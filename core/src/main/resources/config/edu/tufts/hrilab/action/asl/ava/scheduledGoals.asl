@@ -36,14 +36,14 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
 
 
-    !bindings = act:askQuestionFromString(?actor, "What should the scheduled task be?", taskPredicate(X));
+    !bindings = act:askQuestionFromString("What should the scheduled task be?", taskPredicate(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !goalPredicate = op:get(!bindings, !x);
     op:log(debug, "[scheduleGoal] goal !goalPredicate");
 
-    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", !responseFormList);
+    !bindings = act:askQuestionFromString("When should this task be scheduled for?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -59,38 +59,45 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
     op:log(debug, "[scheduleGoal] time/units: !time/!addl");
 
-    !bindings = act:askQuestionFromString(?actor, "Should this task be repeated?", val(X));
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("val(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("relativeTime(X,Y)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString("Should this task be repeated?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !confirmation = op:get(!bindings, !x);
 
-    if (op:equalsValue(!confirmation, yes())) {
-      //Only allowing relativeTime(X,Y) response form here for code simplicity.
-      !bindings = act:askQuestionFromString(?actor, "How often?", !responseForm);
-      if (op:invokeMethod(!bindings,"isEmpty")) {
-          exit(FAIL,not(wasAnswered(myQuestion)));
-      }
-      !interval = op:get(!bindings, !x);
-      !intervalUnits = op:get(!bindings, !y);
-
-      if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time, !addl))"); // TODO: EAK: is this right?
-      } else {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time))"); // TODO: EAK: is this right?
-      }
+    if (op:equalsValue(!confirmation, no())) {
+        if (op:equals(!relativeTime,true)) {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
+        } else {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time))"); // TODO: EAK: is this right?
+        }
     } else {
-      if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
-      } else {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time))"); // TODO: EAK: is this right?
-      }
+        if (op:equalsValue(!confirmation, yes())) {
+            //Only allowing relativeTime(X,Y) response form here for code simplicity.
+            !bindings = act:askQuestionFromString("How often?", !responseForm);
+            if (op:invokeMethod(!bindings,"isEmpty")) {
+                exit(FAIL,not(wasAnswered(myQuestion)));
+            }
+        }
+        !interval = op:get(!bindings, !x);
+        !intervalUnits = op:get(!bindings, !y);
+
+        if (op:equals(!relativeTime,true)) {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time, !addl))"); // TODO: EAK: is this right?
+        } else {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time))"); // TODO: EAK: is this right?
+        }
     }
     op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");
 
     act:submitGoal(!scheduledGoal);
 
-    act:generateResponse(?actor, "added(!scheduledGoal)", direct);
+    act:generateResponse(added(!scheduledGoal));
 }
 
 () = modifyScheduledGoal() {
@@ -132,7 +139,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     //Scheduled Persistent Scheduled or Persistent Scheduled cases
     if (~op:equalsValue(!startPred, none()) && ~op:equalsValue(!periodPred, none())) {
         //Ask to modify either inner or outer timing
-        !bindings = act:askQuestionFromString(?actor, "Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
+        !bindings = act:askQuestionFromString("Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             if (op:equalsValue(!response,execution)) {
@@ -157,12 +164,12 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
     if (op:equals(!modifyInterval,true)) {
         //Scheduled Persistent Scheduled or Persistent Scheduled Interval
-        !bindings = act:askQuestionFromString(?actor, "How frequently would you like to schedule this task instead?", !responseFormList);
+        !bindings = act:askQuestionFromString("How frequently would you like to schedule this task instead?", !responseFormList);
     } else {
         if (~op:equalsValue(periodPred,none())) {
-            !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
+            !bindings = act:askQuestionFromString("When would you like to schedule this task instead?", !responseFormList);
         } else {
-            !bindings = act:askQuestionFromString(?actor, "When should this task's next execution occur?", !responseFormList);
+            !bindings = act:askQuestionFromString("When should this task's next execution occur?", !responseFormList);
         }
     }
 
@@ -252,7 +259,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         }
         //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", option(X));
+        !bindings = act:askQuestionFromString("Which task did you want to modify?", option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
@@ -392,7 +399,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     !responseForm = op:createPredicate("pathName(X)");
     op:add(!responseFormList,!responseForm);
 
-    !bindings = act:askQuestionFromString(?actor,"What is the name of the path?", !responseFormList);
+    !bindings = act:askQuestionFromString("What is the name of the path?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -413,7 +420,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !locations = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
 
-    !bindings = act:askQuestionFromString(?actor,"What's the first location on the path?", location(X));
+    !bindings = act:askQuestionFromString("What's the first location on the path?", location(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -427,7 +434,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     while(~op:equalsValue(!locationId,"none()")){
         op:add(!locations, !tmp);
-        !bindings = act:askQuestionFromString(?actor,"What's the next location on the path?", location(X));
+        !bindings = act:askQuestionFromString("What's the next location on the path?", location(X));
         if (op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }

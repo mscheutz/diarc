@@ -3,6 +3,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.slug.dialogue.Question;
 import java.lang.Integer;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 
 () = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType) {
     // ?semanticType: either direct or indirect   not sure if this is the best variable name
@@ -57,7 +58,7 @@ import java.lang.Integer;
           goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
         } else {
             op:log("debug", "have matching questions, !matchingQuestions");
-            !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions);
+            !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions, ?speaker);
             if (op:isNull(!matchingQuestion)) {
                 op:log("debug", "No matching question was selected to answer");
                 return;
@@ -214,20 +215,20 @@ import java.lang.Integer;
     }
 
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = act:getPriorityTierForGoal(?state);
-    java.lang.String !priorityString = op:invokeMethod(!priorityTier,"name");
-    Symbol !priority = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !priorityString);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priority);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
 }
 
-() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priority, Symbol ?semanticType) {
+() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state,?priority),?semanticType);
+      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType);
     }
 
-    act:handleWant(?speaker,?addressee,?state,?semanticType,?priority);
+    java.lang.String !priorityString = op:getName(?priorityTierSymbol);
+    PriorityTier !priorityTier = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.PriorityTier", "fromString", !priorityString);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
 }
 
-() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Symbol ?priority = uninitialized) {
+() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
     Predicate !defaultResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
@@ -240,7 +241,7 @@ import java.lang.Integer;
 
       try {
         !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType, ?priority);
+        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType, ?priorityTier);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
         !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
         !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -382,7 +383,7 @@ import java.lang.Integer;
     act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
 }
 
-() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType, Symbol ?priority = uninitialized) {
+() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
     Predicate !defaultResponse;
     Predicate !failureEffects;
     java.lang.Long !goalID;
@@ -394,6 +395,7 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Boolean !waitingForResponse;
     Predicate !responsePredicate;
+    java.lang.Long !priority;
 
     conditions : {
       or : {
@@ -422,13 +424,13 @@ import java.lang.Integer;
     // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
     //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
     //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
-    if (~op:equalsValue(?priority,SKIPPENDING)) {
+    if (~op:equalsValue(?priorityTier,SKIPPENDING)) {
         //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
         //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
-        if (~op:equalsValue(?priority,URGENT)) {
+        if (~op:equalsValue(?priorityTier,URGENT)) {
             if (tsc:isAgentWaitingForResponse(?actor)) {
-                //act:generateResponseFromString("Please answer my question before sending further instructions");
-                act:generateResponse(please(before(youSendFurtherInstruction,answer(myQuestion))));
+                //act:generateResponseFromString(?speaker, "Please answer my question before sending further instructions");
+                act:generateResponse(?speaker, please(before(youSendFurtherInstruction,answer(myQuestion))));
                 return;
             }
         }
@@ -440,8 +442,9 @@ import java.lang.Integer;
     }
     !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
 
-
-    !goalID = act:submitGoal(?state,!execType,?priority);
+    !priority = act:getPriorityForGoal(?state);
+    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
+    //!goalID = act:submitGoal(?state,!execType,?priorityTier);
     !goalStatus = act:joinOnGoal(!goalID, 1000);
 //    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
 //      op:log("debug", "tentative accept for ?state with status !goalStatus");
@@ -464,7 +467,7 @@ import java.lang.Integer;
     }
 }
 
-(Question ?matchingQuestion) = selectQuestionToAnswer(java.util.Map ?questions) {
+(Question ?matchingQuestion) = selectQuestionToAnswer(java.util.Map ?questions, Symbol ?speaker) {
     java.util.List !agentQuestions;
     java.lang.Integer !numAgents = 0;
     java.util.Set !agentSet;
@@ -479,7 +482,7 @@ import java.lang.Integer;
 
     //Check ?actor first
     !agentQuestions = op:invokeMethod(?questions,"get",?actor);
-    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
     if (~op:isNull(?matchingQuestion)) {
         op:log("debug", "[selectQuestionToAnswer] single matching question for actor, returning");
         //Have disambiguous question for direct ?actor
@@ -497,7 +500,7 @@ import java.lang.Integer;
             //Only one agent has asked questions, disambiguate for that agent
             foreach(!agent : !agentSet) {
                 !agentQuestions = op:invokeMethod(?questions,"get",!agent);
-                ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
                 if (~op:isNull(?matchingQuestion)) {
                     return;
                 }
@@ -505,22 +508,22 @@ import java.lang.Integer;
         } else {
             //Multiple agents have asked questions, determine which agent the user is meaning to address
             op:log("debug", "[selectQuestionToAnswer] multiple team members have matching questions, selecting amongst them");
-            act:generateResponseFromString("Multiple agents have asked questions relevant to your response. Possible candidates are:");
+            act:generateResponseFromString(?speaker, "Multiple agents have asked questions relevant to your response. Possible candidates are:");
             foreach(!agent : !agentSet) {
-                act:generateResponseFromString(!agent);
+                act:generateResponseFromString(?speaker, !agent);
             }
             //TODO: should be updated to handle potential question overlap properly
             act:suspendWaitForResponse(agent(X),?actor,false);
-            !bindings = act:askQuestionFromString(?actor, "Which one did you mean to address?", agent(X));
+            !bindings = act:askQuestionFromString(?speaker,"Which one did you mean to address?", agent(X));
             act:resumeWaitForResponse(agent(X),?actor);
             if (~op:invokeMethod(!bindings,"isEmpty")) {
                 !response = op:get(!bindings,!x);
                 !response = op:invokeMethod(!response,"toUntyped");
                 !agentQuestions = op:invokeMethod(?questions,"get",!response);
                 if (op:isNull(!agentQuestions)) {
-                    act:generateResponseFromString("agent !response was not a valid option");
+                    act:generateResponseFromString(?speaker, "agent !response was not a valid option");
                 } else {
-                    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
                     return;
                 }
             }
@@ -530,7 +533,7 @@ import java.lang.Integer;
     exit(FAIL,not(know(?actor,whichQuestionYouAreAnswering)));
 }
 
-(Question ?matchingQuestion) = selectQuestionToAnswerHelper(java.util.List ?agentQuestions) {
+(Question ?matchingQuestion) = selectQuestionToAnswerHelper(java.util.List ?agentQuestions, Symbol ?speaker) {
     Symbol !agent;
     java.lang.Integer !numQuestions = 0;
     Predicate !errorPred;
@@ -565,18 +568,18 @@ import java.lang.Integer;
     } elseif (op:gt(!numQuestions,1)) {
         op:log("debug", "[selectQuestionToAnswerHelper] multiple matching question, asking disambiguation question");
         //Multiple matching questions for direct agent, disambiguate between them
-        //act:generateResponseFromString("It is unclear which question you are answering. Possible candidates are:");
-        act:generateResponse(and(report(itIsUnclearWhichQuestionYouAreAnswering),promptList(possibleCandidatesAre)));
+        //act:generateResponseFromString(?speaker, "It is unclear which question you are answering. Possible candidates are:");
+        act:generateResponse(?speaker, and(report(itIsUnclearWhichQuestionYouAreAnswering),promptList(possibleCandidatesAre)));
         for (!questionIndex=0; !questionIndex lt !numQuestions; !questionIndex ++) {
             !question = op:get(?agentQuestions,!questionIndex);
             !questionString = op:invokeMethod(!question,"getQuestionString");
             !spokenIndex = op:++(!questionIndex);
-            act:generateResponseFromString("Option !spokenIndex: !questionString");
+            act:generateResponseFromString(?speaker, "Option !spokenIndex: !questionString");
         }
         //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
-        //!bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
-        !bindings = act:askQuestion(?actor, meanToAnswer(which(question)), option(X));
+        //!bindings = act:askQuestionFromString(?speaker, "Which question did you mean to answer?", option(X));
+        !bindings = act:askQuestion(?speaker, meanToAnswer(which(question)), option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
@@ -587,8 +590,8 @@ import java.lang.Integer;
                 ?matchingQuestion = op:get(?agentQuestions,!questionNumber);
                 return;
             } else {
-                //act:generateResponseFromString("Question !questionNumber was not a valid option");
-                act:generateResponse(not(validOption(question(!questionNumber))));
+                //act:generateResponseFromString(?speaker, "Question !questionNumber was not a valid option");
+                act:generateResponse(?speaker, not(validOption(question(!questionNumber))));
             }
         }
     }

@@ -391,15 +391,17 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     java.lang.Long !goalId;
     java.lang.Boolean !suspended;
     GoalStatus !status;
+    java.lang.Long !timeout = 0;
 
     !goals = act:getGoal(?goalPredicate);
     if (~op:isEmpty(!goals)) {
         !goal = op:get(!goals,0);
         op:log("debug", "[suspendGoal] suspending goal: !goal.");
         !goalId =  op:invokeMethod(!goal, "getId");
+        !status = tsc:getGoalStatus(!goalId);
         !suspended = act:suspendGoal(!goalId);
         if (op:equals(!suspended,true)) {
-            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
             if (op:isNull(!status)) {
                 exit(FAIL,alreadyComplete(goalToSuspend));
             } elseif (~op:equalsValue(!status,SUSPENDED)) {

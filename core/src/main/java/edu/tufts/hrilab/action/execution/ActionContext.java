@@ -1116,4 +1116,18 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   public boolean canCancelInterruptibly() {
     return isInterruptible() && getDBE().hasOnCancelEvent();
   }
+
+  public Symbol getOriginalSubmitter() {
+    Context context = this;
+    while (context != null) {
+      if (context instanceof GoalContext) {
+        Symbol submitter = ((GoalContext) context).getGoal().getSubmitter();
+        if (!submitter.equals(Factory.createSymbol("unknown"))) {
+          return submitter;
+        }
+      }
+      context = context.getParentContext();
+    }
+    return Factory.createSymbol("unknown");
+  }
 }

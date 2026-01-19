@@ -870,12 +870,15 @@ public class ExecutionManager implements GoalListener {
         for (Goal activeGoal : activeGoals) {
           if (!activeGoal.getStatus().isTerminated()) {
             GoalStatus currentStatus = activeGoal.getStatus();
-            //TODO: Revisit this - kiosk goals cannot be canceled within this function due to held locks and multithreaded
-            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself
+            //TODO: Revisit this - kiosk goals cannot be canceled within this function properly due to held locks and multithreaded
+            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself.
+            //      The goal will be canceled, but not move collections or release resources
             if (activeGoal.getPriorityTier() == PriorityTier.KIOSK) {
               //superseded kiosk goals can be canceled and discarded rather than suspended and added to pending
               if (cancelActiveGoal(activeGoal)) {
                 waitForGoalStatus(activeGoal, GoalStatus.CANCELED);
+                //Shouldn't be necessary, needed until deadlock issues are fixed
+                unlockResources(activeGoal);
               }
             } else {
               if (currentStatus == GoalStatus.ACTIVE) {
@@ -2463,19 +2466,28 @@ public class ExecutionManager implements GoalListener {
       if (actions.isEmpty()) {
         return new ConditionJustification(false, Factory.createPredicate("knowAction", actionSignature));
       }
-      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      actions = actions.stream().filter(action -> action.getDBFile() == null || action.getDBFile().equals(learnedActionsFile)).toList();
       if (actions.isEmpty()) {
         return new ConditionJustification(false, Factory.createPredicate("taughtAction", actionSignature));
       }
       for (ActionDBEntry action : actions) {
         //Remove from DB
-        Database.getActionDB().removeAction(action);
+        Database.getInstance().removeActionDBEntry(action);
         //Remove from file
-        if (action.getDBFile() != null) {
+        String actionFile = action.getDBFile();
+        if (actionFile == null) {
+          actionFile = learnedActionsFile;
+        }
+        if (actionFile != null) {
           List<ActionDBEntry> learnedActions = loadLearnedActions(false);
           boolean removed = learnedActions.remove(action);
           if (!removed) {
-            log.warn("action was not found in learned file");
+            //TODO: Look into - get two different ActionDBEntry objects when retrieving from DB vs from file if learned
+            //  during this instance of TRACS. If present on startup, then the same object is returned and matches above
+            removed = learnedActions.removeIf(a -> a.getType().equals(action.getType()) && a.getRoles().size() == action.getRoles().size());
+            if (!removed) {
+              log.warn("action was not found in learned file");
+            }
           }
           ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
           writer.writeToFile(learnedActions, learnedActionsFile);
@@ -2564,14 +2576,13 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    //What should happen here?
-    if (g.getPriorityTier().equals(PriorityTier.URGENT)) {
-      log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
-    }
-
     AgentTeam agentTeam = originalAgentTeam;
     while (agentTeam != null) {
       if (agentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
+        //What should happen here?
+        if (g.getPriorityTier().equals(PriorityTier.URGENT)) {
+          log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
+        }
         log.debug("[handOffToLearning] handing {} off to action learning", g);
         agentTeam.addLearningGoal(g);
         if (!agentTeam.shouldExecute()) {

@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -42,7 +43,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("retractBelief", Term.class);
 //    addServiceToObserve("runScrewdriverProgram", Integer.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class);
     addServiceToObserve("openGripper");
     addServiceToObserve("closeGripper");
     addServiceToObserve("getCameraData", String.class);

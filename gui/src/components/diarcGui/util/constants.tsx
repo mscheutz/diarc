@@ -2,12 +2,10 @@ import ActionProgrammer from "../actionProgrammer/ActionProgrammer";
 import BeliefViewer from "../BeliefViewer";
 import ChatViewer from "../ChatViewer";
 import GoalViewer from "../GoalViewer";
-import GoalQueueViewer from "../GoalQueueViewer";
 import MapViewer from "../MapViewer";
 import GoalSubmission from "../goalSubmission/GoalSubmission";
 import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
-import AvaBehaviorTab from "../AvaBehaviorTab"
 
 const handlerRoots: string[] =
     ["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map",
@@ -28,8 +26,7 @@ const handlers = {
     },
     "goalViewer": {
         tabName: "Goal Viewer",
-//         component: GoalViewer
-        component: GoalQueueViewer
+        component: GoalViewer
     },
     "goalManager": {
         tabName: "Goal Submission",
@@ -54,20 +51,12 @@ export { handlerRoots, handlers };
 const columns = [
     "Goal",
     "Actor",
-    "Current action",
     "Status",
     "Start time",
     "End time",
     "Priority",
     "ID"
 ];
-
-const scheduledColumns = [
-    "Goal",
-    "Scheduled Time",
-    "Repeat Interval",
-    "Repeat Until"
-]
 
 type Option = {
     value: string,
@@ -94,7 +83,7 @@ const statuses: string[] = [
     "failed"
 ]
 
-export {columns, pastColumns, scheduledColumns, sortCriteria, statuses};
+export {columns, sortCriteria, statuses};
 export type { Option };
 
 const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";

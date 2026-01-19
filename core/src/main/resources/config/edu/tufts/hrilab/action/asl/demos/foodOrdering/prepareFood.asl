@@ -230,7 +230,7 @@ import edu.tufts.hrilab.fol.Variable;
     java.lang.String !proceedString;
     Variable !x = "X";
 
-    !bindings = act:askQuestionFromString(?actor,"A motion error has occurred in ?failedAction, is it safe to proceed?", safeToProceed(X));
+    !bindings = act:askQuestionFromString("A motion error has occurred in ?failedAction, is it safe to proceed?", safeToProceed(X));
     !proceedPred = op:get(!bindings, !x);
     !proceedString = op:getName(!proceedPred);
     if (~op:equals(!proceedString,true)) {

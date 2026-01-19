@@ -7,6 +7,7 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
+import java.nio.file.Paths;
 import java.util.Collection;
 
 public class AvaGUIAdapter extends GuiAdapter {
@@ -53,18 +54,11 @@ public class AvaGUIAdapter extends GuiAdapter {
         log.warn("[handleMessage] Exception displaying text", e);
       }
     }).start();
-
-    try {
-      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
-      service.call(void.class,"config/edu/tufts/hrilab/ava/ding.wav");
-    } catch (TRADEException e) {
-      log.warn("[handleMessage] exception playing audio clip on Ava", e);
-    }
   }
 
   @Override
   protected void handleMessage(JsonObject message) {
-    signalAvaExternalCommandReceived();
+    //signalAvaExternalCommandReceived();
     String input = message.get("input").getAsString();
     String speaker = message.get("speaker").getAsString();
     String addressee = message.get("addressee").getAsString();

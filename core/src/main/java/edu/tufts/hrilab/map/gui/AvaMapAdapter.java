@@ -7,6 +7,7 @@ package edu.tufts.hrilab.map.gui;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -17,30 +18,19 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.ConfigurationHolder;
 import edu.tufts.hrilab.gui.GuiAdapter;
-import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.ImageReadException;
-import org.apache.commons.imaging.ImageWriteException;
-import org.apache.commons.imaging.Imaging;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.imageio.ImageIO;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Handles WebSocket messages for MapComponent-related functionalities within the web interface.
- * This class processes and responds to various navigation and location requests, converting
- * them into TRADEService calls and updates within the application.
- */
 public class AvaMapAdapter extends GuiAdapter {
 
   private List<BufferedImage> mapImages = new ArrayList<>();
@@ -53,26 +43,11 @@ public class AvaMapAdapter extends GuiAdapter {
   double mapScaleX;
   double mapScaleY;
   private boolean mock = false;
-  private boolean runRobotPosThread = true;
 
-  //==========================================================================
-  // Constructors
-  //==========================================================================
   public AvaMapAdapter(Collection<String> groups) {
     super(groups);
-    startRobotPosThread();
   }
 
-  //======================================================================
-  // Implementing methods | TextWebSocketHandler
-  //======================================================================
-
-  /**
-   * Handles incoming WebSocket messages by identifying the action requested
-   * and delegating to the appropriate method.
-   *
-   * @param message The text message received from the client.
-   */
   @Override
   protected void handleMessage(JsonObject message) {
 
@@ -117,33 +92,25 @@ public class AvaMapAdapter extends GuiAdapter {
     }
   }
 
-  //======================================================================
-  // Methods
-  //======================================================================
-
-  //TODO: need to update map tsx to handle live updates gracefully
-  private void startRobotPosThread() {
-    new Thread(() -> {
-      while (runRobotPosThread) {
+  private void fetchMapImage() {
+    mapImages = new ArrayList<>();
+    try {
+      List<byte[]> imageBytes = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .name("getMapImages")
+          .argTypes()
+          .inGroups(this.groups.toArray(new String[0]))
+      ).call(List.class);
+      
+      for (byte[] bytes : imageBytes) {
         try {
-          Thread.sleep(5000);
-          fetchRobotPose();
-        } catch (InterruptedException e) {
-          log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+          mapImages.add(ImageIO.read(new ByteArrayInputStream(bytes)));
+        } catch (IOException e) {
+          log.error("Failed to convert map image bytes", e);
         }
       }
-    }).start();
-  }
-
-  /**
-   * Update local current FloorMap and current floor number.
-   */
-  private void fetchMapImage() {
-    try {
-      mapImages = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapImages").argTypes().inGroups(this.groups.toArray(new String[0]))).call(List.class);
     } catch (TRADEException e) {
-      log.error("Error getting map.", e);
-      mapImages = new ArrayList<>();
+      log.error("Failed to get map images", e);
     }
   }
 
@@ -208,30 +175,19 @@ public class AvaMapAdapter extends GuiAdapter {
     return merged;
   }
 
-  /**
-   * Fetches and sends map data to the client, including current floor and associated metadata.
-   */
   private void fetchMapData() {
     getMapMetadata();
     fetchMapImage();
     getFinalMap();
 
     JsonObject response = new JsonObject();
-    if (!mapImages.isEmpty() && !mapMetadatas.isEmpty()) {
-      try {
-        String pngFileName = saveMapAsPNG(finalMap);
-        response.addProperty("currentFloor", 0);
-        String baseUrl = ConfigurationHolder.getBaseUrl();
-        response.addProperty("mapImageUrl", baseUrl + "/images/" + pngFileName);
-        response.addProperty("success", true);
-        response.addProperty("message", "Map data fetched successfully.");
-        response.addProperty("path", getPath());
-      } catch (ImageReadException | ImageWriteException | IOException e) {
-        log.error("Error converting map PGM to PNG");
-        response.addProperty("success", false);
-        response.addProperty("error", "Failed to retrieve map data.");
-        response.addProperty("path", getPath());
-      }
+    if (!mapImages.isEmpty() && !mapMetadatas.isEmpty() && finalMap != null) {
+      response.addProperty("currentFloor", 0);
+      String baseUrl = ConfigurationHolder.getBaseUrl();
+      response.addProperty("mapImageUrl", baseUrl + "/api/map/image");
+      response.addProperty("success", true);
+      response.addProperty("message", "Map data fetched successfully.");
+      response.addProperty("path", getPath());
     } else {
       response.addProperty("success", false);
       response.addProperty("error", "Failed to retrieve map data.");
@@ -244,29 +200,7 @@ public class AvaMapAdapter extends GuiAdapter {
       log.error("Failed to send message", ex);
     }
 
-    // Fetch and send robot pose
     fetchRobotPose();
-  }
-
-  /**
-   * Converts a PGM image file to a PNG image file and returns the new filename.
-   *
-   * @return The filename of the converted PNG image.
-   * @throws ImageReadException
-   * @throws ImageWriteException
-   * @throws IOException
-   */
-  public String saveMapAsPNG(BufferedImage map) throws ImageReadException, ImageWriteException, IOException {
-
-    // Calculate the output directory based on the current working directory
-    String outputDirectory = Paths.get("../core/src/main/resources/static/images/ava").toAbsolutePath().normalize() + "/";
-    Path pngPath = Paths.get(outputDirectory, "map.png");
-
-    Imaging.writeImage(map, pngPath.toFile(), ImageFormats.PNG);
-
-    log.info("saved PNG: {}", pngPath);
-
-    return "ava/map.png";
   }
 
   private Point2d mapToPixel(Point3d mapPosition) {
@@ -274,9 +208,6 @@ public class AvaMapAdapter extends GuiAdapter {
     return new Point2d((mapPosition.getX()/mapScaleX-finalMapOriginX) + finalMapWidth*0.5, (-mapPosition.getY()/mapScaleY+finalMapOriginY) + finalMapHeight*0.5);
   }
 
-  /**
-   * Navigates to a known location identified by a Symbol reference.
-   */
   private void goToLocation(Symbol location) {
     log.info("Attempting to navigate to location: {}", location);
     JsonObject response = new JsonObject();
@@ -317,9 +248,6 @@ public class AvaMapAdapter extends GuiAdapter {
     }
   }
 
-  /**
-   * Fetches and sends the current pose of the robot to the client.
-   */
   private void fetchRobotPose() {
     JsonObject response = new JsonObject();
 
@@ -386,18 +314,20 @@ public class AvaMapAdapter extends GuiAdapter {
 
     try {
       // Fetch the description from the TRADE service
-      Map<Symbol, PoseReference> knownPoses = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes().inGroups(this.groups.toArray(new String[0])))
+      Map<Symbol, Point3d> knownPoses = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLocationsOnMap").argTypes().inGroups(this.groups.toArray(new String[0])))
               .call(Map.class);
 
+      Map<Symbol, String> poseNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLocationNames").argTypes(List.class).inGroups(this.groups.toArray(new String[0])))
+              .call(Map.class, knownPoses.keySet().stream().toList());
       // Loop through each line to extract information
       for (Symbol refId : knownPoses.keySet()) {
-        PoseReference ref = knownPoses.get(refId);
+        Point3d refPose = knownPoses.get(refId);
 
         JsonObject positionJson = new JsonObject();
-        Point2d pixelPosition = mapToPixel(ref.getPose().getLeft());
+        Point2d pixelPosition = mapToPixel(refPose);
         positionJson.addProperty("x", pixelPosition.x);
         positionJson.addProperty("y", pixelPosition.y);
-        positionJson.addProperty("description", ref.properties.get(0).getName());
+        positionJson.addProperty("description", poseNames.get(refId));
         knownPosesJson.add(refId.getName(), positionJson);
       }
       response.add("keyLocations", knownPosesJson);
@@ -420,27 +350,18 @@ public class AvaMapAdapter extends GuiAdapter {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return {@inheritDoc}
-   */
   @Override
   public String getPathRoot() {
     return "map";
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @return {@inheritDoc}
-   */
-  @Override
-  protected boolean providesTradeServices() {
-    return false;
+  @TRADEService
+  public BufferedImage getMapImage() {
+    return finalMap;
   }
 
-  public void shutdown() {
-    runRobotPosThread = false;
+  @Override
+  protected boolean providesTradeServices() {
+    return true;
   }
 }

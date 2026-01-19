@@ -578,6 +578,12 @@ public class LearningState {
           }
         } else {
           name = value.toString();
+          //TODO: Need to tell at this point whether the argument is a string or some other type in order to properly
+          //      escape it if necessary. Otherwise ASL writer/parser can break or incorrect types supplied
+          if (needsEscaping(name)) {
+            name = "\"" + name + "\"";
+          }
+
         }
       }
       param.append(name);
@@ -585,7 +591,25 @@ public class LearningState {
     return param.toString();
   }
 
+  private boolean needsEscaping(String s) {
+    //Already escaped
+    if (s.startsWith("\"") && s.endsWith("\"")) {
+      return false;
+    }
 
+    //Word or digit without special characters
+    if (s.matches("\\w+") || s.matches("[\\x00-\\x20]*[-]?((\\p{Digit}+)(\\.)?((\\p{Digit}+)?))[\\x00-\\x20]*")) {
+      return false;
+    }
+
+    //Reference symbol
+    if (s.matches(".*(.+)_\\d+:\\1")) {
+      return false;
+    }
+
+    //Otherwise contains a special character and is not detected to be a reference, escape
+    return true;
+  }
 
   /**
    *

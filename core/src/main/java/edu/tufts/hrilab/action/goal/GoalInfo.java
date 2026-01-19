@@ -6,6 +6,7 @@ package edu.tufts.hrilab.action.goal;
 
 import edu.tufts.hrilab.action.goal.schedule.ScheduleInfo;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 
@@ -83,6 +84,11 @@ public class GoalInfo implements Serializable {
    */
   public boolean isLearningGoal = false;
 
+  /**
+   * EXPERIMENTAL
+   * The entity (currently only the speaker if a dialogue goal) triggering this goal submission
+   */
+  public Symbol submitter = Factory.createSymbol("unknown");
 
   public GoalInfo(long gid) {
     this.gid = gid;
@@ -104,5 +110,6 @@ public class GoalInfo implements Serializable {
     this.priorityTier = other.priorityTier;
     this.schedulingInfo = other.schedulingInfo;
     this.isLearningGoal = other.isLearningGoal;
+    this.submitter = other.submitter;
   }
 }

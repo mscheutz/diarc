@@ -37,6 +37,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     private boolean registeredForNewActions = false;
     private boolean retrievedLearnedActions = false;
     private String learnedActionsString = "";
+    private List<String> learnedActionNames = new ArrayList<>();
     //TODO: All of this information should potentially be spread out to different parts of the system and gathered here
     //  on startup rather than hardcoded. E.g. descriptions from ActionDBEntries (asl pre-existing and new java annotations),
     //  NL examples from various parsers, selection of exposed actions from config, ... This is a fairly large architectural
@@ -44,19 +45,32 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     private class LLMActionEntry {
         String signature;
         String description;
-        LLMNLExample example;
+        List<LLMNLExample> examples;
 
         LLMActionEntry(String signature, String description, LLMNLExample example) {
             this.signature = signature;
             this.description = description;
-            this.example = example;
+            this.examples = List.of(example);
         }
 
         LLMActionEntry(String signature, String description, String exampleInstruction, String exampleTranslation, int exampleConfidence) {
             this.signature = signature;
             this.description = description;
-            this.example = new LLMNLExample(exampleInstruction, exampleTranslation, exampleConfidence);
+            this.examples = List.of(new LLMNLExample(exampleInstruction, exampleTranslation, exampleConfidence));
         }
+
+      LLMActionEntry(String signature, String description, List<String> exampleInstructions, List<String> exampleTranslations, int exampleConfidence) {
+        this.signature = signature;
+        this.description = description;
+        this.examples = new ArrayList<>();
+        if (exampleInstructions.size() != exampleTranslations.size()) {
+          log.error("[LLMActionEntry] provided instruction and translation lists differ in size");
+        } else {
+          for (int i = 0; i < exampleInstructions.size(); i++) {
+            this.examples.add(new LLMNLExample(exampleInstructions.get(i), exampleTranslations.get(i), exampleConfidence));
+          }
+        }
+      }
 
         public String toString(boolean nlu) {
             String signatureString = signature;
@@ -72,15 +86,17 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             String output = signatureString + "\n" +
                   "Description: " + description + "\n";
             if (nlu) {
-                output +=
-                        "Example Translation: \"" +
-                                example.instruction +
-                                "\" -> {\"Semantics\":\"" +
-                                example.semantics +
-                                "\",\"Input Type\":\"INSTRUCT\",\"Confidence\":\"" +
-                                example.confidence +
-                                "\"}\n";
-            }
+                for (LLMNLExample example : examples) {
+                    output +=
+                            "Example Translation: \"" +
+                                    example.instruction +
+                                    "\" -> {\"Semantics\":\"" +
+                                    example.semantics +
+                                    "\",\"Input Type\":\"INSTRUCT\",\"Confidence\":\"" +
+                                    example.confidence +
+                                    "\"}\n";
+                  }
+              }
             output += "#\n";
             return output;
         }
@@ -119,6 +135,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
         try {
+            Utterance.Builder failure = new Utterance.Builder();
+            failure.setSpeaker(incomingUtterance.getSpeaker());
+            failure.setAddressee(incomingUtterance.getAddressee());
+            failure.setSemantics(Factory.createPredicate("error("+incomingUtterance.getAddressee()+",and(report,not(understand(" + incomingUtterance.getAddressee() + ",that)),ask(pleaseTryAgain))"));
+            failure.setWords(incomingUtterance.getWords());
             Utterance.Builder output = new Utterance.Builder(incomingUtterance);
             log.info(llmResponse.getText());
             String responseString = llmResponse.getText();
@@ -127,7 +148,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             Matcher m = semanticsPattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Semantics or input type result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
 
@@ -135,21 +156,21 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             m = typePattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Input Type result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             UtteranceType utteranceType;
             try {
                 utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
             } catch (IllegalArgumentException e) {
                 log.error("[AvaLLMServiceProvider] generated Input Type {} invalid", m.group(m.groupCount()));
-                return incomingUtterance;
+                return failure.build();
             }
 
             Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
             m = confidencePattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Confidence result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             String confidenceString = m.group(m.groupCount()).trim();
             int confidence = Integer.parseInt(confidenceString);
@@ -157,7 +178,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
                 //TODO: start conversation and recovery dialogue?
                 //      Cache result so that script can be entered based on utterance/agent/something?
-                return incomingUtterance;
+                return failure.build();
             }
 
             output.setUtteranceType(utteranceType);
@@ -170,17 +191,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             }
             processedArguments = processSemantics(semantics, processedArguments, varMap, output, incomingUtterance.getAddressee().getName());
             if (processedArguments == null) {
-                return incomingUtterance;
+                return failure.build();
             }
             output.setSemantics(Factory.createPredicate(semantics.getName(), processedArguments));
             output.setNeedsValidation(true);
 
-            Utterance result = output.build();
-            boolean parsed = correctCommonNLUMistakes(result);
-            if (parsed) {
+            Utterance result = correctCommonNLUMistakes(output.build());
+            if (result != null) {
                 return result;
             } else {
-                return incomingUtterance;
+                return failure.build();
             }
         } catch (Exception e) {
             log.warn("[parseNLUCompletionResponse]",e);
@@ -188,7 +208,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         }
     }
 
-    private boolean correctCommonNLUMistakes(Utterance utterance) {
+    private Utterance correctCommonNLUMistakes(Utterance utterance) {
         ////TODO: this needs to be caught earlier in the pipeline than here, just copying here to maintain awareness of
         //      the issue without hacking code in the asr app or parser itself.
         //incoming.setWords(incoming.getWords().stream().map(word -> {
@@ -206,7 +226,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 Symbol arg = ((Term)utterance.getSemantics()).get(0);
                 if (!arg.isVariable() && !arg.getName().equals("none") && !(arg.isVariable() && !arg.getType().equals("location"))) {
                     log.warn("[correctCommonNLUMistakes] LLM returned location(?location) parse where ?location is not a reference. Not allowing");
-                    return false;
+                    return null;
                 }
             } else if (command.equals("taskPredicate")) {
                 //Not currently prompted to do this
@@ -230,12 +250,171 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                     }
                     utterance.setSemantics(Factory.createPredicate(command, actor, Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
+            } else if (command.equals("playVideo")) {
+                // Special format returned by LLM for different parameterization of playing videos- make sure output is
+                //    valid and coerce into proper specific action semantic form.
+                Predicate semantics = (Predicate) utterance.getSemantics();
+
+                // Needs to have all arguments defined (actor, video name, location)
+                List<Symbol> args = semantics.getArgs();
+                if (args.size() != 3) {
+                  log.error("[correctCommonNLUMistakes] playVideo returned with incorrect number of arguments");
+                  //TODO: check if actually supplied a duration
+                  if (args.size() == 4) {
+                    Utterance.Builder failure = new Utterance.Builder();
+                    failure.setSpeaker(utterance.getSpeaker());
+                    failure.setAddressee(utterance.getAddressee());
+                    failure.setSemantics(Factory.createPredicate("error(" + utterance.getAddressee() + ",cannot(playVideosForSpecificDurations))"));
+                    failure.setWords(utterance.getWords());
+                    return failure.build();
+                  } else {
+                  return null;
+                  }
+                }
+
+                // Check which arguments were set to "default" vs populated explicitly
+                //TODO: set up as listener and hold notion of these rather than grabbing each call
+                List<String> videoNames = getVideoNames();
+                List<String> imageNames = getImageNames();
+                boolean videoDefault = false;
+                boolean locationDefault = false;
+                if (args.get(2).toString().equals("default")) {
+                  locationDefault = true;
+                }
+                if (args.get(1).toString().equals("default")) {
+                  videoDefault = true;
+                } else {
+                  //Make sure the supplied video is actually a video and not hallucinated by the LLM or an image
+                  String videoName = getMatchingNameIgnoreCase(args.get(1).getName(), videoNames);
+                  if (!args.get(1).getType().equals("video") || videoName.isEmpty()) {
+                    // If the supplied video is a known image, attempt to coerce into corresponding display image action
+                    String imageName = getMatchingNameIgnoreCase(args.get(1).getName(), imageNames);
+                    if (!imageName.isEmpty()) {
+                      if (locationDefault) {
+                        log.warn("[correctCommonNLUMistakes] replacing playVideo with corresponding displayImage action");
+                        utterance.setSemantics(Factory.createPredicate("displayNamedImage", actor, args.get(1).toUntyped()));
+                        return utterance;
+                      } else {
+                        log.warn("[correctCommonNLUMistakes] replacing playVideo with corresponding displayImage action");
+                        utterance.setSemantics(Factory.createPredicate("displayNamedImageAtLocation", actor, args.get(1).toUntyped(), args.get(2)));
+                        return utterance;
+                      }
+                    }
+                    log.error("[correctCommonNLUMistakes] playVideos' video argument is not a properly typed saved video");
+                    Utterance.Builder failure = new Utterance.Builder();
+                    failure.setSpeaker(utterance.getSpeaker());
+                    failure.setAddressee(utterance.getAddressee());
+                    failure.setSemantics(Factory.createPredicate("error("+utterance.getAddressee()+",not(savedVideo("+args.get(1).toUntypedString()+")))"));
+                    failure.setWords(utterance.getWords());
+                    return failure.build();
+                  }
+                }
+
+                // Arguments are valid, coerce into the appropriate action
+                if (videoDefault && locationDefault) {
+                  utterance.setSemantics(Factory.createPredicate("playNextVideo", actor));
+                } else if (videoDefault) {
+                  utterance.setSemantics(Factory.createPredicate("playNextVideoAtLocation", actor, args.get(2)));
+                } else if (locationDefault) {
+                  utterance.setSemantics(Factory.createPredicate("playSpecificVideo", actor, args.get(1).toUntyped()));
+                } else {
+                  utterance.setSemantics(Factory.createPredicate("playSpecificVideoAtLocation", actor, args.get(1).toUntyped(), args.get(2)));
+                }
+            } else if (command.equals("displayImage")) {
+                // Special format returned by LLM for different parameterization of displaying images - make sure output is
+                //    valid and coerce into proper specific action semantic form.
+                Predicate semantics = (Predicate) utterance.getSemantics();
+
+                // Needs to have all arguments defined (actor, video name, location, duration)
+                List<Symbol> args = semantics.getArgs();
+                if (args.size() != 4) {
+                  log.error("[correctCommonNLUMistakes] displayImage returned with incorrect number of arguments");
+                  return null;
+                }
+
+                // Check which arguments were set to "default" vs populated explicitly
+                //TODO: set up as listener and hold notion of these rather than grabbing each call
+                List<String> videoNames = getVideoNames();
+                List<String> imageNames = getImageNames();
+                boolean durationDefault = false;
+                boolean locationDefault = false;
+
+                if (args.get(2).toString().equals("default")) {
+                  locationDefault = true;
+                }
+                if (args.get(3).toString().equals("default")) {
+                  durationDefault = true;
+                }
+                //Check if image gets "default"
+                if (args.get(1).toString().equals("default")) {
+                  log.error("[correctCommonNLUMistakes] displayImages's image argument set to default - not possible");
+                  Utterance.Builder failure = new Utterance.Builder();
+                  failure.setSpeaker(utterance.getSpeaker());
+                  failure.setAddressee(utterance.getAddressee());
+                  failure.setSemantics(Factory.createPredicate("error("+utterance.getAddressee()+",not(supplied(imageName)))"));
+                  failure.setWords(utterance.getWords());
+                  return failure.build();
+                } else {
+                  //Make sure the supplied image is actually a image and not hallucinated by the LLM or a video
+                  String imageName = getMatchingNameIgnoreCase(args.get(1).getName(), imageNames);
+                  if (!args.get(1).getType().equals("image") || imageName.isEmpty()) {
+                    // If the supplied image is a known video, attempt to coerce into corresponding play video action
+                    String videoName = getMatchingNameIgnoreCase(args.get(1).getName(), videoNames);
+                    if (!videoName.isEmpty()) {
+                      if (!durationDefault) {
+                        log.error("[correctCommonNLUMistakes] displayImage returned with a video argument and a non-default duration");
+                        Utterance.Builder failure = new Utterance.Builder();
+                        failure.setSpeaker(utterance.getSpeaker());
+                        failure.setAddressee(utterance.getAddressee());
+                        failure.setSemantics(Factory.createPredicate("error("+utterance.getAddressee()+",cannot(playVideosForSpecificDurations))"));
+                        failure.setWords(utterance.getWords());
+                        return failure.build();
+                      }
+                      if (locationDefault) {
+                        log.warn("[correctCommonNLUMistakes] replacing displayImage with corresponding playVideo action");
+                        utterance.setSemantics(Factory.createPredicate("playSpecificVideo",actor,args.get(1).toUntyped()));
+                        return utterance;
+                      } else {
+                        log.warn("[correctCommonNLUMistakes] replacing displayImage with corresponding playVideo action");
+                        utterance.setSemantics(Factory.createPredicate("playSpecificVideoAtLocation",actor,args.get(1).toUntyped(),args.get(2)));
+                        return utterance;
+                      }
+                    }
+                    log.error("[correctCommonNLUMistakes] displayImages' image argument is not a properly typed saved image");
+                    Utterance.Builder failure = new Utterance.Builder();
+                    failure.setSpeaker(utterance.getSpeaker());
+                    failure.setAddressee(utterance.getAddressee());
+                    failure.setSemantics(Factory.createPredicate("error("+utterance.getAddressee()+",not(savedImage("+args.get(1).toUntypedString()+")))"));
+                    failure.setWords(utterance.getWords());
+                    return failure.build();
+                  }
+                }
+
+                // Arguments are valid, coerce into the appropriate action
+                if (durationDefault && locationDefault) {
+                  utterance.setSemantics(Factory.createPredicate("displayNamedImage",actor, args.get(1).toUntyped()));
+                } else if (durationDefault) {
+                  utterance.setSemantics(Factory.createPredicate("displayNamedImageAtLocation",actor,args.get(1).toUntyped(),args.get(2)));
+                } else if (locationDefault) {
+                  utterance.setSemantics(Factory.createPredicate("displayNamedImageForDuration",actor,args.get(1).toUntyped(),args.get(3)));
+                } else {
+                  utterance.setSemantics(Factory.createPredicate("displayNamedImageForDurationAtLocation",actor,args.get(1).toUntyped(),args.get(2), args.get(3)));
+                }
             }
         } catch (Exception e) {
             log.warn("[correctCommonNLUMistakes] unexpected semantics format");
-            return false;
+            return null;
         }
-        return true;
+        return utterance;
+    }
+
+    private String getMatchingNameIgnoreCase(String query, List<String> targets) {
+      for (String target : targets) {
+        if (query.equalsIgnoreCase(target)) {
+          return target;
+        }
+      }
+      return "";
     }
 
     private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor) {
@@ -254,31 +433,28 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 processedArguments.add(Factory.createPredicate(arg.getName(), innerArgs));
             } else {
                 String argString = arg.toString();
-                if (argString.startsWith("?")) {
-                    if (unpopulatedArgSafe) {
-                        processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
-                        continue;
-                    } else {
-                        log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
-                        return null;
-                    }
+
+                // Reject any unpopulated arguments returned by the LLM, unless the semantics specifically allow for that
+                if (unpopulatedArgSafe && argString.startsWith("?")) {
+                    processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
+                    continue;
+                } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
+                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
+                    return null;
                 }
+
+                // Add types to references
+                // TODO: remove this and make the LLM add types itself. Right now any conflicting literal will be processed as a ref
                 Symbol argSymbol;
                 String descriptorType = getDescriptorType(actor,argString);
-                //String descriptorType = "";
-                ////TODO: remove this - make LLM add types itself. Right now any conflicting literal will be processed as a ref
-                //if (!semantics.getName().endsWith("Name")) {
-                //    getDescriptorType(actor, argString);
-                //}
                 if (descriptorType.isEmpty()) {
                     argSymbol = Factory.createFOL(argString);
                 } else {
-                    //v2 only
                     argSymbol = Factory.createSymbol(argString, descriptorType);
                 }
 
-                //TODO: replace with all types which are refs (or in general should be anything which is not an agent?)
-                //Should generally be any reference, just know in this case all references will be locations
+                // Replace reference symbol with Variable and add supplemental semantics
+                //TODO: do this dynamically for all types which are refs (should be anything which is not an agent?)
                 if (argSymbol != null && (argSymbol.getType().equals("location"))) {
                     if (!varMap.containsKey(argSymbol)) {
                         Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
@@ -328,7 +504,29 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         String output = m.group(m.groupCount());
         outgoingUtterance.setWords(List.of(output.split(" ")));
 
+        //TODO: ideally this check and override would occur somewhere else, but currently have learned action information here nicely
+      if (outgoingUtterance.getSemantics().getName().equals("mean")) {
+        checkForLearnedActionInstructionValidation(outgoingUtterance);
+      }
+
         return outgoingUtterance;
+    }
+
+    private void checkForLearnedActionInstructionValidation(Utterance utterance) {
+      Predicate semantics;
+      List<Term> boundSemantics = utterance.getBoundSemantics();
+      if (boundSemantics.isEmpty()) {
+        semantics = (Predicate) utterance.getSemantics();
+      } else {
+        semantics = (Predicate) boundSemantics.get(0);
+      }
+      List<Symbol> args = semantics.getArgs();
+      if (args.size() > 1) {
+        String name = args.get(1).getName();
+        if (learnedActionNames.contains(name)) {
+          utterance.setWords(String.format("Did you mean to ask me to perform the \"%s\" action?",String.join(" ", name.split("_"))));
+        }
+      }
     }
 
     @Override
@@ -441,7 +639,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%imageList", imageList);
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
-        promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
+        String questionString = getCurrentQuestionsString(utterance.getAddressee());
+        promptVars.put("%questionList", questionString);
         promptVars.put("%learnedActions%",learnedActionsString);
         promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
         promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
@@ -449,8 +648,12 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         //promptVars.clear();
         promptVars.put("%utterance", utterance.getWordsAsString());
-        currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
-
+        if (questionString.startsWith("What is the name of the task") || questionString.startsWith("What would you like the action to go on this upcoming tour sequence to be called?")) {
+         //TODO: Quick pre testing-deployment hack - do this through contextual parallel prompting or dialogue recovery instead
+          currentChat.addUserMessage("Reminder, the current question from the system is as follows:\n"+questionString+"\nIf the input does not make sense as any other sort of instruction, it is likely directly a form the desired taskName.\n"+nluUserPrompt.apply(promptVars));
+        } else {
+          currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
+        }
         return currentChat;
     }
 
@@ -619,8 +822,10 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     public void registerForNotifications() {
         try {
             TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
-            registerService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+            TRADEServiceInfo additionNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, additionNotificationHandler, NotificationType.DATABASE_ADDITION);
+            TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseRemoval").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
             registeredForNewActions = true;
             log.info("[registerForNotifications] successfully registered for database additions");
         } catch (TRADEException e) {
@@ -632,7 +837,9 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         try {
             List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
             for (Predicate pred : learnedActionPredicates) {
-                learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
+              learnedActionsString += String.format("%s\n#\n", pred);
+              learnedActionNames.add(pred.getName());
+              //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
             }
             retrievedLearnedActions = true;
         } catch (TRADEException e) {
@@ -645,8 +852,19 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
             log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
             //learnedActions.add(entry);
-            learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            Predicate pred = entry.getSignature(false);
+            learnedActionsString += String.format("%s\n#\n", pred);
+            learnedActionNames.add(pred.getName());
         }
+    }
+
+    @TRADEService
+    public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
+        Predicate pred = entry.getSignature(false);
+        learnedActionsString = learnedActionsString.replace(String.format("%s\n#\n", pred),"");
+        learnedActionNames.remove(pred.getName());
+        //TODO: should ideally remove any cache entries relevant to this action
     }
 
     @Override
@@ -704,6 +922,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportIsVideoSaved":
                 case "sayText":
                 case "say":
+                case "reportBatteryLevel":
                     return true;
                 default:
                     return false;
@@ -890,10 +1109,17 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "i will teach you a new task",
                 "learnNewTask()", 10);
         exposedActionList.add(entry);
+        List<String> endLearningExamples = new ArrayList<>();
+        //Make version of constructor which takes in one translation and multiple examples
+        List<String> endLearningTranslations = new ArrayList<>();
+        endLearningExamples.add("those are the steps of the task");
+        endLearningExamples.add("im done");
+        endLearningTranslations.add("endActionLearning()");
+        endLearningTranslations.add("endActionLearning()");
         entry = new LLMActionEntry("endActionLearning()",
                 "You conclude learning the steps of a new instructable action",
-                "those are the steps of the task",
-                "endActionLearning()", 10);
+                endLearningExamples,
+                endLearningTranslations, 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("describeCurrentLocation()",
                 "You report what location you believe you are currently at",
@@ -915,10 +1141,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //        "what locations are in %examplePath",
         //        "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
         //exposedActionList.add(entry);
+        List<String> questionExamples = new ArrayList<>();
+        List<String> questionTranslations = new ArrayList<>();
+        questionExamples.add("could you repeat that");
+        questionExamples.add("what is the question");
+        questionTranslations.add("repeatLastQuestion()");
+        questionTranslations.add("repeatLastQuestion()");
         entry = new LLMActionEntry("repeatLastQuestion()",
                 "You repeat the last question you asked, which the human still needs to answer",
-                "could you repeat that",
-                "repeatLastQuestion()", 10);
+                questionExamples,
+                questionTranslations, 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("reportTaughtActions()",
                 "You list all of the actions which have been taught to you by a user",
@@ -975,26 +1207,6 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "I want to change the kiosk action",
                 "updateKioskAction()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("playNextVideo()",
-                "You begin playback of the next video in your saved collection, continuing where you left off",
-                "Play video",
-                "playNextVideo()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("playSpecificVideo(?videoName:video)",
-                "You begin playback of the specific video ?videoName",
-                "Show the %exampleVideo video",
-                "playNextVideo(%exampleVideo)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("playNextVideoAtLocation(?location:location)",
-                "You go to ?location and then begin playback of the next video in your saved collection, continuing where you left off",
-                "Play videos at %exampleLocation",
-                "playNextVideoAtLocation(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("playSpecificVideoAtLocation(?videoName:video, ?location:location)",
-                "You go to ?location and then begin playback of the specific video ?videoName",
-                "Go to %exampleLocation and play the %exampleVideo video.",
-                "playSpecificVideoAtLocation(%exampleVideo,%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
         entry = new LLMActionEntry("setVideoVolume(?volume)",
                 "You set the volume of videos played on your screen. Acceptable values are whole numbers between 0 and 100.",
                 "Set the video volume to max",
@@ -1020,29 +1232,36 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "Then wait for a minute",
                 "waitForDuration(60)", 10);
         exposedActionList.add(entry);
-        //TODO: for a lot the video and image actions - allow then() semantics to be targeted and handled generally rather
-        //      than making these variations of the same method (or revisit this specific model and prompt format and
-        //      100% prevent misparamaterized actions from being generated - or have smarter recovery in these cases).
-        //      e.g. then(goToLocation(...),playVideo(...),waitForDuration(...))
-        entry = new LLMActionEntry("displayNamedImage(?imageName:image)",
-                "You display the image ?imageName at your current location until told otherwise",
-                "Display the %exampleImage image",
-                "displayNamedImage(%exampleImage)", 10);
+        //Experimenting with new format for video/image actions
+        List<String> videoInstructions = new ArrayList<>();
+        List<String> videoTranslations = new ArrayList<>();
+        videoInstructions.add("play video");
+        videoTranslations.add("playVideo(default,default)");
+        videoInstructions.add("Show the %exampleVideo video");
+        videoTranslations.add("playVideo(%exampleVideo:video,default)");
+        videoInstructions.add("Play videos at %exampleLocation");
+        videoTranslations.add("playVideo(default,%exampleLocation:location)");
+        videoInstructions.add("Go to %exampleLocation then play the %exampleVideo video");
+        videoTranslations.add("playVideo(%exampleVideo:video,%exampleLocation:location)");
+        entry = new LLMActionEntry("playVideo(?videoName:video,?location:location)",
+                "You begin playback of a video from your saved collection at some location. This action is special and has different meanings based on how it is parameterized. It has two arguments, the video to be played and the location to play it at. The user can instruct this action with any number of these things defined or not defined. If a user does not supply a specific value for any of these arguments, fill it in with the value \"default\". A value of default for the video means that the video played will be the next video in your saved collection, continuing where you left off. For locations, it means that you will play the video at your current location.",
+                videoInstructions,
+                videoTranslations, 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("displayNamedImageAtLocation(?imageName:image,?location:location)",
-                "You go to location ?location then display the image ?imageName until told otherwise",
-                "Display the %exampleImage image at the %exampleLocation location",
-                "displayNamedImageAtLocation(%exampleImage,%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("displayNamedImageForDuration(?imageName:image,?seconds)",
-                "You display the image ?imageName for ?seconds seconds",
-                "Display the %exampleImage image for a minute",
-                "displayNamedImageForDuration(%exampleImage,60)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("displayNamedImageForDurationAtLocation(?imageName:image,?location:location,?seconds)",
-                "You go to location ?location then display the image ?imageName for ?seconds seconds",
-                "Display the %exampleImage image at the %exampleLocation location for 45 seconds",
-                "displayNamedImageForDurationAtLocation(%exampleImage,%exampleLocation:location,45)", 10);
+        List<String> imageInstructions = new ArrayList<>();
+        List<String> imageTranslations = new ArrayList<>();
+        imageInstructions.add("Display the %exampleImage image");
+        imageTranslations.add("displayImage(%exampleImage:image,default,default)");
+        imageInstructions.add("Display the %exampleImage image at the %exampleLocation location");
+        imageTranslations.add("displayImage(%exampleImage:image,%exampleLocation:location,default)");
+        imageInstructions.add("Display the %exampleImage image for a minute");
+        imageTranslations.add("displayImage(%exampleImage:image,default,60)");
+        imageInstructions.add("Display the %exampleImage image at the %exampleLocation location for 45 seconds");
+        imageTranslations.add("displayImage(%exampleImage:image,%exampleLocation:location,45)");
+        entry = new LLMActionEntry("displayImage(?imageName:image,?location:location,?seconds)",
+                "You display an image from your saved collection at some location for a certain duration. This action is also special and has different meanings based on how it is parameterized. It has three arguments, the image to be displayed, the location to display it at, and the duration to display it for. When the user instructs this action, the image must explicitly be defined, but the location and duration may be left undefined. If a user does not supply a specific value for these two arguments, fill it in with the value \"default\". A value of default for the location means that you will display the image at your current location. A default value for the duration means that the image will be displayed indefinitely.",
+                imageInstructions,
+                imageTranslations, 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("listSavedImages()",
                 "You list out the collection of images you currently have saved",
@@ -1069,5 +1288,20 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "disable admin mode",
                 "disableAdminMode()", 10);
         exposedActionList.add(entry);
+      //entry = new LLMActionEntry("toggleDisplay()",
+      //        "Change the output on your display between the two possible inputs",
+      //        "toggle display",
+      //        "toggleDisplay()", 10);
+      //exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTelepresence()",
+              "Change the output on your display to the telepresence stream",
+              "start telepresence",
+              "switchDisplayToTelepresence()", 10);
+      exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTRACS()",
+              "Change the output on your display to what is shown by TRACS, the default setting",
+              "return to TRACS",
+              "switchDisplayToTRACS()", 10);
+      exposedActionList.add(entry);
     }
 }

@@ -454,5 +454,7 @@ public class KioskGoalManager extends DiarcComponent {
   @Override
   public void shutdownComponent() {
     writeKioskSettingsToFile();
+    kioskModeEnabled = false;
+    cancelKioskTimer();
   }
 }

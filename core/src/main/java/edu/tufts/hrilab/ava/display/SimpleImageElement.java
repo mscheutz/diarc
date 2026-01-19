@@ -12,18 +12,25 @@ import java.util.concurrent.TimeUnit;
  */
 public class SimpleImageElement {
     private Image image = null;
+    private boolean scaleToFit = false;
+    private Color backgroundColor = Color.BLACK;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> future;
     private final Semaphore setImageBlockingLock = new Semaphore(0);
 
-    /**
-     * Sets an image to be displayed on the canvas.
-     *
-     * @param image The image to be displayed.
-     */
     public void setImage(Image image, long timeout) {
+        setImage(image, timeout, false, Color.BLACK);
+    }
+
+    public void setImage(Image image, long timeout, boolean scaleToFit) {
+        setImage(image, timeout, scaleToFit, Color.BLACK);
+    }
+
+    public void setImage(Image image, long timeout, boolean scaleToFit, Color backgroundColor) {
         this.image = image;
+        this.scaleToFit = scaleToFit;
+        this.backgroundColor = backgroundColor;
 
         //should we interrupt setImageBlocking here? Or have this block until it's complete?
         cancelClearImageFuture();
@@ -32,8 +39,19 @@ public class SimpleImageElement {
             future = scheduler.schedule(this::clearImage, timeout, TimeUnit.SECONDS);
         }
     }
+
     public void setImageBlocking(Image image, long timeout) {
+        setImageBlocking(image, timeout, false, Color.BLACK);
+    }
+
+    public void setImageBlocking(Image image, long timeout, boolean scaleToFit) {
+        setImageBlocking(image, timeout, scaleToFit, Color.BLACK);
+    }
+
+    public void setImageBlocking(Image image, long timeout, boolean scaleToFit, Color backgroundColor) {
         this.image = image;
+        this.scaleToFit = scaleToFit;
+        this.backgroundColor = backgroundColor;
 
         cancelClearImageFuture();
 
@@ -64,29 +82,41 @@ public class SimpleImageElement {
         image = null;
     }
 
-    /**
-     * Paints the current image onto the provided Graphics 2D context/
-     *
-     * @param g The Graphics2D context to paint on.
-     */
     public void paint(Graphics2D g) {
         Rectangle bounds = g.getClipBounds();
-        int w = bounds.width;
-        int h = bounds.height;
+        int canvasWidth = bounds.width;
+        int canvasHeight = bounds.height;
 
         if (image != null) {
-            int offsetX = 0;
-            int offsetY = 0;
             int imageWidth = image.getWidth(null);
             int imageHeight = image.getHeight(null);
-            if (imageWidth >= w || imageHeight >= h) {
-                imageWidth = w;
-                imageHeight = h;
+            int drawWidth;
+            int drawHeight;
+
+            if (scaleToFit) {
+                double scale = Math.min((double) canvasWidth / imageWidth, (double) canvasHeight / imageHeight);
+                drawWidth = (int) (imageWidth * scale);
+                drawHeight = (int) (imageHeight * scale);
             } else {
-                offsetX = (w - imageWidth) / 2;
-                offsetY = (h - imageHeight) / 2;
+                drawWidth = imageWidth;
+                drawHeight = imageHeight;
             }
-            g.drawImage(image, offsetX, offsetY, imageWidth, imageHeight , null);
+
+            int offsetX = (canvasWidth - drawWidth) / 2;
+            int offsetY = (canvasHeight - drawHeight) / 2;
+
+            g.setColor(backgroundColor);
+            if (offsetY > 0) {
+                g.fillRect(0, 0, canvasWidth, offsetY);
+                g.fillRect(0, offsetY + drawHeight, canvasWidth, canvasHeight - offsetY - drawHeight);
+            }
+            if (offsetX > 0) {
+                g.fillRect(0, offsetY, offsetX, drawHeight);
+                g.fillRect(offsetX + drawWidth, offsetY, canvasWidth - offsetX - drawWidth, drawHeight);
+            }
+            g.fillRect(offsetX, offsetY, drawWidth, drawHeight);
+
+            g.drawImage(image, offsetX, offsetY, drawWidth, drawHeight, null);
         }
     }
 }

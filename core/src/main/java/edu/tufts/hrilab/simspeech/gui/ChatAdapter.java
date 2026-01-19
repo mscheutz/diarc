@@ -11,6 +11,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.GuiAdapter;
 import edu.tufts.hrilab.slug.common.Utterance;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -253,13 +254,6 @@ public class ChatAdapter extends GuiAdapter {
         log.warn("[handleMessage] Exception displaying text", e);
       }
     }).start();
-
-    try {
-      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
-      service.call(void.class,"config/edu/tufts/hrilab/ava/ding.wav");
-    } catch (TRADEException e) {
-      log.warn("[handleMessage] exception playing audio clip on Ava", e);
-    }
   }
 
   /**

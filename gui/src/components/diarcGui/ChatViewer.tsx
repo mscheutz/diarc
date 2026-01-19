@@ -206,31 +206,18 @@ const ChatViewer: React.FC<Props> = ({
         </ConversationList>
     );
 
-    const [username, setUsername] = useState<string>("webapp");
-
-    const askForAgents = () => {
-        sendMessage(JSON.stringify({
-            "path": path,
-            "method": "sendAgents",
-        }))
-    };
+    const [username, setUsername] = useState<string>("evan");
 
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
         if (!data.path || data.path !== path) return;
 
-        if ((chats.length === 0 || !chats[0].robotName) && !data.names) {
-            return;
-        }
-
         let newChats: Chat[];
-        if (!chats[0].robotName) {
+        if (!chats[0].robotName)
             newChats = chats.slice(1);
-        }
-        else {
+        else
             newChats = chats.slice();
-        }
 
         // Update list of robot names; idempotent
         if (data.names) {
@@ -264,7 +251,7 @@ const ChatViewer: React.FC<Props> = ({
                         direction: "incoming",
                         position: "single"
                     }
-                ].slice(-100);
+                ];
                 break;
             } else if (chat.robotName === data.recipient) {
                 chat.messageList = [
@@ -275,7 +262,7 @@ const ChatViewer: React.FC<Props> = ({
                         direction: "outgoing",
                         position: "single"
                     }
-                ].slice(-100)
+                ]
                 break;
             }
         }
@@ -313,7 +300,6 @@ const ChatViewer: React.FC<Props> = ({
     };
 
     let chatContainer = (
-        chats.length === 0 ? <div/> :
         <ChatContainer className='w-3/4' style={chatContainerStyle}>
             {createConversationHeader(chats[currentChat])}
 
@@ -342,7 +328,7 @@ const ChatViewer: React.FC<Props> = ({
         <div className="flex flex-col w-full min-h-0 basis-0 grow border
                         border-1 border-[#d1dbe3] justify-between shadow-md
                         rounded-md p-3 gap-3 md:p-5 md:gap-5">
-            {/*<NameInput username={username} setUsername={setUsername} />*/}
+            <NameInput username={username} setUsername={setUsername} />
 
             <MainContainer className='rounded-md shadow-md' responsive>
                 <Sidebar position="left" style={sidebarStyle}>

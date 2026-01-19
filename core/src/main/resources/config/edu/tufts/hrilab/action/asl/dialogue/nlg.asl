@@ -16,6 +16,7 @@ import java.util.Map;
   */
 () = communicateUtterance(Utterance ?utterance) {
     String !text;
+    Symbol !addressee;
 
     // if utterance does not have words, call NLG actions to turn
     // semantics into words
@@ -32,9 +33,7 @@ import java.util.Map;
     op:log("debug", "done updating dialogue history");
 
     // get text from utterance, and say it
-    !text = op:invokeMethod(?utterance, "getWordsAsString");
-    op:log("debug", "calling sayText: !text");
-    act:sayText(!text);
+    act:sayText(?utterance);
 }
 
 /**
@@ -43,8 +42,19 @@ import java.util.Map;
 () = generateResponseFromString(String ?words) {
     op:log("debug", "[generateResponse] words: ?words");
 
-    Symbol !listener = person; // TODO: how to set this in general?
+    Symbol !listener;
+    !listener = this:getOriginalSubmitter();
     Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
+    UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", ?words);
+    act:communicateUtterance(!utterance);
+}
+
+() = generateResponseFromString(Symbol ?addressee, String ?words) {
+    op:log("debug", "[generateResponse] addressee: ?addressee words: ?words");
+
+    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
     op:invokeMethod(!utterance, "setWords", ?words);
@@ -57,7 +67,8 @@ import java.util.Map;
 () = generateResponse(Predicate ?semantics) {
     op:log("debug", "[generateResponse] semantics: ?semantics");
 
-    Symbol !addressee = person; // TODO: how to set this in general?
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
     Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
@@ -125,6 +136,12 @@ import java.util.Map;
     ?answerBindings = act:askQuestion(?addressee, ?questionSemantics, !responseForms, ?attempts, ?duration);
 }
 
+(Map ?answerBindings) = askQuestionFromString(String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    ?answerBindings = act:askQuestionFromString(!addressee, ?words, ?responseForm, ?attempts, ?duration);
+}
+
 /**
  * Convenience method for communicating an utterance and then waiting for a response.
  * The question to be asked is specified in first-order-logic form.
@@ -145,6 +162,12 @@ import java.util.Map;
 
   // ask question and wait for response
   ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
+}
+
+(Map ?answerBindings) = askQuestionFromString(String ?words, List ?responseForms, long ?attempts=1, long ?duration=-1) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    ?answerBindings = act:askQuestionFromString(!addressee, ?words, ?responseForms, ?attempts, ?duration);
 }
 
 (Map ?answerBindings) = askQuestionFromString(Symbol ?addressee, String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
@@ -191,9 +214,10 @@ import java.util.Map;
  **/
 (Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration) {
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
-  ?answerBindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
+  ?answerBindings = op:setNull();
   Long !count = 0;
   Symbol !speaker;
+  Symbol !addressee;
   Integer !tracker = 0;
   String !questionString;
 
@@ -208,7 +232,8 @@ import java.util.Map;
   }
 
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
-  while (op:invokeMethod(?answerBindings,"isEmpty") && op:lt(!count, ?attempts)) {
+  !addressee = op:invokeMethod(?utterance, "getAddressee");
+  while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
     // communicate utterance (which also updates dialogue history)
@@ -216,8 +241,12 @@ import java.util.Map;
     noInterrupt {
       async {
         act:communicateUtterance(?utterance);
-        //TODO: Specific to domains which contain a wakeword (currently Ava domain) Think about how to allow this behavior to be generally configurable
-        //act:triggerWW();
+        //(Currently Ava specific implementation)
+        //TODO: How to generally implement this? Specific only to interaction modalities which contain a wakeword
+            // Q: How/where to configure what to do based on a specific addressee in a specific domain configuration?
+        if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor")) {
+            act:triggerWW();
+        }
       }
       !tracker = op:newObject("java.lang.Integer", 1);
     }

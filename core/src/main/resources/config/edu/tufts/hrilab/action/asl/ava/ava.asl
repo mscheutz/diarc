@@ -23,10 +23,11 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     op:log(debug, "[escortToLocation] escorting to location named !locName");
 
-    async {
-        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-    }
-    act:waitForReadyAck();
+    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
+//    async {
+//        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+//    }
+//    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
@@ -37,10 +38,11 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
-    async {
-        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-    }
-    act:waitForReadyAck();
+    //TODO: make this toggleable through a setting/language
+//    async {
+        act:say("Hello ?escortee. Please come with me, I will show you to !locName."); // Please say Ready when you are ready to go");
+//    }
+//    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
@@ -325,20 +327,42 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-() = learnNewTaskOnResume(Integer ?tracker, Predicate ?taskName) {
-    if (op:equals(?tracker,1)) {
+() = learnNewTaskOnResume(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+    //if (op:gt(?tracker,1)) {
+    //    tsc:resumeActionLearning(?actor,?actionSignature);
+    //}
+    if (op:equals(?tracker,3)) {
         act:learningPrompt(?taskName);
     }
 }
 
+//() = learnNewTaskOnSuspend(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+//    if (op:gt(?tracker,1)) {
+//        tsc:pauseActionLearning(?actor,?actionSignature);
+//    }
+//}
+//
+//() = learnNewTaskOnCancel(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+//    if (op:gt(?tracker,1)) {
+//        tsc:cancelActionLearning(?actor,?actionSignature);
+//    }
+//}
+
 () = learnNewTask() {
-    onInterrupt :{
-        resume: act:learnNewTaskOnResume(!tracker,!taskName);
+    onInterrupt : {
+        resume: act:learnNewTaskOnResume(!tracker, !taskName, !actionSignature);
+        //suspend: act:learnNewTaskOnSuspend(!tracker, !taskName, !actionSignature);
+        //cancel: act:learnNewTaskOnCancel(!tracker, !taskName, !actionSignature);
     }
     Predicate !actionSignature;
     Predicate !pred;
     String !taskName;
     Integer !tracker = 0;
+    java.util.List !responseFormList;
+    Predicate !responseForm;
+    Symbol !response;
+    Map !bindings;
+    Variable !x = "X";
 
     !taskName = act:askForTaskName();
 
@@ -351,13 +375,31 @@ import edu.tufts.hrilab.action.goal.Goal;
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
     async {
-        act:waitForActionLearningStart(!actionSignature);
-
-        op:log(info, !taskName);
-        act:learningPrompt(!taskName);
+        act:learnAction(!actionSignature);
     }
-    act:learnAction(!actionSignature);
+    act:waitForActionLearningStart(!actionSignature);
     !tracker = op:++(!tracker);
+
+    op:log(info, !taskName);
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("taskPredicate(X)");
+    op:add(!responseFormList,!responseForm);
+    act:learningPrompt(!taskName);
+    !tracker = op:++(!tracker);
+
+    !bindings = act:waitForResponse("how do you perform the task", !responseFormList, ?actor);
+    while (~op:invokeMethod(!bindings,"isEmpty")) {
+        !response = op:get(!bindings,!x);
+        if (op:equalsValue(!response,"none")) {
+            !bindings = op:newObject("java.util.HashMap");
+        } else {
+            act:submitGoal(!response);
+            act:generateResponseFromString("Okay, that step was added to the task being learned");
+            !bindings = act:waitForResponse("how do you perform the task", !responseFormList, ?actor);
+        }
+    }
+
+    act:endActionLearning(!actionSignature);
     !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knowHowTo(?actor,perform(!taskName))");
     act:generateResponse(!pred);
 }
@@ -389,7 +431,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
     op:add(!responseFormList,!responseForm);
 
-    (!bindings) = act:askQuestionFromString(user,"What is the name of the task?", !responseFormList);
+    (!bindings) = act:askQuestionFromString("What is the name of the task?", !responseFormList);
    if (op:invokeMethod(!bindings, "isEmpty")) {
         ?name = op:setNull();
     } else {
@@ -398,8 +440,12 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+() = skippendingsay(String ?literal) {
+    act:say(?literal);
+}
+
 () = say(String ?literal) {
-    Symbol !listener = person; // TODO: how to set this in general?
+    Symbol !listener = this:getOriginalSubmitter();
     edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
     edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
@@ -415,26 +461,17 @@ import edu.tufts.hrilab.action.goal.Goal;
     if (op:gt(?tracker,0)) {
         tsc:cancelActionLearning(?actor,?learnedActionPred);
     }
-    if (op:equals(?tracker,2)) {
-        tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-    }
 }
 
 () = learnTourActionOnSuspend(Integer ?tracker, Predicate ?learnedActionPred) {
     if (op:gt(?tracker,0)) {
         tsc:pauseActionLearning(?actor,?learnedActionPred);
     }
-    if (op:equals(?tracker,2)) {
-        tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-    }
 }
 
 () = learnTourActionOnResume(Integer ?tracker, Predicate ?learnedActionPred) {
     if (op:gt(?tracker,0)) {
         tsc:resumeActionLearning(?actor,?learnedActionPred);
-    }
-    if (op:equals(?tracker,2)) {
-        tsc:allowInstructionsDuringQAForAgent(?actor);
     }
 }
 
@@ -455,25 +492,27 @@ import edu.tufts.hrilab.action.goal.Goal;
     Predicate !actionPred;
     Symbol !location;
     Integer !tracker = 0;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     //////////// Question Asking for tour name ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList);
+    !bindings = act:askQuestionFromString("What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !responseBinding = op:get(!bindings, !x);
     !tourName = op:getName(!responseBinding);
-    //TODO: what had caused this to be necessary? Was it ASL parser not being comfortable with action names with spaces?
-    !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "");
+    //TODO: asl parser cannot handle action names with spaces, extend parser or do something like this?
+    !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "_");
 
     //////////// Question Asking for tour's initial location ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("location(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(user,"Where would you like the tour to begin?", !responseFormList);
+    !bindings = act:askQuestionFromString("Where would you like the tour to begin?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -496,13 +535,14 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:waitForActionLearningStart(!actionPred);
     !stepPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToLocation(?actor,!responseBinding)");
     act:submitGoal(!stepPredicate);
-    act:pauseActionLearning(!actionPred);
 
     //////////// Question Asking for whether the user would like to do anything at the initial location ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("val(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(user,"Do you want me to perform an action at the starting location?", !responseFormList);
+    !responseForm = op:createPredicate("taskPredicate(X)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString("Do you want me to perform an action at the starting location?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         act:cancelActionLearning(!actionPred);
         exit(FAIL,not(wasAnswered(myQuestion)));
@@ -510,36 +550,21 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseBinding = op:get(!bindings, !x);
 
     //////////// Question Asking for action at the initial location ////////////
-    if (op:equalsValue(!responseBinding,"yes")) {
-        !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-        !responseForm = op:createPredicate("taskPredicate(X)");
-        op:add(!responseFormList,!responseForm);
-        async {
-            act:generateResponseFromString("What would you like me to do there?");
-            act:triggerWW();
+    if (~op:equalsValue(!responseBinding,"no")) {
+        if (op:equalsValue(!responseBinding,"yes")) {
+            !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+            !responseForm = op:createPredicate("taskPredicate(X)");
+            op:add(!responseFormList,!responseForm);
+            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList);
         }
-        act:resumeActionLearning(!actionPred);
-        noInterrupt {
-            tsc:allowInstructionsDuringQAForAgent(?actor);
-            !tracker = op:newObject("java.lang.Integer", 2);
-        }
-        !bindings = act:waitForLearningGoalSubmissionOrQuestionAnswer(?actor, "What would you like me to do there?", !responseFormList, !actionPred);
-        if (op:isNull(!bindings)) {
+        if (op:invokeMethod(!bindings,"isEmpty")) {
             act:cancelActionLearning(!actionPred);
-            tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-            exit(FAIL,occurred(unknownError));
-        } elseif (~op:invokeMethod(!bindings,"isEmpty")) {
+            exit(FAIL,not(wasAnswered(myQuestion)));
+        } else {
             //QA answered - submit answered action predicate to add to learning state
             !stepPredicate = op:get(!bindings,!x);
             act:submitGoal(!stepPredicate);
         }
-        //else goal submitted as direct action instruction (Question asking is cleaned up by java action in this case)
-        noInterrupt {
-            tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-            !tracker = op:newObject("java.lang.Integer", 1);
-        }
-        // Pause action learning when doing next location QA
-        act:pauseActionLearning(!actionPred);
     }
 
 
@@ -549,7 +574,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
         !responseForm = op:createPredicate("location(X)");
         op:add(!responseFormList,!responseForm);
-        !bindings = act:askQuestionFromString(user,"What is the next location along the tour path?", !responseFormList);
+        !bindings = act:askQuestionFromString("What is the next location along the tour path?", !responseFormList);
         if (op:invokeMethod(!bindings,"isEmpty")) {
             act:cancelActionLearning(!actionPred);
             exit(FAIL,not(wasAnswered(myQuestion)));
@@ -558,9 +583,6 @@ import edu.tufts.hrilab.action.goal.Goal;
 
         //////////// 2. QA for action to perform at that location ////////////
         if (~op:equalsValue(!responseBinding,"none")) {
-            // Resume action learning
-            act:resumeActionLearning(!actionPred);
-
             // Add go to location step
             !stepPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToLocation(?actor,!responseBinding)");
             act:submitGoal(!stepPredicate);
@@ -569,38 +591,19 @@ import edu.tufts.hrilab.action.goal.Goal;
             !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
             !responseForm = op:createPredicate("taskPredicate(X)");
             op:add(!responseFormList,!responseForm);
-            async {
-                act:generateResponseFromString("What would you like me to do there?");
-                act:triggerWW();
-            }
-            noInterrupt {
-                !tracker = op:newObject("java.lang.Integer", 2);
-                tsc:allowInstructionsDuringQAForAgent(?actor);
-            }
-            !bindings = act:waitForLearningGoalSubmissionOrQuestionAnswer(?actor, "What would you like me to do there?", !responseFormList, !actionPred);
-            if (op:isNull(!bindings)) {
+            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList);
+            if (op:invokeMethod(!bindings,"isEmpty")) {
                 act:cancelActionLearning(!actionPred);
-                tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-                exit(FAIL,occurred(unknownError));
-            } elseif (~op:invokeMethod(!bindings,"isEmpty")) {
+                exit(FAIL,not(wasAnswered(myQuestion)));
+            } else {
                 //QA answered - submit answered action predicate to add to learning state
                 !stepPredicate = op:get(!bindings,!x);
                 act:submitGoal(!stepPredicate);
             }
-            //else goal submitted as direct action instruction (Question asking is cleaned up by java action in this case)
-            noInterrupt {
-                !tracker = op:newObject("java.lang.Integer", 1);
-                tsc:removeAllowInstructionsDuringQAForAgent(?actor);
-            }
-
-            // Pause action learning
-            act:pauseActionLearning(!actionPred);
         }
     }
 
-    //Broke out of teaching loop - should not actively be in action learning and should be done teaching
     //// Commit learning state to learned action ////
-    act:resumeActionLearning(!actionPred);
     act:endActionLearning(!actionPred);
     act:generateResponse("and(learnedTourSequence(!tourName),canAskToPerformBySaying(pleasePerform,!tourName))");
     //act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
@@ -614,7 +617,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Symbol !addl;
     Boolean !success;
 
-    !bindings = act:askQuestionFromString(?actor, "How long should the inactivity timeout be?", relativeTime(X,Y));
+    !bindings = act:askQuestionFromString("How long should the inactivity timeout be?", relativeTime(X,Y));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -634,7 +637,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Variable !x = "X";
     Predicate !goalPredicate;
 
-    !bindings = act:askQuestionFromString(?actor, "What should the new kiosk action be?", taskPredicate(X));
+    !bindings = act:askQuestionFromString("What should the new kiosk action be?", taskPredicate(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -651,5 +654,59 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString("I could not find a task in the queue at the supplied index");
     } else {
         act:generateResponseFromString("I have removed the task from the queue.");
+    }
+}
+
+//() = toggleDisplay() {
+//    Predicate !ww_and_asr_goal;
+//    Boolean !haveDisplay;
+//
+//    !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
+//    !haveDisplay = tsc:getHaveDisplay();
+//    if (op:equalsValue(!haveDisplay,true)) {
+//        try {
+//            op:log("debug","[toggleDisplay] suspending ww and asr goal");
+//            act:suspendGoalBlocking(!ww_and_asr_goal);
+//        } catch(FAIL) {
+//            op:log("warn","[toggleDisplay] could not suspend listenForWWandASR");
+//        }
+//    } else {
+//        try {
+//            op:log("debug","[toggleDisplay] resuming ww and asr goal");
+//            act:resumeGoal(!ww_and_asr_goal);
+//        } catch(FAIL) {
+//            op:log("warn","[toggleDisplay] could not resume listenForWWandASR");
+//        }
+//    }
+//    op:log("debug","[toggleDisplay] calling tsc");
+//    tsc:toggleDisplay();
+//}
+
+() = switchDisplayToTelepresence() {
+    //TODO: is it technically unsafe if this action gets canceled/suspended before its first step that !ww_and_asr_goal is null?
+    onInterrupt : {
+        resume: act:suspendGoalBlocking(!ww_and_asr_goal);
+        cancel: act:resumeGoal(!ww_and_asr_goal);
+        suspend: act:resumeGoal(!ww_and_asr_goal);
+    }
+    Predicate !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
+
+    try {
+        op:log("debug","[switchDisplayToTelepresence] suspending ww and asr goal");
+        act:suspendGoalBlocking(!ww_and_asr_goal);
+    } catch(FAIL) {
+        op:log("warn","[switchDisplayToTelepresence] could not suspend listenForWWandASR");
+    }
+
+    op:log("debug","[switchDisplayToTelepresence] calling tsc");
+    act:switchDisplayToTelepresencePrimitive();
+
+    noInterrupt {
+        try {
+            op:log("debug","[switchDisplayToTelepresence] resuming ww and asr goal");
+            act:resumeGoal(!ww_and_asr_goal);
+        } catch(FAIL) {
+            op:log("warn","[switchDisplayToTelepresence] could not resume listenForWWandASR");
+        }
     }
 }

@@ -10,6 +10,7 @@ vision/build/
 vision/src/swig/
 .idea/
 .vscode/
+.settings/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
@@ -25,3 +26,9 @@ core/bin/
 diarcRos/bin/
 vision/bin/
 /node_modules/
+logs
+*.workspace
+*code-workspace
+*.log
+*.lock
+*.workspace

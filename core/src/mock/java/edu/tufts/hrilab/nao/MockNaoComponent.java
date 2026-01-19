@@ -4,6 +4,7 @@
 package edu.tufts.hrilab.nao;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -354,6 +355,17 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   // ********************************************************************
   // *** SpeechProductionComponent interface
   // ********************************************************************
+
+  @Override
+  public boolean sayText(Utterance utterance) {
+    return sayText(utterance, true);
+  }
+
+  @Override
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return sayText(utterance, wait);
+  }
+
   @Override
   public boolean sayText(String text) {
     log.info("sayText: ({}) {}", getMyGroups(), text);

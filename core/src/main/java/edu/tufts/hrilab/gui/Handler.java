@@ -19,10 +19,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A WebSocket handler which instantiates <code>GuiAdapter</code>s when their
@@ -46,9 +44,9 @@ public class Handler extends TextWebSocketHandler {
   // Fields
   //==========================================================================
   /**
-   * The current session.
+   * The current sessions.
    */
-  private ArrayList<WebSocketSession> sessions;
+  private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
   /**
    * Maps adapter paths to their references.
@@ -68,7 +66,6 @@ public class Handler extends TextWebSocketHandler {
    * Constructor. Private so as to force use of the factory method.
    */
   private Handler() {
-    sessions = new ArrayList<>();
     adapterMap = new HashMap<>();
   }
 
@@ -144,17 +141,27 @@ public class Handler extends TextWebSocketHandler {
     sendMessage(message, sessions);
   }
 
-  private synchronized void sendMessage(String message, ArrayList<WebSocketSession> sessions) throws IOException {
+  private synchronized void sendMessage(String message, Set<WebSocketSession> sessions) throws IOException {
     if (sessions.isEmpty()) return;
-    for (WebSocketSession session : sessions) {
-      session.sendMessage(new TextMessage(message));
+    Iterator<WebSocketSession> iterator = sessions.iterator();
+    while (iterator.hasNext()) {
+      WebSocketSession session = iterator.next();
+      if (session == null || !session.isOpen()) {
+        iterator.remove();
+      } else {
+        try {
+          session.sendMessage(new TextMessage(message));
+        } catch (IOException e) {
+          iterator.remove();
+        }
+      }
     }
   }
 
   /**
    * Send the client an update on which adapters are available.
    */
-  private void sendAdapterUpdate(ArrayList<WebSocketSession> sessions) {
+  private void sendAdapterUpdate(Set<WebSocketSession> sessions) {
     JsonArray paths = new JsonArray();
     synchronized (adapterLock) {
       for (String path : adapterMap.keySet()) {
@@ -199,10 +206,8 @@ public class Handler extends TextWebSocketHandler {
   public void afterConnectionEstablished(@Nonnull WebSocketSession session)
           throws Exception {
     super.afterConnectionEstablished(session);
-    if (!this.sessions.contains(session)) {
-      this.sessions.add(session);
-    }
-    ArrayList<WebSocketSession> sessions = new ArrayList<>();
+    this.sessions.add(session);
+    Set<WebSocketSession> sessions = new HashSet<>();
     sessions.add(session);
     sendAdapterUpdate(sessions);
   }

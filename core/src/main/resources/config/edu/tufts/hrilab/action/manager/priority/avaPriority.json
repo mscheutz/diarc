@@ -3,6 +3,10 @@
     "priority": 1,
     "priorityTier": "URGENT"
   },
+  "switchDisplayToTelepresence": {
+    "priority": 1,
+    "priorityTier": "HIGH"
+  },
   "scheduleGoal": {
     "priority": 1,
     "priorityTier": "NORMAL"
@@ -16,6 +20,10 @@
     "priorityTier": "SKIPPENDING"
   },
   "listenForWWandASR": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptListenForWWandASR": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -156,6 +164,30 @@
     "priorityTier": "SKIPPENDING"
   },
   "disableAdminMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "switchDisplayToTRACS": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setMaryTTSVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopIdleImageCycle": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "startIdleImageCycle": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "skippendingsay": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "playAudioFile": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

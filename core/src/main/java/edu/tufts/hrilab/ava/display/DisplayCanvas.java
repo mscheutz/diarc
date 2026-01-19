@@ -49,26 +49,33 @@ public class DisplayCanvas extends Canvas {
     this.dialogueManager = dialogueManager;
   }
 
-  /**
-   * Sets an image to the background of the display.
-   *
-   * @param img Image object to display in background
-   */
   public void setImage(Image img) {
     setImage(img, -1);
   }
 
-  /**
-   * Sets an image to the background of the display.
-   *
-   * @param img Image object to display in background
-   */
   public void setImage(Image img, long timeout) {
-    simpleImageElement.setImage(img, timeout);
+    setImage(img, timeout, false, bg);
+  }
+
+  public void setImage(Image img, long timeout, boolean scaleToFit) {
+    setImage(img, timeout, scaleToFit, bg);
+  }
+
+  public void setImage(Image img, long timeout, boolean scaleToFit, Color backgroundColor) {
+    simpleImageElement.setImage(img, timeout, scaleToFit, backgroundColor);
     repaint();
   }
+
   public void setImageBlocking(Image img, long timeout) {
-    simpleImageElement.setImageBlocking(img, timeout);
+    setImageBlocking(img, timeout, false, bg);
+  }
+
+  public void setImageBlocking(Image img, long timeout, boolean scaleToFit) {
+    setImageBlocking(img, timeout, scaleToFit, bg);
+  }
+
+  public void setImageBlocking(Image img, long timeout, boolean scaleToFit, Color backgroundColor) {
+    simpleImageElement.setImageBlocking(img, timeout, scaleToFit, backgroundColor);
     repaint();
   }
   public void cancelSetImage() {
@@ -127,6 +134,10 @@ public class DisplayCanvas extends Canvas {
     repaint();
   }
 
+  public void setIdleNoRepaint(boolean idle) {
+    isIdle = idle;
+  }
+
   /**
    * Renders the Canvas with the current state of the DisplayCanvas class.
    *
@@ -140,10 +151,8 @@ public class DisplayCanvas extends Canvas {
     g2d.setColor(bg);
 
     if (!isIdle) {
+      simpleImageElement.paint(g2d);
       List<DialogueMessage> messages = dialogueManager.getMessages();
-      if (messages.isEmpty()) {
-        simpleImageElement.paint(g2d);
-      }
       Rectangle baseTestFootPrint = simpleTextElement.paint(g2d, screenPad);
       if (baseTestFootPrint.height == 0) {
         simpleTextElement.paintDialogue(g2d, messages, getHeight() - screenPad, screenPad, !dialogueManager.isUseChat());

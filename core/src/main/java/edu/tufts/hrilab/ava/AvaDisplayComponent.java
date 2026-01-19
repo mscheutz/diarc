@@ -20,8 +20,9 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-//import uk.co.caprica.vlcj.player.base.MediaPlayer;
-//import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -31,10 +32,13 @@ import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -57,7 +61,8 @@ public class AvaDisplayComponent extends DiarcComponent {
   private long idleTimer = -1;
   private boolean idle = false;
 
-  //private EmbeddedMediaPlayerComponent mediaPlayerComponent;
+  private MediaPlayerFactory mediaPlayerFactory;
+  private EmbeddedMediaPlayerComponent mediaPlayerComponent;
 
   private final ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
   private ScheduledFuture currentImageCycleFuture = null;
@@ -73,36 +78,44 @@ public class AvaDisplayComponent extends DiarcComponent {
   private String idleImageDir = "";
   private String userImageDir = "";
   private String presentationSlidesDir = "";
+  private String videoAudioDevice = "";
   private List<String> videos = new ArrayList<>();
   private int currentVideo = -1;
   private int videoVolume;
-  private boolean videoPlaying = false;
-  private boolean userImageDisplayed = false;
+  private volatile boolean videoPlaying = false;
+  private volatile boolean userImageDisplayed = false;
   private List<String> idleImages = new ArrayList<>();
   private List<String> userImages = new ArrayList<>();
   private int currentImage = -1;
   private int trLogoIndex = 0;
+  private volatile boolean idleImageCycleRunning = true;
+  private String currentlyDisplayedImagePath = "";
 
   @Override
   protected void init() {
-    if (!videoDir.equals("")) {
-      videos = getMediaFromDir(videoDir, ".mp4");
-      idleImages = getMediaFromDir(idleImageDir, ".png");
-      idleImages = idleImages.stream().sorted().toList();
-      userImages = getMediaFromDir(userImageDir, ".png");
-      userImages = userImages.stream().sorted().toList();
-      currentVideo = 0;
-      currentImage = 0;
-      int index = 0;
-      for (String img : idleImages) {
-        if (img.contains("(1)")) {
-          trLogoIndex = index;
-          currentImage = trLogoIndex;
-        }
-        index++;
+    refreshMedia();
+    currentVideo = 0;
+    currentImage = 0;
+    int index = 0;
+    for (String img : idleImages) {
+      if (img.contains("(1)")) {
+        trLogoIndex = index;
+        currentImage = trLogoIndex;
       }
+      index++;
     }
     initializeFrame();
+  }
+
+  @TRADEService
+  public void refreshMedia() {
+    if (!videoDir.equals("")) {
+      videos = getMediaFromDir(videoDir, MediaTypes.VIDEO_EXTENSIONS);
+      idleImages = getMediaFromDir(idleImageDir, MediaTypes.IMAGE_EXTENSIONS);
+      idleImages = idleImages.stream().sorted().toList();
+      userImages = getMediaFromDir(userImageDir, MediaTypes.IMAGE_EXTENSIONS);
+      userImages = userImages.stream().sorted().toList();
+    }
   }
 
   private String getMediaPath(String videoDir) {
@@ -111,10 +124,13 @@ public class AvaDisplayComponent extends DiarcComponent {
     return Paths.get(diarcDirPath, videoDir).toString();
   }
 
-  private List<String> getMediaFromDir(String videoDir, String fileType) {
-    String videoDirPath = getMediaPath(videoDir);
-    File dir = new File(videoDirPath);
-    File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(fileType));
+  private List<String> getMediaFromDir(String mediaDir, Set<String> extensions) {
+    String mediaDirPath = getMediaPath(mediaDir);
+    File dir = new File(mediaDirPath);
+    File[] files = dir.listFiles((dir1, name) -> {
+      String ext = MediaTypes.getExtension(name);
+      return extensions.contains(ext);
+    });
     List<String> toReturn = List.of();
     if (files != null) {
       List<File> fileList = List.of(files);
@@ -130,6 +146,26 @@ public class AvaDisplayComponent extends DiarcComponent {
       TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
     } catch (TRADEException e) {
       log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+    }
+  }
+
+  @TRADEService
+  public String getVideosDir() {
+    return getMediaPath(videoDir);
+  }
+
+  @TRADEService
+  public String getUserImageDir() {
+    return getMediaPath(userImageDir);
+  }
+
+  @TRADEService
+  public void deleteMedia(String path) {
+    try {
+      log.error("[deleteMedia] deleteMedia called on path: " + path);
+      Files.deleteIfExists(Path.of(path));
+    } catch (IOException e) {
+      log.error("[deleteMedia] failed to delete media file: " + path, e);
     }
   }
 
@@ -166,37 +202,45 @@ public class AvaDisplayComponent extends DiarcComponent {
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        //mediaPlayerComponent.release();
+        mediaPlayerComponent.release();
+        mediaPlayerFactory.release();
         frame.setVisible(false);
         frame.dispose();
         System.exit(0);
       }
     });
 
-    //mediaPlayerComponent = new EmbeddedMediaPlayerComponent() {
-    //  @Override
-    //  public void playing(MediaPlayer mediaPlayer) {
-    //    mediaPlayer.audio().setVolume(videoVolume);
-    //    mediaPlayer.controls().play();
-    //  }
-//
-    //  @Override
-    //  public void stopped(MediaPlayer mediaPlayer) {
-    //    videoPlaying = false;
-    //    try {
-    //      SwingUtilities.invokeAndWait(() -> {
-    //                cardLayout.previous(cardPanel);
-    //              }
-    //      );
-    //    } catch (InterruptedException | InvocationTargetException e) {
-    //      log.error("error switching back to idle display", e);
-    //    }
-    //    continueIdleImageCycle();
-    //  }
-//
-    //};
-//
-    //cardPanel.add(mediaPlayerComponent);
+    String[] vlcArgs;
+    if (!videoAudioDevice.isEmpty()) {
+      vlcArgs = new String[]{"--aout=alsa", "--alsa-audio-device=" + videoAudioDevice};
+    } else {
+      vlcArgs = new String[]{};
+    }
+    mediaPlayerFactory = new MediaPlayerFactory(vlcArgs);
+
+    mediaPlayerComponent = new EmbeddedMediaPlayerComponent(mediaPlayerFactory, null, null, null, null) {
+      @Override
+      public void playing(MediaPlayer mediaPlayer) {
+        mediaPlayer.audio().setVolume(videoVolume);
+      }
+
+      @Override
+      public void stopped(MediaPlayer mediaPlayer) {
+        videoPlaying = false;
+        try {
+          SwingUtilities.invokeAndWait(() -> {
+                    cardLayout.previous(cardPanel);
+                  }
+          );
+        } catch (InterruptedException | InvocationTargetException e) {
+          log.error("error switching back to idle display", e);
+        }
+        continueIdleImageCycle();
+      }
+
+    };
+
+    cardPanel.add(mediaPlayerComponent);
 
     if (isFullscreen) {
       frame.setUndecorated(true);
@@ -230,7 +274,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
 
   private void continueIdleImageCycle() {
-    if (!videoPlaying && !userImageDisplayed) {
+    if (!videoPlaying && !userImageDisplayed && idleImageCycleRunning) {
       try {
         SwingUtilities.invokeAndWait(() -> {
                   displayIdleImage(idleImages.get(currentImage), -1);
@@ -246,6 +290,19 @@ public class AvaDisplayComponent extends DiarcComponent {
         currentImage++;
       }
     }
+  }
+
+  @TRADEService
+  @Action
+  public void stopIdleImageCycle() {
+    idleImageCycleRunning = false;
+  }
+
+  @TRADEService
+  @Action
+  public void startIdleImageCycle() {
+    idleImageCycleRunning = true;
+    continueIdleImageCycle();
   }
 
   /**
@@ -354,7 +411,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     String path = getMediaPath(presentationSlidesDir) + File.separator + presentationName + File.separator + imageName;
     userImageDisplayed = true;
-    displayImage(path, timeout, true);
+    displayImage(path, timeout, true, true, Color.WHITE);
     userImageDisplayed = false;
   }
 
@@ -378,22 +435,20 @@ public class AvaDisplayComponent extends DiarcComponent {
     userImageDisplayed = true;
     clearText();
     String path = getMediaPath(userImageDir) + File.separator + imageName;
-    displayImage(path, timeout, blocking);
+    displayImage(path, timeout, blocking, true, Color.WHITE);
     userImageDisplayed = false;
     continueIdleImageCycle();
   }
   private void displayIdleImage(String imageName, long timeout, boolean blocking) {
     String path = getMediaPath(idleImageDir) + File.separator + imageName;
-    displayImage(path, timeout, blocking);
+    displayImage(path, timeout, blocking, false, Color.BLACK);
   }
 
-  /**
-   * Displays an image from the resources directory on the DisplayCanvas.
-   *
-   * @param path filename of image to display
-   */
-  private void displayImage(String path, long timeout, boolean blocking) {
-    log.debug("displayIdleImage(" + path + ")");
+  private void displayImage(String path, long timeout, boolean blocking, boolean scaleToFit, Color backgroundColor) {
+    if (path.equals(currentlyDisplayedImagePath) && !blocking) {
+      return;
+    }
+    log.debug("displayImage(" + path + ")");
     BufferedImage image = null;
     try {
       image = ImageIO.read(new File(path));
@@ -405,11 +460,14 @@ public class AvaDisplayComponent extends DiarcComponent {
     if (image == null) {
       return;
     }
-    unsetIdle();
+    currentlyDisplayedImagePath = path;
+    idle = false;
+    idleTimer = System.currentTimeMillis();
+    canvas.setIdleNoRepaint(false);
     if (blocking) {
-      canvas.setImageBlocking(image, timeout);
+      canvas.setImageBlocking(image, timeout, scaleToFit, backgroundColor);
     } else {
-      canvas.setImage(image, timeout);
+      canvas.setImage(image, timeout, scaleToFit, backgroundColor);
     }
   }
 
@@ -461,9 +519,9 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("error switching back to logo", e);
     }
     String path = getMediaPath(videoDir) + File.separator + videoName;
-    //mediaPlayerComponent.mediaPlayer().media().startPaused(path);
+    mediaPlayerComponent.mediaPlayer().media().start(path);
     videoPlaying = true;
-    log.info("[displayNextVideo] displaying video: " + path);
+    log.info("[displayVideo] playing: " + path);
   }
 
   @TRADEService
@@ -473,18 +531,18 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   @TRADEService
   public void cancelVideoPlayback() {
-    //mediaPlayerComponent.mediaPlayer().controls().stop();
+    mediaPlayerComponent.mediaPlayer().controls().stop();
     videoPlaying = false;
   }
 
   @TRADEService
   public void pauseVideoPlayback() {
-    //mediaPlayerComponent.mediaPlayer().controls().pause();
+    mediaPlayerComponent.mediaPlayer().controls().pause();
   }
 
   @TRADEService
   public void resumeVideoPlayback() {
-    //mediaPlayerComponent.mediaPlayer().controls().play();
+    mediaPlayerComponent.mediaPlayer().controls().play();
   }
 
   /**
@@ -493,6 +551,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void clearImage() {
     log.debug("clearImage()");
+    currentlyDisplayedImagePath = "";
     canvas.clearImage();
   }
 
@@ -539,7 +598,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     //  dialogueManager.addMessage(words, speaker);
     //  unsetIdle();
     //}
-    if (utterance.getSpeaker().getName().equals("ava")) {
+    if (utterance.getSpeaker().getName().equals("ava") && !utterance.getAddressee().getName().equals("webapp")) {
       new Thread(() -> {
         //String displayedText = "Ava: " + utterance.getWordsAsString() + "\n" + currentText;
         //displayText(displayedText);
@@ -557,6 +616,34 @@ public class AvaDisplayComponent extends DiarcComponent {
         }
         displayText("Ava: " + utterance.getWordsAsString());
       }).start();
+    } else if (utterance.getSpeaker().getName().equals("webapp") && utterance.getAddressee().getName().equals("ava")) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+        service.call(void.class,"Received External Command...");
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+      new Thread(() -> {
+        try {
+          Thread.sleep(5000);
+        } catch (InterruptedException e) {
+          log.error("[handleMessage] exception sleeping in clearDisplay thread");
+        }
+        try {
+          TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+          service.call(void.class);
+        } catch (TRADEException e) {
+          log.warn("[handleMessage] Exception displaying text", e);
+        }
+      }).start();
+
+      // Removed from chatAdapter and AvaGuiAdapter - want to add just this to either case?
+      //try {
+      //  TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
+      //  service.call(void.class,"ding.wav");
+      //} catch (TRADEException e) {
+      //  log.warn("[handleMessage] exception playing audio clip on Ava", e);
+      //}
     }
   }
 
@@ -748,6 +835,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     options.add(Option.builder("fullscreen").argName("boolean").desc("make the display full screen or not").build());
     options.add(Option.builder("mediaDir").hasArg().desc("name of base directory with videos, idleImages, and userImages subdirectories in .diarc dir").build());
     options.add(Option.builder("videoVolume").hasArg().desc("volume for video playback").build());
+    options.add(Option.builder("videoAudioDevice").hasArg().desc("ALSA audio device for video playback (e.g. hdmi:CARD=PCH,DEV=0)").build());
     return options;
   }
 
@@ -769,12 +857,21 @@ public class AvaDisplayComponent extends DiarcComponent {
     if (cmdLine.hasOption("videoVolume")) {
       videoVolume = Integer.parseInt(cmdLine.getOptionValue("videoVolume"));
     }
+    if (cmdLine.hasOption("videoAudioDevice")) {
+      videoAudioDevice = cmdLine.getOptionValue("videoAudioDevice");
+    }
   }
 
   @Override
   public void shutdownComponent() {
     displayText("shutting down...");
     refreshExecutor.shutdown();
+    if (mediaPlayerComponent != null) {
+      mediaPlayerComponent.release();
+    }
+    if (mediaPlayerFactory != null) {
+      mediaPlayerFactory.release();
+    }
     canvas = null;
   }
 }

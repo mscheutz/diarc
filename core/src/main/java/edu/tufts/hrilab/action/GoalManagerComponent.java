@@ -587,14 +587,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @param g            the goal in goal(actor,state) or action(actor,args) form
    * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
+   * @param priority     priority value for the submitted goal (overrides default value)
    * @return the goal ID (for checking status)
    */
   @TRADEService
   @Action
-  public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
-    return submitGoal(g, type, PriorityTier.fromString(priorityTier.toString()));
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
+    return submitGoal(g, type, priorityTier, priority, Factory.createSymbol("unknown"));
   }
-
 
   /**
    * Submit a goal to be achieved.
@@ -603,11 +603,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
    * @param priority     priority value for the submitted goal (overrides default value)
+   * @param submitter    the entity (currently only the speaker if a dialogue goal) triggering this goal submission
+   *
    * @return the goal ID (for checking status)
    */
   @TRADEService
   @Action
-  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority, Symbol submitter) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
 
     Goal goal = Goal.createGoal(g);
@@ -615,6 +617,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     goal.setPriority(priority);
     goal.setPriorityTier(priorityTier);
     goal.setExecutionType(type);
+    goal.setSubmitter(submitter);
     goal = em.submitGoal(goal);
     if (goal != null) {
       return goal.getId();

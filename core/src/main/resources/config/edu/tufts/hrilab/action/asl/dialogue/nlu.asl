@@ -47,6 +47,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     op:log("debug", "parser results: ?utterance");
 
     // parser error handling
+    java.lang.String !semanticsName;
     Symbol !semantics = op:invokeMethod(?utterance, "getSemantics");
     if (op:isNull(!semantics)) {
       act:updateDialogueHistory(?utterance);
@@ -55,6 +56,16 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !semantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(understand(!addressee,that))");
       !addressee.act:handleError(!speaker, !addressee, !semantics, direct);
       return;
+    } else {
+        //Originally Ava specific change to allow custom error messages from hybridParser - universally desired?
+        !semanticsName = op:getName(!semantics);
+        if (op:equals(!semanticsName,"error")) {
+            act:updateDialogueHistory(?utterance);
+            !speaker = op:invokeMethod(?utterance, "getSpeaker");
+            !addressee = op:invokeMethod(?utterance, "getAddressee");
+            act:handleError(!speaker, !addressee, !semantics, direct);
+            return;
+        }
     }
 
     // perform reference resolution
@@ -78,6 +89,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
     java.util.List !suspendedQids;
     java.lang.Long !qid;
     edu.tufts.hrilab.fol.Variable !x = "X";
+    Utterance !timeoutUtterance;
+    java.lang.String !validationUtteranceString;
     if (op:invokeMethod(?utterance, "needsValidation")) {
       op:log("debug", "Validating utterance: ?utterance");
       !addressee = op:invokeMethod(?utterance, "getAddressee");
@@ -107,7 +120,19 @@ import edu.tufts.hrilab.slug.common.Utterance;
       //  arises if the goal prompting the original question is canceled, then answering the validation question will cause
       //  the validated response to hit nothing.
       !suspendedQids = act:suspendWaitForResponse(val(X),!addressee,false);
-      !bindings = !addressee.act:askQuestionFromUtterance(!queryUtterance, val(X),1,-1);
+      !bindings = !addressee.act:askQuestionFromUtterance(!queryUtterance, val(X),1,60);
+      //Experimental: Validation Questions time out after 1 minute
+      if (op:isNull(!bindings)) {
+        op:log("warn","[handleSpeechInput] validation question timed out, discarding");
+        //Updating Dialogue history to give users looking at conversation history some indication that this happened
+        //  (because understanding of context of time passed is harder to resolve when looking at chat)
+        !timeoutUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
+        !validationUtteranceString = op:invokeMethod(!queryUtterance,"getWordsAsString");
+        op:invokeMethod(!timeoutUtterance, "setWords", "(previous disambiguation question \"!validationUtteranceString\" has timed out without being answered)");
+        //TODO: Where all should this be displayed? <- conditional on domain and what displays exist where
+        act:updateDialogueHistory(!timeoutUtterance);
+        return;
+      }
       !response = op:get(!bindings, !x);
       if (~op:isEmpty(!suspendedQids)) {
           foreach(!qid : !suspendedQids) {
@@ -117,8 +142,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
-        //act:sayText("Okay, I am ignoring the previous command"); //TODO: not sure about this
-        act:generateResponse(and(ack(okay),ignoring(?actor,previousCommand)));
+        //act:sayText(!speaker, "Okay, I am ignoring the previous command"); //TODO: not sure about this
+        act:generateResponse(!speaker, and(ack(okay),ignoring(?actor,previousCommand)));
         return;
       } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
@@ -126,8 +151,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        //act:sayText("please rephrase");
-        act:generateResponse(please(rephrase));
+        //act:sayText(!speaker, "please rephrase");
+        act:generateResponse(!speaker, please(rephrase));
         return;
       } else {
         op:log("error", "Unexpected question response: !response");

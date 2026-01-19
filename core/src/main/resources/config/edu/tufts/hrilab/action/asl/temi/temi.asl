@@ -121,7 +121,7 @@
     //ob:acknowledged(!ackMessage);
     act:waitForDetection();
     act:startAcknowledgeDisplay("Hello, please follow me to the waiting area.");
-    act:askQuestionFromString(!addressee, "Hello, please follow me to the waiting area.", !waitForAckForm);
+    act:askQuestionFromString("Hello, please follow me to the waiting area.", !waitForAckForm);
     act:endAcknowledgeDisplay();
     act:goToLocation(!destination, !fromGreet);
     act:generateResponseFromString("Someone will be with you shortly");
@@ -162,7 +162,7 @@
     (!destinationName) = act:getLocationNameFromReference(?destination);
     op:log("info","[escort] entering waitForAck");
     act:startAcknowledgeDisplay("Hello ?name. Please come with me. I will show you to !destinationName.");
-    !ackAnswerBindings = act:askQuestionFromString(!addressee, "Hello ?name. Please come with me. I will show you to !destinationName.", !waitForAckForm, !maxWaitAttempts, !waitDuration);
+    !ackAnswerBindings = act:askQuestionFromString("Hello ?name. Please come with me. I will show you to !destinationName.", !waitForAckForm, !maxWaitAttempts, !waitDuration);
     act:endAcknowledgeDisplay();
     op:log("info","[escort] out waitForAck");
 
@@ -170,7 +170,7 @@
 
     //If not acknowledged and ran out of tries -> clear screen, return to original location, and
     //  say that we could not find the requested patient
-    if(op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
+    if(op:isNull(!ackAnswerBindings) || op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
 //        op:log("info", "[escort] going to destination to communicate failure to find patient");
         act:generateResponseFromString("I could not find the requested patient ?name");
     } else {

@@ -11,6 +11,7 @@ import java.util.List;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.gui.SimSpeechProductionComponentVis;
+import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -63,10 +64,24 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
    * Sends text to the speech production component.
    */
   @Override
+  public boolean sayText(Utterance utterance) {
+    return sayText(utterance.getWordsAsString(), true);
+  }
+  /**
+   * Sends text to the speech production component.
+   */
+  @Override
   public boolean sayText(String text) {
     return sayText(text, true);
   }
 
+  /**
+   * Sends text to the speech production component.
+   */
+  @Override
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return sayText(utterance.getWordsAsString(),wait);
+  }
   /**
    * Sends text to the speech production component.
    */

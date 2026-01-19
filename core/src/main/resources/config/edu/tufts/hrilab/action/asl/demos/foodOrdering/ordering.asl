@@ -54,19 +54,19 @@ import java.lang.Integer;
     edu.tufts.hrilab.fol.Symbol !detectionArea;
 
     //TODO: resolve Japanese and English versions of this teaching template for respective demos/configs
-    //!bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pattern(area(X)));
-    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(area(X)));
+    //!bindings = act:askQuestionFromString("それはどこにありますか？", pattern(area(X)));
+    !bindings = act:askQuestionFromString("Where is it located?", pattern(area(X)));
     !area= op:get(!bindings, !x);
 
-    !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
-    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    !bindings = act:askQuestionFromString("Okay, what vision job is used to detect it?", job(X));
+    //!bindings = act:askQuestionFromString("OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!area,!job);
 
-    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
-    //!bindings = act:askQuestionFromString(?actor,"OK、どのあたりで?descriptorを探せばいいですか？", job(X));
-    !bindings = act:askQuestionFromString(?actor,"At which area should I look for a ?descriptor?", pattern(area(X)));
+    //!bindings = act:askQuestionFromString("OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString("OK、どのあたりで?descriptorを探せばいいですか？", job(X));
+    !bindings = act:askQuestionFromString("At which area should I look for a ?descriptor?", pattern(area(X)));
     !detectionArea = op:get(!bindings, !x);
 
     !right.act:goTo(!detectionArea);
@@ -117,7 +117,7 @@ import java.lang.Integer;
 
     act:perceiveEntityFromSymbol(?refId);
 
-    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", hold(X));
+    !bindings = act:askQuestionFromString("I see a ?itemType, can you show me how to grasp it?", hold(X));
     !response = op:get(!bindings, !x);
     if (~op:equalsValue(!response, none())) {
         act:defineGraspPointForDescriptor(?refId, ?itemType);
@@ -181,7 +181,7 @@ import java.lang.Integer;
         act:learnAction(!scriptID);
     }
     act:waitForActionLearningStart(!scriptID);
-    !bindings = act:askQuestionFromString(?actor,"Okay. How do I prepare a ?itemName ?",!endQuery);
+    !bindings = act:askQuestionFromString("Okay. How do I prepare a ?itemName ?",!endQuery);
 
     //generate new signature that is unique to model name
     op:log(warn, "[defineItem] ending learning for: !scriptID");
@@ -226,7 +226,7 @@ import java.lang.Integer;
 
   ?newItem=act:addItem(?newItem);
 
-  !bindings = act:askQuestionFromString(?actor,"What item is it like?", item(X));
+  !bindings = act:askQuestionFromString("What item is it like?", item(X));
   !oldItem = op:get(!bindings, !x);
   !oldScriptGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "prepare!oldItem(?actor)");
   op:log(debug, "osg !oldScriptGoal");
@@ -237,20 +237,20 @@ import java.lang.Integer;
   !likeGoal =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "like", !newScriptGoal,!oldScriptGoal);
   op:log(debug, "lg !likeGoal");
 
-  !bindings = act:askQuestionFromString(!speaker,"okay. what are the differences", mod(X,Y));
+  !bindings = act:askQuestionFromString("okay. what are the differences", mod(X,Y));
   !modification = op:get(!bindings, !x);
   !location = op:get(!bindings, !y);
   op:log(debug, "modification !modification location !location");
   act:modifyAction(!likeGoal,!modification,!location);
 
-  !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
+  !bindings = act:askQuestionFromString("okay. are there any more differences?", mod(X,Y));
   !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
   !modName = op:getName(!modification);
   while(op:!=(!modName,"none")){
     op:log(debug, "modification !modification location !location");
     act:modifyAction(!newScriptGoal,!modification,!location);
-    !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
+    !bindings = act:askQuestionFromString("okay. are there any more differences?", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
     !modName = op:getName(!modification);
