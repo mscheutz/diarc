@@ -713,7 +713,7 @@ import java.lang.Boolean;
     Map !bindings;
     Variable !x = "X";
     Symbol !response;
-    edu.tufts.hrilab.packing.PackingResult3D !res;
+    ai.thinkingrobots.mtracs.packing.PackingResult3D !res;
 
     //!bindings = act:askQuestionFromString(?actor,"Relevant packing parameters have been updated since the last time an optimal crate arrangement has been calculated, may I rerun the algorithm to be up-to-date?",val(X));
     !bindings = act:askQuestion(?actor,then(report(updatedSince(relevantPackingParameters,calculated(optimalCrateArrangement))),ask(may(?actor,rerunAlgorithm),desire(upToDate))),val(X));
@@ -951,7 +951,7 @@ import java.lang.Boolean;
     act:generateResponse("report(?actor,haveUpdatedCrateDimensions)");
 }
 
-(edu.tufts.hrilab.packing.PackingResult3D ?result) = solveCratePacking3D() {
+(ai.thinkingrobots.mtracs.packing.PackingResult3D ?result) = solveCratePacking3D() {
     Variable !x;
     effects : {
         success : ranPackingAlgorithmWithUpdatedSettings(?actor);
