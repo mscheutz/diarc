@@ -1,10 +1,13 @@
+// IMPORTS //
 import React from "react";
 
+// NPM packages
 import { faFolderClosed, faFolderOpen, faFile } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import TreeView, { flattenTree, ITreeViewOnNodeSelectProps } from "react-accessible-treeview";
 import { SendMessage } from "react-use-websocket";
 
+// Internal imports
 import "../util/TreeStyle.css";
 
 type Props = {
@@ -13,6 +16,11 @@ type Props = {
     path: string
 };
 
+/**
+ * FileBrowser. Subcomponent which renders a tree view of ASL files.
+ * @author Lucien Bao
+ * @version 1.0
+ */
 const FileBrowser: React.FC<Props> = ({
     fileTree, sendMessage, path
 }) => {
@@ -29,17 +37,18 @@ const FileBrowser: React.FC<Props> = ({
         }));
     }
 
+    // DOM //
     return (
         <div className="w-full h-full 
-                        border border-border rounded-l-md
-                        shadow-md md:border-0 md:p-5 gap-3 flex flex-col
-                        p-3 bg-card">
+                        outline outline-1 outline-[#d1dbe3] rounded-l-md
+                        shadow-md md:outline-0 md:p-5 gap-3 flex flex-col
+                        p-3">
             <p className="text-lg">File Browser</p>
 
             <TreeView
                 data={flattenTree(fileTree)}
-                className="basic overflow-auto border grow
-                           border-border rounded rounded-md shadow-md"
+                className="basic overflow-auto outline outline-1 grow
+                           outline-[#d1dbe3] rounded rounded-md shadow-md"
                 onNodeSelect={getFileOnSelect}
                 nodeRenderer={
                     ({ element, getNodeProps, level, isBranch, isExpanded, isSelected }) => {

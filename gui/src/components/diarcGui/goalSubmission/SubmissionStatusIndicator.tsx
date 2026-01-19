@@ -1,5 +1,6 @@
 import React from "react";
 
+// Libraries //
 import {faSync, faCheck, faQuestion} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -8,29 +9,42 @@ type Props = {
     submissionStatus: string
 };
 
+/**
+ * SubmissionStatusIndicator. Lightweight component that shows whether a submission is
+ * pending or successful. Used in Goal Submission's form panel to provide
+ * feedback on submission, since the form doesn't clear its fields on
+ * submission.
+ * 
+ * @author Lucien Bao
+ */
 const SubmissionStatusIndicator: React.FC<Props> = ({ goal, submissionStatus }) => {
-    const isIdle = submissionStatus !== "wait" && submissionStatus !== "successful";
-    const isWaiting = submissionStatus === "wait";
+    if (submissionStatus !== "wait" && submissionStatus !== "successful") {
+        return <div className="rounded-md outline outline-1 outline-[#d1dbe3]
+                        flex items-center justify-center px-2 gap-2 w-full shadow-md">
+            <p className="text-center">
+                Goal submission: &nbsp;
+                <FontAwesomeIcon icon={faQuestion} color="#2766e5"/>
+                &nbsp;none submitted
+            </p>
+        </div>
+    }
 
     return (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-sm">
-            <span className="text-muted-foreground">Status:</span>
-            {isIdle ? (
-                <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <FontAwesomeIcon icon={faQuestion} className="h-3 w-3 text-blue-500" />
-                    Ready
-                </span>
-            ) : isWaiting ? (
-                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                    <FontAwesomeIcon icon={faSync} className="h-3 w-3" spin />
-                    Executing <code className="text-xs bg-muted px-1 rounded">{goal}</code>
-                </span>
-            ) : (
-                <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
-                    <FontAwesomeIcon icon={faCheck} className="h-3 w-3" />
-                    <code className="text-xs bg-muted px-1 rounded">{goal}</code> completed
-                </span>
-            )}
+        <div className="rounded-md outline outline-1 outline-[#d1dbe3]
+                        flex items-center justify-center px-2 gap-2 w-full shadow-md">
+            <p className="text-center">
+                <code>{goal}</code>&nbsp;submission: &nbsp;
+                {
+                    submissionStatus === "wait" ?
+                        <FontAwesomeIcon icon={faSync} color="#efd402" spin/>
+                        : <FontAwesomeIcon icon={faCheck} color="#00a505"/>
+                }
+                {
+                    submissionStatus === "wait" ?
+                        " waiting..."
+                        : " successful!"
+                }
+            </p>
         </div>
     );
 }

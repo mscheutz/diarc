@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { config } from '../config';
 
 const User = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<string[]>([]);
   const [inputMessage, setInputMessage] = useState('');
 
+  // Initialize WebSocket connection
   const connect = () => {
-    const websocket = new WebSocket(`ws://${config.serverAddr}:8000/user`);
+    const websocket = new WebSocket('ws://localhost:8080/user');
     websocket.onmessage = (event) => {
       setMessages((prevMessages) => [...prevMessages, event.data]);
     };
@@ -24,6 +24,7 @@ const User = () => {
     };
   };
 
+  // Disconnect WebSocket
   const disconnect = () => {
     if (ws) {
       ws.close();
@@ -31,13 +32,15 @@ const User = () => {
     }
   };
 
+  // Send a message
   const sendMessage = () => {
     if (ws && ws.readyState === WebSocket.OPEN && inputMessage) {
       ws.send(JSON.stringify({ 'user': inputMessage }));
-      setInputMessage('');
+      setInputMessage(''); // Clear input after sending
     }
   };
 
+  // Cleanup WebSocket on component unmount
   useEffect(() => {
     return () => {
       if (ws) {

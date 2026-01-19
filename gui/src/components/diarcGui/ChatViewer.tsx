@@ -1,5 +1,7 @@
+// IMPORTS //
 import React, { useCallback, useEffect, useState } from 'react';
 
+// NPM packages
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
     MainContainer,
@@ -16,9 +18,14 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 import { ReadyState, SendMessage } from 'react-use-websocket';
 
+// Internal imports
+import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css"
 
+// UTILITY //
 type MessageProps = {
+    // Subset of 'model' prop at
+    // https://chatscope.io/storybook/react/?path=/docs/components-message--docs
     message: string,
     sender: string,
     direction: "incoming" | "outgoing" | 0 | 1,
@@ -36,36 +43,60 @@ type Chat = {
 }
 export type { Chat };
 
+// Remove line breaks from messages when sending
 const clean = (message: string) => {
     return message.replace(/(<.*?>)/gm, "").replace(/(\r\n|\n|\r)/gm, "")
 }
+
+type NameInputProps = {
+    username: string,
+    setUsername: React.Dispatch<React.SetStateAction<string>>,
+}
+
+const NameInput: React.FC<NameInputProps> = ({
+    username, setUsername
+}) => {
+    return (
+        <div className="flex-1 items-center justify-center
+                        flex-col space-y-1 flex">
+            <label className='self-start text-xs'>
+                Speaker name
+            </label>
+            <MessageInput
+                className='w-full overflow-scroll'
+                attachButton={false}
+                sendButton={false}
+                placeholder='Set your name here'
+                onChange={(innerText) => setUsername(innerText)}
+                sendOnReturnDisabled={true}
+                value={username}
+            />
+        </div>
+    );
+};
 
 type Props = {
     path: string,
     lastMessage: MessageEvent<any> | null,
     sendMessage: SendMessage,
-    readyState: ReadyState,
-    focusRobot?: string | null
+    readyState: ReadyState
 };
 
+/**
+ * ChatViewer. Defines a chat interface component for issuing commands and
+ * receiving feedback through DIARC.
+ * @author Lucien Bao
+ * @version 1.0
+ */
 const ChatViewer: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState, focusRobot
+    path, lastMessage, sendMessage, readyState
 }) => {
-    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
-    const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
+    // SET UP MOBILE NAVIGATION //
+    // Adapted from "Toggle conversation list using the back button" example at
+    // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
+    const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
-    const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
-    const [pendingHistoryMessages, setPendingHistoryMessages] = useState<any[]>([]);
-
-    // Listen for window resize to update mobile state
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const handleBackClick = useCallback(() => {
         setSidebarVisible(true);
@@ -75,13 +106,6 @@ const ChatViewer: React.FC<Props> = ({
     }, [setSidebarVisible]);
 
     useEffect(() => {
-        // On desktop, always show both sidebar and chat side-by-side
-        if (!isMobile) {
-            setSidebarStyle({});
-            setChatContainerStyle({});
-            return;
-        }
-        // On mobile, toggle between sidebar and chat
         if (sidebarVisible) {
             setSidebarStyle({
                 display: "flex",
@@ -91,11 +115,13 @@ const ChatViewer: React.FC<Props> = ({
             });
             setChatContainerStyle({ display: "none" });
         } else {
-            setSidebarStyle({ display: "none" });
+            setSidebarStyle({});
             setChatContainerStyle({});
         }
-    }, [sidebarVisible, isMobile])
+    }, [sidebarVisible, setSidebarVisible, setSidebarStyle,
+        setChatContainerStyle])
 
+    // COMPONENT CREATION METHODS //
     const createConversation = (chat: Chat, index: number) => {
         return (
             <Conversation
@@ -127,7 +153,7 @@ const ChatViewer: React.FC<Props> = ({
     const createConversationHeader = (chat: Chat) => {
         return (
             <ConversationHeader>
-                {isMobile && <ConversationHeader.Back onClick={() => handleBackClick()} />}
+                <ConversationHeader.Back onClick={() => handleBackClick()} />
                 <Avatar
                     name={chat.robotName}
                     src={chat.profileImagePath}
@@ -145,14 +171,13 @@ const ChatViewer: React.FC<Props> = ({
     }) => {
         return (
             <>
-                {sender !== chats[currentChat].robotName && (
-                    <div
+                {sender !== chats[currentChat].robotName
+                    && <div
                         key={"sentby" + index}
-                        className="text-right text-xs text-muted-foreground mb-px"
+                        className="text-right"
                     >
                         {sender}
-                    </div>
-                )}
+                    </div>}
                 <Message key={index} model={{
                     message: message,
                     sender: sender,
@@ -163,6 +188,7 @@ const ChatViewer: React.FC<Props> = ({
         )
     }
 
+    // SET UP STATE //
     const [currentChat, setCurrentChat] = useState<number>(0);
 
     const [chats, setChats] = useState<Chat[]>([
@@ -180,35 +206,20 @@ const ChatViewer: React.FC<Props> = ({
         </ConversationList>
     );
 
-    const [username] = useState<string>("webapp");
+    const [username, setUsername] = useState<string>("evan");
 
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
         if (!data.path || data.path !== path) return;
 
-        if ((chats.length === 0 || !chats[0].robotName) && !data.names) {
-            return;
-        }
-
-        if (data.historyComplete) {
-            setIsLoadingHistory(false);
-            return;
-        }
-
-        if (isLoadingHistory && data.message) {
-            setPendingHistoryMessages(prev => [...prev, data]);
-            return;
-        }
-
         let newChats: Chat[];
-        if (!chats[0].robotName) {
+        if (!chats[0].robotName)
             newChats = chats.slice(1);
-        }
-        else {
+        else
             newChats = chats.slice();
-        }
 
+        // Update list of robot names; idempotent
         if (data.names) {
             const names = (data.names as string)
                 .slice(1, -1)
@@ -223,7 +234,7 @@ const ChatViewer: React.FC<Props> = ({
                 }
                 newChats.push({
                     robotName: name,
-                    profileImagePath: "./heroimage.svg",
+                    profileImagePath: "/heroimage.svg",
                     messageList: [],
                     focusThisChat: setCurrentChat
                 });
@@ -237,10 +248,10 @@ const ChatViewer: React.FC<Props> = ({
                     {
                         message: data.message,
                         sender: chat.robotName,
-                        direction: "incoming" as const,
-                        position: "single" as const
+                        direction: "incoming",
+                        position: "single"
                     }
-                ].slice(-100);
+                ];
                 break;
             } else if (chat.robotName === data.recipient) {
                 chat.messageList = [
@@ -248,10 +259,10 @@ const ChatViewer: React.FC<Props> = ({
                     {
                         message: data.message,
                         sender: data.sender,
-                        direction: "outgoing" as const,
-                        position: "single" as const
+                        direction: "outgoing",
+                        position: "single"
                     }
-                ].slice(-100)
+                ]
                 break;
             }
         }
@@ -261,76 +272,17 @@ const ChatViewer: React.FC<Props> = ({
                 {newChats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lastMessage, path, sendMessage, isLoadingHistory]);
+    },
+        // we use chats.toString() to make sure the value is changing
+        [lastMessage, chats.toString()]);
 
+    // One-time get the list of chats to show
     useEffect(() => {
-        setIsLoadingHistory(true);
-        setPendingHistoryMessages([]);
-        
         sendMessage(JSON.stringify({
             path: path,
             method: "startup"
-        }));
-        
-        const historyTimeout = setTimeout(() => {
-            setIsLoadingHistory(false);
-        }, 2000);
-        
-        return () => clearTimeout(historyTimeout);
-    }, [path, sendMessage]);
-
-    useEffect(() => {
-        if (!focusRobot) return;
-        const index = chats.findIndex(chat => chat.robotName === focusRobot);
-        if (index >= 0) {
-            setCurrentChat(index);
-            setSidebarVisible(false);
-        }
-    }, [focusRobot, chats]);
-
-    useEffect(() => {
-        if (isLoadingHistory || pendingHistoryMessages.length === 0) return;
-
-        let newChats = chats.slice();
-        
-        for (const data of pendingHistoryMessages) {
-            for (const chat of newChats) {
-                if (chat.robotName === data.sender) {
-                    chat.messageList = [
-                        ...chat.messageList,
-                        {
-                            message: data.message,
-                            sender: chat.robotName,
-                            direction: "incoming" as const,
-                            position: "single" as const
-                        }
-                    ].slice(-100);
-                    break;
-                } else if (chat.robotName === data.recipient) {
-                    chat.messageList = [
-                        ...chat.messageList,
-                        {
-                            message: data.message,
-                            sender: data.sender,
-                            direction: "outgoing" as const,
-                            position: "single" as const
-                        }
-                    ].slice(-100);
-                    break;
-                }
-            }
-        }
-        
-        setChats(newChats);
-        setConversations(
-            <ConversationList>
-                {newChats.map((chat, index) => createConversation(chat, index))}
-            </ConversationList>
-        );
-        setPendingHistoryMessages([]);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoadingHistory, pendingHistoryMessages]);
+        }))
+    }, [path]);
 
     const handleSendMessage = (message: string) => {
         message = clean(message)
@@ -348,8 +300,7 @@ const ChatViewer: React.FC<Props> = ({
     };
 
     let chatContainer = (
-        chats.length === 0 ? <div/> :
-        <ChatContainer style={chatContainerStyle}>
+        <ChatContainer className='w-3/4' style={chatContainerStyle}>
             {createConversationHeader(chats[currentChat])}
 
             <MessageList>
@@ -364,23 +315,36 @@ const ChatViewer: React.FC<Props> = ({
 
             <MessageInput
                 autoFocus
-                placeholder={"Message " + chats[currentChat].robotName + "..."}
+                placeholder={"Talk with " + chats[currentChat].robotName
+                    + "..."}
                 attachButton={false}
                 onSend={(message) => handleSendMessage(message)}
             />
         </ChatContainer>
     );
 
+    // DOM //
     return (
-        <div className="flex flex-col w-full min-h-0 flex-1 p-1 sm:p-2">
-            <MainContainer className="rounded border border-border overflow-hidden flex-1 min-w-0" responsive>
+        <div className="flex flex-col w-full min-h-0 basis-0 grow border
+                        border-1 border-[#d1dbe3] justify-between shadow-md
+                        rounded-md p-3 gap-3 md:p-5 md:gap-5">
+            <NameInput username={username} setUsername={setUsername} />
+
+            <MainContainer className='rounded-md shadow-md' responsive>
                 <Sidebar position="left" style={sidebarStyle}>
-                    <div className="h-full overflow-auto">
-                        {conversations}
+                    <div className="flex flex-col justify-between h-full">
+
+                        <div className="flex flex-col space-y-1 md:space-y-2
+                                        p-1 md:p-2">
+                            {conversations}
+                        </div>
                     </div>
                 </Sidebar>
+
                 {chatContainer}
             </MainContainer>
+
+            <ConnectionIndicator readyState={readyState} />
         </div>
     );
 }

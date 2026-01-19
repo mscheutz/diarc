@@ -1,13 +1,17 @@
+// IMPORTS //
 import React, { useEffect, useState } from "react";
 
+// NPM packages
 import { ReadyState, SendMessage } from "react-use-websocket";
 
+// Internal imports
 import ConnectionIndicator from "../util/ConnectionIndicator";
 import TableOfContents from "./TableOfContents";
 import TradeServiceForm from "./TradeServiceForm";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 
+// HELPER COMPONENTS //
 type GroupProps = {
     group: string,
     services: Service[],
@@ -23,7 +27,7 @@ const Group: React.FC<GroupProps> = ({
             <div className="invisible" id={group}></div>
 
             <div
-                className="text-xl p-2 pt-0 font-bold sticky top-0 bg-card"
+                className="text-xl p-2 pt-0 font-bold sticky top-0 bg-white"
             >
                 {group}
             </div>
@@ -32,7 +36,7 @@ const Group: React.FC<GroupProps> = ({
                 {services
                     .filter((service) => service.name.includes(filter))
                     .length === 0 &&
-                    <p className="px-2 text-muted-foreground">No services matching filter.</p>}
+                    <p className="px-2">No services matching filter.</p>}
                 {services
                     .filter((service) => service.name.includes(filter))
                     .map((service, index) =>
@@ -56,10 +60,11 @@ const ServiceComponent: React.FC<ServiceComponentProps> = ({
 }) => {
     return (
         <div
-            className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-accent
+            className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-blue-200
                        cursor-pointer"
             onClick={() => selectService(service)}
         >
+            {/* &#8594; is the right arrow */}
             <p className="text-lg">
                 {service.name} &#8594;&nbsp;
                 <span className="font-mono text-sm">
@@ -68,7 +73,7 @@ const ServiceComponent: React.FC<ServiceComponentProps> = ({
             </p>
 
             {service.params.length === 0 &&
-                <p className="italic text-muted-foreground">(no parameters)</p>}
+                <p className="italic">(no parameters)</p>}
             {service.params.map((param, index) =>
                 <p key={index}>
                     {param}:&nbsp;
@@ -83,12 +88,12 @@ const ServiceComponent: React.FC<ServiceComponentProps> = ({
 
 type Service = {
     "name": string,
-    "returnType": string,
+    "returnType", string,
     "params": string[],
     "paramTypes": string[],
     "id": number
 }
-export type { Service };
+export { Service };
 
 type Props = {
     path: string,
@@ -97,9 +102,16 @@ type Props = {
     readyState: ReadyState
 };
 
+/**
+ * TradeServiceViewer. Defines a component which displays a list of available
+ * TRADE services and provides a means of invoking them.
+ * @author Lucien Bao
+ * @version 1.0
+ */
 const TradeServiceViewer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
+    // INPUT //
     useEffect(() => {
         if (lastMessage === null) return;
         const data = JSON.parse(lastMessage.data);
@@ -114,6 +126,7 @@ const TradeServiceViewer: React.FC<Props> = ({
         setServices(data.services);
     }, [lastMessage, path]);
 
+    // One-time setup request
     useEffect(() => {
         sendMessage(JSON.stringify({
             path: path,
@@ -129,15 +142,15 @@ const TradeServiceViewer: React.FC<Props> = ({
 
     return (
         <div className="flex flex-col w-full min-h-0 basis-0 grow border
-                        border-border p-5 justify-stretch shadow-md
-                        rounded-md gap-5 bg-card">
+                        border-1 p-5 border-[#d1dbe3] justify-stretch shadow-md
+                        rounded-md gap-5">
             <div className="flex flex-row w-full min-h-0 basis-0 grow
                             justify-stretch gap-5">
                 <TableOfContents groups={groups} />
 
                 <div className="flex flex-col w-1/2 min-h-0 border
-                                border-border shadow-md
-                                rounded-md bg-card">
+                                border-1 border-[#d1dbe3] shadow-md
+                                rounded-md">
                     <p className="text-2xl font-bold p-5">
                         Services
                     </p>
@@ -145,8 +158,8 @@ const TradeServiceViewer: React.FC<Props> = ({
                     <input
                         type="text"
                         className="block box-border rounded text-sm border
-                                   border-input bg-background text-foreground font-mono p-2 mt-0.5
-                                   overflow-x-auto self-stretch m-5 focus:outline-none focus:ring-2 focus:ring-ring"
+                                   border-slate-500 font-mono p-2 mt-0.5
+                                   overflow-x-auto self-stretch m-5"
                         placeholder="Filter services..."
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
@@ -164,8 +177,8 @@ const TradeServiceViewer: React.FC<Props> = ({
                                 />
                         )}
                     </div>
-                    <div className="p-1.5 px-2.5 m-2 rounded-md bg-primary/20 text-primary-foreground
-                                    dark:bg-primary/30">
+                    <div className="p-1.5 px-2.5 m-2 rounded-md bg-green-200
+                                    ">
                         <FontAwesomeIcon icon={faCircleInfo} />&nbsp;
                         Click a service to populate the form on the right.
                     </div>

@@ -1,5 +1,7 @@
+// IMPORTS //
 import React from "react";
 
+// Internal imports
 import { Service } from "./TradeServiceViewer";
 import { Button } from "../../Button";
 import { useForm } from "react-hook-form";
@@ -13,6 +15,12 @@ type Props = {
     path: string
 };
 
+/**
+ * TradeServiceForm. Defines a subcomponent which presents a form for the user
+ * to invoke a TRADE service.
+ * @author Lucien Bao
+ * @version 1.0
+ */
 const TradeServiceForm: React.FC<Props> = ({
     service, setService, sendMessage, result, path
 }) => {
@@ -37,8 +45,8 @@ const TradeServiceForm: React.FC<Props> = ({
 
     return (
         <div className="flex flex-col w-1/3 min-h-0 border
-                        border-border shadow-md
-                        rounded-md overflow-auto bg-card">
+                        border-1 border-[#d1dbe3] shadow-md
+                        rounded-md overflow-auto">
             <p className="text-2xl font-bold p-5">
                 Invoke service
             </p>
@@ -47,6 +55,7 @@ const TradeServiceForm: React.FC<Props> = ({
                     className="flex flex-col p-5 pt-0 gap-3"
                     onSubmit={form.handleSubmit(invoke)}
                 >
+                    {/* &#8594; is the right arrow */}
                     <p className="text-xl">
                         {service.name} &#8594;&nbsp;
                         <span className="font-mono text-sm">
@@ -60,15 +69,15 @@ const TradeServiceForm: React.FC<Props> = ({
                                 title={param + ": " + service.paramTypes[index]}
                             >
                                 <p>{param}</p>
-                                <p className="font-mono text-sm text-muted-foreground">
+                                <p className="font-mono text-sm">
                                     {service.paramTypes[index]}
                                 </p>
                             </label>
                             <input
                                 type="text"
                                 className="block box-border rounded text-sm border
-                                           border-input bg-background text-foreground font-mono p-2 mt-0.5
-                                           overflow-x-auto self-stretch w-full focus:outline-none focus:ring-2 focus:ring-ring"
+                                           border-slate-500 font-mono p-2 mt-0.5
+                                           overflow-x-auto self-stretch w-full"
                                 {...form.register(param)}
                                 required
                             />
@@ -82,7 +91,7 @@ const TradeServiceForm: React.FC<Props> = ({
                         Invoke
                     </Button>
                 </form>
-                : <p className="px-5 text-muted-foreground">No service selected.</p>}
+                : <p className="px-5">No service selected.</p>}
             {result !== null &&
                 <div className="flex flex-col gap-3 p-5">
                     <p className="text-xl font-bold">Result</p>

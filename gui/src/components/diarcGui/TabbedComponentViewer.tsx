@@ -1,250 +1,132 @@
-import React, { useEffect, useMemo, useState } from "react";
+// IMPORTS //
+import React from "react";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "react-tabs/style/react-tabs.css";
-import { ReadyState, SendMessage } from "react-use-websocket";
+// NPM packages
+import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
+import {ReadyState, SendMessage} from "react-use-websocket";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faTriangleExclamation} from '@fortawesome/free-solid-svg-icons'
 
-import { handlers } from "./util/constants";
+// Internal imports
+import {handlerRoots, handlers} from "./util/constants";
+
 import "./util/StyleOverrides.css";
-import { Button } from "../Button";
+import {Button} from "../Button";
 
-const flexTabPanelClass = "hidden flex-col flex-1 min-h-0 overflow-auto";
-
-type UnavailablePanelMode = "connecting" | "unavailable";
+// CONSTANTS //
+const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
 type UnavailablePanelProps = {
-    mode: UnavailablePanelMode;
-    onReloadWebsocket: () => void;
+    wsBaseUrl: string
 };
 
 interface Props {
     availableEndpoints: string[];
-    sendMessage: SendMessage;
-    readyState: ReadyState;
-    lastMessage: WebSocketEventMap["message"] | null;
+    sendMessage: SendMessage
+    readyState: number;
+    lastMessage: WebSocketEventMap['message'] | null; // Type for WebSocket message
     wsBaseUrl: string;
-    generalBaseUrl: URL | string;
-    onReloadWebsocket: () => void;
-    hasEverOpened: boolean;
-    onTabChange?: (tabPath: string | null) => void;
-    requestedTabPath?: string | null;
-    focusRobot?: string | null;
 }
-
-type HandlerKey = keyof typeof handlers;
-type HandlerConfig = (typeof handlers)[HandlerKey];
-
-function findHandlerForPath(
-    path: string
-): { root: string; handler: HandlerConfig } | null {
-    const entry = Object.entries(handlers).find(([root]) =>
-        path.startsWith(root)
-    );
-
-    if (!entry) return null;
-
-    const [root, handler] = entry as [string, HandlerConfig];
-    return { root, handler };
-}
-
-const Spinner: React.FC<{ size?: string }> = ({ size = "w-16 h-16" }) => (
-    <svg
-        className={`${size} animate-spin text-primary`}
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-    >
-        <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-        />
-        <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-    </svg>
-);
 
 const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
-    mode,
-    onReloadWebsocket,
-}) => {
-    const isConnecting = mode === "connecting";
-
+                                                               wsBaseUrl
+                                                           }) => {
     return (
-        <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
-            <Spinner />
-            <div className="text-center space-y-2">
-                <h2 className="text-2xl font-medium text-foreground">
-                    {isConnecting ? "Connecting to robot..." : "Waiting for backend..."}
-                </h2>
-                <p className="text-muted-foreground">
-                    {isConnecting
-                        ? "This usually takes a few seconds"
-                        : "The robot backend is starting up or temporarily unavailable"}
-                </p>
+        <div className="flex flex-col space-y-5 fixed
+                            top-1/2 left-1/2 translate-x-[-50%]
+                            translate-y-[-50%] items-center">
+            <div className="flex flex-row justify-center
+                                justify-items-center">
+                <FontAwesomeIcon
+                    icon={faTriangleExclamation} size="10x"
+                    color={"#f0a900"}
+                />
             </div>
-            <Button variant="outline" onClick={onReloadWebsocket}>
-                Retry connection
+            <div className="text-4xl text-center">
+                Unavailable
+            </div>
+            <div className="text-center">
+                WebSocket URL: {wsBaseUrl}
+                <br/>
+                No endpoints found.
+            </div>
+            <Button onClick={() => window.location.reload()}>
+                Reload
             </Button>
         </div>
     );
 };
 
-const TAB_STORAGE_KEY = "diarc_selected_tab";
-
-const TabbedComponentViewer: React.FC<Props> = ({
-                                                    availableEndpoints,
-                                                    sendMessage,
-                                                    readyState,
-                                                    lastMessage,
-                                                    wsBaseUrl,
-                                                    generalBaseUrl,
-                                                    onReloadWebsocket,
-                                                    hasEverOpened,
-                                                    onTabChange,
-                                                    requestedTabPath,
-                                                    focusRobot,
-                                                }) => {
-    const [hasEverHadEndpoints, setHasEverHadEndpoints] = useState(false);
-    const [initialConnectionTimedOut, setInitialConnectionTimedOut] =
-        useState(false);
-    
-    const [selectedTabIndex, setSelectedTabIndex] = useState<number>(() => {
-        const stored = sessionStorage.getItem(TAB_STORAGE_KEY);
-        return stored ? parseInt(stored, 10) : 0;
-    });
-
-    const sortedEndpoints = useMemo(
-        () => availableEndpoints.slice().sort().filter(p => findHandlerForPath(p) !== null),
-        [availableEndpoints]
-    );
-
-    const handleTabSelect = (index: number) => {
-        setSelectedTabIndex(index);
-        sessionStorage.setItem(TAB_STORAGE_KEY, index.toString());
-        onTabChange?.(sortedEndpoints[index] ?? null);
-    };
-
-    useEffect(() => {
-        if (!requestedTabPath || sortedEndpoints.length === 0) return;
-        const index = sortedEndpoints.findIndex(p => p.startsWith(requestedTabPath));
-        if (index >= 0) {
-            setSelectedTabIndex(index);
-            sessionStorage.setItem(TAB_STORAGE_KEY, index.toString());
-        }
-    }, [requestedTabPath, sortedEndpoints]);
-
-    useEffect(() => {
-        if (sortedEndpoints.length === 0) return;
-        let idx = selectedTabIndex;
-        if (idx >= sortedEndpoints.length) {
-            idx = 0;
-            setSelectedTabIndex(0);
-            sessionStorage.setItem(TAB_STORAGE_KEY, "0");
-        }
-        onTabChange?.(sortedEndpoints[idx] ?? null);
-    }, [sortedEndpoints, selectedTabIndex, onTabChange]);
-
-    useEffect(() => {
-        if (!hasEverHadEndpoints && availableEndpoints.length > 0) {
-            setHasEverHadEndpoints(true);
-            setInitialConnectionTimedOut(false);
-        }
-    }, [availableEndpoints, hasEverHadEndpoints]);
-
-    useEffect(() => {
-        if (hasEverHadEndpoints || availableEndpoints.length > 0) {
-            setInitialConnectionTimedOut(false);
-            return;
-        }
-
-        const timeoutMs = 5000;
-        const timer = window.setTimeout(() => {
-            if (!hasEverHadEndpoints && availableEndpoints.length === 0) {
-                setInitialConnectionTimedOut(true);
-            }
-        }, timeoutMs);
-
-        return () => window.clearTimeout(timer);
-    }, [hasEverHadEndpoints, availableEndpoints.length]);
-
-    const shouldShowUnavailablePanel =
-        availableEndpoints.length === 0 && !hasEverHadEndpoints;
-
-    const isActivelyConnecting = readyState === ReadyState.CONNECTING || readyState === ReadyState.OPEN;
-    const unavailableMode: UnavailablePanelMode =
-        isActivelyConnecting && !initialConnectionTimedOut ? "connecting" : "unavailable";
-
-    if (shouldShowUnavailablePanel) {
-        return (
-            <div className="flex-1 min-h-0 w-full">
-                <UnavailablePanel
-                    mode={unavailableMode}
-                    onReloadWebsocket={onReloadWebsocket}
-                />
-            </div>
-        );
-    }
+/**
+ * TabbedComponentViewer. Detects which endpoints are active, then creates a
+ * tabbed view of the ones that are.
+ * @author Lucien Bao
+ * @version 0.9
+ * @date 29 May 2024
+ */
+const TabbedComponentViewer: React.FC<Props> = (
+    {
+        availableEndpoints,
+        sendMessage,
+        readyState,
+        lastMessage,
+        wsBaseUrl
+    }) => {
 
     return (
-        <Tabs
-            className="displayFlexImportant flex-col flex-1 min-h-0 w-full overflow-hidden"
-            selectedIndex={selectedTabIndex}
-            onSelect={handleTabSelect}
-        >
-            <TabList className="select-none">
-                {sortedEndpoints.map((path) => {
-                        const match = findHandlerForPath(path);
-                        if (!match) return null;
+        <Tabs className="displayFlexImportant flex-col min-h-0 grow w-full mt-20
+                         w-full md:w-5/6">
+            <TabList
+                hidden={availableEndpoints.length === 0}
+                className="select-none">
 
-                        const { root, handler } = match;
-                        const label =
-                            handler.tabName + path.substring(root.length);
-
+                {availableEndpoints.length === 0 && <Tab>Unavailable</Tab>}
+                {//@ts-ignore
+                    availableEndpoints.toSorted().map((path, index) => {
+                        const root = handlerRoots.find((root) => path.startsWith(root));
+                        if (!root) return null;
                         return (
-                            <Tab key={path} title={label}>
-                                {label}
+                            <Tab
+                                key={index}
+                                title={handlers[root].tabName
+                                    + path.substring(root.length)}>
+                                {handlers[root].tabName
+                                    + path.substring(root.length)}
                             </Tab>
                         );
                     })}
             </TabList>
 
-            {sortedEndpoints.map((path) => {
-                    const match = findHandlerForPath(path);
-                    if (!match) return null;
+            {availableEndpoints.length === 0 &&
+                <TabPanel className={flexTabPanelClass}>
+                    <UnavailablePanel wsBaseUrl={wsBaseUrl}/>
+                </TabPanel>}
 
-                    const { handler } = match;
-                    const isChat = path.startsWith("chat");
+            {//@ts-ignore
+                availableEndpoints.toSorted().map((path, index) => {
+                    const root = handlerRoots.find((root) => path.startsWith(root));
+                    if (!root) return null;
 
-                    const Component = handler
-                        .component as React.FC<{
-                        path: string;
-                        lastMessage: MessageEvent<any> | null;
-                        sendMessage: SendMessage;
-                        readyState: ReadyState;
-                        baseUrl: string | URL;
-                        focusRobot?: string | null;
-                    }>;
+                    // You can only instantiate a DOM element from a symbol (variable)
+                    const Component: React.FC<{
+                        path: string,
+                        lastMessage: MessageEvent<any> | null,
+                        sendMessage: SendMessage,
+                        readyState: ReadyState
+                    }> =
+                        handlers[root].component;
 
                     return (
                         <TabPanel
                             className={flexTabPanelClass}
-                            key={path}
-                            forceRender
-                        >
+                            key={index}
+                            forceRender>
                             <Component
                                 path={path}
                                 lastMessage={lastMessage}
                                 sendMessage={sendMessage}
                                 readyState={readyState}
-                                baseUrl={generalBaseUrl}
-                                {...(isChat && focusRobot ? { focusRobot } : {})}
                             />
                         </TabPanel>
                     );

@@ -1,5 +1,11 @@
+/**
+ * @author Lucien Bao
+ * @version 0.9
+ * @date 21 June 2024
+ * VideoStream. Defines a video player component for the vision subproject.
+ */
+
 import React, { useState, useEffect, useRef } from "react";
-import { ReadyState, SendMessage } from "react-use-websocket";
 
 import { Button } from "../../Button";
 import ConnectionIndicator from "../util/ConnectionIndicator";
@@ -18,9 +24,10 @@ const VideoStream: React.FC<Props> = ({
 
     const [videoEnabled, setVideoEnabled] = useState(false);
     const [depthEnabled, setDepthEnabled] = useState(false);
-    const videoCanvasRef = useRef<HTMLCanvasElement>(null);
-    const depthCanvasRef = useRef<HTMLCanvasElement>(null);
+    const videoCanvasRef = useRef(null);
+    const depthCanvasRef = useRef(null);
 
+    // Handle WebSocket messages
     useEffect(() => {
         if (!lastMessage || !lastMessage.data) return;
         try {
@@ -28,12 +35,12 @@ const VideoStream: React.FC<Props> = ({
             if (!message.path || message.path !== path) return;
             const imageData = message.imageData;
             const depthData = message.depthData;
-            const detections = message.detectionData || [];
+            const detections = message.detectionData || []; // Now expects an array, even if empty
 
+            // Image stream handling
             if (videoCanvasRef.current && videoEnabled) {
                 const canvas = videoCanvasRef.current;
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return;
                 const image = new Image();
                 image.onload = () => {
                     canvas.width = image.width;
@@ -42,7 +49,7 @@ const VideoStream: React.FC<Props> = ({
                     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
                     if (trackerDisplay) {
-                        detections.forEach((detection: any) => {
+                        detections.forEach(detection => {
                             if (detection && detection.boundingBox) {
                                 ctx.beginPath();
                                 ctx.rect(
@@ -62,7 +69,6 @@ const VideoStream: React.FC<Props> = ({
             } else if (depthCanvasRef.current && depthEnabled) {
                 const canvas = depthCanvasRef.current;
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return;
                 const image = new Image();
                 image.onload = () => {
                     canvas.width = image.width;
@@ -75,12 +81,12 @@ const VideoStream: React.FC<Props> = ({
                 if (videoCanvasRef.current) {
                     const canvas = videoCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if both streams are disabled
                 }
                 if (depthCanvasRef.current) {
                     const canvas = depthCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if both streams are disabled
                 }
             }
         } catch (error) {
@@ -118,24 +124,26 @@ const VideoStream: React.FC<Props> = ({
     };
 
     return (
-        <div className="min-h-0 grow w-full flex flex-col border shadow-md
-                      border-border items-center p-5 gap-5
-                      rounded-md justify-items-stretch bg-card">
+        <div className="min-h-0 grow w-full flex flex-col outline shadow-md
+                      outline-1 outline-[#d1dbe3] items-center p-5 gap-5
+                      rounded-md justify-items-stretch">
+            {/* Video stream/placeholder */}
             {videoEnabled ? (
-                <canvas ref={videoCanvasRef} />
+                <canvas ref={videoCanvasRef} alt="Video Stream" />
             ) : depthEnabled ? (
-                <canvas ref={depthCanvasRef} />
+                <canvas ref={depthCanvasRef} alt="Depth Stream" />
             ) : (
                 <div className="min-h-0 min-w-0 grow h-full w-full
-                                border border-border
-                                rounded-md shadow-md bg-muted
+                                outline outline-1 outline-[#d1dbe3]
+                                rounded-md shadow-md bg-gray-300
                                 items-center justify-center flex flex-col">
-                    <p className="text-lg text-muted-foreground">Capture has been disabled.</p>
+                    <p className="text-lg">Capture has been disabled.</p>
                 </div>
             )}
-            <div className="shadow-md border border-border
+            {/* Menu */}
+            <div className="shadow-md outline outline-1 outline-[#d1dbe3]
                             p-3 rounded-md justify-center gap-3 flex flex-row
-                            w-full items-center bg-card">
+                            w-full items-center">
 
                 <Button
                     type="button"

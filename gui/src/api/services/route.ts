@@ -1,8 +1,11 @@
-import { config } from '../../config';
+/*
+ *      PURPOSE: contains the logic for interacting with services
+ *               (i.e. actually sends the post and get requests)
+ */
 
 export const getServices = async () => {
     try {
-        const response = await fetch(`http://${config.serverAddr}:8000/services`);
+        const response = await fetch("http://localhost:8080/services");
         if (!response.ok) {
             throw new Error("Network response was not ok");
         }
@@ -15,6 +18,7 @@ export const getServices = async () => {
 
         return serviceList;
     } catch (error) {
+        // setError({ status: true, msg: error.message });
         console.error(
             "There has been a problem with your fetch operation:",
             error
@@ -27,7 +31,7 @@ export const queryServices = async (
     service: string
 ) => {
     const url =
-        `http://${config.serverAddr}:8000/invoke-service?serviceName=` +
+        "http://localhost:8080/invoke-service?serviceName=" +
         service.replace(/\([^()]*\)/g, "");
 
     try {
@@ -36,7 +40,7 @@ export const queryServices = async (
     } catch (error) {
         console.error(
             "something went wrong with the backend request",
-            error instanceof Error ? error.message : String(error)
+            error.message
         );
         throw new Error("Something went wrong fetching backend request");
     }

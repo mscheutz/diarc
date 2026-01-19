@@ -1,11 +1,14 @@
+// IMPORTS //
 import React, { useEffect, useState } from "react";
 
+// NPM packages
 import { SendMessage, ReadyState } from "react-use-websocket";
 import "allotment/dist/style.css"
 import { Allotment } from "allotment";
 import { flattenTree } from "react-accessible-treeview";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
+// Internal imports
 import ActionForm from "./ActionForm";
 import GoalForm from "./GoalForm";
 import ActionFormContext from "./ActionFormContext";
@@ -21,10 +24,19 @@ type Props = {
     readyState: ReadyState
 };
 
+/**
+ * @author Lucien Bao
+ * @version 1.0
+ * GoalSubmission. Provides a GUI to browse available actions and submit actions and goals.
+ * 
+ * Action filtering logic adapted from the example at
+ * https://dgreene1.github.io/react-accessible-treeview/docs/examples-Filtering.
+ */
 const GoalSubmission: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
-    
+    // STATE //
+    // Action browser + action form state
     const [baseActionList, setBaseActionList] = useState<any[]>(flattenTree({
         name: "",
         children: []
@@ -33,6 +45,7 @@ const GoalSubmission: React.FC<Props> = ({
     const [actionFormContext, setActionFormContext] = useState<string[]>([]);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
+    // Method to only show nodes containing the filter string
     const filterNodes = (value: string) => {
         if (value && value !== "") {
             const filtered: any[] = [];
@@ -58,7 +71,9 @@ const GoalSubmission: React.FC<Props> = ({
         }
     };
 
+    // Export button
     const [exportStatus, setExportStatus] = useState<string>("");
+    // Submit buttons
     const [lastGoalSubmitted, setLastGoalSubmitted] = useState<string>("");
     const [submissionStatus, setSubmissionStatus] = useState<string>("");
 
@@ -76,6 +91,7 @@ const GoalSubmission: React.FC<Props> = ({
         }));
     };
 
+    // INPUT //
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
@@ -105,21 +121,25 @@ const GoalSubmission: React.FC<Props> = ({
         }));
     }, [path, sendMessage]);
 
+    // DOM //
     return (
         <ActionFormContext.Provider value={actionFormContext}>
-            <div className="flex flex-col h-full min-h-0 gap-4">
+            <div className="min-h-0 grow w-full flex flex-col border shadow-md
+                            border-1 border-[#d1dbe3] items-center p-5 gap-5
+                            rounded-md justify-items-stretch">
+
+                {/* Fully tabbed view, for mobile */}
                 <Tabs
-                    className="displayFlexImportant flex-col flex-1 min-h-0 md:hidden"
-                    id="mediumHide"
-                >
+                    className="displayFlexImportant flex-col min-h-0 grow w-full"
+                    id="mediumHide">
                     <TabList className="select-none">
-                        <Tab>Database</Tab>
-                        <Tab>Action</Tab>
-                        <Tab>Goal</Tab>
+                        <Tab>Action Database</Tab>
+                        <Tab>Submit Action</Tab>
+                        <Tab>Submit Goal</Tab>
                     </TabList>
 
-                    <TabPanel className="hidden flex-col flex-1 min-h-0 gap-4 pt-4">
-                        <div className="flex-1 min-h-0 border border-border rounded-lg overflow-hidden bg-card">
+                    <TabPanel className="hidden flex-col min-h-0 grow gap-5">
+                        <div className="basis-2/3 min-h-0">
                             <ActionDatabase
                                 actionList={actionList}
                                 setActionFormContext={setActionFormContext}
@@ -129,12 +149,8 @@ const GoalSubmission: React.FC<Props> = ({
                                 exportStatus={exportStatus}
                             />
                         </div>
-                        <div className="h-48 min-h-0 border border-border rounded-lg overflow-hidden bg-card">
-                            <div className="px-3 py-2 border-b border-border bg-muted/30">
-                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                    Saved Presets
-                                </span>
-                            </div>
+                        <div className="basis-1/3 min-h-0 overflow-y-auto border border-1 border-[#d1dbe3] rounded-md
+                                        shadow-md">
                             <ManagePresets
                                 sendMessage={sendMessage}
                                 path={path}
@@ -143,74 +159,88 @@ const GoalSubmission: React.FC<Props> = ({
                             />
                         </div>
                     </TabPanel>
-
-                    <TabPanel className="hidden flex-col flex-1 min-h-0 pt-4 overflow-auto">
-                        <ActionForm
-                            sendMessage={sendMessage}
-                            path={path}
-                            setLastGoalSubmitted={setLastGoalSubmitted}
-                            setSubmissionStatus={setSubmissionStatus}
-                        />
+                    <TabPanel className="hidden flex-col min-h-0 grow">
+                        <div className="w-full h-full overflow-y-auto">
+                            <ActionForm
+                                sendMessage={sendMessage}
+                                path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
+                            />
+                        </div>
                     </TabPanel>
-
-                    <TabPanel className="hidden flex-col flex-1 min-h-0 pt-4 overflow-auto">
-                        <GoalForm
-                            sendMessage={sendMessage}
-                            path={path}
-                            setLastGoalSubmitted={setLastGoalSubmitted}
-                            setSubmissionStatus={setSubmissionStatus}
-                        />
+                    <TabPanel className="hidden flex-col min-h-0 grow">
+                        <div className="w-full h-full overflow-y-auto">
+                            <GoalForm
+                                sendMessage={sendMessage}
+                                path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
+                            />
+                        </div>
                     </TabPanel>
                 </Tabs>
 
+                {/* Split pane, for wide screens */}
+                {/* Horizontal split pane */}
                 <Allotment
-                    className="hidden md:flex flex-1 min-h-0 rounded-lg border border-border overflow-hidden"
-                    minSize={200}
-                    snap
-                >
-                    <Allotment.Pane preferredSize="50%" minSize={300}>
-                        <Allotment vertical minSize={100} snap>
-                            <Allotment.Pane preferredSize="65%" minSize={200}>
-                                <div className="h-full bg-card">
-                                    <ActionDatabase
-                                        actionList={actionList}
-                                        setActionFormContext={setActionFormContext}
-                                        setSelectedIds={setSelectedIds}
-                                        filterNodes={filterNodes}
-                                        handleExport={handleExport}
-                                        exportStatus={exportStatus}
-                                    />
-                                </div>
+                    className="h-full overflow-scroll border border-1 md:block
+                               border-[#d1dbe3] shadow-md rounded-md hidden"
+                    minSize={150}
+                    snap>
+
+                    {/* Left pane */}
+                    <Allotment.Pane
+                        preferredSize={"50%"}
+                        minSize={350}
+                        className="flex flex-col">
+                        <Allotment
+                            className="h-full overflow-scroll border border-1 md:block
+                               border-[#d1dbe3] shadow-md rounded-md hidden"
+                            minSize={150}
+                            vertical={true}
+                            snap>
+                            <Allotment.Pane
+                                preferredSize={"65%"}
+                                minSize={350}
+                                className="flex flex-col">
+                                <ActionDatabase
+                                    actionList={actionList}
+                                    setActionFormContext={setActionFormContext}
+                                    setSelectedIds={setSelectedIds}
+                                    filterNodes={filterNodes}
+                                    handleExport={handleExport}
+                                    exportStatus={exportStatus}
+                                />
                             </Allotment.Pane>
-                            <Allotment.Pane preferredSize="35%" minSize={100}>
-                                <div className="h-full flex flex-col bg-card border-t border-border">
-                                    <div className="px-3 py-2 border-b border-border bg-muted/30">
-                                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                            Saved Presets
-                                        </span>
-                                    </div>
-                                    <ManagePresets
-                                        sendMessage={sendMessage}
-                                        path={path}
-                                        setLastGoalSubmitted={setLastGoalSubmitted}
-                                        setSubmissionStatus={setSubmissionStatus}
-                                    />
-                                </div>
+                            <Allotment.Pane
+                                preferredSize={"35%"}
+                                minSize={150}
+                                className="flex flex-col">
+                                <p className="p-2 text-lg border-b border-[#d1dbe3]">Manage Presets</p>
+                                <ManagePresets
+                                    sendMessage={sendMessage}
+                                    path={path}
+                                    setLastGoalSubmitted={setLastGoalSubmitted}
+                                    setSubmissionStatus={setSubmissionStatus}
+                                />
                             </Allotment.Pane>
                         </Allotment>
                     </Allotment.Pane>
 
-                    <Allotment.Pane minSize={280}>
-                        <div className="h-full bg-card border-l border-border overflow-auto">
-                            <Tabs className="h-full flex flex-col">
-                                <div className="px-4 pt-4">
-                                    <TabList className="select-none">
-                                        <Tab>Action</Tab>
-                                        <Tab>Goal</Tab>
-                                    </TabList>
-                                </div>
+                    {/* Right pane */}
+                    <Allotment.Pane
+                        className="overflow-y-auto"
+                        minSize={300}>
 
-                                <TabPanel className="hidden flex-col flex-1 min-h-0 p-4 overflow-auto">
+                        <div className="w-full h-full overflow-y-auto p-5">
+                            <Tabs className="h-full flex flex-col">
+                                <TabList className="select-none">
+                                    <Tab>Submit Action</Tab>
+                                    <Tab>Submit Goal</Tab>
+                                </TabList>
+
+                                <TabPanel className="hidden flex-col min-h-0 grow overflow-y-auto">
                                     <ActionForm
                                         sendMessage={sendMessage}
                                         path={path}
@@ -219,7 +249,7 @@ const GoalSubmission: React.FC<Props> = ({
                                     />
                                 </TabPanel>
 
-                                <TabPanel className="hidden flex-col flex-1 min-h-0 p-4 overflow-auto">
+                                <TabPanel className="hidden flex-col min-h-0 grow">
                                     <GoalForm
                                         sendMessage={sendMessage}
                                         path={path}
@@ -232,7 +262,7 @@ const GoalSubmission: React.FC<Props> = ({
                     </Allotment.Pane>
                 </Allotment>
 
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="w-full flex flex-row justify-stretch gap-5">
                     <ConnectionIndicator readyState={readyState} />
                     <SubmissionStatusIndicator goal={lastGoalSubmitted} submissionStatus={submissionStatus} />
                 </div>

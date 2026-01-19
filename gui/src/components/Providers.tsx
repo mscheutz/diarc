@@ -1,7 +1,10 @@
+
+
+"use client";
+
 import React from "react";
 import { ThemeProvider } from "next-themes";
 import type { FC, ReactNode } from "react";
-import { AuthProvider } from "../contexts/AuthContext";
 
 interface ProvidersProps {
     children: ReactNode;
@@ -9,11 +12,8 @@ interface ProvidersProps {
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
     return (
-        // @ts-ignore
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AuthProvider>
-                {children}
-            </AuthProvider>
+            {children}
         </ThemeProvider>
     );
 };

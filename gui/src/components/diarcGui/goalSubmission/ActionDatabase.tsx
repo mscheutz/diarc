@@ -1,8 +1,11 @@
+// IMPORTS //
 import React from "react";
 
+// NPM packages
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faSync } from "@fortawesome/free-solid-svg-icons";
 
+// Internal imports
 import ActionBrowser from "./ActionBrowser";
 import { Button } from "../../Button";
 
@@ -15,36 +18,51 @@ type Props = {
     exportStatus: string
 };
 
+/**
+ * ActionDatabase. Subcomponent which combines the action browser with a menu
+ * bar for filtering and exporting actions.
+ * 
+ * @author Lucien Bao
+ * @version 1.0
+ */
 const ActionDatabase: React.FC<Props> = ({
     actionList, setActionFormContext, setSelectedIds, filterNodes,
     handleExport, exportStatus
 }) => {
+    // DOM //
     return (
-        <div className="flex flex-col h-full min-h-0">
-            <div className="flex items-center gap-2 p-3 border-b border-border bg-muted/30">
+        <div className="flex flex-col shrink min-h-0 max-h-full gap-5 md:gap-1">
+            {/* Menu bar */}
+            <div className="p-3 rounded-tl-md outline outline-1 outline-[#d1dbe3]
+                            flex flex-row gap-3 overflow-auto items-stretch
+                            shrink-0">
                 <input
                     type="text"
-                    className="flex-1 h-8 rounded-md text-sm border border-input bg-background 
-                               text-foreground px-3 placeholder:text-muted-foreground
-                               focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
-                    placeholder="Search actions..."
-                    onChange={(e) => filterNodes(e.target.value)}
-                />
-                <Button size="sm" variant="outline" onClick={handleExport}>
-                    Export
-                    {exportStatus === "wait" && (
-                        <FontAwesomeIcon icon={faSync} className="ml-1.5 h-3 w-3 text-amber-500" spin />
-                    )}
-                    {exportStatus === "successful" && (
-                        <FontAwesomeIcon icon={faCheck} className="ml-1.5 h-3 w-3 text-green-500" />
-                    )}
+                    className="block box-border rounded 
+                               text-sm border border-slate-500
+                               font-mono grow pl-2"
+                    placeholder="Filter actions..."
+                    onChange={(e) => {
+                        filterNodes(e.target.value);
+                    }}>
+                </input>
+                <Button onClick={handleExport}>
+                    Export selected
                 </Button>
+                {exportStatus ? (
+                    <div className="flex flex-row items-center">
+                        {exportStatus === "wait" ? (
+                            <FontAwesomeIcon icon={faSync} color="#efd402" spin />
+                        ) : (
+                            <FontAwesomeIcon icon={faCheck} color="#00a505" />
+                        )}
+                    </div>) : null}
             </div>
-            <div className="flex-1 min-h-0 overflow-auto">
+
+            {/* Results */}
+            <div className="flex flex-col w-full min-h-0 max-h-full shrink">
                 {actionList.length === 1 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                        No actions match filter
-                    </div>
+                    <div className="pl-1">No actions match filter.</div>
                 ) : (
                     <ActionBrowser
                         actionList={actionList}

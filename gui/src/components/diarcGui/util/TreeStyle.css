@@ -1,21 +1,15 @@
+/* Custom styling for react-accessible-treeview classes */
+
 .tree-node {
     cursor: pointer;
     white-space: nowrap;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    transition: background-color 0.1s ease;
 }
 
 .tree-node:hover {
-    background: hsl(var(--muted));
+    background: #C6E3FA;
 }
 
 .selected {
     cursor: pointer;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-}
-
-.selected:hover {
-    background: hsl(var(--primary) / 0.9);
+    background: #6ab0ff;
 }

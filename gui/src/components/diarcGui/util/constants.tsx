@@ -1,28 +1,24 @@
 import ActionProgrammer from "../actionProgrammer/ActionProgrammer";
+import BeliefViewer from "../BeliefViewer";
 import ChatViewer from "../ChatViewer";
-import GoalQueueViewer from "../GoalQueueViewer";
+import GoalViewer from "../GoalViewer";
+import MapViewer from "../MapViewer";
+import GoalSubmission from "../goalSubmission/GoalSubmission";
 import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
-import AvaBehaviorTab from "../AvaBehaviorTab";
-import MediaManager from "../MediaManager";
-// import MapViewer from "../MapViewer";
 
-const handlerRoots: string[] = [
-    "actionProgrammer",
-    "chat",
-    "goalViewer",
-    "goalQueueViewer",
-    "vision",
-    "tradeService",
-    "avaBehaviors",
-    "media",
-    // "map"
-];
+const handlerRoots: string[] =
+    ["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map",
+        "vision", "tradeService"];
 
 const handlers = {
     "actionProgrammer": {
         tabName: "Action Programmer",
         component: ActionProgrammer
+    },
+    "belief": {
+        tabName: "Belief Viewer",
+        component: BeliefViewer
     },
     "chat": {
         tabName: "Chat Viewer",
@@ -30,7 +26,15 @@ const handlers = {
     },
     "goalViewer": {
         tabName: "Goal Viewer",
-        component: GoalQueueViewer
+        component: GoalViewer
+    },
+    "goalManager": {
+        tabName: "Goal Submission",
+        component: GoalSubmission
+    },
+    "map": {
+        tabName: "Map Viewer",
+        component: MapViewer
     },
     "tradeService": {
         tabName: "TRADE Service Viewer",
@@ -39,47 +43,20 @@ const handlers = {
     "vision": {
         tabName: "Vision Manager",
         component: VisionManager
-    },
-    "avaBehaviors": {
-        tabName: "Task Submission",
-        component: AvaBehaviorTab
-    },
-    "media": {
-        tabName: "Media Management",
-        component: MediaManager
-    },
-    // "map": {
-    //     tabName: "Map",
-    //     component: MapViewer
-    // },
+    }
 };
 
 export { handlerRoots, handlers };
 
 const columns = [
     "Goal",
-    "Status",
-    "Start time",
-];
-
-const pastColumns = [
-    "Goal",
+    "Actor",
     "Status",
     "Start time",
     "End time",
+    "Priority",
+    "ID"
 ];
-
-const scheduledColumns = [
-    "Goal",
-    "Scheduled Time",
-    "Repeat Interval",
-    "Repeat Until"
-]
-
-const mediaColumns = [
-    "Filename",
-    "File type"
-]
 
 type Option = {
     value: string,
@@ -92,6 +69,8 @@ const sortCriteria: Option[] = [
     { value: "status", label: "Status" },
     { value: "start", label: "Start time" },
     { value: "end", label: "End time" },
+    { value: "priority", label: "Priority" },
+    { value: "id", label: "ID" },
 ]
 
 const statuses: string[] = [
@@ -104,7 +83,7 @@ const statuses: string[] = [
     "failed"
 ]
 
-export {columns, pastColumns, scheduledColumns, sortCriteria, statuses, mediaColumns};
+export {columns, sortCriteria, statuses};
 export type { Option };
 
 const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
