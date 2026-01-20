@@ -16,6 +16,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.temiv3.TemiV3Interface;
 import edu.tufts.hrilab.temiv3.TemiV3PoseConsultant;
 import edu.tufts.hrilab.temiv3.TemiV3PoseReference;
@@ -467,6 +468,12 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
         }
         log.warn("[convertStringToInt] Error converting string representation of integer: " + numberString);
         return -1;
+    }
+
+    @Override
+    public void sayText(Utterance utterance) {
+        String message = utterance.getWordsAsString();
+        sayText(message);
     }
 
     @Override

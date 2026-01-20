@@ -8,6 +8,7 @@ import edu.tufts.hrilab.config.YumiFoodOrderingMock;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
@@ -31,8 +32,10 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     simSpeechRec = diarcConfig.simSpeechRec;
     untrustedSimSpeechRec = diarcConfig.untrustedSimSpeechRec;
 
+    addServiceToObserve("sayText", Utterance.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
+    addServiceToObserve("sayText", Utterance.class, Boolean.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);    addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
     addServiceToObserve("assertProperties", Symbol.class, List.class);
     addServiceToObserve("openGripperRapid");
     addServiceToObserve("closeGripperRapid");

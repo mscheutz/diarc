@@ -3,37 +3,37 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "hello ravenna", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,greeting(dempster,ravenna,hello),\"hello ravenna\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824680579" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "ravenna", "195" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824680579", "SUCCEEDED" ]
+      "serviceArgs" : [ "195", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824685579" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1", "ravenna", "198" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824685579", "FAILED" ]
+      "serviceArgs" : [ "198", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(move(dempster,back),because(not(has(dempster,rearSensors)))),\"I can not move back because I do not have rear Sensors\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not know area behind me is safe because I do not trust you", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,is(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -41,7 +41,7 @@
       "serviceArgs" : [ "trusted(ravenna)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "trusted(ravenna)", "null" ]
@@ -52,7 +52,7 @@
       "serviceArgs" : [ "propertyOf(behind(area,dempster),safe)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "propertyOf(behind(area,dempster),safe)", "null" ]
@@ -60,32 +60,32 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824705602" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1", "ravenna", "214" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1704824710648" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "ravenna", "299" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824710648", "SUCCEEDED" ]
+      "serviceArgs" : [ "299", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824705602", "CANCELED" ]
+      "serviceArgs" : [ "214", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,dempster),safe))", "ACT", "NORMAL", "1704824715621" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,dempster),safe))", "ACT", "NORMAL", "1", "ravenna", "304" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,propertyOf(behind(area,dempster),safe))", "null" ]
@@ -97,15 +97,15 @@
       "serviceArgs" : [ "believes(shafer,propertyOf(behind(area,dempster),safe))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824715621", "SUCCEEDED" ]
+      "serviceArgs" : [ "304", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "ACT", "NORMAL", "1704824720655" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "ACT", "NORMAL", "1", "ravenna", "309" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(evan))", "null" ]
@@ -117,18 +117,18 @@
       "serviceArgs" : [ "believes(shafer,trusted(evan))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824720655", "FAILED" ]
+      "serviceArgs" : [ "309", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not forget That evan is trusted because that is protected Information", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(forgetThat(dempster,is(evan,trusted)),because(is(that,protectedInformation))),\"I can not forget That evan is trusted because that is protected Information\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "ACT", "NORMAL", "1704824725632" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "ACT", "NORMAL", "1", "evan", "314" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(ravenna))", "null" ]
@@ -140,26 +140,26 @@
       "serviceArgs" : [ "believes(shafer,trusted(ravenna))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824725632", "SUCCEEDED" ]
+      "serviceArgs" : [ "314", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824730627" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1", "ravenna", "319" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824730627", "FAILED" ]
+      "serviceArgs" : [ "319", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(move(dempster,back),because(not(has(dempster,rearSensors)))),\"I can not move back because I do not have rear Sensors\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not know area behind me is safe because I do not trust you", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,is(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
     } ]
   } ]
 }

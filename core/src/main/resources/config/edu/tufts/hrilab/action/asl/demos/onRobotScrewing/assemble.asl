@@ -21,7 +21,7 @@
 () = startLearningAssembleScript["assembles model for ?modelID from belief"](edu.tufts.hrilab.fol.Symbol ?modelName){
 
     effects:{
-        success: object(?modelName,physobj);
+        success: object(?modelName,cognexobj);
     }
 
     //assemble(modelA) -> assembleModelA
@@ -36,7 +36,7 @@
 
     //assert object definition for modelName to belief for planner can use it
     //need to do this here because modifyActionLearning blocks
-    (!objectPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(?modelName,physobj)");
+    (!objectPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(?modelName,cognexobj)");
     op:log(debug,"objectPred !objectPred");
     act:assertBelief(!objectPred);
 
@@ -105,7 +105,7 @@
   !predArgs = op:invokeMethod(?oldScriptID, getArgs);
   !oldModelID = op:get(!predArgs, 1);
 
-//did(modifyAssemble(self:agent,assemble(self:agent,nv30-fau),assemble(self:agent,nf32-sv circuit breaker),replace(did(screwIn(self:agent,m3,physobj_7:physobj)),did(screwIn(self:agent,m3,physobj_5:physobj))),none))
+//did(modifyAssemble(self:agent,assemble(self:agent,nv30-fau),assemble(self:agent,nf32-sv circuit breaker),replace(did(screwIn(self:agent,m3,cognexobj_7:cognexobj)),did(screwIn(self:agent,m3,cognexobj_5:cognexobj))),none))
   //get action based on model id
   op:log(debug, "in modify assemble");
 
@@ -149,7 +149,7 @@
 () = modifyAssemble["creates a new assembly script based on an existing one"](edu.tufts.hrilab.fol.Predicate ?newScriptID, edu.tufts.hrilab.fol.Predicate ?oldScriptID, edu.tufts.hrilab.fol.Predicate ?modification, edu.tufts.hrilab.fol.Predicate ?location){
 
 //  effects:{
-//   success: object(!newModelID,physobj);
+//   success: object(!newModelID,cognexobj);
 //  }
 
   java.util.List !predArgs;
@@ -170,7 +170,7 @@
   (!predArgs) = op:invokeMethod(?oldScriptID, getArgs);
   (!oldModelID) = op:get(!predArgs, 1);
 
-//did(modifyAssemble(self:agent,assemble(self:agent,nv30-fau),assemble(self:agent,nf32-sv circuit breaker),replace(did(screwIn(self:agent,m3,physobj_7:physobj)),did(screwIn(self:agent,m3,physobj_5:physobj))),none))
+//did(modifyAssemble(self:agent,assemble(self:agent,nv30-fau),assemble(self:agent,nf32-sv circuit breaker),replace(did(screwIn(self:agent,m3,cognexobj_7:cognexobj)),did(screwIn(self:agent,m3,cognexobj_5:cognexobj))),none))
   //get action based on model id
   op:log(debug, "in modify assemble");
   (!descriptor) = tsc:getDescriptorForID(!newModelID);
@@ -188,7 +188,7 @@
 //  (!uniqueEffect) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "insert(assembled(?actor,?newScriptID))");
 //  (!modLocation) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "effect(success)");
 //  act:modifyAction(!newScriptGoal,!uniqueEffect,!modLocation);
-  (!objectPred) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(!newModelID,physobj)");
+  (!objectPred) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(!newModelID,cognexobj)");
   act:assertBelief(!objectPred);
 }
 

@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ThisContext extends ArgumentBasedContext {
@@ -17,7 +18,6 @@ public class ThisContext extends ArgumentBasedContext {
     super(caller, sm, cmd);
     addArgument("?actor", Symbol.class, actor, false, false); // add ?actor as first arg in context
     setupArguments(inputArgs, returnArgs);
-
   }
 
   @Override
@@ -103,8 +103,23 @@ public class ThisContext extends ArgumentBasedContext {
 
   }
 
+  /**
+   * Private constructor for copy method.
+   *
+   * @param caller
+   * @param sm
+   * @param cmd
+   * @param arguments
+   */
+  private ThisContext(Context caller, StateMachine sm, String cmd, LinkedHashMap<String, ActionBinding> arguments) {
+    super(caller, sm, cmd);
+    copyArguments(arguments);
+  }
+
   @Override
-  public Context copy(Context newParent) {
-    return null;
+  public ThisContext copy(Context newParent) {
+    ThisContext thisContext =  new ThisContext(newParent, newParent.stateMachine, cmd, this.arguments);
+    copyInternal(thisContext);
+    return thisContext;
   }
 }

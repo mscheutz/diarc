@@ -3,32 +3,32 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "hello evan", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824992988" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "23" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824992988", "SUCCEEDED" ]
+      "serviceArgs" : [ "23", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "no", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(no),\"no\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1704824998001" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "evan", "35" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824998001", "FAILED" ]
+      "serviceArgs" : [ "35", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not do a squat because I do not know how to do a squat", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,cannot(doasquat(dempster),because(not(know(dempster,how(doasquat(dempster)))))),\"I can not do a squat because I do not know how to do a squat\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -36,16 +36,16 @@
       "serviceArgs" : [ "capableOf(move(dempster,forward))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(yes),\"yes\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704825003007" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "41" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704825003007", "FAILED" ]
+      "serviceArgs" : [ "41", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,cannot(move(dempster,forward),because(see(dempster,obstacle))),\"I can not move forward because I see obstacle\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -53,29 +53,29 @@
       "serviceArgs" : [ "capableOf(move(dempster,forward))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(yes),\"yes\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704825007998" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "52" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1704825013009" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "75" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704825013009", "SUCCEEDED" ]
+      "serviceArgs" : [ "75", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704825007998", "CANCELED" ]
+      "serviceArgs" : [ "52", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "bye evan", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,bye),\"bye evan\",{})", "true" ]
     } ]
   } ]
 }

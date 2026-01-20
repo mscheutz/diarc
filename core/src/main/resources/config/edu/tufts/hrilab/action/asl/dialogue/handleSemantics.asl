@@ -155,9 +155,10 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
       if (goal:knows(?actor,?query)) {
         op:log("debug", "handleITK: knows goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
-        //TODO: undo this change -> big issue that goals are submitted not through the Execution Manager
-        //      Making hacky change to get desired behavior on short notice while covering up this bug
-        return;
+        ////TODO: undo this change -> big issue that goals are submitted not through the Execution Manager
+        ////      Making hacky change to get desired behavior on short notice while covering up this bug
+        ////      (Don't want a secondary response after resource checking "knows" goals provide their own failure responses)
+        //return;
       } elseif (goal:observe(?query)) {
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");

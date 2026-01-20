@@ -363,7 +363,7 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
 
   @Override
   public boolean sayText(Utterance utterance, boolean wait) {
-    return sayText(utterance, wait);
+    return sayText(utterance.getWordsAsString(), wait);
   }
 
   @Override

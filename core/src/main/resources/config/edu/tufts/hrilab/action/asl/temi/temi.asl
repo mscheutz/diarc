@@ -170,8 +170,10 @@
 
     //If not acknowledged and ran out of tries -> clear screen, return to original location, and
     //  say that we could not find the requested patient
-    if(op:isNull(!ackAnswerBindings) || op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
-//        op:log("info", "[escort] going to destination to communicate failure to find patient");
+    if(op:isNull(!ackAnswerBindings)) {
+        act:generateResponseFromString("I could not find the requested patient ?name");
+    } elseif (op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
+        //double conditional due to asl bug
         act:generateResponseFromString("I could not find the requested patient ?name");
     } else {
         act:generateResponseFromString("Arrived at !destinationName");

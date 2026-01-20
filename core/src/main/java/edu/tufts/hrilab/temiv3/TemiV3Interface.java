@@ -11,6 +11,7 @@ import edu.tufts.hrilab.action.annotations.Effect;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.slug.common.Utterance;
 
 import java.util.List;
 
@@ -340,6 +341,10 @@ public interface TemiV3Interface {
     @TRADEService
     @Action
     public void setHardButtons(boolean disabled);
+
+    @TRADEService
+    @Action
+    void sayText(Utterance utterance);
 
     @TRADEService
     @Action

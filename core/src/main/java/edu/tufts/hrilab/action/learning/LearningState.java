@@ -58,7 +58,7 @@ public class LearningState {
   private Map<List<Term>,String> localVariableProperties = new HashMap<>();
 
   //TODO:brad: get these values from the currently active consultants
-  private Set<String> consultantTypes = Set.of(new String[]{"physobj", "pose"});//,"gofapose","yumipose","mobileyumipose","location"});
+  private Set<String> consultantTypes = Set.of(new String[]{"physobj", "cognexobj"});//, "pose"});//,"gofapose","yumipose","mobileyumipose","location"});
   private int localVariableCounter=0;
   private int roleNameCounter = 0;
 
@@ -533,7 +533,7 @@ public class LearningState {
    */
   private EventSpec buildEventSpecForAction(Symbol actor, Predicate actionPredicate) {
     EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.ACTION);
-//    esBuilder.setActor(processEventArgument(actor));
+    esBuilder.setActor(processEventArgument(actor));
     esBuilder.setCommand(actionPredicate.getName());
 
     List<Symbol> args = actionPredicate.getArgs();
@@ -577,13 +577,13 @@ public class LearningState {
             name = getRoleNameForValue(value);
           }
         } else {
-          name = value.toString();
+          name = value.getName();
           //TODO: Need to tell at this point whether the argument is a string or some other type in order to properly
-          //      escape it if necessary. Otherwise ASL writer/parser can break or incorrect types supplied
+          //      escape it if necessary. Otherwise ASL writer/parser can break or have incorrect types supplied
           if (needsEscaping(name)) {
             name = "\"" + name + "\"";
           }
-
+          name = value.hasType() ? name + ":" + value.getType() : name;
         }
       }
       param.append(name);

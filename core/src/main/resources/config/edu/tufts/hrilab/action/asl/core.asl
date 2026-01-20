@@ -17,9 +17,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (tsc:actionExecutable(?goal)) {
       !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "capableOf(?goal)");
       act:assertBelief(!toAssert);
-      //TODO: pull out - pickAndPlace2024 hack to get around itk pipeline not submitting goals through ExecutionManager
-      !response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes)");
-      act:generateResponse(?actor,!response,direct);
+      ////TODO: pull out - pickAndPlace2024 hack to get around itk pipeline not submitting goals through ExecutionManager
+      //!response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes)");
+      //act:generateResponse(?actor,!response,direct);
     } else {
       // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
       //       way that ITKs are handled

@@ -797,6 +797,11 @@ public final class Utterance implements Serializable {
     }
     sb.append(",");
 
+    sb.append("\"");
+    sb.append(getWordsAsString());
+    sb.append("\"");
+    sb.append(",");
+
     // print supplemental semantics modifiers
     sb.append("{");
     StringBuilder modifiers = new StringBuilder();

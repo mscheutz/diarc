@@ -9,6 +9,7 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.slug.common.Utterance;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +65,14 @@ public class HardCodedTestComparator extends DiarcTestComparator {
         }
         joinOnGoalAlternate[2] = nextOutput[2]; // goal status
       }
+    }
+
+    try {
+      if (nextOutput[0].equals("sayText")) {
+        nextOutput[1] = ((Utterance) nextOutput[1]).getWordsAsString();
+      }
+    } catch (Exception e) {
+      log.debug("[handleNextOutput] unable to convert sayText target to words string");
     }
 
     boolean foundMatch = false;

@@ -11,7 +11,7 @@ currenteetype(robotone,gripper).
 currenteetype(robottwo,gripper).
 
 %%%%%%% Planning %%%%%%%%%%%%%%
-subtype(modelID, physobj).
+subtype(modelID, cognexobj).
 subtype(eetype,concept).
 
 subtype(var, object).
@@ -19,9 +19,9 @@ subtype(concept, var).
 subtype(physical, var).
 subtype(location, concept).
 subtype(method, concept).
-subtype(physobj, physical).
+subtype(cognexobj, physical).
 subtype(agent, physical).
-subtype(container, physobj).
+subtype(container, cognexobj).
 subtype(arm, agent).
 subtype(place, location).
 subtype(pose, location).

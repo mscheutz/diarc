@@ -11,6 +11,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
@@ -38,10 +39,12 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
     addServiceToObserve("joinOnGoal", Long.class);
+    addServiceToObserve("sayText", Utterance.class);
     addServiceToObserve("sayText", String.class);
-
+    addServiceToObserve("sayText", Utterance.class, Boolean.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);
     setPermanentTimeout(10, TimeUnit.SECONDS);
   }
 

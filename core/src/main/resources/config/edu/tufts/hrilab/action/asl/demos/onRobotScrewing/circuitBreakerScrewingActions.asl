@@ -1,16 +1,16 @@
 //actions used for planning in circuit breaker screwing demos
 
-() = grab["?actor grabs ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+() = grab["?actor grabs ?cognexobj"](edu.tufts.hrilab.fol.Symbol ?cognexobj:cognexobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
 
     conditions : {
         pre : free(?actor);
-        pre : at(?physobj,?pose);
+        pre : at(?cognexobj,?pose);
         pre : at(?actor, ?pose);
     }
     effects : {
-        success : holding(?actor, ?physobj);
+        success : holding(?actor, ?cognexobj);
         success : not(free(?actor));
-        success : not(at(?physobj,?pose));
+        success : not(at(?cognexobj,?pose));
         nonperf : not(at(?actor,?pose));
         nonperf : unknownlocation(?actor);
     }
@@ -18,35 +18,35 @@
     edu.tufts.hrilab.fol.Symbol !default = "default";
     edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
 
-    op:log(info, "[grab] ?physobj");
+    op:log(info, "[grab] ?cognexobj");
     act:goToCameraPose(?pose);
-    act:perceiveEntity(?physobj);
+    act:perceiveEntity(?cognexobj);
 
     act:rotateToEE(!gripper);
     tsc:openGripper();
-    tsc:moveAndOrientToCognexTarget(?physobj);
+    tsc:moveAndOrientToCognexTarget(?cognexobj);
     act:moveToObjectHeight();
     tsc:closeGripper();
     act:moveToCameraHeight();
     act:rotateToEE(!default);
-    op:log(info, "[grab] ?physobj complete");
+    op:log(info, "[grab] ?cognexobj complete");
 }
 
-() = putdown["?actor releases ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+() = putdown["?actor releases ?cognexobj"](edu.tufts.hrilab.fol.Symbol ?cognexobj:cognexobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
     conditions : {
-        pre : holding(?actor, ?physobj);
+        pre : holding(?actor, ?cognexobj);
         pre : at(?actor,?pose);
     }
     effects : {
-        success : not(holding(?actor, ?physobj));
+        success : not(holding(?actor, ?cognexobj));
         success : free(?actor);
-        success : at(?physobj,?pose);
+        success : at(?cognexobj,?pose);
     }
 
     edu.tufts.hrilab.fol.Symbol !default = "default";
     edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
 
-    op:log(info, "[putdown] ?physobj + ?pose");
+    op:log(info, "[putdown] ?cognexobj + ?pose");
 
     act:rotateToEE(!gripper);
     act:moveToObjectHeight();
@@ -54,7 +54,7 @@
     act:moveToCameraHeight();
     act:rotateToEE(!default);
 
-    op:log(info, "[putdown] ?physobj + ?pose complete");
+    op:log(info, "[putdown] ?cognexobj + ?pose complete");
 }
 
 

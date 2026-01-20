@@ -130,6 +130,12 @@ import java.util.Map;
     }
 }
 
+(Map ?answerBindings) = askQuestion(Predicate ?questionSemantics, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    ?answerBindings = act:askQuestion(!addressee, ?questionSemantics, ?responseForm, ?attempts, ?duration);
+}
+
 (Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
     List !responseForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     op:add(!responseForms, ?responseForm);

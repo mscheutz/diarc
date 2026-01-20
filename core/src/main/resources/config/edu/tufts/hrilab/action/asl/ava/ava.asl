@@ -453,7 +453,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     act:toggleVoiceOn();
     act:updateDialogueHistory(!utterance);
-    act:sayText(?literal);
+    act:sayText(!utterance);
     act:toggleVoiceOff();
 }
 
