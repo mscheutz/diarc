@@ -142,7 +142,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
-        //act:sayText(!speaker, "Okay, I am ignoring the previous command"); //TODO: not sure about this
+        //act:generateResponseFromString(!speaker, "Okay, I am ignoring the previous command"); //TODO: not sure about this
         act:generateResponse(!speaker, and(ack(okay),ignoring(?actor,previousCommand)));
         return;
       } elseif (op:equalsValue(!response, yes())) {

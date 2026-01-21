@@ -44,11 +44,7 @@ import java.util.Map;
 
     Symbol !listener;
     !listener = this:getOriginalSubmitter();
-    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
-    UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
-    op:invokeMethod(!utterance, "setType", !type);
-    op:invokeMethod(!utterance, "setWords", ?words);
-    act:communicateUtterance(!utterance);
+    act:generateResponseFromString(!listener,?words);
 }
 
 () = generateResponseFromString(Symbol ?addressee, String ?words) {
@@ -69,7 +65,13 @@ import java.util.Map;
 
     Symbol !addressee;
     !addressee = this:getOriginalSubmitter();
-    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
+    act:generateResponse(!addressee,?semantics);
+}
+
+() = generateResponse(Symbol ?addressee, Predicate ?semantics) {
+    op:log("debug", "[generateResponse] semantics: ?semantics");
+
+    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
     op:invokeMethod(!utterance, "setSemantics", ?semantics);

@@ -52,7 +52,8 @@ public class QueueExecutionManager extends ExecutionManager {
       List<Predicate> conflictingGoals = getSystemGoalsPredicates(g.getActor(), true);
       if (!conflictingGoals.isEmpty()) {
         if (conflictingGoals.get(0).getName().equals("active")) {
-          statusReportSemantics = Factory.createPredicate("addingToMyCurrentQueueOfTasks()");
+          //TODO: get addressee
+          statusReportSemantics = Factory.createPredicate("addingThatToMyCurrentQueueOfTasks()");
           //statusReport = "okay, adding to my current queue of tasks";
         } else if (conflictingGoals.get(0).getName().equals("suspended")) {
           //Could add currently suspended goal predicate to semantics and corresponding examples to NLG prompt if we want to report what the goal is

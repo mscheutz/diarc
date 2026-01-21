@@ -445,7 +445,8 @@ import edu.tufts.hrilab.action.goal.Goal;
 }
 
 () = say(String ?literal) {
-    Symbol !listener = this:getOriginalSubmitter();
+    //Symbol !listener = this:getOriginalSubmitter();
+    Symbol !listener = local_user;
     edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
     edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
