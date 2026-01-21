@@ -141,6 +141,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
   private CiscoCodecAPI ciscoCodecAPI = new CiscoCodecAPI();
+  private Symbol altDockLocation;
+
+  // Original (unadjusted) dock poses for localization
+  private Map<String, Pair<Point3d, Quat4d>> originalDockPoses = new HashMap<>();
 
   public AvaComponent() {
     super();
@@ -242,6 +246,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
 
     Map<String, Pair<Point3d, Quat4d>> tags = getAllTags();
+    
+    // Store original dock poses before adjusting (needed for localization)
+    for (String dockName : dockNames) {
+      Pair<Point3d, Quat4d> pose = tags.get(dockName);
+      if (pose != null) {
+        // Deep copy the position since adjustDockTags modifies in place
+        Point3d originalPos = new Point3d(pose.getLeft());
+        Quat4d originalQuat = new Quat4d(pose.getRight());
+        originalDockPoses.put(dockName, new MutablePair<>(originalPos, originalQuat));
+      }
+    }
+    
     adjustDockTags(tags, dockNames);
     try {
       addReferenceToMapService.call(void.class, tags);
@@ -252,32 +268,48 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     //todo: (pete) should go in a consultant? assumes unique names? can only handle one dock?
     //todo: (pete) it really feels like the "dock-ness" of a location should be a property?
     if (dockNames.size() > 1) {
-      log.error("[init] multiple tags labeled as dock in the map. only one dock currently supported");
+      log.warn("[init] multiple tags labeled as dock in the map. only one dock currently properly supported");
     } else if (dockNames.isEmpty()) {
       log.error("[init] no dock marked in map! a dock is required.");
+    }
+
+    TRADEServiceInfo getReferencesService;
+    try {
+      getReferencesService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes());
+    } catch (TRADEException e) {
+      log.error("[init] error getting getMapReferences service ", e);
+      return;
+    }
+
+    Map<Symbol, PoseReference> poseReferences = new HashMap<>();
+    try {
+      poseReferences = getReferencesService.call(Map.class);
+    } catch (TRADEException e) {
+      log.error("[init] error calling getMapReferences");
+    }
+
+    String dockName = "";
+    String dock2Name = "";
+    if (dockNames.size() > 1) {
+      if (dockNames.contains("dock1") && dockNames.contains("dock2")) {
+        dockName = "dock1";
+        dock2Name = "dock2";
+      } else {
+        log.error("[init] multiple docks, but not following naming convention! need a 'dock1' and a 'dock2'");
+      }
     } else {
+      dockName = dockNames.get(0);
+    }
 
-      TRADEServiceInfo getReferencesService;
-      try {
-        getReferencesService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes());
-      } catch (TRADEException e) {
-        log.error("[init] error getting getMapReferences service ", e);
-        return;
+    dockName = "dock1";
+    dock2Name = "dock2";
+    for (Symbol refId : poseReferences.keySet()) {
+      //abosultely shouldn't be blind indexing into the ref to get the name!!!!!!!
+      if (poseReferences.get(refId).properties.get(0).getName().equals(dockName)) {
+        dockLocation = refId;
       }
-
-      Map<Symbol, PoseReference> poseReferences = new HashMap<>();
-      try {
-        poseReferences = getReferencesService.call(Map.class);
-      } catch (TRADEException e) {
-        log.error("[init] error calling getMapReferences");
-      }
-
-      String dockName = dockNames.get(0);
-      for (Symbol refId : poseReferences.keySet()) {
-        //abosultely shouldn't be blind indexing into the ref to get the name!!!!!!!
-        if (poseReferences.get(refId).properties.get(0).getName().equals(dockName)) {
-          dockLocation = refId;
-        }
+      if (poseReferences.get(refId).properties.get(0).getName().equals(dock2Name)) {
+        altDockLocation = refId;
       }
     }
 
@@ -296,6 +328,53 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     getCameraHeightMax();
 
     //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+  }
+
+  @TRADEService
+  @Action
+  public void setAtPrimaryDock() {
+    setLocationTo(dockLocation);
+  }
+
+  @TRADEService
+  @Action
+  public void setAtSecondaryDock() {
+    setLocationTo(altDockLocation);
+  }
+
+  private void setLocationTo(Symbol locationTerm) {
+    log.info("[setLocationTo] getting location reference for refid " + locationTerm);
+    
+    Point3d position;
+    Quat4d orientation;
+    
+    // For dock locations, use original (unadjusted) positions for accurate localization
+    if (locationTerm.equals(dockLocation) && originalDockPoses.containsKey("dock1")) {
+      Pair<Point3d, Quat4d> originalPose = originalDockPoses.get("dock1");
+      position = originalPose.getLeft();
+      orientation = originalPose.getRight();
+      log.info("[setLocationTo] using original dock1 position for localization: " + position);
+    } else if (locationTerm.equals(altDockLocation) && originalDockPoses.containsKey("dock2")) {
+      Pair<Point3d, Quat4d> originalPose = originalDockPoses.get("dock2");
+      position = originalPose.getLeft();
+      orientation = originalPose.getRight();
+      log.info("[setLocationTo] using original dock2 position for localization: " + position);
+    } else {
+      // For non-dock locations, use the map reference as before
+      try {
+        PoseReference poseReference = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
+                .call(PoseReference.class, locationTerm);
+        position = poseReference.getPosition();
+        orientation = poseReference.getOrientation();
+      } catch (Exception e) {
+        log.error("[setLocationTo] unable to call getMapReference service ", e);
+        return;
+      }
+    }
+    
+    // Extract yaw (Z rotation) from quaternion
+    double theta = RotationHelpers.quatToXYZRotations(orientation).z;
+    api.localize(position.getX(), position.getY(), theta);
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
@@ -1217,7 +1296,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   public void playAudioClip(String fileName) {
     log.info("[playAudioClip] calling method on MaryTTSComponent");
-    String homeDir = System.getProperty("user.home");
+    String homeDir = getProperty("user.home");
     String path = Paths.get(homeDir, ".diarc", "ava", fileName).toString();
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
@@ -1241,7 +1320,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     // --gpu
     // --asr_mode: 1 == local, 2 == remote
     // --endpoint: http://<ip>:5000/
-    String home = System.getProperty("user.home");
+    String home = getProperty("user.home");
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
     // moonshine base cpu
@@ -1426,7 +1505,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   public void waitForReadyAck() {
-    String home = System.getProperty("user.home");
+    String home = getProperty("user.home");
     ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {

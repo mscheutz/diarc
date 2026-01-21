@@ -524,3 +524,5 @@ start idle image cycle; VERBI; startIdleImageCycle
 stop idle image cycle; VERBI; stopIdleImageCycle
 
 play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)
+primary dock; C; setAtPrimaryDock(?ADDRESSEE)
+secondary dock; C; setAtSecondaryDock(?ADDRESSEE)

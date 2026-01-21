@@ -5,8 +5,6 @@ import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.util.Http;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
@@ -14,8 +12,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
 
 public class AvaHTTPAPI implements AvaAPIInterface {
   private Logger log = LoggerFactory.getLogger(AvaHTTPAPI.class);
@@ -552,6 +548,54 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     log.debug("Sending setRotation request");
     try {
       Http.sendPostRequest(uri, args, null);
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    return resObj;
+  }
+
+
+  /**
+   * Set the localization information for the robot. Forces expected localization.
+   *
+   * Lets the robot figure out theta based on sensor information.
+   *
+   * @param x x position in global coordinates
+   * @param y y position in global coordinates
+   * @return response object
+   */
+  public RMSResponse localize(double x, double y) {
+    String uri = baseUrl + "/robot/mapping/localize";
+    LocalizeArgs args = new LocalizeArgs(1, x, y);
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending localize request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      log.info(httpResponse.responseString);
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    return resObj;
+  }
+
+  /**
+   * Set the localization information for the robot with orientation.
+   *
+   * @param x x position in global coordinates
+   * @param y y position in global coordinates
+   * @param theta orientation in radians
+   * @return response object
+   */
+  public RMSResponse localize(double x, double y, double theta) {
+    String uri = baseUrl + "/robot/mapping/localize";
+    LocalizeArgs args = new LocalizeArgs(1, x, y, theta);
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending localize request with theta");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      log.info(httpResponse.responseString);
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
