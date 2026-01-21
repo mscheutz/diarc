@@ -764,10 +764,46 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   /**
-   * Send the Ava robot to dock.
+   * Determines which dock is closer to the robot's current position.
+   * 
+   * @return "dock1" or "dock2" depending on which is closer, or "dock1" as fallback
+   */
+  private String getCloserDock() {
+    if (originalDockPoses.isEmpty()) {
+      log.warn("[getCloserDock] no dock poses available, defaulting to dock1");
+      return "dock1";
+    }
+    
+    Point3d currentPos = getPosition();
+    
+    Pair<Point3d, Quat4d> dock1Pose = originalDockPoses.get("dock1");
+    Pair<Point3d, Quat4d> dock2Pose = originalDockPoses.get("dock2");
+    
+    if (dock1Pose == null) {
+      return "dock2";
+    }
+    if (dock2Pose == null) {
+      return "dock1";
+    }
+    
+    double distToDock1 = currentPos.distance(dock1Pose.getLeft());
+    double distToDock2 = currentPos.distance(dock2Pose.getLeft());
+    
+    log.info("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
+    
+    return distToDock1 <= distToDock2 ? "dock1" : "dock2";
+  }
+
+  /**
+   * Send the Ava robot to dock. Automatically determines which dock is closer
+   * and forces localization to that dock after docking completes.
    */
   @Override
   public Justification goToDock() {
+    // Determine which dock we're heading to before docking
+    String targetDock = getCloserDock();
+    log.info("[goToDock] determined closer dock: {}", targetDock);
+    
     boolean docked = false;
     int timeoutCounter = 0;
     api.dock();
@@ -786,8 +822,80 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       timeoutCounter++;
     }
     setZLift(0);
-    log.debug("[goToDock] Ava has docked");
+    
+    // Force localization to the correct dock to prevent snapping to wrong one
+    localizeAtDock(targetDock);
+    
+    log.debug("[goToDock] Ava has docked at {}", targetDock);
     return new ConditionJustification(true);
+  }
+
+  /**
+   * Dock to a specific dock by reference ID.
+   * 
+   * @param dockRefId the Symbol reference for the target dock (dockLocation or altDockLocation)
+   * @return justification of success/failure
+   */
+  @TRADEService
+  @Action
+  public Justification dock(Symbol dockRefId) {
+    String targetDock;
+    if (dockRefId.equals(dockLocation)) {
+      targetDock = "dock1";
+    } else if (dockRefId.equals(altDockLocation)) {
+      targetDock = "dock2";
+    } else {
+      log.error("[dock] unknown dock reference: {}", dockRefId);
+      return new ConditionJustification(false);
+    }
+    
+    log.info("[dock] docking to {}", targetDock);
+    
+    boolean docked = false;
+    int timeoutCounter = 0;
+    api.dock();
+    while (!docked) {
+      if (timeoutCounter > dockingTimeout) {
+        log.error("Docking process timed out");
+        return new ConditionJustification(false);
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (Exception ex) {
+        log.error("Error sleeping 1000ms", ex);
+      }
+      RMSDockStatusResponse res = api.getDockStatus();
+      docked = res.response.state.equals("Docked");
+      timeoutCounter++;
+    }
+    setZLift(0);
+    
+    // Force localization to the specified dock
+    localizeAtDock(targetDock);
+    
+    log.debug("[dock] Ava has docked at {}", targetDock);
+    return new ConditionJustification(true);
+  }
+
+  /**
+   * Force localization to a specific dock using its original (unadjusted) position.
+   * 
+   * @param dockName "dock1" or "dock2"
+   */
+  private void localizeAtDock(String dockName) {
+    Pair<Point3d, Quat4d> dockPose = originalDockPoses.get(dockName);
+    if (dockPose == null) {
+      log.warn("[localizeAtDock] no pose found for {}, skipping localization", dockName);
+      return;
+    }
+    
+    Point3d position = dockPose.getLeft();
+    Quat4d orientation = dockPose.getRight();
+    double theta = RotationHelpers.quatToXYZRotations(orientation).z;
+    
+    log.info("[localizeAtDock] forcing localization to {} at ({}, {}, {})", 
+             dockName, position.getX(), position.getY(), theta);
+    api.localize(position.getX(), position.getY(), theta);
   }
 
   /**

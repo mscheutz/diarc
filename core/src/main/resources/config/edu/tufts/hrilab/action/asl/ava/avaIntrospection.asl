@@ -49,6 +49,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = describeAllKnownLocations() {
     List !locationNames;
     java.lang.String !locationName;
+    java.lang.String !locationNameStr;
 
     !locationNames = tsc:getMapLocationNames();
     if (op:isEmpty(!locationNames)) {
@@ -56,7 +57,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     } else {
         act:generateResponseFromString("I know the following locations");
         foreach(!locationName : !locationNames) {
-            act:generateResponseFromString(!locationName);
+            // Explicitly convert to String to avoid numeric-looking names being coerced to integers
+            !locationNameStr = op:invokeMethod(!locationName, "toString");
+            act:generateResponseFromString(!locationNameStr);
         }
     }
 }

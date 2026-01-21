@@ -39,6 +39,7 @@ the location of; NP/LREF;#x.$x
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HARD CODED COMMANDS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 go home; C; goHome(?ADDRESSEE)
+dock; VERBT; dock
 
 hey av; C; heyAva(?ADDRESSEE)
 hey ava; C; heyAva(?ADDRESSEE)

@@ -955,6 +955,13 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 10
         );
         exposedActionList.add(entry);
+        entry = new LLMActionEntry("dock(?destination:location)",
+                "You dock at the given dock ?destination:location.",
+                "dock at %exampleLocation",
+                "dock(%exampleLocation:location)",
+                10
+        );
+      exposedActionList.add(entry);
         entry = new LLMActionEntry("reportBatteryLevel()",
                 "You report the current battery level of the robot as a percentage",
                 "how much charge do you have",
