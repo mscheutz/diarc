@@ -43,6 +43,7 @@ public class QueueExecutionManager extends ExecutionManager {
       g.setStatus(GoalStatus.PENDING);
     }
 
+    //TODO: do we want these status notifications? <- should make configurable based on a notion of "system verbosity"
     //PickAndPlace2024 - Report that the goal is being added to the queue
     Symbol actor = g.getActor();
     if (!actor.getName().equals("self")) {
@@ -52,7 +53,6 @@ public class QueueExecutionManager extends ExecutionManager {
       List<Predicate> conflictingGoals = getSystemGoalsPredicates(g.getActor(), true);
       if (!conflictingGoals.isEmpty()) {
         if (conflictingGoals.get(0).getName().equals("active")) {
-          //TODO: get addressee
           statusReportSemantics = Factory.createPredicate("addingThatToMyCurrentQueueOfTasks()");
           //statusReport = "okay, adding to my current queue of tasks";
         } else if (conflictingGoals.get(0).getName().equals("suspended")) {
@@ -64,7 +64,7 @@ public class QueueExecutionManager extends ExecutionManager {
         if (statusReportSemantics != null) {
           Utterance utt = new Utterance.Builder()
                   .setSpeaker(g.getActor())
-                  .setAddressee(Factory.createSymbol("user"))
+                  .setAddressee(g.getSubmitter())
                   .setUtteranceType(UtteranceType.REPLY)
                   .setIsInputUtterance(false)
                   //.setWords(List.of(statusReport.split(" ")))
@@ -73,7 +73,7 @@ public class QueueExecutionManager extends ExecutionManager {
           try {
             utt = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToText").argTypes(Utterance.class)).call(Utterance.class, utt);
             TRADE.getAvailableService(new TRADEServiceConstraints().name("updateDialogueHistory").argTypes(Utterance.class)).call(void.class, utt);
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(void.class, utt.getWordsAsString());
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(Utterance.class)).call(void.class, utt);
           } catch (TRADEException e) {
             log.error("[handleConflictingLowerPriorityGoal]", e);
           }
