@@ -46,7 +46,7 @@ public class QueueExecutionManager extends ExecutionManager {
     //TODO: do we want these status notifications? <- should make configurable based on a notion of "system verbosity"
     //PickAndPlace2024 - Report that the goal is being added to the queue
     Symbol actor = g.getActor();
-    if (!actor.getName().equals("self")) {
+    if (!actor.getName().equals("self") && g.getScheduledState() != 2) {
       //Currently need to use semantics rather than string for NLG for flexibility between EN/JP
       //String statusReport = null;
       Predicate statusReportSemantics = null;
