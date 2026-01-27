@@ -46,7 +46,7 @@ namespace diarc {
 
       //! displays the point cloud annotated with calculated grasp info from agile
       //! the grasp info displayed here does not contain and coordinate frame transforms
-      //! into the ADE preferred coordinate frame
+      //! into the DIARC preferred coordinate frame
       void plotAntipodalFrames(const std::vector<Handle>& antipodals, pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud);
 
       LocalizationPtr localization;

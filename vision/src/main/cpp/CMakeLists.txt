@@ -42,7 +42,7 @@ else()
   CMAKE_POLICY(SET CMP0086 NEW)
 endif()
 
-# Set paths between Vision-Java, Vision-Native and ADE
+# Set paths between Vision-Java, Vision-Native and DIARC
 SET(VISION_BASE_PACKAGE edu.tufts.hrilab.vision)
 SET(SWIG_SRC_BASE_OUTDIR ${CMAKE_SOURCE_DIR}/../../swig/java)
 SET(SWIG_SRC_OUTDIR ${SWIG_SRC_BASE_OUTDIR}/edu/tufts/hrilab/vision)
@@ -142,7 +142,7 @@ INCLUDE_DIRECTORIES(${LOG4CXX_INCLUDE_DIRS})
 FIND_PACKAGE( JSONCPP REQUIRED )
 INCLUDE_DIRECTORIES(${JSON_INC_PATH})
 
-# SIFT (checked into ADE-Vision repo)
+# SIFT (checked into DIARC-Vision repo)
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/third_party/vlfeat/bin/glnxa64 )
 
 # REALSENSE TODO

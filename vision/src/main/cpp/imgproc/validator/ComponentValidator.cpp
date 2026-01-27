@@ -419,22 +419,82 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   
 }
 
-void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
-  LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-  
-  MemoryObject::Ptr object = notification->object;
+void ComponentValidator::handleFrameCompletionNotification(FrameCompletionNotification::ConstPtr notification) {
 
-  // check if this typeId should currently be processed
+  // keep track of when a frame has been fully processed for "known" and "unknown" objects
   DescriptorsByTypeConstPtr types = getTypes();
-  DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
+  for (const auto& typeId : notification->typeIds) {
+    LOG4CXX_DEBUG(logger, "[handleFrameCompletionNotification] processing notification for typeId: " << typeId << " FrameNum: " << notification->frameNumber);
 
-  if (types_itr != types->end()) {
+    if (types->find(typeId) != types->end()) {
+      // "unknown" typeId
+      unknownMOs.erase(mostRecentUnknownFrameNum); // erase old results
+      mostRecentUnknownFrameNum = notification->frameNumber;
+    } else {
+      // "known" typeId
+      if (notification->frameNumber <= mostRecentKnownFrameNum) {
+        return;
+      }
+      knownMOs.erase(mostRecentKnownFrameNum); // erase old results
+      mostRecentKnownFrameNum = notification->frameNumber;
+    }
+  }
+
+  if (mostRecentKnownFrameNum != 0 && mostRecentUnknownFrameNum != 0) {
+    // have results from "known" and "unknown" for at least one frame
+    LOG4CXX_DEBUG(logger, boost::format("[handleFrameCompletionNotification] have both MO types. Knowns: %d. Unknowns: %d. Filtering knowns ...") % knownMOs[mostRecentKnownFrameNum].size() % unknownMOs[mostRecentUnknownFrameNum].size());
+    auto filteredUnknownMOs = unknownMOs[mostRecentUnknownFrameNum];
+    removeKnownObjects(knownMOs[mostRecentKnownFrameNum], filteredUnknownMOs);
+    LOG4CXX_DEBUG(logger, "[handleFrameCompletionNotification] after filtering. Num of unknowns: " << filteredUnknownMOs.size());
+    for (auto& unknownMO : filteredUnknownMOs) {
+      processUnknownObject(unknownMO);
+      unknownMO->addValidationResult(0.9f, PredicateHelper("unknown(X)"));
+      sendValidationNotifications(unknownMO);
+    }
+
+    // reset unknownMOs container to avoid duplicate processing
+    unknownMOs.erase(mostRecentUnknownFrameNum);
+    mostRecentUnknownFrameNum = 0;
+  }
+
+  // call base class method to forward notifications
+  ObjectValidator::handleFrameCompletionNotification(notification);
+}
+
+void ComponentValidator::removeKnownObjects(const std::vector<MemoryObject::Ptr>& knownObjects, std::vector<MemoryObject::Ptr>& unknownObjects) {
+  for (auto unknown_itr = unknownObjects.begin(); unknown_itr != unknownObjects.end();) {
+    bool matchFound = false;
+    for (auto known_itr = knownObjects.begin(); known_itr != knownObjects.end(); ++known_itr) {
+      if (calculateBBoxIoU((*known_itr)->getTrackingMask()->getBoundingBox(), (*unknown_itr)->getDetectionMask()->getBoundingBox()) > 0.5) {
+        matchFound = true;
+        break;
+      }
+    }
+
+    // remove "unknown" object if it matches with any "known" objects
+    if (matchFound) {
+      unknown_itr = unknownObjects.erase(unknown_itr);
+    } else {
+      ++unknown_itr;
+    }
+  }
+}
+
+float ComponentValidator::calculateBBoxIoU(const cv::Rect& rect1, const cv::Rect& rect2) {
+  cv::Rect intersection = rect1 & rect2;
+  float intersection_area = intersection.area();
+  float bbox1_area = rect1.area();
+  float bbox2_area = rect2.area();
+  float union_area = bbox1_area + bbox2_area - intersection_area;
+  return intersection_area / union_area;
+}
+
+void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
+  LOG4CXX_TRACE(logger, "[processUnknownObject] method entered.");
 
     cv::Mat bestSemMatrixSig = cv::Mat::zeros(1, 24, CV_32F);  // Track the model output with the highest IoU
     // get current descriptors to process
     TypesByDescriptorConstPtr descriptors = getDescriptors();
-    TypesByDescriptor::const_iterator descriptor_iter;
-    std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
 
     // get MemoryObject cloud, denoise and upsample it
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();
@@ -540,6 +600,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       foundPredicatesVector[2] = true;
     }
 
+    DescriptorsByType::const_iterator types_itr = getTypes()->find(object->getTypeId());
     PredicateHelper::Set::const_iterator descriptors_itr;
     for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end();
          ++descriptors_itr) {
@@ -593,8 +654,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         }
       }
     }
-      
-  }
+
 }
 
 

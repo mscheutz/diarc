@@ -197,7 +197,7 @@ void V4RDetector::handleCaptureNotification(CaptureNotification::ConstPtr notifi
       if (oh->is_verified_) {
         std::unordered_map<std::string, std::string>::const_iterator nameMap_itr = nameMap_.find(oh->model_id_);
         if (nameMap_itr == nameMap_.end()) {
-          // v4r model type not exposed via ade predicate
+          // v4r model type not exposed via diarc predicate
           continue;
         }
         std::string predicateName = nameMap_itr->second;

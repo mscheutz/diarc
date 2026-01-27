@@ -55,7 +55,7 @@ void GestureBasedValidator::handleFrameCompletionNotification(FrameCompletionNot
     // have been notified by both referent and relatum searches, can now send along frame completion notification
     LOG4CXX_TRACE(logger, boost::format("[handleFrameCompletionNotification] sending notification for typeId: %lld.") % thisTypeId);
     FrameCompletionNotification::Ptr new_fcn(
-            new FrameCompletionNotification(shared_from_this(), thisTypeId, notification->frameNumber));
+            new FrameCompletionNotification(this->getProcessorId(), thisTypeId, notification->frameNumber));
     sendNotifications(new_fcn);
   } else {
     LOG4CXX_TRACE(logger,

@@ -12,22 +12,22 @@
 #ifndef MEMORYOBJECTNOTIFICATION_HPP
 #define	MEMORYOBJECTNOTIFICATION_HPP
 
-#include "common/notification/VisionNotification.hpp"
+#include "common/notification/Notification.hpp"
 #include "stm/MemoryObject.hpp"
 
 /*
  * Notifies about a new detected object.
  */
-class MemoryObjectNotification : public VisionNotification {
+class MemoryObjectNotification : public Notification {
 public:
   typedef boost::shared_ptr<MemoryObjectNotification> Ptr;
   typedef boost::shared_ptr<const MemoryObjectNotification> ConstPtr;
 
-  MemoryObjectNotification(const VisionProcessConstPtr& notifier_,
+  MemoryObjectNotification(const long long& processorId_,
                            const long long& typeId_,
                            const unsigned long long& frameNumber_,
                            diarc::stm::MemoryObject::Ptr& object_)
-  : VisionNotification(notifier_, MEMORY_OBJECT, typeId_, frameNumber_),
+  : Notification(MEMORY_OBJECT, processorId_, typeId_, frameNumber_),
   object(object_) {
   }
 

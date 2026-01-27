@@ -34,7 +34,7 @@ VisionProcess::VisionProcess(const long long &processor_id, const unsigned int i
           serialProcessing(false),
           incrementalProcessing_mutex(),
           serialProcessing_mutex(),
-          ignoreOlderNotifications(true),
+          pruneNotificationsFlag(true),
           tmpPredicates() {
 }
 
@@ -48,24 +48,11 @@ void VisionProcess::perform() {
 
   // log all pending notifications
   if (logger->isTraceEnabled()) {
-    LOG4CXX_DEBUG(logger, boost::format("%d PENDING NOTIFICATIONS:") % pending.size());
+    LOG4CXX_TRACE(logger, boost::format("%d PENDING NOTIFICATIONS:") % pending.size());
     std::list<Notification::Ptr>::const_iterator pending_itr;
     for (pending_itr = pending.begin(); pending_itr != pending.end(); ++pending_itr) {
-      VisionNotification::Ptr vn = boost::dynamic_pointer_cast<VisionNotification>(*pending_itr);
-      if (vn) {
-        if (vn->notifier) {
-          LOG4CXX_TRACE(logger, boost::format("Type: %d. FrameNum: %llu. ProcId: %lld.")
-                                % vn->type % vn->frameNumber % vn->notifier->getProcessorId());
-        } else {
-          // capture processor doesn't inherit from VisionProcess
-          LOG4CXX_TRACE(logger, boost::format("Type: %d. FrameNum: %llu. ProcId: Capture.")
-                                % vn->type % vn->frameNumber);
-        }
-      } else {
-        // capture notification -- currently only notification that doesn't inherit from VisionNotification
-        LOG4CXX_TRACE(logger,
-                      boost::format("Type: %d. FrameNum: %llu.") % (*pending_itr)->type % (*pending_itr)->frameNumber);
-      }
+          LOG4CXX_TRACE(logger, boost::format("NotificationType: %d. FrameNum: %llu. ProcId: %lld.")
+                        % (*pending_itr)->type % (*pending_itr)->frameNumber % (*pending_itr)->processorId);
     }
   }
 
@@ -73,86 +60,67 @@ void VisionProcess::perform() {
   // nee to do this because of the order of pending notifications (i.e., newest first
   // which means that FCNs appear before other notifications for that frame number)
   //std::list<Notification::Ptr> pendingFCNs;
-  Notification::Ptr onDeckFCN;
+  // Notification::Ptr onDeckFCN;
 
   // lock
   boost::lock_guard<boost::mutex> lock(perform_mutex);
 
   // handle all the types of notifications we are interested in and discard the rest
   while (!pending.empty()) {
-    LOG4CXX_TRACE(logger, boost::format("%d PENDING NOTIFICATIONS LEFT:") % pending.size());
-    Notification::Ptr n = pending.back();
-    pending.pop_back();
+    Notification::Ptr n = pending.front();
+    pending.pop_front();
 
-    // used to notify entire pipeline when processing of an entire frame has completed
-    // this is needed to know when a full detection -> validation -> tracking cycle has finished
-    if (n->type == Notification::FRAME_COMPLETION) {
-      // send the previously seen frame completion notification
-      // 
-      if (onDeckFCN) {
-        handleNotification(onDeckFCN);
-      }
-      onDeckFCN = n;
-      //pendingFCNs.push_back(n);
-    } else {
-      //handle all other relevant notification types
-      handleNotification(n);
-    }
+    handleNotification(n);
 
     // remove old notifications in the pending queue (removal process depends on notification type)
-    if (ignoreOlderNotifications) {
-      //TODO: get rid of notifications older than onDeckFCN ??
-      removeOldNotifications(pending, n);
-    }
-  }
+    if (pruneNotificationsFlag) {
+      pruneNotifications(pending, n);
 
-  // finally process all frame completion notifications
-  //  LOG4CXX_DEBUG(logger, boost::format("%d PENDING FRAME_COMPLETION NOTIFICATIONS:") % pendingFCNs.size());
-  //  while (!pendingFCNs.empty()) {
-  //    Notification::Ptr n = pendingFCNs.front();
-  //    pendingFCNs.pop_front();
-  //    handleNotification(n);
-  //  }
-  if (onDeckFCN) {
-    handleNotification(onDeckFCN);
-  }
-}
-
-void VisionProcess::removeOldNotifications(std::list<Notification::Ptr> &pending, Notification::Ptr notification) {
-  switch (notification->type) {
-    case Notification::CAPTURE:
-    case Notification::SALIENCY:
-    case Notification::SCENE_CHANGE:
-    case Notification::SIFT:
-      removeNotificationsOfType(pending, notification->type);
-      break;
-    case Notification::PLANE:
-      removeNotificationsOfType(pending, notification->type, notification->frameNumber);
-      break;
-    case Notification::FRAME_COMPLETION: {
-      FrameCompletionNotification::Ptr fcn = boost::dynamic_pointer_cast<FrameCompletionNotification>(notification);
-      for (std::list<Notification::Ptr>::iterator i = pending.begin(); i != pending.end();) {
-        if ((*i)->type == fcn->type) {
-          FrameCompletionNotification::Ptr i_fcn = boost::dynamic_pointer_cast<FrameCompletionNotification>(*i);
-          if (i_fcn->typeIds == fcn->typeIds && i_fcn->frameNumber <= fcn->frameNumber) {
-            i = pending.erase(i);
-          } else {
-            ++i;
-          }
-        } else {
-          ++i;
+      if (logger->isTraceEnabled()) {
+        LOG4CXX_TRACE(logger, boost::format("%d PENDING NOTIFICATIONS AFTER PRUNING:") % pending.size());
+        std::list<Notification::Ptr>::const_iterator pending_itr;
+        for (pending_itr = pending.begin(); pending_itr != pending.end(); ++pending_itr) {
+          LOG4CXX_TRACE(logger, boost::format("NotificationType: %d. FrameNum: %llu. ProcId: %lld.")
+                        % (*pending_itr)->type % (*pending_itr)->frameNumber % (*pending_itr)->processorId);
         }
       }
     }
-      break;
-    case Notification::MEMORY_OBJECT:
-      removeNotificationsOfType(pending, notification->type, notification->frameNumber); //EAK: do we want to do this?
-    case Notification::MEMORY_OBJECTS:
-      break;
+
+    LOG4CXX_TRACE(logger, boost::format("%d PENDING NOTIFICATIONS LEFT:") % pending.size());
   }
-  //case Notification::MEMORY_OBJECT:
-  //TODO: potentially remove notifications older than the last FRAME_COMPLETION notification (per typeId)??
-  //removeNotificationsOfType(pending, n->type, n->frameNum); //EAK: do we want to do this?
+}
+
+void VisionProcess::pruneNotifications(std::list<Notification::Ptr> &pending, Notification::Ptr notification) {
+  if (notification->type != Notification::FRAME_COMPLETION) {
+    return;
+  }
+
+  // find all FCNs to remove
+  std::list<Notification::Ptr> fcnToRemove;
+  for (auto itr = pending.begin(); itr != pending.end();) {
+    if ((*itr)->type == Notification::FRAME_COMPLETION
+      && (*itr)->processorId == notification->processorId
+      && (*itr)->typeIds == notification->typeIds) {
+      fcnToRemove.push_back(*itr);
+      itr = pending.erase(itr);
+    } else {
+      ++itr;
+    }
+  }
+
+  // remove all notifications related to removed FCNs (each FCN is related to a specific set of non-FCNs (MO, CAPTURE, etc)).
+  for (auto fcn : fcnToRemove) {
+    for (auto itr = pending.begin(); itr != pending.end();) {
+      if ((*itr)->type != Notification::FRAME_COMPLETION
+        && (*itr)->processorId == fcn->processorId
+        && (*itr)->frameNumber == fcn->frameNumber
+        && (*itr)->typeIds == fcn->typeIds) {
+        itr = pending.erase(itr);
+        } else {
+          ++itr;
+        }
+    }
+  }
 }
 
 void VisionProcess::init() {
@@ -326,16 +294,14 @@ void VisionProcess::handleFrameCompletionNotification(FrameCompletionNotificatio
     }
   }
 
-  // if notification isn't for a particular search typeId (e.g., capture, sift image proc, etc)
-  // TODO: figure this out!!
-  //if (notification->typeId == -1) {
   if (notification->typeIds.find(-1) != notification->typeIds.end()) {
+    // if notification isn't from a particular search typeId (e.g., capture, sift image proc, etc)
     LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 1.");
     if (types->empty()) {
       LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 2.");
-      // send notification that's not for a particular search typeId
+      // send notification that's not for a particular search typeId (e.g. img proc notifications)
       FrameCompletionNotification::Ptr new_fcn(
-              new FrameCompletionNotification(shared_from_this(), -1L, notification->frameNumber));
+              new FrameCompletionNotification(this->getProcessorId(), -1L, notification->frameNumber));
       sendNotifications(new_fcn);
     } else {
       LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 3.");
@@ -343,20 +309,18 @@ void VisionProcess::handleFrameCompletionNotification(FrameCompletionNotificatio
       for (types_itr = types->begin(); types_itr != types->end(); ++types_itr) {
         LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 4.");
         FrameCompletionNotification::Ptr new_fcn(
-                new FrameCompletionNotification(shared_from_this(), types_itr->first, notification->frameNumber));
+                new FrameCompletionNotification(this->getProcessorId(), types_itr->first, notification->frameNumber));
         sendNotifications(new_fcn);
       }
     }
   } else {
     LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 5.");
     // pass along notification for that particular search typeId (only if this VP is processing that typeId)
-    // TODO: figure this out!!
     for (types_itr = types->begin(); types_itr != types->end(); ++types_itr) {
-      //if (types->find(notification->typeId) != types->end()) {
       if (notification->typeIds.find(types_itr->first) != notification->typeIds.end()) {
         LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] 6.");
         FrameCompletionNotification::Ptr new_fcn(
-                new FrameCompletionNotification(shared_from_this(), types_itr->first, notification->frameNumber));
+                new FrameCompletionNotification(this->getProcessorId(), types_itr->first, notification->frameNumber));
         sendNotifications(new_fcn);
       }
     }
@@ -479,15 +443,11 @@ void VisionProcess::sendNotifications(Notification::Ptr n) {
     }
   }
 
-  LOG4CXX_TRACE(logger, boost::format("[sendNotifications] to %lu registeredProcessors.") % toNotify.size());
+  LOG4CXX_TRACE(logger, boost::format("[sendNotifications] Notification Type: %d. FrameNum: %llu to %lu registeredProcessors.") % n->type % n->frameNumber % toNotify.size());
 
-  int counter = 1;
   for (boost::unordered_set<VisionProcess::Ptr>::const_iterator itr = toNotify.begin(); itr != toNotify.end(); ++itr) {
-    //    if (counter == 1) {
-    LOG4CXX_TRACE(logger, boost::format("[sendNotifications] to %s (%lu of %lu).")
-                          % (*itr)->visionProcessName % counter++ % registeredProcessors.size());
+    LOG4CXX_TRACE(logger, boost::format("[sendNotifications] to %s") % (*itr)->visionProcessName);
     (*itr)->notify(n);
-    //    }
   }
 
   LOG4CXX_TRACE(logger, "[sendNotifications] done.");
@@ -501,12 +461,11 @@ void VisionProcess::notify(Notification::Ptr n) {
 }
 
 void VisionProcess::getPendingNotifications(std::list<Notification::Ptr> &pending) {
-  pending.clear();
-  Notification::Ptr n;
   // NOTE: Popping only the number of notifications that is currently in the queue
   // avoids being stuck in an endless loop in case new notifications come in at the
   // same rate as we are reading them off. (Admittedly a very unlikely case, but the
   // devil never sleeps ...)
+  Notification::Ptr n;
   size_t s = notifications.size();
   for (size_t i = 0; i < s; i++) {
     if (notifications.trypop(n)) {
@@ -517,14 +476,8 @@ void VisionProcess::getPendingNotifications(std::list<Notification::Ptr> &pendin
 
 void VisionProcess::waitPendingNotifications(std::list<Notification::Ptr> &pending) {
   pending.clear();
-  Notification::Ptr n;
-  notifications.wait();
-  size_t s = notifications.size();
-  for (size_t i = 0; i < s; i++) {
-    if (notifications.trypop(n)) {
-      pending.push_back(n);
-    }
-  }
+  notifications.wait(); // wait until at least one notification
+  getPendingNotifications(pending);
 }
 
 void VisionProcess::waitPendingNotification(Notification::Ptr &pending) {
@@ -536,27 +489,6 @@ void VisionProcess::clearPendingNotifications() {
   size_t s = notifications.size();
   for (size_t i = 0; i < s; i++) {
     notifications.trypop(n);
-  }
-}
-
-void VisionProcess::removeNotificationsOfType(std::list<Notification::Ptr> &pending, Notification::Type type) {
-  for (std::list<Notification::Ptr>::iterator i = pending.begin(); i != pending.end();) {
-    if ((*i)->type == type) {
-      i = pending.erase(i);
-    } else {
-      ++i;
-    }
-  }
-}
-
-void VisionProcess::removeNotificationsOfType(std::list<Notification::Ptr> &pending,
-                                              Notification::Type type, unsigned long int frameNum) {
-  for (std::list<Notification::Ptr>::iterator i = pending.begin(); i != pending.end();) {
-    if ((*i)->type == type && (*i)->frameNumber < frameNum) {
-      i = pending.erase(i);
-    } else {
-      ++i;
-    }
   }
 }
 

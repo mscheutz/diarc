@@ -6,7 +6,6 @@
 #include "common/notification/FrameCompletionNotification.hpp"
 #include "common/notification/MemoryObjectNotification.hpp"
 #include "capture/Capture.hpp"
-#include "detector/ObjectDetector.hpp"
 #include "display/Display.hpp"
 
 //derived classes includes
@@ -66,7 +65,6 @@ ObjectTracker::ObjectTracker(const long long &processorId, const int imgWidth, c
       detectionConfidenceThreshold(0.0),
       dataProcessed_(false),
       objectsTracked_(false),
-      numAddedObjects_(0),
       trackedObjects(NULL),
       publishToROS(true) {
   trackedObjects = TrackedObjects::getInstance();
@@ -165,8 +163,6 @@ long ObjectTracker::numIterationsCompleted(const long long &typeId) const {
 }
 
 void ObjectTracker::handleCaptureNotification(CaptureNotification::ConstPtr notification) {
-  // if (publishToROS)
-  // publishTrackingResultsToROS(); 
   if (currentlyTrackingObjects()) {
     // do tracking iteration
     haveNewImage(notification);
@@ -181,44 +177,6 @@ void ObjectTracker::handleCaptureNotification(CaptureNotification::ConstPtr noti
   }
 }
 
-// void ObjectTracker::publishTrackingResultsToROS() {
-//   // TODO: Allow for config to determine both whether we want to publish results to ROS or not
-//   //        and what typeIds we want to publish results of
-//   // MemoryObjects_HashedById_Set trackedObjectsByTypeId;
-//   // tracked_objects_msg_->trackedObjects.clear();
-//   // for typeId in typeIds:
-//   MemoryObjects_HashedById_Set trackedObjectsByTypeId = trackedObjects->getByTypeId(0);
-//   c_her::TrackedObjects tracked_objects_msg;
-//   if (trackedObjectsByTypeId.size() > 0) {
-//     MemoryObjects_HashedById_Set::const_iterator trackedObjectsByTypeIdIter;
-//     for (trackedObjectsByTypeIdIter = trackedObjectsByTypeId.begin();
-//          trackedObjectsByTypeIdIter != trackedObjectsByTypeId.end(); ++trackedObjectsByTypeIdIter) {
-//       // extract relevant info from trackedObject
-//       c_her::TrackedObject tracked_object_msg;
-//       geometry_msgs::Point obj_location_msg;
-//       // TODO: grasp_pose if desired, have to check if grasp child is present
-//       // geometry_msgs::Pose grasp_pose_msg;
-
-//       const MemoryObjectMask::ConstPtr obj_mask = (*trackedObjectsByTypeIdIter)->getTrackingMask();
-
-//       obj_location_msg.x = obj_mask->getLocation().x;
-//       obj_location_msg.y = obj_mask->getLocation().y;
-//       obj_location_msg.z = obj_mask->getLocation().z;
-
-//       tracked_object_msg.location = obj_location_msg;
-//       tracked_object_msg.objectRef = (*trackedObjectsByTypeIdIter)->getVariableName();
-//       tracked_object_msg.typeId = (*trackedObjectsByTypeIdIter)->getId();
-//       tracked_object_msg.tokenId = (*trackedObjectsByTypeIdIter)->getTypeId();
-
-//       tracked_objects_msg.trackedObjects.push_back(tracked_object_msg);
-//     }
-//   }
-//   // pub message to node
-//   LOG4CXX_DEBUG(logger, "[publishTrackingResultsToROS] publishing message");
-//   pub.publish(tracked_objects_msg);
-//   ros::spinOnce();
-// }
-
 void ObjectTracker::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, boost::format("[handleMemoryObjectNotification] method entered. Tracking summary: %s.") %
       getTrackingSummary());
@@ -226,21 +184,21 @@ void ObjectTracker::handleMemoryObjectNotification(MemoryObjectNotification::Con
   if (!(notification->object)) {
     LOG4CXX_ERROR(logger, "[handleMemoryObjectNotification] MemoryObject NULL.");
     return;
+  }
+
+  LOG4CXX_TRACE(logger, boost::format("[handleMemoryObjectNotification] MO with validation: %s.") %
+                notification->object->getValidationResultsString());
+  if (notification->object->isTracked()) {
+    //if already tracked, no need to add to tracker again
+    LOG4CXX_TRACE(logger, "[handleMemoryObjectNotification] calling haveTrackedMemoryObject method.");
+    haveTrackedMemoryObject(notification->object);
   } else {
-    LOG4CXX_TRACE(logger, boost::format("[handleMemoryObjectNotification] MO with validation: %s.") %
-        notification->object->getValidationResultsString());
-    if (notification->object->isTracked()) {
-      //if already tracked, no need to add to tracker again
-      LOG4CXX_TRACE(logger, "[handleMemoryObjectNotification] calling haveTrackedMemoryObject method.");
-      haveTrackedMemoryObject(notification->object);
-    } else {
-      LOG4CXX_TRACE(logger, "[handleMemoryObjectNotification] calling haveNewMemoryObject method.");
-      haveNewMemoryObject(notification->object);
-    }
+    LOG4CXX_TRACE(logger, "[handleMemoryObjectNotification] calling haveNewMemoryObject method.");
+    haveNewMemoryObject(notification->object);
   }
 
   LOG4CXX_TRACE(logger, boost::format("[handleMemoryObjectNotification] method complete. Tracking summary: %s.") %
-      getTrackingSummary());
+                getTrackingSummary());
 }
 
 void ObjectTracker::handleFrameCompletionNotification(FrameCompletionNotification::ConstPtr notification) {
@@ -254,11 +212,19 @@ void ObjectTracker::handleFrameCompletionNotification(FrameCompletionNotificatio
     long long typeId = *typeIds_itr;
 
     LOG4CXX_TRACE(logger, boost::format(
-        "[handleFrameCompletionNotification] handling notification for typeId: %lld. Tracking summary: %s.")
-        % typeId % getTrackingSummary());
+        "[handleFrameCompletionNotification] handling notification for typeId: %lld. FrameNum: %llu. Tracking summary: %s.")
+        % typeId % notification->frameNumber % getTrackingSummary());
 
-    if (typeId != -1 && types->find(typeId) != types->end()) {
+    if (typeId == -1 ) {
+      // FCN from capture notification. Send a FCN for all typeIds that have completed processing at least one frame
+      for (auto itr = lastFrameCompletedByType.begin(); itr != lastFrameCompletedByType.end(); ++itr) {
+        FrameCompletionNotification::Ptr new_fcn(
+            new FrameCompletionNotification(this->getProcessorId(), itr->first, notification->frameNumber));
+        sendNotifications(new_fcn);
+      }
 
+    } else if (types->find(typeId) != types->end()) {
+      // FCN from MO notification
       // update local lastFrameCompletedByType
       boost::unique_lock<boost::mutex> lock(frameCompletion_mutex);
       if (lastFrameCompletedByType[typeId] < notification->frameNumber) {
@@ -272,17 +238,13 @@ void ObjectTracker::handleFrameCompletionNotification(FrameCompletionNotificatio
 
       // pass along notification to rest of vision pipeline
       FrameCompletionNotification::Ptr new_fcn(
-          new FrameCompletionNotification(shared_from_this(), notification->frameNumber, typeId));
+          new FrameCompletionNotification(this->getProcessorId(), typeId, notification->frameNumber));
       sendNotifications(new_fcn);
     }
   }
 }
 
 void ObjectTracker::haveTrackedMemoryObject(MemoryObject::Ptr trackedObject) {
-  //get types that tracker should be processing
-  DescriptorsByTypeConstPtr descriptorsByType = getTypes();
-  DescriptorsByType::const_iterator descriptorsByType_iter;
-
   //TODO: check if trackedObject should be tracked, and remove it if it shouldn't? or in handleMemoryObjectNotification?
 
   //re-send notifications that trackedObject was updated so that it continues
@@ -294,30 +256,11 @@ void ObjectTracker::haveNewMemoryObject(MemoryObject::Ptr newObject) {
   LOG4CXX_TRACE(logger, boost::format("[ObjectTracker::haveNewMemoryObject] with frame number: %llu") %
       newObject->getDetectionMask()->getFrameNumber());
 
-  //  SurfaceObject::Ptr surfaceObject = boost::dynamic_pointer_cast<SurfaceObject>(newObject);
-  //  if (surfaceObject) {
-  //    diarc::Display::createWindowIfDoesNotExist("potential tracked object");
-  //    diarc::Display::displayFrame(surfaceObject->getObjectImage(), "potential tracked object");
-  //  }
+  MemoryObject::Ptr trackedObject = mergeObject(newObject);
 
-  int localAddedObjects = mergeObject(newObject);
-  numAddedObjects_ += localAddedObjects;
-
-  //  if (surfaceObject) {
-  //    LOG4CXX_DEBUG(logger, boost::format("[ObjectTracker::haveNewMemoryObject] tracked: %d. VALIDATION: %s\n.") % localAddedObjects % newObject->getValidationResultsString());
-  //    sleep(1);
-  //  }
-  //
-  //  if (surfaceObject && localAddedObjects >= 1) {
-  //    diarc::Display::createWindowIfDoesNotExist("new tracked object");
-  //    diarc::Display::displayFrame(surfaceObject->getObjectImage(), "new tracked object");
-  //    sleep(1);
-  //  }
-
-  //EAK: should we send notifications here too? should we only send if localAddedObjects > 0?
-  //send notifications that newObject was updated
-  if (localAddedObjects > 0) {
-    sendTrackingNotifications(newObject);
+  // send notification about updated (already tracked object) AND newly added MOs
+  if (trackedObject) {
+    sendTrackingNotifications(trackedObject);
   }
 }
 
@@ -326,7 +269,7 @@ void ObjectTracker::sendTrackingNotifications(MemoryObject::VecPtr newTrackedObj
                 boost::format("[sendTrackingNotifications] num tracked objects: %d.") % newTrackedObjects->size());
   if (newTrackedObjects->size() > 0) {
     for (size_t i = 0; i < newTrackedObjects->size(); i++) {
-      MemoryObjectNotification::Ptr n(new MemoryObjectNotification(shared_from_this(),
+      MemoryObjectNotification::Ptr n(new MemoryObjectNotification(this->getProcessorId(),
                                                                    (*newTrackedObjects)[i]->getTypeId(),
                                                                    (*newTrackedObjects)[i]->getTrackingMask()->getFrameNumber(),
                                                                    (*newTrackedObjects)[i]));
@@ -338,7 +281,7 @@ void ObjectTracker::sendTrackingNotifications(MemoryObject::VecPtr newTrackedObj
 void ObjectTracker::sendTrackingNotifications(MemoryObject::Ptr trackedObject) {
   LOG4CXX_TRACE(logger, "[sendTrackingNotifications] single tracked object.");
   if (trackedObject) {
-    MemoryObjectNotification::Ptr n(new MemoryObjectNotification(shared_from_this(),
+    MemoryObjectNotification::Ptr n(new MemoryObjectNotification(this->getProcessorId(),
                                                                  trackedObject->getTypeId(),
                                                                  trackedObject->getTrackingMask()->getFrameNumber(),
                                                                  trackedObject));
@@ -363,30 +306,8 @@ bool ObjectTracker::currentlyTrackingObjects() {
 
 //iterate through all newly detected objects and try to 
 //"match" with existing tracked objects
-
-int ObjectTracker::mergeObjects(MemoryObject::VecPtr newlyDetectedObjects) {
-  LOG4CXX_TRACE(logger, boost::format("[mergeObject] trying to merge %d objects.") % newlyDetectedObjects->size());
-  int numAddedObjects = 0;
-
-  // iterator for newly detected objects
-  MemoryObject::Vec::iterator newObjectIter;
-  //iterate through all newly detected objects
-  for (newObjectIter = newlyDetectedObjects->begin();
-       newObjectIter != newlyDetectedObjects->end(); ++newObjectIter) {
-
-    numAddedObjects += mergeObject(*newObjectIter);
-  }
-
-  return numAddedObjects;
-}
-
-//iterate through all newly detected objects and try to 
-//"match" with existing tracked objects
-
-int ObjectTracker::mergeObject(MemoryObject::Ptr newlyDetectedObject) {
+MemoryObject::Ptr ObjectTracker::mergeObject(MemoryObject::Ptr newlyDetectedObject) {
   LOG4CXX_TRACE(logger, "[mergeObject] trying to merge single object.");
-  int numAddedObjects = 0;
-  bool matchFound = false;
 
   // TODO: EAK: is this still needed? the detection/validation pipeline should fileter out unqualified objects,
   //    they shouldn't need to be filtered out here too.
@@ -409,30 +330,25 @@ int ObjectTracker::mergeObject(MemoryObject::Ptr newlyDetectedObject) {
 
   //for all types that newlyDetectedObject qualifies as, compare against all
   //tracked objects of those types
-  MemoryObjects_HashedById_Set trackedObjectsByTypeId;
-  MemoryObjects_HashedById_Set::const_iterator trackedObjectsByTypeIdIter;
   //iterate through all existing tracked objects of matching typeId
-  trackedObjectsByTypeId = trackedObjects->getByTypeId(newlyDetectedObject->getTypeId());
-  for (trackedObjectsByTypeIdIter = trackedObjectsByTypeId.begin();
-       trackedObjectsByTypeIdIter != trackedObjectsByTypeId.end(); ++trackedObjectsByTypeIdIter) {
-    //found match, no need to check other objects of type
-    if ((*trackedObjectsByTypeIdIter)->compare(newlyDetectedObject) == 1.0) {
-      (*trackedObjectsByTypeIdIter)->update(newlyDetectedObject);
-      matchFound = true;
-      break;
+  for (auto& trackedObject : trackedObjects->getByTypeId(newlyDetectedObject->getTypeId())) {
+    if (trackedObject->compare(newlyDetectedObject) == 1.0) {
+      // match found, no need to check other objects of type
+      trackedObject->update(newlyDetectedObject);
+      LOG4CXX_TRACE(logger, "[mergeObject] found match, not adding new object to tracker.");
+      return trackedObject;
     }
   }
 
-  //no match found, add new MemoryObject to Tracker
-  if (!matchFound) {
-    if (canTrack(newlyDetectedObject)) { //tracker can reject object
-      LOG4CXX_TRACE(logger, "[mergeObject] adding object to tracker.");
-      startTracking(newlyDetectedObject);
-      ++numAddedObjects;
-    }
+  // no match found, add new MemoryObject to Tracker
+  if (canTrack(newlyDetectedObject)) { // tracker can reject object
+    LOG4CXX_TRACE(logger, "[mergeObject] adding object to tracker.");
+    startTracking(newlyDetectedObject);
+    return newlyDetectedObject;
   }
 
-  return numAddedObjects;
+  LOG4CXX_TRACE(logger, "[mergeObject] object rejected by tracker.");
+  return nullptr;
 }
 
 void ObjectTracker::removeLowConfidenceObjects() {

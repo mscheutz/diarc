@@ -30,7 +30,8 @@ protected:
   std::string objectType;  
   
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
-  virtual void initModels(const std::string &model_path);
+  virtual void handleFrameCompletionNotification(FrameCompletionNotification::ConstPtr notification);
+  virtual void initModels(const std::string &model_path1, const std::string &model_path2, const std::string &model_path3);
 
 private:
 
@@ -80,6 +81,14 @@ private:
     {28, 29}  // azimuth and elevation of side component 2
   };
 
+  // for filtering "known" objects before processing
+  unsigned long long mostRecentKnownFrameNum = 0;
+  unsigned long long mostRecentUnknownFrameNum = 0;
+  std::unordered_map<unsigned long long, std::vector<diarc::stm::MemoryObject::Ptr>> knownMOs;
+  std::unordered_map<unsigned long long, std::vector<diarc::stm::MemoryObject::Ptr>> unknownMOs;
+
+  int numRandomAngles = 9;  // Number of additional angles (not counting 0)
+
   // Constants for de-normalizing output values back to 3D space
   const float EDGINESS_MIN = 0.01f;
   const float EDGINESS_MAX = 1.0f;
@@ -111,7 +120,11 @@ private:
   double chamferTolerance = 2;
 
   std::vector<PredicateFeatures> semanticProperties;
-  
+
+  void processUnknownObject(diarc::stm::MemoryObject::Ptr object);
+  void removeKnownObjects(const std::vector<diarc::stm::MemoryObject::Ptr>& knownObjects, std::vector<diarc::stm::MemoryObject::Ptr>& unknownObjects);
+  float calculateBBoxIoU(const cv::Rect& rect1, const cv::Rect& rect2);
+
   void denoiseAndUpsamplePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& inputCloud,
                                     pcl::PointCloud<pcl::PointXYZ>::Ptr& outputCloud);
   BestDescription findBestReconstruction(pcl::PointCloud<pcl::PointXYZ>::Ptr& objectCloud,
