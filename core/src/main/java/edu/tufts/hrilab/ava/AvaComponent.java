@@ -1419,7 +1419,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void listenForWWandASR() {
     listenForWW = true;
-    //TODO: What of the below do we want to expose through the config?
+    //TODO: ARGS ARE OUTDATED FOR MOST OF THESE CONFIGURATIONS
     //args:
     // --model_size: "tiny", "base", "small", "medium", "large"
     // --ww_model_path: ~/.diarc/python/ww/models/hey_eyva_model_float32.tflite
@@ -1432,7 +1432,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
     // moonshine base cpu
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
 
     // fasterwhisper small gpu
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");

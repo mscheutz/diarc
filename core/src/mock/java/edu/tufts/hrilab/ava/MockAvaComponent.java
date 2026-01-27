@@ -472,7 +472,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void listenForWWandASR() {
     listenForWW = true;
-    //TODO: What of the below do we want to expose through the config?
+    //TODO: ARGS ARE OUTDATED FOR MOST OF THESE CONFIGURATIONS
     //args:
     // --model_size: "tiny", "base", "small", "medium", "large"
     // --ww_model_path: ~/.diarc/python/ww/models/hey_eyva_model_float32.tflite
@@ -485,7 +485,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
     // local moonshine base cpu
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
 
     // local fasterwhisper small gpu
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
@@ -498,6 +498,9 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
     //********If haven't updated ww env and script, use the below*******
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+
+    //dual local setup
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--gpu", "--model_type", "0", "--model_size", "medium", "--diarc");
 
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
