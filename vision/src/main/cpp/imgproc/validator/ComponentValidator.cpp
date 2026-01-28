@@ -461,6 +461,38 @@ void ComponentValidator::handleFrameCompletionNotification(FrameCompletionNotifi
   ObjectValidator::handleFrameCompletionNotification(notification);
 }
 
+void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
+  LOG4CXX_TRACE(logger, "[handleMemoryObjectNotification] method entered.");
+
+  MemoryObject::Ptr object = notification->object;
+
+  // check if this typeId should currently be processed
+  DescriptorsByTypeConstPtr types = getTypes();
+  DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
+
+  // separate the notification objects into "known" and "unknown" containers
+  if (types_itr != types->end()) {
+    // "unknown" MO
+    if (unknownMOs.find(notification->frameNumber) == unknownMOs.end()) {
+      unknownMOs[notification->frameNumber] = std::vector<MemoryObject::Ptr>();
+    }
+    unknownMOs[notification->frameNumber].push_back(object);
+    LOG4CXX_DEBUG(logger, "[handleMemoryObjectNotification] Received \"unknown\" object. Count: " << unknownMOs[notification->frameNumber].size() << " FrameNum: " << notification->frameNumber);
+  } else {
+    // "known" MO
+    if (notification->frameNumber <= mostRecentKnownFrameNum) {
+      LOG4CXX_DEBUG(logger, "[handleMemoryObjectNotification] Received old \"known\" object notification. Ignoring. FrameNum: " << notification->frameNumber);
+      return;
+    }
+    if (knownMOs.find(notification->frameNumber) == knownMOs.end()) {
+      knownMOs[notification->frameNumber] = std::vector<MemoryObject::Ptr>();
+    }
+    knownMOs[notification->frameNumber].push_back(object);
+    LOG4CXX_DEBUG(logger, "[handleMemoryObjectNotification] Received \"known\" object. Count: " << knownMOs[notification->frameNumber].size() << " FrameNum: " << notification->frameNumber);
+  }
+
+}
+
 void ComponentValidator::removeKnownObjects(const std::vector<MemoryObject::Ptr>& knownObjects, std::vector<MemoryObject::Ptr>& unknownObjects) {
   for (auto unknown_itr = unknownObjects.begin(); unknown_itr != unknownObjects.end();) {
     bool matchFound = false;
@@ -492,168 +524,169 @@ float ComponentValidator::calculateBBoxIoU(const cv::Rect& rect1, const cv::Rect
 void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
   LOG4CXX_TRACE(logger, "[processUnknownObject] method entered.");
 
-    cv::Mat bestSemMatrixSig = cv::Mat::zeros(1, 24, CV_32F);  // Track the model output with the highest IoU
-    // get current descriptors to process
-    TypesByDescriptorConstPtr descriptors = getDescriptors();
+  const auto& types = getTypes();
+  DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
+  if (types_itr == types->end()) {
+    LOG4CXX_INFO(logger, "TypeId not being processed by Validator: " << object->getTypeId());;
+    return;
+  }
 
-    // get MemoryObject cloud, denoise and upsample it
-    pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr denoisedCloud(new pcl::PointCloud<pcl::PointXYZ>());
-    *denoisedCloud = *objectCloudOrig;
-    float refCubeScaleFactor = scalePointCloudToUnitCube(denoisedCloud, AXIS_UNIT_CUBE_MAX);
-    cv::Mat objectDepthImage(denoisedCloud->height, denoisedCloud->width, CV_32FC1);
-    diarc::pc::util::pointCloudToDepthWithinReferenceCube(objectDepthImage, denoisedCloud,
+  cv::Mat bestSemMatrixSig = cv::Mat::zeros(1, 24, CV_32F); // Track the model output with the highest IoU
+
+  // get MemoryObject cloud, denoise and upsample it
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr denoisedCloud(new pcl::PointCloud<pcl::PointXYZ>());
+  *denoisedCloud = *objectCloudOrig;
+  float refCubeScaleFactor = scalePointCloudToUnitCube(denoisedCloud, AXIS_UNIT_CUBE_MAX);
+  cv::Mat objectDepthImage(denoisedCloud->height, denoisedCloud->width, CV_32FC1);
+  diarc::pc::util::pointCloudToDepthWithinReferenceCube(objectDepthImage, denoisedCloud,
                                                         AXIS_UNIT_CUBE_MAX);
 
-    // align object point cloud with superellipsoid coordinate system
-    pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud = denoisedCloud;
-    rotatePointCloud(objectCloud, 180.0f, Eigen::Vector3f::UnitX());
-    rotatePointCloud(objectCloud, 90.0f, Eigen::Vector3f::UnitY());
-        
-    // reconstruct superellipsoids for different rotations, use best (lowest chamfer distance) reconstruction
-    BestDescription bestDescriptionCandidate = findBestReconstruction(objectCloud, objectDepthImage);
-    printDimensions(bestDescriptionCandidate, refCubeScaleFactor);
+  // align object point cloud with superellipsoid coordinate system
+  pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud = denoisedCloud;
+  rotatePointCloud(objectCloud, 180.0f, Eigen::Vector3f::UnitX());
+  rotatePointCloud(objectCloud, 90.0f, Eigen::Vector3f::UnitY());
 
-    if (visualizeReconstruction == true) {
+  // reconstruct superellipsoids for different rotations, use best (lowest chamfer distance) reconstruction
+  BestDescription bestDescriptionCandidate = findBestReconstruction(objectCloud, objectDepthImage);
+  printDimensions(bestDescriptionCandidate, refCubeScaleFactor);
 
-      cv::Mat displayFrame = visualizePointClouds({bestDescriptionCandidate.objectUnRot}, bestDescriptionCandidate.bestSuperellipsoidsUnRot);
-      
-      std::string savePath = "projected_pointcloud.png";
-      cv::imwrite(savePath, displayFrame);
-      cv::namedWindow("Visual Object Representation", cv::WINDOW_AUTOSIZE);
-      cv::moveWindow("Visual Object Representation", 1340, 50); 
-      cv::imshow("Visual Object Representation", displayFrame);
-      cv::waitKey(2000); 
-     
+  if (visualizeReconstruction == true) {
+    cv::Mat displayFrame = visualizePointClouds({bestDescriptionCandidate.objectUnRot},
+                                                bestDescriptionCandidate.bestSuperellipsoidsUnRot);
+
+    std::string savePath = "projected_pointcloud.png";
+    cv::imwrite(savePath, displayFrame);
+    cv::namedWindow("Visual Object Representation", cv::WINDOW_AUTOSIZE);
+    cv::moveWindow("Visual Object Representation", 1340, 50);
+    cv::imshow("Visual Object Representation", displayFrame);
+    cv::waitKey(2000);
+  }
+
+  // Check if the output matrix is valid before using it
+  if (bestDescriptionCandidate.bestSemMatrixSigUnRot.empty()) {
+    LOG4CXX_DEBUG(logger, boost::format("Semantic Matrix not valid"));
+  }
+
+  float confidence = 0.99; //TODO: Should I set this to the IoU value?
+  int predShape;
+  int predAxis;
+  int predIdx;
+  bool predFound;
+  std::vector<bool> foundPredicatesVector(semanticProperties.size(), false);
+
+  bool sideComp1IsPresent = isSideComponentPresent(1, bestDescriptionCandidate.bestSemMatrixSigUnRot);
+  bool sideComp2IsPresent = isSideComponentPresent(2, bestDescriptionCandidate.bestSemMatrixSigUnRot);
+
+  // Determine if semantic predicates are present for object and save results in vector of booleans
+  for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
+    predShape = sp->predicateShape;
+    predAxis = sp->predicateAxis;
+    predIdx = sp->predicateIndex;
+
+    // Compute semantic properties for the model output that achieved the highest IoU
+    foundPredicatesVector[predIdx] = calculateSemProperty(bestDescriptionCandidate.bestSemMatrixSigUnRot, predShape,
+                                                          predAxis, predIdx);
+
+    // If side component 1 is not found, we do not need to go further
+    if (sideComp1IsPresent == false && predIdx >= 10) {
+      foundPredicatesVector[0] = true;
+      break;
     }
 
-    // Check if the output matrix is valid before using it
-    if (bestDescriptionCandidate.bestSemMatrixSigUnRot.empty()) {
-      LOG4CXX_DEBUG(logger, boost::format("Semantic Matrix not valid"));
+    // If side component 2 is not found, we do not need to go further
+    if (sideComp2IsPresent == false && predIdx >= 29) {
+      foundPredicatesVector[1] = true;
+      break;
     }
 
-    float confidence = 0.99; //TODO: Should I set this to the IoU value?
-    int predShape;
-    int predAxis;
-    int predIdx;
-    bool predFound;
-    std::vector<bool> foundPredicatesVector(semanticProperties.size(), false);
-
-    bool sideComp1IsPresent = isSideComponentPresent(1, bestDescriptionCandidate.bestSemMatrixSigUnRot);
-    bool sideComp2IsPresent = isSideComponentPresent(2, bestDescriptionCandidate.bestSemMatrixSigUnRot);
-
-    // Determine if semantic predicates are present for object and save results in vector of booleans
-    for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
-      predShape = sp->predicateShape;
-      predAxis = sp->predicateAxis;
-      predIdx = sp->predicateIndex;
-
-      // Compute semantic properties for the model output that achieved the highest IoU
-      foundPredicatesVector[predIdx] = calculateSemProperty(bestDescriptionCandidate.bestSemMatrixSigUnRot, predShape, predAxis, predIdx);
-
-      // If side component 1 is not found, we do not need to go further
-      if (sideComp1IsPresent == false && predIdx >= 10) {
-        foundPredicatesVector[0] = true;
-        break;
+    // set shape to part if we couldn't assign a shape to the existing component
+    if (identifyShapes) {
+      if (predIdx == 6) {
+        if (foundPredicatesVector[3] == false
+          && foundPredicatesVector[4] == false
+          && foundPredicatesVector[5] == false) {
+          foundPredicatesVector[6] = true;
+        }
       }
-
-      // If side component 2 is not found, we do not need to go further
-      if (sideComp2IsPresent == false && predIdx >= 29) {
-        foundPredicatesVector[1] = true;
-        break;
+      if (sideComp1IsPresent == true && predIdx == 13) {
+        if (foundPredicatesVector[10] == false
+          && foundPredicatesVector[11] == false
+          && foundPredicatesVector[12] == false) {
+          foundPredicatesVector[13] = true;
+        }
       }
-
-      // set shape to part if we couldn't assign a shape to the existing component
-      if (identifyShapes) {
-        if (predIdx == 6) {
-          if (foundPredicatesVector[3] == false 
-              && foundPredicatesVector[4] == false
-              && foundPredicatesVector[5] == false) {
-            foundPredicatesVector[6] = true;
-          }
-        }
-        if (sideComp1IsPresent == true && predIdx == 13) {
-          if (foundPredicatesVector[10] == false 
-              && foundPredicatesVector[11] == false
-              && foundPredicatesVector[12] == false)
-          {
-            foundPredicatesVector[13] = true;
-          }
-        }
-        if (sideComp2IsPresent == true && predIdx == 32) {
-          if (foundPredicatesVector[29] == false 
-              && foundPredicatesVector[30] == false
-              && foundPredicatesVector[31] == false)
-          {
-            foundPredicatesVector[32] = true;
-          }
-        }
-      } else {
-        std::vector<int> shapeIndices = {3, 4, 5, 6, 9, 10, 11, 12, 13, 29, 30, 31, 32};
-        for (int idx: shapeIndices) {
-          foundPredicatesVector[idx] = false;
+      if (sideComp2IsPresent == true && predIdx == 32) {
+        if (foundPredicatesVector[29] == false
+          && foundPredicatesVector[30] == false
+          && foundPredicatesVector[31] == false) {
+          foundPredicatesVector[32] = true;
         }
       }
     }
-
-    if (sideComp1IsPresent && sideComp2IsPresent) {
-      foundPredicatesVector[2] = true;
+    else {
+      std::vector<int> shapeIndices = {3, 4, 5, 6, 9, 10, 11, 12, 13, 29, 30, 31, 32};
+      for (int idx : shapeIndices) {
+        foundPredicatesVector[idx] = false;
+      }
     }
+  }
 
-    DescriptorsByType::const_iterator types_itr = getTypes()->find(object->getTypeId());
-    PredicateHelper::Set::const_iterator descriptors_itr;
-    for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end();
-         ++descriptors_itr) {
+  if (sideComp1IsPresent && sideComp2IsPresent) {
+    foundPredicatesVector[2] = true;
+  }
 
-      std::string keyToFind = descriptors_itr->getName();
+  for (const auto& descriptor : types_itr->second) {
+    std::string keyToFind = descriptor.getName();
 
-      // Add each identified predicate (shape, size, position, ...) as validation result
-      if (keyToFind == "any" || keyToFind == "unknown") {
-        //populateMemoryObjectDescription(foundPredicatesVector, object);
-        std::string descriptor = generateFullDescription(foundPredicatesVector,  
-                                                          bestDescriptionCandidate.minChamferDist);
-        LOG4CXX_INFO(logger, boost::format("Description: %s") % descriptor);
-        object->addValidationResult(0.9f, PredicateHelper("unknown(" + object->getVariableName() + ")"));
-        object->addValidationResult(0.9f, PredicateHelper(descriptor + "(" + object->getVariableName() + ")"));
+    // Add each identified predicate (shape, size, position, ...) as validation result
+    if (keyToFind == "any" || keyToFind == "unknown") {
+      //populateMemoryObjectDescription(foundPredicatesVector, object);
+      std::string descriptor = generateFullDescription(foundPredicatesVector,
+                                                       bestDescriptionCandidate.minChamferDist);
+      LOG4CXX_INFO(logger, boost::format("Description: %s") % descriptor);
+      object->addValidationResult(0.9f, PredicateHelper("unknown(" + object->getVariableName() + ")"));
+      object->addValidationResult(0.9f, PredicateHelper(descriptor + "(" + object->getVariableName() + ")"));
 
-        sendValidationNotifications(object);
+      sendValidationNotifications(object);
 
       // Add full text description as validation result
-      } else if (keyToFind == "full_description") {
+    }
+    else if (keyToFind == "full_description") {
+      std::string fullTextDescription = generateFullDescription(foundPredicatesVector,
+                                                                bestDescriptionCandidate.minChamferDist);
 
-        std::string fullTextDescription = generateFullDescription(foundPredicatesVector,
-                                                                  bestDescriptionCandidate.minChamferDist);
+      object->addValidationResult(confidence, PredicateHelper(descriptor));
+      object->addValidationResult(confidence, PredicateHelper(
+                                    fullTextDescription + "(" + descriptor.getArg(0) + ")"));
+      sendValidationNotifications(object);
+      std::cout << "Full description: " << fullTextDescription << std::endl;
 
-        object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
-        object->addValidationResult(confidence, PredicateHelper(
-                                    fullTextDescription + "(" + descriptors_itr->getArg(0) + ")"));
+      // Add validation result for specific predicates we are looking for
+    }
+    else {
+      auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
+                             [&keyToFind](const PredicateFeatures& pf) {
+                               return pf.predicateKey == keyToFind;
+                             });
+
+      // Check if the element was found
+      if (it == semanticProperties.end()) {
+        continue;
+      }
+
+      predFound = foundPredicatesVector[it->predicateIndex];
+
+      if (!predFound) {
+        LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
+        continue;
+      }
+      else {
+        object->addValidationResult(confidence, descriptor);
         sendValidationNotifications(object);
-        std::cout << "Full description: " << fullTextDescription << std::endl;
-
-        // Add validation result for specific predicates we are looking for
-      } else {
-
-        auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
-                               [&keyToFind](const PredicateFeatures &pf) {
-                                  return pf.predicateKey == keyToFind;
-                              });
-
-        // Check if the element was found
-        if (it == semanticProperties.end()) {
-          continue;
-        }
-
-        predFound = foundPredicatesVector[it->predicateIndex];
-
-        if (!predFound) {
-          LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
-          continue;
-        } else {
-          object->addValidationResult(confidence, *descriptors_itr);
-          sendValidationNotifications(object);
-        }
       }
     }
+  }
 
 }
 

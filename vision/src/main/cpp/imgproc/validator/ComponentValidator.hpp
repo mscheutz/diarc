@@ -31,7 +31,7 @@ protected:
   
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
   virtual void handleFrameCompletionNotification(FrameCompletionNotification::ConstPtr notification);
-  virtual void initModels(const std::string &model_path1, const std::string &model_path2, const std::string &model_path3);
+  virtual void initModels(const std::string &model_path);
 
 private:
 
@@ -86,8 +86,6 @@ private:
   unsigned long long mostRecentUnknownFrameNum = 0;
   std::unordered_map<unsigned long long, std::vector<diarc::stm::MemoryObject::Ptr>> knownMOs;
   std::unordered_map<unsigned long long, std::vector<diarc::stm::MemoryObject::Ptr>> unknownMOs;
-
-  int numRandomAngles = 9;  // Number of additional angles (not counting 0)
 
   // Constants for de-normalizing output values back to 3D space
   const float EDGINESS_MIN = 0.01f;
