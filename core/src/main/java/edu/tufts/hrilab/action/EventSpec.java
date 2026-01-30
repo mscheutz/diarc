@@ -138,32 +138,44 @@ public final class EventSpec implements Serializable {
   }
 
   /**
-   * Build ACTION or GOAL EventSpec from Predicate representation (i.e., action(actor,args)).
+   * Build ACTION or GOAL EventSpec from Predicate representation (e.g., action(actor,args)).
    *
    * TODO: generalize this method to work for non-ACTION types, using the same semantics that Goal expects.
    *
-   * @param eventPredicate
+   * @param eventPredicate - predicate defining action (e.g., action(actor,args)) or goal (e.g., goal(actor,args))
+   * @param containsActor - if the eventPredicate contains the actor as its first arg
    */
-  public EventSpec(Predicate eventPredicate) {
-    if (eventPredicate.size() > 0) {
-      this.actor = eventPredicate.get(0).toString();
-      if (eventPredicate.getName().equals("goal")) {
-        type = EventType.GOAL;
-        Predicate state = (Predicate) eventPredicate.get(1);
-        command = state.getName();
-        for (Symbol arg : state.getArgs().subList(1, eventPredicate.getArgs().size())) {
-          inputArgs.add(arg.toString());
-        }
+  public EventSpec(Predicate eventPredicate, boolean containsActor) {
+    if (containsActor && eventPredicate.getArgs().isEmpty()) {
+      log.error("[EventSpec] no actor specified in predicate: {}", eventPredicate);
+      type = null;
+      return;
+    }
+
+    if (eventPredicate.getName().equals("goal")) {
+      type = EventType.GOAL;
+      Predicate state;
+      if (containsActor) {
+        this.actor = eventPredicate.get(0).toString();
+        state = (Predicate) eventPredicate.get(1);
       } else {
-        command = eventPredicate.getName();
-        type = EventType.ACTION;
-        for (Symbol arg : eventPredicate.getArgs().subList(1, eventPredicate.getArgs().size())) {
-          inputArgs.add(arg.toString());
-        }
+        state = (Predicate) eventPredicate.get(0);
+      }
+      command = state.getName();
+      for (Symbol arg : state.getArgs()) {
+        inputArgs.add(arg.toString());
       }
     } else {
-      log.error("[EventSpec] trying to create event spec with invalid form: " + eventPredicate);
-      type = null;
+      type = EventType.ACTION;
+      command = eventPredicate.getName();
+      int argIndex = 0;
+      if (containsActor) {
+        this.actor = eventPredicate.get(0).toString();
+        argIndex = 1;
+      }
+      for (Symbol arg : eventPredicate.getArgs().subList(argIndex, eventPredicate.getArgs().size())) {
+        inputArgs.add(arg.toString());
+      }
     }
   }
 

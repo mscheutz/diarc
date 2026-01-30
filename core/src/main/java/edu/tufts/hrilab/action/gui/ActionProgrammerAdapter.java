@@ -169,11 +169,7 @@ public class ActionProgrammerAdapter extends GuiAdapter {
 
     ActionDBEntry.Builder builder = new ActionDBEntry.Builder(name);
     for (JsonElement link : chain) {
-      builder.addEventSpec(
-              new EventSpec(
-                      Factory.createPredicate(link.getAsString())
-              )
-      );
+      builder.addEventSpec(new EventSpec(Factory.createPredicate(link.getAsString()), true));
     }
 
     builder.build(true);
