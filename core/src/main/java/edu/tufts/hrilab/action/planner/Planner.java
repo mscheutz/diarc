@@ -131,7 +131,7 @@ public abstract class Planner {
         // apply semantic types
         actionWithActor = createTypedPredicate(actionWithActor, objectTypeMap);
 
-        newAction.addEventSpec(new EventSpec(actionWithActor));
+        newAction.addEventSpec(new EventSpec(actionWithActor, true));
       }
     }
     newAction.setDescription(goal.getPredicate().toString());
