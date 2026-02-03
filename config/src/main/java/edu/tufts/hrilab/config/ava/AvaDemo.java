@@ -152,9 +152,6 @@ public class AvaDemo extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
 //    }
 
-    if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
-    }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
@@ -164,6 +161,9 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs);
     }
     createInstance(edu.tufts.hrilab.ava.stats.AvaStatisticsManagerComponent.class, "");
+    if (useDisplay) {
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
+    }
 
     String kioskArgs = "";
     if (initKiosk) {

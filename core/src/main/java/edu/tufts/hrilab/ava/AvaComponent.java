@@ -321,6 +321,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       if (dock2Name != null && refName.equals(dock2Name)) {
         altDockLocation = refId;
       }
+
     }
 
 
@@ -345,6 +346,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
 
     //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    switchDisplayToTRACS();
   }
 
   private void updateRollingPositionData() {
@@ -2109,6 +2111,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     displayLock.lock();
     telepresenceCondition.signal();
     displayLock.unlock();
+    if (ciscoCodecAPI.getCurrentDisplayMode() != CiscoCodecAPI.DisplayMode.TRACS) {
+      //Switch back to TRACS (PC 2 on the Cisco codec)
+      boolean success = ciscoCodecAPI.switchToTRACS();
+      if (success) {
+        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+      } else {
+        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      }
+    }
   }
 
   @OnInterrupt(onCancelServiceCall = "switchDisplayToTRACS()", onSuspendServiceCall = "switchDisplayToTRACS()")
