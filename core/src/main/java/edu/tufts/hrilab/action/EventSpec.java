@@ -291,7 +291,7 @@ public final class EventSpec implements Serializable {
   }
 
   public String getActor() {
-    return actor;
+    return (actor != null) ? actor : "?actor";
   }
 
   /**
