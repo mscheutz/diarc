@@ -4,7 +4,7 @@
     "arity": 1
   },
   "config": {
-    "model": "1comp_uc_rotation_650epochs",
+    "model": "model_objects_c_v5_1500",
     "type" : "onnx",
     "use_user_defined_model" : true,
     "identify_shapes" : true,
