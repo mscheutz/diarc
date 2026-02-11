@@ -128,6 +128,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private final ScheduledExecutorService keepAliveExecutor = Executors.newScheduledThreadPool(1);
   private final ScheduledExecutorService stopGoingHomeExecutor = Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService dockingPositionCorrectionExecutor = Executors.newScheduledThreadPool(1);
 
   private final Lock chargingLock = new ReentrantLock();
   private final Condition chargingTerminatedCondition = chargingLock.newCondition();
@@ -146,6 +147,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   // Original (unadjusted) dock poses for localization
   private Map<String, Pair<Point3d, Quat4d>> originalDockPoses = new HashMap<>();
+
+  private ArrayList<Point3d> rollingPositionData = new ArrayList<>();
+  private String prevDockStatus = "";
 
   public AvaComponent() {
     super();
@@ -315,6 +319,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     keepAlive();
     stopGoingHomeOnTheHour();
+    monitorDockingStatus();
 
     // get notified when display services become available
     try {
@@ -327,6 +332,50 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     getCameraHeightMax();
 
     //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+  }
+
+  private void updateRollingPositionData() {
+    if (rollingPositionData.size() >= 30) {
+      rollingPositionData.remove(0);
+    }
+    rollingPositionData.add(getPosition());
+  }
+
+  private void monitorDockingStatus() {
+    keepAliveExecutor.scheduleAtFixedRate(() -> {
+      updateRollingPositionData();
+      try {
+        if (api.hasSession()) {
+          RMSDockStatusResponse response = api.getDockStatus();
+          if (response != null) {
+            DockStatusResponse dockStatusResponse = response.response;
+            if (dockStatusResponse.state.equals("Docked") && !prevDockStatus.equals("Docked")) {
+              //go through all the positions up to halfway and check which dock they were closest to. ensure most match one dock
+              int countDock1 = 0;
+              for (Point3d pos : rollingPositionData) {
+                if (getCloserDock(pos).equals("dock1")) {
+                  countDock1++;
+                }
+              }
+              if (countDock1 > (0.6 * rollingPositionData.size())) {
+                if (!getCloserDock().equals("dock1")) {
+                  log.warn("[monitorDockingStatus] forcing localization to dock1 based on position data history. Was docked either by hand or outside of TRACS");
+                  setAtPrimaryDock();
+                }
+              } else {
+                if (!getCloserDock().equals("dock2")) {
+                  log.warn("[monitorDockingStatus] forcing localization to dock2 based on position data history. Was docked either by hand or outside of TRACS");
+                  setAtSecondaryDock();
+                }
+              }
+            }
+            prevDockStatus = dockStatusResponse.state;
+          }
+        }
+      } catch (Exception e) {
+        log.error("Exception while keeping Ava alive.", e);
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   @TRADEService
@@ -774,24 +823,32 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     
     Point3d currentPos = getPosition();
-    
-    Pair<Point3d, Quat4d> dock1Pose = originalDockPoses.get("dock1");
-    Pair<Point3d, Quat4d> dock2Pose = originalDockPoses.get("dock2");
-    
-    if (dock1Pose == null) {
-      return "dock2";
-    }
-    if (dock2Pose == null) {
-      return "dock1";
-    }
-    
-    double distToDock1 = currentPos.distance(dock1Pose.getLeft());
-    double distToDock2 = currentPos.distance(dock2Pose.getLeft());
-    
-    log.info("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
-    
-    return distToDock1 <= distToDock2 ? "dock1" : "dock2";
+    return getCloserDock(currentPos);
   }
+
+    private String getCloserDock(Point3d currentPos) {
+      if (originalDockPoses.isEmpty()) {
+        log.warn("[getCloserDock] no dock poses available, defaulting to dock1");
+        return "dock1";
+      }
+
+      Pair<Point3d, Quat4d> dock1Pose = originalDockPoses.get("dock1");
+      Pair<Point3d, Quat4d> dock2Pose = originalDockPoses.get("dock2");
+
+      if (dock1Pose == null) {
+        return "dock2";
+      }
+      if (dock2Pose == null) {
+        return "dock1";
+      }
+
+      double distToDock1 = currentPos.distance(dock1Pose.getLeft());
+      double distToDock2 = currentPos.distance(dock2Pose.getLeft());
+
+      log.info("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
+
+      return distToDock1 <= distToDock2 ? "dock1" : "dock2";
+    }
 
   /**
    * Send the Ava robot to dock. Automatically determines which dock is closer
