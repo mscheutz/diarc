@@ -6,6 +6,7 @@ package edu.tufts.hrilab.config.kinova;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.moveit.MockMoveItComponent;
 import edu.tufts.hrilab.moveit.MoveItComponent;
@@ -19,8 +20,11 @@ import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.tf.TFComponent;
 import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.vision.stm.Grasp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class KinovaFlexConfig extends DiarcConfiguration {
   protected static Logger log = LoggerFactory.getLogger(KinovaFlexConfig.class);
@@ -49,13 +53,14 @@ public class KinovaFlexConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame camera_color_frame -capture kinova.xml");
 //     createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml");
 
-    createInstance(edu.tufts.hrilab.grasp.GraspComponent.class);
+//    createInstance(edu.tufts.hrilab.grasp.GraspComponent.class);
 
+    MoveItComponent moveItComponent = null;
     if (useMockRobot) {
       createInstance(MockMoveItComponent.class);
     } else {
       createInstance(TFComponent.class);
-      createInstance(MoveItComponent.class, "-config kortex.json");
+      moveItComponent = createInstance(MoveItComponent.class, "-config kortex.json");
     }
 
 
@@ -73,7 +78,8 @@ public class KinovaFlexConfig extends DiarcConfiguration {
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee self -config spotDemo.simspeech");
 
-//    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.moveit.MoveItComponent");
+    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.moveit.MoveItComponent");
 
+//    moveItComponent.goToPose("arm", Factory.createSymbol("home"));
   }
 }

@@ -248,7 +248,13 @@ namespace diarc {
           }
 
           // create point cloud from color and depth frames
-          diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+          if (performDepthRegistration_) {
+            // use color camera matrix bc depth has already been aligned with color frame
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 1);
+          } else {
+            // use depth camera matrix
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 0);
+          }
 
         } catch (cv_bridge::Exception &e) {
           LOG4CXX_ERROR(logger, boost::format("cv_bridge exception: %s") % e.what());

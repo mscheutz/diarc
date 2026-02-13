@@ -326,7 +326,7 @@ namespace diarc {
         nh = new ros::NodeHandle();
 
         // ROS publisher
-        pub = nh->advertise<pcl::PointCloud<pcl::PointXYZ> >("/head_mount_kinect/depth_registered/points", 1);
+        pub = nh->advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/diarc/depth_registered/points", 1);
       }
 #endif //USE_ROS_VISION
 
@@ -361,10 +361,11 @@ namespace diarc {
       bool success = captureCurrentCameraFrame();
 
 #ifdef USE_ROS_VISION
-      if (publishCloudToRos && cloud) {
-        cloud->header.frame_id = "head_mount_kinect_rgb_optical_frame";
-        cloud->header.stamp = ros::Time::now().toNSec() / 1e3;
-        pub.publish(cloud);
+      if (publishCloudToRos && cloudRGB) {
+        // cloudRGB->header.frame_id = "camera_depth_frame";
+        cloudRGB->header.frame_id = "camera_color_frame";
+        cloudRGB->header.stamp = ros::Time::now().toNSec() / 1e3;
+        pub.publish(cloudRGB);
         ros::spinOnce();
       }
 #endif //USE_ROS_VISION

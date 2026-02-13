@@ -167,6 +167,7 @@ do; Q/ C; #x.$x
 do you see ; Q/REF ; #x.see(?ADDRESSEE,$x)
 handle; THING; handle
 doorknob; THING; doorknob
+block; THING; block
 
 do that; C; dothat:dialog ; ACTIVATED
 
