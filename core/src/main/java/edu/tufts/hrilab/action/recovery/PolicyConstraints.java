@@ -56,4 +56,11 @@ public class PolicyConstraints {
    * Can be empty (i.e., applies to all action statuses).
    */
   public Set<ActionStatus> actionStatuses = new HashSet<>();
+  /**
+   * Returns true if the corresponding recovery policy is empty (i.e., is always applicable).
+   * @return
+   */
+  public boolean isEmpty() {
+    return goals.isEmpty() && excludedGoals.isEmpty() && failedActions.isEmpty() && excludedFailedActions.isEmpty() && failureReasons.isEmpty() && excludedFailureReasons.isEmpty() && actionStatuses.isEmpty();
+  }
 }
