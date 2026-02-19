@@ -10,6 +10,7 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.moveit.MockMoveItComponent;
 import edu.tufts.hrilab.moveit.MoveItComponent;
+import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -17,6 +18,7 @@ import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.tf.MockTFComponent;
 import edu.tufts.hrilab.tf.TFComponent;
 import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.util.Util;
@@ -40,7 +42,7 @@ public class KinovaFlexConfig extends DiarcConfiguration {
     createInstance(DialogueComponent.class);
     createInstance(SimSpeechProductionComponent.class);
 
-    String hybridParserArgs = "-tldl templatedict.dict -cache -cacheName spotPickAndPlace -cachePersist true";
+    String hybridParserArgs = "-tldl spot.dict templatedict.dict -cache -cacheName spotPickAndPlace -cachePersist true";
     if (useLLM) {
       createInstance(LLMComponent.class);
       hybridParserArgs += " -llm -llmService spotPickAndPlace";
@@ -57,12 +59,18 @@ public class KinovaFlexConfig extends DiarcConfiguration {
 
     MoveItComponent moveItComponent = null;
     if (useMockRobot) {
+      createInstance(MockTFComponent.class);
       createInstance(MockMoveItComponent.class);
     } else {
       createInstance(TFComponent.class);
       moveItComponent = createInstance(MoveItComponent.class, "-config kortex.json");
     }
 
+    // flex rl
+//    String tradeHubContainer = "192.168.80.101@10001";
+    String tradeHubContainer = "127.0.0.1@10001";
+    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
+    flex.start(); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-beliefinitfile agents/agents.pl "
