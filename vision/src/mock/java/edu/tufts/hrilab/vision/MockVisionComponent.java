@@ -399,7 +399,8 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     List<MemoryObject> tokensOut = new ArrayList<>();
 
     if (typeIdDescriptors.containsKey(typeId)) {
-      if (typeIdDescriptors.get(typeId).get(0).getName().equals("any")) {
+      String descriptorName = typeIdDescriptors.get(typeId).get(0).getName();
+      if (descriptorName.equals("any") || descriptorName.equals("all")) {
         return sceneCollection.getSceneDetectionResults();
       }
 

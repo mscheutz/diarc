@@ -164,7 +164,7 @@ if (REALSENSE_FOUND)
 endif(REALSENSE_FOUND)
 
 # ROS
-OPTION(USE_ROS "Turn on/off integration with ROS." ON)
+OPTION(USE_ROS "Turn on/off integration with ROS." OFF)
 IF(USE_ROS)
 	FIND_PACKAGE(roscpp)
 	FIND_PACKAGE(rosconsole)

@@ -16,8 +16,8 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.diarcros.msg.spot_msgs.NavigateToGoal;
 import edu.tufts.hrilab.diarcros.spot_ros.SpotDoorDetector;
 import edu.tufts.hrilab.diarcros.spot_ros.SpotNavGraph;
-import edu.tufts.hrilab.spot.consultant.RosSpotNavGraphLocationConsultant;
-import edu.tufts.hrilab.spot.consultant.RosSpotNavGraphLocationReference;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.ros.actionlib.state.SimpleClientGoalState;
@@ -37,7 +37,7 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
 
     //Path to nav graph file stored on Spot
     private String navGraphPath ="/";
-    private RosSpotNavGraphLocationConsultant consultant;
+    private SpotNavGraphLocationConsultant consultant;
     private Symbol currentLocation;
 
     @Override
@@ -65,7 +65,7 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
     protected void init() {
         navGraph = new SpotNavGraph();
 
-        consultant = new RosSpotNavGraphLocationConsultant(RosSpotNavGraphLocationReference.class, mapDescriptor);
+        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
         try {
             TRADE.registerAllServices(consultant,this.getMyGroups());
         } catch (TRADEException e) {
@@ -90,8 +90,8 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
         if (currentLocation == null) {
             log.error("[goToLocation] location not initialized");
         }
-        RosSpotNavGraphLocationReference currentLocationRef = consultant.getReference(currentLocation);
-        RosSpotNavGraphLocationReference destinationLocation = consultant.getReference(location);
+        SpotNavGraphLocationReference currentLocationRef = consultant.getRefWithId(currentLocation);
+        SpotNavGraphLocationReference destinationLocation = consultant.getRefWithId(location);
 
         edu.tufts.hrilab.diarcros.msg.spot_msgs.NavigateToGoal goal = new NavigateToGoal(
                 "/home/evan/ws_spot/hrilabtr5.12.23.walk",

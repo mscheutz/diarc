@@ -4,15 +4,12 @@
 
 #include "PlaneProcessor.hpp"
 
-#include "capture/Capture.hpp"
 #include "common/notification/PlaneNotification.hpp"
 #include "display/Display.hpp"
 #include "point_clouds/PCLFunctions.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <opencv2/opencv.hpp>
-#include <pcl/common/time.h>
-#include <sys/time.h>
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>

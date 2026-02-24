@@ -3,7 +3,6 @@
  */
 
 #include <cfloat>
-//#include <eigen3/Eigen/src/StlSupport/StdVector.h>
 #include <boost/lexical_cast.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -243,7 +242,7 @@ void ClusterDetector::display(MemoryObject::VecPtr newClusterObjects) {
     displayCloud->at(index).b = 0;
   }
 
-  // set plane points to blue
+  // set plane points to red
   for (unsigned long i = 0; i < plane->getPlaneIndices()->indices.size(); ++i) {
     int index = plane->getPlaneIndices()->indices.at(i);
     displayCloud->at(index).r = 255;

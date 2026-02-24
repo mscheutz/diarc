@@ -101,11 +101,13 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   @Override
   public Justification goToLocation(Symbol location, boolean wait) {
     simExecTime();
-    if (getLocationPose(location) != null) {
-      currentLocation = location;
-      return new ConditionJustification(true);
-    }
-    return new ConditionJustification(false);
+//    if (getLocationPose(location) != null) {
+//      currentLocation = location;
+//      return new ConditionJustification(true);
+//    }
+//    return new ConditionJustification(false);
+    currentLocation = location;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -173,6 +175,7 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
     }
   }
 
+  //todo: This assumes that the location consultant binds to a matrix4d, which is not always the case (e.g. spot)
   protected Matrix4d getLocationPose(Symbol refID) {
     Matrix4d locPose = null;
     try {

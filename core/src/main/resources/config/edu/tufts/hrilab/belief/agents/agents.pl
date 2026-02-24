@@ -16,6 +16,7 @@ name(rightArm,rightArm).
 name(human,human).
 
 actor(brad).
+actor(pete).
 actor(eric).
 actor(medic).
 actor(searcher).

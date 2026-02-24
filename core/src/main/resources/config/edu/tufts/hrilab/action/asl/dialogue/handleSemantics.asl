@@ -30,9 +30,13 @@ import java.lang.Integer;
       // if more than one binding option for the semantics
       // TODO: contextualize clarifications into their poorly formed referring expressions
       op:log("debug", "Generating multiple bindings error");
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.slug.dialogue.ResponseGeneration", "generateClarificationMultipleMeanings", ?actor, ?speaker, ?semantics);
+      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.slug.dialogue.ResponseGeneration", "generateClarificationMultipleMeanings", ?actor, ?speaker, ?semantics, ?suppSemantics);
       // TODO: this should use askQuestion instead of generateResponse
-      act:generateResponse(?speaker, !failureEffects, direct);
+      //act:generateResponse(?speaker, !failureEffects, direct);
+      // For now asking a question without expecting a response in order to have correct utterance type for LLM NLG
+      // Generally need to generate an output utterance that is meaningful to the user and get in return the proper semantic
+      //  bindings from the answer bindings (or fail gracefully)
+      act:askQuestion(?speaker, !failureEffects, nonexistent(X), 1, 5);
     } elseif (op:gt(!varsSize, 0)) {
       // if any unbound variables in supplemental semantics
       // TODO: contextualize clarifications into their poorly formed referring expressions
@@ -152,7 +156,7 @@ import java.lang.Integer;
         if (op:invokeMethod(!queryVariables, "isEmpty")) {
           !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(no)");
         } else {
-          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(?query)");
         }
 
         act:generateResponse(?speaker, !defaultResponse, direct);

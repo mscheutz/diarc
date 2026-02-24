@@ -10,10 +10,6 @@ Required:
 
 Optional:
 	any additional fields the particular camera mode might need
-
-NOTE: use this config with:
-
-	 ros2 launch realsense2_camera rs_align_depth_launch.py"
 -->
 
 <capture>

@@ -230,12 +230,6 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             }
         }
 
-        // TODO: remove these debug lines
-        if (!parsing) {
-          log.debug("NLG LLM chat prompt: {}", chat.toPromptString());
-          log.debug("NLG LLM chat response: {}", response.getText());
-        }
-
         //Add LLM's response to the chat //TODO: do we actually generally want this present in the chat in this way?
         chat.addRobotMessage(response.getText());
 

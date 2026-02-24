@@ -18,6 +18,7 @@
 #include "SurfaceMarkingDetector.hpp"
 #include "MotionDetector.hpp"
 #include "ArucoDetector.hpp"
+
 #ifdef USE_PYTHON
 #include "FastSamDetector.hpp"
 #include "OwlV2Detector.hpp"

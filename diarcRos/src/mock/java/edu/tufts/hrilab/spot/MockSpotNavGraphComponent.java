@@ -10,8 +10,8 @@ import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.spot.consultant.RosSpotNavGraphLocationConsultant;
-import edu.tufts.hrilab.spot.consultant.RosSpotNavGraphLocationReference;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -26,7 +26,7 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
     private String refsConfigDir = "config/edu/tufts/hrilab/spot";
     boolean shouldSimExecTime = false; // should the primitive actions simulate execution times
     long simExecTimeout = 1000; // timeout to simulate execution time
-    private RosSpotNavGraphLocationConsultant consultant;
+    private SpotNavGraphLocationConsultant consultant;
     private Symbol currentLocation;
 
     @Override
@@ -55,7 +55,7 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
 
     @Override
     protected void init() {
-        consultant = new RosSpotNavGraphLocationConsultant(RosSpotNavGraphLocationReference.class, mapDescriptor);
+        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
         try {
             Collection<String> consultantGroups = this.getMyGroups();
             consultantGroups.add(consultant.getKBName());
