@@ -193,7 +193,7 @@ void ObjectDetector::sendDetectionNotifications(MemoryObject::Ptr newDetectedObj
     ++numObjectsDetected_;
     objectDetected_ = true;
     MemoryObjectNotification::Ptr n(
-            new MemoryObjectNotification(shared_from_this(),
+            new MemoryObjectNotification(this->getProcessorId(),
                                          newDetectedObject->getTypeId(),
                                          newDetectedObject->getDetectionMask()->getFrameNumber(),
                                          newDetectedObject));

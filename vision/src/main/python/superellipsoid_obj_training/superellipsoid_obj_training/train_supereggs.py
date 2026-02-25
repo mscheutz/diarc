@@ -67,7 +67,7 @@ def train(object_id, num_of_objects):
     device = torch.device("cpu")
    
     tao = 1e-6  # learning rate
-    epochs = 100  # this will depend on how much time the user has (5 for testing now)
+    epochs = 2000  # this will depend on how much time the user has, fixed value for now 
     len_z = 30  # length of feature vector
     
     E_img = mdl.SemanticEncoderSuperEgg(n_c=1, n_z=len_z).to(device)

@@ -273,7 +273,7 @@ class ExrDataset(Dataset):
             # normalize and store azimuth and elevation
             gt_matrix[0][idx+8:idx+10] = [
                 self.normalize_values(azimuth, ANGLE_MIN, ANGLE_MAX),
-                self.normalize_values(elevation, ANGLE_MIN, ANGLE_MAX),
+                self.normalize_values(elevation, ANGLE_MIN, ANGLE_MAX/2),
             ]
         
         return gt_matrix

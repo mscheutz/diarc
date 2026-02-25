@@ -531,7 +531,7 @@ void addBorder(Mat &image, int borderWidth) {
 
 /**
  * This is for testing images of indivvidual segmented objecgs,
- * saved from ADE
+ * saved from DIARC
  * Remove all edges caused by object borders, so only object internal
  * edges remain.
  * @param image 3 channel 8 bit unsigned char BGR images
@@ -569,7 +569,7 @@ void warpPerspectiveRand(const Mat& src, Mat& dst, RNG& rng) {
 }
 
 /**
- * Background in ADE is marked with (0,0,192). This is changed to (0,0,0).
+ * Background in DIARC is marked with (0,0,192). This is changed to (0,0,0).
  */
 void colorBackgroundBlack(Mat &image) {
   for (int i = 0; i < image.rows; i++)

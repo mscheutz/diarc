@@ -395,7 +395,7 @@ namespace diarc {
       // send frame completion notification
       FrameCompletionNotification::Ptr frameCompletionNotification =
               FrameCompletionNotification::Ptr(
-                      new FrameCompletionNotification(VisionProcess::Ptr(), -1L, captureNotification->frameNumber));
+                      new FrameCompletionNotification(-1L, -1L, captureNotification->frameNumber));
       sendNotifications(frameCompletionNotification);
 
       //display captured frames

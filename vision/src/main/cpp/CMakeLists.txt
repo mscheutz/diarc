@@ -42,7 +42,7 @@ else()
   CMAKE_POLICY(SET CMP0086 NEW)
 endif()
 
-# Set paths between Vision-Java, Vision-Native and ADE
+# Set paths between Vision-Java, Vision-Native and DIARC
 SET(VISION_BASE_PACKAGE edu.tufts.hrilab.vision)
 SET(SWIG_SRC_BASE_OUTDIR ${CMAKE_SOURCE_DIR}/../../swig/java)
 SET(SWIG_SRC_OUTDIR ${SWIG_SRC_BASE_OUTDIR}/edu/tufts/hrilab/vision)

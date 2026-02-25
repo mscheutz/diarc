@@ -23,11 +23,11 @@ public:
   typedef boost::shared_ptr<SceneChangeNotification> Ptr;
   typedef boost::shared_ptr<const SceneChangeNotification> ConstPtr;
 
-  SceneChangeNotification(const VisionProcessConstPtr& notifier_,
+  SceneChangeNotification(const long long& processorId_,
                           const unsigned long long& frameNumber_,
                           const CaptureData::ConstPtr& captureData_,
                           bool changeStarted_)
-          : ImageProcessorNotification(notifier_, SCENE_CHANGE, frameNumber_, captureData_),
+          : ImageProcessorNotification(SCENE_CHANGE, processorId_, frameNumber_, captureData_),
             changeStarted(changeStarted_) {
   }
 

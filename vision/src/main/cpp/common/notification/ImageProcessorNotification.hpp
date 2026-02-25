@@ -13,18 +13,18 @@
 #define	IMAGEPROCESSORNOTIFICATION_HPP
 
 #include "common/CaptureData.hpp"
-#include "common/notification/VisionNotification.hpp"
+#include "common/notification/Notification.hpp"
 
-class ImageProcessorNotification : public VisionNotification {
+class ImageProcessorNotification : public Notification {
 public:
   typedef boost::shared_ptr<ImageProcessorNotification> Ptr;
   typedef boost::shared_ptr<const ImageProcessorNotification> ConstPtr;
 
-  ImageProcessorNotification(const VisionProcessConstPtr& notifier_,
-                             const Type& type_,
+  ImageProcessorNotification(const Type& type_,
+                             const long long& processorId_,
                              const unsigned long long& frameNumber_,
                              const CaptureData::ConstPtr& captureData_)
-          : VisionNotification(notifier_, type_, -1L, frameNumber_),
+          : Notification(type_, processorId_, -1L, frameNumber_),
             captureData(captureData_) {
   }
 

@@ -68,7 +68,7 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 NeuralDetector::NeuralDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "NeuralDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.NeuralDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.NeuralDetector");
 }
 
 NeuralDetector::~NeuralDetector() {}
@@ -386,9 +386,10 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
                   new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), notification->captureData,
                                    detected_object.rect));
           if (useAllResults) {
-            // add "class_label(VAR)" instead of "all(VAR)"
+            // add "class_label(VAR)" and "all(VAR)"
             newObj->addValidationResult(detected_object.confidence, PredicateHelper(
                     detected_object.name + "(" + descriptor_iter->first.getArg(0) + ")"));
+            newObj->addValidationResult(detected_object.confidence, descriptor_iter->first);
           } else {
             // add "class_label(VAR)"
             newObj->addValidationResult(detected_object.confidence, descriptor_iter->first);

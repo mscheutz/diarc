@@ -7,6 +7,7 @@ package edu.tufts.hrilab.vision.imgproc;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.vision.detector.swig.NativeDetector;
 import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
 import edu.tufts.hrilab.vision.common.swig.CommonModule;
@@ -15,10 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.*;
 import javax.swing.AbstractListModel;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
+
 import edu.tufts.hrilab.vision.util.NonEDTListModel;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 import java.io.File;
@@ -88,6 +86,7 @@ public class AvailableImageProcessors extends AbstractListModel {
       ImageProcessorType type;
       String[] requirements;
       String[] dependencies;
+      String[] searchDependencies;
 
       try {
         //get directory    
@@ -141,6 +140,15 @@ public class AvailableImageProcessors extends AbstractListModel {
             }
           }
 
+          searchDependencies = null;
+          if (processor.containsAttribute("searchDepends")) {
+            try {
+              searchDependencies = processor.string("searchDepends").split(",\\s*");
+            } catch (RuntimeException e) {
+              log.error("Could not parse " + type + "'s searchDependencies.");
+            }
+          }
+
           //add type to available options
           if (!typesDetail.containsKey(type)) {
             ImageProcessorDetail newProcDetail = new ImageProcessorDetail(type, imgWidth, imgHeight, isStereo);
@@ -150,9 +158,13 @@ public class AvailableImageProcessors extends AbstractListModel {
                   newProcDetail.addDependency(ImageProcessorType.valueOf(dependency.toUpperCase()));
                 }
               }
+              if (searchDependencies != null) {
+                for (String searchDependency : searchDependencies) {
+                  newProcDetail.addSearchDependency(Factory.createPredicate(searchDependency));
+                }
+              }
             } catch (Exception e) {
-              log.error(String.format("Problem parsing info for \"%s\" detector type. All such detector types will not be loaded.",
-                                      type.toString()));
+              log.error("Problem parsing info for {} detector type. All such detector types will not be loaded.", type);
               continue;
             }
             typesDetail.put(type, newProcDetail);

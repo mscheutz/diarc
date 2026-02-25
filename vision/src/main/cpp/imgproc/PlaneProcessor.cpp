@@ -101,7 +101,7 @@ void PlaneProcessor::handleCaptureNotification(CaptureNotification::ConstPtr not
                     % currentPlane->getFilteredObjectsIndices()->indices.size());
 
   PlaneNotification::Ptr
-      n(new PlaneNotification(shared_from_this(), frameNum, notification->captureData, currentPlane));
+      n(new PlaneNotification(this->getProcessorId(), frameNum, notification->captureData, currentPlane));
   sendNotifications(n);
 
   if (getDisplayFlag()) {
