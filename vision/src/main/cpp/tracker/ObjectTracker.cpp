@@ -6,7 +6,6 @@
 #include "common/notification/FrameCompletionNotification.hpp"
 #include "common/notification/MemoryObjectNotification.hpp"
 #include "capture/Capture.hpp"
-#include "detector/ObjectDetector.hpp"
 #include "display/Display.hpp"
 
 //derived classes includes
@@ -22,15 +21,16 @@
 #endif //OPENCV_TRACKING
 
 #ifdef USE_V4R
-
 #include "V4RTracker.hpp"
-
 #endif  //USE_V4R
 
 #include <boost/unordered/unordered_set.hpp>
-
-#include "TapnetTracker.hpp"
 #include "point_clouds/PCLFunctions.hpp"
+
+#ifdef USE_PYTHON
+#include "TapnetTracker.hpp"
+#endif // USE_PYTHON
+
 
 using namespace diarc::stm;
 

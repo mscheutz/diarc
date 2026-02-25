@@ -70,7 +70,8 @@ INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
 # PyBind11 (required)
 # version 3 to avoid conflicts with ROS pybind11 version on noetic
-FIND_PACKAGE(pybind11 3)
+#FIND_PACKAGE(pybind11 3)
+FIND_PACKAGE(pybind11)
 if (pybind11_FOUND)
 	add_definitions("-DUSE_PYTHON")
 	FIND_PACKAGE (Python3 COMPONENTS Interpreter Development)
