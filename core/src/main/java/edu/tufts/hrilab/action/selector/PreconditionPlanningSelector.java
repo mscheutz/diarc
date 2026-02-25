@@ -88,7 +88,7 @@ public class PreconditionPlanningSelector extends ActionSelector {
     // combine preconditionAction and selectedAction into one ParameterizedAction
     ActionDBEntry.Builder combinedADB = new ActionDBEntry.Builder("planned");
     combinedADB.prependEventSpecs(preconditionAction.getEntry().getEventSpecs()); // steps to reach pre-conditions
-    combinedADB.addEventSpec(new EventSpec(goal.getPredicate())); // original action step
+    combinedADB.addEventSpec(new EventSpec(goal.getPredicate(), true)); // original action step
 
     return new ParameterizedAction(combinedADB.build(false), goal);
   }

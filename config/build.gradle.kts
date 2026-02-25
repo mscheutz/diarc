@@ -88,6 +88,22 @@ tasks.named<Jar>("jar") {
   }
 }
 
+tasks.register("fatJar", Jar::class) {
+  archiveFileName.set("${rootProject.name}-fat.jar") // Naming the fat jar
+  manifest {
+    attributes("Main-Class" to "edu.tufts.hrilab.diarc.DiarcConfiguration") // Replace with your main class
+  }
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  from(sourceSets.main.get().output)
+  dependsOn(configurations.runtimeClasspath)
+  from({
+    configurations.runtimeClasspath.get().filter { it.exists() }.map { zipTree(it) }
+  })
+  exclude("META-INF/*.RSA")
+  exclude("META-INF/*.SF")
+  exclude("META-INF/*.DSA")
+}
+
 tasks.named<Test>("test") {
   useJUnit()
   maxHeapSize = "4g"

@@ -836,6 +836,8 @@ public class ActionScriptLanguageParser {
         return EventSpec.EventType.GOAL;
       } else if (specType.TSC() != null) {
         return EventSpec.EventType.TSC;
+      } else if (specType.THIS() != null) {
+        return EventSpec.EventType.THIS;
       } else {
         log.error("Unexpected EventType in event spec: " + specType.getText());
         return null;

@@ -102,7 +102,7 @@ public class StandardJavaMethods {
    * @return Constructor
    * @throws NoSuchMethodException
    */
-  private static Constructor<?> getConstructor(Class<?> clazz, Object... args) throws NoSuchMethodException {
+  public static Constructor<?> getConstructor(Class<?> clazz, Object... args) throws NoSuchMethodException {
     // collect arg types
     Class<?>[] argTypes = new Class<?>[args.length];
     for (int i = 0; i < args.length; ++i) {
@@ -182,7 +182,7 @@ public class StandardJavaMethods {
    * @return Method
    * @throws NoSuchMethodException
    */
-  private static Method getMethod(Class<?> clazz, String name, Object... args) throws NoSuchMethodException {
+  public static Method getMethod(Class<?> clazz, String name, Object... args) throws NoSuchMethodException {
     // collect arg types
     Class<?>[] argTypes = new Class<?>[args.length];
     for (int i = 0; i < args.length; ++i) {

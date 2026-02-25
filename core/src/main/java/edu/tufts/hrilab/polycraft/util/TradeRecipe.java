@@ -89,7 +89,7 @@ public class TradeRecipe {
               .setCommand("log")
               .addInputArg("\"info\"").addInputArg("\">> " + actionName + "\"")
               .build());
-      newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("trade", actorID, tradeRecipe.toString())));
+      newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("trade", actorID, tradeRecipe.toString()), true));
 
       // Querying existing trades from belief to detect novelty
       try {
