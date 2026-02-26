@@ -90,8 +90,8 @@ class SpotTRADEWrapper:
 
         logging.debug(f"BBox (x,y,width,height): {bbox.x}, {bbox.y}, {bbox.width}, {bbox.height}")
         logging.debug(f"Center pixel: {x_pix}, {y_pix}. Img src size: {img_src_width}, {img_src_height}")
-        mo_img_width = mo.getImageWidth()
-        mo_img_height = mo.getImageHeight()
+        mo_img_width = int(mo.getImageWidth())
+        mo_img_height = int(mo.getImageHeight())
         logging.info(f"mo img size: {mo_img_width}, {mo_img_height}")
 
         # scale pixel location to match image_response size
@@ -889,6 +889,7 @@ if __name__ == '__main__':
     parser.add_argument('--spot-map', help='Path to Spot graph_nav file')
     parser.add_argument('--refs', help='Path to Spor refs file')
     parser.add_argument('--groups', nargs='*', help='TRADE group(s)')
+    parser.add_argument('--test', action='store_true', help='run test code in main method')
     args = parser.parse_args()
 
     with open(args.spot_config, 'r') as file:
@@ -902,17 +903,23 @@ if __name__ == '__main__':
     TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "") # TODO: fix the args.groups when more than one group is specified
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
+    spot_wrapper.claim()
+    
     # claim robot
-#     spot_wrapper.claim()
-#     spot_wrapper.spot.power_on()
-#     spot_wrapper.spot.spot_arm.gripper_open()
+    if args.test:
+        spot_wrapper.spot.power_on()
+        spot_wrapper.spot.spot_arm.gripper_open()
 
     # load pre-built spot map
     if args.spot_map:
         logging.info(f"Loading spot map: {args.spot_map}")
-        spot_wrapper.spot.spot_graph_nav.upload_graph(args.spot_map)
-        spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
+        (result, msg) = spot_wrapper.spot.spot_graph_nav.upload_graph(args.spot_map)
+        if not result:
+            logging.warning(f"Failed to load spot map: {args.spot_map}. Message: {msg}")
+        else:
+            logging.info(f"Spot map loaded: {args.spot_map}")
+            spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 
         # spot_wrapper.undock() # TODO: is undock-ing needed here?
         pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
-        logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])
+        # logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])

@@ -17,12 +17,16 @@ public class SpotComponent extends DiarcComponent {
    * Path to spot config YAML file
    */
   private String spotConfigFile;
+  private String spotMapFile = null;
+  private String refsFile = null;
 
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("hubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
     options.add(Option.builder("spotConfigFile").hasArg().argName("file").desc("Path to yaml spot config").build());
+    options.add(Option.builder("spotMap").hasArg().argName("file").desc("Path to map file").build());
+    options.add(Option.builder("refs").hasArg().argName("file").desc("Path to location refs file").build());
     return options;
   }
 
@@ -34,13 +38,33 @@ public class SpotComponent extends DiarcComponent {
     if (cmdLine.hasOption("spotConfigFile")) {
       spotConfigFile = cmdLine.getOptionValue("spotConfigFile");
     }
+    if (cmdLine.hasOption("spotMap")) {
+      spotMapFile = cmdLine.getOptionValue("spotMap");
+    }
+    if (cmdLine.hasOption("refs")) {
+      refsFile = cmdLine.getOptionValue("refs");
+    }
   }
 
   @Override
   public void init() {
-    String myGroups = String.join(", ", getMyGroups());
     PythonWrapper wrapper = new PythonWrapper("diarc.spot.spot_trade_wrapper", true, hubContainer); // Declare the wrapper as a TRADE spoke
-    wrapper.start("--spot-config",  spotConfigFile, "--groups", myGroups); // Start the wrapper
+
+    List<String> args = new ArrayList<>();
+    args.add("--spot-config");
+    args.add(spotConfigFile);
+    args.add("--groups");
+    args.addAll(getMyGroups());
+    if (spotMapFile != null) {
+      args.add("--spot-map");
+      args.add(spotMapFile);
+    }
+    if (refsFile != null) {
+      args.add("--refs");
+      args.add(refsFile);
+    }
+
+    wrapper.start(args.toArray(new String[args.size()])); // Start the wrapper
   }
 
 }
