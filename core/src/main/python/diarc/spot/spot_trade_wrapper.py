@@ -52,7 +52,7 @@ def handle_return(func):
 
 @JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface, VelocityInterface])
 class SpotTRADEWrapper:
-    def __init__(self, config, trade_wrapper: TRADEWrapper):
+    def __init__(self, trade_wrapper: TRADEWrapper, config, refs: str = None):
         self._reference_frame = "gpe"
         self.trade = trade_wrapper
         self._mapping = False
@@ -73,11 +73,9 @@ class SpotTRADEWrapper:
         )
         self.locationConsultant = SpotNavGraphLocationConsultant("location")
         # todo: Load existing refs
-        loadRefs = False
-        if loadRefs:
+        if refs is not None:
             refsConfigDir = ""
-            refsConfigFile = ""
-            self.locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile)
+            self.locationConsultant.loadReferencesFromFile(refsConfigDir, refs)
 
     def _get_center_pixel(self, refId: Symbol, img_src_width: int, img_src_height: int) -> (int, int):
         # get pixel coordinates from refId
@@ -889,6 +887,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Spot TRADE Wrapper')
     parser.add_argument('--spot-config', required=True, help='Path to Spot yaml config file')
     parser.add_argument('--spot-map', help='Path to Spot graph_nav file')
+    parser.add_argument('--refs', help='Path to Spor refs file')
     parser.add_argument('--groups', nargs='*', help='TRADE group(s)')
     args = parser.parse_args()
 
@@ -898,7 +897,7 @@ if __name__ == '__main__':
 
     trade_wrapper = TRADEWrapper()
 
-    spot_wrapper = SpotTRADEWrapper(config, trade_wrapper)
+    spot_wrapper = SpotTRADEWrapper(trade_wrapper, config, args.refs)
     logging.info(f"TRADE groups: {args.groups}")
     TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "") # TODO: fix the args.groups when more than one group is specified
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
