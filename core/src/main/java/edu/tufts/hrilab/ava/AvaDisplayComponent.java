@@ -666,6 +666,9 @@ public class AvaDisplayComponent extends DiarcComponent {
       return false;
     }
     videoVolume = volume;
+    if (mediaPlayerComponent != null && videoPlaying) {
+      mediaPlayerComponent.mediaPlayer().audio().setVolume(videoVolume);
+    }
     return true;
   }
 
