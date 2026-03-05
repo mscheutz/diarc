@@ -232,6 +232,12 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   @Override
+  public boolean setVels(double vel_x, double vel_y, double vel_rot) {
+    log.warn("Ignoring vel_y.");
+    return this.setVels(vel_x, vel_rot);
+  }
+
+  @Override
   public boolean setRV(double rv) {
     log.info("setRV: ({}) {}", getMyGroups(), rv);
     return setVels(0.0, rv);

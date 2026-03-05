@@ -8,6 +8,7 @@ VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.
 VERBTTT; {((C/REF)/REF)/REF; #x#y#z.?PH(?ADDRESSEE,$y,$x)}, {(((C/REF)/REF)/REF)\AGENT; #a#x#y#z.?PH($a,$y,$x)}
 
 THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
+LOC;{RN; ?PH:location ; VAR}, {DN; ?PH:property}
 
 %% object as property, location as reference:
 %VERBT; {(C/DESC)\AGENT ; #x#y.?PH($x,$y)}, {C/DESC ; #x.?PH(?ADDRESSEE, $x)}
@@ -75,7 +76,7 @@ obtain; VERBTT ; deliver
 collect; VERBTT ; deliver
 
 % goto(?ADDRESSEE, REF:location)
-go to; VERBT; goto
+go to; VERBT; goToLocation
 go towards; VERBT; goto
 go over to; VERBT; goto
 come to; VERBT; goto
@@ -85,6 +86,12 @@ proceed to; VERBT; goto
 travel to; VERBT; goto
 head to; VERBT; goto
 advance to; VERBT; goto
+
+% TODO: REMOVE THESE
+home; LOC; home
+dropoff; LOC; dropoff
+tableA; LOC; tableA
+tableC; LOC; tableC
 
 % pickup(?ADDRESSEE, REF:physobj)
 pick up; VERBT; pickUp

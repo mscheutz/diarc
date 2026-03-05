@@ -944,6 +944,12 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
   }
 
   @Override
+  public boolean setVels(double vel_x, double vel_y, double vel_rot) {
+    log.warn("Ignoring vel_y.");
+    return this.setVels(vel_x, vel_rot);
+  }
+
+  @Override
   public boolean setRV(double v) {
     log.trace("setRV: " + v);
     return setVels(0.0, v);

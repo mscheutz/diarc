@@ -17,6 +17,7 @@ import edu.tufts.hrilab.spot.MockRos2SpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
+@Deprecated
 public class SpotConfig extends DiarcConfiguration {
 
   boolean useMockVision;

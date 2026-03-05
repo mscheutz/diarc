@@ -16,8 +16,9 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.diarcros.msg.spot_msgs.NavigateToGoal;
 import edu.tufts.hrilab.diarcros.spot_ros.SpotDoorDetector;
 import edu.tufts.hrilab.diarcros.spot_ros.SpotNavGraph;
-import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
-import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
+import edu.tufts.hrilab.spot.consultant.SpotLocationConsultant;
+import edu.tufts.hrilab.spot.consultant.SpotLocationReference;
+import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.ros.actionlib.state.SimpleClientGoalState;
@@ -37,7 +38,7 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
 
     //Path to nav graph file stored on Spot
     private String navGraphPath ="/";
-    private SpotNavGraphLocationConsultant consultant;
+    private SpotLocationConsultant consultant;
     private Symbol currentLocation;
 
     @Override
@@ -65,14 +66,15 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
     protected void init() {
         navGraph = new SpotNavGraph();
 
-        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
+        consultant = new SpotLocationConsultant(mapDescriptor);
         try {
             TRADE.registerAllServices(consultant,this.getMyGroups());
         } catch (TRADEException e) {
             log.error("exception registering spot mission location consultant ",e);
         }
         if (refsConfigFile != null && !refsConfigFile.isEmpty()) {
-            consultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+            String filename = Resources.createFilepath(refsConfigDir, refsConfigFile);
+            consultant.loadReferencesFromFile(filename);
         }
     }
 
@@ -90,14 +92,14 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
         if (currentLocation == null) {
             log.error("[goToLocation] location not initialized");
         }
-        SpotNavGraphLocationReference currentLocationRef = consultant.getRefWithId(currentLocation);
-        SpotNavGraphLocationReference destinationLocation = consultant.getRefWithId(location);
+        SpotLocationReference currentLocationRef = consultant.getRefWithId(currentLocation);
+        SpotLocationReference destinationLocation = consultant.getRefWithId(location);
 
         edu.tufts.hrilab.diarcros.msg.spot_msgs.NavigateToGoal goal = new NavigateToGoal(
                 "/home/evan/ws_spot/hrilabtr5.12.23.walk",
-                destinationLocation.getGraphId(),
+                destinationLocation.getWaypointId(),
                 false,
-                currentLocationRef.getGraphId()
+                currentLocationRef.getWaypointId()
         );
         log.info("[goToLocation] goal: "+goal);
         try {

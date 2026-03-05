@@ -25,8 +25,8 @@ import yaml
 from functools import wraps
 
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface, VelocityInterface
-from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
+from edu.tufts.hrilab.spot import SpotInterface
+from edu.tufts.hrilab.spot.consultant import SpotLocationConsultant
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
 from edu.tufts.hrilab.action.justification import ConditionJustification
@@ -50,9 +50,9 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface, VelocityInterface])
+@JImplements([SpotInterface])
 class SpotTRADEWrapper:
-    def __init__(self, trade_wrapper: TRADEWrapper, config, refs: str = None):
+    def __init__(self, trade_wrapper: TRADEWrapper, config, refs_file: str = None):
         self._reference_frame = "gpe"
         self.trade = trade_wrapper
         self._mapping = False
@@ -71,11 +71,12 @@ class SpotTRADEWrapper:
             continually_try_stand=True,
             rgb_cameras=config['rgb_cameras'],
         )
-        self.locationConsultant = SpotNavGraphLocationConsultant("location")
-        # todo: Load existing refs
-        if refs is not None:
-            refsConfigDir = ""
-            self.locationConsultant.loadReferencesFromFile(refsConfigDir, refs)
+
+        # Load existing refs
+        self.locationConsultant = SpotLocationConsultant("location")
+        logging.info(f"Loading location references from file: {refs_file}")
+        if refs_file is not None:
+            self.locationConsultant.loadReferencesFromFile(refs_file)
 
     def _get_center_pixel(self, refId: Symbol, img_src_width: int, img_src_height: int) -> (int, int):
         # get pixel coordinates from refId
@@ -461,22 +462,30 @@ class SpotTRADEWrapper:
     def goToLocation(self, *args):
         # dispatch method for overloaded goToLocation
 
-        if len(args)==1:
-            return self.goToLocationRef(args[0])
-        if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], JBoolean):
-            return self.goToLocationRefWait(*args)
-        if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], Symbol):
-            return self.goToLocationFrom(*args)
-        if len(args)==7:
-            return self.goToLocationPose(*args)
+        try:
+            if len(args)==1:
+                return self.goToLocationRef(args[0])
+            if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], JBoolean):
+                return self.goToLocationRefWait(*args)
+            if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], Symbol):
+                return self.goToLocationFrom(*args)
+            if len(args)==7:
+                return self.goToLocationPose(*args)
+        except Exception as e:
+            logging.error(f"Error calling goToLocation: {traceback.format_exc()}")
+            return (False, "error msg")
 
         logging.info(f"No valid argument match found.")
         raise RuntimeError("Incorrect arguments")
 
     def goToLocationRef(self, location):
         # todo: Handle consultant stuff
-        waypoint_id = self.locationConsultant.getRefWithId(location.getName()).getGraphId()
-        return self.spot.spot_graph_nav.navigate_to_existing_waypoint(waypoint_id)
+        ref = self.locationConsultant.getRefWithId(location)
+        if ref is None:
+            return (False, f"No reference found with name {location}")
+
+        waypoint_id = ref.getWaypointId()
+        return self.spot.spot_graph_nav.navigate_to_existing_waypoint(str(waypoint_id))
 
     def goToLocationRefWait(self, location, wait):
         pass
@@ -486,7 +495,6 @@ class SpotTRADEWrapper:
         return self.goToLocation(desiredLocation)
 
     def goToLocationPose(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait):
-        self.spot.spot_images.get_rgb_image()
         pass
 
     #####################################################################
@@ -612,7 +620,12 @@ class SpotTRADEWrapper:
 
     @JOverride
     def checkAt(self, locationTerm):
-        pass
+        # TODO: is there a way to actually check if we are at a location?
+        # return "True" observation
+        from java.util import HashMap, ArrayList
+        java_list = ArrayList()
+        java_list.add(HashMap())  # Add an empty HashMap to the list
+        return java_list
 
     @handle_return
     @JOverride
@@ -759,63 +772,76 @@ class SpotTRADEWrapper:
     @JOverride
     def localize(self):
         """Trigger localization when near a fiducial."""
-        current_odom_tform_body = get_odom_tform_body(self._get_transforms_snapshot()).to_proto()
+        self.spot.spot_graph_nav.set_initial_localization_fiducial()
 
-        # Create an empty instance for initial localization since we are asking it to localize
-        # based on the nearest fiducial.
-        localization = nav_pb2.Localization()
-        self.spot.spot_graph_nav.set_localization(initial_guess_localization=localization,
-                                                     ko_tform_body=current_odom_tform_body)
-
-    def start_mapping(self):
+    @JOverride
+    def startMapping(self):
         """
         Puts the system in recording mode, which will allow the create of new waypoints with create_waypoint(...)
         :return:
         """
-        if self._mapping:
-            logging.info("Already mapping")
-            return
-        recording_client = self.spot._robot.ensure_client(GraphNavRecordingServiceClient.default_service_name)
-        recording_client.start_recording()
-        self._mapping = True
 
-    def create_waypoint(self, name):
+        try:
+            if self._mapping:
+                logging.info("Already mapping")
+                return
+            self._recording_client = self.spot._robot.ensure_client(GraphNavRecordingServiceClient.default_service_name)
+            self._recording_client.start_recording()
+            self._mapping = True
+        except Exception as e:
+            logging.error(f"Error starting recording: {traceback.format_exc()}")
+            return False, "Error starting recording"
+
+    @JOverride
+    def createWaypoint(self, name: Symbol):
         """
         Creates a waypoint at the robot's current location. Requires start_mapping(...) to have been called.
         Note that this doesn't merge this waypoint until finish_mapping(...) is called.
         :param name: Human-readable name of the waypoint
         :return:
         """
-        # todo: add to consultant here
-        if not self._mapping:
-            logging.info("Not mapping")
-            return
-        record_resp = self._recording_client.create_waypoint(waypoint_name=name)
-        logging.info(f"New waypoint ID: {record_resp.created_waypoint}")
+        try:
+            if not self._mapping:
+                logging.warning("Not mapping. First call startMapping.")
+                return
+            record_resp = self._recording_client.create_waypoint()
+            self.locationConsultant.createReferenceWithWaypointId(JString(record_resp.created_waypoint.id), name)
+            logging.info(f"New waypoint ID: {record_resp.created_waypoint.id} with name: {name}")
+        except Exception as e:
+            logging.error(f"Error creating waypoint: {traceback.format_exc()}")
+            return False, "Error creating waypoint"
 
-    def finish_mapping(self):
+    @JOverride
+    def finishMapping(self):
         """
         Turns off recording mode and merges any new waypoints into the current graph.
         TODO: There may be some anchor optimization that could happen here. If you see weird nav behaviors, I would check that out first.
         :return:
         """
-        if not self._mapping:
-            logging.info("Not mapping")
-            return
+        try:
+            if not self._mapping:
+                logging.warning("Not mapping. First call startMapping.")
+                return
 
-        # Stop recording
-        while True:
-            try:
-                self._recording_client.stop_recording()
-                break
-            except:
-                time.sleep(1)
+            # Stop recording
+            while True:
+                try:
+                    self._recording_client.stop_recording()
+                    break
+                except:
+                    time.sleep(1)
 
-        self._mapping = False
+            self._mapping = False
 
-        self.spot.spot_graph_nav.download_navigation_graph("/tmp/spot_map")
-        self.spot.spot_graph_nav.upload_graph("/tmp/spot_map")
-        spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
+            self.spot.spot_graph_nav.download_navigation_graph("/tmp/spot_map")
+            self.spot.spot_graph_nav.upload_graph("/tmp/spot_map")
+            spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
+
+            self.locationConsultant.writeReferencesToFile("/tmp/spot_map_refs.json")
+
+        except Exception as e:
+            logging.error(f"Error finishing mapping: {traceback.format_exc()}")
+            return False, "Error finishing mapping"
 
     @JOverride
     @handle_return
@@ -841,7 +867,7 @@ class SpotTRADEWrapper:
     def setTV(self, tv):
         try:
             logging.info(f"Setting TV({tv})")
-            return self.setVels(tv, 0.0)
+            return self._setVelsLocal(tv, 0.0, 0.0)
         except Exception as e:
             logging.error(f"Error calling setTV({tv}): {traceback.format_exc()}")
             return False
@@ -850,25 +876,36 @@ class SpotTRADEWrapper:
     def setRV(self, rv):
         try:
             logging.info(f"Setting RV({rv})")
-            return self.setVels(0.0, rv)
+            return self._setVelsLocal(0.0, 0.0, rv)
         except Exception as e:
             logging.error(f"Error calling setRV vel({rv}): {traceback.format_exc()}")
             return False
 
     @JOverride
-    def setVels(self, tv, rv):
-        try:
-            # Create a mobility command to walk forward
-            # Linear velocity in x (forward) direction, 0 for y and angular velocity for yaw
-            linear_velocity_x = float(tv)  # meters per second
-            linear_velocity_y = 0.0
-            angular_velocity_yaw = float(rv)
+    def setVels(self, *args):
+        logging.info(f"setVels dispatch method called")
+        # always use the wild card args when implementing a dispatch
 
+        try:
+            if len(args)==2:
+                return self._setVelsLocal(args[0], 0.0, args[1])
+            if len(args)==3:
+                return self._setVelsLocal(args[0], args[1], args[2])
+
+        except Exception as e:
+            logging.error(f"Error calling setVels: {traceback.format_exc()}")
+            return False
+
+        logging.info(f"No valid argument match found.")
+        raise RuntimeError("Incorrect arguments")
+
+    def _setVelsLocal(self, vel_x, vel_y, vel_rot):
+        try:
             # Build the full mobility command
             velocity_command = RobotCommandBuilder.synchro_velocity_command(
-                v_x=linear_velocity_x,
-                v_y=linear_velocity_y,
-                v_rot=angular_velocity_yaw
+                v_x=float(vel_x),
+                v_y=float(vel_y),
+                v_rot=float(vel_rot)
             )
 
             (success, msg, cmd_id) = self.spot.robot_command(velocity_command, duration=2)
@@ -878,9 +915,6 @@ class SpotTRADEWrapper:
             logging.error(f"Error calling setVels: {traceback.format_exc()}")
             return False
 
-    # @JOverride
-    # def moveToBlocking(self, x, y, theta):
-    #    pass
 
 # This main is largely used for testing behaviors
 if __name__ == '__main__':
@@ -904,7 +938,7 @@ if __name__ == '__main__':
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
     spot_wrapper.claim()
-    
+
     # claim robot
     if args.test:
         spot_wrapper.spot.power_on()

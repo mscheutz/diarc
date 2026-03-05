@@ -80,6 +80,18 @@ public interface VelocityInterface {
   @TRADEService
   @Action
   boolean setVels(double tv, double rv);
+
+  /**
+   * Set x, y, and rot velocities.
+   * @param vel_x the new forward/backward velocity (m/sec)
+   * @param vel_y the new side-to-side velocity (m/sec)
+   * @param vel_rot the new rotational (rad/sec)
+   * @return
+   */
+  @TRADEService
+  @Action
+  boolean setVels(double vel_x, double vel_y, double vel_rot);
+
   /**
    *Returns left and right wheel velocities.
    *

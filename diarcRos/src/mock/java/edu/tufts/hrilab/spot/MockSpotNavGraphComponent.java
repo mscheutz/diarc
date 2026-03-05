@@ -10,8 +10,8 @@ import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
-import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
+import edu.tufts.hrilab.spot.consultant.SpotLocationConsultant;
+import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -26,7 +26,7 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
     private String refsConfigDir = "config/edu/tufts/hrilab/spot";
     boolean shouldSimExecTime = false; // should the primitive actions simulate execution times
     long simExecTimeout = 1000; // timeout to simulate execution time
-    private SpotNavGraphLocationConsultant consultant;
+    private SpotLocationConsultant consultant;
     private Symbol currentLocation;
 
     @Override
@@ -55,7 +55,7 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
 
     @Override
     protected void init() {
-        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
+        consultant = new SpotLocationConsultant(mapDescriptor);
         try {
             Collection<String> consultantGroups = this.getMyGroups();
             consultantGroups.add(consultant.getKBName());
@@ -64,7 +64,8 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
             log.error("exception registering spot mission location consultant ",e);
         }
         if (refsConfigFile != null && !refsConfigFile.isEmpty()) {
-            consultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+            String filename = Resources.createFilepath(refsConfigDir, refsConfigFile);
+            consultant.loadReferencesFromFile(filename);
         }
     }
 

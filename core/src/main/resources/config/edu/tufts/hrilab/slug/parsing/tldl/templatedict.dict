@@ -236,17 +236,17 @@ from; REF/REF; #x.$x
 
 give; VERBDT ;give
 
-go to pose; C/POSE; #x.goToPose(?ADDRESSEE,$x)
-go to pose; (C/POSE)\AGENT; #y#x.goToPose(?ADDRESSEE,$x)
+%go to pose; C/POSE; #x.goToPose(?ADDRESSEE,$x)
+%go to pose; (C/POSE)\AGENT; #y#x.goToPose(?ADDRESSEE,$x)
 
 home; POSE; home
 vertical; POSE; vertical
 start; POSE; start
 
-go to location; C/LOC ; #x.goToLocation(?ADDRESSEE,$x)
-go to location; (C/LOC)\AGENT ; #a#x.goToLocation(?ADDRESSEE,$x)
+%go to location; C/LOC ; #x.goToLocation(?ADDRESSEE,$x)
+%go to location; (C/LOC)\AGENT ; #a#x.goToLocation(?ADDRESSEE,$x)
 
-go to start pose; C ; startOver()
+%go to start pose; C ; startOver()
 
 %go to; C/LREF; #x.moveTo($x)
 %go; VERBTD ;move

@@ -29,7 +29,7 @@ import javax.vecmath.Quat4d;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = false;
+  boolean useMockVision = true;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -63,16 +63,20 @@ public class SpotConfig extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
-    String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
-//    String spotConfigFile = "/home/evan/Downloads/spot_psi.yaml";
-//    String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
-//    String tradeHubContainer = "127.0.0.1@10002";
-    String tradeHubContainer = "192.168.80.101@10001";
-    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
+//    String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
+//    String spotConfigFile = /home/evan/Documents/spot/spot_psi.yaml";
+    String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
+//    String tradeHubContainer = "127.0.0.1@10001";
+    String tradeHubContainer = "192.168.0.46@10001";
+    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
+            + " -groups agent:robotone "
+            + " -hubContainer " + tradeHubContainer
+            + " -spotMap " + "/home/evan/.diarc/spot/spot_map"
+            + " -refs " + "/spot/spot_map_refs.json");
 
     // flex rl
-    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
-    flex.start("--groups", "agent:robotone"); // Start the wrapper
+//    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
+//    flex.start("--groups", "agent:robotone"); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
