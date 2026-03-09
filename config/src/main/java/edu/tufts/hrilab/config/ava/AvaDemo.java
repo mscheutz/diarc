@@ -187,6 +187,7 @@ public class AvaDemo extends DiarcConfiguration {
               "ava/ava.asl " +
               "ava/avaIntrospection.asl " +
               "ava/scheduledGoals.asl " +
+              "ava/avaStatistics.asl " +
               "ava/avaMedia.asl " +
               "ava/avaASR.asl " +
               "ava/avaTMCDemo.asl " +

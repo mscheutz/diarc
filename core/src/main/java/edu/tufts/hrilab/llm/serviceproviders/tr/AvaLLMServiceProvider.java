@@ -162,6 +162,7 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
         promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
         promptVars.put("%exampleImage", images.isEmpty() ? "test" : images.get(0));
         promptVars.put("%imageList", imageList);
+        promptVars.put("%statisticsList", getStatisticsListForPrompt());
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getCurrentGoalsSummary(utterance.getAddressee()));
         promptVars.put("%questionList", questionString);
@@ -418,6 +419,23 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
         return new ArrayList<>();
     }
 
+    private String getStatisticsListForPrompt() {
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> ids = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAvailableStatisticIds")).call(List.class);
+            TRADEServiceInfo getDisplayName = TRADE.getAvailableService(new TRADEServiceConstraints().name("getStatisticDisplayName").argTypes(String.class));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < ids.size(); i++) {
+                String displayName = getDisplayName.call(String.class, ids.get(i));
+                sb.append(i + 1).append(". ").append(displayName).append("\n");
+            }
+            return sb.toString();
+        } catch (TRADEException e) {
+            log.debug("[getStatisticsListForPrompt] Stats service not available: {}", e.getMessage());
+        }
+        return "";
+    }
+
     private List<String> getImageNames() {
         try {
             return TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageNames").argTypes(Boolean.class)).call(List.class,true);
@@ -535,6 +553,7 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
         if(goalPred != null) {
             switch (goalPred.getName()) {
                 case "describeScheduledGoals":
+                case "discussRobotPerformance":
                 case "describeCurrentLocation":
                 case "describePendingGoals":
                 case "describeAllKnownLocations":
@@ -706,6 +725,11 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
                 "You report what your currently scheduled goals are",
                 "what are you scheduled to do",
                 "describeScheduledGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("discussRobotPerformance()",
+                "You begin a dialogue to report tracked robot statistics over a time period (e.g. time off dock, distance traveled, goals completed)",
+                "i want to discuss robot performance",
+                "discussRobotPerformance()", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("describeCurrentGoal()",
                 "You report what your current task is",

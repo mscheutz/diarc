@@ -274,10 +274,15 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
 
   private void continueIdleImageCycle() {
-    if (!videoPlaying && !userImageDisplayed && idleImageCycleRunning) {
+    if (idleImages.isEmpty()) {
+      return;
+    }
+    if (!videoPlaying && !userImageDisplayed && idleImageCycleRunning && !idleImages.isEmpty()) {
       try {
         SwingUtilities.invokeAndWait(() -> {
-                  displayIdleImage(idleImages.get(currentImage), -1);
+                  if (!idleImages.isEmpty() && currentImage >= 0 && currentImage < idleImages.size()) {
+                    displayIdleImage(idleImages.get(currentImage), -1);
+                  }
                 }
         );
       } catch (InterruptedException | InvocationTargetException e) {

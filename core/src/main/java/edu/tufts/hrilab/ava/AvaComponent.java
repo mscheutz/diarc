@@ -360,6 +360,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.warn("[registerForAvaStatisticsNotifications] attempt to register duplicate callback, not adding");
     } else {
       statisticsSubscribers.add(callback);
+      // Push current dock state so CSV has a baseline (avoids 0 min off dock when robot started already undocked)
+      AvaStatisticsEvent.Kind kind = wasDocked ? AvaStatisticsEvent.Kind.DOCKED : AvaStatisticsEvent.Kind.UNDOCKED;
+      notifyStatisticsSubscribers(AvaStatisticsEvent.builder(kind).build());
     }
   }
 

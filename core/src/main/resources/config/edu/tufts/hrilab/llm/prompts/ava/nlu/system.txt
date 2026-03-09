@@ -69,6 +69,11 @@ amount(?number)
 Description: The specification of a number of things. The only acceptable values for ?number is either an integer or "all". "all" referring the maximum amount of something.
 Example Translation: "ten at a time" -> {"Semantics":"amount(10)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the full amount" -> {"Semantics":"amount(all)","Input Type":"REPLY","Confidence":"10"}
+#
+date(?date)
+Description: A calendar date for the start or end of an analysis period. Use format YYYY-MM-DD (e.g. 2026-02-01). The user may say "February 1 2026" or "Feb 1, 2026" — translate to date(2026-02-01).
+Example Translation: "February 1 2026" -> {"Semantics":"date(2026-02-01)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "2026-02-09" -> {"Semantics":"date(2026-02-09)","Input Type":"REPLY","Confidence":"10"}
 ###
 ENTITIES: Following are the list of locations, videos, and still images known to the system.
 ##
@@ -80,6 +85,9 @@ Videos:
 ##
 Images:
 %imageList
+##
+Tracked statistics (when the question is which statistic to report; reply with option(N) where N is the number):
+%statisticsList
 ###
 The current state of the world as perceived by the robot may also be relevant in providing context to your translation. It is described here:
 #
