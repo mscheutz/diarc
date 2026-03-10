@@ -788,6 +788,7 @@ public class AvaDisplayComponent extends DiarcComponent {
         .collect(Collectors.toList());
     saveUserIdleImageSelection();
     buildIdleImageCycleList();
+    continueIdleImageCycle();
   }
 
   @TRADEService
