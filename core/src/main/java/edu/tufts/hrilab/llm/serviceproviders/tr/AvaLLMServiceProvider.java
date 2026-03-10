@@ -839,6 +839,16 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
                 "Set the video volume to max",
                 "setVideoVolume(100)", 10);
         exposedActionList.add(entry);
+        entry = new LLMActionEntry("lowerVideoVolume()",
+                "You lower the volume of videos played on your screen by one step.",
+                "Lower the volume",
+                "lowerVideoVolume()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("raiseVideoVolume()",
+                "You raise the volume of videos played on your screen by one step.",
+                "Raise the volume",
+                "raiseVideoVolume()", 10);
+        exposedActionList.add(entry);
         entry = new LLMActionEntry("listSavedVideos()",
                 "You list out the collection of videos you currently have saved",
                 "what videos can you play",

@@ -110,6 +110,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private BufferedImage listeningIndicatorComposite;
   private static final String LISTENING_INDICATOR_IMAGE = System.getProperty("user.home") + "/.diarc/ava/cramertransparent2.png";
   private static final double LISTENING_INDICATOR_HEIGHT_FRACTION = 0.6;
+  private static final int VIDEO_VOLUME_STEP = 15;
 
   @Override
   protected void init() {
@@ -901,6 +902,19 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public int getVideoVolume() {
     return videoVolume;
+  }
+
+
+  @TRADEService
+  public boolean lowerVideoVolume() {
+    int next = Math.max(0, videoVolume - VIDEO_VOLUME_STEP);
+    return setVideoVolume(next);
+  }
+
+  @TRADEService
+  public boolean raiseVideoVolume() {
+    int next = Math.min(100, videoVolume + VIDEO_VOLUME_STEP);
+    return setVideoVolume(next);
   }
 
   //Leaving temporarily for reference

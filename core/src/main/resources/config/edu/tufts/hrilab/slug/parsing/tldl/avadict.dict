@@ -524,6 +524,24 @@ disable_ww_listen; VERBI; interruptListenForWWandASR
 enable_ww_listen; VERBI; listenForWWandASR
 set output volume to; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
 set output volume; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set video volume to; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+set video volume; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+lower the volume; VERBI; lowerVideoVolume
+lower volume; VERBI; lowerVideoVolume
+lower media volume; VERBI; lowerVideoVolume
+turn down the volume; VERBI; lowerVideoVolume
+turn down volume; VERBI; lowerVideoVolume
+turn it down; VERBI; lowerVideoVolume
+lower video volume; VERBI; lowerVideoVolume
+turn down video volume; VERBI; lowerVideoVolume
+raise the volume; VERBI; raiseVideoVolume
+raise volume; VERBI; raiseVideoVolume
+raise media volume; VERBI; raiseVideoVolume
+turn up the volume; VERBI; raiseVideoVolume
+turn up volume; VERBI; raiseVideoVolume
+turn it up; VERBI; raiseVideoVolume
+raise video volume; VERBI; raiseVideoVolume
+turn up video volume; VERBI; raiseVideoVolume
 start idle image cycle; VERBI; startIdleImageCycle
 stop idle image cycle; VERBI; stopIdleImageCycle
 

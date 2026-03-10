@@ -63,6 +63,20 @@ import java.util.Map;
     }
 }
 
+() = lowerVideoVolume() {
+    Boolean !success = tsc:lowerVideoVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
+() = raiseVideoVolume() {
+    Boolean !success = tsc:raiseVideoVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
 ////Could just have playNextVideo kiosk action with low timeout, not sure if this should ideally be instructed directly or exist
 //() = playAllVideosLoping() {
 //    while (true) {
