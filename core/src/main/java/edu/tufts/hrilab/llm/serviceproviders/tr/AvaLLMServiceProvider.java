@@ -727,7 +727,7 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
                 "describeScheduledGoals()", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("discussRobotPerformance()",
-                "You begin a dialogue to report tracked robot statistics over a time period (e.g. time off dock, distance traveled, goals completed)",
+                "You begin a dialogue to report tracked robot statistics over a time period. You list categories and options (Mobility: time off dock, distance; Goals: tours, scheduled, low-battery returns, completed/failed/canceled, kiosk mode goal triggered; Escorts & deliveries; Drill-down & locations: most/least failed action, most canceled, most visited location, number of locations visited, most frequent escort destination; Media). User says an option number then start and end date (YYYY-MM-DD); you report that statistic in natural language.",
                 "i want to discuss robot performance",
                 "discussRobotPerformance()", 10);
         exposedActionList.add(entry);

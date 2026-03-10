@@ -6,6 +6,7 @@ package edu.tufts.hrilab.ava;
 
 import ai.thinkingrobots.trade.*;
 
+import edu.tufts.hrilab.ava.stats.AvaStatisticsEvent;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.execution.ExecutionType;
@@ -83,6 +84,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private int currentVideo = -1;
   private int videoVolume;
   private volatile boolean videoPlaying = false;
+  private volatile long videoPlaybackStartMs = 0;
   private volatile boolean userImageDisplayed = false;
   private List<String> idleImages = new ArrayList<>();
   private List<String> userImages = new ArrayList<>();
@@ -429,6 +431,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     userImageDisplayed = true;
     displayImage(path, timeout, true, true, Color.WHITE);
     userImageDisplayed = false;
+    recordMediaPlayback("image", timeout * 1000L);
   }
 
   //TODO: smarter interaction with timeout on suspend/resume? Currently will reset timer
@@ -453,6 +456,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     String path = getMediaPath(userImageDir) + File.separator + imageName;
     displayImage(path, timeout, blocking, true, Color.WHITE);
     userImageDisplayed = false;
+    recordMediaPlayback("image", timeout * 1000L);
     continueIdleImageCycle();
   }
   private void displayIdleImage(String imageName, long timeout, boolean blocking) {
@@ -537,6 +541,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     String path = getMediaPath(videoDir) + File.separator + videoName;
     mediaPlayerComponent.mediaPlayer().media().start(path);
+    videoPlaybackStartMs = System.currentTimeMillis();
     videoPlaying = true;
     log.info("[displayVideo] playing: " + path);
   }
@@ -548,8 +553,26 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   @TRADEService
   public void cancelVideoPlayback() {
+    if (videoPlaying && videoPlaybackStartMs > 0) {
+      long durationMs = System.currentTimeMillis() - videoPlaybackStartMs;
+      recordMediaPlayback("video", durationMs);
+    }
     mediaPlayerComponent.mediaPlayer().controls().stop();
     videoPlaying = false;
+  }
+
+  /** Records intentional media playback for statistics (excludes idle image rotation). */
+  private void recordMediaPlayback(String mediaType, long durationMs) {
+    if (durationMs <= 0) return;
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("recordAvaStatisticsEvent").argTypes(AvaStatisticsEvent.class))
+          .call(void.class, AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.MEDIA_PLAYBACK)
+              .mediaType(mediaType)
+              .durationMs(durationMs)
+              .build());
+    } catch (TRADEException e) {
+      log.debug("[recordMediaPlayback] Could not record event: {}", e.getMessage());
+    }
   }
 
   @TRADEService

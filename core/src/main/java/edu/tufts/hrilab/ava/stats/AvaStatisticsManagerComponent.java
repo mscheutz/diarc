@@ -30,6 +30,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +44,25 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
   public static final String STAT_DISTANCE_TRAVELED = "distance_traveled";
   public static final String STAT_TOURS_EXECUTED = "tours_executed";
   public static final String STAT_SCHEDULED_GOAL_EXECUTIONS = "scheduled_goal_executions";
-  public static final String STAT_PANIC_DOCK_EXECUTIONS = "panic_dock_executions";
+  public static final String STAT_LOW_BATTERY_DOCK_EXECUTIONS = "low_battery_dock_executions";
   public static final String STAT_GOALS_COMPLETED = "goals_completed";
   public static final String STAT_GOALS_FAILED = "goals_failed";
   public static final String STAT_GOALS_CANCELED = "goals_canceled";
+  public static final String STAT_AVERAGE_UNDOCKED_BATTERY = "average_undocked_battery";
+  public static final String STAT_MEDIA_PLAYBACK_TOTAL = "media_playback_total";
+  public static final String STAT_MEDIA_PLAYBACK_PHOTOS = "media_playback_photos";
+  public static final String STAT_MEDIA_PLAYBACK_VIDEOS = "media_playback_videos";
+  public static final String STAT_ESCORTS_COMPLETED = "escorts_completed";
+  public static final String STAT_ESCORTS_FAILED = "escorts_failed";
+  public static final String STAT_ESCORTS_CANCELED = "escorts_canceled";
+  public static final String STAT_DELIVERIES_COMPLETED = "deliveries_completed";
+  public static final String STAT_MOST_FREQUENTLY_FAILED = "most_frequently_failed";
+  public static final String STAT_LEAST_FREQUENTLY_FAILED = "least_frequently_failed";
+  public static final String STAT_MOST_FREQUENTLY_CANCELED = "most_frequently_canceled";
+  public static final String STAT_MOST_VISITED_LOCATION = "most_visited_location";
+  public static final String STAT_LOCATIONS_VISITED_COUNT = "locations_visited_count";
+  public static final String STAT_MOST_FREQUENT_ESCORT_DESTINATION = "most_frequent_escort_destination";
+  public static final String STAT_KIOSK_GOAL_TRIGGERS = "kiosk_goal_triggers";
 
   private static final Map<String, String> STAT_DISPLAY_NAMES = new LinkedHashMap<>();
   static {
@@ -53,14 +70,51 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
     STAT_DISPLAY_NAMES.put(STAT_DISTANCE_TRAVELED, "Distance traveled");
     STAT_DISPLAY_NAMES.put(STAT_TOURS_EXECUTED, "Tours executed");
     STAT_DISPLAY_NAMES.put(STAT_SCHEDULED_GOAL_EXECUTIONS, "Scheduled goal executions");
-    STAT_DISPLAY_NAMES.put(STAT_PANIC_DOCK_EXECUTIONS, "Panic dock (urgent go home) executions");
+    STAT_DISPLAY_NAMES.put(STAT_LOW_BATTERY_DOCK_EXECUTIONS, "Low-battery returns to dock");
     STAT_DISPLAY_NAMES.put(STAT_GOALS_COMPLETED, "Goals completed");
     STAT_DISPLAY_NAMES.put(STAT_GOALS_FAILED, "Goals failed");
     STAT_DISPLAY_NAMES.put(STAT_GOALS_CANCELED, "Goals canceled");
+    STAT_DISPLAY_NAMES.put(STAT_ESCORTS_COMPLETED, "Escorts completed");
+    STAT_DISPLAY_NAMES.put(STAT_ESCORTS_FAILED, "Escorts failed");
+    STAT_DISPLAY_NAMES.put(STAT_ESCORTS_CANCELED, "Escorts canceled");
+    STAT_DISPLAY_NAMES.put(STAT_DELIVERIES_COMPLETED, "Deliveries completed");
+    STAT_DISPLAY_NAMES.put(STAT_MOST_FREQUENTLY_FAILED, "Most frequently failed action");
+    STAT_DISPLAY_NAMES.put(STAT_LEAST_FREQUENTLY_FAILED, "Least frequently failed action (that failed at least once)");
+    STAT_DISPLAY_NAMES.put(STAT_MOST_FREQUENTLY_CANCELED, "Most frequently canceled action");
+    STAT_DISPLAY_NAMES.put(STAT_MOST_VISITED_LOCATION, "Most visited location");
+    STAT_DISPLAY_NAMES.put(STAT_LOCATIONS_VISITED_COUNT, "Number of locations visited");
+    STAT_DISPLAY_NAMES.put(STAT_MOST_FREQUENT_ESCORT_DESTINATION, "Most frequent escort destination");
+    STAT_DISPLAY_NAMES.put(STAT_KIOSK_GOAL_TRIGGERS, "Kiosk mode goal triggered");
+    STAT_DISPLAY_NAMES.put(STAT_AVERAGE_UNDOCKED_BATTERY, "Average battery level when undocked");
+    STAT_DISPLAY_NAMES.put(STAT_MEDIA_PLAYBACK_TOTAL, "Time spent playing media");
+    STAT_DISPLAY_NAMES.put(STAT_MEDIA_PLAYBACK_PHOTOS, "Time spent on photos");
+    STAT_DISPLAY_NAMES.put(STAT_MEDIA_PLAYBACK_VIDEOS, "Time spent on videos");
   }
+
+  /** Category order and stat IDs per category for grouped option list. */
+  private static final List<String> CATEGORY_ORDER = Arrays.asList("Mobility", "Goals", "Escorts & deliveries", "Drill-down & locations", "Media");
+  private static final Map<String, List<String>> CATEGORY_TO_STATS = new LinkedHashMap<>();
+  static {
+    CATEGORY_TO_STATS.put("Mobility", Arrays.asList(STAT_TIME_OFF_DOCK, STAT_DISTANCE_TRAVELED));
+    CATEGORY_TO_STATS.put("Goals", Arrays.asList(STAT_TOURS_EXECUTED, STAT_SCHEDULED_GOAL_EXECUTIONS, STAT_LOW_BATTERY_DOCK_EXECUTIONS, STAT_GOALS_COMPLETED, STAT_GOALS_FAILED, STAT_GOALS_CANCELED, STAT_KIOSK_GOAL_TRIGGERS));
+    CATEGORY_TO_STATS.put("Escorts & deliveries", Arrays.asList(STAT_ESCORTS_COMPLETED, STAT_ESCORTS_FAILED, STAT_ESCORTS_CANCELED, STAT_DELIVERIES_COMPLETED));
+    CATEGORY_TO_STATS.put("Drill-down & locations", Arrays.asList(STAT_MOST_FREQUENTLY_FAILED, STAT_LEAST_FREQUENTLY_FAILED, STAT_MOST_FREQUENTLY_CANCELED, STAT_MOST_VISITED_LOCATION, STAT_LOCATIONS_VISITED_COUNT, STAT_MOST_FREQUENT_ESCORT_DESTINATION));
+    CATEGORY_TO_STATS.put("Media", Arrays.asList(STAT_MEDIA_PLAYBACK_TOTAL, STAT_MEDIA_PLAYBACK_PHOTOS, STAT_MEDIA_PLAYBACK_VIDEOS));
+    // STAT_AVERAGE_UNDOCKED_BATTERY paused: current value is average of ad-hoc samples (UNDOCKED + STOPPED_MOVING only), not time-weighted. To fix: log battery at regular intervals while undocked, then average over those samples or use time-weighted formula.
+  }
+
+  private static final java.util.Set<String> BREAKDOWN_STAT_IDS = new java.util.LinkedHashSet<>(Arrays.asList(
+      STAT_MOST_FREQUENTLY_FAILED, STAT_LEAST_FREQUENTLY_FAILED, STAT_MOST_FREQUENTLY_CANCELED,
+      STAT_MOST_VISITED_LOCATION, STAT_LOCATIONS_VISITED_COUNT, STAT_MOST_FREQUENT_ESCORT_DESTINATION));
 
   /** Tour goal names contain this (case-insensitive) to count as "tour executed". */
   private static final String TOUR_GOAL_NAME_SUBSTRING = "tour";
+  /** Escort goal names contain this (case-insensitive); e.g. escortToLocation, escortFromLocationToLocation. */
+  private static final String ESCORT_GOAL_NAME_SUBSTRING = "escort";
+  /** Delivery goal names contain this (case-insensitive) for deliveries_completed. */
+  private static final String DELIVERY_GOAL_NAME_SUBSTRING = "delivery";
+  /** Default kiosk goal name (KioskGoalManager default is goHomeAndCharge). Exact match so we don't count goHomeAndChargeToPercent (battery monitor). TODO: generalize to count any kiosk-submitted goal (e.g. flag in CSV or match configured kiosk action). */
+  private static final String KIOSK_GOAL_NAME_EXACT = "goHomeAndCharge";
 
   private Path statisticsDir;
   private Path statisticsFile;
@@ -149,6 +203,7 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         : (info.unboundGoal != null ? info.unboundGoal.getName() : "unknown");
     boolean scheduled = info.schedulingInfo != null;
     boolean urgentGoHome = AvaStatisticsEvent.URGENT_GO_HOME_GOAL_NAME.equals(goalName);
+    Predicate goalPredicate = (info.goal != null && info.goal.isPredicate()) ? (Predicate) info.goal : null;
     AvaStatisticsEvent event = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.GOAL_STATUS)
         .timestampMs(System.currentTimeMillis())
         .goalGid(info.gid)
@@ -158,6 +213,7 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         .goalEndMs(info.end >= 0 ? info.end : null)
         .scheduled(scheduled)
         .urgentGoHome(urgentGoHome)
+        .goalPredicate(goalPredicate)
         .build();
     onAvaStatisticsEvent(event);
   }
@@ -172,6 +228,15 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
     }
   }
 
+  /**
+   * Records an event to the statistics CSV. Any component (e.g. AvaDisplayComponent) can call this
+   * to log MEDIA_PLAYBACK or other events without registering with AvaComponent.
+   */
+  @TRADEService
+  public void recordAvaStatisticsEvent(AvaStatisticsEvent event) {
+    onAvaStatisticsEvent(event);
+  }
+
   @TRADEService
   public void onAvaStatisticsEvent(AvaStatisticsEvent event) {
     if (writer == null) {
@@ -180,7 +245,8 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
     writeLock.lock();
     try {
       if (!headerWritten) {
-        writer.write("timestamp_ms,kind,dock_name,cumulative_distance_m,segment_start_timestamp_ms,drive_status_end,goal_gid,goal_name,goal_status,goal_start_ms,goal_end_ms,scheduled,urgent_go_home");
+        // Order must match CSV_IDX_* and all query methods that parse cols[] (0=timestamp_ms, 1=kind, 3=cumulative_distance_m, 7=goal_name, 8=goal_status, 11=scheduled, 12=urgent_go_home, 13=goal_predicate, 14=battery_pct, 15=media_type, 16=duration_ms).
+        writer.write("timestamp_ms,kind,dock_name,cumulative_distance_m,segment_start_timestamp_ms,drive_status_end,goal_gid,goal_name,goal_status,goal_start_ms,goal_end_ms,scheduled,urgent_go_home,goal_predicate,battery_pct,media_type,duration_ms");
         writer.newLine();
         writer.flush();
         headerWritten = true;
@@ -200,9 +266,13 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         row.append(',').append(event.getGoalEndMs() != null ? event.getGoalEndMs() : "");
         row.append(',').append(event.getScheduled() != null && event.getScheduled() ? "true" : "false");
         row.append(',').append(event.getUrgentGoHome() != null && event.getUrgentGoHome() ? "true" : "false");
+        row.append(',').append(escapeCsv(event.getGoalPredicate() != null ? event.getGoalPredicate().toString() : ""));
       } else {
-        row.append(",,,,,,");
+        row.append(",,,,,,,,");
       }
+      row.append(',').append(event.getBatteryPct() != null ? event.getBatteryPct() : "");
+      row.append(',').append(event.getMediaType() != null ? escapeCsv(event.getMediaType()) : "");
+      row.append(',').append(event.getDurationMs() != null ? event.getDurationMs() : "");
       writer.write(row.toString());
       writer.newLine();
       writer.flush();
@@ -228,12 +298,30 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
   // -------------------------------------------------------------------------
 
   /**
-   * Returns statistic IDs in display order (option 1, 2, ... for list+option flow).
-   * Future work (media, locations, etc.): see docs/AVA_STATISTICS.md.
+   * Returns statistic IDs in display order (option 1, 2, ... for list+option flow),
+   * grouped by category so ASL can list by section.
    */
   @TRADEService
   public List<String> getAvailableStatisticIds() {
-    return new ArrayList<>(STAT_DISPLAY_NAMES.keySet());
+    List<String> out = new ArrayList<>();
+    for (String category : CATEGORY_ORDER) {
+      List<String> ids = CATEGORY_TO_STATS.get(category);
+      if (ids != null) out.addAll(ids);
+    }
+    return out;
+  }
+
+  /** Category names in the order they should be announced (Mobility, Goals, Battery, Media). */
+  @TRADEService
+  public List<String> getCategoryNamesInOrder() {
+    return new ArrayList<>(CATEGORY_ORDER);
+  }
+
+  /** Statistic IDs in the given category (for grouped listing). */
+  @TRADEService
+  public List<String> getStatisticIdsInCategory(String category) {
+    List<String> ids = CATEGORY_TO_STATS.get(category);
+    return ids != null ? new ArrayList<>(ids) : Collections.emptyList();
   }
 
   @TRADEService
@@ -273,12 +361,23 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         return createDurationValueTerm(value);
       case STAT_DISTANCE_TRAVELED:
         return Factory.createPredicate("distance", Factory.createSymbol(String.format("%.1f", value)), Factory.createSymbol("meters"));
+      case STAT_AVERAGE_UNDOCKED_BATTERY:
+        return Factory.createPredicate("percent", Factory.createSymbol(String.format("%.1f", value)));
+      case STAT_MEDIA_PLAYBACK_TOTAL:
+      case STAT_MEDIA_PLAYBACK_PHOTOS:
+      case STAT_MEDIA_PLAYBACK_VIDEOS:
+        return createDurationValueTerm(value);
       case STAT_TOURS_EXECUTED:
       case STAT_SCHEDULED_GOAL_EXECUTIONS:
-      case STAT_PANIC_DOCK_EXECUTIONS:
+      case STAT_LOW_BATTERY_DOCK_EXECUTIONS:
       case STAT_GOALS_COMPLETED:
       case STAT_GOALS_FAILED:
       case STAT_GOALS_CANCELED:
+      case STAT_ESCORTS_COMPLETED:
+      case STAT_ESCORTS_FAILED:
+      case STAT_ESCORTS_CANCELED:
+      case STAT_DELIVERIES_COMPLETED:
+      case STAT_KIOSK_GOAL_TRIGGERS:
       default:
         return Factory.createPredicate("count", Factory.createSymbol(String.valueOf((int) Math.round(value))));
     }
@@ -291,11 +390,60 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
   @TRADEService
   public Predicate createStatisticsReportPredicate(String statisticId, String startDateStr, String endDateStr, double value) {
     Symbol valueTerm = createStatisticValueTerm(statisticId, value);
+    return createStatisticsReportPredicateWithValueTerm(statisticId, startDateStr, endDateStr, valueTerm);
+  }
+
+  /**
+   * Builds statisticsReport with an arbitrary value term (e.g. mostFailedGoals(goal1, goal2, count(N)) for ties; last arg is always count).
+   * Use so RR can resolve refs inside the value term when generateResponse(predicate) is used.
+   */
+  @TRADEService
+  public Predicate createStatisticsReportPredicateWithValueTerm(String statisticId, String startDateStr, String endDateStr, Symbol valueTerm) {
     return Factory.createPredicate("statisticsReport",
         Factory.createSymbol(statisticId),
         Factory.createSymbol(startDateStr),
         Factory.createSymbol(endDateStr),
         valueTerm);
+  }
+
+  /**
+   * Returns the report predicate for the given statistic over the period, for use with generateResponse.
+   * For numeric stats: queries the value and builds the report predicate. For drill-down/location stats: builds the report predicate from aggregated data.
+   * Returns null if no data for that statistic in that period.
+   */
+  @TRADEService
+  public Predicate getStatisticsReportPredicate(String statisticId, long startMs, long endMs, String startDateStr, String endDateStr) {
+    if (statisticId == null || !STAT_DISPLAY_NAMES.containsKey(statisticId)) {
+      return null;
+    }
+    if (BREAKDOWN_STAT_IDS.contains(statisticId)) {
+      return getStatisticsReportPredicateForBreakdown(statisticId, startMs, endMs, startDateStr, endDateStr);
+    }
+    double value = queryStatistics(statisticId, startMs, endMs);
+    return createStatisticsReportPredicate(statisticId, startDateStr, endDateStr, value);
+  }
+
+  /** Returns the report predicate for drill-down/location stats, or null if no data. */
+  private Predicate getStatisticsReportPredicateForBreakdown(String statisticId, long startMs, long endMs, String startDateStr, String endDateStr) {
+    if (statisticId == null || !BREAKDOWN_STAT_IDS.contains(statisticId)) {
+      return null;
+    }
+    switch (statisticId) {
+      case STAT_MOST_FREQUENTLY_FAILED:
+        return getMostFailedGoalReport(startMs, endMs, startDateStr, endDateStr);
+      case STAT_LEAST_FREQUENTLY_FAILED:
+        return getLeastFailedGoalReport(startMs, endMs, startDateStr, endDateStr);
+      case STAT_MOST_FREQUENTLY_CANCELED:
+        return getMostCanceledGoalReport(startMs, endMs, startDateStr, endDateStr);
+      case STAT_MOST_VISITED_LOCATION:
+        return getMostVisitedLocationReport(startMs, endMs, startDateStr, endDateStr);
+      case STAT_LOCATIONS_VISITED_COUNT:
+        return getLocationsVisitedCountReport(startMs, endMs, startDateStr, endDateStr);
+      case STAT_MOST_FREQUENT_ESCORT_DESTINATION:
+        return getMostFrequentEscortDestinationReport(startMs, endMs, startDateStr, endDateStr);
+      default:
+        return null;
+    }
   }
 
   /**
@@ -321,11 +469,7 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
   /**
    * Queries the statistics CSV for the given statistic over [startMs, endMs] (inclusive).
    * Returns a numeric value: counts as whole number (e.g. 10.0), time off dock in minutes,
-   * distance in meters.
-   *
-   * TODO: Add statistics for media playback (count and image vs video breakdown); requires
-   * event source for media playback (subgoal or media component), not only top-level GOAL_STATUS.
-   * See docs/AVA_STATISTICS.md for full future-work list.
+   * distance in meters, average battery 0-100, media playback in minutes.
    */
   @TRADEService
   public double queryStatistics(String statisticId, long startMs, long endMs) {
@@ -345,14 +489,36 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         return queryToursExecuted(startMs, endMs);
       case STAT_SCHEDULED_GOAL_EXECUTIONS:
         return queryScheduledGoalExecutions(startMs, endMs);
-      case STAT_PANIC_DOCK_EXECUTIONS:
-        return queryPanicDockExecutions(startMs, endMs);
+      case STAT_LOW_BATTERY_DOCK_EXECUTIONS:
+        return queryLowBatteryDockExecutions(startMs, endMs);
       case STAT_GOALS_COMPLETED:
         return queryGoalStatusCount(startMs, endMs, "SUCCEEDED");
       case STAT_GOALS_FAILED:
         return queryGoalStatusCount(startMs, endMs, "FAILED");
       case STAT_GOALS_CANCELED:
         return queryGoalStatusCount(startMs, endMs, "CANCELED");
+      case STAT_AVERAGE_UNDOCKED_BATTERY:
+        return queryAverageUndockedBattery(startMs, endMs);
+      case STAT_MEDIA_PLAYBACK_TOTAL:
+        return queryMediaPlaybackMinutes(startMs, endMs, null);
+      case STAT_MEDIA_PLAYBACK_PHOTOS:
+        return queryMediaPlaybackMinutes(startMs, endMs, "image");
+      case STAT_MEDIA_PLAYBACK_VIDEOS:
+        return queryMediaPlaybackMinutes(startMs, endMs, "video");
+      case STAT_ESCORTS_COMPLETED:
+        return queryGoalStatusCountWithFilter(startMs, endMs, "SUCCEEDED", name ->
+            name != null && name.toLowerCase().contains(ESCORT_GOAL_NAME_SUBSTRING));
+      case STAT_ESCORTS_FAILED:
+        return queryGoalStatusCountWithFilter(startMs, endMs, "FAILED", name ->
+            name != null && name.toLowerCase().contains(ESCORT_GOAL_NAME_SUBSTRING));
+      case STAT_ESCORTS_CANCELED:
+        return queryGoalStatusCountWithFilter(startMs, endMs, "CANCELED", name ->
+            name != null && name.toLowerCase().contains(ESCORT_GOAL_NAME_SUBSTRING));
+      case STAT_DELIVERIES_COMPLETED:
+        return queryGoalStatusCountWithFilter(startMs, endMs, "SUCCEEDED", name ->
+            name != null && name.toLowerCase().contains(DELIVERY_GOAL_NAME_SUBSTRING));
+      case STAT_KIOSK_GOAL_TRIGGERS:
+        return queryDistinctGoalCountByExactName(startMs, endMs, KIOSK_GOAL_NAME_EXACT);
       default:
         return 0;
     }
@@ -454,7 +620,7 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
     return count;
   }
 
-  private double queryPanicDockExecutions(long startMs, long endMs) {
+  private double queryLowBatteryDockExecutions(long startMs, long endMs) {
     int count = 0;
     try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
       if (r.readLine() == null) return 0;
@@ -467,10 +633,71 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
         if (ts >= startMs && ts <= endMs && "true".equalsIgnoreCase(cols[12].trim())) count++;
       }
     } catch (IOException e) {
-      log.error("[queryPanicDockExecutions] Error reading statistics file", e);
+      log.error("[queryLowBatteryDockExecutions] Error reading statistics file", e);
       return 0;
     }
     return count;
+  }
+
+  /** Expected CSV column count; must match header and onAvaStatisticsEvent write order. */
+  private static final int CSV_COLUMN_COUNT = 17;
+  /** Column index for goal_predicate in CSV. */
+  private static final int CSV_IDX_GOAL_PREDICATE = 13;
+  /** Column index for battery_pct in CSV (after goal columns). */
+  private static final int CSV_IDX_BATTERY_PCT = 14;
+  /** Column indices for MEDIA_PLAYBACK. */
+  private static final int CSV_IDX_MEDIA_TYPE = 15;
+  private static final int CSV_IDX_DURATION_MS = 16;
+
+  private double queryAverageUndockedBattery(long startMs, long endMs) {
+    double sum = 0;
+    int n = 0;
+    try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
+      if (r.readLine() == null) return 0;
+      String line;
+      while ((line = r.readLine()) != null) {
+        String[] cols = parseCsvLine(line);
+        if (cols.length <= CSV_IDX_BATTERY_PCT) continue;
+        String kind = cols[1].trim();
+        if (!"UNDOCKED".equals(kind) && !"STOPPED_MOVING".equals(kind)) continue;
+        long ts = parseLong(cols[0], -1);
+        if (ts < startMs || ts > endMs) continue;
+        double pct = parseDouble(cols[CSV_IDX_BATTERY_PCT], -1);
+        if (pct >= 0 && pct <= 100) {
+          sum += pct;
+          n++;
+        }
+      }
+    } catch (IOException e) {
+      log.error("[queryAverageUndockedBattery] Error reading statistics file", e);
+      return 0;
+    }
+    return n == 0 ? 0 : sum / n;
+  }
+
+  /**
+   * Sum of MEDIA_PLAYBACK duration in the range, in minutes. If filter is null, sum all; if "image", sum image only; if "video", sum video only.
+   */
+  private double queryMediaPlaybackMinutes(long startMs, long endMs, String filterMediaType) {
+    long totalMs = 0;
+    try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
+      if (r.readLine() == null) return 0;
+      String line;
+      while ((line = r.readLine()) != null) {
+        String[] cols = parseCsvLine(line);
+        if (cols.length <= CSV_IDX_DURATION_MS) continue;
+        if (!"MEDIA_PLAYBACK".equals(cols[1].trim())) continue;
+        long ts = parseLong(cols[0], -1);
+        if (ts < startMs || ts > endMs) continue;
+        if (filterMediaType != null && !filterMediaType.equalsIgnoreCase(cols[CSV_IDX_MEDIA_TYPE].trim())) continue;
+        long dur = parseLong(cols[CSV_IDX_DURATION_MS], 0);
+        if (dur > 0) totalMs += dur;
+      }
+    } catch (IOException e) {
+      log.error("[queryMediaPlaybackMinutes] Error reading statistics file", e);
+      return 0;
+    }
+    return totalMs / (60_000.0);
   }
 
   private double queryGoalStatusCount(long startMs, long endMs, String status) {
@@ -517,6 +744,216 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
       return 0;
     }
     return count;
+  }
+
+  /** Count of distinct goals (by goal_gid) whose goal_name equals exactName. Used for kiosk trigger count (default goHomeAndCharge; excludes goHomeAndChargeToPercent). */
+  private double queryDistinctGoalCountByExactName(long startMs, long endMs, String exactName) {
+    java.util.Set<Long> gids = new java.util.HashSet<>();
+    if (exactName == null) return 0;
+    try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
+      if (r.readLine() == null) return 0;
+      String line;
+      while ((line = r.readLine()) != null) {
+        String[] cols = parseCsvLine(line);
+        if (cols.length < 8) continue;
+        if (!"GOAL_STATUS".equals(cols[1].trim())) continue;
+        long ts = parseLong(cols[0], -1);
+        if (ts < startMs || ts > endMs) continue;
+        String goalName = unescapeCsv(cols[7]);
+        if (!exactName.equals(goalName)) continue;
+        long gid = parseLong(cols[6], -1);
+        if (gid >= 0) gids.add(gid);
+      }
+    } catch (IOException e) {
+      log.error("[queryDistinctGoalCountByExactName] Error reading statistics file", e);
+      return 0;
+    }
+    return gids.size();
+  }
+
+  /** Aggregates GOAL_STATUS rows by goal_predicate (col 13) for the given status. Returns map of goalPredicateStr -> count. */
+  private Map<String, Long> aggregateGoalPredicateByStatus(long startMs, long endMs, String status) {
+    Map<String, Long> counts = new LinkedHashMap<>();
+    try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
+      if (r.readLine() == null) return counts;
+      String line;
+      while ((line = r.readLine()) != null) {
+        String[] cols = parseCsvLine(line);
+        if (cols.length <= CSV_IDX_GOAL_PREDICATE) continue;
+        if (!"GOAL_STATUS".equals(cols[1].trim())) continue;
+        long ts = parseLong(cols[0], -1);
+        if (ts < startMs || ts > endMs) continue;
+        if (!status.equals(cols[8].trim())) continue;
+        String gp = unescapeCsv(cols[CSV_IDX_GOAL_PREDICATE]);
+        if (gp == null || gp.isEmpty()) continue;
+        counts.merge(gp, 1L, Long::sum);
+      }
+    } catch (IOException e) {
+      log.error("[aggregateGoalPredicateByStatus] Error reading statistics file", e);
+    }
+    return counts;
+  }
+
+  /** Returns [goalPredicateStr, count] for the entry with max (or min if max=false) count, or null if empty. */
+  /** Returns all keys tied for the best count (max or min). Returns null if empty. Caller can get count from counts.get(keys.get(0)). */
+  private static List<String> findAllTiedByCount(Map<String, Long> counts, boolean max) {
+    if (counts == null || counts.isEmpty()) return null;
+    long best = max ? Long.MIN_VALUE : Long.MAX_VALUE;
+    List<String> bestKeys = new ArrayList<>();
+    for (Map.Entry<String, Long> e : counts.entrySet()) {
+      long c = e.getValue();
+      if (max ? c > best : c < best) {
+        best = c;
+        bestKeys.clear();
+        bestKeys.add(e.getKey());
+      } else if (c == best) {
+        bestKeys.add(e.getKey());
+      }
+    }
+    return bestKeys.isEmpty() ? null : bestKeys;
+  }
+
+  private static Predicate parseGoalPredicateSafe(String s) {
+    if (s == null || s.isEmpty()) return null;
+    try {
+      return Factory.createPredicate(s.trim());
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  /**
+   * Extract the location ref (destination) from a goal predicate string for "most visited" / escort stats.
+   * goToLocation: destination is always the last arg — (location), (actor, location), or (actor, start, end).
+   * escortToLocation(actor, location): destination = arg 1.
+   * escortFromLocationToLocation(actor, from, to): destination = arg 2 (to).
+   */
+  private static Symbol extractLocationRefFromGoalPredicateString(String goalPredicateStr) {
+    Predicate p = parseGoalPredicateSafe(goalPredicateStr);
+    if (p == null || p.getArgs() == null || p.getArgs().isEmpty()) return null;
+    String name = p.getName();
+    int idx = -1;
+    if ("goToLocation".equals(name)) {
+      idx = p.getArgs().size() - 1;  // destination is last: (loc), (actor, loc), or (actor, start, end)
+    } else if ("escortToLocation".equals(name)) idx = 1;
+    else if ("escortFromLocationToLocation".equals(name)) idx = 2;
+    if (idx < 0 || idx >= p.getArgs().size()) return null;
+    Symbol arg = p.get(idx);
+    if (arg == null || arg.isVariable()) return null;
+    return arg;
+  }
+
+  /** Aggregates GOAL_STATUS rows by extracted location ref (for goToLocation / escort goals). escortOnly: only goal_name contains "escort". */
+  private Map<String, Long> aggregateLocationRefs(long startMs, long endMs, boolean escortOnly) {
+    Map<String, Long> counts = new LinkedHashMap<>();
+    try (BufferedReader r = Files.newBufferedReader(statisticsFile, StandardCharsets.UTF_8)) {
+      if (r.readLine() == null) return counts;
+      String line;
+      while ((line = r.readLine()) != null) {
+        String[] cols = parseCsvLine(line);
+        if (cols.length <= CSV_IDX_GOAL_PREDICATE) continue;
+        if (!"GOAL_STATUS".equals(cols[1].trim())) continue;
+        long ts = parseLong(cols[0], -1);
+        if (ts < startMs || ts > endMs) continue;
+        String goalName = cols.length > 7 ? unescapeCsv(cols[7]) : null;
+        if (escortOnly && (goalName == null || !goalName.toLowerCase().contains(ESCORT_GOAL_NAME_SUBSTRING))) continue;
+        String gp = unescapeCsv(cols[CSV_IDX_GOAL_PREDICATE]);
+        Symbol ref = extractLocationRefFromGoalPredicateString(gp);
+        if (ref == null) continue;
+        counts.merge(ref.toString(), 1L, Long::sum);
+      }
+    } catch (IOException e) {
+      log.error("[aggregateLocationRefs] Error reading statistics file", e);
+    }
+    return counts;
+  }
+
+  /** Builds value term with all tied items (goals or location refs) and count; predicate name plural (e.g. mostFailedGoals). */
+  private static Symbol buildTiedReportValueTerm(String predicateName, List<Symbol> tiedRefs, long count) {
+    if (tiedRefs == null || tiedRefs.isEmpty()) return null;
+    List<Symbol> args = new ArrayList<>(tiedRefs);
+    args.add(Factory.createPredicate("count", Factory.createSymbol(String.valueOf(count))));
+    return Factory.createPredicate(predicateName, args);
+  }
+
+  @TRADEService
+  public Predicate getMostFailedGoalReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateGoalPredicateByStatus(startMs, endMs, "FAILED");
+    List<String> tied = findAllTiedByCount(counts, true);
+    if (tied == null || tied.isEmpty()) return null;
+    long countVal = counts.get(tied.get(0));
+    List<Symbol> goalPreds = new ArrayList<>();
+    for (String key : tied) {
+      Predicate p = parseGoalPredicateSafe(key);
+      if (p != null) goalPreds.add(p);
+    }
+    if (goalPreds.isEmpty()) return null;
+    Symbol valueTerm = buildTiedReportValueTerm("mostFailedGoals", goalPreds, countVal);
+    return createStatisticsReportPredicateWithValueTerm("most_frequently_failed", startDateStr, endDateStr, valueTerm);
+  }
+
+  @TRADEService
+  public Predicate getLeastFailedGoalReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateGoalPredicateByStatus(startMs, endMs, "FAILED");
+    List<String> tied = findAllTiedByCount(counts, false);
+    if (tied == null || tied.isEmpty()) return null;
+    long countVal = counts.get(tied.get(0));
+    List<Symbol> goalPreds = new ArrayList<>();
+    for (String key : tied) {
+      Predicate p = parseGoalPredicateSafe(key);
+      if (p != null) goalPreds.add(p);
+    }
+    if (goalPreds.isEmpty()) return null;
+    Symbol valueTerm = buildTiedReportValueTerm("leastFailedGoals", goalPreds, countVal);
+    return createStatisticsReportPredicateWithValueTerm("least_frequently_failed", startDateStr, endDateStr, valueTerm);
+  }
+
+  @TRADEService
+  public Predicate getMostCanceledGoalReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateGoalPredicateByStatus(startMs, endMs, "CANCELED");
+    List<String> tied = findAllTiedByCount(counts, true);
+    if (tied == null || tied.isEmpty()) return null;
+    long countVal = counts.get(tied.get(0));
+    List<Symbol> goalPreds = new ArrayList<>();
+    for (String key : tied) {
+      Predicate p = parseGoalPredicateSafe(key);
+      if (p != null) goalPreds.add(p);
+    }
+    if (goalPreds.isEmpty()) return null;
+    Symbol valueTerm = buildTiedReportValueTerm("mostCanceledGoals", goalPreds, countVal);
+    return createStatisticsReportPredicateWithValueTerm("most_frequently_canceled", startDateStr, endDateStr, valueTerm);
+  }
+
+  @TRADEService
+  public Predicate getMostVisitedLocationReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateLocationRefs(startMs, endMs, false);
+    List<String> tied = findAllTiedByCount(counts, true);
+    if (tied == null || tied.isEmpty()) return null;
+    long countVal = counts.get(tied.get(0));
+    List<Symbol> locRefs = new ArrayList<>();
+    for (String key : tied) locRefs.add(Factory.createSymbol(key));
+    Symbol valueTerm = buildTiedReportValueTerm("mostVisitedLocations", locRefs, countVal);
+    return createStatisticsReportPredicateWithValueTerm("most_visited_location", startDateStr, endDateStr, valueTerm);
+  }
+
+  @TRADEService
+  public Predicate getLocationsVisitedCountReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateLocationRefs(startMs, endMs, false);
+    int n = counts.size();
+    Symbol valueTerm = Factory.createPredicate("count", Factory.createSymbol(String.valueOf(n)));
+    return createStatisticsReportPredicateWithValueTerm("locations_visited_count", startDateStr, endDateStr, valueTerm);
+  }
+
+  @TRADEService
+  public Predicate getMostFrequentEscortDestinationReport(long startMs, long endMs, String startDateStr, String endDateStr) {
+    Map<String, Long> counts = aggregateLocationRefs(startMs, endMs, true);
+    List<String> tied = findAllTiedByCount(counts, true);
+    if (tied == null || tied.isEmpty()) return null;
+    long countVal = counts.get(tied.get(0));
+    List<Symbol> locRefs = new ArrayList<>();
+    for (String key : tied) locRefs.add(Factory.createSymbol(key));
+    Symbol valueTerm = buildTiedReportValueTerm("mostFrequentEscortDestinations", locRefs, countVal);
+    return createStatisticsReportPredicateWithValueTerm("most_frequent_escort_destination", startDateStr, endDateStr, valueTerm);
   }
 
   private static long parseLong(String s, long def) {

@@ -362,13 +362,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       statisticsSubscribers.add(callback);
       // Push current dock state so CSV has a baseline (avoids 0 min off dock when robot started already undocked)
       AvaStatisticsEvent.Kind kind = wasDocked ? AvaStatisticsEvent.Kind.DOCKED : AvaStatisticsEvent.Kind.UNDOCKED;
-      notifyStatisticsSubscribers(AvaStatisticsEvent.builder(kind).build());
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(kind);
+      if (kind == AvaStatisticsEvent.Kind.UNDOCKED) {
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+      }
+      notifyStatisticsSubscribers(b.build());
     }
   }
 
   @TRADEService
   public void unregisterForAvaStatisticsNotifications(TRADEServiceInfo callback) {
     statisticsSubscribers.remove(callback);
+  }
+
+  /** Returns current battery 0–100 for statistics, or null if unavailable. */
+  private Double getBatteryLevelForStats() {
+    try {
+      double level = getBatteryLevel();
+      return (level >= 0 && level <= 100) ? level : null;
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   private void notifyStatisticsSubscribers(AvaStatisticsEvent event) {
@@ -618,7 +633,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     log.debug("[goToLocation] Going to:{} Wait is {}", location.getName(), wait);
     currentMoveGoal.setGoToLocationGoal(location, wait);
     if (wasDocked) {
-      notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.UNDOCKED).build());
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.UNDOCKED);
+      Double bat = getBatteryLevelForStats();
+      if (bat != null) b.batteryPct(bat);
+      notifyStatisticsSubscribers(b.build());
       wasDocked = false;
     }
 
@@ -710,11 +728,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("Error going to location: " + res.errorMessage);
       polling = false;
       long segmentStartTimeMs = System.currentTimeMillis();
-      notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
           .segmentStartTimestampMs(segmentStartTimeMs)
           .cumulativeDistanceM(0)
-          .driveStatusEnd("API_ERROR")
-          .build());
+          .driveStatusEnd("API_ERROR");
+      Double bat = getBatteryLevelForStats();
+      if (bat != null) b.batteryPct(bat);
+      notifyStatisticsSubscribers(b.build());
       if (res.errorMessage.contains("Inaccessible map location")) {
         return new ConditionJustification(false, Factory.createPredicate("accessible", "location"));
       } else {
@@ -764,11 +784,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       ds = getDriveStatus();
       if (ds == DriveStatus.FAILED_DRIVE_WAYPOINT) {
         log.warn("[goToArbitrary] Failed to reach goal position: " + goalPosition + " theta: " + goalTheta);
-        notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
             .segmentStartTimestampMs(segmentStartTimeMs)
             .cumulativeDistanceM(segmentCumulativeM)
-            .driveStatusEnd("FAILED_DRIVE_WAYPOINT")
-            .build());
+            .driveStatusEnd("FAILED_DRIVE_WAYPOINT");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
         return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
       }
 
@@ -784,21 +806,25 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
 
       if (apiFailures >= 4) {
-        notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
             .segmentStartTimestampMs(segmentStartTimeMs)
             .cumulativeDistanceM(segmentCumulativeM)
-            .driveStatusEnd("API_FAILURE")
-            .build());
+            .driveStatusEnd("API_FAILURE");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
         return new ConditionJustification(false, Factory.createPredicate("http_server", "connected"));
       }
     }
     polling = false;
     String endStatus = stopped ? "STOPPED" : "COMPLETE";
-    notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+    AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
         .segmentStartTimestampMs(segmentStartTimeMs)
         .cumulativeDistanceM(segmentCumulativeM)
-        .driveStatusEnd(endStatus)
-        .build());
+        .driveStatusEnd(endStatus);
+    Double bat = getBatteryLevelForStats();
+    if (bat != null) b.batteryPct(bat);
+    notifyStatisticsSubscribers(b.build());
 //    log.info("[goToArbitrary] Arrived at x: " + positionX + ", y: " + positionY + ", theta: " + goalTheta);
     return new ConditionJustification(true);
   }

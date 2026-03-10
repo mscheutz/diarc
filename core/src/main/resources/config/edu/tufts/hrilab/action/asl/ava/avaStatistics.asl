@@ -29,7 +29,6 @@ import java.lang.Boolean;
     java.lang.String !endDateStr;
     Long !startMs;
     Long !endMs;
-    Double !value;
     Predicate !reportPred;
     java.util.List !responseFormList;
     Predicate !responseForm;
@@ -42,11 +41,28 @@ import java.lang.Boolean;
     !numStats = op:invokeMethod(!statIds,"size");
     act:generateResponseFromString("The tracked statistics are");
     !displayNum = op:newObject("java.lang.Integer", "0");
-    for (!idx = 0; !idx lt !numStats; !idx ++) {
-        !displayNum = op:++(!displayNum);
-        !statId = op:get(!statIds,!idx);
-        !displayName = tsc:getStatisticDisplayName(!statId);
-        act:generateResponseFromString("Option !displayNum: !displayName");
+    java.util.List !categoryNames;
+    Integer !catIdx;
+    Integer !numCategories;
+    !categoryNames = tsc:getCategoryNamesInOrder();
+    !numCategories = op:invokeMethod(!categoryNames,"size");
+    java.lang.String !categoryName;
+    java.util.List !idsInCategory;
+    Integer !numInCategory;
+    Integer !j;
+    for (!catIdx = 0; !catIdx lt !numCategories; !catIdx ++) {
+        !categoryName = op:get(!categoryNames,!catIdx);
+        !idsInCategory = tsc:getStatisticIdsInCategory(!categoryName);
+        !numInCategory = op:invokeMethod(!idsInCategory,"size");
+        if (op:gt(!numInCategory,0)) {
+            act:generateResponseFromString("!categoryName:");
+            for (!j = 0; !j lt !numInCategory; !j ++) {
+                !displayNum = op:++(!displayNum);
+                !statId = op:get(!idsInCategory,!j);
+                !displayName = tsc:getStatisticDisplayName(!statId);
+                act:generateResponseFromString("Option !displayNum: !displayName");
+            }
+        }
     }
 
     act:suspendWaitForResponse(option(X),?actor,false);
@@ -87,8 +103,11 @@ import java.lang.Boolean;
 
     !startMs = tsc:parseDateToStartMs(!startDateStr);
     !endMs = tsc:parseDateToEndMs(!endDateStr);
-    !value = tsc:queryStatistics(!statId, !startMs, !endMs);
 
-    !reportPred = tsc:createStatisticsReportPredicate(!statId, !startDateStr, !endDateStr, !value);
-    act:generateResponse(!reportPred);
+    !reportPred = tsc:getStatisticsReportPredicate(!statId, !startMs, !endMs, !startDateStr, !endDateStr);
+    if (op:isNull(!reportPred)) {
+        act:generateResponseFromString("There is no data for that statistic in that period.");
+    } else {
+        act:generateResponse(!reportPred);
+    }
 }

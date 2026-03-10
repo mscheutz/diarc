@@ -43,8 +43,8 @@ Example Translation: "half past noon" -> {"Semantics":"absoluteTime(12:30,pm)","
 #
 timingOf(?timingType)
 Description: Specification of the type of timing detail ?timingType. ?timingType takes two possible values, interval or example. interval references the amount of time between occurrences and execution references the time of a specific occurrence
-Example Translation: "when it first happens" -> {"Semantics":"timingOf(execution),"Input Type":"REPLY","Confidence":"10"}
-Example Translation: "the timing" -> {"Semantics":"timingOf(execution),"Input Type":"REPLY","Confidence":"10"}
+Example Translation: "when it first happens" -> {"Semantics":"timingOf(execution)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the timing" -> {"Semantics":"timingOf(execution)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the duration between when it happens" -> {"Semantics":"timingOf(interval)","Input Type":"REPLY","Confidence":"10"}
 #
 abort(question)
@@ -56,12 +56,14 @@ Description: The name of a task to be learned, ?name. This form will generally b
 Example Translation: "it is called task a" -> {"Semantics":"taskName(task a)","Input Type":"REPLY","Confidence":"10"}
 #
 option(?number)
-Description: The specification of an option ?number from a list of options
+Description: The specification of an option ?number from a list of options (e.g. when choosing which statistic to report, or which item from a menu). ?number is an integer.
 Example Translation: "the first one" -> {"Semantics":"option(1)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "14" -> {"Semantics":"option(14)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "option 9" -> {"Semantics":"option(9)","Input Type":"REPLY","Confidence":"10"}
 #
 actionType(?type)
 Description: Specification of a type of action, referencing how the system came to know about the action. ?type takes three possible values: taught, predefined, or both. Taught references actions taught by the user, predefined references actions known automatically by the system on startup, and both references all actions.
-Example Translation: "the taught actions" -> {"Semantics":"actionType(taught),"Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the taught actions" -> {"Semantics":"actionType(taught)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the ones you already knew" -> {"Semantics":"actionType(predefined)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "all of them" -> {"Semantics":"actionType(both)","Input Type":"REPLY","Confidence":"10"}
 #

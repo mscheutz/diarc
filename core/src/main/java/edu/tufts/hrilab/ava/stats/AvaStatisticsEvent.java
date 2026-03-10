@@ -4,11 +4,13 @@
 
 package edu.tufts.hrilab.ava.stats;
 
+import edu.tufts.hrilab.fol.Predicate;
+
 import java.io.Serializable;
 
 /**
  * Event DTO for Ava statistics notifications. Script-friendly: one callback signature,
- * filter by kind. Payload uses primitives and String only for TRADE serialization.
+ * filter by kind. Payload uses primitives, String, and FOL (Predicate) for TRADE serialization.
  */
 public class AvaStatisticsEvent implements Serializable {
 
@@ -18,10 +20,11 @@ public class AvaStatisticsEvent implements Serializable {
     DOCKED,
     UNDOCKED,
     STOPPED_MOVING,
-    GOAL_STATUS
+    GOAL_STATUS,
+    MEDIA_PLAYBACK
   }
 
-  /** Goal name used for "urgent go home" (panic dock) identification. */
+  /** Goal name used for urgent go-home / low-battery return-to-dock identification. */
   public static final String URGENT_GO_HOME_GOAL_NAME = "urgentGoHomeAndChargeToPercent";
 
   private final Kind kind;
@@ -38,6 +41,11 @@ public class AvaStatisticsEvent implements Serializable {
   private final Long goalEndMs;
   private final Boolean scheduled;
   private final Boolean urgentGoHome;
+  /** Bound goal predicate (FOL); from GoalInfo.goal when bound. Serialized to CSV via toString(); pass through to reports so RR can resolve refs. */
+  private final Predicate goalPredicate;
+  private final Double batteryPct;
+  private final String mediaType;
+  private final Long durationMs;
 
   private AvaStatisticsEvent(Builder b) {
     this.kind = b.kind;
@@ -53,6 +61,10 @@ public class AvaStatisticsEvent implements Serializable {
     this.goalEndMs = b.goalEndMs;
     this.scheduled = b.scheduled;
     this.urgentGoHome = b.urgentGoHome;
+    this.goalPredicate = b.goalPredicate;
+    this.batteryPct = b.batteryPct;
+    this.mediaType = b.mediaType;
+    this.durationMs = b.durationMs;
   }
 
   public Kind getKind() {
@@ -107,6 +119,22 @@ public class AvaStatisticsEvent implements Serializable {
     return urgentGoHome;
   }
 
+  public Predicate getGoalPredicate() {
+    return goalPredicate;
+  }
+
+  public Double getBatteryPct() {
+    return batteryPct;
+  }
+
+  public String getMediaType() {
+    return mediaType;
+  }
+
+  public Long getDurationMs() {
+    return durationMs;
+  }
+
   public static Builder builder(Kind kind) {
     return new Builder(kind);
   }
@@ -125,6 +153,10 @@ public class AvaStatisticsEvent implements Serializable {
     private Long goalEndMs;
     private Boolean scheduled;
     private Boolean urgentGoHome;
+    private Predicate goalPredicate;
+    private Double batteryPct;
+    private String mediaType;
+    private Long durationMs;
 
     public Builder(Kind kind) {
       this.kind = kind;
@@ -192,6 +224,26 @@ public class AvaStatisticsEvent implements Serializable {
 
     public Builder urgentGoHome(boolean urgentGoHome) {
       this.urgentGoHome = urgentGoHome;
+      return this;
+    }
+
+    public Builder goalPredicate(Predicate goalPredicate) {
+      this.goalPredicate = goalPredicate;
+      return this;
+    }
+
+    public Builder batteryPct(double batteryPct) {
+      this.batteryPct = batteryPct;
+      return this;
+    }
+
+    public Builder mediaType(String mediaType) {
+      this.mediaType = mediaType;
+      return this;
+    }
+
+    public Builder durationMs(long durationMs) {
+      this.durationMs = durationMs;
       return this;
     }
 
