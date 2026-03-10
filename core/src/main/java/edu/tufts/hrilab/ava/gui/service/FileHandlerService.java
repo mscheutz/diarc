@@ -39,6 +39,11 @@ public class FileHandlerService {
 
   private final ConcurrentHashMap<String, ChunkedUploadInfo> activeUploads = new ConcurrentHashMap<>();
 
+  /** For use when not created by Spring (e.g. AvaMediaAdapter); defaults normalize-audio to true. */
+  public FileHandlerService() {
+    this(true);
+  }
+
   public FileHandlerService(@Value("${ava.video.normalize-audio:true}") boolean normalizeVideoAudio) {
     this.normalizeVideoAudio = normalizeVideoAudio;
     TRADEServiceInfo tsi = null;
