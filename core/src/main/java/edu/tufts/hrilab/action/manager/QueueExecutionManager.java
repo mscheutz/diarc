@@ -42,44 +42,6 @@ public class QueueExecutionManager extends ExecutionManager {
     if (g.getStatus() == GoalStatus.PENDING) {
       g.setStatus(GoalStatus.PENDING);
     }
-
-    //TODO: do we want these status notifications? <- should make configurable based on a notion of "system verbosity"
-    //PickAndPlace2024 - Report that the goal is being added to the queue
-    Symbol actor = g.getActor();
-    if (!actor.getName().equals("self") && g.getScheduledState() != 2) {
-      //Currently need to use semantics rather than string for NLG for flexibility between EN/JP
-      //String statusReport = null;
-      Predicate statusReportSemantics = null;
-      List<Predicate> conflictingGoals = getSystemGoalsPredicates(g.getActor(), true);
-      if (!conflictingGoals.isEmpty()) {
-        if (conflictingGoals.get(0).getName().equals("active")) {
-          statusReportSemantics = Factory.createPredicate("addingThatToMyCurrentQueueOfTasks()");
-          //statusReport = "okay, adding to my current queue of tasks";
-        } else if (conflictingGoals.get(0).getName().equals("suspended")) {
-          //Could add currently suspended goal predicate to semantics and corresponding examples to NLG prompt if we want to report what the goal is
-          statusReportSemantics = Factory.createPredicate("myCurrentTaskIsSuspendedAddingThisToMyQueue()");
-          //statusReport = "okay, my current task is suspended. Adding this to my queue";
-        }
-        //if (statusReport != null) {
-        if (statusReportSemantics != null) {
-          Utterance utt = new Utterance.Builder()
-                  .setSpeaker(g.getActor())
-                  .setAddressee(g.getSubmitter())
-                  .setUtteranceType(UtteranceType.REPLY)
-                  .setIsInputUtterance(false)
-                  //.setWords(List.of(statusReport.split(" ")))
-                  .setSemantics(statusReportSemantics)
-                  .build();
-          try {
-            utt = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToText").argTypes(Utterance.class)).call(Utterance.class, utt);
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("updateDialogueHistory").argTypes(Utterance.class)).call(void.class, utt);
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(Utterance.class)).call(void.class, utt);
-          } catch (TRADEException e) {
-            log.error("[handleConflictingLowerPriorityGoal]", e);
-          }
-        }
-      }
-    }
   }
 
   //TODO: extend definition of resources past just whole agents/teams

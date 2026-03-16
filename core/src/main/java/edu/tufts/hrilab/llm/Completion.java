@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
 import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
 
@@ -26,6 +27,7 @@ public class Completion {
   public String type;
   public int inputTokens;
   public int outputTokens;
+  public List<ToolCall> toolCalls = new ArrayList<>();
 
   public Completion (OpenaiCompletionResponse response) {
     text = response.choices[0].text;
@@ -39,10 +41,19 @@ public class Completion {
   }
 
   public Completion (OpenaiChatCompletionResponse response) {
-    if (response.choices.length>0) {
+    if (response.choices != null && response.choices.length>0) {
       text = response.choices[0].message.content;
+      if (text == null) {
+        text = "";
+      }
+      if (response.choices[0].message.tool_calls != null) {
+        toolCalls = List.of(response.choices[0].message.tool_calls);
+      } else {
+        toolCalls = new ArrayList<>();
+      }
     } else {
-      text = "none";
+      text = "";
+      toolCalls = new ArrayList<>();
     }
     id = response.id;
     created = response.created;

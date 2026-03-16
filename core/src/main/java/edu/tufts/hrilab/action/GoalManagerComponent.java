@@ -803,10 +803,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getCurrentGoals(Symbol actor) {
+  public List<Predicate> getCurrentGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getCurrentGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getPredicate());
       }
     }
@@ -866,10 +866,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getActiveGoals(Symbol actor) {
+  public List<Predicate> getActiveGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getPredicate());
       }
     }
@@ -894,14 +894,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing.
    *
-   * @param actor the actor to filter the scheduled goals list by
+   * @param agentTeam the actor to filter the scheduled goals list by
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getScheduledGoals(Symbol actor) {
+  public List<Predicate> getScheduledGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getPredicate());
       }
     }
@@ -925,14 +925,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently.
    *
-   * @param actor the actor to filter the scheduled goals list by
+   * @param agentTeam the actor to filter the scheduled goals list by
    * @return a list of scheduled goals' ids
    */
   @TRADEService
-  public List<Long> getScheduledGoalIds(Symbol actor) {
+  public List<Long> getScheduledGoalIds(Symbol agentTeam) {
     List<Long> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getId());
       }
     }
@@ -1010,8 +1010,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
-  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
-    return em.getSystemGoalsPredicates(actor,true);
+  public List<Predicate> getSystemGoalsPredicates(Symbol agentTeam) {
+    return em.getSystemGoalsPredicates(agentTeam,true);
   }
 
   /**
@@ -1042,6 +1042,16 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.getPendingGoalsPredicates();
   }
 
+
+  /**
+   * Get a list of predicates of all pending goals for the supplied agentTeam and all members
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getPendingGoals(Symbol agentTeam) {
+    return em.getPendingGoalsPredicates(agentTeam);
+  }
+
   /**
    * Get the predicate of the pending goal currently with the highest priority
    */
@@ -1059,6 +1069,25 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public Predicate getNextGoal(Symbol agent) {
     return em.getNextGoalPredicate(agent);
   }
+
+  /**
+   * Get the gid of the pending goal currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public long getNextGoalId() {
+    return em.getNextGoalId();
+  }
+
+  /**
+   * Get the gid of the pending goal for a specific agentTeam currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public long getNextGoalId(Symbol agent) {
+    return em.getNextGoalId(agent);
+  }
+
 
   /**
    * Get the goal ID for a goal predicate. Checks current and
@@ -1089,6 +1118,18 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Long> getGoalIds(Predicate goal) {
     List<Goal> goals = em.getAllGoals(goal);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
+  }
+
+  /**
+   * Get the GoalInfo for all goals matching the supplied predicate. Checks all goal collections.
+   *
+   * @param goal
+   * @return
+   */
+  @TRADEService
+  public List<GoalInfo> getGoalInfos(Predicate goal) {
+    List<Goal> goals = em.getAllGoals(goal);
+    return goals.stream().map(Goal::getInfo).collect(Collectors.toList());
   }
 
   /**

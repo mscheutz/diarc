@@ -1,10 +1,12 @@
 package edu.tufts.hrilab.llm.hf.response;
 
+import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionChoice;
+
 import java.util.List;
 import java.util.Map;
 
-public class LlamaHFChatCompletionResponseV2 {
-  public List<LlamaHFChatCompletionResponseChoice> choices;
+public class HFOpenaiCompatibleChatCompletionResponse {
+  public List<OpenaiChatCompletionChoice> choices;
   public float created;
   public String id;
   public String model;

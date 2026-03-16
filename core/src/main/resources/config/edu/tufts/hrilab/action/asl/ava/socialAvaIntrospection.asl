@@ -1,0 +1,484 @@
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Variable;
+import java.lang.Boolean;
+import java.lang.Integer;
+import java.lang.String;
+import java.util.List;
+import java.util.Map;
+import edu.tufts.hrilab.action.goal.Goal;
+
+(String ?output) = generateOutputStringFromSemantics(Predicate ?semantics) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    java.lang.Boolean !false = false;
+
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setSemantics", ?semantics);
+    //!utterance = act:applyPragmaticMeaning(!utterance);
+    //!utterance = act:convertSemanticsToText(!utterance);
+    op:log("info","!utterance !false");
+    !utterance = tsc:convertSemanticsToTextLLMService(!utterance, !false);
+
+    ?output = op:invokeMethod(!utterance,"getWordsAsString");
+}
+
+(String ?output) = generateBatteryLevelString() {
+    double !batteryLevel; //percentage
+    Predicate !responsePredicate;
+
+    !batteryLevel = act:getBatteryLevel();
+    !responsePredicate = op:createPredicate("batteryLevel(!batteryLevel)");
+    ?output = act:generateOutputStringFromSemantics(!responsePredicate);
+}
+
+(String ?output) = generateCurrentLocationString() {
+    Symbol !currentLocation;
+
+    !currentLocation = act:getCurrentLocation();
+    ?output = act:generateOutputStringFromSemantics(at(?actor, !currentLocation));
+}
+
+(String ?output) = generateAllKnownLocationsString() {
+    List !locationNames;
+    java.lang.String !locationName;
+    java.lang.String !locationNameStr = "";
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !locationNames = tsc:getMapLocationNames();
+    if (op:isEmpty(!locationNames)) {
+        ?output = op:newObject("java.lang.String","There are no saved locations");
+    } else {
+        op:invokeMethod(!sb,"append","I know the following locations: ");
+        foreach(!locationName : !locationNames) {
+            op:invokeMethod(!sb,"append",!sep);
+            // Explicitly convert to String to avoid numeric-looking names being coerced to integers
+            !locationNameStr = op:invokeMethod(!locationName, "toString");
+            op:invokeMethod(!sb,"append",!locationNameStr);
+            !sep = op:newObject("java.lang.String",", ");
+            //act:generateResponseFromString(!locationNameStr);
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+}
+
+(String ?output) = generateAllKnownPatrolPathsString() {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Symbol !path;
+    Symbol !pathName = "";
+    Map !elem;
+    List !bindings;
+    java.lang.String !locationNameStr = "";
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(X,Y)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        op:invokeMethod(!sb,"append","I know the following patrol paths: ");
+        foreach(!elem : !bindings) {
+            op:invokeMethod(!sb,"append",!sep);
+            !path = op:get(!elem,!x);
+            !pathName = op:invokeMethod(!path,"getName");
+            op:invokeMethod(!sb,"append",!pathName);
+            !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    } else {
+        ?output = op:newObject("java.lang.String","There are no saved patrol paths");
+    }
+}
+
+(String ?output) = generateAllLocationsOnPatrolPathString(Symbol ?pathName) {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Map !elem;
+    List !bindings;
+    Predicate !locationsPredicate;
+    Predicate !generateResponsePredicate;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?pathName,X)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+     !elem = op:get(!bindings, 0);
+     !locationsPredicate = op:get(!elem,!x);
+     !generateResponsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "patrolPath(?pathName,contains(!locationsPredicate))");
+     ?output = act:generateOutputStringFromSemantics(!generateResponsePredicate);
+    } else {
+     ?output = op:newObject("java.lang.String","I don't have a patrol path saved under the name ?pathName");
+    }
+}
+(String ?output) = generateTaughtActionsString() {
+    List !taughtActions;
+    Predicate !actionPred;
+    Integer !numTaught;
+    Predicate !reportedPred;
+    String !actionName = "";
+    String !numToReportString;
+    Integer !numToReport;
+    Integer !numReported = 0;
+    Map !bindings;
+    Variable !x = "X";
+    Symbol !confirmation;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !taughtActions = tsc:getLearnedActionPredicates();
+    if (op:isEmpty(!taughtActions)) {
+        ?output = op:newObject("java.lang.String","I have not been taught any new actions");
+    } else {
+        !numTaught = op:invokeMethod(!taughtActions,"size");
+        op:invokeMethod(!sb,"append","I have been taught !numTaught new actions. They are named: ");
+        foreach (!actionPred : !taughtActions) {
+            op:invokeMethod(!sb,"append",!sep);
+            !actionName = op:getName(!actionPred);
+            op:invokeMethod(!sb,"append",!actionName);
+            !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+}
+
+(String ?output) = generatePredefinedActionsString() {
+    List !instructableActions;
+    Integer !numPredefined;
+    String !actionName = "";
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !instructableActions = tsc:getInstructableActions();
+    if (op:isEmpty(!instructableActions)) {
+        ?output = op:newObject("java.lang.String","I could not retrieve my predefined action list");
+    } else {
+        !numPredefined = op:invokeMethod(!instructableActions,"size");
+        op:invokeMethod(!sb,"append","I have !numPredefined predefined actions. They are: ");
+        foreach (!actionName : !instructableActions) {
+           op:invokeMethod(!sb,"append",!sep);
+           op:invokeMethod(!sb,"append",!actionName);
+           !sep = op:newObject("java.lang.String",", ");
+       }
+       ?output = op:invokeMethod(!sb,"toString");
+   }
+}
+
+//Wrapper to adhere to queueEM
+(String ?output) = generateActionStepsString(Predicate ?action) {
+    Goal !goal;
+    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
+    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
+    Predicate !actionDescription;
+    edu.tufts.hrilab.action.ActionConstraints !ac;
+    edu.tufts.hrilab.action.state.StateMachine !sm;
+    java.util.List !eventSpecs;
+    Predicate !stepPredicate;
+    java.util.List !actDescArgs;
+    Predicate !failCond;
+    Predicate !desc;
+    Boolean !isTaughtAction;
+
+    !isTaughtAction = tsc:isLearnedAction(?action);
+
+    if (op:equals(!isTaughtAction,true)) {
+        // get StateMachine for use in action selection
+        !sm = tsc:getStateMachine();
+
+        // pick action, and get event specs from selected action
+        !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", ?action);
+        !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
+        !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
+        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+
+        // do null check for action
+        if (op:isNull(!parameterizedAction)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,how(?action)))");
+            ?output = act:generateOutputStringFromSemantics(!failCond);
+            return;
+        }
+
+        // construct final predicate to assert to belief
+        !actDescArgs = op:newObject("java.util.ArrayList");
+        !oldDescArgs = op:newObject("java.util.ArrayList");
+
+        // build and assert final predicate to belief
+        !stepPredicate = op:invokeMethod(!parameterizedAction, "getStepsInPredicateForm");
+        op:invokeMethod(!actDescArgs, "add", ?action);
+        op:invokeMethod(!actDescArgs, "add", !stepPredicate);
+        !actionDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
+        !desc = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
+        ?output = act:generateOutputStringFromSemantics(!desc);
+    } else {
+        ?output = op:newObject("java.lang.String","As of right now, I can only describe the actions which have been taught to me by a user. For predefined actions, please refer to my user guide");
+    }
+}
+
+//Wrapper to adhere to queueEM
+(String ?output) = generateIfCanPerformString(Predicate ?actionPredicate) {
+    String !actionName;
+    Boolean !hasArgs;
+    Boolean !canPerform = false;
+
+    op:log("info","[reportIfCanPerform] ?actionPredicate");
+    //Workaround for inconsistent LLM semantics when specifying a general action name rather than signature
+    !hasArgs = op:invokeMethod(?actionPredicate,"hasArgs");
+    if (op:equals(!hasArgs,true)) {
+        op:log("info","[reportIfCanPerform] predicate has args");
+        if (tsc:actionExists(?actionPredicate)) {
+            op:log("info","[reportIfCanPerform] action found to exist");
+            !canPerform = op:newObject("java.lang.Boolean", true);
+        }
+    } else {
+        !actionName = op:getName(?actionPredicate);
+        op:log("info","[reportIfCanPerform] predicate has no args");
+        if (tsc:actionExists(!actionName)) {
+            op:log("info","[reportIfCanPerform] action found to exist");
+            !canPerform = op:newObject("java.lang.Boolean", true);
+        }
+    }
+
+    if (op:equals(!canPerform,true)) {
+      //act:generateResponseFromString("Yes");
+      ?output = act:generateOutputStringFromSemantics(knowHow(?actionPredicate));
+    } else {
+      //act:generateResponseFromString("No");
+      ?output = act:generateOutputStringFromSemantics(not(knowHow(?actionPredicate)));
+    }
+}
+
+(String ?output) = generateKioskSettingsString() {
+    Predicate !kioskGoalPredicate;
+    Boolean !enabled;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+
+    !enabled = tsc:getKioskModeEnabled();
+    if (op:equals(!enabled,true)) {
+        op:invokeMethod(!sb,"append","Kiosk mode is currently enabled.");
+    } else {
+        op:invokeMethod(!sb,"append","Kiosk mode is currently disabled.");
+    }
+
+    !kioskGoalPredicate = tsc:getWrappedKioskGoalPredicate();
+    ?output = act:generateOutputStringFromSemantics(!kioskGoalPredicate);
+    op:invokeMethod(!sb,"append",?output);
+    ?output = op:invokeMethod(!sb,"toString");
+}
+
+(String ?output) = generateSavedVideosString() {
+    List !videoNames;
+    Integer !numVideos;
+    String !videoName = "";
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !videoNames = tsc:getVideoNames(false);
+
+    if (op:isEmpty(!videoNames)) {
+        ?output = op:newObject("java.lang.String","I currently have no saved videos");
+    } else {
+        !numVideos = op:invokeMethod(!videoNames,"size");
+        op:invokeMethod(!sb,"append","I have !numVideos saved videos. They are called: ");
+        foreach (!videoName : !videoNames) {
+           op:invokeMethod(!sb,"append",!sep);
+           op:invokeMethod(!sb,"append",!videoName);
+           !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+}
+
+(String ?output) = generateVideoVolumeString() {
+    Integer !volume;
+
+    !volume = tsc:getVideoVolume();
+     ?output = op:newObject("java.lang.String","video volume is currently set to !volume percent");
+}
+
+(String ?output) = generateIsVideoSavedString(Symbol ?videoName) {
+    Boolean !match;
+    String !name;
+
+    !name = op:getName(?videoName);
+    !match = tsc:isVideoSaved(!name);
+    if (op:equalsValue(!match,true)) {
+        ?output = op:newObject("java.lang.String","Yes, I have a video saved under the name !name");
+    } else {
+        ?output = op:newObject("java.lang.String","I do not have a video saved under the name !name");
+    }
+}
+
+(String ?output) = generateSavedImagesString() {
+    List !imageNames;
+    Integer !numImages;
+    String !imageName = "";
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !imageNames = tsc:getImageNames(false);
+
+    if (op:isEmpty(!imageNames)) {
+        ?output = op:newObject("java.lang.String","I currently have no saved images");
+    } else {
+        !numImages = op:invokeMethod(!imageNames,"size");
+        op:invokeMethod(!sb,"append","I have !numImages saved images. They are called: ");
+        foreach (!imageName : !imageNames) {
+           op:invokeMethod(!sb,"append",!sep);
+           op:invokeMethod(!sb,"append",!imageName);
+           !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+}
+
+//Is there really no good way to call an action for result from a String/Predicate?
+//() = itkToolWrapper(Predicate ?semantics) {
+//  String !output;
+//  Symbol !user = this:getOriginalSubmitter();
+//  !output = act:?semantics;
+//  tsc:addToolResponse(!user, ?actor,!output);
+//}
+//
+//() = itkResponseWrapper(Predicate ?semantics) {
+//  String !output;
+//  !output = act:?semantics;
+//  act:generateResponseFromString(!output);
+//}
+
+() = getBatteryLevelString() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateBatteryLevelString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getCurrentLocationString() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateCurrentLocationString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getAllKnownLocations() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateAllKnownLocationsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getAllKnownPatrolPaths() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateAllKnownPatrolPathsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getAllLocationsOnPatrolPath(Symbol ?pathName) {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateAllLocationsOnPatrolPathString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getTaughtActions() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateTaughtActionsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getPredefinedActions() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generatePredefinedActionsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getActionSteps(Predicate ?action) {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateActionStepsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getIfCanPerform(Predicate ?actionPredicate) {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateIfCanPerformString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getKioskSettings() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateKioskSettingsString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getSavedVideos() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateSavedVideosString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getVideoVolume() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateVideoVolumeString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getIsVideoSaved(Symbol ?videoName) {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateIsVideoSavedString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getSavedImages() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateSavedImagesString();
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+() = getCurrentPendingScheduledGoalInformation(java.lang.Boolean ?offContextState) {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = tsc:getFullGoalsSummary(?actor,?offContextState);
+    !output = tsc:addToolResponse(!user,?actor,!output);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}

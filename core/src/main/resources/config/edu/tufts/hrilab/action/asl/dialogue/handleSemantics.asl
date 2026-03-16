@@ -231,6 +231,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
 () = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
     Predicate !defaultResponse;
+    Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
@@ -241,8 +242,10 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     if (op:equals(?addressee, ?actor)) {
 
       try {
-        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType, ?priorityTier);
+        //TODO: Empirically tune ack semantics
+        !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
+        act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType, ?priorityTier);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
         !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
         !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -271,6 +274,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
 () = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType) {
     Predicate !defaultResponse;
+    Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
@@ -284,8 +288,10 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     }
 
     try {
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-      act:achieveState(?speaker, ?recovery, !defaultResponse, !defaultResponse, indirect);
+      //TODO: Empirically tune ack semantics
+      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
+      act:achieveState(?speaker, ?recovery, !defaultTentativeResponse, !defaultResponse, indirect);
     } catch(FAIL_PRECONDITONS, !failureConditions) {
       op:log("debug", "catching recovery before the new state is handled");
       !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
@@ -303,8 +309,10 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     }
 
     try {
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-      act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType);
+      //TODO: Empirically tune ack semantics
+      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
+      act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType);
     } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
       !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
       !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -320,6 +328,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
 }
 
+//TODO: update default response semantics to something along the lines of ack(okay,believeFact(?actor,?fact)) for an LLM to target
 () = believeFact["believe that ?fact is true from agent ?speaker"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol ?semanticType, Predicate ?responseSemantics = ack(okay)) {
     conditions : {
       pre : trust(?addressee,?speaker);
@@ -362,6 +371,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     }
 }
 
+//TODO: update default response semantics to something along the lines of ack(okay,believeRule(?actor,?head,?body)) for an LLM to target
 () = believeRule["believe that ?rule is true from agent ?speaker"](Symbol ?speaker, Predicate ?head, Predicate ?body, Symbol ?semanticType, Predicate ?responseSemantics = ack(okay)) {
     conditions : {
       pre : trust(?actor,?speaker);
@@ -380,7 +390,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     } else {
       op:invokeMethod(!bodySet, "add", ?body);
     }
-    act:assertSimpleRule(!head, !bodySet);
+    act:assertSimpleRule(?head, !bodySet);
     act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
 }
 
@@ -452,6 +462,37 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 //      act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
 //      !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
 //    }
+
+    //TODO: Do we need to make this explicitly a queueEM only change?
+    // Report to the user that the goal is waiting as PENDING until unblocked by relevant resources being freed
+    java.util.List !currentGoals;
+    Predicate !goalPred;
+    java.lang.String !currentStatus;
+    java.lang.Boolean !currentGoalActive = true;
+    Predicate !goalSubmittedPred;
+    if (op:equalsValue(!goalStatus,"PENDING")) {
+        !currentGoals = act:getSystemGoalsPredicates(?actor);
+
+        // Do we want distinction of reporting when placing behind a suspended goal vs an active goal?
+        //  ^Eventually this logic will need to be extended to explicitly find the goal(s) occupying the required resources
+        if (op:isEmpty(!currentGoals)) {
+            op:log("warn", "Submitted goal for ?state is still PENDING, but no active goal found");
+        } else {
+            foreach (!goalPred : !currentGoals) {
+                !currentStatus = op:getName(!goalPred);
+                if (op:equals("suspended",!currentStatus)) {
+                    !currentGoalActive = op:newObject("java.lang.Boolean", false);
+                }
+            }
+            //TODO: experiment with phrasing of these preds / format for LLM NLG in a smarter way relating to current conflicting task(s)
+            if (op:equals(!currentGoalActive,true)) {
+                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iAmCurrentlyBusyIWillAddThatTaskToMyQueue()");
+            } else {
+                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "myCurrentTaskIsSuspendedIWillAddThisToMyQueue()");
+            }
+            act:generateResponse(?speaker,!goalSubmittedPred);
+        }
+    }
 
     op:log("debug", "waiting to get into state: ?state goalId: !goalID");
     !goalStatus = act:joinOnGoal(!goalID);

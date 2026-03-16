@@ -1459,6 +1459,18 @@ public class ExecutionManager implements GoalListener {
     } else if (g.getStatus().isTerminated()) {
       log.warn("[suspendGoal] attempting to suspend an already terminated goal");
       return false;
+    } else if (g.getStatus().equals(GoalStatus.SUSPENDED)) {
+      // EW: Should this explicitly live in a separate method?
+      // Functionality required for social LLM "OffContext" dialogue goal interactions - set a currently superseded
+      //  pending goal to stay suspended when returning to the current collection
+      PendingGoal pg = getPendingGoal(gid);
+      if (pg != null) {
+        if (pg.getPreviousAIFuture() != null) {
+          pg.setPreviousStatus(GoalStatus.SUSPENDED);
+          return true;
+        }
+      }
+      return suspendActiveGoal(g);
     } else {
       log.debug("[suspendGoal] suspending active goal {}", g);
       return suspendActiveGoal(g);
@@ -1846,6 +1858,33 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Get a list of the corresponding predicate representations of all goals currently found in the pending collection
+   * for a specific AgentTeam.
+   */
+  public List<Predicate> getPendingGoalsPredicates(Symbol agentTeamSym) {
+    log.trace("[getPendingGoalsPredicates] in method with actor {}", agentTeamSym);
+
+    AgentTeam agentTeam = getAgentTeam(agentTeamSym);
+    if (agentTeam == null) {
+      return new ArrayList<>();
+    }
+
+    List<Predicate> goalPreds = new ArrayList<>();
+    synchronized (pendingGoalsLock) {
+      log.trace("[getPendingGoalsPredicates] have pendingGoalsLock");
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pendingGoal = pendingGoalIterator.next();
+        if (agentTeam.getName().getName().equals(pendingGoal.getGoal().getActor().getName()) || agentTeam.getMember(pendingGoal.getGoal().getActor()) != null) {
+          goalPreds.add(pendingGoal.getGoal().getPredicate());
+        }
+      }
+    }
+    log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
+    return goalPreds;
+  }
+
+  /**
    * Get a list of the corresponding predicate representations of all goals currently found in the active collection.
    * If wrap == true -> result is wrapped in a predicate with the goal's status as its name
    */
@@ -1923,6 +1962,46 @@ public class ExecutionManager implements GoalListener {
     }
     log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
     return Factory.createPredicate("none()");
+  }
+
+  /**
+   * Get the gid corresponding to the goal with the highest priority found in the pending collection
+   */
+  public long getNextGoalId() {
+    log.trace("[getNextGoalPredicate] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] have pendingGoalsLock");
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      if (pendingGoalIterator.hasNext()) {
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
+        return pendingGoalIterator.next().getGoal().getId();
+      } else {
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
+        return -1;
+      }
+    }
+  }
+
+  /**
+   * Get the gid corresponding to the goal with the highest priority for the supplied agent found in the
+   * pending collection
+   */
+  public long getNextGoalId(Symbol agent) {
+    log.trace("[getNextGoalPredicate] {}", agent);
+    agent = agent.toUntyped();
+    synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] {} have pendingGoalsLock", agent);
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pg = pendingGoalIterator.next();
+        if (agent.equals(pg.getGoal().getActor().toUntyped())) {
+          log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
+          return pg.getGoal().getId();
+        }
+      }
+    }
+    log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
+    return -1;
   }
 
   /**
@@ -2033,6 +2112,16 @@ public class ExecutionManager implements GoalListener {
    */
   public List<ScheduledGoal> getScheduledGoals() {
     return scheduledGoalManager.getScheduledGoals();
+  }
+
+  /**
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing for the
+   *  supplied agentTeam
+   *
+   * @return shallow copy of scheduled goals
+   */
+  public List<ScheduledGoal> getScheduledGoals(Symbol agentTeam) {
+    return scheduledGoalManager.getScheduledGoals(agentTeam);
   }
 
   /**
@@ -2528,6 +2617,11 @@ public class ExecutionManager implements GoalListener {
       }
     }
     return new ArrayList<>();
+  }
+
+  @TRADEService
+  public List<ActionDBEntry> getLearnedActions() {
+    return loadLearnedActions(false);
   }
 
   @TRADEService

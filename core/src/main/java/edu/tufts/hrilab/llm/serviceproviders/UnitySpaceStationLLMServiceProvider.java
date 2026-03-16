@@ -84,25 +84,24 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     }
 
     @Override
-    protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
+    public Utterance convertSemanticsToTextLLMService(Utterance utterance) {
         //TODO: when looking back at lab branch, set this up correctly if exists (assuming stylizeUnitySpeak is filling in for this some way)
         log.warn("NLG for UnitySpaceStation not set up through LLMServiceProvider");
         return null;
     }
 
     @Override
-    protected Chat generateNLUChat(Utterance utterance, Chat currentChat, List<Utterance> conversationHistory) {
-        if (currentChat == null) {
-            currentChat = new Chat(nluPrompt);
-        }
-        currentChat.addUserMessage(utterance.getWordsAsString());
-
-        Chat chat = new Chat(nluPrompt);
-        return chat;
+    public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
+        return false;
     }
 
     @Override
-    protected Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
+    public Utterance parseUtteranceLLMService(Utterance utterance) {
+        Chat chat = new Chat(nluPrompt);
+        chat.addUserMessage(utterance.getWordsAsString());
+
+        Completion llmResponse = callChatEndpoint(chat);
+
         String jsonString = llmResponse.toString();
         LlamaSpaceStationResponse lssRes = null;
         if (!jsonString.contains("}")) {
@@ -131,7 +130,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
             log.info("Got response: " + response.toString());
         }
 
-        Utterance.Builder output = new Utterance.Builder(incomingUtterance);
+        Utterance.Builder output = new Utterance.Builder(utterance);
         output.setUtteranceType(UtteranceType.valueOf(response.intention.intent.toUpperCase()));
 
         // collect referent info by variable name
@@ -151,8 +150,8 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
                 args.add(addressee);
                 output.setAddressee(addressee);
             } else {
-                args.add(incomingUtterance.getAddressee());
-                output.setAddressee(incomingUtterance.getAddressee());
+                args.add(utterance.getAddressee());
+                output.setAddressee(utterance.getAddressee());
             }
             Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
             semantics = Factory.createPredicate(prop.text, args);
@@ -172,11 +171,6 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
         //    variables.forEach(var -> output.addTierAssignment(var, Factory.createSymbol(referentMap.get(var.getName()).cognitive_status.toUpperCase())));
 
         return output.build();
-    }
-
-    @Override
-    protected Utterance parseNLGCompletionResponse(Utterance outgoingUtterance, Completion llmResponse) {
-        return null;
     }
 
     private String getAgent () {

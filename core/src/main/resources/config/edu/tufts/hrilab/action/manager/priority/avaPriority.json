@@ -190,5 +190,61 @@
   "playAudioFile": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "generateResponseFromString": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getAllKnownLocations":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getBatteryLevelString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentLocationString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getTaughtActions":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getIfCanPerform":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPredefinedActions":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getActionSteps":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getKioskSettings":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getVideoVolume":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getIsVideoSaved":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getSavedVideos":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getSavedImages":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentPendingScheduledGoalInformation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

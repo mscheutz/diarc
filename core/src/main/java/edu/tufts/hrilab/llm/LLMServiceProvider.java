@@ -6,107 +6,79 @@ package edu.tufts.hrilab.llm;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.goal.GoalInfo;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.common.UtteranceType;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+//3/12:
+// Base abstract class providing services required by the LLMParserComponent and LLMNLGComponent. Contains utilities for
+//  tracking LLM Chats and other system information which may commonly be included in prompting requests.
+// Two abstract methods must be implemented:
+//      parseUtteranceLLMService: called directly by parseUtterance - goal is to populate the supplied input utterance's semantics, bindings, etc.
+//      convertSemanticsToTextLLMService: called directly by convertSemanticsToText - goal is to return an output Utterance with populated words list based on input Utterance's semantics
+// Subclass Tree Summary:
+//  - BasicLLMServiceProvider: Another abstract class one level up providing a focused API for one-shot parsing and NLG. Extend this class if
+//                             you will not have any extended interactions between the user and LLM; a new Chat with fresh context is created each parse or generation attempt
+//      -- TRLLMServiceProvider: Even more focused abstract subclass of BasicLLMServiceProvider containing general pre/post-processing utilities
+//                               specific to a certain prompt format which has already been applied to multiple different domains.
+//          --- (4 separate domain/demo specific concrete subclasses of TRLLMServiceProvider currently exist)
+//
+ //     -- (1 BasicLLMServiceProvider, non-TRLLMServicerProvider currently exists)
+//  - SocialLLMServiceProvider: (In progress) Initial implementation of LLMServiceProvider to provide a new framework
+//                              for user language interactions with the architecture using an LLM. The goal is to allow
+//                              the LLM to target any of the following:
+//                                   1. Extended free-form dialogue interactions with the user - whether social or towards the NLU task
+//                                   2. INSTRUCT and ITK semantics using LLM "tool"/"function" definitions
+//                                   3. REPLY semantics using parallel prompting only when a question has been asked
+//                                   4. Private back-door interactions with the architecture to supply additional information or guidance
 public abstract class LLMServiceProvider extends DiarcComponent {
-    boolean parserTest = false;
-    protected String language = "English";
 
-    //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
-    Map<Pair<Symbol,Symbol>,Chat> currentChats = new HashMap<>();
+    //////////////// Abstract Methods Start ////////////////
 
-    //TODO: Check if direct address interacts with this appropriately
-    //REVISIT: How much do we want to constrain supplied histories? Correct answer might be specific to the domain...
-    //      e.g. do this (split by external user and agentTeam) vs only split by external speaker vs complete dialogue history
-    //Set of existing 'conversations' between sets of users and system agents
-    Map<Symbol,Set<Integer>> conversationMappings = new HashMap<>();
-    Map<Integer,List<Utterance>> currentConversations = new HashMap<>();
-    AtomicInteger counter = new AtomicInteger();
+    @TRADEService
+    public abstract Utterance parseUtteranceLLMService(Utterance utterance);
 
-    private Map<Symbol,Set<Symbol>> agentHierarchy;
+    @TRADEService
+    public abstract Utterance convertSemanticsToTextLLMService(Utterance u);
 
+    @TRADEService
+    public abstract boolean inExtendedInteraction(Symbol user, Symbol agentTeam);
+
+    //////////////// Abstract Methods End ////////////////
+
+    // System agentTeam hierarchy - relevant for understanding what agents are part of what conversations
+    protected Map<Symbol,Set<Symbol>> agentHierarchy;
     private boolean addedAgents = false;
+
+    //// General information which may be relevant for prompting - off by default ////
+    //Independent dialogue history tracking - in case intending to supply external/out of Chat context dialogue to the prompt
+    protected boolean trackDialogueHistory = false;
+    protected Map<Symbol, Set<Integer>> conversationMappings = new HashMap<>();
+    protected Map<Integer, List<Utterance>> currentConversations = new HashMap<>();
+    protected AtomicInteger counter = new AtomicInteger();
     private boolean registeredForDialogueNotifications = false;
 
-    /**
-     * Generate a Chat object to call LLM's chatCompletion service with for the generation task. Practically entails
-     * generating a system and user message for an NLG request of the supplied utterance.
-     * @param utterance outgoing utterance to perform NLG for
-     * @param conversationHistory Relevant dialogue history leading up to this outgoing utterance which may provide context.
-     * @return Fully updated Chat object to pass to an LLM's chatCompletion service for NLG
-     */
-    protected abstract Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory);
-    /**
-     * Generate a Chat object to call LLM's chatCompletion service with for the parsing task. Practically entails
-     * creating a new or updating an existing Chat object to contain the proper system, user, and assistant messages to
-     * come up with a proper parse of the supplied utterance.
-     * @param utterance incoming utterance to be parsed
-     * @param currentChat Chat object containing prior requests and responses between the LLM for this current parse attempt.
-     *                    Null if this is the first interaction.
-     * @param conversationHistory Relevant dialogue history leading up to this incoming utterance which may provide context.
-     * @return Fully updated Chat object to pass to an LLM's chatCompletion service for parsing
-     */
-    protected abstract Chat generateNLUChat(Utterance utterance, Chat currentChat, List<Utterance> conversationHistory);
-
-    /**
-     * Postprocessing of LLM's chatCompletion return value for the NLU task.
-     * @return The fully populated Utterance to return from parseUtterance
-     */
-    protected abstract Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse);
-    /**
-     * Postprocessing of LLM's chatCompletion return value for the NLG task.
-     * @return The fully populated Utterance to return convertSemanticsToText.
-     */
-    protected abstract Utterance parseNLGCompletionResponse(Utterance outgoingUtterance, Completion llmResponse);
-
+    // Track learned actions and generated plans - in case prompt targets need to be updated
+    protected boolean trackLearnedActions = false;
+    protected List<ActionDBEntry> learnedActions = new ArrayList<>();
+    private boolean registeredForNewActions = false;
+    private boolean retrievedLearnedActions = false;
 
     @Override
     protected void init() {
         super.init();
-        if (!parserTest) {
-            shouldRunExecutionLoop = true;
-        }
-    }
-
-    //TODO: 'japanese' shouldn't be at this level?
-    @Override
-    protected List<Option> additionalUsageInfo() {
-        List<Option> options = new ArrayList<>();
-        options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
-        return options;
-    }
-
-    @Override
-    protected void parseArgs (CommandLine cmdLine) {
-        if (cmdLine.hasOption("japanese")) {
-            language = "Japanese";
-        }
+        shouldRunExecutionLoop = true;
     }
 
     @Override
     protected void executionLoop() {
-        if (!registeredForDialogueNotifications) {
-            try {
-                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class, Boolean.class);
-                TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications")).call(void.class, updateHistoryService);
-                registeredForDialogueNotifications = true;
-            } catch (TRADEException e) {
-                log.error("[LLMServiceProvider] exception registering for dialogue notifications, trying again", e);
-            }
-        }
         if (!addedAgents) {
             try {
                 agentHierarchy = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllAgentTeams")).call(Map.class);
@@ -139,85 +111,41 @@ public abstract class LLMServiceProvider extends DiarcComponent {
                 log.debug("[init] error making TRADE call to getAllAgentTeams", e);
             }
         }
-    }
 
-    @TRADEService
-    public Utterance parseUtteranceLLMService(Utterance utterance) {
-        return llmChatCompletionHelper(utterance, true);
-    }
-
-    @TRADEService
-    public Utterance convertSemanticsToTextLLMService(Utterance u) {
-        return llmChatCompletionHelper(u, false);
-    }
-
-    private Utterance llmChatCompletionHelper(Utterance utterance, boolean parsing) {
-        // Get existing chat and dialogue history for the utterance's speaker and listener and call abstract method to
-        //  create the Chat object to pass to the LLM
-        Chat chat;
-        List<Utterance> conversationHistory;
-        Symbol user;
-        Symbol agentTeam;
-        if (parsing) {
-            user = getUntypedSymbol(utterance.getSpeaker());
-            agentTeam = getUntypedSymbol(utterance.getAddressee());
-        } else {
-            user = getUntypedSymbol(utterance.getAddressee());
-            agentTeam = getUntypedSymbol(utterance.getSpeaker());
-        }
-        if (!agentHierarchy.containsKey(agentTeam)) {
-            log.error("[llmChatCompletionHelper] System agent found in incoming utterance not found in agent hierarchy");
-            chat = null;
-            conversationHistory = new ArrayList<>();
-        } else {
-            chat = currentChats.get(Pair.of(user, agentTeam));
-            conversationHistory = getConversationHistory(utterance.getSpeaker(), utterance.getAddressee());
-        }
-
-        if (parsing) {
-            chat = generateNLUChat(utterance, chat, conversationHistory);
-        } else {
-            chat = generateNLGChat(utterance, conversationHistory);
-        }
-
-        String systemMessage = chat.systemMessage;
-        List<Message> userMessages = chat.getMessages();
-        Pattern pattern = Pattern.compile(".*%\\w+\\s*.*", Pattern.DOTALL);
-        Matcher m = pattern.matcher(systemMessage);
-        if (m.matches()) {
-            log.warn("[llmChatCompletionHelper] System message may have an unpopulated prompt variable");
-        }
-        for (Message message : userMessages) {
-            m = pattern.matcher(message.content); {
-                if (m.matches()) {
-                    log.warn("[llmChatCompletionHelper] A user message may have an unpopulated prompt variable");
-                }
+        if (trackDialogueHistory && !registeredForDialogueNotifications) {
+            try {
+                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class, Boolean.class);
+                TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications")).call(void.class, updateHistoryService);
+                registeredForDialogueNotifications = true;
+            } catch (TRADEException e) {
+                log.error("[LLMServiceProvider] exception registering for dialogue notifications, trying again", e);
             }
         }
 
-        // Call LLM to get Completion
+        if (trackLearnedActions && !registeredForNewActions) {
+            registerForNotifications();
+        }
+
+        if (trackLearnedActions && !retrievedLearnedActions) {
+            initLearnedActions();
+        }
+    }
+
+    ////////////////// Chat Object Handling ////////////////
+
+    //TODO: move methods back into here when "social" version has been merged into unified class hierarchy
+
+    protected Completion callChatEndpoint(Chat chat) {
         Completion response = null;
         try {
             response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
         } catch (TRADEException e) {
             log.error("[llmParserService] Error performing chat completion", e);
         }
-
-        if (response == null ||response.getText() == null) {
-            log.warn("[llmChatCompletionHelper] have null response from LLM, returning original utterance");
-            return utterance;
-        }
-
-        //Add LLM's response to the chat //TODO: do we actually generally want this present in the chat in this way?
-        chat.addRobotMessage(response.getText());
-
-        // Call abstract method to transform Completion to Utterance (implementation dependent on prompt)
-        if (parsing) {
-            return parseNLUCompletionResponse(utterance, response);
-        } else {
-            return parseNLGCompletionResponse(utterance, response);
-        }
+        return response;
     }
+
+    //////////////// Dialogue History Tracking ////////////////
 
     @TRADEService
     public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
@@ -281,13 +209,13 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         return sharedChats;
     }
 
-    private List<Utterance> getConversationHistory(Symbol user, Symbol agentTeam) {
+    protected List<Utterance> getConversationHistory(Symbol user, Symbol agentTeam) {
         Set<Symbol> members = getDescendants(agentTeam);
         members.add(user);
         return getConversationHistory(members);
     }
 
-    private List<Utterance> getConversationHistory(Set<Symbol> members) {
+    protected List<Utterance> getConversationHistory(Set<Symbol> members) {
         int chatIndex = getConversationHistoryIndex(members);
 
         if (chatIndex == -1) {
@@ -337,8 +265,8 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         for (Symbol agentTeam : agentTeams) {
             members.addAll(getDescendants(agentTeam));
         }
-        //TODO: not sure we want this, adding default listener of any actorless generateResponse to every conversation
-        members.add(Factory.createSymbol("person"));
+        ////TODO: not sure we want this, adding default listener of any actorless generateResponse to every conversation
+        //members.add(Factory.createSymbol("person"));
         return startLLMConversation(members);
     }
     /**
@@ -404,22 +332,73 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         }
     }
 
-    //TODO: not used right now, only place I see this being currently possible is from some dialogue recovery script
     @TRADEService
     @Action
-    public void startLLMChatContext(Utterance u) {
-        Chat chat = new Chat();
-        chat.addUserMessage(u.getWordsAsString());
-        Symbol speaker = getUntypedSymbol(u.getSpeaker());
-        Symbol addressee = getUntypedSymbol(u.getAddressee());
-        currentChats.put(Pair.of(speaker,addressee),chat);
+    public void clearConversationHistory() {
+        //currentChats = new HashMap<>();
+        conversationMappings = new HashMap<>();
+        currentConversations = new HashMap<>();
+    }
+
+    //////////////// Taught Action Tracking ////////////////
+
+    @TRADEService
+    public void registerForNotifications() {
+        try {
+            TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+            TRADEServiceInfo additionNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, additionNotificationHandler, NotificationType.DATABASE_ADDITION);
+            TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseRemoval").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
+            registeredForNewActions = true;
+            log.info("[registerForNotifications] successfully registered for database additions");
+        } catch (TRADEException e) {
+            log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+        }
+    }
+
+    protected void initLearnedActions() {
+        try {
+            learnedActions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActions")).call(List.class);
+            retrievedLearnedActions = true;
+        } catch (TRADEException e) {
+            log.debug("[initLearnedActions] error getting taught actions from EM on startup");
+        }
     }
 
     @TRADEService
-    @Action
-    public void endLLMChatContext(Pair<Symbol,Symbol> members) {
-        members = Pair.of(getUntypedSymbol(members.getLeft()),getUntypedSymbol(members.getRight()));
-        currentChats.remove(members);
+    public void handleDatabaseAddition(ActionDBEntry entry) throws TRADEException {
+        if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
+            log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
+            learnedActions.add(entry);
+        }
+    }
+
+    @TRADEService
+    public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
+        learnedActions.remove(entry);
+        //TODO: (external) should ideally remove any cache entries relevant to this action
+    }
+
+    //////////////// Taught Action Tracking End ////////////////
+
+    @Override
+    public void shutdownComponent() {
+        super.shutdownComponent();
+        try {
+            if (trackLearnedActions) {
+                TRADEServiceInfo unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+                TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
+                unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+            }
+
+            if (trackDialogueHistory) {
+                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class, Boolean.class);
+                TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterForDialogueHistoryNotifications")).call(void.class, updateHistoryService);
+            }
+        } catch (TRADEException e) {
+            log.error("[shutdownComponent]", e);
+        }
     }
 
     protected Set<Symbol> getDescendants(Symbol agentTeam) {
@@ -442,41 +421,5 @@ public abstract class LLMServiceProvider extends DiarcComponent {
             s = Factory.createSymbol(s.toUntypedString());
         }
         return s;
-    }
-
-    @TRADEService
-    @Action
-    public void clearConversationHistory() {
-        currentChats = new HashMap<>();
-        conversationMappings = new HashMap<>();
-        currentConversations = new HashMap<>();
-    }
-
-    // Testing Code //
-    @Action
-    @TRADEService
-    public void testLLMNLGWithString(String semantics) {
-      Chat chat = new Chat();
-      List<Utterance> conversationHistory = new ArrayList<>();
-      Predicate semanticsPred = Factory.createPredicate(semantics);
-      Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone")).setListener(Factory.createSymbol("pete")).build();
-      chat = generateNLGChat(utterance, conversationHistory);
-
-      // Call LLM to get Completion
-      Completion response;
-      try {
-        response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
-      } catch (TRADEException e) {
-        log.error("[testLLMNLGWithString] Error performing chat completion", e);
-        return;
-      }
-      utterance = parseNLGCompletionResponse(utterance, response);
-      log.info("[testLLMNLGWithString] {}",utterance.getWordsAsString());
-
-      try {
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(Void.class,utterance.getWordsAsString());
-      } catch (TRADEException e) {
-        log.error("[testLLMNLGWithString] Error calling sayText", e);
-      }
     }
 }

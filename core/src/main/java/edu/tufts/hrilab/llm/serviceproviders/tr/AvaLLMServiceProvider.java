@@ -2,42 +2,19 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.llm.serviceproviders;
+package edu.tufts.hrilab.llm.serviceproviders.tr;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.db.ActionDBEntry;
-//import edu.tufts.hrilab.action.goal.GoalInfo;
-//import edu.tufts.hrilab.action.notification.NotificationType;
-import edu.tufts.hrilab.action.goal.GoalInfo;
-import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.fol.*;
-import edu.tufts.hrilab.llm.Chat;
-import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.LLMServiceProvider;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.common.UtteranceType;
-import org.apache.commons.cli.CommandLine;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class AvaLLMServiceProvider extends LLMServiceProvider {
-    Prompt nluSystemPrompt = Prompts.getPrompt("ava/nlu/system");
-    Prompt nluUserPrompt = Prompts.getPrompt("ava/nlu/user");
-    Prompt nlgSystemPrompt = Prompts.getPrompt("ava/nlg/system");
-    Prompt nlgUserPrompt = Prompts.getPrompt("ava/nlg/user");
-    Prompt validationSystemPrompt = Prompts.getPrompt("ava/validation/system");
-    Prompt validationUserPrompt = Prompts.getPrompt("ava/validation/user");
-    private boolean registeredForNewActions = false;
-    private boolean retrievedLearnedActions = false;
-    private String learnedActionsString = "";
-    private List<String> learnedActionNames = new ArrayList<>();
+public class AvaLLMServiceProvider extends TRLLMServiceProvider {
     //TODO: All of this information should potentially be spread out to different parts of the system and gathered here
     //  on startup rather than hardcoded. E.g. descriptions from ActionDBEntries (asl pre-existing and new java annotations),
     //  NL examples from various parsers, selection of exposed actions from config, ... This is a fairly large architectural
@@ -119,96 +96,111 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     protected void init() {
         super.init();
         generateExposedActionList();
+        processMatchingNLUParseLiteralsAsRefs = true;
     }
+
+  @Override
+  protected Prompt getNluSystemPrompt() {
+    return Prompts.getPrompt("ava/nlu/system");
+  }
+
+  @Override
+  protected Prompt getNluUserPrompt() {
+    return Prompts.getPrompt("ava/nlu/user");
+  }
+
+  @Override
+  protected Prompt getNlgSystemPrompt() {
+    return Prompts.getPrompt("ava/nlg/system");
+  }
+
+  @Override
+  protected Prompt getNlgUserPrompt() {
+    return Prompts.getPrompt("ava/nlg/user");
+  }
+
+  @Override
+  protected Prompt getValidationSystemPrompt() {
+    return Prompts.getPrompt("ava/validation/system");
+  }
+
+  @Override
+  protected Prompt getValidationUserPrompt() {
+    return Prompts.getPrompt("ava/validation/user");
+  }
+
+  //TODO: Certain values here should be maintained and updated over time rather than regenerated
+  @Override
+  protected Map<String, String> populatePromptVars(Utterance utterance, Map<String, String> promptVars, boolean system, boolean parsing, boolean validation) {
+    if (parsing) {
+      String questionString = getCurrentQuestionsString(utterance.getAddressee());
+      if (system) {
+        List<String> locations = getLocations("self", true);
+        List<String> patrolPaths = getPatrolPaths();
+        List<String> videos = getVideoNames();
+        List<String> images = getImageNames();
+        String patrolPathList = String.join(":path\n", patrolPaths);
+        if (!patrolPathList.isEmpty()) {
+          patrolPathList += ":path\n";
+        }
+        String locationList = String.join(":location\n", locations);
+        if (!locationList.isEmpty()) {
+          locationList += ":location\n";
+        }
+        String videoList = String.join(":video\n", videos);
+        if (!videoList.isEmpty()) {
+          videoList += ":video\n";
+        }
+        String imageList = String.join(":image\n", images);
+        if (!videoList.isEmpty()) {
+          imageList += ":image\n";
+        }
+        promptVars.put("%actionList", generateLLMActionListString(true));
+        promptVars.put("%patrolPathList", patrolPathList);
+        promptVars.put("%locationList", locationList);
+        promptVars.put("%videoList", videoList);
+        promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
+        promptVars.put("%exampleImage", images.isEmpty() ? "test" : images.get(0));
+        promptVars.put("%imageList", imageList);
+        promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
+        promptVars.put("%goals", getCurrentGoalsSummary(utterance.getAddressee()));
+        promptVars.put("%questionList", questionString);
+        promptVars.put("%learnedActions%",learnedActionsString);
+        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
+        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
+      } else {
+        promptVars.put("%utterance", utterance.getWordsAsString());
+        //TODO: Quick pre testing-deployment hack - do this through contextual parallel prompting or dialogue recovery instead
+        if (questionString.startsWith("What is the name of the task") || questionString.startsWith("What would you like the action to go on this upcoming tour sequence to be called?")) {
+          promptVars.put("%preface","Reminder, the current question from the system is as follows:\n" + questionString + "\nIf the input does not make sense as any other sort of instruction, it is likely directly a form the desired taskName.\n");
+        } else {
+          promptVars.put("%preface", "");
+        }
+      }
+    } else {
+      if (system) {
+        List<String> locations = getLocations("self", true);
+        List<String> patrolPaths = getPatrolPaths();
+        promptVars.put("%language", language);
+        promptVars.put("%actionList", generateLLMActionListString(false));
+        promptVars.put("%learnedActions%",learnedActionsString);
+        promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
+        promptVars.put("%locationList", String.join("\n", locations));
+        promptVars.put("%addressee", utterance.getAddressee().getName());
+      } else {
+        promptVars.put("%utterance", utterance.toString());
+      }
+    }
+    return promptVars;
+  }
+
+  @Override
+  protected List<String> getRefTypes() {
+    return List.of("location");
+  }
 
     @Override
-    protected void executionLoop () {
-        super.executionLoop();
-        if (!registeredForNewActions) {
-            registerForNotifications();
-        }
-        if (!retrievedLearnedActions) {
-            initLearnedActions();
-        }
-    }
-
-    @Override
-    public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
-        try {
-            Utterance.Builder failure = new Utterance.Builder();
-            failure.setSpeaker(incomingUtterance.getSpeaker());
-            failure.setAddressee(incomingUtterance.getAddressee());
-            failure.setSemantics(Factory.createPredicate("error("+incomingUtterance.getAddressee()+",and(report,not(understand(" + incomingUtterance.getAddressee() + ",that)),ask(pleaseTryAgain))"));
-            failure.setWords(incomingUtterance.getWords());
-            Utterance.Builder output = new Utterance.Builder(incomingUtterance);
-            log.info(llmResponse.getText());
-            String responseString = llmResponse.getText();
-
-            Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
-            Matcher m = semanticsPattern.matcher(responseString);
-            if (!m.matches()) {
-                log.error("[AvaLLMServiceProvider] cannot find Semantics or input type result in LLM response");
-                return failure.build();
-            }
-            Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
-
-            Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
-            m = typePattern.matcher(responseString);
-            if (!m.matches()) {
-                log.error("[AvaLLMServiceProvider] cannot find Input Type result in LLM response");
-                return failure.build();
-            }
-            UtteranceType utteranceType;
-            try {
-                utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
-            } catch (IllegalArgumentException e) {
-                log.error("[AvaLLMServiceProvider] generated Input Type {} invalid", m.group(m.groupCount()));
-                return failure.build();
-            }
-
-            Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
-            m = confidencePattern.matcher(responseString);
-            if (!m.matches()) {
-                log.error("[AvaLLMServiceProvider] cannot find Confidence result in LLM response");
-                return failure.build();
-            }
-            String confidenceString = m.group(m.groupCount()).trim();
-            int confidence = Integer.parseInt(confidenceString);
-            if (confidence < 5) {
-                log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
-                //TODO: start conversation and recovery dialogue?
-                //      Cache result so that script can be entered based on utterance/agent/something?
-                return failure.build();
-            }
-
-            output.setUtteranceType(utteranceType);
-
-            Map<Symbol, Variable> varMap = new LinkedHashMap<>();
-            List<Symbol> processedArguments = new ArrayList<>();
-            if (utteranceType == UtteranceType.INSTRUCT) {
-                String actorName = incomingUtterance.getAddressee().getName();
-                processedArguments.add(Factory.createSymbol(actorName));
-            }
-            processedArguments = processSemantics(semantics, processedArguments, varMap, output, incomingUtterance.getAddressee().getName());
-            if (processedArguments == null) {
-                return failure.build();
-            }
-            output.setSemantics(Factory.createPredicate(semantics.getName(), processedArguments));
-            output.setNeedsValidation(true);
-
-            Utterance result = correctCommonNLUMistakes(output.build());
-            if (result != null) {
-                return result;
-            } else {
-                return failure.build();
-            }
-        } catch (Exception e) {
-            log.warn("[parseNLUCompletionResponse]",e);
-            return incomingUtterance;
-        }
-    }
-
-    private Utterance correctCommonNLUMistakes(Utterance utterance) {
+    protected Utterance correctCommonNLUMistakes(Utterance utterance) {
         ////TODO: this needs to be caught earlier in the pipeline than here, just copying here to maintain awareness of
         //      the issue without hacking code in the asr app or parser itself.
         //incoming.setWords(incoming.getWords().stream().map(word -> {
@@ -417,275 +409,6 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
       return "";
     }
 
-    private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor) {
-        return processSemantics(semantics,processedArguments,varMap, output, actor, false);
-    }
-    private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor, boolean unpopulatedArgSafe) {
-        if (semantics.getName().equals("reportIfCanPerform")) {
-            unpopulatedArgSafe = true;
-        }
-        for (Symbol arg: semantics.getArgs()) {
-            if (arg.isPredicate()) {
-                List<Symbol> innerArgs = processSemantics((Predicate)arg,new ArrayList<>(),varMap,output,actor,unpopulatedArgSafe);
-                if (innerArgs == null) {
-                    return null;
-                }
-                processedArguments.add(Factory.createPredicate(arg.getName(), innerArgs));
-            } else {
-                String argString = arg.toString();
-
-                // Reject any unpopulated arguments returned by the LLM, unless the semantics specifically allow for that
-                if (unpopulatedArgSafe && argString.startsWith("?")) {
-                    processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
-                    continue;
-                } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
-                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
-                    return null;
-                }
-
-                // Add types to references
-                // TODO: remove this and make the LLM add types itself. Right now any conflicting literal will be processed as a ref
-                Symbol argSymbol;
-                String descriptorType = getDescriptorType(actor,argString);
-                if (descriptorType.isEmpty()) {
-                    argSymbol = Factory.createFOL(argString);
-                } else {
-                    argSymbol = Factory.createSymbol(argString, descriptorType);
-                }
-
-                // Replace reference symbol with Variable and add supplemental semantics
-                //TODO: do this dynamically for all types which are refs (should be anything which is not an agent?)
-                if (argSymbol != null && (argSymbol.getType().equals("location"))) {
-                    if (!varMap.containsKey(argSymbol)) {
-                        Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
-                        varMap.put(argSymbol, var);
-
-                        output.addSupplementalSemantics(Factory.createPredicate(argSymbol.toUntypedString(), var));
-                        Symbol tier = Factory.createSymbol("DEFINITE");
-                        output.addTierAssignment(var, tier);
-
-                        processedArguments.add(var);
-                    } else {
-                        processedArguments.add(varMap.get(argSymbol));
-                    }
-                } else {
-                    //TODO: this isn't always the case, if we want to allow variables to be generated by the LLM this needs to change and the prompt needs to be updated
-                    //Domain-specific safeguard to prevent the LLM from capitalizing arguments
-                    //If argument is a wildcard, don't want it to be capitalized by the LLM just because it recognizes it as a proper noun
-                    if (Character.isUpperCase(argString.charAt(0)) && argString.length() > 1) {
-                        try {
-                            TimeUnit.valueOf(argString);
-                            processedArguments.add(Factory.createSymbol(argString));
-                        } catch (IllegalArgumentException ignored) {
-                            String lowercaseArg = argString;
-                            lowercaseArg = Character.toLowerCase(lowercaseArg.charAt(0)) + lowercaseArg.substring(1);
-                            processedArguments.add(Factory.createSymbol(lowercaseArg));
-                        }
-                    } else {
-                        processedArguments.add(Factory.createSymbol(argString));
-                    }
-                }
-            }
-        }
-        return processedArguments;
-    }
-
-    @Override
-    public Utterance parseNLGCompletionResponse(Utterance outgoingUtterance, Completion llmResponse) {
-        log.info(llmResponse.getText());
-        String responseString = llmResponse.getText().trim();
-
-        Pattern outputPattern = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
-        Matcher m = outputPattern.matcher(responseString);
-        if (!m.matches()) {
-            log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");
-            return null;
-        }
-        String output = m.group(m.groupCount());
-        outgoingUtterance.setWords(List.of(output.split(" ")));
-
-        //TODO: ideally this check and override would occur somewhere else, but currently have learned action information here nicely
-      if (outgoingUtterance.getSemantics().getName().equals("mean")) {
-        checkForLearnedActionInstructionValidation(outgoingUtterance);
-      }
-
-        return outgoingUtterance;
-    }
-
-    private void checkForLearnedActionInstructionValidation(Utterance utterance) {
-      Predicate semantics;
-      List<Term> boundSemantics = utterance.getBoundSemantics();
-      if (boundSemantics.isEmpty()) {
-        semantics = (Predicate) utterance.getSemantics();
-      } else {
-        semantics = (Predicate) boundSemantics.get(0);
-      }
-      List<Symbol> args = semantics.getArgs();
-      if (args.size() > 1) {
-        String name = args.get(1).getName();
-        if (learnedActionNames.contains(name)) {
-          utterance.setWords(String.format("Did you mean to ask me to perform the \"%s\" action?",String.join(" ", name.split("_"))));
-        }
-      }
-    }
-
-    @Override
-    protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
-        Chat chat = new Chat();
-
-        //Intercept Validation Question and use specific validation prompt
-        String userMessage;
-        Predicate semantics;
-        List<Term> boundSemantics = utterance.getBoundSemantics();
-        if (boundSemantics.isEmpty()) {
-            semantics = (Predicate) utterance.getSemantics();
-        } else {
-            semantics = (Predicate) boundSemantics.get(0);
-        }
-        List<String> locations = getLocations("self", true);
-        List<String> patrolPaths = getPatrolPaths();
-
-        Map<String,String> promptVars = new LinkedHashMap<>();
-        utterance = new Utterance.Builder(utterance).build();
-        //Doesn't include suppSemantics
-        semantics = replaceReferencesInSemantics(semantics);
-        utterance.setSemantics(semantics);
-        promptVars.put("%utterance", utterance.toString());
-        populatePromptVarsWithProperties(promptVars, locations);
-        if (semantics.getName().equals("mean")) {
-            userMessage = validationUserPrompt.apply(promptVars);
-        } else {
-            userMessage = nlgUserPrompt.apply(promptVars);
-        }
-        chat.addUserMessage(userMessage);
-
-        promptVars = new LinkedHashMap<>();
-        promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
-        promptVars.put("%language", language);
-        promptVars.put("%actionList", generateLLMActionListString(false));
-        promptVars.put("%learnedActions%",learnedActionsString);
-        promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
-        promptVars.put("%locationList", String.join("\n", locations));
-        promptVars.put("%addressee", utterance.getAddressee().getName());
-        if (semantics.getName().equals("mean")) {
-            chat.setSystem(validationSystemPrompt.apply(promptVars));
-        } else {
-            chat.setSystem(nlgSystemPrompt.apply(promptVars));
-        }
-
-        log.info("generateNLGChat called for: {}", utterance);
-
-        return chat;
-    }
-
-    Predicate replaceReferencesInSemantics(Predicate semantics) {
-        List<Symbol> transformedArgs = new ArrayList<>();
-        for (Symbol arg: semantics.getArgs()) {
-            if (arg.isPredicate()) {
-                transformedArgs.add(replaceReferencesInSemantics((Predicate) arg));
-            } else {
-                if (arg.getType().equals("location")) {
-                    Map<Symbol, List<Term>> refs = new HashMap<>();
-                    try {
-                        refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
-                        if (refs.get(arg).size() == 1) {
-                            transformedArgs.add(Factory.createSymbol(refs.get(arg).get(0).getName(),refs.get(arg).get(0).get(0).getType()));
-                        }
-                    } catch (TRADEException e) {
-                        log.warn("[generateREG]", e);
-                    }
-                } else {
-                    transformedArgs.add(arg);
-                }
-            }
-        }
-        return Factory.createPredicate(semantics.getName(), transformedArgs);
-    }
-
-    @Override
-    protected Chat generateNLUChat(Utterance utterance, Chat currentChat, List<Utterance> conversationHistory){
-        if (currentChat == null) {
-            currentChat = new Chat();
-        }
-
-        Map<String,String> promptVars = new LinkedHashMap<>();
-        promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
-        List<String> locations = getLocations("self", true);
-        List<String> patrolPaths = getPatrolPaths();
-        List<String> videos = getVideoNames();
-        List<String> images = getImageNames();
-        String patrolPathList = String.join(":path\n", patrolPaths);
-        if (!patrolPathList.isEmpty()) {
-            patrolPathList += ":path\n";
-        }
-        String locationList = String.join(":location\n", locations);
-        if (!locationList.isEmpty()) {
-            locationList += ":location\n";
-        }
-        String videoList = String.join(":video\n", videos);
-        if (!videoList.isEmpty()) {
-            videoList += ":video\n";
-        }
-        String imageList = String.join(":image\n", images);
-        if (!videoList.isEmpty()) {
-            imageList += ":image\n";
-        }
-        promptVars.put("%actionList", generateLLMActionListString(true));
-        promptVars.put("%patrolPathList", patrolPathList);
-        promptVars.put("%locationList", locationList);
-        promptVars.put("%videoList", videoList);
-        promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
-        promptVars.put("%exampleImage", images.isEmpty() ? "test" : images.get(0));
-        promptVars.put("%imageList", imageList);
-        promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
-        promptVars.put("%goals", getGoalString(utterance.getAddressee()));
-        String questionString = getCurrentQuestionsString(utterance.getAddressee());
-        promptVars.put("%questionList", questionString);
-        promptVars.put("%learnedActions%",learnedActionsString);
-        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
-        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
-        populatePromptVarsWithProperties(promptVars, locations);
-        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
-        //promptVars.clear();
-        promptVars.put("%utterance", utterance.getWordsAsString());
-        if (questionString.startsWith("What is the name of the task") || questionString.startsWith("What would you like the action to go on this upcoming tour sequence to be called?")) {
-         //TODO: Quick pre testing-deployment hack - do this through contextual parallel prompting or dialogue recovery instead
-          currentChat.addUserMessage("Reminder, the current question from the system is as follows:\n"+questionString+"\nIf the input does not make sense as any other sort of instruction, it is likely directly a form the desired taskName.\n"+nluUserPrompt.apply(promptVars));
-        } else {
-          currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
-        }
-        return currentChat;
-    }
-
-    private String getConversationHistoryString(List<Utterance> conversationHistory) {
-        StringBuilder builder = new StringBuilder();
-        if (conversationHistory.isEmpty()) {
-            builder.append("<there is no conversation history>");
-        } else {
-            for (Utterance pastUtterance : conversationHistory) {
-                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
-            }
-        }
-        return builder.toString();
-    }
-
-    private Map<String,String> populatePromptVarsWithProperties(Map<String,String> promptVars, List<String> locations) {
-        //int numLocations = locations.size();
-        //if (numLocations > 0) {
-        //    promptVars.put("location one", locations.get(0));
-        //    if (numLocations > 1) {
-        //        promptVars.put("location two", locations.get(1));
-        //        if (numLocations > 2) {
-        //            promptVars.put("location three", locations.get(2));
-        //            if (numLocations > 3) {
-        //                promptVars.put("location four", locations.get(3));
-        //            }
-        //        }
-        //    }
-        //}
-        return promptVars;
-    }
-
     private List<String> getVideoNames() {
         try {
             return TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideoNames").argTypes(Boolean.class)).call(List.class,true);
@@ -777,106 +500,14 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         return output;
     }
 
-    private String getGoalString(Symbol agent) {
-        //TODO: also add pending and scheduled?
-        String currentGoalString = "<The robot has no current task>\n";
-        try {
-            List<Predicate> currentGoalPredicate = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSystemGoalsPredicates").argTypes(Symbol.class)).call(List.class,agent);
-            if (!currentGoalPredicate.isEmpty()) {
-                currentGoalString = currentGoalPredicate.get(0).toString() + "\n";
-            }
-        } catch (TRADEException e) {
-            log.error("[getWorldStateString] error getting current goal for agent", e);
-        }
-        return currentGoalString;
-    }
-
-    private String getCurrentQuestionsString(Symbol agent) {
-        String output = "";
-        try {
-            String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class,agent);
-            List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
-            if (!expectedResponseForms.isEmpty()) {
-                output = questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
-            }
-        } catch (TRADEException e) {
-            log.error("[getCurrentQuestionsString] error getting last question for agent");
-        }
-        if (output.isEmpty()) {
-            output = "<There are no current outstanding questions>";
-        }
-        return output;
-    }
-
-    private String getDescriptorType(String agentName, String descriptor) {
+    @Override
+    protected String getDescriptorType(String agentName, String descriptor) {
         List<String> propertyNames  = getLocations("self", true);
         if (propertyNames.contains(descriptor)) {
             return "location";
         }
 
         return "";
-    }
-
-    @TRADEService
-    //public void registerForNotifications(TRADEServiceInfo notificationHandler) {
-    public void registerForNotifications() {
-        try {
-            TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-            TRADEServiceInfo additionNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
-            registerService.call(void.class, additionNotificationHandler, NotificationType.DATABASE_ADDITION);
-            TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseRemoval").argTypes(ActionDBEntry.class));
-            registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
-            registeredForNewActions = true;
-            log.info("[registerForNotifications] successfully registered for database additions");
-        } catch (TRADEException e) {
-            log.debug("[registerForNotifications] error registering for actionDB notifications", e);
-        }
-    }
-
-    private void initLearnedActions() {
-        try {
-            List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
-            for (Predicate pred : learnedActionPredicates) {
-              learnedActionsString += String.format("%s\n#\n", pred);
-              learnedActionNames.add(pred.getName());
-              //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
-            }
-            retrievedLearnedActions = true;
-        } catch (TRADEException e) {
-            log.debug("[initLearnedActions] error getting taught actions from EM on startup");
-        }
-    }
-
-    @TRADEService
-    public void handleDatabaseAddition(ActionDBEntry entry) throws TRADEException {
-        if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
-            log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
-            //learnedActions.add(entry);
-            //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
-            Predicate pred = entry.getSignature(false);
-            learnedActionsString += String.format("%s\n#\n", pred);
-            learnedActionNames.add(pred.getName());
-        }
-    }
-
-    @TRADEService
-    public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
-        Predicate pred = entry.getSignature(false);
-        learnedActionsString = learnedActionsString.replace(String.format("%s\n#\n", pred),"");
-        learnedActionNames.remove(pred.getName());
-        //TODO: should ideally remove any cache entries relevant to this action
-    }
-
-    @Override
-    public void shutdownComponent() {
-        super.shutdownComponent();
-        try {
-            TRADEServiceInfo unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
-            unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
-        } catch (TRADEException e) {
-            log.error("[shutdownComponent]", e);
-        }
     }
 
     TRADEServiceInfo getServiceForAgent(String agentName, String serviceName, Class<?>... argTypes) {

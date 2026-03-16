@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.config.ava;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.llm.serviceproviders.tr.AvaLLMServiceProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -18,6 +19,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean useLLMNLG = true;
   String service = "openai";
   String model = "Qwen/Qwen3-14B-AWQ";
+//  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
   String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
@@ -104,7 +106,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useLLMNLG || useLLMParser) {
-      createInstance(edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider.class,"");
+      createInstance(AvaLLMServiceProvider.class,"");
       String llmComponentArgs = String.format("-service %s llamahf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
       if (service.equals("llamahf")) {
         if (usePrivateEndpoint) {

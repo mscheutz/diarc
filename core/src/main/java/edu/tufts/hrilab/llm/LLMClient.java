@@ -15,6 +15,8 @@ public interface LLMClient {
 
   void setTemperature(float temperature);
 
+//  void setToolEnabled(boolean supported);
+
   Completion completion(String userPrompt);
 
   Completion completion(String userPrompt, String model);

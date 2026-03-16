@@ -4,7 +4,10 @@
 
 package edu.tufts.hrilab.slug.parsing.hybrid;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
@@ -63,7 +66,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
+    options.add(Option.builder("tldl").hasArgs().argName("file").desc("load tldl dictionary from file(s)").build());
     options.add(Option.builder("llm").argName("boolean").desc("Use the LLM parser").build());
     options.add(Option.builder("cache").argName("boolean").desc("Use the cache").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
@@ -182,16 +185,26 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Future<Utterance> cachedFuture = null;
     Future<Utterance> pmpFuture = null;
 
+    //TODO: Where should this actually live? Need to push some notion of LLM presence and state explicitly up to a core
+    //  component of the pipeline if we are saying that LLM extended interactions, once began, only perform subsequent
+    //  parses using the LLM.
+    boolean useLLMOnly = false;
+
     if (useLLM) {
+      try {
+         useLLMOnly = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedInteraction").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
+      } catch (TRADEException ex) {
+        log.error("Error calling inExtendedInteraction service", ex);
+      }
       llmFuture = executor.submit(() -> llmParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (useTLDL) {
+    if (useTLDL && !useLLMOnly) {
       tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (useCache) {
+    if (useCache && !useLLMOnly) {
       cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (usePMP) {
+    if (usePMP && !useLLMOnly) {
       pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
 
@@ -264,10 +277,18 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         log.debug("[parseUtterance] Using llm parser response");
         preserveAddressee(llmOutput);
         output = llmOutput;
-        if (confirmation) {
-          output.setNeedsValidation(true);
-        } else if (useCache && cacheLLM) {
-          cacheParse(output);
+        //TODO: Fully get rid of 'confirmation' configuration at this level and make it up to the LLM service provider
+        // impl to determine if the output needs to be validated? Or just don't override in the extended "social" case
+        // and keep otherwise.
+        // In the "social" system, we can't have arbitrary system responses (implemented as "generateResponse" parses)
+        //  or responses to validation questions (which will never hit the cache or TLDL once haivng entered an extended
+        //  interaction) hit validation.
+        if (!useLLMOnly) {
+          if (confirmation) {
+            output.setNeedsValidation(true);
+          } else if (useCache && cacheLLM) {
+            cacheParse(output);
+          }
         }
       }
     }
@@ -342,7 +363,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (useTLDL) {
       ((TLDLParserComponent) tldlParser).injectDictionaryEntry(morpheme, type, semantics, cognitiveStatus);
     } else {
-      log.warn("[injectDictionaryEntry] trying to update TLDL parser dictionary when not using TLDL parser");
+      log.debug("[injectDictionaryEntry] trying to update TLDL parser dictionary when not using TLDL parser");
     }
   }
 

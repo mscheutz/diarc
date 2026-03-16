@@ -7,6 +7,14 @@
     "priority": 9999,
     "priorityTier": "URGENT"
   },
+  "offContextSubmission": {
+    "priority": 1,
+    "priorityTier": "URGENT"
+  },
+  "focusedContextResponseSubmissionWrapper": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "endFreeze": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -15,7 +23,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-
   "describeCurrentGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -352,6 +359,10 @@
     "priorityTier": "SKIPPENDING"
   },
   "describeKnownPoseNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endConversation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

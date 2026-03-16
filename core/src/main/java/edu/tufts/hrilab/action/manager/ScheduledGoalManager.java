@@ -16,6 +16,7 @@ import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalJob;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalListener;
 import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
@@ -266,6 +267,22 @@ public class ScheduledGoalManager {
   public List<ScheduledGoal> getScheduledGoals() {
     synchronized (scheduledGoals) {
       return new ArrayList<>(scheduledGoals.keySet());
+    }
+  }
+
+  /**
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing.
+   *
+   * @return shallow copy of scheduled goals
+   */
+  public List<ScheduledGoal> getScheduledGoals(Symbol actor) {
+    AgentTeam agentTeam = em.getAgentTeam(actor);
+    if (agentTeam == null) {
+      return new ArrayList<>();
+    }
+
+    synchronized (scheduledGoals) {
+      return new ArrayList<>(scheduledGoals.keySet()).stream().filter(sg -> agentTeam.getMember(sg.getActor()) != null).toList();
     }
   }
 

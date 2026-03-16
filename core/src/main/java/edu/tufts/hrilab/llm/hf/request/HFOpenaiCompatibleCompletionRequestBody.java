@@ -12,7 +12,7 @@ import java.util.Map;
 import edu.tufts.hrilab.llm.LlamaHFChat;
 import edu.tufts.hrilab.llm.Message;
 
-public class LlamaHFCompletionRequestBodyV2 implements LlamaHFCompletionRequestBody {
+public class HFOpenaiCompatibleCompletionRequestBody {
   public String model;
   public List<Message> messages;
   public Map<String,Object> parameters;
@@ -35,12 +35,12 @@ public class LlamaHFCompletionRequestBodyV2 implements LlamaHFCompletionRequestB
     messages = new ArrayList<>();
   }
 
-  public LlamaHFCompletionRequestBodyV2 (String model) {
+  public HFOpenaiCompatibleCompletionRequestBody(String model) {
     this.model = model;
     init();
   }
 
-  public LlamaHFCompletionRequestBodyV2(LlamaHFChat chat, String model) {
+  public HFOpenaiCompatibleCompletionRequestBody(LlamaHFChat chat, String model) {
     init();
     messages.add(new Message("system", chat.getSystem()));
     messages.addAll(chat.getMessages());

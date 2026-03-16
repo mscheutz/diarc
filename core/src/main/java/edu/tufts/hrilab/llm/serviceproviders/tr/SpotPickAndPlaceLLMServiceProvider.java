@@ -2,15 +2,12 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.llm.serviceproviders;
+package edu.tufts.hrilab.llm.serviceproviders.tr;
 
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.LLMServiceProvider;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -20,18 +17,75 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-//This layer does not need to be abstract for now. If have more examples that do the same thing similarly, then can
-//  have an additional abstraction (Or even when this is actually working with a prompt we can make a prompt template
-//  out of it which this class can abstractly use and subclasses can provide specific prompt parameters only
-//public abstract class DefaultLLMServiceProvider extends LLMServiceProvider {
-public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
-    Prompt nluSystemPrompt = Prompts.getPrompt("spotpickandplace/nlu/system");;
-    Prompt nluUserPrompt = Prompts.getPrompt("spotpickandplace/nlu/user");
-    Prompt nlgSystemPrompt = Prompts.getPrompt("spotpickandplace/nlg/system");
-    Prompt nlgUserPrompt = Prompts.getPrompt("spotpickandplace/nlg/user");
-    Prompt validationPrompt = Prompts.getPrompt("spotpickandplace/nlg/validation");
+//TODO: the listed prompts don't even exist on this branch. 1. where are they or 2. can we get rid of this class?
+public class SpotPickAndPlaceLLMServiceProvider extends TRLLMServiceProvider {
+    @Override
+    protected void init() {
+        super.init();
+        processMatchingNLUParseLiteralsAsRefs = true;
+    }
 
+    @Override
+    protected Prompt getNluSystemPrompt() {
+        return Prompts.getPrompt("spotpickandplace/nlu/system");
+    }
 
+    @Override
+    protected Prompt getNluUserPrompt() {
+        return Prompts.getPrompt("spotpickandplace/nlu/user");
+    }
+
+    @Override
+    protected Prompt getNlgSystemPrompt() {
+        return Prompts.getPrompt("spotpickandplace/nlg/system");
+    }
+
+    @Override
+    protected Prompt getNlgUserPrompt() {
+        return Prompts.getPrompt("spotpickandplace/nlg/user");
+    }
+
+    @Override
+    protected Prompt getValidationSystemPrompt() {
+        return getNlgSystemPrompt();
+    }
+
+    @Override
+    protected Prompt getValidationUserPrompt() {
+        return Prompts.getPrompt("spotpickandplace/nlg/validation");
+    }
+
+    @Override
+    protected Map<String, String> populatePromptVars(Utterance utterance, Map<String, String> promptVars, boolean system, boolean parsing, boolean validation) {
+        if (parsing) {
+            if (!system) {
+                //TODO: if this prompt file is ever recovered, need to add %utterance variable to the end of it
+                promptVars.put("%utterance", utterance.getWordsAsString());
+            }
+        } else {
+            if (!system) {
+                promptVars.put("%utterance", utterance.toString());
+            }
+        }
+        return promptVars;
+    }
+
+    @Override
+    protected List<String> getRefTypes() {
+        return List.of("location", "physobj");
+    }
+
+    @Override
+    protected Utterance correctCommonNLUMistakes(Utterance utterance) {
+        return utterance;
+    }
+
+    @Override
+    protected String getDescriptorType(String agentName, String descriptor) {
+        return "";
+    }
+
+    //TODO: update to be in line with base class format
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
         Utterance.Builder output = new Utterance.Builder(incomingUtterance);
@@ -142,79 +196,6 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         outgoingUtterance.setWords(List.of(responseString.split(" ")));
 
         return outgoingUtterance;
-    }
-
-    @Override
-    protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
-        Chat chat = new Chat();
-
-        //Intercept Validation Question and use specific validation prompt
-        String userMessage;
-        Predicate semantics = (Predicate) utterance.getSemantics();
-        StringBuilder builder = new StringBuilder();
-        if (conversationHistory.isEmpty()) {
-            builder.append("<there is no conversation history>");
-        } else {
-            for (Utterance pastUtterance : conversationHistory) {
-                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
-            }
-        }
-        Map<String,String> promptVars = new HashMap<>();
-        promptVars.put("%utterance", utterance.toString());
-        if (semantics.getName().equals("mean")) {
-            userMessage = validationPrompt.apply(promptVars);
-        } else {
-            userMessage = nlgUserPrompt.apply(promptVars);
-        }
-
-        //TODO (same as NLU)
-        //Map<String,String> nlgSystemPromptParameters = new HashMap<>();
-        //////nlgSystemPromptParameters.put("%conversationHistory%",conversationHistory);
-        //chat.setSystem(nlgSystemPrompt.apply(nlgSystemPromptParameters));
-        //Map<String,String> nlgUserPromptParameters = new HashMap<>();
-        ////nlgUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
-        //chat.addUserMessage(nlgUserPrompt.apply(nlgUserPromptParameters));
-
-        promptVars = new HashMap<>();
-        promptVars.put("%conversationHistory", builder.toString());
-        chat.setSystem(nlgSystemPrompt.apply(promptVars));
-        chat.addUserMessage(userMessage);
-
-        log.info("generateNLGChat called for: {}", utterance.toString());
-
-        return chat;
-    }
-
-    @Override
-    protected Chat generateNLUChat(Utterance utterance, Chat currentChat, List<Utterance> conversationHistory){
-        if (currentChat == null) {
-            currentChat = new Chat();
-        }
-
-        //TODO: I tried writing this prompt in a format which is closer to a general template which can have domain
-        //  specific information applied. Swap out information from the prompt with identifiers and apply parameters
-        //  rather than hardcode the information
-        //Map<String,String> nluSystemPromptParameters = new HashMap<>();
-        //////nluSystemPromptParameters.put("%conversationHistory%",conversationHistory);
-        //currentChat.setSystem(nluSystemPrompt.apply(nluSystemPromptParameters));
-        //Map<String,String> nluUserPromptParameters = new HashMap<>();
-        ////nluUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
-        //currentChat.addUserMessage(nluUserPrompt.apply(nluUserPromptParameters));
-        StringBuilder builder = new StringBuilder();
-        if (conversationHistory.isEmpty()) {
-            builder.append("<there is no conversation history>");
-        } else {
-            for (Utterance pastUtterance : conversationHistory) {
-                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
-            }
-        }
-        Map<String,String> promptVars = new HashMap<>();
-        promptVars.put("%conversationHistory", builder.toString());
-
-        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
-        currentChat.addUserMessage(nluUserPrompt.getText() + utterance.getWordsAsString());
-
-        return currentChat;
     }
 
     //public abstract Set<Symbol> getRelevantAgents();

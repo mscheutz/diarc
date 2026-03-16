@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.llm.azure.AzureClient;
+import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.hf.HFClient;
 
 import java.awt.*;
@@ -15,6 +16,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
@@ -49,6 +51,7 @@ public class LLMComponent extends DiarcComponent {
     options.add(Option.builder("endpoint").hasArgs().argName("string").desc("Set the endpoints of the LLM services to use.").build());
     options.add(Option.builder("stopwords").hasArgs().argName("string").desc("Set additional stopwords to use with models and services that support them. Comma-separated lists.").build());
     options.add(Option.builder("temperature").hasArgs().argName("float").desc("Set the temperatures of the models").build());
+    options.add(Option.builder("tool").desc("The provided model/service pair supports tool calling").build());
     return options;
   }
 
@@ -91,6 +94,12 @@ public class LLMComponent extends DiarcComponent {
     } else {
       setLLMTemperature(0.5f);
     }
+
+//    if (cmdLine.hasOption("tool")) {
+//      for (LLMClient client : clients) {
+//        client.setToolEnabled(true);
+//      }
+//    }
   }
 
   /**
@@ -183,7 +192,7 @@ public class LLMComponent extends DiarcComponent {
       return;
     }
     for (int i = 0; i < modelStrs.size(); i++) {
-      if (services.get(i).equals("llamahf") || services.get(i).equals("t5hf")) {
+      if (services.get(i).endsWith("hf")) {
         ((HFClient)clients.get(i)).setModel(services.get(i), modelStrs.get(i));
       } else {
         clients.get(i).setModel(modelStrs.get(i));
@@ -382,6 +391,27 @@ public class LLMComponent extends DiarcComponent {
     Completion completion = null;
     for (LLMClient client : clients) {
       completion = client.chatCompletion(chat);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
+  }
+
+  //TODO: revisit holistic LLM API and tool support - refactor based on standards (MCP, openai-api) rather than models or
+  // inference providers
+  @TRADEService
+  @Action
+  public Completion chatCompletion (Chat chat, List<ToolDefinition> tools) {
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      if (client instanceof OpenaiClient) {
+        completion = ((OpenaiClient)client).chatCompletion(chat, tools);
+      } else if(client instanceof HFClient && ((HFClient) client).service.equals("hf")) {
+        completion = ((HFClient)client).chatCompletion(chat, tools);
+      } else {
+        completion = client.chatCompletion(chat);
+      }
       if (completion != null) {
         break;
       }

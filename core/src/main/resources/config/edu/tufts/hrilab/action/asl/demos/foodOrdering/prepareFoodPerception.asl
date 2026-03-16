@@ -41,7 +41,7 @@ import java.util.List;
     if (op:equals(!success, true)) {
        op:log(debug, "[perceiveitem] succeeded");
     } else {
-        !failCond = op:invokeStaticMethod("edu.hrilab.tufts.fol.Factory", "createPredicate", "not(perceive(?actor, ?itemType))");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(perceive(?actor, ?itemType))");
         exit(FAIL, !failCond);
     }
 }

@@ -7,6 +7,7 @@ package edu.tufts.hrilab.llm;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,19 +59,19 @@ public class Chat {
 
   public Chat (Message message) {
     messages.add(message);
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public Chat (String systemText, List<Message> msgs) {
     systemMessage = systemText;
     messages = msgs;
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public Chat (Prompt systemPrompt, List<Message> msgs) {
     systemMessage = systemPrompt.toString();
     messages = msgs;
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public Chat (Completion a, Completion b) {
@@ -78,7 +79,21 @@ public class Chat {
     str += "\n\n";
     str += b.toString();
     systemMessage = str;
-    updateTokenCounts();
+    //updateTokenCounts();
+  }
+
+  public Chat (Chat other) {
+    messages = new ArrayList<>();
+    for (Message msg : other.messages) {
+      messages.add(new Message(msg.role, msg.content, msg.tool_calls));
+    }
+    tokens = other.tokens;
+    userName = other.userName;
+    robotName = other.robotName;
+    systemMessage = other.systemMessage;
+    context = other.context;
+    service = other.service;
+    model = other.model;
   }
 
   /**
@@ -112,50 +127,60 @@ public class Chat {
 
   public void addMessage (String role, String content) {
     messages.add(new Message(role, content));
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addMessage (Message message) {
     messages.add(message);
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addMessages (List<Message> msgs) {
     for (Message message : msgs) {
       messages.add(message);
     }
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void setMessages (List<Message> msgs) {
     messages = msgs;
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void setMessages (Chat chat) {
     messages = chat.messages;
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addUserMessage (String content) {
     messages.add(new Message("user", content));
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addRobotMessage (String content) {
     messages.add(new Message("assistant", content));
-    updateTokenCounts();
+    //updateTokenCounts();
+  }
+
+  public void addRobotMessage (String content, List<ToolCall> toolCalls) {
+    messages.add(new Message("assistant", content, toolCalls.toArray(new ToolCall[]{})));
+    //updateTokenCounts();
+  }
+
+  public void addToolMessage (String content, String tool_call_id) {
+    messages.add(new Message("tool", content, tool_call_id));
+    //updateTokenCounts();
   }
 
   public void addInteraction (Message a, Message b) {
     messages.add(a);
     messages.add(b);
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addCompletion (Completion completion) {
     messages.add(new Message("assistant", completion.text));
-    updateTokenCounts();
+    //updateTokenCounts();
   }
 
   public void addCompletion (Completion completion, boolean updateTokens) {

@@ -4,7 +4,9 @@
 
 package edu.tufts.hrilab.llm.openai;
 
+import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.llm.LLMClient;
+import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.openai.request.*;
 import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.Chat;
@@ -97,8 +99,8 @@ public class OpenaiClient implements LLMClient {
         model_parameters = new HashMap<>();
         model_parameters.put("temperature", 0.7);
         model_parameters.put("top_p", 0.8);
-        model_parameters.put("top_k", 20.0);
-        model_parameters.put("min_p", 0.0);
+        //model_parameters.put("top_k", 20.0);
+        //model_parameters.put("min_p", 0.0);
         //max_tokens = 6000;
         //HashMap<String,Object> chat_template_kwargs = new HashMap<>();
         //chat_template_kwargs.put("enable_thinking", false);
@@ -199,6 +201,11 @@ public class OpenaiClient implements LLMClient {
     return chatCompletion(chat, model);
   }
 
+  @TRADEService
+  public Completion chatCompletion(Chat chat, List<ToolDefinition> tools) {
+    return chatCompletion(chat.toPrompt(), model, tools);
+  }
+
   /**
    * Performs a chat completion using OpenAI with a provided model and the messages in the given chat.
    * @param chat the chat containing the messages to use for the completion
@@ -218,11 +225,17 @@ public class OpenaiClient implements LLMClient {
    * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
    **/
   public Completion chatCompletion(List<Message> messages, String model) {
-    OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, messages);
+    return chatCompletion(messages, model, new ArrayList<>());
+  }
+  public Completion chatCompletion(List<Message> messages, String model, List<ToolDefinition> tools) {
+    OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, messages, tools);
     OpenaiChatCompletionResponse response = chatCompletion(requestBody);
     if (response == null) {
       return null;
     } else {
+      if (response.choices != null && response.choices.length > 1) {
+        log.warn("[chatCompletion] model returned multiple output choices - not currently configured to handle more than one");
+      }
       return new Completion(response);
     }
   }

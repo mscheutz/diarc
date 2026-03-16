@@ -6,13 +6,13 @@ package edu.tufts.hrilab.llm.hf;
 
 import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.llm.*;
-import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBodyV1;
+import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBody;
-import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBodyV2;
 import edu.tufts.hrilab.llm.hf.request.T5BaseCompletionRequestBody;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
-import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponseV2;
 import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
+import edu.tufts.hrilab.llm.openai.request.OpenaiChatRequestBody;
+import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
@@ -26,30 +26,22 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import com.google.gson.Gson;
 
+//TODO: Removed all model specific endpoints and configuration - hf deprecated/overhauled them for general router endpoint.
+//      Need to revisit necessary configurability if returning to using old models/code.
 public class HFClient implements LLMClient {
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
-    //Unclear if the other endpoint set is just down temporarily or they completely overhauled the API and got rid of
-    //  the model specific endppoints
-    private boolean routerEndpoint = true;
     private String hfCompletionEndpoint = "https://router.huggingface.co/v1/chat/completions";
-    private String llamaHFCompletionEndpointTemplate = "https://api-inference.huggingface.co/models/meta-llama/%s";
-
-    private String t5CompletionEndpointTemplate = "https://api-inference.huggingface.co/models/%s";
 
     private String endpoint;
 
     private final Pattern UNICODE_PATTERN = Pattern.compile("(?<!\\\\)\\\\u(\\p{XDigit}{4})");
 
-    //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
-    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Llama-3.1-8B", "Llama-3.1-8B-Instruct", "Llama-3.1-70B", "Llama-3.1-70B-Instruct","Llama-3.1-405B", "Llama-3.1-405B-Instruct","Llama-3.3-70B-Instruct", "Qwen/Qwen3-14B");
-    private List<String> t5CompletionModels = Arrays.asList("t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b");
-
     private String defaultSystemPrompt = "";
 
-    public String service = "llamahf";
-    public String model = "Meta-Llama-3.1-70B-Instruct";
+    public String service = "hf";
+    public String model = "meta-llama/Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
     private int maxNewTokens = 128;
@@ -69,14 +61,6 @@ public class HFClient implements LLMClient {
     }
 
     public void setModel (String serviceStr, String modelStr) {
-        //TODO: should clean up model/endpoint (type) configuration everywhere. Using HF endpoints should be be deprecated soon though...
-        if (!((serviceStr.equals("llamahf") && llamaHFCompletionModels.contains(modelStr)) || (serviceStr.equals("t5hf") && t5CompletionModels.contains(modelStr)))) {
-            log.error("HFClient does not support service/model pair {} and {}: ", serviceStr, modelStr);
-            return;
-        }
-        if (routerEndpoint && !modelStr.startsWith("meta-llama") && !modelStr.startsWith("Qwen")) {
-            modelStr = "meta-llama/" + modelStr;
-        }
         service = serviceStr;
         model = modelStr;
     }
@@ -162,55 +146,38 @@ public class HFClient implements LLMClient {
         return chatCompletion(chat, model);
     }
 
+    public Completion chatCompletion(Chat chat, List<ToolDefinition> tools) {
+        return chatCompletion(chat, model, tools);
+    }
+
     @Override
     public Completion chatCompletion(Chat chat, String model) {
+        return chatCompletion(chat, model, null);
+    }
+
+    public Completion chatCompletion(Chat chat, String model, List<ToolDefinition> tools) {
+        //if (!useTool) {
+        //    log.error("[chatCompletion] called with ToolDefinitions, but tool support is not enabled")
+        //}
+
         if (service.equals("llamahf")) {
+            log.error("[chatCompletion] llamahf setup not extended to use tool definitions. Please use the base openai-api compatible hf service");
+            return null;
+        } else if (service.equals("t5hf")) {
+            log.error("[chatCompletion] t5hf setup not extended to use tool definitions. Please use the base openai-api compatible hf service");
+            return null;
+        } else if (service.equals("hf")) {
             //TODO: this shouldn't live here
             if (model.startsWith("Qwen")) {
                 chat.systemMessage = "\\no_think " + chat.systemMessage;
             }
-            LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
-            llamaHFChat.setModel(model);
-            llamaHFChat.setService(service);
-            LlamaHFCompletionRequestBody requestBody;
-            if (routerEndpoint) {
-                requestBody = new LlamaHFCompletionRequestBodyV2(llamaHFChat, model);
-            } else {
-                requestBody = new LlamaHFCompletionRequestBodyV1(llamaHFChat);
-            }
-            requestBody.setTemperature(temperature);
-            requestBody.setMax_new_tokens(maxNewTokens);
-            return new Completion(llamaHFChatCompletion(requestBody, model));
-        } else if (service.equals("t5hf")) {
-            if (chat.messages.size() > 1) {
-                log.warn("t5hf service not set up to handle multiple messages");
-            }
-            StringBuilder promptString = new StringBuilder();
-            for (Message message : chat.messages) {
-                promptString.append(message.content);
-            }
-            T5BaseCompletionRequestBody requestBody = new T5BaseCompletionRequestBody(promptString.toString());
-            return new Completion(t5BaseCompletion(requestBody, model));
+            OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, chat.toPrompt(), tools);
+            requestBody.temperature = (double) temperature;
+            requestBody.max_tokens = maxNewTokens;
+            return new Completion(openaiCompatibleChatCompletion(requestBody, model));
         } else {
             log.error("HF Client does not support service: {}", service);
             return null;
-        }
-    }
-
-    public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody, String model) {
-        String endpoint = String.format(t5CompletionEndpointTemplate, model);
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + apiKey);
-        Gson gson = new Gson();
-        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
-        String response = httpResponse == null ? null : httpResponse.responseString;
-        log.debug("Response: " + response);
-        Type t = new TypeToken<List<T5BaseCompletionResponse>>() {}.getType();
-        List<T5BaseCompletionResponse> results = gson.fromJson(response, t);
-        if (results == null) {
-            return new T5BaseCompletionResponse(response);
-        } else {
-            return results.get(0);
         }
     }
 
@@ -220,11 +187,7 @@ public class HFClient implements LLMClient {
         Gson gson = new Gson();
         String targetEndpoint;
         if (endpoint == null) {
-            if (routerEndpoint) {
-                targetEndpoint = hfCompletionEndpoint;
-            } else {
-                targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
-            }
+            targetEndpoint = hfCompletionEndpoint;
         } else {
             targetEndpoint = endpoint;
         }
@@ -238,11 +201,7 @@ public class HFClient implements LLMClient {
             //TODO: sayText to report coldstart period?
             //Try using free endpoint temporarily
             log.debug("[llamaHFChatCompletion] attempting using serverless endpoint...");
-            if (routerEndpoint) {
-                targetEndpoint = hfCompletionEndpoint;
-            } else {
-                targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
-            }
+            targetEndpoint = hfCompletionEndpoint;
             httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
             responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
             response = httpResponse == null ? null : httpResponse.responseString;
@@ -261,36 +220,38 @@ public class HFClient implements LLMClient {
 
         LlamaHFChatCompletionResponse resp = new LlamaHFChatCompletionResponse();
         if (response != null) {
-            if (routerEndpoint) {
-                Type t = new TypeToken<LlamaHFChatCompletionResponseV2>() {
-                }.getType();
-                LlamaHFChatCompletionResponseV2 result = gson.fromJson(response, t);
-                if (result != null && !result.choices.isEmpty()) {
-                    resp.generated_text = (String)result.choices.get(0).message.get("content");
-                }
-            } else {
-                Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
-                List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
-                resp = results.get(0);
-                Matcher unicodeMatcher = UNICODE_PATTERN.matcher(resp.generated_text);
-                if (unicodeMatcher.find()) {
-                    try {
-                        log.warn("[lamaHFChatCompletion] found escaped unicode strings in response. Attempting to convert to unicode characters.");
-                        unicodeMatcher.reset(resp.generated_text);
-                        String original = resp.generated_text;
-                        resp.generated_text = unicodeMatcher.replaceAll(match -> {
-                            char c = (char) Integer.parseInt(match.group(1), 16);
-                            return Character.toString(c);
-                        });
-                        log.warn("[llamaHFChatCompletion] original: " + original + "\n corrected: " + resp.generated_text);
-                    } catch (Exception e) {
-                        log.error("llamaHFChatCompletion] error attempting to convert escaped unicode literals to valid characters in response " + resp);
-                        resp = new LlamaHFChatCompletionResponse();
-                    }
-                }
+            Type t = new TypeToken<OpenaiChatCompletionResponse>() {
+            }.getType();
+            OpenaiChatCompletionResponse result = gson.fromJson(response, t);
+            if (result != null && result.choices.length > 0) {
+                resp.generated_text = result.choices[0].message.content;
             }
         }
         return resp;
     }
 
+    public OpenaiChatCompletionResponse openaiCompatibleChatCompletion(OpenaiChatRequestBody requestBody, String model) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + apiKey);
+        Gson gson = new Gson();
+        String targetEndpoint;
+        if (endpoint == null) {
+            targetEndpoint = hfCompletionEndpoint;
+        } else {
+            targetEndpoint = endpoint;
+        }
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
+        int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+        log.debug("Response: " + response);
+        log.info("Response code: " + responseCode);
+
+        OpenaiChatCompletionResponse resp = new OpenaiChatCompletionResponse();
+        if (response != null) {
+            Type t = new TypeToken<OpenaiChatCompletionResponse>() {
+            }.getType();
+            resp = gson.fromJson(response, t);
+        }
+        return resp;
+    }
 }
