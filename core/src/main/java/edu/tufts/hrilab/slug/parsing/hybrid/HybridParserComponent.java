@@ -58,8 +58,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = null;
-
   private boolean confirmation = true;
+  // Intended sequences:
+  // "Social LLM Service Provider": Cache -> TLDL -> PMP -> LLM if first input (or really whatever the user desires). But if in an extended interaction, override LLM -> rest.
+  // "Basic LLM Service Provider": Always Cache -> TLDL -> PMP -> LLM
+  private String[] sequence;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -77,6 +80,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
+    options.add(Option.builder("sequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
     return options;
   }
 
@@ -127,6 +131,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       usePMP = true;
       log.debug("Using the pattern matching parser");
     }
+    if (cmdLine.hasOption("sequence")) {
+      sequence = cmdLine.getOptionValues("generationSequence");
+    } else {
+      sequence = new String[]{"cache", "tldl", "pattern", "llm"};
+    }
+    log.info("Using sequence: {}", Arrays.toString(sequence));
   }
 
   @Override
@@ -188,23 +198,38 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     //TODO: Where should this actually live? Need to push some notion of LLM presence and state explicitly up to a core
     //  component of the pipeline if we are saying that LLM extended interactions, once began, only perform subsequent
     //  parses using the LLM.
-    boolean useLLMOnly = false;
+    String[] parseSequence = sequence;
+    boolean inExtendedInteraction = false;
 
     if (useLLM) {
       try {
-         useLLMOnly = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedInteraction").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
+         inExtendedInteraction = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedInteraction").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
       } catch (TRADEException ex) {
         log.error("Error calling inExtendedInteraction service", ex);
       }
+      // If in an extended "Social" LLM interaction, then shift the LLM to the top of the sequence. All parses are now
+      //  likely dependent on the current context in some way, which is not currently handled well by any other parser type
+      if (inExtendedInteraction) {
+        parseSequence = new String[sequence.length];
+        parseSequence[0] = "llm";
+        int offset = 1;
+        for (int i=0;i+offset<sequence.length;i++) {
+          if (sequence[i].equals("llm")) {
+            offset = 0;
+            continue;
+          }
+          parseSequence[i+offset] = sequence[i];
+        }
+      }
       llmFuture = executor.submit(() -> llmParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (useTLDL && !useLLMOnly) {
+    if (useTLDL && !inExtendedInteraction) {
       tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (useCache && !useLLMOnly) {
+    if (useCache && !inExtendedInteraction) {
       cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
-    if (usePMP && !useLLMOnly) {
+    if (usePMP && !inExtendedInteraction) {
       pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
 
@@ -214,86 +239,124 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
 
-    //Check cache first
-    if (cachedFuture != null) {
-      try {
-        cachedOutput = cachedFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting cached parser results.", e);
-      }
+    for (int i = 0; i < parseSequence.length; i++) {
+      switch (parseSequence[i]) {
+        case "cache":
+          if (cachedFuture != null) {
+            try {
+              cachedOutput = cachedFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+              log.error("[parseUtterance] Error getting cached parser results.", e);
+            }
 
-      if (cachedOutput != null && cachedOutput.getSemantics() != null) {
-        log.debug("[parseUtterance] Using cached parser response");
-        return applyAddressee(incoming, cachedOutput);
-      }
-    }
-
-    //Try patternmatching parser
-    if (pmpFuture != null) {
-      try {
-        pmpOutput = pmpFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting pattern matching parser results.", e);
-      }
-
-      //TODO:brad: what should this return in the no match case?
-      if (pmpOutput != null) {
-        return pmpOutput;
-      }
-    }
-
-    //Try TLDLParser, return if not null or UNKNOWN
-    if (tldlFuture != null) {
-      try {
-        tldlOutput = tldlFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting tldl parser results.", e);
-      }
-
-      if (tldlOutput != null && tldlOutput.getSemantics() != null) {
-        preserveAddressee(tldlOutput);
-        if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
-          log.debug("[parseUtterance] Using tldl parser response");
-          if (useCache && cacheTldl) {
-            cacheParse(tldlOutput);
+            if (cachedOutput != null && cachedOutput.getSemantics() != null) {
+              output = applyAddressee(incoming, cachedOutput);
+              log.debug("[parseUtterance] Using cached parser response: {}", output);
+              notifyLLMOfExternalParse(incoming.getSpeaker(), incoming.getAddressee(), llmFuture);
+              return output;
+            }
           }
-          return applyAddressee(incoming, tldlOutput);
-        } else {
-          //Use TLDL UNKNOWN parse in case LLM parse fails
-          output = tldlOutput;
-        }
-      }
-    }
+          break;
+        case "pattern":
+          if (pmpFuture != null) {
+            try {
+              pmpOutput = pmpFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+              log.error("[parseUtterance] Error getting pattern matching parser results.", e);
+            }
 
-    //Try LLMParser last
-    if (llmFuture != null) {
-      try {
-        llmOutput = llmFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting llm parser results.", e);
-      }
-
-      if (llmOutput != null && llmOutput.getSemantics() != null) {
-        log.debug("[parseUtterance] Using llm parser response");
-        preserveAddressee(llmOutput);
-        output = llmOutput;
-        //TODO: Fully get rid of 'confirmation' configuration at this level and make it up to the LLM service provider
-        // impl to determine if the output needs to be validated? Or just don't override in the extended "social" case
-        // and keep otherwise.
-        // In the "social" system, we can't have arbitrary system responses (implemented as "generateResponse" parses)
-        //  or responses to validation questions (which will never hit the cache or TLDL once haivng entered an extended
-        //  interaction) hit validation.
-        if (!useLLMOnly) {
-          if (confirmation) {
-            output.setNeedsValidation(true);
-          } else if (useCache && cacheLLM) {
-            cacheParse(output);
+            //TODO:brad: what should this return in the no match case?
+            if (pmpOutput != null && pmpOutput.getSemantics() != null) {
+              log.debug("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
+              notifyLLMOfExternalParse(incoming.getSpeaker(), incoming.getAddressee(), llmFuture);
+              return pmpOutput;
+            }
           }
-        }
+          break;
+        case "tldl":
+          if (tldlFuture != null) {
+            try {
+              tldlOutput = tldlFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+              log.error("[parseUtterance] Error getting tldl parser results.", e);
+            }
+
+            if (tldlOutput != null && tldlOutput.getSemantics() != null) {
+              preserveAddressee(tldlOutput);
+              if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
+                if (useCache && cacheTldl && !inExtendedInteraction) {
+                  cacheParse(tldlOutput);
+                }
+                output = applyAddressee(incoming, tldlOutput);
+                log.debug("[parseUtterance] Using tldl parser response: {}", output);
+                notifyLLMOfExternalParse(incoming.getSpeaker(), incoming.getAddressee(), llmFuture);
+                return output;
+              } else {
+                //Use TLDL UNKNOWN parse in case LLM parse fails
+                output = tldlOutput;
+              }
+            }
+          }
+          break;
+        case "llm":
+          if (llmFuture != null) {
+            try {
+              llmOutput = llmFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+              log.error("[parseUtterance] Error getting llm parser results.", e);
+            }
+
+            if (llmOutput != null && llmOutput.getSemantics() != null) {
+              log.debug("[parseUtterance] Using llm parser response");
+              preserveAddressee(llmOutput);
+              output = llmOutput;
+              //TODO: Fully get rid of 'confirmation' configuration at this level and make it up to the LLM service provider
+              // impl to determine if the output needs to be validated? Or just don't override in the extended "social" case
+              // and keep otherwise.
+              // In the "social" system, we can't have arbitrary system responses (implemented as "generateResponse" parses)
+              //  or responses to validation questions (which will never hit the cache or TLDL once having entered an extended
+              //  interaction) hit validation.
+              if (!inExtendedInteraction) {
+                if (confirmation) {
+                  output.setNeedsValidation(true);
+                } else if (useCache && cacheLLM) {
+                  cacheParse(output);
+                }
+              }
+            }
+          }
+        default:
+          break;
       }
     }
-
     return applyAddressee(incoming, output);
+  }
+
+  //TODO: Not exactly sure what this should look like; if we always want to reset history or sometimes incorporate it
+  //  based on target (e.g. when transferring to a focused context dialogue interaction). Currently geared towards
+  //  assumption that a positively validated instruction clears context. Separately, should the specific
+  //TODO: How does this relate to SocialServiceProvider synchronicity? Does the method this hits need to wait on the
+  //  context lock with highest priority? Do we need to pass in the specific Utterance to just remove it from the history
+  //  without resetting the whole thing (because NLG events can occur?)?
+  //  ^ Do we need to also only add messages to context history from the dialogue history for the parser as well?
+  /**
+   * Notify the LLM when input has been handled by another parser - do not want lingering unused messages or incorrect
+   *  state.
+   */
+  private void notifyLLMOfExternalParse(Symbol speaker, Symbol addressee, Future<Utterance> llmFuture) {
+    executor.submit(() -> {
+      if (llmFuture != null) {
+        try {
+          llmFuture.get();
+        } catch (InterruptedException | ExecutionException ignored) {
+        }
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("endChatContext").argTypes(Symbol.class, Symbol.class)).call(void.class, speaker, addressee);
+        } catch (TRADEException ex) {
+          //For now this should only occur if not using the 'social' LLM
+        }
+      }
+    });
   }
 
   /**

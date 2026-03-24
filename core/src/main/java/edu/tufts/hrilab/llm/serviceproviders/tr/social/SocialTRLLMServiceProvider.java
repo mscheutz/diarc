@@ -689,11 +689,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /**
    * Method for HybridParser/NLG components to prevent use of other parser/NLG components once entering an
    * extended interaction
-   * TODO: properly use this method in those places
    */
   public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
     ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
     return collection != null && collection.currentChat != null;
+  }
+
+  /**
+   * Method used in nlu.asl to understand on positive validation of a command whether the command was a first-time
+   * instruction or part of an extended, contextual dialogue. Necessary to know what Utterance's are safe to cache.
+   */
+  @Override
+  public int getLLMConversationLength(Symbol user, Symbol agentTeam) {
+    ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (collection == null || collection.currentChat == null) {
+      return 0;
+    }
+    return collection.currentChat.history.messages.size();
   }
 
   /**
@@ -778,18 +790,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     } else {
       semantics = (Predicate) boundSemantics.get(0);
     }
-    Chat currentChatHistory = null;
     ChatTemplates chatTemplates = null;
     ChatCollection chatCollection = getChatCollection(user, agentTeam);
     if (chatCollection != null) {
       ChatContext chatContext = chatCollection.currentChat;
       if (chatContext != null) {
         promptVars.put("%chatHistoryAsString",chatContext.history.getMessages().stream().map(m -> m.role+": "+m.content).collect(Collectors.joining("\n")));
-        currentChatHistory = chatContext.history;
         if (chatContext.chatState == ChatState.VALIDATION) {
           chatTemplates = this.chatTemplates.get("validation");
         }
       }
+    } else {
+      promptVars.put("%chatHistoryAsString","<There is no relevant chat history>");
     }
     if (chatTemplates == null) {
       chatTemplates = this.chatTemplates.get("nlg");
@@ -817,11 +829,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     String output = m.group(m.groupCount());
     utterance.setWords(List.of(output.split(" ")));
-
-    // Add response to NLU chat context
-    if (currentChatHistory != null && addRobotMessage) {
-      currentChatHistory.addRobotMessage(output);
-    }
 
     // (Previously specific workaround for getting acceptable NLG for learned action instructions - revisit when adding learned actions back in)
     //TODO: ideally this check and override would occur somewhere else, but currently have learned action information here nicely
@@ -1514,6 +1521,31 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   @TRADEService
   public List<String> getInstructableActions() {
     return new ArrayList<>(chatTemplates.get("nlu").tools.keySet());
+  }
+
+  /**
+   * Experimenting adding messages to ChatContexts from dialogue history updates (**currently NLG only) in case
+   *  output from external parsers or generators is chosen over this one.
+   *  (If intending to do the same for NLU, need to first stop adding messages directly in parseUtterance)
+   */
+  @Override
+  public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
+    super.updateLLMConversationHistory(utterance, newUtterance);
+    if (!newUtterance) {
+      return;
+    }
+
+    //NLG only
+    Symbol user = utterance.getAddressee().toUntyped();
+    Symbol agentTeam = utterance.getSpeaker().toUntyped();
+    ChatCollection chatCollection = getChatCollection(user, agentTeam);
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        chatContext.history.addRobotMessage(utterance.getWordsAsString());
+      }
+      //TODO: else should this be added to a new history? Revisit when implementing general history pruning/timeout
+    }
   }
 
   /**

@@ -148,6 +148,7 @@ import java.lang.String;
     java.util.List !responseFormList;
     Predicate !responseForm;
     java.lang.Boolean !validated;
+    java.lang.Integer !historyLength;
 
     ?revalidate = op:newObject("java.lang.Boolean", false);
     !addressee = op:invokeMethod(?unvalidatedUtterance, "getAddressee");
@@ -159,6 +160,8 @@ import java.lang.String;
         // Update dialogue history explicitly here so that it shows up in any UI element before the validation question is asked or answered
         act:updateDialogueHistory(?unvalidatedUtterance);
     }
+    // (Social LLM) Measure current conversation history length in order to know whether validated inputs can be parsed
+    !historyLength = tsc:getLLMConversationLength(!speaker,!addressee);
 
     //// Ask Validation Question ////
 
@@ -224,8 +227,11 @@ import java.lang.String;
         //    - LLM Chat state should have been updated properly in handleValidationResponse
         op:log("debug", "Utterance validated.");
         op:invokeMethod(?unvalidatedUtterance,"setIsValidated", true);
-        //TODO: Should only be cached if not the product of an extended/contextual interaction
-        act:cacheParse(?unvalidatedUtterance);
+        if (op:lt(!historyLength,3)) {
+            // LLM results should only be cached if not the product of an extended/contextual interaction. 3 allotted
+            //  messages are 1. instruction, 2. validation Q, 3. validation affirmation.
+            act:cacheParse(?unvalidatedUtterance);
+        }
     } elseif (op:equalsValue(!response, no())) {
         //TODO: This is an instance of overwriting an utterance's parse and running it back through the pipeline after it has already been processed once - is this okay?
         // Utterance not validated - want to engage in an extended dialogue to attempt to rectify misunderstanding

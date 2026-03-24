@@ -91,21 +91,12 @@ public class SocialAvaConfig extends DiarcConfiguration {
     //EW: Adding noConfirmation, but still setting needsValidation in AvaLLMServiceProvider so it will perform validation.
     //  Doing to add the possibility of generating failure responses from the Ava service provider without affecting other domains
     //  (to prevent nonsensical tldl failure responses from being used)
-    //String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation -noCacheLLM";
-    //if (useLLMParser) {
-    //  parserArgs += " -llm";
-    //}
-    String parserArgs = "-llm -noConfirmation";
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation -noCacheLLM -llm";
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.domains.AvaHybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-    //String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist";
-    //if (useLLMNLG) {
-    //  nlgArgs += " -llm";
-    //}
-    String nlgArgs = "-llm";
-
+    String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist -llm -sequence llm cache simple";
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
