@@ -85,9 +85,9 @@ public final class Utterance implements Serializable {
   private Map<String,String> translations = new HashMap<>();
 
   /**
-   * Unique utterance ID
+   * Utterance ID
    */
-  public final long uid;
+  private long id;
   private static final IdGenerator idGenerator = new IdGenerator();
 
   /**
@@ -116,7 +116,7 @@ public final class Utterance implements Serializable {
     this.words = words;
     this.type = type;
     this.isInputUtterance = isInput;
-    this.uid = idGenerator.getNext();
+    this.id = idGenerator.getNext();
   }
 
   /**
@@ -136,7 +136,7 @@ public final class Utterance implements Serializable {
                    Symbol semantics, List<Term> indirectSemantics, List<Term> supSementics,
                    List<Map<Variable, Symbol>> bindings, Map<Variable, Symbol> tierAssignments,
                    UtteranceType type, boolean isInput, boolean needsValidation, boolean validated,
-                   String language, Map<String,String> translations) {
+                   String language, Map<String,String> translations, long id) {
 
     this.type = type;
     this.isInputUtterance = isInput;
@@ -153,7 +153,7 @@ public final class Utterance implements Serializable {
     this.tierAssignments = tierAssignments;
     this.language = language;
     this.translations = translations;
-    this.uid = idGenerator.getNext();
+    this.id = id;
   }
 
   public static class Builder {
@@ -173,6 +173,7 @@ public final class Utterance implements Serializable {
     private Map<Variable, Symbol> tierAssignments;
     private String language;
     private Map<String,String> translations;
+    private long id;
 
     public Builder() {
       type = UtteranceType.UNKNOWN;
@@ -190,6 +191,7 @@ public final class Utterance implements Serializable {
       tierAssignments = new LinkedHashMap<>();
       language = "en";
       translations = new HashMap<>();
+      this.id = idGenerator.getNext();
     }
 
     public Builder(Utterance source) {
@@ -208,10 +210,11 @@ public final class Utterance implements Serializable {
       this.tierAssignments = new LinkedHashMap<>(source.tierAssignments);
       this.language = source.getLanguage();
       this.translations = new HashMap<>(source.getTranslations());
+      this.id = source.id;
     }
 
     public Utterance build() {
-      return new Utterance(speaker, addressee, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, validated, language, translations);
+      return new Utterance(speaker, addressee, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, validated, language, translations, id);
     }
 
     public Builder setSpeaker(Symbol speaker) {
@@ -766,11 +769,11 @@ public final class Utterance implements Serializable {
   }
 
   /**
-   * Get the unique identifier associated with this Utterance
+   * Get the identifier associated with this Utterance
    * @return
    */
   public long getUid() {
-    return uid;
+    return id;
   }
 
   //TODO:brad:is this sufficient?

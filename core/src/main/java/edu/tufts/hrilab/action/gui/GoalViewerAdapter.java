@@ -288,7 +288,7 @@ public class GoalViewerAdapter extends GuiAdapter {
         goalJson.addProperty("scheduled", true);
         ScheduleInfo scheduleInfo = info.schedulingInfo;
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
-        goalJson.addProperty("start", timeFormat.format(scheduleInfo.startTime));
+        goalJson.addProperty("start", scheduleInfo.startTime == null ? "Immediately" : timeFormat.format(scheduleInfo.startTime));
         goalJson.addProperty("end", scheduleInfo.endTime == null ? "Forever" : timeFormat.format(scheduleInfo.endTime));
         String intervalString = "N/A";
         if (scheduleInfo.period != -1) {

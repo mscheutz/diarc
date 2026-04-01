@@ -4,33 +4,53 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
 
 public class ChatContext {
+  /**
+   * General State Variables
+   */
   Chat history;
   ChatType chatType = ChatType.BASE;
   ChatState chatState = ChatState.PARSE;
-  long cid = -1;
-  //Maybe lock is external and is just a condition here
+  Utterance utteranceUpForValidation = null;
+  // Identifier String of the type of ChatContext - used to gather proper System Messages and Tool sets during Completion
+  //  request generation
+  String contextID = "nlu";
+
+  /**
+   * "Focused Context" only details
+   */
+  //"Revolving door" locks to allow for blocking until a "focused" context terminates and then grabbing populated template
+  //  result before clearing state
   Semaphore contextLock = new Semaphore(0);
   Semaphore postprocessingLock = new Semaphore(0);
-  Utterance utteranceUpForValidation = null;
-  String contextID = "nlu";
+  // ID of the related ActionContext for a "focused" dialogue action - used as a unique identifier to target the correct ChatContext
+  long cid = -1;
+  // Time the "focused" context action was instructed - Held to measure the time elapsed between instruction and start
+  //  (e.g. in the case of the goal being held in the queue) in order to know whether to prompt the system to reorient
+  //  the user of the previous instruction context.
   long submissionTime = -1;
+
+  private long uid;
+  private static final IdGenerator idGenerator = new IdGenerator();
 
   private static final Logger log = LoggerFactory.getLogger(ChatContext.class);
 
   public ChatContext(Chat chat) {
     history = chat;
+    uid = idGenerator.getNext();
   }
 
   public ChatContext(Chat chat, long cid) {
     history = chat;
     this.cid = cid;
     chatType = ChatType.FOCUSED;
+    uid = idGenerator.getNext();
   }
 
 
@@ -42,9 +62,13 @@ public class ChatContext {
     contextID = other.contextID;
     submissionTime = other.submissionTime;
     history = new Chat(other.history);
+    uid = other.uid;
   }
 
-  //TODO: swap off semaphore and make so arbitrary # of listeners can wait and be signalled at once properly.
+  // TODO: swap off semaphore and make so arbitrary # of listeners can wait and be signalled at once properly.
+  /**
+   * "Focused" context only - signal that the focused context is completed.
+   */
   public void signalCompletion() {
     if (chatType != ChatType.BASE) {
       contextLock.release();
@@ -59,6 +83,12 @@ public class ChatContext {
     }
   }
 
+  // TODO: How this and the above method is used would need to change if changing how "focused" contexts work - i.e.
+  //  not always terminating after first validated instruction
+  /**
+   * "Focused" context only - wait for the focused context to terminate with a validated instruction (or interrupted)
+   * @return The semantics of the validated, populated focused template semantics. Null if interrupted or aborted.
+   */
   public Predicate waitForCompletion() {
     try {
       contextLock.acquire();
@@ -75,13 +105,31 @@ public class ChatContext {
         log.debug("[ChatContext.waitForCompletion] invalid semantics in utterance");
       } else {
         ret = (Predicate) semantics;
+        // If utteranceUpForValidation populated from dialogue history, will be want(actor,goalSemantics) form
+        if (ret.getName().equals("want")) {
+          ret = (Predicate) ret.get(1);
+        }
       }
     }
 
+    // In offContext case, give waitOnFocusedChat a chance to grab the output semantics (in order to know if the goal
+    //  is modifying the superseded goal directly or not - requires special handling)
     if (chatType == ChatType.OFFTOPIC) {
       postprocessingLock.release();
     }
 
     return ret;
+  }
+
+  public long getUid() {
+    return uid;
+  }
+
+  /**
+   * Release all locks for the collection and active context. Only use this method in the case of error recovery.
+   */
+  protected void releaseLocks() {
+    contextLock.release();
+    postprocessingLock.release();
   }
 }

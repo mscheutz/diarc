@@ -261,14 +261,14 @@ import java.util.Map;
 
     // wait for response - default duration is -1, which means block indefinitely
     !questionString = op:invokeMethod(?utterance, "getWordsAsString");
-    ?answerBindings = act:waitForResponse(!questionString, ?responseForms, !speaker, ?duration);
+    ?answerBindings = act:waitForResponse(!questionString, ?responseForms, !speaker, !addressee, ?duration);
     !tracker = op:newObject("java.lang.Integer", 2);
   }
 
   //TODO EW: If "abort" semantics supplied as answer to question, EXIT fail from this script or let caller handle case?
   //If we timed out and did not receive a response, we need to remove the active question ourselves
   if (op:isNull(?answerBindings)) {
-    act:cancelWaitForResponse(!questionString, ?responseForms, !speaker);
+    act:cancelWaitForResponse(!questionString, ?responseForms, !speaker, !addressee);
   }
   //TODO:EW: else interrupt looping communicateUtterance we are potentially in if we received a response mid loop?
 }

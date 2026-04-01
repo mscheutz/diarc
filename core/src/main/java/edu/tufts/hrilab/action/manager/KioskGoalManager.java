@@ -16,6 +16,7 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.dialogue.Question;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -144,7 +145,7 @@ public class KioskGoalManager extends DiarcComponent {
   }
 
   private void registerQuestionAskingListener() {
-    TRADEServiceInfo tsi = getMyService("questionAskingCallback", Symbol.class, Boolean.class);
+    TRADEServiceInfo tsi = getMyService("questionAskingCallback", Symbol.class, Boolean.class, Question.class);
     if (tsi == null) {
       log.error("[registerQuestionAskingListener] unable to get questionAskingCallback tsi");
       return;
@@ -371,7 +372,7 @@ public class KioskGoalManager extends DiarcComponent {
   }
 
   @TRADEService
-  public void questionAskingCallback(Symbol agent, boolean active) {
+  public void questionAskingCallback(Symbol agent, boolean active, Question question) {
     log.trace("[questionAskingCallback] in method");
 
     synchronized (kioskGoalAccessLock) {

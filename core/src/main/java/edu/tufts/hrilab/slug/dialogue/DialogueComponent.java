@@ -167,9 +167,22 @@ public class DialogueComponent extends DiarcComponent {
     updateDialogueHistory(utt,true);
   }
 
+  //TODO: revisit base LLM nlu.asl validation to see if we can fully remove newUtterance
   @TRADEService
   @Action
   public void updateDialogueHistory(Utterance utt, boolean newUtterance) {
+    // TODO: is dialogue history not trimmed? Is this problematic for long term deployments?
+    // (SocialLLM) Can now use Utterance ID to detect whether the input is actually new or post-(re)validation
+    List<Utterance> history = diaLog.getDialogueHistory();
+    for (int i = history.size()-1;i>=0;i--) {
+      // With unbound dialogue history size, don't want to traverse entire history? What's a safe number of messages
+      //  to check back through?
+      if (i > 50 || history.get(i).getUid() == utt.getUid()) {
+        newUtterance = false;
+        break;
+      }
+    }
+
     if (newUtterance) {
       diaLog.addHistory(utt);
     } else {
@@ -220,11 +233,11 @@ public class DialogueComponent extends DiarcComponent {
     dialogueHistorySubscribers.remove(callback);
   }
 
-  private void notifyQuestionAskingSubscribers(Symbol agent, boolean active) {
+  private void notifyQuestionAskingSubscribers(Symbol agent, boolean active, Question question) {
     List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
     for (TRADEServiceInfo subscriber : questionAskingSubscribers) {
       try {
-        subscriber.call(void.class, agent, active);
+        subscriber.call(void.class, agent, active, question);
       } catch (Exception e) {
         log.error("Could not make callback to: " + subscriber, e);
         //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
@@ -290,30 +303,42 @@ public class DialogueComponent extends DiarcComponent {
           onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
   )
   public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker) {
-    return waitForResponse(questionString, responseForms, speaker,-1);
+    return waitForResponse(questionString, responseForms, speaker,Factory.createSymbol("any"));
+  }
+
+  @TRADEService
+  @Action
+  @OnInterrupt(
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)"
+  )
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, Symbol addressee) {
+    return waitForResponse(questionString, responseForms, speaker,addressee, -1);
   }
 
   /**
    * @param questionString String corresponding to question which was asked
    * @param responseForms List of possible semantic forms which are considered answers to the question
    * @param speaker The agent which had asked the question
+   * @param addressee The user able to answer the question. A value of 'any' allows any user to answer the question
    * @param waitDuration duration this method will block until giving up. If a negative number, will block indefinitely
    * @return Bindings from the answer, or an empty map if no answer was received in time or the question was overwritten/canceled
    */
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)",
-          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)"
   )
   @TRADEService
   @Action
-  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, long waitDuration) {
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, Symbol addressee, long waitDuration) {
     if (responseForms.isEmpty()) {
       log.warn("[waitForOneOfResponses] empty form list supplied");
       return new HashMap<>();
     }
 
     speaker = speaker.toUntyped();
-    Question question = new Question(questionString, responseForms, idGenerator.getNext());
+    addressee = addressee.toUntyped();
+    Question question = new Question(questionString, responseForms, addressee, idGenerator.getNext());
     Set<Question> currentQuestions = questionsPerAgent.get(speaker);
     if (currentQuestions == null) {
       log.warn("[waitForResponse] unexpected speaker encountered {}", speaker);
@@ -323,10 +348,10 @@ public class DialogueComponent extends DiarcComponent {
       currentQuestions.add(question);
     }
 
-    notifyQuestionAskingSubscribers(speaker,true);
+    notifyQuestionAskingSubscribers(speaker,true, question);
     Map<Variable,Symbol> bindings = question.waitForResponse(waitDuration);
     currentQuestions.remove(question);
-    notifyQuestionAskingSubscribers(speaker,false);
+    notifyQuestionAskingSubscribers(speaker,false, question);
     return bindings;
   }
 
@@ -344,8 +369,9 @@ public class DialogueComponent extends DiarcComponent {
     speaker = speaker.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
+    Symbol finalSpeaker = speaker;
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.isMatchingAnswerSemantics(answerSemantics))
+            .filter(q -> q.isActive() && q.isMatchingAnswerSemantics(answerSemantics) && q.isMatchingAddressee(finalSpeaker))
             .toList();
 
     //Bind response
@@ -389,6 +415,11 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener) {
+    cancelWaitForResponse(questionString, responseForms, listener, Factory.createSymbol("any"));
+  }
   //TODO: extend signature variations this method can be called with
   /**
    * Remove the question corresponding to the provided string and response semantics from the current question
@@ -400,12 +431,12 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener) {
+  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener, Symbol speaker) {
     listener = listener.toUntyped();
     Set<Question> currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isMatchingQuestion(questionString) && q.hasMatchingResponseForms(responseForms))
+            .filter(q -> q.isMatchingQuestion(questionString) && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
     for (Question q : matchingQuestions) {
@@ -413,6 +444,11 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+    return suspendWaitForResponse(responseForm, listener, unlock, Factory.createSymbol("any"));
+  }
   //TODO: Extend signature variations this method can be called with
   //      Also, more explicitly define "exactMatch" vs "anyMatch" variations of response forms
   /**
@@ -424,13 +460,13 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock, Symbol speaker) {
     log.debug("[suspendWaitForResponse] suspending responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
     return suspendQuestions(matchingQuestions, unlock);
   }
@@ -438,12 +474,17 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public List<Long> suspendWaitForResponse(List<Term> responseForms, Symbol listener, boolean unlock) {
+    return suspendWaitForResponse(responseForms, listener, unlock, Factory.createSymbol("any"));
+  }
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(List<Term> responseForms, Symbol listener, boolean unlock, Symbol speaker) {
     log.debug("[suspendWaitForResponse] suspending responseForms {}", responseForms);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms))
+            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
     return suspendQuestions(matchingQuestions, unlock);
@@ -465,6 +506,11 @@ public class DialogueComponent extends DiarcComponent {
     return matchingQids;
   }
 
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener) {
+    return resumeWaitForResponse(responseForm, listener, Factory.createSymbol("any"));
+  }
   /**
    * Resume the previously suspended question(s) to allow them to match future question responses
    *
@@ -474,13 +520,13 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener) {
+  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener, Symbol speaker) {
     log.debug("[resumeWaitForResponse] resuming responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
     return resumeQuestions(matchingQuestions);
@@ -488,12 +534,17 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public List<Long> resumeWaitForResponse(List<Term> responseForms, Symbol listener) {
+    return resumeWaitForResponse(responseForms, listener, Factory.createSymbol("any"));
+  }
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(List<Term> responseForms, Symbol listener, Symbol speaker) {
     log.debug("[resumeWaitForResponse] resuming responseForms {}", responseForms);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> !q.isActive() && q.hasMatchingResponseForms(responseForms))
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
     return resumeQuestions(matchingQuestions);
@@ -582,5 +633,20 @@ public class DialogueComponent extends DiarcComponent {
     agent = agent.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(agent);
     return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getQid)).map(Question::getResponseForms).toList();
+  }
+
+  @TRADEService
+  public void resetQuestionTimeout(List<Term> responseForms, Symbol speaker, Symbol addressee) {
+    log.debug("[resetQuestionTimeout] resetting question timeout for {}/{}: {}", speaker, addressee, responseForms);
+    speaker = speaker.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(speaker);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(addressee.toUntyped()))
+            .toList();
+
+    for (Question q: matchingQuestions) {
+      q.resetWaitTimer();
+    }
   }
 }

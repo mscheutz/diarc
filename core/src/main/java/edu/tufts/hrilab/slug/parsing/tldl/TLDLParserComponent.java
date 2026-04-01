@@ -294,9 +294,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         parses.put(speaker, new Parse(terminalCategories.keySet()));
         // TODO: this should be handled in the NLU scripts
 
-        output = generateErrorSemantics(speaker, addressee, token);
-        output.setWords(input.getWords());
-        return output;
+        return generateErrorSemantics(input, speaker, addressee, token);
       }
       currentParse = addEntriesForToken(entries, speaker);
       //this occurs if we're in not in learning mode and we get a morpheme that's not in the dict
@@ -346,7 +344,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     if (currentParse.checkTerminal()) {
       //currentParse.pruneNonTerminal();
       log.debug("terminal condition found");
-      output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+      output = createParsedUtterance(input, currentParse.getCurrentParse(), speaker, addressee);
 
       //reset parse tree once utterance has been sent
       //TODO: in the future we might want to keep track of the set of all previous parses somewhere
@@ -361,7 +359,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         log.debug("inferring new definitions ");
         dictionary.addEntries(currentParse.inferUnknowns());
         log.debug("sending inferred parse");
-        output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+        output = createParsedUtterance(input, currentParse.getCurrentParse(), speaker, addressee);
       } else if (currentParse.checkComplete()) {
         //try to rebuild the tree because the current parsing algorithm is too greedy and might be wrong
         log.debug("parse might be fixable");
@@ -369,7 +367,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         //now check if it's complete
         if (currentParse.checkTerminal()) {
           log.debug("sending revised parse");
-          output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+          output = createParsedUtterance(input, currentParse.getCurrentParse(), speaker, addressee);
         } else {
           log.debug("it wasn't...");
           return input;
@@ -418,10 +416,10 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   //sends error message which indicates that the utterance wasn't parsed
-  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String reason) {
+  private Utterance generateErrorSemantics(Utterance input, Symbol speaker, Symbol addressee, String reason) {
     log.debug("sending error message");
 
-    Utterance.Builder utterance = new Utterance.Builder();
+    Utterance.Builder utterance = new Utterance.Builder(input);
     utterance.setSpeaker(speaker);
     if (useAddressHistory && addressHistory.containsKey(speaker)) {
       utterance.setAddressee(addressHistory.get(speaker));
@@ -442,7 +440,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   //Pass along new utterance with updated semantics to another NLPComponent
-  private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
+  private Utterance createParsedUtterance(Utterance input, Node possibleSemantics, Symbol speaker, Symbol addressee) {
     log.debug("sending semantics");
     log.trace("number of parses found: " + possibleSemantics.rules.size());
 
@@ -456,7 +454,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         log.debug("full semantics: " + fullSemantics);
 
         // start building utterance and set utterance type
-        Utterance.Builder builder = new Utterance.Builder();
+        Utterance.Builder builder = new Utterance.Builder(input);
         UtteranceType type = terminalCategories.get(rule.syntax.type);
         builder.setUtteranceType(type);
 

@@ -87,11 +87,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-
-    //EW: Adding noConfirmation, but still setting needsValidation in AvaLLMServiceProvider so it will perform validation.
-    //  Doing to add the possibility of generating failure responses from the Ava service provider without affecting other domains
-    //  (to prevent nonsensical tldl failure responses from being used)
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation -noCacheLLM -llm";
+    // Added LLM before TLDL in sequence because some TLDL ITK targets (and just in general targets) are problematic/out of date
+    //  TODO: ^at least want this for testing. If we want direct ITK versions still available for deployment can swap back
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache llm tldl";
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.domains.AvaHybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
@@ -186,7 +184,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
                     "core.asl " +
                     "manipulation.asl " +
                     "dialogue/nlg.asl " +
-                    "dialogue/nlu.asl " +
+                    "dialogue/socialLLMnlu.asl " +
                     "dialogue/handleSemantics.asl " +
                     "vision.asl " +
                     "ava/ava.asl " +

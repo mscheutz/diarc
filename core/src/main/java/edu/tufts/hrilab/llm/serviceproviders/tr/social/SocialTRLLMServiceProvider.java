@@ -34,6 +34,7 @@ import edu.tufts.hrilab.llm.gson.tool.response.ToolFunction;
 import edu.tufts.hrilab.llm.openai.ToolParameterHelper;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
+import edu.tufts.hrilab.slug.dialogue.Question;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Contains all relevant conversation contexts and their managed histories between each pair
    */
   // TODO: extend to groups of interactors, similar to conversations
-  protected Map<Pair<Symbol,Symbol>,ChatCollection> currentChatCollections = new HashMap<>();
+  protected final Map<Pair<Symbol,Symbol>,ChatCollection> currentChatCollections = new HashMap<>();
 
   /**
    *  Prompt variables to be replaced in sent Completion requests. Refer to the Prompt class and apply method if this
@@ -180,7 +181,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   Map<Long,Utterance> contextTransferResponseUtterances = new HashMap<>();
 
+  private boolean registeredForQuestionAskingNotifications = false;
   private String language = "English";
+
+  //Temporary list holding itk action names to detect in dialogue history callback whether UtteranceType Question
+  //  was overwritten with INSTRUCT due to ITK / QueueEM incompatibility workarounds.
+  List<String> itkActionNames = new ArrayList<>();
 
   @Override
   public void init() {
@@ -188,6 +194,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     chatTemplates = new HashMap<>();
     List<Tool> instructTools = generateInstructTools();
     List<Tool> itkTools = generateITKTools();
+    for (Tool itkTool : itkTools) {
+      itkActionNames.add(itkTool.toolDefinition.function.name);
+    }
     replyToolset = generateReplyTools();
 
     //// Generate universal Tools ////
@@ -219,6 +228,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                     " be \"what are you doing after your current task.\"",
             List.of(new ToolParameterHelper("supersededGoal","boolean",List.of("true"),"",true))),
             UtteranceType.QUESTION);
+    itkActionNames.add("getCurrentPendingScheduledGoalInformation");
 
     //TODO: Add an argument which explicitly tracks current \"best guess\" parse at each step? (Even if not fully parameterized)
     //  ^ Think this could be helpful to provide focused architecture messages guiding interactions, but may be too hard
@@ -302,6 +312,20 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     trackLearnedActions = true;
   }
 
+  @Override
+  protected void executionLoop() {
+    super.executionLoop();
+    if (!registeredForQuestionAskingNotifications) {
+      try {
+        TRADEServiceInfo tsi = getMyService("questionAskingCallback", Symbol.class, Boolean.class, Question.class);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForQuestionAskingNotifications").argTypes(TRADEServiceInfo.class)).call(void.class, tsi);
+        registeredForQuestionAskingNotifications = true;
+      } catch (TRADEException e) {
+        log.error("[LLMServiceProvider] exception registering for question asking notifications, trying again", e);
+      }
+    }
+  }
+
   /**
    * Initialize Prompt variables whose values are static during runtime or updated by event-based listeners
    */
@@ -382,63 +406,99 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * @return The utterance with populated semantics, or null if no valid parse is found
    */
   public Utterance parseUtteranceLLMService(Utterance utterance, boolean reattemptedParse) {
-    //// Get existing chats
+    //// Get existing chats or create new if none exists
+    ChatCollection chatCollection;
+    ChatContext chatContext;
+    Chat chat;
     Symbol user = getUntypedSymbol(utterance.getSpeaker());
     Symbol agentTeam = getUntypedSymbol(utterance.getAddressee());
-    ChatCollection chatCollection = getChatCollection(user, agentTeam);
-    if (chatCollection == null) {
-      chatCollection = new ChatCollection(new Chat());
-      currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
-    }
-    ChatContext chatContext = chatCollection.currentChat;
-
-    //// Update or create relevant chats based on current state
-    Chat chat;
-    Prompt systemTemplate;
-    List<ToolDefinition> tools;
-
-    // Create new Chat Context if none exists
-    if (chatContext == null) {
-      chat = new Chat();
-      chatContext = new ChatContext(chat);
-      chatCollection.currentChat = chatContext;
-    }
-
-    // Pull correct template and update system message and tool targets based off current state
-    if (chatContext.chatState == ChatState.VALIDATION) {
-      systemTemplate = new Prompt(chatTemplates.get("validationnlu").systemMessageTemplate.getText());
-      tools = new ArrayList<>();
-      // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
-      //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
-      chat = new Chat();
-      promptVars.put("%chatHistoryAsString",chatContext.history.getMessages().stream().map(m -> m.role+": "+m.content).collect(Collectors.joining("\n")));
-      chatContext.history.addUserMessage(utterance.getWordsAsString());
-    } else {
-      ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
-      systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
-      tools = new ArrayList<>(chatTemplates.toolDefinitions);
-      chat = chatContext.history;
+    long originalChatContextid;
+    boolean newContext = false;
+    synchronized (currentChatCollections) {
+      chatCollection = getChatCollection(user, agentTeam);
+      if (chatCollection == null) {
+        chatCollection = new ChatCollection(new Chat());
+        currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
+        newContext = true;
+      }
+      chatContext = chatCollection.currentChat;
+      if (chatContext == null) {
+        chat = new Chat();
+        chatContext = new ChatContext(chat);
+        chatCollection.currentChat = chatContext;
+        newContext = true;
+      }
+      originalChatContextid = chatContext.getUid();
     }
 
-    if (chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION) {
-      // Add special offContextSubmission Tool if in a focused context
-      tools.add(offContextSubmissionTool.toolDefinition);
-    } else {
-      // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
-      // Add all matching system question response tools based off of expected reply semantics
-      tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
-    }
-
-    //TODO: Error handling if chat is null
-
-    // Apply input as user message
+    // New: Synchronization - need to wait for any previous chat inputs and corresponding side effects to finish being
+    // processed before applying this one
     if (!reattemptedParse) {
-      chat.addUserMessage(utterance.getWordsAsString());
+      if (!chatCollection.grabInputLock(utterance)) {
+        // Dialogue history update showed that external parser completed before reaching this point. Do not need to proceed.
+        return utterance;
+      }
     }
 
-    // Update and apply prompt vars
-    updatePromptVars(utterance, true);
-    chat.setSystem(systemTemplate.apply(promptVars));
+    List<ToolDefinition> tools;
+    synchronized (currentChatCollections) {
+      if (!newContext) {
+        // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
+        // existing state
+        chatContext = chatCollection.currentChat;
+        if (chatContext == null) {
+          chat = new Chat();
+          chatContext = new ChatContext(chat);
+          chatCollection.currentChat = chatContext;
+          originalChatContextid = chatContext.getUid();
+        }
+      }
+
+      // TODO: Revisit this - looks incomplete on second check. Can multiple pending inputs also result in this state?
+      // If external parser hit terminated the newly created context, short circuit this unused thread
+      if (chatCollection.currentChat == null || chatCollection.currentChat.getUid() != originalChatContextid) {
+        return utterance;
+      }
+
+      //// Update chats based on current state
+      Prompt systemTemplate;
+      // Pull correct template and update system message and tool targets based off current state
+      if (chatContext.chatState == ChatState.VALIDATION) {
+        systemTemplate = new Prompt(chatTemplates.get("validationnlu").systemMessageTemplate.getText());
+        tools = new ArrayList<>();
+        tools.add(textResponseTool.toolDefinition);
+        // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
+        //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
+        chat = new Chat();
+        promptVars.put("%chatHistoryAsString", chatContext.history.getMessages().stream().map(m -> m.role + ": " + m.content).collect(Collectors.joining("\n")));
+        chatContext.history.addUserMessage(utterance.getWordsAsString());
+      } else {
+        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
+        tools = new ArrayList<>(chatTemplates.toolDefinitions);
+        chat = chatContext.history;
+      }
+
+      if (chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION) {
+        // Add special offContextSubmission Tool if in a focused context
+        tools.add(offContextSubmissionTool.toolDefinition);
+      } else {
+        // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+        // Add all matching system question response tools based off of expected reply semantics
+        tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+      }
+
+      //TODO: Error handling if chat is null
+
+      // Apply input as user message
+      if (!reattemptedParse) {
+        chat.addUserMessage(utterance.getWordsAsString());
+      }
+
+      // Update and apply prompt vars
+      updatePromptVars(utterance, true);
+      chat.setSystem(systemTemplate.apply(promptVars));
+    }
 
     //// Send created chat to LLM completion
     Completion response = callChatCompletion(chat, tools);
@@ -449,29 +509,37 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
 
-    //TODO: need to update this code if going with paradigm that text responses are no longer valid
-    //// Handle Responses
-    if (response.toolCalls.isEmpty()) {
-      // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
-      //    Add robot message to chat and return generateResponse semantics with no validation required
-      return handleTextResponse(response,utterance,chatContext);
-    } else {
-      if (chatContext.chatState == ChatState.VALIDATION) {
-        // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
-        //  to terminate and/or transfer between base and focused contexts in this case)
-        return handleValidationResponse(response, utterance, chatCollection);
-      } else {
+    synchronized (currentChatCollections) {
+      if (chatCollection.currentChat == null || chatCollection.currentChat.getUid() != originalChatContextid) {
+        return utterance;
+      }
 
-        // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
-        return handleToolResponse(response, utterance, chatCollection);
+      //TODO: need to update this code if going with paradigm that text responses are no longer valid (or can leave text
+      //  case in case LLM doesn't target the tool for whatever reason)
+      //// Handle Responses
+      if (response.toolCalls.isEmpty()) {
+        // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
+        //    Add robot message to chat and return generateResponse semantics with no validation required
+        return handleTextResponse(response, utterance, chatContext);
+      } else {
+        if (chatContext.chatState == ChatState.VALIDATION) {
+          // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
+          //  to terminate and/or transfer between base and focused contexts in this case)
+          return handleValidationResponse(response, utterance, chatCollection);
+        } else {
+
+          // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
+          return handleToolResponse(response, utterance, chatCollection);
+        }
       }
     }
   }
 
   /**
    * Method for handling Completion responses containing Tool calls, 3 main cases:
-   *  - Base - Enter validation towards called Tool's underlying semantics
-   *  - LLM ITK - will submit goal without validation (Underlying semantics should match a SKIPPENDING priority goal which calls {@link #addToolResponse(Symbol, Symbol, String)})
+   *  - Base: Return an Utterance populated with the Tool's underlying semantics. In the case of an external cache hit,
+   *          the context will be discarded and handleValidatedToolResponse will be called from the corresponding dialogue history update.
+   *  - LLM ITK - will return semantics for goal without validation (Underlying semantics should match a SKIPPENDING priority goal which calls {@link #addToolResponse(Symbol, Symbol, String)})
    *  - Invalid parse - Add a system error message to the Chat, call the completion again, and return a text response to the user with the result
    *  - *NEW* Stand-in tool(s) for text responses - Experimenting targeting a specific tool to give text responses rather than using
    *      handleTextResponse above with promising initial success. Allowing the LLM to target text responses or tool calls was giving it a
@@ -567,8 +635,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         outputUtterance.setType(UtteranceType.INSTRUCT);
         outputUtterance.setNeedsValidation(false);
       } else {
-        chatContext.chatState = ChatState.VALIDATION;
-        chatContext.utteranceUpForValidation = outputUtterance; //copy?
+        if (outputUtterance.needsValidation()) {
+          chatContext.chatState = ChatState.VALIDATION;
+          chatContext.utteranceUpForValidation = outputUtterance; //copy?
+        } else {
+          // noConfirmation case - deferred until dialogue history update in case of external parser hit
+          //handleValidatedToolCall(outputUtterance, chatCollection);
+        }
       }
 
       return outputUtterance;
@@ -584,13 +657,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       chatContext.history.addMessage("tool", baseToolResponse.toString());
 
       // Re-call completion for text response
-      // TODO URGENT: Test this again - does this need the text response tool advertised? Will this supply a text response
-      //              or target a tool found in the history?
-      Completion errorResponse = callChatCompletion(chatContext.history, null);
+      Completion errorResponse = callChatCompletion(chatContext.history, List.of(textResponseTool.toolDefinition));
       if (errorResponse == null) {
         return inputUtterance;
       } else {
-        return handleTextResponse(errorResponse, inputUtterance, chatContext);
+        if (errorResponse.toolCalls.isEmpty()) {
+          return handleTextResponse(errorResponse, inputUtterance, chatContext);
+        } else {
+          return handleToolResponse(errorResponse,inputUtterance,chatCollection);
+        }
       }
     }
   }
@@ -602,7 +677,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext) {
     String responseString = llmResponse.getText();
 
-    chatContext.history.addRobotMessage(responseString);
+    // Updating response from dialogue history now - in case this parse result is not used
+    //chatContext.history.addRobotMessage(responseString);
     Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), "\""+responseString+"\"");
     inputUtterance.setSemantics(generateResponsePred);
     inputUtterance.setType(UtteranceType.INSTRUCT);
@@ -610,6 +686,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return inputUtterance;
   }
 
+  // (Don't need to do any disjoint updates/checking for external cache hits because assuming we are already using LLM only by this point)
   /**
    * Method for handling Completion responses containing during validation.
    *
@@ -628,6 +705,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Utterance.Builder output = new Utterance.Builder(inputUtterance);
     ChatContext chatContext = chatCollection.currentChat;
 
+    // Experimental text response tool stand-in (described above)
+    if (toolCall.function.name.equals("stillGatheringInformation")) {
+      return handleToolResponse(llmResponse, inputUtterance, chatCollection);
+    }
+
     // Handle expected validation question yes/no response semantics
     if (toolCall.function.name.equals("val") || toolCall.function.name.equals("validated")) {
       String argument = toolCall.function.arguments.contains("yes") ? "yes" : "no";
@@ -637,39 +719,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       // If positively validated, terminate associated context and submit instruction
       if (argument.equals("yes")) {
-        Utterance utterance = chatContext.utteranceUpForValidation;
-        String toolName = utterance.getSemantics().getName();
-
-        // TODO: revisit offContextSubmission handling
-        if (toolName.equals("offContextSubmission")) {
-          //Make a copy for new submission context
-          ChatContext copy = new ChatContext(chatContext);
-          copy.submissionTime = System.currentTimeMillis();
-          chatCollection.pendingFocusedChats.put(toolName, copy);
-          chatContext.chatState = ChatState.PARSE;
-
-          //TODO: test and iterate on this. What chat state do we want when entering offcontext submission case?
-          //  Do we want the suspended conversation history to be in context? If so, in what form?
-          //  Add architecture message explaining "offcontext" status? and/or summary of suspended context?
-          //chatContext.history = new Chat();
-          //chatContext.history.addMessage();
-          copy.history.addMessage("tool", "The user has signalled they are attempting to give a new instruction, independent of the target of the original suspended interaction. If they have already supplied enough information about the new instruction to call a function below, please do so. Otherwise, please continue with the system task to figure out what the new instruction is.");
-
-          //TODO: better way to do this? Not sure if this will be an issue when looking and synchronicity/safety
-          //Don't remove current state so it can be handled on suspend
-        } else {
-          // If tool is targeting a 'focused dialogue action', store the current chat history for retrieval by that action
-          if (chatTemplates.containsKey(toolName)) {
-            // Storing submission time so that action can conditionally add a disclaimer stating that this instruction
-            //  was given T time ago (because the goal may end up being stuck in the queue for an arbitrary amount of time)
-            chatContext.submissionTime = System.currentTimeMillis();
-            chatCollection.pendingFocusedChats.put(toolName, chatContext);
-          }
-
-          // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
-          chatCollection.currentChat.signalCompletion();
-          chatCollection.currentChat = null;
-        }
+        handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
       } else {
         // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
         //  side effects will be triggered from reattemptParse / the NLU asl pipeline
@@ -684,6 +734,61 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       chatCollection.currentChat = null;
     }
     return output.build();
+  }
+
+  private void handleValidatedToolCall(Utterance validatedUtterance, ChatCollection chatCollection) {
+    handleValidatedToolCall(validatedUtterance.getSemantics().getName(), chatCollection);
+  }
+
+  /**
+   * Method to perform relevant side effects for a validated (or noConfirmation) tool call
+   */
+  private void handleValidatedToolCall(String toolName, ChatCollection chatCollection) {
+    ChatContext chatContext = chatCollection.currentChat;
+
+    // TODO: revisit offContextSubmission handling
+    if (toolName.equals("offContextSubmission")) {
+      //Make a copy for new submission context
+      ChatContext copy = new ChatContext(chatContext);
+      copy.submissionTime = System.currentTimeMillis();
+      chatCollection.pendingFocusedChats.put(toolName, copy);
+      chatContext.chatState = ChatState.PARSE;
+
+      //TODO: test and iterate on this. What chat state do we want when entering offcontext submission case?
+      //  Do we want the suspended conversation history to be in context? If so, in what form?
+      //  Add architecture message explaining "offcontext" status? and/or summary of suspended context?
+      //chatContext.history = new Chat();
+      //chatContext.history.addMessage();
+      copy.history.addMessage("tool", "The user has signalled they are attempting to give a new instruction, independent of the target of the original suspended interaction. If they have already supplied enough information about the new instruction to call a function below, please do so. Otherwise, please continue with the system task to figure out what the new instruction is.");
+
+      //TODO: better way to do this w.r.t synchronization/safety?
+      //Don't remove current state so it can be handled on suspend
+    } else {
+      // If tool is targeting a 'focused dialogue action', store the current chat history for retrieval by that action
+      if (chatTemplates.containsKey(toolName)) {
+        // Kind of a hack? Can remove if extending synchronization around tentativeAccept/Submission dialogue or figuring
+        //  out another solution for integrating NLG into relevant chats.
+        // Remove potential excess system NLG for unrelated goals before storing this chat
+        for (int i=chatContext.history.messages.size()-1; i>0;i--) {
+          if (chatContext.history.messages.get(i).role.equals(chatContext.history.userName)) {
+            break;
+          }
+          chatContext.history.messages.remove(i);
+        }
+
+        // Storing submission time so that action can conditionally add a disclaimer stating that this instruction
+        //  was given T time ago (because the goal may end up being stuck in the queue for an arbitrary amount of time)
+        chatContext.submissionTime = System.currentTimeMillis();
+        chatCollection.pendingFocusedChats.put(toolName, chatContext);
+      }
+
+      //TODO: shouldn't be here - don't need to validate ITK, but hitting this in noConfirmation case now
+      if (!itkActionNames.contains(toolName)) {
+        // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
+        chatCollection.currentChat.signalCompletion();
+        chatCollection.currentChat = null;
+      }
+    }
   }
 
   /**
@@ -715,10 +820,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   @TRADEService
   public boolean reattemptParse(Utterance utterance) {
-    Symbol user = utterance.getSpeaker().toUntyped();
-    Symbol agentTeam = utterance.getAddressee().toUntyped();
-    ChatCollection chatCollection = getChatCollection(user, agentTeam);
-    ChatContext currentContext = chatCollection.currentChat;
+    ChatCollection chatCollection;
+    ChatContext currentContext;
+    synchronized (currentChatCollections) {
+      Symbol user = utterance.getSpeaker().toUntyped();
+      Symbol agentTeam = utterance.getAddressee().toUntyped();
+      chatCollection = getChatCollection(user, agentTeam);
+      currentContext = chatCollection.currentChat;
+    }
     if (currentContext == null || currentContext.chatState != ChatState.PARSE) {
       log.error("[reattemptParse] called with incompatible parse state");
       //TODO: set error semantics for now?
@@ -737,6 +846,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Call completion with user response and tool message
     Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
+    tempUtterance.setNeedsValidation(true);
     tempUtterance = parseUtteranceLLMService(tempUtterance, true);
     //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
     utterance.setSemantics(tempUtterance.getSemantics());
@@ -747,13 +857,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     utterance.setNeedsValidation(tempUtterance.needsValidation());
     utterance.setType(tempUtterance.getType());
 
-    // TODO: update this reasoning, this is really weird and we may run into problems if we ever allow LLM parses to not
-    //  be validated by default. Return value is signaling whether the outer loop in NLU.asl needs to continue and the
-    //  utterance needs to be revalidated (i.e. when an updated tool call is made) vs not (i.e. when a text response is
-    //  given). Even in the latter case, we want the text response to occur, so we must set isValidated to true or else
-    //  the utterance would be discarded in nlu.asl
+    chatCollection.utteranceBeingProcessed = null;
     boolean ret = utterance.needsValidation();
     if (!ret) {
+      // This is kind of weird, but we need to set isValidated to true even for things normally not needing validation
+      //  (e.g. LLM text responses) so that outer loop in NLU.asl doesn't discard the utterance.
       utterance.setIsValidated(true);
     }
     return ret;
@@ -849,93 +957,117 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   @TRADEService
   public Utterance focusDialogueChat(Symbol user, Symbol agentTeam, String contextIdentifier, long cid) {
-    //// Retrieve relevant Chat state
-    Symbol speaker = getUntypedSymbol(user);
-    Symbol addressee = getUntypedSymbol(agentTeam);
-    ChatCollection collection = getChatCollection(speaker, addressee);
-    if (collection == null) {
-      log.error("[runContextSpecificChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+    ChatContext chatContext;
+    ChatCollection collection;
+    Symbol speaker;
+    Symbol addressee;
+    // Get System Prompt Template and Tool set for focused context - convention is for a ChatTemplate to be added
+    //  on init with the entry key == the name of the action causing this call
+    ChatTemplates contextSpecificTemplate = chatTemplates.get(contextIdentifier);
+    Chat chat;
+    Utterance originalUtterance = getOriginalContextSpecificUtterance(user, agentTeam, contextIdentifier);
+    if (originalUtterance == null) {
+      log.error("[focusDialogueChat] could not find utterance triggering call for context identifier {}", contextIdentifier);
+      //TODO: null check in asl, or return dummy/error response utterance
       return null;
     }
 
-    // Get System Prompt Template and Tool set for focused context - convention is for a ChatTemplate to be added
-    //  on init with the entry key == the name of the action causing this call
-    List<ToolDefinition> tools;
-    ChatTemplates contextSpecificTemplate = chatTemplates.get(contextIdentifier);
-    Chat chat;
-    if (collection.currentChat != null) {
-      // TODO: is there still a distinction between the above and below conditionals? We are not suspending/resuming
-      //  on this method. Can probably simplify this case/remove the "merge on resume"? Should just always fail?
-      if (collection.currentChat.cid != cid) {
-        // Cannot transition from a focused context to another focused context - something went wrong with NLU pipeline
-        //  or action design
-        log.error("[runContextSpecificChat] Attempting to start focused Chat context for user/agent pair {}/{}, but pair has an existing context {}", speaker, addressee, collection.currentChat.cid);
-        return null;
-      } else {
-        log.debug("[runContextSpecificChat] merging on resumed Chat context for user/agent pair {}/{}, cid {}", speaker, addressee, cid);
-      }
-      chat = collection.currentChat.history;
-    } else {
-      // Grab corresponding chat history which was cached in pending contexts
-      //TODO: This should theoretically be a list per contextIdentifier; probably shouldn't, but could have multiple
-      //      suspended conversations of the same type at the same time.
-      ChatContext chatContext = collection.pendingFocusedChats.remove(contextIdentifier);
-      if (chatContext == null) {
-        log.error("[runContextSpecificChat] could not find stored chat state for user/agent pair {}/{}", speaker, addressee);
-        return null;
-      }
-
-      // Copy over existing base chat history, remove previous tool calls, overwrite system prompt
-      //  TODO: see if performance is good enough just doing this, or if a tool response to the initial call saying
-      //    to use the history towards the updated task explicitly works better
-      chatContext.chatState = ChatState.PARSE;
-      chatContext.contextID = contextIdentifier;
-      collection.currentChat = chatContext;
-      chat = chatContext.history;
-      if (!contextIdentifier.equals("offContextSubmission")) {
-        // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
-        //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
-        //  in system prompt itself and resetting message list
-        promptVars.put("%focusedChatHistoryAsString", chat.getMessages().stream().map(m -> m.role + ": " + m.content).collect(Collectors.joining("\n")));
-        chat.setMessages(new ArrayList<>());
-      }
-      //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
-      chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
-
-      // Update chat status
-      if (contextIdentifier.equals("offContextSubmission")) {
-        chatContext.chatType = ChatType.OFFTOPIC;
-      } else {
-        chatContext.chatType = ChatType.FOCUSED;
-
-        // Check time elapsed since storage, if greater than N, add architecture message
-        long timeSinceSubmission = System.currentTimeMillis() - chatContext.submissionTime;
-        //TODO: what amount of time here? + Test if/how this actually modified response once everything else is settled
-        if (timeSinceSubmission > 15) {
-          chatContext.history.addMessage("tool", String.format("%d seconds have passed since the user gave you the previous instruction. In your next response, unless you are calling a function, please briefly remind the user that they previously instructed you to perform the current task.", timeSinceSubmission / 1000));
+    //TODO: Update what actually happens here. Conceptually we should wait until the user is done with their last
+    //  interaction or proactively interrupt it in order to engage in this. Issue is it is hard to detect when an
+    //  interaction is "done" purely through language, and we probably want to override some interactions and not
+    //  others. Currently interrupting everything that is not in a validation state after the current input is processed
+    while (true) {
+      // Grab current chat state
+      synchronized (currentChatCollections) {
+        speaker = getUntypedSymbol(user);
+        addressee = getUntypedSymbol(agentTeam);
+        collection = getChatCollection(speaker, addressee);
+        if (collection == null) {
+          log.error("[runContextSpecificChat] supplied user/agent pair {}/{} does not have an existing Chat collection", speaker, addressee);
+          return null;
         }
       }
-      chatContext.cid = cid;
-    }
 
-    // Grab tools from corresponding template
-    tools = new ArrayList<>(contextSpecificTemplate.toolDefinitions);
-    tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+      // Wait for current pending input(s) to be fully processed and then grab input lock until this call's side effect terminates.
+      //  Will be unlocked in dialogue history update resulting from "focusedContextResponseSubmissionWrapper" goal submitted in outer script.
+      collection.grabInputLock(originalUtterance);
 
-    // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
-    Completion response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
-    Utterance originalUtterance = getOriginalContextSpecificUtterance(user, agentTeam, contextIdentifier);
-    //TODO: null check on response and utterance
-    if (response.toolCalls.isEmpty()) {
-      // Text response, presumably querying for information towards new template target
-      originalUtterance = handleTextResponse(response, originalUtterance, collection.currentChat);
-    } else {
-      // Direct tool call on transfer
-      originalUtterance = handleToolResponse(response, originalUtterance, collection);
+      // After input is processed, check if we are in validation state. If so, loop to top and wait for it to terminate.
+      // Otherwise, overwrite and remove the existing chat with the focused context.
+      synchronized (currentChatCollections) {
+        if (collection.currentChat != null && collection.currentChat.chatState == ChatState.VALIDATION) {
+          // In validation state, release hold on input lock and loop to top
+          log.warn("[focusDialogueChat] existing chat context is in validation, allowing it to terminate before entering focused context");
+          collection.signalInputProcessed(originalUtterance);
+          chatContext = collection.currentChat;
+        } else {
+          // Set focused context to current
+          log.warn("[focusDialogueChat] discarding existing chat context. Should only be system responses / failure messages");
+
+          // Grab corresponding chat history which was cached in pending contexts
+          //TODO: This should theoretically be a list per contextIdentifier; probably shouldn't, but could have multiple
+          //      suspended conversations of the same type at the same time. (could use ActionContext id)
+          chatContext = collection.pendingFocusedChats.remove(contextIdentifier);
+          if (chatContext == null) {
+            log.error("[runContextSpecificChat] could not find stored chat state for user/agent pair {}/{}", speaker, addressee);
+            collection.signalInputProcessed(originalUtterance);
+            return null;
+          }
+
+          // Remove previous tool calls, replace system prompt, add previous Chat history to new system prompt
+          //  TODO: see if performance is good enough just doing this, or if a tool response to the initial call saying
+          //    to use the history towards the updated task explicitly works better
+          chatContext.chatState = ChatState.PARSE;
+          collection.signalInputProcessed();
+          chatContext.contextID = contextIdentifier;
+          collection.currentChat = chatContext;
+          chat = chatContext.history;
+          if (!contextIdentifier.equals("offContextSubmission")) {
+            // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
+            //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
+            //  in system prompt itself and resetting message list
+            promptVars.put("%focusedChatHistoryAsString", chat.getMessages().stream().map(m -> m.role + ": " + m.content).collect(Collectors.joining("\n")));
+            chat.setMessages(new ArrayList<>());
+          }
+          //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
+          chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
+
+          // Update chat status
+          if (contextIdentifier.equals("offContextSubmission")) {
+            chatContext.chatType = ChatType.OFFTOPIC;
+          } else {
+            chatContext.chatType = ChatType.FOCUSED;
+
+            // Check time elapsed since storage, if greater than N, add architecture message
+            long timeSinceSubmission = (System.currentTimeMillis() - chatContext.submissionTime) / 1000;
+            //TODO: what amount of time here? + Test if/how this actually modified response once everything else is settled
+            if (timeSinceSubmission > 15) {
+              chatContext.history.addMessage("tool", String.format("%d seconds have passed since the user gave you the previous instruction. In your next response, unless you are calling a function, please briefly remind the user that they previously instructed you to perform the current task.", timeSinceSubmission));
+            }
+          }
+          chatContext.cid = cid;
+
+          // Grab tools from corresponding template
+          //tools = new ArrayList<>(contextSpecificTemplate.toolDefinitions);
+          //tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+
+          // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
+          Completion response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
+          //TODO: null check on response and utterance
+          if (response.toolCalls.isEmpty()) {
+            // Text response, presumably querying for information towards new template target
+            originalUtterance = handleTextResponse(response, originalUtterance, collection.currentChat);
+          } else {
+            // Direct tool call on transfer
+            originalUtterance = handleToolResponse(response, originalUtterance, collection);
+          }
+          // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
+          contextTransferResponseUtterances.put(cid, originalUtterance);
+          return originalUtterance;
+        }
+      }
+      chatContext.waitForCompletion();
     }
-    // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
-    contextTransferResponseUtterances.put(cid,originalUtterance);
-    return originalUtterance;
   }
 
   /**
@@ -950,17 +1082,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
-    ChatCollection collection = getChatCollection(speaker, addressee);
-    if (collection == null) {
-      log.error("[interruptWaitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-      return false;
-    } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
-      //TODO: is this now very much possible if the offcontext submission immediately goes through?
-      log.warn("[interruptWaitOnFocusedChat] no matching chat for pair and id {}/{} {}", speaker, addressee, collection);
-      return false;
-    }
+    synchronized (currentChatCollections) {
+      ChatCollection collection = getChatCollection(speaker, addressee);
+      if (collection == null) {
+        log.error("[interruptWaitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+        return false;
+      } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
+        //TODO: is this now very much possible if the offcontext submission immediately goes through?
+        log.warn("[interruptWaitOnFocusedChat] no matching chat for pair and id {}/{} {}", speaker, addressee, collection);
+        return false;
+      }
 
-    collection.currentChat.signalCompletion();
+      collection.currentChat.signalCompletion();
+    }
 
     return true;
   }
@@ -981,21 +1115,26 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Get Chat for supplied user/agentTeam pair
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
-    ChatCollection collection = getChatCollection(speaker, addressee);
-    if (collection == null) {
-      log.error("[waitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-      return null;
-    } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
-      //TODO: is this now very much possible if the offcontext submission immediately goes through?
-      log.warn("[waitOnFocusedChat] no matching chat for pair and id {}/{} {}. This should only be possible if the initial instruction contained all relevant information", speaker, addressee, collection);
-      return null;
+    ChatCollection collection;
+    ChatContext chatContext;
+    synchronized (currentChatCollections) {
+      collection = getChatCollection(speaker, addressee);
+      if (collection == null) {
+        log.error("[waitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+        return null;
+      } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
+        //TODO: is this now very much possible if the offcontext submission immediately goes through?
+        log.warn("[waitOnFocusedChat] no matching chat for pair and id {}/{} {}. This should only be possible if the initial instruction contained all relevant information", speaker, addressee, collection);
+        return null;
+      }
+      chatContext = collection.currentChat;
     }
 
-    Predicate resultOfFocusedContext = collection.currentChat.waitForCompletion();
-
-    //TODO: see if can do offContext cancel/suspendCurrentGoal transformation shenanigans here instead
+    // Wait for focused context to terminate
+    Predicate resultOfFocusedContext = chatContext.waitForCompletion();
 
     contextTransferResponseUtterances.remove(cid);
+    //TODO: see if can do offContext cancel/suspendCurrentGoal transformation shenanigans here instead
 
     log.info("[waitOnFocusedChat] out method {}/{} {}", user, agentTeam, cid);
 
@@ -1075,6 +1214,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   @TRADEService
   public long waitForGoalSubmission(Predicate goalPred, long timeout) {
+    if (goalPred == null) {
+      log.error("[waitForGoalSubmission] null goalPred supplied");
+      return -1;
+    }
+
     long startTime = System.currentTimeMillis() - 1000;
 
     //Start thread to wait on notification of goal submission
@@ -1183,12 +1327,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   @TRADEService
   public void endChatContext(Symbol user, Symbol agentTeam) {
-    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
-    if (chatCollection != null) {
-      ChatContext chatContext = chatCollection.currentChat;
-      if (chatContext != null) {
+    synchronized (currentChatCollections) {
+      ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+      if (chatCollection != null) {
+        chatCollection.releaseLocks();
         chatCollection.currentChat = null;
-        chatContext.signalCompletion();
       }
     }
   }
@@ -1224,10 +1367,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }.getType());
         calledArguments.values().removeIf(Objects::isNull);
         String text = calledArguments.get("response");
-        collection.currentChat.history.addRobotMessage(text);
         return text;
       } else if (response.getText() != null) {
-        collection.currentChat.history.addRobotMessage(response.getText());
         return response.getText();
       }
     }
@@ -1235,28 +1376,62 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return "";
   }
 
+  //TODO: Should ITK calls be fully synchronized between instruction to this call here? Ideally, yes, but it would be
+  //  very very hard to detect any exception in the external itk method which would cause this method to not be
+  //  reached. For now, if a user submits another input which terminates the chat context before this method has a
+  //  chance to be called, we just discard the response.
+  /**
+   * Method used by "social LLM" itk behaviors (llm <-> diarc itk) to add DIARC's response to an ITK request and then
+   * call the Completion endpoint with the updated Chat for a text response.
+   */
   //TODO: Relate to original tool call id if keeping in history
   @TRADEService
   public String addToolResponse(Symbol user, Symbol agentTeam, String toolResponse) {
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
-    ChatCollection collection = getChatCollection(speaker, addressee);
-    if (collection == null) {
-      log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-      return "";
-    } else if (collection.currentChat == null) {
-      log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{}", speaker, addressee);
-      return "";
+    ChatCollection collection;
+    ChatContext chatContext;
+    Chat chat;
+    long originalChatContextid;
+    synchronized (currentChatCollections) {
+      collection = getChatCollection(speaker, addressee);
+      chatContext = collection.currentChat;
+      if (collection == null) {
+        log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+        return "";
+      } else if (chatContext == null) {
+        log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{}", speaker, addressee);
+        return "";
+      } else {
+        chatContext.history.addMessage("tool", toolResponse);
+        chat = chatContext.history;
+        originalChatContextid = chatContext.getUid();
+      }
     }
 
-    collection.currentChat.history.addMessage("tool", toolResponse);
+    Completion response = callChatCompletion(chat, List.of(textResponseTool.toolDefinition));
 
-    //Completion response = callChatCompletion(collection.currentChat.history, null);
-    Completion response = callChatCompletion(collection.currentChat.history, List.of(textResponseTool.toolDefinition));
-
-    if (response != null && response.getText() != null) {
-      collection.currentChat.history.addRobotMessage(response.getText());
-      return response.getText();
+    if (response != null) {
+      synchronized (currentChatCollections) {
+        if (collection.currentChat == null || collection.currentChat.getUid() != originalChatContextid) {
+          log.error("[addToolResponse] chat context was overwritten during completion request");
+          //TODO: do we still return the response in this case - or just move on?
+          return "";
+        }
+        if (response.getText() != null && !response.getText().isEmpty()) {
+          collection.currentChat.history.addRobotMessage(response.getText());
+          return response.getText();
+        } else if (!response.toolCalls.isEmpty()) {
+          ToolCall toolCall = response.toolCalls.get(0);
+          if (toolCall.function.name.equals("stillGatheringInformation")) {
+            Map<String, String> calledArguments = new Gson().fromJson(response.toolCalls.get(0).function.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
+            }.getType());
+            calledArguments.values().removeIf(Objects::isNull);
+            String ret = calledArguments.get("response");
+            return ret == null ? "" : ret;
+          }
+        }
+      }
     }
 
     return "";
@@ -1265,93 +1440,101 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //// Inner suspend/resume methods for runContextSpecificChat ////
   @TRADEService
   public Justification suspendLLMChatContext(Symbol user, Symbol agentTeam, long cid) {
-    ChatCollection collection = getChatCollection(user, agentTeam);
-    if (collection == null) {
-      return new ConditionJustification(false);
-    }
-    ChatContext chatContext = collection.currentChat;
-    if (chatContext == null) {
-      log.error("[suspendLLMChatContext] {}/{} chat collection has no active chat", user, agentTeam);
-      return new ConditionJustification(false);
-    }
-    if (chatContext.cid != cid) {
-      log.error("[suspendLLMChatContext] active chat for {}/{} does match supplied cid. {}, {}", user, agentTeam, chatContext.cid, cid);
-      return new ConditionJustification(false);
-    }
-    if (chatContext.chatType != ChatType.FOCUSED) {
-      log.error("[suspendLLMChatContext] active chat for {}/{} does not have ChatType FOCUSED, has {}", user, agentTeam, chatContext.chatType);
-      return new ConditionJustification(false);
-    }
+    synchronized (currentChatCollections) {
+      ChatCollection collection = getChatCollection(user, agentTeam);
+      if (collection == null) {
+        return new ConditionJustification(false);
+      }
+      ChatContext chatContext = collection.currentChat;
+      if (chatContext == null) {
+        log.error("[suspendLLMChatContext] {}/{} chat collection has no active chat", user, agentTeam);
+        return new ConditionJustification(false);
+      }
+      if (chatContext.cid != cid) {
+        log.error("[suspendLLMChatContext] active chat for {}/{} does match supplied cid. {}, {}", user, agentTeam, chatContext.cid, cid);
+        return new ConditionJustification(false);
+      }
+      if (chatContext.chatType != ChatType.FOCUSED) {
+        log.error("[suspendLLMChatContext] active chat for {}/{} does not have ChatType FOCUSED, has {}", user, agentTeam, chatContext.chatType);
+        return new ConditionJustification(false);
+      }
 
-    collection.suspendedChats.add(0,chatContext);
-    collection.currentChat = null;
-    //chatContext.contextLock.release();
-    //chatContext.signalCompletion();
+      collection.suspendedChats.add(0, chatContext);
+      collection.currentChat = null;
+      //chatContext.contextLock.release();
+      //chatContext.signalCompletion();
+    }
 
     return new ConditionJustification(true);
   }
 
   @TRADEService
   public Justification resumeLLMChatContext(Symbol user, Symbol agentTeam, long cid) {
-    ChatCollection collection = getChatCollection(user, agentTeam);
-    if (collection == null) {
-      return new ConditionJustification(false);
-    }
-    if (collection.currentChat != null) {
-      log.error("[resumeLLMChatContext] active chat for {}/{} already exists.", user, agentTeam);
-      return new ConditionJustification(false);
-    }
-
-    int index = -1;
-    for (int i=0; i<collection.suspendedChats.size();i++) {
-      if (collection.suspendedChats.get(i).cid == cid) {
-        index = i;
-        break;
+    synchronized (currentChatCollections) {
+      ChatCollection collection = getChatCollection(user, agentTeam);
+      if (collection == null) {
+        return new ConditionJustification(false);
       }
-    }
+      if (collection.currentChat != null) {
+        log.error("[resumeLLMChatContext] active chat for {}/{} already exists.", user, agentTeam);
+        return new ConditionJustification(false);
+      }
 
-    if (index == -1) {
-      log.error("[resumeLLMChatContext] Could not find suspended chat for pair {}/{} and cid {}.", user, agentTeam, cid);
-      return new ConditionJustification(false);
-    }
+      int index = -1;
+      for (int i = 0; i < collection.suspendedChats.size(); i++) {
+        if (collection.suspendedChats.get(i).cid == cid) {
+          index = i;
+          break;
+        }
+      }
 
-    //TODO: this message needs to be tuned
-    ChatContext chatContext = collection.suspendedChats.remove(index);
-    chatContext.history.addMessage("tool", String.format("Your interaction with the user was paused for some amount of time while you both performed other actions. Please refamiliarize the user with the task you are performing and the current state of progress."));
-    collection.currentChat = chatContext;
+      if (index == -1) {
+        log.error("[resumeLLMChatContext] Could not find suspended chat for pair {}/{} and cid {}.", user, agentTeam, cid);
+        return new ConditionJustification(false);
+      }
+
+      //TODO: this message needs to be tuned
+      ChatContext chatContext = collection.suspendedChats.remove(index);
+      chatContext.history.addMessage("tool", String.format("Your interaction with the user was paused for some amount of time while you both performed other actions. Please refamiliarize the user with the task you are performing and the current state of progress."));
+      collection.currentChat = chatContext;
+
+      //chatContext.waitToProcessInput(cid);
+    }
 
     return new ConditionJustification(true);
   }
 
   @TRADEService
   public Justification cancelLLMChatContext(Symbol user, Symbol agentTeam, long cid) {
-    ChatCollection collection = getChatCollection(user, agentTeam);
-    if (collection == null) {
-      return new ConditionJustification(false);
-    }
+    synchronized (currentChatCollections) {
+      ChatCollection collection = getChatCollection(user, agentTeam);
+      if (collection == null) {
+        return new ConditionJustification(false);
+      }
 
-    if (collection.currentChat != null && collection.currentChat.cid == cid) {
-      ChatContext chatContext = collection.currentChat;
-      if (chatContext.chatType != ChatType.FOCUSED) {
-        log.error("[cancelLLMChatContext] active chat for {}/{} does not have ChatType FOCUSED, has {}", user, agentTeam, collection.currentChat.chatType);
-        return new ConditionJustification(false);
-      }
-      collection.currentChat = null;
-      //chatContext.contextLock.release();
-    } else {
-      int index = -1;
-      for (int i=0; i<collection.suspendedChats.size();i++) {
-        if (collection.suspendedChats.get(i).cid == cid) {
-          index = i;
-          break;
+      if (collection.currentChat != null && collection.currentChat.cid == cid) {
+        ChatContext chatContext = collection.currentChat;
+        if (chatContext.chatType != ChatType.FOCUSED) {
+          log.error("[cancelLLMChatContext] active chat for {}/{} does not have ChatType FOCUSED, has {}", user, agentTeam, collection.currentChat.chatType);
+          return new ConditionJustification(false);
         }
-      }
-      if (index == -1) {
-        log.error("[cancelLLMChatContext] could not find matching chat for pair and id {}/{}, {}", user, agentTeam, cid);
-        return new ConditionJustification(false);
-      } else {
-        ChatContext chatContext = collection.suspendedChats.remove(index);
+        collection.currentChat = null;
         //chatContext.contextLock.release();
+      } else {
+        int index = -1;
+        for (int i = 0; i < collection.suspendedChats.size(); i++) {
+          if (collection.suspendedChats.get(i).cid == cid) {
+            index = i;
+            break;
+          }
+        }
+        if (index == -1) {
+          log.error("[cancelLLMChatContext] could not find matching chat for pair and id {}/{}, {}", user, agentTeam, cid);
+          return new ConditionJustification(false);
+        } else {
+          ChatContext chatContext = collection.suspendedChats.remove(index);
+          //chatContext.contextLock.release();
+        }
       }
     }
 
@@ -1531,20 +1714,132 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   @Override
   public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
     super.updateLLMConversationHistory(utterance, newUtterance);
-    if (!newUtterance) {
+
+    synchronized (currentChatCollections) {
+      if (utterance.isInputUtterance()) {
+        //NLU
+        Symbol agentTeam = utterance.getAddressee().toUntyped();
+        Symbol user = utterance.getSpeaker().toUntyped();
+        ChatCollection chatCollection = getChatCollection(user, agentTeam);
+        // Create new collection in case another parser hit completes and triggers a history update
+        //  before the input even reaches this parser. In this case, we want to short-circuit the parse call for this
+        //  utterance to prevent any unncessary side effects.
+        if (chatCollection == null) {
+          chatCollection = new ChatCollection();
+          currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
+        }
+
+        if (chatCollection.currentChat != null) {
+          ChatContext chatContext = chatCollection.currentChat;
+          // Reset validation Question timeout on any user input
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            try {
+              List<Term> responseForms = List.of(Factory.createPredicate("val(X)"), Factory.createPredicate("validated(X)"));
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("resetQuestionTimeout").argTypes(List.class, Symbol.class, Symbol.class)).call(void.class, responseForms, agentTeam, user);
+            } catch (TRADEException e) {
+              log.error("[updateLLMConversationHistory] unable to reset timeout for validation questions", e);
+            }
+          }
+
+          Predicate semantics = (Predicate) utterance.getSemantics();
+          // If negative validation response, don't unlock until reattemptParse completes
+          if ((semantics.getName().equals("val") || semantics.getName().equals("validated")) && semantics.get(0).getName().equals("no")) {
+            return;
+          }
+
+          // TODO: How to detect all ITK cases to know whether to keep result in the history? Currently not using the
+          //  itk pipeline due to issues interacting with EM queueing. Can at least match against any LLM itk tool..
+          // Perform necessary side effects to current chat. 2 cases handled collectively here:
+          //   External parser hit for an action instruction - discard chat context holding any side effects from unused LLM parse
+          //   LLM noConfirmation case - handle side effects as if a validated instruction just occurred
+          if (utterance.getType() == UtteranceType.INSTRUCT && !utterance.needsValidation()) {
+            boolean preserveHistory = false;
+
+            // (noConfirmation LLM cases only)
+            if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
+              if (semantics.getArgs().size() > 1) {
+                String command = semantics.get(1).getName();
+                if (command.equals("generateResponseFromString") || itkActionNames.contains(command)) {
+                  // TODO: should this check be for all SKIPPENDING?
+                  // Remove history unless LLM text response or ITK call
+                  preserveHistory = true;
+                } else {
+                  if (command.equals("offContextSubmission")) {
+                    // TODO: can this be moved somewhere else
+                    // Moved to suspended context on suspend
+                    preserveHistory = true;
+                    chatContext.utteranceUpForValidation = utterance;
+                  }
+                  // For LLM targets under noConfirmation - perform special side effects for "focused" contexts
+                  handleValidatedToolCall(command, chatCollection);
+                }
+              }
+            }
+
+            // Clear history unless noConfirmation LLM target dictates it should be retained
+            if (!preserveHistory) {
+              endChatContext(user, agentTeam);
+            }
+          }
+        }
+
+        // TODO: do we want to extend holding the lock until around tentative accept response or failure response?
+        // Side effects complete - Unlock input lock for this user/agent pair
+        chatCollection.signalInputProcessed(utterance);
+      } else {
+        //NLG - add to current context if exists
+        Symbol user = utterance.getAddressee().toUntyped();
+        Symbol agentTeam = utterance.getSpeaker().toUntyped();
+        ChatCollection chatCollection = getChatCollection(user, agentTeam);
+        if (chatCollection != null) {
+          ChatContext chatContext = chatCollection.currentChat;
+          if (chatContext != null) {
+            chatContext.history.addRobotMessage(utterance.getWordsAsString());
+          }
+          //TODO: Should this be added to a new history/context if none currently exists? Hard question to answer because
+          //  sometimes it may be relevant and sometimes it may throw off future parses significantly. Best case is to
+          //  have an "extended dialogue history" itk target which is handled well
+        }
+      }
+    }
+  }
+
+  /**
+   * Question asking notification callback - throw away the current chat context if the associated system validation
+   *  question timed out without a response.
+   */
+  @TRADEService
+  public void questionAskingCallback(Symbol agent, boolean active, Question question) {
+    // Only care when question is terminated
+    if (active) {
       return;
     }
 
-    //NLG only
-    Symbol user = utterance.getAddressee().toUntyped();
-    Symbol agentTeam = utterance.getSpeaker().toUntyped();
-    ChatCollection chatCollection = getChatCollection(user, agentTeam);
-    if (chatCollection != null) {
-      ChatContext chatContext = chatCollection.currentChat;
-      if (chatContext != null) {
-        chatContext.history.addRobotMessage(utterance.getWordsAsString());
+    // Only care if validation question
+    if (!question.hasMatchingResponseForms(List.of(Factory.createPredicate("val(X)"), Factory.createPredicate("validated(X)")))) {
+      return;
+    }
+
+    Symbol user = question.getAddressee().toUntyped();
+    Symbol agentTeam = agent.toUntyped();
+    // Validation questions from socialLLMnlu.asl should always have a specific target
+    if (user.getName().equals("any")) {
+      return;
+    }
+
+    if (question.getLastFormMatch() == null) {
+      // If validation question expired but chat context is still in validation state, we know the validation question expired.
+      //  So update chat state accordingly.
+      synchronized (currentChatCollections) {
+        ChatCollection chatCollection = getChatCollection(user, agentTeam);
+        if (chatCollection != null) {
+          ChatContext chatContext = chatCollection.currentChat;
+          if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
+            chatCollection.currentChat.signalCompletion();
+            chatCollection.currentChat = null;
+          }
+        }
       }
-      //TODO: else should this be added to a new history? Revisit when implementing general history pruning/timeout
     }
   }
 
@@ -1638,7 +1933,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       Predicate semantics = Factory.createPredicate(toolDefinition.function.name, processedArguments);
       output.setSemantics(semantics);
       output.setUtteranceType(tool.utteranceType);
-      output.setNeedsValidation(true);
       return output.build();
     } else {
       return null;
@@ -1822,17 +2116,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         List<Symbol> args = new ArrayList<>();
         for (Symbol arg : ((Predicate)utterance.getSemantics()).getArgs()) {
           //Need to remove actor from scheduled predicate - will be filtered out by default
-          if (arg.isPredicate() && arg.hasArgs()) {
+          if (arg.isPredicate()) {
+            Predicate argPred = (Predicate) arg;
             if (arg.getName().equals("start")) {
-              if (!((Predicate)arg).get(0).getName().equals("immediately")) {
+              if (argPred.hasArgs() && !argPred.get(0).getName().equals("immediately")) {
                 args.add(arg);
               }
             } else if (arg.getName().equals("period")) {
-              if (!((Predicate)arg).get(0).getName().equals("nonrepeating")) {
+              if (argPred.hasArgs() && !argPred.get(0).getName().equals("nonrepeating")) {
                 args.add(arg);
               }
             } else if (arg.getName().equals("end")) {
-              if (!((Predicate)arg).get(0).getName().equals("indefinitely")) {
+              if (argPred.hasArgs() && !argPred.get(0).getName().equals("indefinitely")) {
                 args.add(arg);
               }
             } else {

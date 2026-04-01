@@ -70,6 +70,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     servicesToObserve.add(Pair.of("sayText", new Class<?>[]{Utterance.class}));
     servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class}));
     servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Long.class}));
+    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class, Long.class}));
     servicesToObserve.add(Pair.of("cancelWaitForResponse", new Class<?>[]{String.class, List.class, Symbol.class}));
     servicesToObserve.add(Pair.of("startAcknowledgeDisplay", new Class<?>[]{String.class}));
     servicesToObserve.add(Pair.of("endAcknowledgeDisplay", new Class<?>[]{}));
@@ -102,6 +103,8 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
       TRADEServiceInfo TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class));
       TRADE.beforeService(wrapperTSI, TSItoWrap);
       TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class, Long.class));
+      TRADE.beforeService(wrapperTSI, TSItoWrap);
+      TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class, Long.class, Symbol.class));
       TRADE.beforeService(wrapperTSI, TSItoWrap);
     } catch (TRADEException e) {
       log.error("exception adding before wrapper for waitForResponse", e);
