@@ -326,8 +326,8 @@ class SpotTRADEWrapper:
             if pose == 'carry':
                 return self.spot.spot_arm.arm_carry()
             if pose == 'detection':
-                return self.spot.spot_arm.hand_pose(x=0.818, y=-0.003, z=0.523, qx=-0.000, qy=0.389, qz=-0.004, qw=0.921)
-#                 return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
+#                 return self.spot.spot_arm.hand_pose(x=0.818, y=-0.003, z=0.523, qx=-0.000, qy=0.389, qz=-0.004, qw=0.921)
+                return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
             if pose == "putdown" or pose == "putDown":
                 return self.spot.spot_arm.hand_pose(x=1.1, y=0, z=0.4, qx=-0.7071, qy=0, qz=0, qw=0.7071)
             if pose == 'stow':

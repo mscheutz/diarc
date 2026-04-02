@@ -310,6 +310,7 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
 }
 
 void ComponentValidator::initModels(const std::string &model_path) {
+  LOG4CXX_INFO(logger, boost::format("[initModels] model_path: %s") % model_path.c_str());
   nets.push_back(cv::dnn::readNetFromONNX(model_path + ".onnx"));
 }
 

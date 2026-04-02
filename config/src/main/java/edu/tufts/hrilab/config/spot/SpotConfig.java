@@ -29,7 +29,7 @@ import javax.vecmath.Quat4d;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = true;
+  boolean useMockVision = false;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -56,10 +56,10 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
     if (useMockVision) {
-      createInstance(MockVisionComponent.class, "-groups agent:robotone -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
+      createInstance(MockVisionComponent.class, "-sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
     } else {
-//      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot.xml -cameraFrame hand_color_image_sensor");
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot_python.xml -baseFrame gpe -cameraFrame hand_color_image_sensor");
+//      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture spot.xml -cameraFrame hand_color_image_sensor");
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture spot_python.xml -baseFrame gpe -cameraFrame hand_color_image_sensor");
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
@@ -69,7 +69,6 @@ public class SpotConfig extends DiarcConfiguration {
 //    String tradeHubContainer = "127.0.0.1@10001";
     String tradeHubContainer = "192.168.0.46@10001";
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
-            + " -groups agent:robotone "
             + " -hubContainer " + tradeHubContainer
             + " -spotMap " + "/home/evan/.diarc/spot/spot_map"
             + " -refs " + "/spot/spot_map_refs.json");
@@ -90,13 +89,14 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl vision.asl "
                     + "-asl demos/spotDemo.asl "
 //                    + "-asl spot/spotActions.asl "
+                    + "-asl demos/spotVisionDesc.asl "
                     + "-asl spot/spot.asl "
                     + "-goal listen(self) "
 //                    + "-goal init(self) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 
-    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee robotone -config spotDemo.simspeech");
+    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee self -config spotDemo.simspeech");
 
 //    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.ArmInterface");
 //    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");

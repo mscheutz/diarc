@@ -31,13 +31,13 @@ Optional fields:
   <detector type="blob" trackers="kcf,cmt" config="blob/blobs.xml" />
   <detector type="buttondetector" trackers="kcf, cmt" config="buttondetector/buttondetector.json"/>
   <detector type="colorbased" trackers="kcf,cmt" config="colorbased/colorbased.xml" />
-<!--  <detector type="cluster" trackers="kcf,cmt" depends="plane" config="cluster/cluster.xml" required="depth"/>-->
+  <detector type="cluster" trackers="kcf,cmt" depends="plane" config="cluster/cluster.xml" required="depth"/>
   <detector type="cluster_advanced" trackers="kcf,cmt" config="cluster/cluster_advanced.xml" required="depth,v4r_v0"/>
   <detector type="cluster2d" trackers="kcf,cmt" config="cluster/cluster2d.xml"/>
   <detector type="dnn" trackers="kcf, cmt" config="yolov5/yolov5.json"/>
   <!--  <detector type="dnn" trackers="kcf,cmt" config="yolov3/yolov3.json"/>-->
   <detector type="elevatordoordetector" trackers="kcf, cmt" config="elevatordoordetector/elevatordoordetector.json"/>
-  <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>
+<!--  <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>-->
   <detector type="haar" trackers="tapnet" config="haar/haars.xml"/>
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>
   <detector type="motion" trackers="generic" depends="opticalflow" config="motion/motion.xml"/>

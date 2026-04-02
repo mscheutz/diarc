@@ -32,8 +32,8 @@
 () = turn(edu.tufts.hrilab.fol.Symbol ?direction, edu.tufts.hrilab.fol.Symbol ?theta = infinite) {
     edu.tufts.hrilab.fol.Predicate !failCond;
     java.lang.Float !degToRad = 0.01745; // pi/180
-    java.long.Float !rads;
-    java.long.Float !radPerSec = 0.3;
+    java.lang.Float !rads;
+    java.lang.Float !radPerSec = 0.3;
     try {
       // determine direction
       if (op:equalsValue(?direction, right)) {

@@ -224,6 +224,9 @@ detection mode; C; goToPose(?ADDRESSEE,detection)
 go to detection pose; C; goToPose(?ADDRESSEE,detection)
 go to the detection pose; C; goToPose(?ADDRESSEE,detection)
 
+%% vision search demo %%
+look for available parts; VERBI; lookForObjects
+
 look for; VERBT; perceiveEntity
 undock; VERBI; undock
 dock; VERBI; dock

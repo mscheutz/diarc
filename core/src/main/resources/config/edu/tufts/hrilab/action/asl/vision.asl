@@ -47,8 +47,8 @@ import edu.tufts.hrilab.fol.Predicate;
     act:startVisualSearch(!anySearch);
 
     // look for "unknown" objects
-//    !anySearch = op:createPredicate("unknown(X)");
-//    act:startVisualSearch(!anySearch);
+    !anySearch = op:createPredicate("unknown(X)");
+    act:startVisualSearch(!anySearch);
 
     // get resulting refs from search(es)
     !groups = op:newArrayList("java.lang.String");

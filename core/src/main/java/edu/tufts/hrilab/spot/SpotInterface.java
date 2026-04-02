@@ -54,7 +54,7 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
   void bindLocationToCurrentPose(Symbol refId);
 
   /**
-   * TODO: remove this in favor of the graspObject method in the ArmCInterface
+   * TODO: remove this in favor of the graspObject method in the ArmInterface
    *
    * @param refId
    * @return

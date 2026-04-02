@@ -35,7 +35,7 @@ namespace diarc {
       LOG4CXX_INFO(logger, "Authenticating with robot ------");
       ::bosdyn::common::Status status = robot->Authenticate(username, password);
       if (!status) {
-        LOG4CXX_ERROR(logger, boost::format("Could not authenticate with robot: %s.") % status.DebugString());
+        LOG4CXX_ERROR(logger, boost::format("Could not authenticate with robot: %s. Username: %s. Passwd: %s") % status.DebugString() % username % password);
       }
       LOG4CXX_INFO(logger, "------Authenticated with Robot");
 
@@ -64,9 +64,9 @@ namespace diarc {
       ptree pt;
       read_xml(configFile, pt);
 
-      std::string hostname = pt.get<std::string>("capture.hostname");
-      std::string username = pt.get<std::string>("capture.username");
-      std::string password = pt.get<std::string>("capture.password");
+      hostname = pt.get<std::string>("capture.hostname");
+      username = pt.get<std::string>("capture.username");
+      password = pt.get<std::string>("capture.password");
     }
 
     bool CaptureSpot::captureCurrentCameraFrame() {
