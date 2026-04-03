@@ -37,16 +37,21 @@ import java.lang.String;
   * Handle an incoming utterance. This is the main control flow for the NLU "pipeline".
   */
 () = handleSpeechInput(Utterance ?utterance) {
-    Symbol !speaker;
-    Symbol !addressee;
-    java.lang.Boolean !validated;
-
     op:log("debug", "handleSpeechInput for utterance: ?utterance");
 
     // parse utterance
     op:log("debug", "calling parser ...");
     ?utterance = act:parseUtterance(?utterance);
     op:log("debug", "parser results: ?utterance");
+
+    act:handleParsedUtterance(?utterance);
+}
+
+() = handleParsedUtterance(Utterance ?utterance, java.lang.Boolean ?updateHistory=true) {
+    java.lang.Boolean !continueValidation;
+    java.lang.Boolean !validated;
+    Symbol !speaker;
+    Symbol !addressee;
 
     // parser error handling
     java.lang.String !semanticsName;
@@ -70,14 +75,6 @@ import java.lang.String;
             return;
         }
     }
-
-    act:handleParsedUtterance(?utterance);
-}
-
-() = handleParsedUtterance(Utterance ?utterance, java.lang.Boolean ?updateHistory=true) {
-    java.lang.Boolean !continueValidation;
-    java.lang.Boolean !validated;
-    Symbol !addressee;
 
     // perform reference resolution
     op:log("debug", "calling rr ...");
@@ -202,8 +199,9 @@ import java.lang.String;
         !validationUtteranceString = op:invokeMethod(!queryUtterance,"getWordsAsString");
         op:invokeMethod(!timeoutUtterance, "setWords", "(previous disambiguation question \"!validationUtteranceString\" has timed out without being answered)");
         act:updateDialogueHistory(!timeoutUtterance);
+        //// (done through QA listener now)
         // Discard current conversation context
-        tsc:endChatContext(!speaker,!addressee);
+        //tsc:endChatContext(!speaker,!addressee);
         return;
     }
 
@@ -229,7 +227,7 @@ import java.lang.String;
         if (op:lt(!historyLength,3)) {
             // LLM results should only be cached if not the product of an extended/contextual interaction. 3 allotted
             //  messages are 1. instruction, 2. validation Q, 3. validation affirmation.
-            act:cacheParse(?unvalidatedUtterance);
+            act:cacheLLMParse(?unvalidatedUtterance);
         }
     } elseif (op:equalsValue(!response, no())) {
         //TODO: This is an instance of overwriting an utterance's parse and running it back through the pipeline after it has already been processed once - is this okay?
@@ -331,6 +329,8 @@ import java.lang.String;
 
     Integer !tracker = 0;
     Utterance !focusedChatInitialResponse;
+    Symbol !focusedChatInitialResponseSemantics;
+    String !semanticsName;
     Predicate !submissionPredicate;
 
     op:log("info","[runContextSpecificChat] in method");
@@ -339,28 +339,48 @@ import java.lang.String;
     //  separate goal in order for all possible interactions to work as intended: e.g. interruption methods, initial text
     //  response vs immediate tool call, OFFContextSubmission special case, result goal blocking in the queue, ...
     noInterrupt {
-        tsc:focusDialogueChat(?user, ?agentTeam, ?contextId, ?cid);
-        !submissionPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "focusedContextResponseSubmissionWrapper(?actor,?cid)");
+        !focusedChatInitialResponse = tsc:focusDialogueChat(?user, ?agentTeam, ?contextId, ?cid);
+        !submissionPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "focusedContextResponseSubmissionWrapper(?actor,?user,?agentTeam,?cid)");
         ?gid = act:submitGoal(!submissionPredicate);
         !tracker = op:++(!tracker);
+    }
+
+    // If an issue occurred during focusDialogueChat
+    if (op:isNull(!focusedChatInitialResponse)) {
+        exit(FAIL,occurred(internalError));
+    }
+    !focusedChatInitialResponseSemantics = op:invokeMethod(!focusedChatInitialResponse, "getSemantics");
+    !semanticsName = op:getName(!focusedChatInitialResponseSemantics);
+    if (op:equals(!semanticsName,"error")) {
+        act:handleError(?user, ?agentTeam, !focusedChatInitialResponseSemantics, direct);
+        tsc:endChatContext(?user,?agentTeam);
+        exit(FAIL);
     }
 
     //  wait on lock in either case - should be released when moving on from specific context
     //  (goal canceled or validation complete)
     ?resultPred = act:waitOnFocusedChat(?user,?agentTeam,?cid);
 
+    //// If an issue occurred during focusDialogueChat
+    //if (op:isNull(?resultPred)) {
+    //    exit(FAIL,occurred(internalError));
+    //}
+
     op:log("info", "[runContextSpecificChat] out with result: ?resultPred");
 }
-() = focusedContextResponseSubmissionWrapper(java.lang.Long ?cid) {
+() = focusedContextResponseSubmissionWrapper(Symbol ?user, Symbol ?agentTeam, java.lang.Long ?cid) {
     Utterance !responseUtterance;
 
-    op:log("info","[focusedContextSubmissionWrapper] in method");
+    op:log("debug","[focusedContextSubmissionWrapper] in method");
 
     !responseUtterance = tsc:getContextTransferResponseUtterance(?cid);
-    //TODO: failure handling
-    //if (op:isNull(!responseUtterance)) {}
 
-    act:handleParsedUtterance(!responseUtterance);
+    if (op:isNull(!responseUtterance)) {
+        op:log("warn","[focusedContextSubmissionWrapper] have null transfer response utterance, canceling waitOnFocusedChat");
+        tsc:interruptWaitOnFocusedChat(?user,?agentTeam,?cid);
+    } else {
+        act:handleParsedUtterance(!responseUtterance);
+    }
 }
 
 // Validation of this goal itself will stand in as question inquiring about whether the user intended a goal
@@ -395,6 +415,11 @@ import java.lang.String;
     //      Though suspend/resume/cancel directly shouldn't be an acceptable dialogue target in this state anyway
     noInterrupt {
         !output = act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
+
+        if (op:isNull(!output)) {
+            op:log("warn","[offContextSubmission] exception during call for runContextSpecificChat ***TODO HANDLE****");
+            return;
+        }
 
         // Wait for submission to complete in any case (new submission has highest priority and/or status reporting of submission and/or dialogue of submission placement)
         op:log("debug","[offContextSubmission] waiting on goal submission for !output");

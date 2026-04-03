@@ -97,6 +97,10 @@ public class ChatCollection {
     return shouldProcess;
   }
 
+  public boolean shouldProcess(Utterance utterance) {
+    return !processedUttIds.contains(utterance.getUid());
+  }
+
   /**
    * Corresponding unlock method of grabInputLock. Signal that we are done processing the supplied Utterance and applying
    *  relevant side effects to member ChatContexts.
@@ -123,6 +127,7 @@ public class ChatCollection {
     inputLock.lock();
     if (utteranceBeingProcessed != null) {
       log.debug("[signalInputProcessed] releasing input lock");
+      processedUttIds.add(utteranceBeingProcessed.getUid());
       inputCondition.signal();
       utteranceBeingProcessed = null;
     } else {
@@ -135,9 +140,10 @@ public class ChatCollection {
    * Release all locks for the collection and active context. Only use this method in the case of error recovery.
    */
   protected void releaseLocks() {
-    inputLock.lock();
-    inputCondition.signal();
-    inputLock.unlock();
+    //inputLock.lock();
+    //inputCondition.signal();
+    //inputLock.unlock();
+    signalInputProcessed();
     if (currentChat != null) {
       currentChat.releaseLocks();
     }

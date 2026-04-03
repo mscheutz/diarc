@@ -78,22 +78,32 @@ public class ScheduledGoalManager {
                     (Runnable) () -> {
                       Goal newGoal = goal.getNextGoalToSubmit();
                       if (newGoal != null) {
-                        //TODO: issue with submitting goals through the EM directly rather than the GM. Skips attaching
-                        // goalStatus listeners, all priority calculations, etc.
-                        try {
-                          PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getPredicate());
-                          //TODO: discussion to be had about whether we want this to be something standard, configurable, at all, ...
-                          if (priorityTier != PriorityTier.SKIPPENDING && goal.isPeriodic()) {
-                            priorityTier = PriorityTier.LOW;
+                        // Issue with scheduled goals triggering instantly on startup - GM is not registered with TRADE yet
+                        int numAttempts = 0;
+                        while (numAttempts < 3) {
+                          //TODO: issue with submitting goals through the EM directly rather than the GM. Skips attaching
+                          // goalStatus listeners, all priority calculations, etc.
+                          try {
+                            PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getPredicate());
+                            //TODO: discussion to be had about whether we want this to be something standard, configurable, at all, ...
+                            if (priorityTier != PriorityTier.SKIPPENDING && goal.isPeriodic()) {
+                              priorityTier = PriorityTier.LOW;
+                            }
+                            long priority = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
+                            GoalManagerNotifier notifier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalManagerNotifier")).call(GoalManagerNotifier.class);
+                            newGoal.addListener(notifier);
+                            newGoal.setPriority(priority);
+                            newGoal.setPriorityTier(priorityTier);
+                            newGoal.setScheduledState(2);
+                            break;
+                          } catch (TRADEException e) {
+                            log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted. Trying again...", e);
+                            numAttempts += 1;
+                            try {
+                              Thread.sleep(5000);
+                            } catch (InterruptedException ignored) {
+                            }
                           }
-                          long priority  = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
-                          GoalManagerNotifier notifier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalManagerNotifier")).call(GoalManagerNotifier.class);
-                          newGoal.addListener(notifier);
-                          newGoal.setPriority(priority);
-                          newGoal.setPriorityTier(priorityTier);
-                          newGoal.setScheduledState(2);
-                        } catch (TRADEException e) {
-                          log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted",e);
                         }
                         em.submitGoal(newGoal);
                       }

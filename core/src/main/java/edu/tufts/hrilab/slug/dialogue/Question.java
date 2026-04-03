@@ -164,6 +164,10 @@ public class Question {
         endWaitForResponse();
     }
 
+    public boolean wasAnswered() {
+        return answer.getAnswerBindings() != null;
+    }
+
     public long getTimestamp() {
         return timestamp;
     }

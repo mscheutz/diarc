@@ -147,7 +147,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
         return;
       } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
-        act:cacheParse(?utterance);
+        act:cacheLLMParse(?utterance);
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");

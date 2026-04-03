@@ -56,7 +56,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-// WARN - Need synchronization around Chats. Currently very unsafe for concurent interactions
 //TODO: This is currently technically the "SocialAvaLLMServiceProvider" subclass of what should be an abstract
 //      "SocialTRLLMServiceProvider" class. Extract domain specific logic from general extended dialogue service
 //      provider logic when having time and/or more examples.
@@ -98,8 +97,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    *      "nlg" - used when making calls from convertSemanticsToTextLLMService
    *      "validationnlg" - used when making calls from convertSemanticsToTextLLMService while validating a parse result
    *      "validationnlu" - used when making calls from parseUtteranceLLMService while validating a parse result
-   *        //TODO: This class is currently set up assuming LLM parses will always be validated.
-   *        //       Either add logic to toggle whether validation is occurring or explicitly check if there is a system validation question
    *    Available core, general:
    *      "scheduleTask" - Social LLM alternative to templated turn-based scheduleGoal script
    *      TODO: learnAction, reorderGoals, handleHigherPriorityConflictingGoal, modifyScheduledGoal, ...
@@ -230,7 +227,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             UtteranceType.QUESTION);
     itkActionNames.add("getCurrentPendingScheduledGoalInformation");
 
-    //TODO: Add an argument which explicitly tracks current \"best guess\" parse at each step? (Even if not fully parameterized)
+    //Brainstorm: Add an argument which explicitly tracks current \"best guess\" parse at each step? (Even if not fully parameterized)
     //  ^ Think this could be helpful to provide focused architecture messages guiding interactions, but may be too hard
     //    of a task or confuse the LLM into calling Tools without proper full parameterization or ...
     textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
@@ -239,7 +236,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             List.of(new ToolParameterHelper("response","string",new ArrayList<>(),
                     "What you want to say to the user", true))),
             UtteranceType.INSTRUCT);
-    //TODO: add "socialInteraction" analog which does the same thing under the covers
+    //TODO: add "socialInteraction" analog which does the same thing under the covers?
 
     //// Gather Tool Sets and System Prompts ////
     // Base "nlu" tool set:
@@ -259,9 +256,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  - Base LLM<->Diarc ITK targets - TODO: temporarily removed - should these be available or not? Only a specific subset?
     //  - relevant REPLY targets - TODO: temporarily removed, should these be allowed? Should there be a mechanism to define REPLY targets per focused context?
     //  - endConversation==cancelGoal
-    //  - offContextSubmission - TODO: temporarily removed. Should this be replaced with explicit suspend/cancelGoal targets?
+    //  - offContextSubmission - Should this be replaced with explicit suspend/cancelGoal targets?
     List<Tool> universalFocusedTools = new ArrayList<>();
     universalFocusedTools.add(focusedEndConversationTool);
+    universalFocusedTools.add(new Tool(new ToolDefinition("suspendCurrentInteraction",
+            "You pause your current task, which can be later resumed. An example of instructing this could be \"pause what you're doing.\"" +
+                    "This may be instructed directly as shown in the example, or could be intended when the user wants to temporarily have a separate conversation on a different topic.",
+            new ArrayList<>()),
+            UtteranceType.INSTRUCT));
+    universalFocusedTools.add(new Tool(new ToolDefinition("cancelCurrentInteraction",
+            "You stop and fully discard your current task. An example of instructing this could be \"stop what you're doing.\"",
+            new ArrayList<>()),
+            UtteranceType.INSTRUCT));
+
     //universalFocusedTools.addAll(itkTools);
     //universalFocusedTools.add(defaultGoalInfoTool);
     //universalFocusedTools.add(offContextSubmissionTool); //Done in parse method
@@ -406,29 +413,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * @return The utterance with populated semantics, or null if no valid parse is found
    */
   public Utterance parseUtteranceLLMService(Utterance utterance, boolean reattemptedParse) {
-    //// Get existing chats or create new if none exists
+    //// Get existing chat collections or create new if none exists
     ChatCollection chatCollection;
     ChatContext chatContext;
     Chat chat;
     Symbol user = getUntypedSymbol(utterance.getSpeaker());
     Symbol agentTeam = getUntypedSymbol(utterance.getAddressee());
-    long originalChatContextid;
-    boolean newContext = false;
     synchronized (currentChatCollections) {
       chatCollection = getChatCollection(user, agentTeam);
       if (chatCollection == null) {
         chatCollection = new ChatCollection(new Chat());
         currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
-        newContext = true;
       }
-      chatContext = chatCollection.currentChat;
-      if (chatContext == null) {
-        chat = new Chat();
-        chatContext = new ChatContext(chat);
-        chatCollection.currentChat = chatContext;
-        newContext = true;
-      }
-      originalChatContextid = chatContext.getUid();
     }
 
     // New: Synchronization - need to wait for any previous chat inputs and corresponding side effects to finish being
@@ -442,22 +438,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     List<ToolDefinition> tools;
     synchronized (currentChatCollections) {
-      if (!newContext) {
-        // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
-        // existing state
-        chatContext = chatCollection.currentChat;
-        if (chatContext == null) {
-          chat = new Chat();
-          chatContext = new ChatContext(chat);
-          chatCollection.currentChat = chatContext;
-          originalChatContextid = chatContext.getUid();
-        }
+      // Check for external parser notification between grabbing input lock and synchronized block
+      if (!chatCollection.shouldProcess(utterance)) {
+        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
+        return utterance;
       }
 
-      // TODO: Revisit this - looks incomplete on second check. Can multiple pending inputs also result in this state?
-      // If external parser hit terminated the newly created context, short circuit this unused thread
-      if (chatCollection.currentChat == null || chatCollection.currentChat.getUid() != originalChatContextid) {
-        return utterance;
+      // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
+      // existing state
+      chatContext = chatCollection.currentChat;
+      if (chatContext == null) {
+        chat = new Chat();
+        chatContext = new ChatContext(chat);
+        chatCollection.currentChat = chatContext;
       }
 
       //// Update chats based on current state
@@ -474,6 +467,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatContext.history.addUserMessage(utterance.getWordsAsString());
       } else {
         ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        if (chatTemplates == null) {
+          log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
+          return utterance;
+        }
         systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
         tools = new ArrayList<>(chatTemplates.toolDefinitions);
         chat = chatContext.history;
@@ -481,7 +478,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       if (chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION) {
         // Add special offContextSubmission Tool if in a focused context
-        tools.add(offContextSubmissionTool.toolDefinition);
+        //tools.add(offContextSubmissionTool.toolDefinition);
       } else {
         // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
         // Add all matching system question response tools based off of expected reply semantics
@@ -503,19 +500,24 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //// Send created chat to LLM completion
     Completion response = callChatCompletion(chat, tools);
 
-    //TODO: null error handling
-    //TODO: handling multiple tool calls present
-    //TODO: handling text response and tool call(s) present
+    if (response == null) {
+      log.error("[parseUtteranceLLMService] have null Completion response");
+      utterance.setSemantics(Factory.createPredicate("error",utterance.getAddressee().toUntypedString(),"wasUnableToReachLanguageServices"));
+      utterance.setNeedsValidation(false);
+      return utterance;
+    }
 
     log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
 
     synchronized (currentChatCollections) {
-      if (chatCollection.currentChat == null || chatCollection.currentChat.getUid() != originalChatContextid) {
+      // Check for external parser notification between grabbing input lock and this synchronized block
+      if (!chatCollection.shouldProcess(utterance)) {
+        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
         return utterance;
       }
 
-      //TODO: need to update this code if going with paradigm that text responses are no longer valid (or can leave text
-      //  case in case LLM doesn't target the tool for whatever reason)
+      //TODO: handling multiple tool calls present
+      //TODO: handling text response and tool call(s) present
       //// Handle Responses
       if (response.toolCalls.isEmpty()) {
         // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
@@ -527,7 +529,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //  to terminate and/or transfer between base and focused contexts in this case)
           return handleValidationResponse(response, utterance, chatCollection);
         } else {
-
           // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
           return handleToolResponse(response, utterance, chatCollection);
         }
@@ -548,7 +549,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection) {
     if (llmResponse.toolCalls.size() > 1) {
       //TODO
-      log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both");
+      log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both. Only using first...");
     }
     ToolCall toolCall = llmResponse.toolCalls.get(0);
     log.info("[handleToolResponse] " + toolCall);
@@ -556,45 +557,56 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ChatContext chatContext = chatCollection.currentChat;
 
     //// Thought we would have ideally wanted this in the history, but found that LLM would extract tool calls from
-    ////  from the history as targets, even if they were taken out of the system prompt based on a state change
+    ////  the history as targets, even if they were taken out of the system prompt based on a state change
     //chatContext.history.addRobotMessage("", List.of(toolCall));
 
     //// Check that tool response is valid
     ToolFunction functionCall = toolCall.function;
-    Tool correspondingTool;
-    if (chatContext.chatType == ChatType.FOCUSED) {
-      if (functionCall.name.equals("offContextSubmission")) {
-        correspondingTool = offContextSubmissionTool;
+    Tool correspondingTool = null;
+    try {
+      if (chatContext.chatType == ChatType.FOCUSED) {
+        if (functionCall.name.equals("offContextSubmission")) {
+          correspondingTool = offContextSubmissionTool;
+        } else {
+          correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
+        }
       } else {
-        //TODO: null checks / error handling
-        correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
+        if (chatContext.chatType == ChatType.OFFTOPIC) {
+          correspondingTool = chatTemplates.get("offContextSubmission").tools.get(functionCall.name);
+        } else {
+          correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
+        }
+        if (correspondingTool == null) {
+          correspondingTool = replyToolset.get(functionCall.name);
+        }
       }
-    } else {
-      if (chatContext.chatType == ChatType.OFFTOPIC) {
-        correspondingTool = chatTemplates.get("offContextSubmission").tools.get(functionCall.name);
-      } else {
-        correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
-      }
-      if (correspondingTool == null) {
-        correspondingTool = replyToolset.get(functionCall.name);
-      }
+    } catch (NullPointerException e) {
+      log.error("[handleToolResponse] error finding Tool definition for called tool found in Completion response", e);
     }
-    //TODO: null checks / error handling
+
+    // Internal LLM error - should there be LLM specific error responses in this case?
+    if (correspondingTool == null) {
+      return inputUtterance;
+    }
 
     // Process the tool call and supplied arguments - output utterance will be null and baseToolResponse will be updated
     //  with error details in case any invalid response was supplied by the LLM
     StringBuilder baseToolResponse = new StringBuilder("You interpreted the user's command as ").append(toolCall).append(". This result contains missing or invalid information. Please succinctly let them know what you thought they were trying to instruct, including the task itself and any information which was supplied correctly, and summarize the following errors:\n");
     Utterance outputUtterance = processToolCall(functionCall, correspondingTool, inputUtterance, baseToolResponse);
 
-    // Experimental text response tool stand-in (described above)
-    if (toolCall.function.name.equals("stillGatheringInformation")) {
-      llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
-      return handleTextResponse(llmResponse,inputUtterance,chatContext);
-    }
-
     //// Handle processed response
-    if (outputUtterance != null) {
+    if (outputUtterance != null && outputUtterance.getSemantics() != null) {
       //Valid parse - proceed to validation
+
+      // Experimental text response tool stand-in (described above)
+      if (toolCall.function.name.equals("stillGatheringInformation")) {
+        if (!outputUtterance.getSemantics().isPredicate() || ((Predicate)outputUtterance.getSemantics()).getArgs().size() < 2) {
+          log.error("[handleToolResponse] malformed stillGatheringInformation response");
+          return inputUtterance;
+        }
+        llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
+        return handleTextResponse(llmResponse,inputUtterance,chatContext);
+      }
 
       //// Domain specific postprocessing to correct common mistakes
       correctCommonNLUMistakes(outputUtterance);
@@ -608,26 +620,44 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // TODO: If using, make sure Validation NLG hides this distinction in this case - whether using a different action, providing examples
       if (chatContext.chatType == ChatType.OFFTOPIC) {
         if (toolName.equals("suspendSystemGoalsBlocking") || toolName.equals("cancelSystemGoals")) {
-          String contextId = chatCollection.suspendedChats.get(0).contextID;
-          Predicate pred = Factory.createPredicate(contextId, inputUtterance.getAddressee());
-          long gid = -1;
-          try {
-            gid = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalId").argTypes(Predicate.class)).call(long.class, pred);
-          } catch (TRADEException e) {
-            log.warn("[getNextGoalid]", e);
-          }
-          if (toolName.equals("suspendSystemGoalsBlocking")) {
-            outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+          if (chatCollection.suspendedChats.isEmpty()) {
+            log.error("[handleToolResponse] targeted suspend or cancel in OFFTOPIC state, but no suspended focused context exists. Simply abandoning instruction");
+            toolName = "endConversation";
           } else {
-            outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+            String contextId = chatCollection.suspendedChats.get(0).contextID;
+            Predicate pred = Factory.createPredicate(contextId, inputUtterance.getAddressee());
+            long gid = -1;
+            try {
+              gid = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalId").argTypes(Predicate.class)).call(long.class, pred);
+            } catch (TRADEException e) {
+              log.error("[handleToolResponse] exception getting goal ID for suspended focused goal: {}", pred, e);
+            }
+            //// Not currently safe
+            //if (gid == -1) {
+            //  log.warn("[handleToolResponse] could not find goalId for suspended focused chat");
+            //  //TODO; Any associated cleanup necessary?
+            //  inputUtterance.setSemantics(Factory.createPredicate("error","internalErrorOccurred","couldNotStopDesiredGoal"));
+            //  inputUtterance.setNeedsValidation(false);
+            //  return inputUtterance;
+            //} else {
+              if (toolName.equals("suspendSystemGoalsBlocking")) {
+                outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+              } else {
+                outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+              }
+            //}
           }
         }
       }
 
-      // "endConversation" target is just a wrapper for cancelCurrentGoal
-      if (toolName.equals("endConversation") && chatContext.chatType != ChatType.BASE) {
+      // Temporary special wrappers - revisit when reintroducing "offContext" functionality
+      if (chatContext.chatType != ChatType.BASE) {
+        if (toolName.equals("endConversation") || toolName.equals("cancelCurrentInteraction")) {
           //TODO: make sure validation NLG handles this correctly
           outputUtterance.setSemantics(Factory.createPredicate("cancelSystemGoals", inputUtterance.getAddressee()));
+        } else if (toolName.equals("suspendCurrentInteraction")) {
+          outputUtterance.setSemantics(Factory.createPredicate("suspendSystemGoalsBlocking", inputUtterance.getAddressee()));
+        }
       }
 
       // Proceed to validation if not architecture ITK call
@@ -659,6 +689,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Re-call completion for text response
       Completion errorResponse = callChatCompletion(chatContext.history, List.of(textResponseTool.toolDefinition));
       if (errorResponse == null) {
+        inputUtterance.setSemantics(Factory.createPredicate("error",inputUtterance.getAddressee().toUntypedString(),"wasUnableToReachLanguageServices"));
+        inputUtterance.setNeedsValidation(false);
         return inputUtterance;
       } else {
         if (errorResponse.toolCalls.isEmpty()) {
@@ -694,7 +726,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection) {
     if (llmResponse.toolCalls.size() > 1) {
-      log.warn("[handleValidationResponse] Multiple tool calls returned -> TODO handle both");
+      log.warn("[handleValidationResponse] Multiple tool calls returned -> TODO handle both. Currently only using first...");
     }
     ToolCall toolCall = llmResponse.toolCalls.get(0);
     log.info("[handleValidationResponse] " + toolCall);
@@ -769,24 +801,31 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // Kind of a hack? Can remove if extending synchronization around tentativeAccept/Submission dialogue or figuring
         //  out another solution for integrating NLG into relevant chats.
         // Remove potential excess system NLG for unrelated goals before storing this chat
-        for (int i=chatContext.history.messages.size()-1; i>0;i--) {
-          if (chatContext.history.messages.get(i).role.equals(chatContext.history.userName)) {
+        ChatContext copy = new ChatContext(chatContext);
+        for (int i = copy.history.messages.size() - 1; i > 0; i--) {
+          if (copy.history.messages.get(i).role.equals(copy.history.userName)) {
             break;
           }
-          chatContext.history.messages.remove(i);
+          copy.history.messages.remove(i);
         }
 
         // Storing submission time so that action can conditionally add a disclaimer stating that this instruction
         //  was given T time ago (because the goal may end up being stuck in the queue for an arbitrary amount of time)
-        chatContext.submissionTime = System.currentTimeMillis();
-        chatCollection.pendingFocusedChats.put(toolName, chatContext);
+        copy.submissionTime = System.currentTimeMillis();
+        chatCollection.pendingFocusedChats.put(toolName, copy);
       }
 
       //TODO: shouldn't be here - don't need to validate ITK, but hitting this in noConfirmation case now
       if (!itkActionNames.contains(toolName)) {
-        // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
-        chatCollection.currentChat.signalCompletion();
-        chatCollection.currentChat = null;
+        // Temp workaround until reintroducing offContextSubmission - don't terminate context here if suspending a focused context
+        if (!(chatCollection.currentChat.chatType == ChatType.FOCUSED && toolName.equals("suspendSystemGoalsBlocking"))) {
+          // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
+          chatCollection.currentChat.signalCompletion();
+          chatCollection.currentChat = null;
+        } else {
+          // Else reset to parse state for when focused context is resumed
+          chatCollection.currentChat.chatState = ChatState.PARSE;
+        }
       }
     }
   }
@@ -830,24 +869,39 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     if (currentContext == null || currentContext.chatState != ChatState.PARSE) {
       log.error("[reattemptParse] called with incompatible parse state");
-      //TODO: set error semantics for now?
+      // Should we reset state here? Fail loudly? Currently would fail silently when used in the intended pipeline.
+      Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. Could you repeat that?\"");
+      utterance.setSemantics(generateResponsePred);
+      utterance.setType(UtteranceType.INSTRUCT);
+      utterance.setNeedsValidation(true);
+      utterance.setIsValidated(false);
       return false;
     }
 
-    ////Note: if including tool calls in the history, this message needs to include matching tool_call_id
-    // Add tool response stating what was negatively validated by the user
-    Predicate semantics = (Predicate) utterance.getSemantics().clone();
-    Map<Variable,Symbol> varMap = new HashMap<>();
-    for (Term t : utterance.getSupplementalSemantics()) {
-      varMap.put((Variable) t.get(0),Factory.createSymbol(t.getName(),t.getType()));
+    Symbol semantics = utterance.getSemantics().clone();
+    if (semantics.isPredicate() && utterance.getSupplementalSemantics() != null) {
+      ////Note: if including tool calls in the history, this message needs to include matching tool_call_id
+      // Add tool response stating what was negatively validated by the user
+      Map<Variable, Symbol> varMap = new HashMap<>();
+      for (Term t : utterance.getSupplementalSemantics()) {
+        varMap.put((Variable) t.get(0), Factory.createSymbol(t.getName(), t.getType()));
+      }
+      semantics = replaceVarsWithDescriptors((Predicate)semantics, varMap);
     }
-    semantics = replaceVarsWithDescriptors(semantics, varMap);
     currentContext.history.addMessage("tool", "The user has just informed you that your previous function selection targeting " + semantics + " was not what they intended to instruct. Use the recent user messages to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention, then you may attempt an updated function call targeting the new intention. 2. Otherwise, please continue with your original task by conversing with the user to resolve the misunderstanding.");
 
     // Call completion with user response and tool message
     Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
     tempUtterance.setNeedsValidation(true);
     tempUtterance = parseUtteranceLLMService(tempUtterance, true);
+
+    if (tempUtterance.getSemantics() == null) {
+      log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
+      tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString",utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
+      tempUtterance.setNeedsValidation(false);
+      tempUtterance.setType(UtteranceType.INSTRUCT);
+    }
+
     //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
     utterance.setSemantics(tempUtterance.getSemantics());
     utterance.setBindings(tempUtterance.getBindings());
@@ -885,19 +939,26 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   @TRADEService
   public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean addRobotMessage) {
     ////// Get existing chats
-    //TODO: revisit ChatTemplates and PromptVars relationship with NLG side as opposed to NLU side
+    //TODO: revisit ChatTemplates and PromptVars relationship with NLG side as opposed to NLU side to reduce inefficiency
     Symbol user = utterance.getAddressee().toUntyped();
     Symbol agentTeam = utterance.getSpeaker().toUntyped();
 
     updatePromptVars(utterance, false);
 
-    Predicate semantics;
+    Symbol semantics;
     List<Term> boundSemantics = utterance.getBoundSemantics();
     if (boundSemantics.isEmpty()) {
-      semantics = (Predicate) utterance.getSemantics();
+      semantics = utterance.getSemantics();
+    } else if (boundSemantics.size() == 1) {
+      semantics = boundSemantics.get(0);
     } else {
-      semantics = (Predicate) boundSemantics.get(0);
+      semantics = Factory.createPredicate("and", boundSemantics);
     }
+    if (semantics == null) {
+      log.error("[convertSemanticsToTextLLMService] supplied utterance has null semantics");
+      return utterance;
+    }
+
     ChatTemplates chatTemplates = null;
     ChatCollection chatCollection = getChatCollection(user, agentTeam);
     if (chatCollection != null) {
@@ -920,11 +981,20 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Create a new chat as to not destroy history
     Chat genChat = new Chat();
     utterance = new Utterance.Builder(utterance).build();
-    semantics = replaceReferencesInSemantics(semantics);
+    if (semantics.isPredicate()) {
+      semantics = replaceReferencesInSemantics((Predicate) semantics);
+    }
     utterance.setSemantics(semantics);
     genChat.addUserMessage(utterance.toString());
     genChat.setSystem(chatTemplates.systemMessageTemplate.apply(promptVars));
     Completion llmResponse = callChatCompletion(genChat, null);
+
+    if (llmResponse == null) {
+      log.error("[convertSemanticsToTextLLMService] received null completion response");
+      utterance.setWords("Sorry, I was unable to reach language services");
+      return utterance;
+    }
+
     log.info(llmResponse.getText());
     String responseString = llmResponse.getText().trim();
 
@@ -933,10 +1003,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Matcher m = outputPattern.matcher(responseString);
     if (!m.matches()) {
       log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");
+      utterance.setWords("Sorry, an internal error has occurred");
       return null;
+    } else {
+      String output = m.group(m.groupCount());
+      utterance.setWords(List.of(output.split(" ")));
     }
-    String output = m.group(m.groupCount());
-    utterance.setWords(List.of(output.split(" ")));
 
     // (Previously specific workaround for getting acceptable NLG for learned action instructions - revisit when adding learned actions back in)
     //TODO: ideally this check and override would occur somewhere else, but currently have learned action information here nicely
@@ -964,11 +1036,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Get System Prompt Template and Tool set for focused context - convention is for a ChatTemplate to be added
     //  on init with the entry key == the name of the action causing this call
     ChatTemplates contextSpecificTemplate = chatTemplates.get(contextIdentifier);
+    if (contextSpecificTemplate == null) {
+      log.error("[focusDialogueChat] could not find chat templates matching supplied context identifier {}", contextIdentifier);
+      return null;
+    }
     Chat chat;
     Utterance originalUtterance = getOriginalContextSpecificUtterance(user, agentTeam, contextIdentifier);
     if (originalUtterance == null) {
       log.error("[focusDialogueChat] could not find utterance triggering call for context identifier {}", contextIdentifier);
-      //TODO: null check in asl, or return dummy/error response utterance
       return null;
     }
 
@@ -1053,16 +1128,26 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
           // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
           Completion response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
-          //TODO: null check on response and utterance
+
+          if (response == null) {
+            log.error("[focusDialogueChat] received null Completion response");
+            Utterance failureUtterance = Utterance.createOutputUtterance(agentTeam, user);
+            failureUtterance.setSemantics(Factory.createPredicate("error",addressee.toUntypedString(),"wasUnableToReachLanguageServices"));
+            return failureUtterance;
+          }
+
           if (response.toolCalls.isEmpty()) {
             // Text response, presumably querying for information towards new template target
             originalUtterance = handleTextResponse(response, originalUtterance, collection.currentChat);
           } else {
             // Direct tool call on transfer
             originalUtterance = handleToolResponse(response, originalUtterance, collection);
+            //TODO: if this call returns the utterance unmodified, needs to be an error case
           }
-          // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
-          contextTransferResponseUtterances.put(cid, originalUtterance);
+          if (!originalUtterance.getSemantics().getName().equals("error")) {
+            // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
+            contextTransferResponseUtterances.put(cid, originalUtterance);
+          }
           return originalUtterance;
         }
       }
@@ -1082,6 +1167,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
+    ChatContext chatContext;
     synchronized (currentChatCollections) {
       ChatCollection collection = getChatCollection(speaker, addressee);
       if (collection == null) {
@@ -1092,9 +1178,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         log.warn("[interruptWaitOnFocusedChat] no matching chat for pair and id {}/{} {}", speaker, addressee, collection);
         return false;
       }
-
-      collection.currentChat.signalCompletion();
+      chatContext = collection.currentChat;
     }
+    chatContext.signalCompletion();
 
     return true;
   }
@@ -1133,8 +1219,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Wait for focused context to terminate
     Predicate resultOfFocusedContext = chatContext.waitForCompletion();
 
-    contextTransferResponseUtterances.remove(cid);
+    Utterance utt = contextTransferResponseUtterances.remove(cid);
     //TODO: see if can do offContext cancel/suspendCurrentGoal transformation shenanigans here instead
+
+    if (resultOfFocusedContext == null && utt != null) {
+      // If we immediately called a populated template (noConfirmation) tool target, resultOfFocusedContext will be null,
+      //  but not due to failure. Only if utt is also null did we actually fail in initial focused completion.
+      //TODO: is this okay for offContextSubmission? And do same in above case "no matching chat for pair"
+      resultOfFocusedContext = Factory.createPredicate("dummy","response");
+    }
 
     log.info("[waitOnFocusedChat] out method {}/{} {}", user, agentTeam, cid);
 
@@ -1169,7 +1262,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (!conversationHistory.isEmpty()) {
       for (int i=conversationHistory.size()-1;i>=0;i--) {
         Utterance u = conversationHistory.get(i);
-        if (u.getType() == UtteranceType.INSTRUCT && u.getSemantics() != null) {
+        if (u != null && u.getType() == UtteranceType.INSTRUCT && u.getSemantics() != null && u.getSemantics().isPredicate()) {
           Predicate semantics = (Predicate) u.getSemantics();
           Symbol instructedAction = semantics.get(1);
           if (instructedAction != null && instructedAction.getName().equals(contextIdentifier)) {
@@ -1202,7 +1295,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(predicate.getName());
+      return Objects.hashCode(predicate == null ? "" : predicate.getName());
     }
   }
   private final Lock goalSubmissionLock = new ReentrantLock();
@@ -1347,33 +1440,49 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   @TRADEService
   public String callChatCompletionForTextResponse(Symbol user, Symbol agentTeam, long id) {
-    Symbol speaker = getUntypedSymbol(user);
-    Symbol addressee = getUntypedSymbol(agentTeam);
-    ChatCollection collection = getChatCollection(speaker, addressee);
-    if (collection == null) {
-      log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-      return "";
-    } else if (collection.currentChat == null || collection.currentChat.cid != id) {
-      log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{} {}", speaker, addressee, id);
-      return "";
+    ChatCollection collection;
+    Chat chat;
+    long originalChatContextid;
+    synchronized (currentChatCollections) {
+      Symbol speaker = getUntypedSymbol(user);
+      Symbol addressee = getUntypedSymbol(agentTeam);
+      collection = getChatCollection(speaker, addressee);
+      if (collection == null) {
+        log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+        return "";
+      } else if (collection.currentChat == null || collection.currentChat.cid != id) {
+        log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{} {}", speaker, addressee, id);
+        return "";
+      }
+      chat = collection.currentChat.history;
+      originalChatContextid = collection.currentChat.getUid();
     }
 
-    Completion response = callChatCompletion(collection.currentChat.history, null);
+    Completion response = callChatCompletion(chat, List.of(textResponseTool.toolDefinition));
 
     if (response != null) {
-      //TODO: if accepting this schema, need to refactor API
-      if (!response.toolCalls.isEmpty() && response.toolCalls.get(0).function.name.equals("stillGatheringInformation")) {
-        Map<String, String> calledArguments = new Gson().fromJson(response.toolCalls.get(0).function.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
-        }.getType());
-        calledArguments.values().removeIf(Objects::isNull);
-        String text = calledArguments.get("response");
-        return text;
-      } else if (response.getText() != null) {
-        return response.getText();
+      synchronized (currentChatCollections) {
+        if (collection.currentChat == null || collection.currentChat.getUid() != originalChatContextid) {
+          log.error("[callChatCompletionForTextResponse] chat context was overwritten during completion request");
+          //TODO: do we still return the response in this case - or just move on?
+          return "";
+        }
+        if (response.getText() != null && !response.getText().isEmpty()) {
+          return response.getText();
+        } else if (!response.toolCalls.isEmpty()) {
+          ToolCall toolCall = response.toolCalls.get(0);
+          if (toolCall.function.name.equals("stillGatheringInformation")) {
+            Map<String, String> calledArguments = new Gson().fromJson(response.toolCalls.get(0).function.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
+            }.getType());
+            calledArguments.values().removeIf(Objects::isNull);
+            String ret = calledArguments.get("response");
+            return ret == null ? "Sorry, an internal error occurred during your request." : ret;
+          }
+        }
       }
     }
 
-    return "";
+    return "Sorry, I lost connection during your request.";
   }
 
   //TODO: Should ITK calls be fully synchronized between instruction to this call here? Ideally, yes, but it would be
@@ -1395,14 +1504,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     long originalChatContextid;
     synchronized (currentChatCollections) {
       collection = getChatCollection(speaker, addressee);
-      chatContext = collection.currentChat;
       if (collection == null) {
         log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
         return "";
-      } else if (chatContext == null) {
+      } else if (collection.currentChat == null) {
         log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{}", speaker, addressee);
         return "";
       } else {
+        chatContext = collection.currentChat;
         chatContext.history.addMessage("tool", toolResponse);
         chat = chatContext.history;
         originalChatContextid = chatContext.getUid();
@@ -1419,7 +1528,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return "";
         }
         if (response.getText() != null && !response.getText().isEmpty()) {
-          collection.currentChat.history.addRobotMessage(response.getText());
+          //collection.currentChat.history.addRobotMessage(response.getText());
           return response.getText();
         } else if (!response.toolCalls.isEmpty()) {
           ToolCall toolCall = response.toolCalls.get(0);
@@ -1428,13 +1537,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }.getType());
             calledArguments.values().removeIf(Objects::isNull);
             String ret = calledArguments.get("response");
-            return ret == null ? "" : ret;
+            return ret == null ? "Sorry, an internal error occurred. PLease try again." : ret;
           }
         }
       }
     }
 
-    return "";
+    return "Sorry, I lost connection during your request. Please try again.";
   }
 
   //// Inner suspend/resume methods for runContextSpecificChat ////
@@ -1495,7 +1604,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       //TODO: this message needs to be tuned
       ChatContext chatContext = collection.suspendedChats.remove(index);
-      chatContext.history.addMessage("tool", String.format("Your interaction with the user was paused for some amount of time while you both performed other actions. Please refamiliarize the user with the task you are performing and the current state of progress."));
+      chatContext.history.addMessage("tool", "Your interaction with the user was paused for some amount of time while you both performed other actions. Please refamiliarize the user with the task you are performing and the current state of progress.");
       collection.currentChat = chatContext;
 
       //chatContext.waitToProcessInput(cid);
@@ -1546,21 +1655,25 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: This form of storage/retrieval only matches on name, should match on signature form (without specific variable name choices)
   private List<ToolDefinition> getQuestionResponseToolDefinitions(Symbol agent) {
     List<ToolDefinition> responseFormTools = new ArrayList<>();
-    responseFormTools.add(replyToolset.get("abort").toolDefinition);
     try {
       //String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class,agent);
       List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
-      for (Term responseForm : expectedResponseForms) {
-        Tool tool = replyToolset.get(responseForm.getName());
-        if (tool != null) {
-          responseFormTools.add(tool.toolDefinition);
-        } else {
-          log.error("[getQuestionResponseToolDefinitions] found no corresponding ToolDefinition for expected response form {}",responseForm);
-          //TODO: create default definition from semantics
+      if (expectedResponseForms != null) {
+        for (Term responseForm : expectedResponseForms) {
+          Tool tool = replyToolset.get(responseForm.getName());
+          if (tool != null) {
+            responseFormTools.add(tool.toolDefinition);
+          } else {
+            log.error("[getQuestionResponseToolDefinitions] found no corresponding ToolDefinition for expected response form {}", responseForm);
+            //TODO: create default definition from semantics
+          }
         }
       }
     } catch (TRADEException e) {
       log.error("[getCurrentQuestionsString] error getting last question for agent");
+    }
+    if (!responseFormTools.isEmpty()) {
+      responseFormTools.add(replyToolset.get("abort").toolDefinition);
     }
     return responseFormTools;
   }
@@ -1655,7 +1768,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     try {
       String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class,agent);
       List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
-      if (!expectedResponseForms.isEmpty()) {
+      if (expectedResponseForms != null && !expectedResponseForms.isEmpty()) {
         output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
         output += questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
         output += "\nThere should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
@@ -1715,8 +1828,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
     super.updateLLMConversationHistory(utterance, newUtterance);
 
+    if (utterance == null) {
+      return;
+    }
+
     synchronized (currentChatCollections) {
       if (utterance.isInputUtterance()) {
+         if (utterance.getSemantics() == null || !utterance.getSemantics().isPredicate()) {
+           return;
+         }
         //NLU
         Symbol agentTeam = utterance.getAddressee().toUntyped();
         Symbol user = utterance.getSpeaker().toUntyped();
@@ -1762,6 +1882,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                 if (command.equals("generateResponseFromString") || itkActionNames.contains(command)) {
                   // TODO: should this check be for all SKIPPENDING?
                   // Remove history unless LLM text response or ITK call
+                  preserveHistory = true;
+                } else if (chatContext.chatType == ChatType.FOCUSED && command.equals("suspendSystemGoalsBlocking")) {
+                  // Temp workaround until reintroducing offContextSubmission - don't terminate context here if suspending a focused context
                   preserveHistory = true;
                 } else {
                   if (command.equals("offContextSubmission")) {
@@ -1827,7 +1950,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
 
-    if (question.getLastFormMatch() == null) {
+    if (!question.wasAnswered()) {
       // If validation question expired but chat context is still in validation state, we know the validation question expired.
       //  So update chat state accordingly.
       synchronized (currentChatCollections) {
@@ -1835,7 +1958,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (chatCollection != null) {
           ChatContext chatContext = chatCollection.currentChat;
           if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
-            chatCollection.currentChat.signalCompletion();
+            chatCollection.signalInputProcessed();
             chatCollection.currentChat = null;
           }
         }
@@ -1853,7 +1976,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Map<String, String> calledArguments = new Gson().fromJson(functionCall.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
     }.getType());
     calledArguments.values().removeIf(Objects::isNull);
-    Boolean validParse = true;
+    boolean validParse = true;
 
     ToolDefinition toolDefinition = tool.toolDefinition;
 
@@ -1886,7 +2009,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (targetParam == null) {
         // An argument was supplied which isn't present in the target set
         //  (This is more just an LLM issue? Do we do anything in this case, or just discard the information?)
-        log.warn("[handleToolResponse] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
+        log.warn("[processToolCall] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
       } else {
         Symbol argValue = Factory.createFOL(calledArguments.get(argName));
         // If there is an explicit possible_values set, make sure the argument is present
@@ -2142,7 +2265,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     catch (Exception e) {
-      log.warn("[correctCommonNLUMistakes] unexpected semantics format");
+      log.warn("[correctCommonNLUMistakes] unexpected semantics format {}", utterance.getSemantics());
+      //TODO: explicitly fail with a specific message here? Or just return unmodified utterance?
     }
   }
 
@@ -2184,13 +2308,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (tsi != null) {
         refs = tsi.call(Map.class);
       }
-      return refs.values().stream().map(ref -> {
-        if (!ref.properties.isEmpty()) {
-          return ref.properties.get(0).getName()+":location";
-        } else {
-          return "";
-        }
-      }).toList();
+      if (refs != null) {
+        return refs.values().stream().map(ref -> {
+          if (!ref.properties.isEmpty()) {
+            return ref.properties.get(0).getName() + ":location";
+          } else {
+            return "";
+          }
+        }).toList();
+      }
     } catch (TRADEException e) {
       log.error("[getLocations]", e);
     }
@@ -2209,13 +2335,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (tsi != null) {
         refs = tsi.call(Map.class);
       }
-      for (Map<Variable, Symbol> binding : bindings) {
-        Symbol y = binding.get(new Variable("Y"));
-        //TODO: should be based on group
-        PoseReference ref = refs.get(y);
-        if (ref != null) {
-          if (!ref.properties.isEmpty()) {
-            robotLocationString = String.format("You were last at the following location: %s.\n", ref.properties.get(0).getName());
+      if (refs != null && bindings != null) {
+        for (Map<Variable, Symbol> binding : bindings) {
+          Symbol y = binding.get(new Variable("Y"));
+          //TODO: should be based on group
+          PoseReference ref = refs.get(y);
+          if (ref != null) {
+            if (!ref.properties.isEmpty()) {
+              robotLocationString = String.format("You were last at the following location: %s.\n", ref.properties.get(0).getName());
+            }
           }
         }
       }
@@ -2632,7 +2760,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     definition = new ToolDefinition("abort",
             "You inform the system that the user is explicitly abandoning answering its current OUTSTANDING QUESTION. Examples of instructing this could be saying \"nevermind\" immediately after a question has been asked.",
-            List.of(new ToolParameterHelper("","string",List.of(),"",true)));
+            List.of(new ToolParameterHelper("target","string",List.of("question"),"",true)));
     replyTools.put("abort",new Tool(definition,UtteranceType.REPLY));
     //replyTools.put(Factory.createPredicate("abort()"), new Tool(definition,UtteranceType.REPLY));
     definition = new ToolDefinition("val",

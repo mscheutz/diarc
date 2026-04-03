@@ -311,7 +311,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
               log.debug("[parseUtterance] Using llm parser response");
               preserveAddressee(llmOutput);
               output = llmOutput;
-              if (!inExtendedInteraction && output.needsValidation() && useCache && cacheLLM) {
+              if (!inExtendedInteraction && !confirmation && useCache && cacheLLM) {
                 cacheParse(output);
               }
               return output;
@@ -383,6 +383,19 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       cacheParser.addEntryToCache(utterance);
     } else {
       log.warn("[cacheParse] attempting to add utterance to cache but parser cache is disabled");
+    }
+  }
+
+  @TRADEService
+  @Action
+  public void cacheLLMParse(Utterance utterance) {
+    if (cacheLLM) {
+      if (useCache) {
+        log.debug("[cacheLLMParse] Caching parsed utterance");
+        cacheParser.addEntryToCache(utterance);
+      } else {
+        log.warn("[cacheLLMParse] attempting to add utterance to cache but parser cache is disabled");
+      }
     }
   }
 
