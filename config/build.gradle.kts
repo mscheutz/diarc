@@ -47,7 +47,7 @@ dependencies {
   implementation(project(":core"))
   implementation(project(":core","mockJar"))
   implementation(project(":vision","mockJar"))
-  implementation(project(":diarcRos"))
+//  implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
 
   if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {

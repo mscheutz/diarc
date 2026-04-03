@@ -4,14 +4,9 @@
 
 package edu.tufts.hrilab.config.spot;
 
-import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.GoalManagerComponent;
-import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.llm.LLMComponent;
-import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -19,17 +14,14 @@ import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.spot.MockSpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
-import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
-import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.MockVisionComponent;
-
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = false;
+  boolean useMockVision = true;
+  boolean useMockSpot = true;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -63,15 +55,19 @@ public class SpotConfig extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
+    if (useMockSpot) {
+      createInstance(MockSpotComponent.class);
+    } else {
 //    String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
 //    String spotConfigFile = /home/evan/Documents/spot/spot_psi.yaml";
-    String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
+      String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
 //    String tradeHubContainer = "127.0.0.1@10001";
-    String tradeHubContainer = "192.168.0.46@10001";
-    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
-            + " -hubContainer " + tradeHubContainer
-            + " -spotMap " + "/home/evan/.diarc/spot/spot_map"
-            + " -refs " + "/spot/spot_map_refs.json");
+      String tradeHubContainer = "192.168.0.46@10001";
+      createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
+              + " -hubContainer " + tradeHubContainer
+              + " -spotMap " + "/home/evan/.diarc/spot/spot_map"
+              + " -refs " + "/spot/spot_map_refs.json");
+    }
 
     // flex rl
 //    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);

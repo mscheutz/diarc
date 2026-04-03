@@ -254,6 +254,7 @@ spot; AGENT; ?ADDRESSEE
 
 yes; VAL; val(yes)
 no; VAL; val(no)
+ready; VAL; val(ready)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Additional entries for flexibility %%

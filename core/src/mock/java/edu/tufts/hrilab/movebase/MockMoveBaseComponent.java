@@ -64,7 +64,6 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   @Override
   public void setPoseGlobal(double x, double y, double theta) {
     simExecTime();
-    return;
   }
 
   @Override

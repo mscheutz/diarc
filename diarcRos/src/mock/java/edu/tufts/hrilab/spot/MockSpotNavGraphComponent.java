@@ -6,6 +6,8 @@ package edu.tufts.hrilab.spot;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -19,7 +21,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNavigationInterface {
+/**
+ * This class is only used by the Multi-robot caddy integration test. This class should be deleted once that test
+ * is updated with the newer MockSpotComponent.
+ */
+@Deprecated
+public class MockSpotNavGraphComponent extends DiarcComponent {
 
     private String mapDescriptor = "location";
     private String refsConfigFile;
@@ -69,10 +76,18 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
         }
     }
 
-    @Override
+    @TRADEService
+    @Action
     public Justification goToLocation(Symbol location) {
         log.info("[goToLocation] " + "going to location " + location);
         simExecTime();
+        currentLocation = location;
+        return new ConditionJustification(true);
+    }
+
+    @TRADEService
+    @Action
+    public Justification initLocation(Symbol location) {
         currentLocation = location;
         return new ConditionJustification(true);
     }
@@ -84,10 +99,5 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
             } catch (InterruptedException e) {
             }
         }
-    }
-
-    public Justification initLocation(Symbol location) {
-        currentLocation = location;
-        return new ConditionJustification(true);
     }
 }

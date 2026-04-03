@@ -73,13 +73,13 @@ public class ObservationContext extends ArgumentBasedContext {
     setupArguments(stateToObserve.getOrderedVars(), null);
   }
 
-  protected ObservationContext(Context caller, StateMachine sm, String cmd, List<String> arguments, Symbol actor, Observable observable) {
+  protected ObservationContext(Context caller, StateMachine sm, String cmd, List<String> inputArgs, List<String> returnArgs, Symbol actor, Observable observable) {
     super(caller, sm, "observe");
     this.actor = actor;
-    this.stateToObserve = Factory.createPredicate(cmd, arguments.stream().toArray(String[]::new));
+    this.stateToObserve = Factory.createPredicate(cmd, inputArgs.stream().toArray(String[]::new));
     this.observable = observable;
 
-    setupArguments(stateToObserve.getOrderedVars(), null);
+    setupArguments(stateToObserve.getOrderedVars(), returnArgs);
   }
 
   @Override
@@ -90,6 +90,12 @@ public class ObservationContext extends ArgumentBasedContext {
       addArgument("?actor", Symbol.class, actor, false, false);
     } else {
       setArgument("?actor", actor);
+    }
+
+    // setup return arg
+    if (returnArgs != null && !returnArgs.isEmpty()) {
+      Class cls = getArgumentType((String) returnArgs.get(0));
+      addArgument("ret", cls, returnArgs.get(0), false, true);
     }
   }
 
@@ -377,7 +383,6 @@ public class ObservationContext extends ArgumentBasedContext {
       log.error("Observation action does not return 'List<?>'");
     }
     observationBindings = observations;
-    return;
   }
 
   /**
@@ -408,8 +413,19 @@ public class ObservationContext extends ArgumentBasedContext {
         if (observationBindings.size() > 1) {
           log.warn("More than one result observed for: " + boundStateToObserve + " Selecting first binding option from: " + observationBindings);
         }
-        // deep bind observed arguments
-        observationBindings.get(0).forEach((k, v) -> this.getArgument(k.getName()).bindDeep(v));
+        // deep bind observed arguments (only for args that are script variables. i.e., starts with ? or !)
+        observationBindings.get(0).forEach((k, v) -> {
+          if (Utilities.isScriptVariable(k.getName())) {
+            this.getArgument(k.getName()).bindDeep(v);
+          }
+        });
+
+        // bind return value
+        ActionBinding returnArg = this.getLocalArgument("ret");
+        if (returnArg != null) {
+          returnArg.bindDeep(observationBindings);
+          redistributeArguments();
+        }
         if (!isNegation) {
           holds = true;
         }

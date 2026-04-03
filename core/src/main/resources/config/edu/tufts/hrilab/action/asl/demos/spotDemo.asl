@@ -7,37 +7,6 @@ import java.lang.Boolean;
 import java.util.List;
 
 
-/////////// Recovery Policies /////////
-////todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
-() = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-  Symbol !defaultLocation = location_0:location;
-
-  recovery: {
-    failedActions: {init(self:agent)}
-    actionStatuses: {FAIL_RETURNVALUE}
-  }
-
-    act:setInitialLocation(!defaultLocation);
-//  act:setLocationWithFiducial(!defaultLocation;
-  op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
-}
-
-//() = failedGrasp(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-//  Symbol !defaultLocation = location_0:location;
-//
-//  recovery: {
-////    failedActions: {grabObject(self:agent, X:physobj)}
-//    failureReasons: {failedGrasp(X)}
-////    actionStatuses: {FAIL}
-//  }
-//
-////    act:setInitialLocation(!defaultLocation);
-////  act:setLocationWithFiducial(!defaultLocation);
-//  op:log(warn, "[failedGrasp] trying grasp again");
-//  act:stopAllSearches();
-//}
-
-
 //////// Core behaviors //////////
 
 () = init(Symbol ?location = location_0:location) {
@@ -79,49 +48,13 @@ import java.util.List;
       success : not(at(?actor, X));
       success : at(?actor, ?location);
     }
-    Boolean !result = act:hasBeenLocalized();
 
-    if (op:equals(!result, true)) {
-        op:log(debug, "[localize] no need to localize again");
-    } elseif (op:equals(?useFiducial, true)) {
-        op:log(debug, "[localize] localizing to: ?location");
-//        act:localize();
-      act:setLocationWithFiducial(?location);
+    op:log(debug, "[localize] localizing to: ?location");
+    if (op:equals(?useFiducial, true)) {
+      act:localizeWithFiducial();
     } else {
-      act:setInitialLocation(?location);
+      act:localizeWithReference(?location);
     }
-}
-
-() = map() {
-    Symbol !location;
-    Integer !numLocations;
-//    java.util.Map !bindings;
-
-    act:getNavGraphPointsAndPopulateConsultant();
-    !numLocations = tsc:getNumberOfKnownLocations();
-    op:log(debug, "[map] number of known locations is !numLocations");
-
-
-    for (!i=0; !i lt !numLocations; !i ++) {
-        !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
-        act:goToLocationUnsafe(!location);
-        act:bindLocationToCurrentPose(!location);
-        op:log(debug, "[map] mapped !location");
-    }
-    //tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/room.json");
-    act:localize();
-}
-
-() = wander() {
-    Symbol !location;
-    Integer !numLocations;
-    !numLocations = tsc:getNumberOfKnownLocations();
-    for (!i=0; !i lt !numLocations; !i ++) {
-        !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
-        act:goToLocation(!location);
-        op:log(debug, "[wander] at location !location");
-    }
-    op:log(info, "[wander] done with tour. at location !location");
 }
 
 () = shutDown() {
@@ -139,11 +72,6 @@ import java.util.List;
     }
 
     tsc:goToPose(stow);
-}
-
-() = test() {
-    act:map();
-    act:wander();
 }
 
 () = perceiveEntity(Symbol ?object:physobj) {

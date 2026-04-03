@@ -966,7 +966,7 @@ public abstract class Context {
       // observation DB
       case OBSERVATION:
         // create new context for observation
-        c = new ObservationContext(this, this.stateMachine, command, inputArgs, actor, Observable.TRUE);
+        c = new ObservationContext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor, Observable.TRUE);
         break;
 
       case THIS:

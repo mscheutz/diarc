@@ -479,7 +479,6 @@ class SpotTRADEWrapper:
         raise RuntimeError("Incorrect arguments")
 
     def goToLocationRef(self, location):
-        # todo: Handle consultant stuff
         ref = self.locationConsultant.getRefWithId(location)
         if ref is None:
             return (False, f"No reference found with name {location}")
@@ -751,28 +750,24 @@ class SpotTRADEWrapper:
 
     @handle_return
     @JOverride
-    def setInitialLocation(self, refId):
-        pass
+    def localizeWithReference(self, refId):
 
-    @handle_return
-    @JOverride
-    def setLocationWithFiducial(self, refId):
-        pass
-
-    @handle_return
-    @JOverride
-    def bindLocationToCurrentPose(self, refId):
         ref = self.locationConsultant.getRefWithId(refId)
+        if ref is None:
+            return (False, f"Cannot localize. No reference found for reference: {refId}")
+
+        waypoint_id = ref.getWaypointId()
+        self.spot.spot_graph_nav.set_initial_localization_waypoint([waypoint_id])
+
+    @handle_return
+    @JOverride
+    def localizeWithFiducial(self):
+        self.spot.spot_graph_nav.set_initial_localization_fiducial()
 
     @JOverride
     @handle_return
-    def hasBeenLocalized(self):
-        pass
-
-    @JOverride
-    def localize(self):
-        """Trigger localization when near a fiducial."""
-        self.spot.spot_graph_nav.set_initial_localization_fiducial()
+    def isLocalized(self) -> bool:
+        return not self.spot.spot_graph_nav._graph_nav_client.get_localization_state().lost_detector_state.is_lost
 
     @JOverride
     def startMapping(self):

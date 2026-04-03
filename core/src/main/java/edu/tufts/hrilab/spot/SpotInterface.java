@@ -35,23 +35,15 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
 
   @TRADEService
   @Action
-  boolean hasBeenLocalized();
-
-  @TRADEService
-  @Action
-  Justification localize();
+  boolean isLocalized();
 
   @Action
   @TRADEService
-  void setInitialLocation(Symbol refId);
+  void localizeWithReference(Symbol refId);
 
   @Action
   @TRADEService
-  Justification setLocationWithFiducial(Symbol refId);
-
-  @Action
-  @TRADEService
-  void bindLocationToCurrentPose(Symbol refId);
+  void localizeWithFiducial();
 
   /**
    * TODO: remove this in favor of the graspObject method in the ArmInterface
