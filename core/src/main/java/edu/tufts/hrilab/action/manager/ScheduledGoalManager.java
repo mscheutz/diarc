@@ -223,7 +223,9 @@ public class ScheduledGoalManager {
       goalScheduler.getListenerManager().addSchedulerListener(listener);
       if (listener.joinOnGoal()) {
         Goal lastGoal = goal.getLastSubmittedGoal();
-        em.joinOnGoal(lastGoal.getId());
+        if (lastGoal != null) {
+          em.joinOnGoal(lastGoal.getId());
+        }
       }
       goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {
@@ -248,7 +250,9 @@ public class ScheduledGoalManager {
       if (listener.joinOnGoal(millis)) {
         millis = millis - (System.currentTimeMillis() - startTime);
         Goal lastGoal = goal.getLastSubmittedGoal();
-        em.joinOnGoal(lastGoal.getId(), millis);
+        if (lastGoal != null) {
+          em.joinOnGoal(lastGoal.getId(), millis);
+        }
       }
       goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {

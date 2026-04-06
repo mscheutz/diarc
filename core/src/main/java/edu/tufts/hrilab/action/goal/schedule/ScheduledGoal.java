@@ -133,6 +133,10 @@ public class ScheduledGoal extends Goal {
    * @return
    */
   public Goal getLastSubmittedGoal() {
+    if (submittedGoals.isEmpty()) {
+      log.warn("[getLastSubmittedGoal] no goal found");
+      return null;
+    }
     return submittedGoals.get(submittedGoals.size() - 1);
   }
 
