@@ -123,6 +123,21 @@ void ClusterDetector::handlePlaneNotification(PlaneNotification::ConstPtr notifi
     LOG4CXX_ERROR(logger, "Unable to extract clusters!");
   }
 
+  // remove all clusters below plane dist threshold
+  float dist_thresh = 0.03;
+  auto it = clusters.begin();
+  while (it != clusters.end()) {
+    float dist = calculateMaxDistanceFromPlane(cloud, plane, *it);
+    LOG4CXX_DEBUG(logger, boost::format("Max cluster distance from plane: %f") % dist);
+    if (dist < dist_thresh) {
+      // erase() returns the iterator to the next element
+      it = clusters.erase(it);
+    } else {
+      // Only increment if we didn't erase
+      ++it;
+    }
+  }
+
   //send notifications
   MemoryObject::VecPtr newClusterObjects = createMemoryObjects(clusters, notification->captureData);
   sendDetectionNotifications(newClusterObjects);
@@ -130,6 +145,24 @@ void ClusterDetector::handlePlaneNotification(PlaneNotification::ConstPtr notifi
   if (getDisplayFlag()) {
     display(newClusterObjects);
   }
+}
+
+float ClusterDetector::calculateMaxDistanceFromPlane(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, ExtractedPlane::ConstPtr& plane, const pcl::PointIndices& cluster) {
+
+  const pcl::ModelCoefficients::ConstPtr& coefficients = plane->getPlaneCoefficients();
+  Eigen::Vector4f model_coefficients(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
+
+  float max_distance = 0;
+  for (auto index : cluster.indices) {
+    pcl::PointXYZRGB p = cloud->at(index);
+    Eigen::Vector4f pp(p.x, p.y, p.z, 1);
+    float dist = pp.dot(model_coefficients);
+    if (dist > max_distance) {
+      max_distance = dist;
+    }
+  }
+
+  return max_distance;
 }
 
 void ClusterDetector::sortPointcloud() {
