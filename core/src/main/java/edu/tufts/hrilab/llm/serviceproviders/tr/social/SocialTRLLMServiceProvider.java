@@ -47,6 +47,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -1443,15 +1446,25 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //// General Completion / ChatCollection Utilities ////
 
   private Completion callChatCompletion(Chat chat, List<ToolDefinition> tools) {
-    try {
-      //TODO: Add this generally to pipeline
-      if (tools != null) {
-        return TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class, List.class)).call(Completion.class, chat, tools);
-      } else {
-        return TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
+    ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
+    Future<Completion> future = endpointCallExecutor.submit(() -> {
+      try {
+        //TODO: Add this generally to pipeline
+        if (tools != null) {
+          return TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class, List.class)).call(Completion.class, chat, tools);
+        } else {
+          return TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
+        }
+      } catch (TRADEException e) {
+        log.error("[llmParserService] Error performing chat completion", e);
+        return null;
       }
-    } catch (TRADEException e) {
-      log.error("[llmParserService] Error performing chat completion", e);
+    });
+    try {
+      // What amount of time here?
+      return future.get(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      log.error("[callChatCompletion] exception or timeout waiting on endpoint completion request", e);
       return null;
     }
   }
