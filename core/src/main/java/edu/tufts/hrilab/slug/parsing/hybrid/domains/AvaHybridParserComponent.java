@@ -27,6 +27,12 @@ public class AvaHybridParserComponent extends HybridParserComponent {
       return incoming;
     }
 
+    if (incoming.getWordsAsString().equals("reset")) {
+      incoming.setSemantics(Factory.createPredicate("resetConversation",incoming.getAddressee()));
+      incoming.setType(UtteranceType.INSTRUCT);
+      return incoming;
+    }
+
     Utterance output = super.parseUtterance(incoming);
     output = applyContextToOutput(output);
     return output;

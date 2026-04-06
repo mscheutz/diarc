@@ -1466,8 +1466,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     synchronized (currentChatCollections) {
       ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
       if (chatCollection != null) {
-        chatCollection.releaseLocks();
-        chatCollection.currentChat = null;
+        if (chatCollection.currentChat != null && chatCollection.currentChat.chatState == ChatState.VALIDATION) {
+          log.warn("[endChatContext] called during validation, not currently equipped to cancel validation question and clean up side effects. Just clearing history...");
+          chatCollection.currentChat.history = new Chat();
+        } else {
+          chatCollection.releaseLocks();
+          chatCollection.currentChat = null;
+        }
       }
     }
   }
@@ -1943,8 +1948,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
               if (semantics.getArgs().size() > 1) {
                 String command = semantics.get(1).getName();
-                if (command.equals("generateResponseFromString") || itkActionNames.contains(command)) {
-                  // TODO: should this check be for all SKIPPENDING?
+                // TODO: should this check be for all SKIPPENDING?
+                if (command.equals("generateResponseFromString") || itkActionNames.contains(command) || command.equals("resetConversation")) {
                   // Remove history unless LLM text response or ITK call
                   preserveHistory = true;
                 } else if (chatContext.chatType == ChatType.FOCUSED && command.equals("suspendSystemGoalsBlocking")) {
@@ -2620,6 +2625,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getSavedVideos":
         case "getSavedImages":
         case "getCurrentPendingScheduledGoalInformation":
+        case "resetConversation":
           return true;
         default:
           return false;

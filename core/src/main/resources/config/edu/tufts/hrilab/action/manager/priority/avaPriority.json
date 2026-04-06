@@ -246,5 +246,9 @@
   "getCurrentPendingScheduledGoalInformation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "resetConversation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

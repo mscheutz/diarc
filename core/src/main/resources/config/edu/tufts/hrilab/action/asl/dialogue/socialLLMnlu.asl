@@ -504,3 +504,13 @@ import java.lang.String;
 
     //TODO: prompt the system to say something in this case? goodbye?
 }
+
+() = resetConversation() {
+    Symbol !submitter;
+
+    op:log(info,"[endConversation]");
+
+    !submitter = this:getOriginalSubmitter();
+    tsc:endChatContext(!submitter,?actor);
+    act:generateResponseFromString(!submitter,"Conversation has been reset");
+}
