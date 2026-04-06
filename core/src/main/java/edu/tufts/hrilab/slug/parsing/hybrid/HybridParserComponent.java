@@ -63,6 +63,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   // "Social LLM Service Provider": Cache -> TLDL -> PMP -> LLM if first input (or really whatever the user desires). But if in an extended interaction, override LLM -> rest.
   // "Basic LLM Service Provider": Always Cache -> TLDL -> PMP -> LLM
   private String[] sequence;
+  private boolean restrictedMode = false;
+  private String[] cachedSequence = null;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -237,7 +239,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
 
-    Utterance output = incoming;
+    //Utterance output = incoming;
+    Utterance output = null;
     Utterance cachedOutput = null;
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
@@ -293,8 +296,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
                 log.debug("[parseUtterance] Using tldl parser response: {}", output);
                 return output;
               } else {
-                //Use TLDL UNKNOWN parse in case LLM parse fails
-                output = tldlOutput;
+                if (output == null) {
+                  //Use TLDL UNKNOWN parse in case LLM parse fails
+                  output = tldlOutput;
+                }
               }
             }
           }
@@ -308,19 +313,38 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
             }
 
             if (llmOutput != null && llmOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using llm parser response");
-              preserveAddressee(llmOutput);
-              output = llmOutput;
-              if (!inExtendedInteraction && !confirmation && useCache && cacheLLM) {
-                cacheParse(output);
+              if (llmOutput.getType() != UtteranceType.UNKNOWN) {
+                log.debug("[parseUtterance] Using llm parser response");
+                preserveAddressee(llmOutput);
+                output = llmOutput;
+                if (!inExtendedInteraction && !confirmation && useCache && cacheLLM) {
+                  cacheParse(output);
+                }
+                // Same as above comment - in a crunch, redo
+                try {
+                  TRADE.getAvailableService(new TRADEServiceConstraints().name("usedLLMParse").argTypes(Symbol.class, Symbol.class)).call(void.class, incoming.getSpeaker(), incoming.getAddressee());
+                } catch (TRADEException ex) {
+                  log.error("Error calling usedLLMParse service", ex);
+                }
+                return output;
+              } else {
+                if (output == null) {
+                  //TODO: revisit, using a hack to allow for LLM to return error responses as strings. A better way is
+                  //  to just return semantics but populate the cache or make sure SimpleNLG can handle them properly
+                  llmOutput.setType(UtteranceType.INSTRUCT);
+                  //Use LLM UNKNOWN parse in case all other parsers fail
+                  output = llmOutput;
+                }
               }
-              return output;
             }
           }
           break;
         default:
           break;
       }
+    }
+    if (output == null) {
+      output = incoming;
     }
     return applyAddressee(incoming, output);
   }
@@ -425,4 +449,51 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   public CachedParserComponent getCacheParser() {
     return cacheParser;
   }
+
+  @TRADEService
+  public void setHybridParserRestrictedMode(boolean enabled) {
+    if (!useLLM) {
+      log.warn("[setHybridParserRestrictedMode] Cannot toggle restricted mode without being configured to use the LLM");
+      return;
+    }
+
+    if (enabled) {
+      if (restrictedMode) {
+        log.warn("[setHybridParserRestrictedMode] already enabled");
+        return;
+      }
+      cachedSequence = sequence;
+      // Put LLM at the back of the order
+      String[] restrictedSequence = new String[sequence.length];
+      restrictedSequence[sequence.length-1] = "llm";
+      int offset = 0;
+      for (int i=0;i<sequence.length;i++) {
+        if (sequence[i].equals("llm")) {
+          offset = 1;
+          continue;
+        }
+        restrictedSequence[i-offset] = sequence[i];
+      }
+      sequence = restrictedSequence;
+      restrictedMode = true;
+    } else {
+      if (!restrictedMode) {
+        log.warn("[setHybridParserRestrictedMode] already disabled");
+        return;
+      } else if (cachedSequence == null) {
+        log.error("[setHybridParserRestrictedMode] cannot find original cached sequence to reset to");
+        return;
+      }
+      sequence = cachedSequence;
+      cachedSequence = null;
+      restrictedMode = false;
+    }
+  }
+
+  @TRADEService
+  public boolean getHybridParserRestrictedMode() {
+    return restrictedMode;
+  }
+
+
 }

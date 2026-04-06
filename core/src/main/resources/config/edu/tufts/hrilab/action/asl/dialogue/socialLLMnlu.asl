@@ -56,6 +56,8 @@ import java.lang.String;
     // parser error handling
     java.lang.String !semanticsName;
     Symbol !semantics = op:invokeMethod(?utterance, "getSemantics");
+    java.lang.String !failureString;
+    Utterance !failureUtterance;
     if (op:isNull(!semantics)) {
       act:updateDialogueHistory(?utterance);
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
@@ -72,6 +74,12 @@ import java.lang.String;
             !speaker = op:invokeMethod(?utterance, "getSpeaker");
             !addressee = op:invokeMethod(?utterance, "getAddressee");
             act:handleError(!speaker, !addressee, !semantics, direct);
+            //!failureString = op:invokeMethod(?utterance,"getWordsAsString");
+            //if (op:invokeMethod(!failureString,"isEmpty")) {
+            //    act:handleError(!speaker, !addressee, !semantics, direct);
+            //} else {
+            //    !addressee.act:generateResponseFromString(!speaker,!failureString);
+            //}
             return;
         }
     }
@@ -351,10 +359,19 @@ import java.lang.String;
     }
     !focusedChatInitialResponseSemantics = op:invokeMethod(!focusedChatInitialResponse, "getSemantics");
     !semanticsName = op:getName(!focusedChatInitialResponseSemantics);
-    if (op:equals(!semanticsName,"error")) {
-        act:handleError(?user, ?agentTeam, !focusedChatInitialResponseSemantics, direct);
+
+    //if (op:equals(!semanticsName,"error")) {
+    //    act:handleError(?user, ?agentTeam, !focusedChatInitialResponseSemantics, direct);
+    //    tsc:endChatContext(?user,?agentTeam);
+    //    exit(FAIL);
+    //}
+    edu.tufts.hrilab.slug.common.UtteranceType !utteranceType = op:invokeMethod(!focusedChatInitialResponse,"getType");
+    if (op:equalsValue(!utteranceType,"UNKNOWN")) {
+        !utteranceType = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "INSTRUCT");
+        op:invokeMethod(!focusedChatInitialResponse, "setType", !utteranceType);
+        act:handleParsedUtterance(!focusedChatInitialResponse);
         tsc:endChatContext(?user,?agentTeam);
-        exit(FAIL);
+        exit(FAIL); //TODO: should just fail out with relevant semantics here
     }
 
     //  wait on lock in either case - should be released when moving on from specific context

@@ -185,6 +185,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //  was overwritten with INSTRUCT due to ITK / QueueEM incompatibility workarounds.
   List<String> itkActionNames = new ArrayList<>();
 
+  private int externalErrorCount = 0;
+  private boolean restrictedMode = false;
+
   @Override
   public void init() {
     super.init();
@@ -502,9 +505,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     if (response == null) {
       log.error("[parseUtteranceLLMService] have null Completion response");
-      utterance.setSemantics(Factory.createPredicate("error",utterance.getAddressee().toUntypedString(),"wasUnableToReachLanguageServices"));
-      utterance.setNeedsValidation(false);
+      handleErrorResponse(utterance, true, false);
+      //utterance.setSemantics(Factory.createPredicate("error",utterance.getAddressee().toUntypedString(),generateErrorResponse(false,user,agentTeam,true)));
+      //utterance.setNeedsValidation(false);
       return utterance;
+    } else {
+      resetErrorCount(false, user, agentTeam);
     }
 
     log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
@@ -586,6 +592,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Internal LLM error - should there be LLM specific error responses in this case?
     if (correspondingTool == null) {
+      handleErrorResponse(inputUtterance, true, true);
       return inputUtterance;
     }
 
@@ -602,9 +609,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (toolCall.function.name.equals("stillGatheringInformation")) {
         if (!outputUtterance.getSemantics().isPredicate() || ((Predicate)outputUtterance.getSemantics()).getArgs().size() < 2) {
           log.error("[handleToolResponse] malformed stillGatheringInformation response");
+          handleErrorResponse(inputUtterance, true, true);
           return inputUtterance;
         }
         llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
+        resetErrorCount(true, inputUtterance.getSpeaker().toUntyped(), inputUtterance.getAddressee().toUntyped());
         return handleTextResponse(llmResponse,inputUtterance,chatContext);
       }
 
@@ -674,6 +683,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
       }
 
+      resetErrorCount(true, inputUtterance.getSpeaker().toUntyped(), inputUtterance.getAddressee().toUntyped());
       return outputUtterance;
     } else {
       // Invalid parse - engage in recovery in the form of an extended dialogue interaction
@@ -689,11 +699,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Re-call completion for text response
       Completion errorResponse = callChatCompletion(chatContext.history, List.of(textResponseTool.toolDefinition));
       if (errorResponse == null) {
-        inputUtterance.setSemantics(Factory.createPredicate("error",inputUtterance.getAddressee().toUntypedString(),"wasUnableToReachLanguageServices"));
-        inputUtterance.setNeedsValidation(false);
+        handleErrorResponse(inputUtterance, true, false);
         return inputUtterance;
       } else {
         if (errorResponse.toolCalls.isEmpty()) {
+          resetErrorCount(true, inputUtterance.getSpeaker().toUntyped(), inputUtterance.getAddressee().toUntyped());
           return handleTextResponse(errorResponse, inputUtterance, chatContext);
         } else {
           return handleToolResponse(errorResponse,inputUtterance,chatCollection);
@@ -835,8 +845,32 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * extended interaction
    */
   public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
+    if (restrictedMode) {
+      return false;
+    }
+
     ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
-    return collection != null && collection.currentChat != null;
+    // Without this, there could be an issue here if any TLDL greeting, reply, ack responses are present in the history
+    //  but the LLM is failing calls to the endpoint. Would be returning true, but because of population from a tldl call
+    if (collection != null) {
+      ChatContext chatContext = collection.currentChat;
+      if (chatContext != null) {
+        return chatContext.containsLLMParse; // exclude error responses?
+      }
+    }
+    return false;
+  }
+
+  // Revisit/remove
+  @TRADEService
+  public void usedLLMParse(Symbol user, Symbol agentTeam) {
+    ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (collection != null) {
+      ChatContext chatContext = collection.currentChat;
+      if (chatContext != null) {
+        chatContext.containsLLMParse = true;
+      }
+    }
   }
 
   /**
@@ -899,6 +933,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
       tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString",utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
       tempUtterance.setNeedsValidation(false);
+      tempUtterance.setType(UtteranceType.INSTRUCT);
+    } else if (tempUtterance.getType() == UtteranceType.UNKNOWN) {
       tempUtterance.setType(UtteranceType.INSTRUCT);
     }
 
@@ -991,8 +1027,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     if (llmResponse == null) {
       log.error("[convertSemanticsToTextLLMService] received null completion response");
-      utterance.setWords("Sorry, I was unable to reach language services");
+      handleErrorResponse(utterance, false, false);
       return utterance;
+    } else {
+      resetErrorCount(false, user, agentTeam);
     }
 
     log.info(llmResponse.getText());
@@ -1003,7 +1041,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Matcher m = outputPattern.matcher(responseString);
     if (!m.matches()) {
       log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");
-      utterance.setWords("Sorry, an internal error has occurred");
       return null;
     } else {
       String output = m.group(m.groupCount());
@@ -1131,9 +1168,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
           if (response == null) {
             log.error("[focusDialogueChat] received null Completion response");
-            Utterance failureUtterance = Utterance.createOutputUtterance(agentTeam, user);
-            failureUtterance.setSemantics(Factory.createPredicate("error",addressee.toUntypedString(),"wasUnableToReachLanguageServices"));
+            Utterance failureUtterance = (new Utterance.Builder()).setSpeaker(user).setAddressee(agentTeam).build();
+            handleErrorResponse(failureUtterance, true, false);
             return failureUtterance;
+          } else {
+            resetErrorCount(false, user, agentTeam);
           }
 
           if (response.toolCalls.isEmpty()) {
@@ -1144,9 +1183,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             originalUtterance = handleToolResponse(response, originalUtterance, collection);
             //TODO: if this call returns the utterance unmodified, needs to be an error case
           }
-          if (!originalUtterance.getSemantics().getName().equals("error")) {
+
+          if (chatContext.getNumParseErrors() == 0 && externalErrorCount == 0) {
+          //if (!originalUtterance.getSemantics().getName().equals("error")) {
             // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
             contextTransferResponseUtterances.put(cid, originalUtterance);
+          } else {
+            originalUtterance.setType(UtteranceType.UNKNOWN); //Revisit whole commit - decide on error semantics or figure out better way to handle this
           }
           return originalUtterance;
         }
@@ -1468,6 +1511,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return "";
         }
         if (response.getText() != null && !response.getText().isEmpty()) {
+          resetErrorCount(true, user, agentTeam);
           return response.getText();
         } else if (!response.toolCalls.isEmpty()) {
           ToolCall toolCall = response.toolCalls.get(0);
@@ -1476,13 +1520,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }.getType());
             calledArguments.values().removeIf(Objects::isNull);
             String ret = calledArguments.get("response");
-            return ret == null ? "Sorry, an internal error occurred during your request." : ret;
+            if (ret == null) {
+              collection.currentChat.incrementNumParseErrors();
+              return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
+            } else {
+              resetErrorCount(true, user, agentTeam);
+             return ret;
+            }
+          } else {
+            collection.currentChat.incrementNumParseErrors();
+            return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
           }
         }
       }
     }
 
-    return "Sorry, I lost connection during your request.";
+    externalErrorCount += 1;
+    return generateErrorResponse(false,externalErrorCount,false);
   }
 
   //TODO: Should ITK calls be fully synchronized between instruction to this call here? Ideally, yes, but it would be
@@ -1537,13 +1591,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }.getType());
             calledArguments.values().removeIf(Objects::isNull);
             String ret = calledArguments.get("response");
-            return ret == null ? "Sorry, an internal error occurred. PLease try again." : ret;
+            if (ret == null) {
+              collection.currentChat.incrementNumParseErrors();
+              return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
+            } else {
+              resetErrorCount(true, user, agentTeam);
+              return ret;
+            }
+          } else {
+            collection.currentChat.incrementNumParseErrors();
+            return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
           }
         }
       }
     }
 
-    return "Sorry, I lost connection during your request. Please try again.";
+    externalErrorCount += 1;
+    return generateErrorResponse(false,externalErrorCount,false);
   }
 
   //// Inner suspend/resume methods for runContextSpecificChat ////
@@ -1966,6 +2030,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
+  //TODO: should postprocessing errors here increment "internalErrorCount" even if returning their own specialized error message?
   /**
    * Process an LLM Tool call response by matching it against existing Tool Definitions.
    * Return:
@@ -2163,6 +2228,143 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     return Factory.createPredicate(semantics.getName(), transformedArgs);
+  }
+
+  private void handleErrorResponse(Utterance utterance, boolean parse, boolean internal) {
+    if (utterance == null) {
+      log.error("[handleErrorResponse] supplied utterance is null");
+      return;
+    }
+
+    Symbol user;
+    Symbol agentTeam;
+    if (parse) {
+      user = utterance.getSpeaker().toUntyped();
+      agentTeam = utterance.getAddressee().toUntyped();
+    } else {
+      user = utterance.getAddressee().toUntyped();
+      agentTeam = utterance.getSpeaker().toUntyped();
+    }
+
+    String errorMessage = "Sorry, I am unable to connect to necessary services. Please check your internet connection or reach out to support.";
+    if (internal) {
+      int internalErrorCount = 1;
+      ChatContext chatContext = null;
+      ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+      if (chatCollection != null) {
+        chatContext = chatCollection.currentChat;
+        if (chatContext != null) {
+          chatContext.incrementNumParseErrors();
+          internalErrorCount = chatContext.getNumParseErrors();
+        }
+      }
+
+      if (internalErrorCount >= 3) {
+        endChatContext(user, agentTeam);
+        chatContext.resetNumParseErrors();
+      }
+      errorMessage = generateErrorResponse(internal, internalErrorCount, false);
+
+      //if (internalErrorCount == 1) {
+      //  //utterance.setWords(generateErrorResponse(internal,internalErrorCount,false));
+      //} else if (internalErrorCount == 2) {
+      //  //utterance.setWords(generateErrorResponse(internal,internalErrorCount,false));
+      //} else {
+      //  endChatContext(user, agentTeam);
+      //  chatContext.resetNumParseErrors();
+      //  //utterance.setWords(generateErrorResponse(internal,internalErrorCount,false));
+      //}
+    } else {
+      externalErrorCount += 1;
+      if (externalErrorCount >= 3) {
+        endChatContext(user, agentTeam);
+        if (!restrictedMode) {
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("setHybridParserRestrictedMode").argTypes(Boolean.class)).call(void.class, true);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("setHybridNLGRestrictedMode").argTypes(Boolean.class)).call(void.class, true);
+            restrictedMode = true;
+            errorMessage = "Sorry, I am unable to connect to necessary services. Entering restricted interaction mode. Please try starting over.";
+          } catch (TRADEException e) {
+            log.info("[generateErrorResponse] could not reach Hybrid parser to set restricted mode. Assuming we are only using the LLM parser", e);
+          }
+        }
+
+//        if (!restrictedMode) {
+//          try {
+//            TRADE.getAvailableService(new TRADEServiceConstraints().name("setHybridParserRestrictedMode").argTypes(Boolean.class)).call(void.class, true);
+//            restrictedMode = true;
+//            if (parse) {
+//              utterance.setSemantics(Factory.createPredicate("error", agentTeam.toUntypedString(), "and(sorryIAmUnableToConnectToNecessaryServices,enteringRestrictedInteractionMode,pleaseTryStartingOver)"));
+//            }
+//            utterance.setWords("Sorry, I am unable to connect to necessary services. Entering restricted interaction mode. Please try starting over.");
+//          } catch (TRADEException e) {
+//            log.info("[generateErrorResponse] could not reach Hybrid parser to set restricted mode. Assuming we are only using the LLM parser", e);
+//            if (parse) {
+//              utterance.setSemantics(Factory.createPredicate("error", agentTeam.toUntypedString(), "and(sorryIAmUnableToConnectToNecessaryServices,pleaseReconnectOrReachOutToSupport)"));
+//            }
+//            utterance.setWords("Sorry, I am unable to connect to necessary services. Please check your internet connection or reach out to support.");
+//          }
+//        }
+      } else {
+        errorMessage = generateErrorResponse(internal, externalErrorCount, false);
+
+        //if (parse) {
+        //  utterance.setSemantics(Factory.createPredicate("error",agentTeam.toUntypedString(),generateErrorResponse(internal, externalErrorCount, true)));
+        //}
+        //utterance.setWords(generateErrorResponse(internal, externalErrorCount, false));
+      }
+    }
+    if (parse) {
+      utterance.setSemantics(Factory.createPredicate("generateResponseFromString", agentTeam.toUntypedString(), user.toUntypedString(),"\""+errorMessage+"\""));
+      utterance.setNeedsValidation(false);
+    } else {
+      utterance.setWords(errorMessage);
+      // TODO: update - Hack alongside HybridNLGComponent to detect failure responses.
+      utterance.setType(UtteranceType.UNKNOWN);
+    }
+  }
+
+  private String generateErrorResponse(boolean internal, int errorCount, boolean predicate) {
+    if (internal) {
+      if (errorCount == 1) {
+        return "Sorry, an internal error occurred during your request. Please try again.";
+      } else if (errorCount == 2) {
+        return "Sorry, an internal error occurred during your request again. Please try one more time.";
+      } else {
+        return "Sorry, an internal error occurred during your request. I have reset my state, please try starting over.";
+      }
+    } else {
+      if (errorCount == 1) {
+        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryAgain)" : "Sorry, I did not have connection during your request. Please try again.";
+      } else if (errorCount == 2) {
+        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryOneMoreTime)" : "Sorry, I did not have connection during your request again. Please try one more time.";
+      } else {
+        return predicate ? "and(sorryIAmUnableToConnectToNecessaryServices,pleaseReconnectOrReachOutToSupport)" : "Sorry, I am unable to connect to necessary services. Please check your internet connection or reach out to support.";
+      }
+    }
+  }
+
+  private void resetErrorCount(boolean internal, Symbol user, Symbol agentTeam) {
+    if (internal) {
+        ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+        if (chatCollection != null) {
+          ChatContext chatContext = chatCollection.currentChat;
+          if (chatContext != null) {
+            chatContext.resetNumParseErrors();
+          }
+        }
+    } else {
+      externalErrorCount = 0;
+      if (restrictedMode) {
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("setHybridParserRestrictedMode").argTypes(Boolean.class)).call(void.class, false);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("setHybridNLGRestrictedMode").argTypes(Boolean.class)).call(void.class, false);
+          restrictedMode = false;
+        } catch (TRADEException e) {
+          log.error("[resetErrorCount] could not reach Hybrid parser to unset restricted mode.", e);
+        }
+      }
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////

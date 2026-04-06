@@ -38,6 +38,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
   private boolean cacheSimpleNLG = false;
   // Adding configurable sequence to NLG as well. Mainly because "Social LLM" domains generally want LLM first.
   private String[] sequence;
+  private boolean restrictedMode = false;
+  private String[] cachedSequence = null;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -224,5 +226,51 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
   public CachedNLGComponent getCacheNLG() {
     return cacheNLG;
+  }
+
+  // Push LLM back in the sequence to prevent further error messages until reconnected
+  @TRADEService
+  public void setHybridNLGRestrictedMode(boolean enabled) {
+    if (!useLLM) {
+      log.warn("[setHybridNLGRestrictedMode] Cannot toggle restricted mode without being configured to use the LLM");
+      return;
+    }
+
+    if (enabled) {
+      if (restrictedMode) {
+        log.warn("[setHybridNLGRestrictedMode] already enabled");
+        return;
+      }
+      cachedSequence = sequence;
+      // Put LLM at the back of the order
+      String[] restrictedSequence = new String[sequence.length];
+      restrictedSequence[sequence.length-1] = "llm";
+      int offset = 0;
+      for (int i=0;i<sequence.length;i++) {
+        if (sequence[i].equals("llm")) {
+          offset = 1;
+          continue;
+        }
+        restrictedSequence[i-offset] = sequence[i];
+      }
+      sequence = restrictedSequence;
+      restrictedMode = true;
+    } else {
+      if (!restrictedMode) {
+        log.warn("[setHybridNLGRestrictedMode] already disabled");
+        return;
+      } else if (cachedSequence == null) {
+        log.error("[setHybridNLGRestrictedMode] cannot find original cached sequence to reset to");
+        return;
+      }
+      sequence = cachedSequence;
+      cachedSequence = null;
+      restrictedMode = false;
+    }
+  }
+
+  @TRADEService
+  public boolean getHybridParserRestrictedMode() {
+    return restrictedMode;
   }
 }

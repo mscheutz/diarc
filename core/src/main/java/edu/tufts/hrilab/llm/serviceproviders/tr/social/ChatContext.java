@@ -21,6 +21,9 @@ public class ChatContext {
   // Identifier String of the type of ChatContext - used to gather proper System Messages and Tool sets during Completion
   //  request generation
   String contextID = "nlu";
+  // Consecutive number of parse errors within this context
+  private int parseErrorCount = 0;
+  protected boolean containsLLMParse = false; //revisit
 
   /**
    * "Focused Context" only details
@@ -131,5 +134,17 @@ public class ChatContext {
   protected void releaseLocks() {
     contextLock.release();
     postprocessingLock.release();
+  }
+
+  public int getNumParseErrors() {
+    return parseErrorCount;
+  }
+
+  public void incrementNumParseErrors() {
+    parseErrorCount += 1;
+  }
+
+  public void resetNumParseErrors() {
+    parseErrorCount = 0;
   }
 }
