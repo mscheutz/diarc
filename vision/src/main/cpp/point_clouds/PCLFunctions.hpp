@@ -180,19 +180,9 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
   // select the point on the plane and create vector to the camera
   Eigen::Vector3f plane_norm(coeffs_plane->values[0], coeffs_plane->values[1], coeffs_plane->values[2]);
   plane_norm.norm();
-  int idx = indices_plane->indices.at(0);
-  Eigen::Vector3f plane2camera_vect(-cloud->points.at(idx).x, -cloud->points.at(idx).y, -cloud->points.at(idx).z);
-  plane2camera_vect.normalize();
-  // if dot product is negative then flip the normal
-  float cos_ang = plane_norm.dot(plane2camera_vect);
-  if (cos_ang < 0) {
-    plane_norm[0] = -plane_norm[0];
-    plane_norm[1] = -plane_norm[1];
-    plane_norm[2] = -plane_norm[2];
-  }
 
   typename pcl::PointCloud<PointT>::Ptr eroded_hull(new pcl::PointCloud<PointT>);
-  Eigen::Vector3f edge_vector, erosion_dir;
+  Eigen::Vector3f edge_vector, erosion_dir, edge_2_center_dir;
   PointT translated_point;
 
   // set erosion_distance based on hull size
@@ -203,8 +193,10 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
 
   // Total erosion distance: distance * iterations (here: 5cm)
   float erosion_distance = chull_diag_dist/100.0; // 0.01;
-  static const int erosion_iterations = 5;
+  static const int erosion_iterations = 3;
 
+  bool flip_dir = false;
+  bool first_iter = true;
   for (int iter = 0; iter < erosion_iterations; iter++) {
     eroded_hull->clear();
     eroded_hull->reserve(cloud_hull->width);
@@ -215,15 +207,42 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
       edge_vector = cloud_hull->at(MOD(i + 1, cloud_hull->width)).getVector3fMap()
                     - cloud_hull->at(MOD(i - 1, cloud_hull->width)).getVector3fMap();
 
-      // Vector perpendicular to the edge of the hull, pointing towards the inside of the hull.
+      // Vector perpendicular to the edge of the hull
       erosion_dir = edge_vector.cross(plane_norm);
       erosion_dir.normalize();
 
+      // on first iteration, check of erosion direction is pointing towards the inside of the hull.
+      if (first_iter) {
+        first_iter = false;
+
+        PointT chull_center;
+        chull_center.x = (minPt.x + maxPt.x)/2.0;
+        chull_center.y = (minPt.y + maxPt.y)/2.0;
+        chull_center.z = (minPt.z + maxPt.z)/2.0;
+
+        edge_2_center_dir = chull_center.getVector3fMap() - cloud_hull->at(i).getVector3fMap();
+        edge_2_center_dir.normalize();
+
+        // if dot product is negative, then flip the direction
+        float cos_ang = erosion_dir.dot(edge_2_center_dir);
+        if (cos_ang < 0) {
+          flip_dir = true;
+        }
+      }
+
       // Translate point on edge of hull
       translated_point = cloud_hull->at(i);
-      translated_point.x -= erosion_distance * erosion_dir[0];
-      translated_point.y -= erosion_distance * erosion_dir[1];
-      translated_point.z -= erosion_distance * erosion_dir[2];
+      if (flip_dir) {
+        // erosion dir pointing outside of hull
+        translated_point.x -= erosion_distance * erosion_dir[0];
+        translated_point.y -= erosion_distance * erosion_dir[1];
+        translated_point.z -= erosion_distance * erosion_dir[2];
+      } else {
+        // erosion dir pointing inside of hull
+        translated_point.x += erosion_distance * erosion_dir[0];
+        translated_point.y += erosion_distance * erosion_dir[1];
+        translated_point.z += erosion_distance * erosion_dir[2];
+      }
 
       // Store point in eroded hull pointcloud
       eroded_hull->push_back(translated_point);
