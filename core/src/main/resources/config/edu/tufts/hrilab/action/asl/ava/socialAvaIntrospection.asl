@@ -386,7 +386,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = getAllLocationsOnPatrolPath(Symbol ?pathName) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = act:generateAllLocationsOnPatrolPathString();
+    !output = act:generateAllLocationsOnPatrolPathString(?pathName);
     !output = tsc:addToolResponse(!user,?actor,!output);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
@@ -413,7 +413,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = getActionSteps(Predicate ?action) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = act:generateActionStepsString();
+    !output = act:generateActionStepsString(?action);
     !output = tsc:addToolResponse(!user,?actor,!output);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
@@ -422,7 +422,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = getIfCanPerform(Predicate ?actionPredicate) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = act:generateIfCanPerformString();
+    !output = act:generateIfCanPerformString(?actionPredicate);
     !output = tsc:addToolResponse(!user,?actor,!output);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
@@ -458,7 +458,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = getIsVideoSaved(Symbol ?videoName) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = act:generateIsVideoSavedString();
+    !output = act:generateIsVideoSavedString(?videoName);
     !output = tsc:addToolResponse(!user,?actor,!output);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
