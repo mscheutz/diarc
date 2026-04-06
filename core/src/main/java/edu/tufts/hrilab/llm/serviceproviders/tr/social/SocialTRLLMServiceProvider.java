@@ -2094,7 +2094,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         //  (This is more just an LLM issue? Do we do anything in this case, or just discard the information?)
         log.warn("[processToolCall] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
       } else {
-        Symbol argValue = Factory.createFOL(calledArguments.get(argName));
+        String argString = calledArguments.get(argName);
+        // Revisit where this should be addressed
+        if (argName.equals("response") && functionCall.name.equals("stillGatheringInformation")) {
+          argString = "\"" + argString + "\"";
+        }
+        Symbol argValue = Factory.createFOL(argString);
         // If there is an explicit possible_values set, make sure the argument is present
         if (!targetParam.getPossible_values().isEmpty()) {
           if (!targetParam.getPossible_values().contains(calledArguments.get(argName))) {
