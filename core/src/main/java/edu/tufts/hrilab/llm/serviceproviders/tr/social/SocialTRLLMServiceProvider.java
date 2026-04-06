@@ -616,6 +616,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return inputUtterance;
         }
         llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
+        if(llmResponse.text.startsWith("\"") && llmResponse.text.endsWith("\"")) {
+          llmResponse.text = llmResponse.text.substring(1, llmResponse.text.length() - 1);
+        }
         resetErrorCount(true, inputUtterance.getSpeaker().toUntyped(), inputUtterance.getAddressee().toUntyped());
         return handleTextResponse(llmResponse,inputUtterance,chatContext);
       }
