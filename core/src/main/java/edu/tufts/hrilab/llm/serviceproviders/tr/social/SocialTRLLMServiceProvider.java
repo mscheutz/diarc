@@ -2709,7 +2709,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("say",
-            "You say ?words. An example of instructing this could be \"say hello, it's me.\", which would map to say(hello, it's me)",
+            "The robot says ?words. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. An example of instructing this could be \"say to everyone: welcome to the event!.\", which would map to say(welcome to the event!)",
             List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("stopFollow",
@@ -2886,11 +2886,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-    //TODO: need to update this with new social extended interaction structure - Do we still even need this as an action? Or should be rephrased to repeatSystemQuestion
-    definition = new ToolDefinition("repeatLastQuestion",
-            "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    ////TODO: need to update this with new social extended interaction structure - Do we still even need this as an action? Or should be rephrased to repeatSystemQuestion
+    //definition = new ToolDefinition("repeatLastQuestion",
+    //        "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
+    //        new ArrayList());
+    //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
 
     return instructTools;
@@ -2913,61 +2913,61 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ToolDefinition definition;
 
     definition = new ToolDefinition("getBatteryLevelString",
-            "You report the current battery level of the robot as a percentage. An example of instructing this could be \"how much charge do you have.\"",
+            "Use this to ask the system what the current battery level of the robot as a percentage is. An example of when you may need this information is when a user asks \"how much charge do you have.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getCurrentLocationString",
-            "You report what location you believe you are currently at. An example of instructing this could be \"what is your current location.\"",
+            "Use this to ask the system what saved location on your map you believe you are currently at. An example of when you may need this information is when a user asks \"what is your current location.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getAllKnownLocations",
-            "You list all currently saved locations. An example of instructing this could be \"what are your saved locations.\"",
+            "Use this to ask the system for a list of all currently saved locations. An example of when you may need this information is when a user asks \"what are your saved locations.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getTaughtActions",
-            "You list all of the actions which have been taught to you by a user. An example of instructing this could be \"What actions have you been taught.\"",
+            "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getIfCanPerform",
-            "You report whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of instructing this could be \"do you know how to escort a patient from %exampleLocation to the dock.\", which would map to reportIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
+            "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from %exampleLocation to the dock.\", which would map to reportIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 //    definition = new ToolDefinition("reportInstructableActions",
-//            "You report the list of actions a user is able to instruct you through natural language to perform. An example of instructing this could be \"what can you be instructed to do.\"",
+//            "You report the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
 //            new ArrayList());
 //    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     /// /////////////////////STANDIN ///////////////////////////////////////////
     /// /////////////////////STANDIN ///////////////////////////////////////////
     /// /////////////////////STANDIN ///////////////////////////////////////////
     definition = new ToolDefinition("getPredefinedActions",
-            "You report the list of actions a user is able to instruct you through natural language to perform. An example of instructing this could be \"what can you be instructed to do.\"",
+            "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     /// /////////////////////STANDIN ///////////////////////////////////////////
     /// /////////////////////STANDIN ///////////////////////////////////////////
     /// /////////////////////STANDIN ///////////////////////////////////////////
     definition = new ToolDefinition("getActionSteps",
-            "You describe an action by listing out the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of instructing this could be \"How would you escort someone.\", which would map to describeActionSteps(escort)",
+            "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to describeActionSteps(escort)",
             List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getKioskSettings",
-            "You report the current configuration of kiosk mode; Whether it is enabled and the currently configured kiosk timeout and action. An example of instructing this could be \"what is your kiosk configuration.\"",
+            "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getVideoVolume",
-            "You report the current volume videos are set to play at. An example of instructing this could be \"what is the video volume set to.\"",
+            "Use this to ask the system for the current volume videos are set to play at. An example of when you may need this information is when a user asks \"what is the video volume set to.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getIsVideoSaved",
-            "You answer whether you have a video saved under the supplied name. An example of instructing this could be \"Do you have the %exampleVideo video saved.\", which would map to reportIsVideoSaved(?videoName)",
+            "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the %exampleVideo video saved.\", which would map to reportIsVideoSaved(?videoName)",
             List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getSavedVideos",
-            "You list out the collection of videos you currently have saved. An example of instructing this could be \"what videos can you play.\"",
+            "Use this to ask the system to list out the collection of videos you currently have saved. An example of when you may need this information is when a user asks \"what videos can you play.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getSavedImages",
-            "You list out the collection of images you currently have saved. An example of instructing this could be \"what images can you display.\"",
+            "Use this to ask the system to list out the collection of images you currently have saved. An example of when you may need this information is when a user asks \"what images can you display.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
