@@ -140,15 +140,18 @@ public class Prolog implements Prover {
     String plQuery = sanitize(query) + ".";
     List<Map<Variable, Symbol>> tmpResults = queryString(plQuery);
 
-    // apply variable map to query results (if needed)
-    List<Map<Variable, Symbol>> finalResults = new ArrayList<>();
-    for (Map<Variable, Symbol> result : tmpResults) {
-      Map<Variable, Symbol> tmpBinding = new HashMap<>();
-      result.forEach((k, v) -> tmpBinding.put(Utilities.prologToAction(k), PrologUtil.undoMakePrologSafe(v)));
-      finalResults.add(tmpBinding);
+    if (tmpResults != null) {
+      // apply variable map to query results (if needed)
+      List<Map<Variable, Symbol>> finalResults = new ArrayList<>();
+      for (Map<Variable, Symbol> result : tmpResults) {
+        Map<Variable, Symbol> tmpBinding = new HashMap<>();
+        result.forEach((k, v) -> tmpBinding.put(Utilities.prologToAction(k), PrologUtil.undoMakePrologSafe(v)));
+        finalResults.add(tmpBinding);
+      }
+      return finalResults;
     }
 
-    return finalResults;
+    return new ArrayList<>();
   }
 
   /**
