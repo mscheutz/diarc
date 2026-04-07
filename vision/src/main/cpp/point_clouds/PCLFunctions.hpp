@@ -191,9 +191,14 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
   float chull_diag_dist = pcl::euclideanDistance(minPt,maxPt);
   //fprintf(stderr, "hull euclidean distance: %f\n", chull_diag_dist);
 
+  PointT chull_center;
+  chull_center.x = (minPt.x + maxPt.x)/2.0;
+  chull_center.y = (minPt.y + maxPt.y)/2.0;
+  chull_center.z = (minPt.z + maxPt.z)/2.0;
+
   // Total erosion distance: distance * iterations (here: 5cm)
   float erosion_distance = chull_diag_dist/100.0; // 0.01;
-  static const int erosion_iterations = 3;
+  static const int erosion_iterations = 5;
 
   bool flip_dir = false;
   bool first_iter = true;
@@ -204,31 +209,30 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
     for (int i = 0; i < cloud_hull->width; i++) {
 
       // Edge for point i is approximated by looking at previous and next neighbors on the hull
-      edge_vector = cloud_hull->at(MOD(i + 1, cloud_hull->width)).getVector3fMap()
-                    - cloud_hull->at(MOD(i - 1, cloud_hull->width)).getVector3fMap();
+      // edge_vector = cloud_hull->at(MOD(i + 1, cloud_hull->width)).getVector3fMap()
+      //               - cloud_hull->at(MOD(i - 1, cloud_hull->width)).getVector3fMap();
 
       // Vector perpendicular to the edge of the hull
-      erosion_dir = edge_vector.cross(plane_norm);
-      erosion_dir.normalize();
+      // erosion_dir = edge_vector.cross(plane_norm);
+      // erosion_dir.normalize();
 
       // on first iteration, check of erosion direction is pointing towards the inside of the hull.
-      if (first_iter) {
-        first_iter = false;
+      // if (first_iter) {
+      //   first_iter = false;
+      //
+      //   edge_2_center_dir = chull_center.getVector3fMap() - cloud_hull->at(i).getVector3fMap();
+      //   edge_2_center_dir.normalize();
+      //
+      //   // if dot product is negative, then flip the direction
+      //   float cos_ang = erosion_dir.dot(edge_2_center_dir);
+      //   if (cos_ang < 0) {
+      //     flip_dir = true;
+      //   }
+      // }
 
-        PointT chull_center;
-        chull_center.x = (minPt.x + maxPt.x)/2.0;
-        chull_center.y = (minPt.y + maxPt.y)/2.0;
-        chull_center.z = (minPt.z + maxPt.z)/2.0;
 
-        edge_2_center_dir = chull_center.getVector3fMap() - cloud_hull->at(i).getVector3fMap();
-        edge_2_center_dir.normalize();
-
-        // if dot product is negative, then flip the direction
-        float cos_ang = erosion_dir.dot(edge_2_center_dir);
-        if (cos_ang < 0) {
-          flip_dir = true;
-        }
-      }
+      erosion_dir = chull_center.getVector3fMap() - cloud_hull->at(i).getVector3fMap();
+      erosion_dir.normalize();
 
       // Translate point on edge of hull
       translated_point = cloud_hull->at(i);
@@ -269,7 +273,8 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
                       const pcl::PointIndices::ConstPtr& indices_plane,
                       const pcl::PointIndices::ConstPtr& indices_objects,
                       const pcl::PointIndices::ConstPtr& indices_real_objects,
-                      const typename pcl::PointCloud<PointT>::ConstPtr& cloud_hull) {
+                      const typename pcl::PointCloud<PointT>::ConstPtr& cloud_hull,
+                      const typename pcl::PointCloud<PointT>::ConstPtr& og_cloud_hull) {
 
   pcl::ExtractIndices<PointT> extract;
   typename pcl::PointCloud<PointT>::Ptr objectCloud(new pcl::PointCloud<PointT>);
@@ -301,6 +306,18 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
       }
       viewer->addLine(point, nextPoint, 255, 0, 0, "chull_line_" + boost::lexical_cast<size_t>(i));
     }
+    for (size_t i = 0; i < og_cloud_hull->size(); ++i) {
+      PointT point = og_cloud_hull->points[i];
+      //viewer->addSphere(point, 0.001, 255, 0, 0, "chull_" + boost::lexical_cast<size_t>(i));
+
+      PointT nextPoint;
+      if (i == og_cloud_hull->size() - 1) {
+        nextPoint = og_cloud_hull->points[0];
+      } else {
+        nextPoint = og_cloud_hull->points[i + 1];
+      }
+      viewer->addLine(point, nextPoint, 100, 0, 0, "og_line_" + boost::lexical_cast<size_t>(i));
+    }
   } else {
     viewer->updatePointCloud(cloud, "capture");
     //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> handler_cloud_hull(cloud_hull, 255, 0, 0);
@@ -323,12 +340,24 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
       }
       viewer->addLine(point, nextPoint, 255, 0, 0, "chull_line_" + boost::lexical_cast<size_t>(i));
     }
+    for (size_t i = 0; i < og_cloud_hull->size(); ++i) {
+      PointT point = og_cloud_hull->points[i];
+      //viewer->addSphere(point, 0.001, 255, 0, 0, "chull_" + boost::lexical_cast<size_t>(i));
+
+      PointT nextPoint;
+      if (i == og_cloud_hull->size() - 1) {
+        nextPoint = og_cloud_hull->points[0];
+      } else {
+        nextPoint = og_cloud_hull->points[i + 1];
+      }
+      viewer->addLine(point, nextPoint, 100, 0, 0, "og_line_" + boost::lexical_cast<size_t>(i));
+    }
 
   }
-  while (!viewer->wasStopped()) {
+  // while (!viewer->wasStopped()) {
     viewer->spinOnce();
-  }
-  viewer->resetStoppedFlag();
+  // }
+  // viewer->resetStoppedFlag();
 }
 
 //template <class T>
@@ -930,6 +959,7 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
     }
 
     // Erosion on convex hull to avoid having walls next to table detected as objects
+    typename pcl::PointCloud<PointT>::Ptr og_cloud_hull(new pcl::PointCloud<PointT>(*cloud_hull));
     erodeConvexHull<PointT>(cloud, indices_plane, coeffs_plane, cloud_hull);
 
     // TODO: this fix may not be needed it future versions of PCL (currently needed in released 1.7 version)
@@ -946,7 +976,7 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
 
     // NOTE: uncomment this to view results -- this does not play nice with other displays as it doesn't
     // run on vision's display thread.
-    // visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull);
+    visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull, og_cloud_hull);
 
   } catch (...) {
     return (false);

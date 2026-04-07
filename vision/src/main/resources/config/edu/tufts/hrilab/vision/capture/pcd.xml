@@ -21,7 +21,9 @@ Optional:
 -->
 <capture>
 	<camMode>PCD</camMode>
-	<pcdFilename>/dev/shm/fetch_screws_scene.pcd</pcdFilename>
+	<pcdFilename>/home/evan/Pictures/spot_low_table/spot_gearbox_bottom_0.pcd</pcdFilename>
+<!--	<rgbFilename>/home/evan/Pictures/spot_fetchit/spot_large_screw_2.jpg</rgbFilename>-->
+<!--	<pcdFilename>/home/evan/Pictures/spot_fetchit/spot_fetchit_gearbox_bottom_0.pcd</pcdFilename>-->
 	<imageWidth>320</imageWidth>
 	<imageHeight>240</imageHeight>
 	<hasStereo>false</hasStereo>
