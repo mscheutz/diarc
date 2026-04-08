@@ -4,9 +4,12 @@
     "arity": 1
   },
   "config": {
-    "model": "model_objects_c_v5_1500",
+    "models": [
+      "model_objects_c_rpd_v2_501",
+      "model_objects_c_v5_1500"
+    ],
     "type" : "onnx",
-    "use_user_defined_model" : true,
+    "use_user_defined_model" : false,
     "identify_shapes" : true,
     "visualize_reconstruction" : true,
     "edginess_similarity_threshold" : 0.25,
