@@ -28,9 +28,9 @@ if (pybind11_FOUND AND OpenCV_dnn_FOUND)
 	    validator/ComponentValidator.cpp
 		)
 
-    # Model trained with objects_c_v5_1500
-    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/model_objects_c_v5_1500.onnx")
-    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_v5_1500.onnx")
+    # Model trained with objects_c_rpd_v2_501
+    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/model_objects_c_rpd_v2_501.onnx")
+    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_rpd_v2_501.onnx")
 
     if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
     	message("Downloading model: ${COMPONENT_MODEL_URL}")
