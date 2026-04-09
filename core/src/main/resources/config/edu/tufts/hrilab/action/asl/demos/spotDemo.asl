@@ -96,7 +96,9 @@ import java.util.List;
     try {
       act:findObject(?object);
       //act:pauseCapture();
+      op:log("info", "[grab] calling grabObject...");
       act:grabObject(?object);
+      op:log("info", "[grab] grabObject returned");
     } catch() {
       op:log("info", "[grab] IN CATCH BLOCK");
       exit(FAIL);

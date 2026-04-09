@@ -9,6 +9,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.fol.util.PragUtil;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.util.Convert;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.consultant.RealVisionConsultant;
@@ -24,6 +25,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
@@ -256,6 +259,10 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
           Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, baseFrame, cameraCoordinateFrame);
           if (tmpTransform != null) {
             currVisionTransform = tmpTransform;
+            //Quat4d rot = new Quat4d();
+            //currVisionTransform.get(rot);
+            //Point3d euler = Convert.convertToEuler(rot);
+            //log.info("Vision transform height: {} rot: {}", currVisionTransform.m23, Math.toDegrees(euler.x+(Math.PI/2.0)));
           } else {
             log.warn("getTransform returned null, not updating vision transform.");
           }

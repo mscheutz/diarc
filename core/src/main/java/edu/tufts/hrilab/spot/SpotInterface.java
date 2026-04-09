@@ -39,11 +39,11 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
 
   @Action
   @TRADEService
-  void localizeWithReference(Symbol refId);
+  Justification localizeWithReference(Symbol refId);
 
   @Action
   @TRADEService
-  void localizeWithFiducial();
+  Justification localizeWithFiducial();
 
   /**
    * TODO: remove this in favor of the graspObject method in the ArmInterface

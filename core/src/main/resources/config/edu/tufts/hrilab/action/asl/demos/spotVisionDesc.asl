@@ -6,18 +6,17 @@ import edu.tufts.hrilab.fol.Predicate;
 
   boolean !result = act:searchLocation(location_2:location);
   if (op:equals(!result, false)) {
-    act:generateResponseFromString("Searching for other parts");
     !result = act:searchLocation(location_3:location);
   }
   if (op:equals(!result, false)) {
-    act:generateResponseFromString("Searching for other parts");
     !result = act:searchLocation(location_4:location);
   }
 
   // no more parts to explore
   if (op:equals(!result, false)) {
-    act:generateResponseFromString("I do not see any other parts, return to assembly area");
-    act:goToLocation(location_1:location);
+    act:generateResponseFromString("I do not see any other parts.");
+//    act:generateResponseFromString("I do not see any other parts, returning to assembly area");
+//    act:goToLocation(location_1:location);
   }
 
   op:log("info", "Exiting lookForObjects action");
@@ -33,7 +32,23 @@ import edu.tufts.hrilab.fol.Predicate;
   act:goToPose(detection);
   act:openGripper(arm);
 
+  op:sleep(1000); // wait for image from spot to catch up to new pose
+
   java.util.List !bindings = obs:!obsPred;
+  if (op:isNull(!bindings)) {
+    op:log("info", "Null bindings from observation: !obsPred");
+    ?result = op:newObject("java.lang.Boolean", false);
+    act:goToPose(stow);
+    act:closeGripper(arm);
+    return;
+  } elseif (op:isEmpty(!bindings)) {
+    op:log("info", "Empty bindings from observation: !obsPred");
+    ?result = op:newObject("java.lang.Boolean", false);
+    act:goToPose(stow);
+    act:closeGripper(arm);
+    return;
+  }
+
   op:log("info", "Got bindings from observation: !bindings");
   act:generateResponse(person, !obsPred, !bindings, direct);
 
@@ -46,12 +61,20 @@ import edu.tufts.hrilab.fol.Predicate;
     ?result = op:newObject("java.lang.Boolean", true);
   } else {
     ?result = op:newObject("java.lang.Boolean", false);
+    act:generateResponseFromString("Searching for other parts");
+    act:goToPose(stow);
+    act:closeGripper(arm);
   }
 }
 
 () = bringObjectToPerson(Symbol ?objectRef) {
   act:pickUp(?objectRef);
+  act:goToPose(carry);
   act:goToLocation(location_1:location);
   act:askQuestionFromString(person, "Say ready when you are ready to grab the object.", val(X));
+  op:sleep(1000);
   act:openGripper(arm);
+  op:sleep(1000);
+  act:closeGripper(arm);
+  act:goToPose(stow);
 }

@@ -327,7 +327,7 @@ class SpotTRADEWrapper:
                 return self.spot.spot_arm.arm_carry()
             if pose == 'detection':
 #                 return self.spot.spot_arm.hand_pose(x=0.818, y=-0.003, z=0.523, qx=-0.000, qy=0.389, qz=-0.004, qw=0.921)
-                return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
+                return self.spot.spot_arm.hand_pose(x=0.6, y=-0.001, z=0.3, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
             if pose == "putdown" or pose == "putDown":
                 return self.spot.spot_arm.hand_pose(x=1.1, y=0, z=0.4, qx=-0.7071, qy=0, qz=0, qw=0.7071)
             if pose == 'stow':
@@ -741,6 +741,7 @@ class SpotTRADEWrapper:
                     pick_object_ray_in_world=grasp)
 
             (success, msg, cmd_id) = self.spot.manipulation_command(grasp_request)
+            self.spot.spot_arm.block_until_manipulation_completes(self.spot._manipulation_api_client, cmd_id)
             logging.info(f"Pickup command results: {success}, {msg} {cmd_id}")
             return success, msg, cmd_id
 
@@ -751,23 +752,35 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def localizeWithReference(self, refId):
+        try:
+            ref = self.locationConsultant.getRefWithId(refId)
+            if ref is None:
+                return (False, f"Cannot localize. No reference found for reference: {refId}")
 
-        ref = self.locationConsultant.getRefWithId(refId)
-        if ref is None:
-            return (False, f"Cannot localize. No reference found for reference: {refId}")
-
-        waypoint_id = ref.getWaypointId()
-        self.spot.spot_graph_nav.set_initial_localization_waypoint([waypoint_id])
+            waypoint_id = ref.getWaypointId()
+            self.spot.spot_graph_nav.set_initial_localization_waypoint([waypoint_id])
+            return True, ""
+        except Exception as e:
+            logging.error(f"Error calling localizeWithReference: {traceback.format_exc()}")
+            return False, ""
 
     @handle_return
     @JOverride
     def localizeWithFiducial(self):
-        self.spot.spot_graph_nav.set_initial_localization_fiducial()
+        try:
+            self.spot.spot_graph_nav.set_initial_localization_fiducial()
+            return True, ""
+        except Exception as e:
+            logging.error(f"Error calling localizeWithFiducial: {traceback.format_exc()}")
+            return False, ""
 
     @JOverride
-    @handle_return
     def isLocalized(self) -> bool:
-        return not self.spot.spot_graph_nav._graph_nav_client.get_localization_state().lost_detector_state.is_lost
+        try:
+            return not self.spot.spot_graph_nav._graph_nav_client.get_localization_state().lost_detector_state.is_lost
+        except Exception as e:
+            logging.error(f"Error calling isLocalized: {traceback.format_exc()}")
+            return False
 
     @JOverride
     def startMapping(self):
@@ -945,9 +958,6 @@ if __name__ == '__main__':
         (result, msg) = spot_wrapper.spot.spot_graph_nav.upload_graph(args.spot_map)
         if not result:
             logging.warning(f"Failed to load spot map: {args.spot_map}. Message: {msg}")
-        else:
-            logging.info(f"Spot map loaded: {args.spot_map}")
-            spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 
         # spot_wrapper.undock() # TODO: is undock-ing needed here?
         pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map

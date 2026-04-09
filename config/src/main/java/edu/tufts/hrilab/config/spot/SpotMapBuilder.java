@@ -19,7 +19,8 @@ public class SpotMapBuilder extends DiarcConfiguration {
 //            + " -groups agent:robotone "
             + " -hubContainer " + tradeHubContainer
 //            + " -spotMap " + "/home/evan/Documents/spot/autowalk/sarah.walk"
-            + " -refs " + "tmpSpotRefs.json");
+//            + " -refs " + "tmpSpotRefs.json"
+    );
 
 
     createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.spot.SpotInterface");

@@ -618,9 +618,9 @@ void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
   cv::Mat_<float> imageMask;
   std::vector<int> indices = object->getDetectionMask()->getIndicesMask();
   const cv::Mat image = object->getCaptureData()->frame;
-  bool isRed = isTargetColor(image, indices, cv::Scalar(255,0,0), colorConf1, imageMask);
-  bool isBlue = isTargetColor(image, indices, cv::Scalar(0,0,255), colorConf2, imageMask);
-  bool isYellow = isTargetColor(image, indices, cv::Scalar(255,255,0), colorConf3, imageMask);
+  bool isRed = isTargetColor(image, indices, cv::Scalar(145,0,0), colorConf1, imageMask);
+  bool isBlue = isTargetColor(image, indices, cv::Scalar(0,30,90), colorConf2, imageMask);
+  bool isYellow = isTargetColor(image, indices, cv::Scalar(200,160,0), colorConf3, imageMask);
   LOG4CXX_INFO(logger, "Color detection. Red: " << isRed << " Blue: " << isBlue << " Yellow: " << isYellow);
   LOG4CXX_INFO(logger, "Color detection. Red: " << colorConf1 << " Blue: " << colorConf2 << " Yellow: " << colorConf3);
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////

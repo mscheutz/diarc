@@ -419,13 +419,6 @@ public class ObservationContext extends ArgumentBasedContext {
             this.getArgument(k.getName()).bindDeep(v);
           }
         });
-
-        // bind return value
-        ActionBinding returnArg = this.getLocalArgument("ret");
-        if (returnArg != null) {
-          returnArg.bindDeep(observationBindings);
-          redistributeArguments();
-        }
         if (!isNegation) {
           holds = true;
         }
@@ -435,6 +428,14 @@ public class ObservationContext extends ArgumentBasedContext {
           holds = true;
         }
       }
+
+      // bind return value
+      ActionBinding returnArg = this.getLocalArgument("ret");
+      if (returnArg != null) {
+        returnArg.bindDeep(observationBindings);
+        redistributeArguments();
+      }
+
       observationResults = new ConditionJustification(holds, boundStateToObserve, observationBindings);
     } else if (childContexts.get(0).isFailure()) {
       log.debug("[observeCondition] observation completed with status: " + getStatus());

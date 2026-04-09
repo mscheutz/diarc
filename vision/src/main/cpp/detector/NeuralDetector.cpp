@@ -16,13 +16,19 @@ namespace fs = std::experimental::filesystem;
 using namespace diarc::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
+  LOG4CXX_INFO(logger, boost::format("Loading config file: %s") % configFile.c_str());
   //get directory
   fs::path homedir(getenv("HOME"));
   fs::path diarc(".diarc");
   fs::path vision("vision");
   fs::path detectors("detectors");
-  fs::path p(configFile);
-  fs::path dir = homedir / diarc / vision / detectors / p.stem();
+
+  unsigned found = configFile.find_last_of("/\\");
+  std::string path = configFile.substr(0, found);
+  found = path.find_last_of("/\\");
+  fs::path p(path.substr(found+1, path.length()));
+
+  fs::path dir = homedir / diarc / vision / detectors / p;
   std::string backEnd;
   std::string type;
   uint64_t totalClasses;

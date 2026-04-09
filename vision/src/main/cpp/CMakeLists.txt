@@ -150,7 +150,8 @@ INCLUDE_DIRECTORIES(${JSON_INC_PATH})
 # SIFT (checked into this repo)
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/third_party/vlfeat/bin/glnxa64 )
 
-# spot-cpp-sdk disabled until libprotobuf versioning issue can be resolved
+# spot-cpp-sdk disabled until libprotobuf versioning issue can be resolved.
+# Use spot python instead (i.e., CaptureSpotPython.cpp with BOSDYN_PYTHON)
 # FIND_PACKAGE(bosdyn)
 if (bosdyn_FOUND)
     ADD_DEFINITIONS(-DUSE_BOSDYN)

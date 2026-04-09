@@ -54,11 +54,13 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
-  public void localizeWithReference(Symbol refId) {
+  public Justification localizeWithReference(Symbol refId) {
+    return new ConditionJustification(true);
   }
 
   @Override
-  public void localizeWithFiducial() {
+  public Justification localizeWithFiducial() {
+    return new ConditionJustification(true);
   }
 
   @Override

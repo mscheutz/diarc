@@ -43,8 +43,8 @@ import edu.tufts.hrilab.fol.Predicate;
 
   if (op:isVariable(!x)) {
     // look for "any" objects
-    !anySearch = op:createPredicate("all(X)");
-    act:startVisualSearch(!anySearch);
+//    !anySearch = op:createPredicate("all(X)");
+//    act:startVisualSearch(!anySearch);
 
     // look for "unknown" objects
     !anySearch = op:createPredicate("unknown(X)");

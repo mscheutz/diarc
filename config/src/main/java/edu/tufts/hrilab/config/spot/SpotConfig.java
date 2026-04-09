@@ -16,12 +16,13 @@ import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.MockSpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
+import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = true;
-  boolean useMockSpot = true;
+  boolean useMockVision = false;
+  boolean useMockSpot = false;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -94,7 +95,7 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee self -config spotDemo.simspeech");
 
-//    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.ArmInterface");
+    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.spot.SpotInterface");
 //    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");
 
 //    Util.Sleep(2000);
