@@ -524,6 +524,83 @@ float ComponentValidator::calculateBBoxIoU(const cv::Rect& rect1, const cv::Rect
   return intersection_area / union_area;
 }
 
+bool ComponentValidator::isTargetColor(const cv::Mat& image, const std::vector<int>& indices, const cv::Scalar& color, float &confidence, cv::Mat_<float>& imageMask) {
+
+  float r_color = color(0);
+  float g_color = color(1);
+  float b_color = color(2);
+  r_color = r_color / 255;
+  g_color = g_color / 255;
+  b_color = b_color / 255;
+
+  // red color (1,0,0)
+  float max2red = sqrt((r_color - 1)*(r_color - 1) + (g_color - 0)*(g_color - 0) + (b_color - 0)*(b_color - 0));
+  // green color (0,1,0)
+  float max2green = sqrt((r_color - 0)*(r_color - 0) + (g_color - 1)*(g_color - 1) + (b_color - 0)*(b_color - 0));
+  // blue color (0,0,1)
+  float max2blue = sqrt((r_color - 0)*(r_color - 0) + (g_color - 0)*(g_color - 0) + (b_color - 1)*(b_color - 1));
+  // red-green color (1,1,0)
+  float max2red_green = sqrt((r_color - 1)*(r_color - 1) + (g_color - 1)*(g_color - 1) + (b_color - 0)*(b_color - 0));
+  // red-blue color (1,0,1)
+  float max2red_blue = sqrt((r_color - 1)*(r_color - 1) + (g_color - 0)*(g_color - 0) + (b_color - 1)*(b_color - 1));
+  // green-blue color (0,1,1)
+  float max2green_blue = sqrt((r_color - 0)*(r_color - 0) + (g_color - 1)*(g_color - 1) + (b_color - 1)*(b_color - 1));
+  // black color (0,0,0)
+  float max2black = sqrt((r_color - 0)*(r_color - 0) + (g_color - 0)*(g_color - 0) + (b_color - 0)*(b_color - 0));
+  // white color (1,1,1)
+  float max2white = sqrt((r_color - 1)*(r_color - 1) + (g_color - 1)*(g_color - 1) + (b_color - 1)*(b_color - 1));
+
+  float max_dist;
+  max_dist = std::max(max2red, max2green);
+  max_dist = std::max(max_dist, max2blue);
+  max_dist = std::max(max_dist, max2red_green);
+  max_dist = std::max(max_dist, max2red_blue);
+  max_dist = std::max(max_dist, max2green_blue);
+  max_dist = std::max(max_dist, max2black);
+  max_dist = std::max(max_dist, max2white);
+
+  //initialize resulting image mask with zeros
+  imageMask = cv::Mat_<float>::zeros(image.size());
+
+  long numPoints = 0;
+  confidence = 0;
+  int imgWidth = image.cols;
+  int imgHeight = image.rows;
+  float confidence_thresh = 0.5f;
+  float pixel_confidence_thresh = 0.4f;
+
+  std::vector<int>::const_iterator indices_itr;
+  for (indices_itr = indices.begin(); indices_itr != indices.end(); ++indices_itr) {
+
+    int x = (*indices_itr) % imgWidth;
+    int y = (*indices_itr) / imgWidth;
+
+    float rr = image.at<uchar>(y, 3 * x + 2);
+    float gg = image.at<uchar>(y, 3 * x + 1);
+    float bb = image.at<uchar>(y, 3 * x + 0);
+    rr = rr / 255;
+    gg = gg / 255;
+    bb = bb / 255;
+
+    float dist = (rr - r_color)*(rr - r_color) + (gg - g_color)*(gg - g_color) + (bb - b_color)*(bb - b_color);
+    dist = sqrt(dist);
+    float pixel_confidence = 1.0 - dist / max_dist;
+    numPoints++;
+    if (pixel_confidence > pixel_confidence_thresh) {
+      imageMask(y, x) = pixel_confidence;
+      confidence += pixel_confidence;
+    }
+  }
+
+  confidence /= numPoints;
+
+  if (numPoints > 0 && confidence > confidence_thresh) {
+    return true;
+  }
+
+  return false;
+}
+
 void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
   LOG4CXX_TRACE(logger, "[processUnknownObject] method entered.");
 
@@ -533,6 +610,20 @@ void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
     LOG4CXX_INFO(logger, "TypeId not being processed by Validator: " << object->getTypeId());;
     return;
   }
+
+  ////////////////////////////////////////// Color Processing //////////////////////////////////////////////////
+  float colorConf1 = 0.0f;
+  float colorConf2 = 0.0f;
+  float colorConf3 = 0.0f;
+  cv::Mat_<float> imageMask;
+  std::vector<int> indices = object->getDetectionMask()->getIndicesMask();
+  const cv::Mat image = object->getCaptureData()->frame;
+  bool isRed = isTargetColor(image, indices, cv::Scalar(255,0,0), colorConf1, imageMask);
+  bool isBlue = isTargetColor(image, indices, cv::Scalar(0,0,255), colorConf2, imageMask);
+  bool isYellow = isTargetColor(image, indices, cv::Scalar(255,255,0), colorConf3, imageMask);
+  LOG4CXX_INFO(logger, "Color detection. Red: " << isRed << " Blue: " << isBlue << " Yellow: " << isYellow);
+  LOG4CXX_INFO(logger, "Color detection. Red: " << colorConf1 << " Blue: " << colorConf2 << " Yellow: " << colorConf3);
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // get MemoryObject cloud, denoise and upsample it
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();

@@ -192,7 +192,7 @@ private:
   cv::Mat applyMixedActivation(const cv::Mat& semMatrix);
   std::string generateFullDescription(std::vector<bool> foundPredicatesVector, float minChamfer);
   void populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, diarc::stm::MemoryObject::Ptr mo);
-  
+  bool isTargetColor(const cv::Mat& image, const std::vector<int>& indices, const cv::Scalar& color, float &confidence, cv::Mat_<float>& imageMask);
 };
 
 
