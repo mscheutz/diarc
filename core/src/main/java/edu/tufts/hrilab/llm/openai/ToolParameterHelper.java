@@ -8,6 +8,8 @@ public class ToolParameterHelper {
   List<String> possible_values;
   String description;
   boolean required;
+  boolean processAsTool = false;
+  String toolChatTemplateContextId;
 
   public ToolParameterHelper(String name, String type, List<String> possible_values, String description, boolean required) {
     this.name = name;
@@ -15,6 +17,16 @@ public class ToolParameterHelper {
     this.possible_values = possible_values;
     this.description = description;
     this.required = required;
+  }
+
+  public ToolParameterHelper(String name, String type, List<String> possible_values, String description, boolean required, boolean processAsTool, String toolChatTemplateContextId) {
+    this.name = name;
+    this.type = type;
+    this.possible_values = possible_values;
+    this.description = description;
+    this.required = required;
+    this.processAsTool = processAsTool;
+    this.toolChatTemplateContextId = toolChatTemplateContextId;
   }
 
 
@@ -47,5 +59,13 @@ public class ToolParameterHelper {
 
   public String getDescription() {
     return description;
+  }
+
+  public boolean getProcessAsTool() {
+    return processAsTool;
+  }
+
+  public String getToolChatTemplateContextId() {
+    return toolChatTemplateContextId;
   }
 }

@@ -7,6 +7,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
@@ -47,10 +48,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -274,16 +275,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You stop and fully discard your current task. An example of instructing this could be \"stop what you're doing.\"",
             new ArrayList<>()),
             UtteranceType.INSTRUCT));
-
     //universalFocusedTools.addAll(itkTools);
     //universalFocusedTools.add(defaultGoalInfoTool);
     //universalFocusedTools.add(offContextSubmissionTool); //Done in parse method
+    //universalFocusedTools.add(textResponseTool); //Add per focused entry - using custom text response in learnTour
 
     // OffContext submission toolset: Everything from base context, but overriding:
     //  - getCurrentGoalInfo (to hide the "offContextSubmission" action / explicitly handle reasoning around the fact
     //                        that the spiritual "current goal" is what was superseded by this goal)
     //  - Specific endConversation tool - description includes notion of the "superseded" task this is interrupting
-    universalFocusedTools.add(textResponseTool);
     List<Tool> offTopicTools = new ArrayList<>(instructTools);
     offTopicTools.add(offtopicEndConversationTool);
     offTopicTools.add(offtopicGoalInfoTool);
@@ -299,7 +299,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     chatTemplates.put("nlg", new ChatTemplates(getNlgSystemPrompt(), new ArrayList<>()));
     chatTemplates.put("validation", new ChatTemplates(getValidationNLGSystemPrompt(), new ArrayList<>()));
 
-    // Focused context toolsets
+    // Focused context toolsets:
+    // Goal Scheduling
     List<Tool> scheduleGoalTools = new ArrayList<>();
     scheduleGoalTools.add(new Tool(new ToolDefinition("scheduled",
             "Schedule the discussed task with all known timing information", List.of(
@@ -311,7 +312,40 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                     UtteranceType.INSTRUCT
             ));
     scheduleGoalTools.addAll(universalFocusedTools);
+    scheduleGoalTools.add(textResponseTool);
     chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/scheduleGoal"), scheduleGoalTools));
+    // Tour Teaching
+    // Using custom "stillGatheringInformation" tool which also explicitly keeps track of the "current template parse" at
+    //  each step. The idea is that writing it down each step provides something concretely to validate each step and
+    //  better context for incremental LLM population. This could be first application/attempt of "general template
+    //  population" structure, which we may want to use for at least general action learning if not every context.
+    // TODO: See initial performance of this version and then determine whether we need to swap to more structured version
+    //    of this interaction. E.g. hold an explicit representation of the learning state in Java and provide an API to
+    //    the LLM through tools to modify specific existing steps, add/insert new one, etc.
+    List<Tool> learnTourTools = new ArrayList<>();
+    learnTourTools.add(new Tool(new ToolDefinition("tourDefinition",
+            "Submit the details of the fully defined tour sequence for storage and future use. Call this when you believe you have all information about the tour finalized and are ready to save.", List.of(
+            new ToolParameterHelper("tourName","string",new ArrayList<>(),"The name this tour should be saved under and later instructed as",true),
+            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the tour should begin at",true),
+            new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide \"none\".",true,true,"nlu"),
+            //TODO: technically here we want to provide a possible_values list for postprocessing but not necessarily to the LLM (unless it can understand that the possible_values apply to each value in the sequence rather than the sequence as a whole)
+            new ToolParameterHelper("locationSequence","array",new ArrayList<>(),"The list of locations to visit in order after leaving the start location. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location, in other words, one of the acceptable values of startLocation.",true),
+            new ToolParameterHelper("actionSequence","array",new ArrayList<>(),"The list of tasks to perform at each corresponding location in locationSequence. The final length of this list must be equal to the length of locationSequence. Each individual value in this list must follow the same format as startAction, in other words, a populated form from the Action List above.",true,true,"nlu")
+    )),
+            UtteranceType.INSTRUCT
+    ));
+    learnTourTools.addAll(universalFocusedTools);
+    Tool modifiedTextResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
+            "You are still being taught new or modifying existing tour steps by the user. You will respond to" +
+                    "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
+                    "to gather missing information in order to define the tour.",
+            List.of(new ToolParameterHelper("response","string",new ArrayList<>(),
+                    "What you want to say to the user", true),
+                    new ToolParameterHelper("currentTourDefinition","object",new ArrayList<>(),
+                            "Your current understanding of the steps of the tour being taught to you. The expected format is json matching the tourDefinition function described above.", true))),
+            UtteranceType.INSTRUCT);
+    learnTourTools.add(modifiedTextResponseTool);
+    chatTemplates.put("learnTour", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
 
     //TODO: apply promptVars to Tool definitions/examples and most importantly possible_values sets as well
     //// init prompt vars
@@ -599,13 +633,26 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return inputUtterance;
     }
 
+    StringBuilder baseToolResponse = new StringBuilder("You interpreted the user's command as ").append(toolCall).append(". This result contains missing or invalid information. Please succinctly let them know what you thought they were trying to instruct, including the task itself and any information which was supplied correctly, summarize the following errors, and work with them to correct the errors:\n");
+
     // Process the tool call and supplied arguments - output utterance will be null and baseToolResponse will be updated
     //  with error details in case any invalid response was supplied by the LLM
-    StringBuilder baseToolResponse = new StringBuilder("You interpreted the user's command as ").append(toolCall).append(". This result contains missing or invalid information. Please succinctly let them know what you thought they were trying to instruct, including the task itself and any information which was supplied correctly, and summarize the following errors:\n");
     Utterance outputUtterance = processToolCall(functionCall, correspondingTool, inputUtterance, baseToolResponse);
 
-    //// Handle processed response
+    boolean error = false;
     if (outputUtterance != null && outputUtterance.getSemantics() != null) {
+      //// Domain specific postprocessing to correct common mistakes
+      String errorResponse = correctCommonNLUMistakes(outputUtterance);
+      if (!errorResponse.isEmpty()) {
+        error = true;
+        baseToolResponse.append(errorResponse);
+      }
+    } else {
+      error = true;
+    }
+
+    //// Handle processed response
+    if (!error) {
       //Valid parse - proceed to validation
 
       // Experimental text response tool stand-in (described above)
@@ -622,9 +669,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         resetErrorCount(true, inputUtterance.getSpeaker().toUntyped(), inputUtterance.getAddressee().toUntyped());
         return handleTextResponse(llmResponse,inputUtterance,chatContext);
       }
-
-      //// Domain specific postprocessing to correct common mistakes
-      correctCommonNLUMistakes(outputUtterance);
 
       //// Universal postprocessing for accepted cases
       // TODO: Reevaluate if these are in fact conventions we want to universally accept / how we want to do these things
@@ -1883,19 +1927,75 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   @Override
   protected void initLearnedActions() {
     super.initLearnedActions();
-    log.warn("[SocialAvaLLMServiceProvider] TODO: IMPLEMENT LEARNED ACTION -> TOOL TARGET TRANSLATION");
+    synchronized (currentChatCollections) {
+      for (ActionDBEntry entry : learnedActions) {
+        addLearnedActionToCollections(entry);
+      }
+    }
   }
 
   @Override
   public void handleDatabaseAddition(ActionDBEntry entry) throws TRADEException {
     super.handleDatabaseAddition(entry);
-    log.warn("[SocialAvaLLMServiceProvider.handleDatabaseAddition] TODO: IMPLEMENT LEARNED ACTION -> TOOL TARGET TRANSLATION");
+    if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
+      log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
+      addLearnedActionToCollections(entry);
+    }
   }
 
   @Override
   public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
     super.handleDatabaseRemoval(entry);
-    log.warn("[SocialAvaLLMServiceProvider.handleDatabaseRemoval] TODO: Remove corresponding tool target when learned action is forgotten");
+    removeLearnedActionFromCollections(entry.getName());
+
+  }
+
+  private void addLearnedActionToCollections(ActionDBEntry dbEntry) {
+    Predicate signature = dbEntry.getSignature(false);
+    Tool correspondingTool = new Tool(new ToolDefinition(signature.getName(), "This is an action which was previously taught to you by a human user. It was given the name \"" + signature.getName() + "\" during instruction. You may use the getActionSteps function to get a description of the steps contained within this action if desired.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
+    String nluString = toolToDescString(correspondingTool, true);
+    // As of now is the same because all are parameterless
+    //String NLGString = toolToDescString(correspondingTool, false);
+
+    // If an action with same name already exists, overwrite it and fill in with new details
+    //  (TODO: If teaching parameterized/overloaded actions, would need to update representation)
+    synchronized (currentChatCollections) {
+      if (chatTemplates.get("nlu").tools.get(signature.getName()) != null) {
+        log.error("[addLearnedActionToCollections] have multiple taught actions with the same name {}. Overwriting existing entry.", signature.getName());
+        removeLearnedActionFromCollections(signature.getName());
+      }
+      // Add to "instructable actions" list for focused contexts
+      promptVars.put("%instructNLGList", promptVars.get("%instructNLGList") + String.format("\n%s\n#", nluString));
+      promptVars.put("%instructList", promptVars.get("%instructList") + String.format("\n%s\n#", nluString));
+      // Add as tool target in base context
+      chatTemplates.get("nlu").toolDefinitions.add(correspondingTool.toolDefinition);
+      chatTemplates.get("nlu").tools.put(signature.getName(), correspondingTool);
+      // Add as tool target in offTopic context
+      chatTemplates.get("offContextSubmission").toolDefinitions.add(correspondingTool.toolDefinition);
+      chatTemplates.get("offContextSubmission").tools.put(signature.getName(), correspondingTool);
+    }
+  }
+
+  private void removeLearnedActionFromCollections(String name) {
+    synchronized (currentChatCollections) {
+      Tool correspondingTool = chatTemplates.get("nlu").tools.remove(name);
+      if (correspondingTool == null) {
+        log.error("[removeLearnedActionFromCollections] removing action not found in base instructable tool set");
+        return;
+      }
+      String nluString = toolToDescString(correspondingTool, true);
+      // As of now is the same because all are parameterless
+      //String NLGString = toolToDescString(correspondingTool, false);
+      //Remove from "instructable actions list" for focused contexts
+      promptVars.put("%instructNLGList", promptVars.get("%instructNLGList").replace(String.format("\n%s\n#", nluString), ""));
+      promptVars.put("%instructList", promptVars.get("%instructList").replace(String.format("\n%s\n#", nluString), ""));
+      // Remove as tool target in base context
+      chatTemplates.get("nlu").toolDefinitions.remove(correspondingTool.toolDefinition);
+      chatTemplates.get("nlu").tools.remove(name);
+      // Remove as tool target in offTopic context
+      chatTemplates.get("offContextSubmission").toolDefinitions.remove(correspondingTool.toolDefinition);
+      chatTemplates.get("offContextSubmission").tools.remove(name);
+    }
   }
 
   //TODO: Able to move at least some of this to the base class?
@@ -2054,89 +2154,170 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: should postprocessing errors here increment "internalErrorCount" even if returning their own specialized error message?
   /**
    * Process an LLM Tool call response by matching it against existing Tool Definitions.
+   * @param functionCall Completion response Tool call
+   * @param tool Matching Tool definition containing intended structure and constraints to validate against
+   * @param inputUtterance input Utterance whose semantics to update
+   * @param errorMessage Stringbuilder to populate with all relevant errors caught during postprocessing to feed back to the LLM
    * Return:
    *   Fully populated utterance with information extracted from functionCall
    *   Null on any error case - errorMessage should be updated in this case
    */
   private Utterance processToolCall(ToolFunction functionCall, Tool tool, Utterance inputUtterance, StringBuilder errorMessage) {
-    Map<String, String> calledArguments = new Gson().fromJson(functionCall.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
-    }.getType());
-    calledArguments.values().removeIf(Objects::isNull);
-    boolean validParse = true;
+    Utterance.Builder builder = new Utterance.Builder(inputUtterance);
+    Symbol actor = inputUtterance.getAddressee();
+    Map<Symbol,Variable> varMap = new HashMap<>();
+    Symbol semantics = processToolArgument(functionCall.arguments, tool, actor, builder, varMap, errorMessage, false);
+    if (semantics != null) {
+      builder.setSemantics(semantics);
+      builder.setUtteranceType(tool.utteranceType);
+      return builder.build();
+    } else {
+      return null;
+    }
+  }
+  // Process an arbitrary inner argument found in a Tool response - convert to a Symbol
+  //  List -> Converts each element into a Symbol independently and wraps in an "and" predicate
+  //  Map -> Corresponding Tool parameter must have processAsTool flag and associated toolChatTemplateContextId set. Will be processed as a Tool call, converted into the corresponding action predicate
+  //  String/Number -> Factory.createFoL(arg)
+  private Symbol processArgument(String parameterName, Object parameterValue, ToolParameter parameterDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+    Symbol processedArg = null;
+    boolean argValid = true;
+    unpopulatedArgSafe = unpopulatedArgSafe || parentTool.function.name.equals("getIfCanPerform"); //TODO; revisit this and associated cases
+    if (parameterValue instanceof List<?>) {
+      //// Handle List
+        List<Object> argObjectList = (List<Object>) parameterValue; //Can you actually have a ClassCastException here? Catch and handle if so
+        List<Symbol> innerArgs = new ArrayList<>();
+        for (Object argValue : argObjectList) {
+          Symbol innerArg = processArgument(parameterName, argValue, parameterDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+          if (innerArg == null) {
+            argValid = false;
+            continue;
+          }
+          innerArgs.add(innerArg);
+        }
+        processedArg = Factory.createPredicate("and",innerArgs);
+    } else if (parameterValue instanceof Map<?,?>) {
+      //// Handle Map (Tool)
+      if (!parameterDefinition.getProcessAsTool()) {
+        log.error("[processArgument] have argument value json without flag set to process as tool: {}", parameterValue);
+        //TODO: is this just developer error or can it actually also be LLM error?
+        errorMessage.append("- You supplied a JSON object for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was not signaled to be parsed as a tool call. Please adapt this argument to a string or number.\n");
+        return null;
+      }
+      String chatTemplateContextId = parameterDefinition.getToolChatTemplateContextId();
+      if (chatTemplateContextId == null || chatTemplateContextId.isEmpty()) {
+        log.error("[processArgument] inner tool call has processAsTool flag set but no associated ChatTemplateContextId. **Developer Error - please check your LLM subclass implementation** Cannot recover from this...: {}", parameterName);
+        //TODO: definitely developer error at this point - what do we do?
+        return null;
+      }
+      ChatTemplates innerToolChatTemplates = chatTemplates.get(chatTemplateContextId);
+      if (innerToolChatTemplates == null) {
+        log.error("[processArgument] inner tool call's ChatTemplateContextId does not match an existing ChatTemplates entry: {}. **Developer Error - please check your LLM subclass implementation** Cannot recover from this...", parameterName);
+        //TODO: also definitely developer error - what do we do?
+        return null;
+      }
 
-    ToolDefinition toolDefinition = tool.toolDefinition;
-
-    // Check all required arguments exist
-    ToolParameters targetParameters = toolDefinition.function.parameters;
-    for (String paramName : targetParameters.getProperties().keySet()) {
-      if (targetParameters.getRequired().contains(paramName)) {
-        if (!calledArguments.containsKey(paramName)) {
-          validParse = false;
-          errorMessage.append("- The user's instruction was missing a value for the required \"").append(paramName).append("\" argument\n");
+      Map<String,Object> calledArguments = (Map<String, Object>) parameterValue; //Can you actually have a ClassCastException here? Catch and handle if so
+      calledArguments.values().removeIf(Objects::isNull);
+      String toolName = (String)calledArguments.get("name");
+      Object arguments = calledArguments.get("arguments");
+      if (toolName == null) {
+        log.warn("[processArgument] inner tool call does not have name field present: {}", parameterValue);
+        errorMessage.append("- You supplied action json for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"name\" field. Please include the proper name of this action.\n");
+        argValid = false;
+      }
+      if (arguments == null) {
+        log.warn("[processArgument] inner tool call does not have arguments field present: {}", parameterValue);
+        errorMessage.append("- You supplied action json for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"arguments\" field. Please include the proper arguments of this action, even if an empty map.\n");
+        argValid = false;
+      }
+      Tool innerTool = innerToolChatTemplates.tools.get(toolName);
+      if (innerTool == null) {
+        log.warn("[processArgument] inner tool call's name does not match a Tool in the corresponding ChatTemplates: {}", toolName);
+        errorMessage.append("- You supplied action json for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but the supplied name \"").append(toolName).append("\" does not correspond to the name of a valid action. Please remove this entry and replace it with a valid action, work with the user if necessary.\n");
+        argValid = false;
+      }
+      if (argValid) {
+        processedArg = processToolArgument(arguments, innerTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+      }
+    } else if (parameterValue instanceof String) {
+      //// Handle String (predicate)
+      String stringValue = (String)parameterValue;
+      if (parentTool.function.name.equals("stillGatheringInformation") || parentTool.function.name.equals("say")) {
+        if (!(stringValue.startsWith("\"") && stringValue.endsWith("\""))) {
+        stringValue = "\"" + stringValue + "\"";
         }
       }
+      processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe);
+    } else {
+      //// Handle Number - anything else possible?
+      String stringValue = String.valueOf(parameterValue);
+      processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe);
     }
 
+    if (argValid) {
+      return processedArg;
+    } else {
+      return null;
+    }
+  }
+  // Process a tool call's arguments (json string or object representing a map with "name" and "arguments" fields)
+  private Symbol processToolArgument(Object arguments, Tool intendedTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+    boolean validParse;
+    ToolDefinition toolDefinition = intendedTool.toolDefinition;
+    Map<String, Object> calledArguments;
+    // Attempt to parse arguments json
+    if (arguments instanceof String) {
+      try {
+        calledArguments = new Gson().fromJson((String)arguments, new TypeToken<LinkedTreeMap<String, Object>>() {
+        }.getType());
+        calledArguments.values().removeIf(Objects::isNull);
+      } catch (JsonSyntaxException e) {
+        errorMessage.append("- The supplied tool call arguments string for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly.\n");
+        //TODO: hook up to internalError (TODO: this whole block can loop endlessly if the llm keeps retargeting the same semantics)
+        log.error("[processToolCall] malformed json present in functionCall", e);
+        return null;
+      }
+    } else if (arguments instanceof Map<?,?>) {
+      calledArguments = (Map<String, Object>) arguments; //Catch and handle ClassCastException if ever encountered
+    } else {
+      errorMessage.append("- The supplied tool call arguments for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as json. Please reformat your call to supply a valid json string or object.\n");
+      log.error("[processToolArgument] unhandled {}", arguments);
+      return null;
+    }
+
+    // Check all required arguments exist
+    validParse = checkRequiredArgsExist(calledArguments.keySet(), toolDefinition.function.parameters, errorMessage);
+
     // Add actor to output semantics
-    Map<Symbol, Variable> varMap = new LinkedHashMap<>();
     List<Symbol> processedArguments = new ArrayList<>();
     //TODO: QUESTION should not be in this case once ITK pipeline is fixed - and/or make distinction between going through
     //      the itk pipeline to have it generate its own response vs calling the underlying action to populate a tool response
-    if (tool.utteranceType == UtteranceType.INSTRUCT || tool.utteranceType == UtteranceType.QUESTION) {
-      String actorName = inputUtterance.getAddressee().getName();
+    if (intendedTool.utteranceType == UtteranceType.INSTRUCT || intendedTool.utteranceType == UtteranceType.QUESTION) {
+      String actorName = actor.getName();
       processedArguments.add(Factory.createSymbol(actorName));
     }
-    Utterance.Builder output = new Utterance.Builder(inputUtterance);
 
     // Validate Tool call's supplied arguments
     for (String argName : calledArguments.keySet()) {
       Symbol processedArg;
-      ToolParameter targetParam = targetParameters.getProperties().get(argName);
+      ToolParameter targetParam = toolDefinition.function.parameters.getProperties().get(argName);
       if (targetParam == null) {
         // An argument was supplied which isn't present in the target set
         //  (This is more just an LLM issue? Do we do anything in this case, or just discard the information?)
-        log.warn("[processToolCall] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
+        // TODO: Count as internal error?
+        log.warn("[processToolArgument] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
       } else {
-        String argString = calledArguments.get(argName);
-        // Revisit where this should be addressed
-        if (argName.equals("response") && functionCall.name.equals("stillGatheringInformation")) {
-          argString = "\"" + argString + "\"";
+        //TODO: general mechanism to ignore fields when extracting final result? E.g. want the llm to keep track of the
+        // template during the extended dialogue, but don't care if it's fully valid yet.
+        if (intendedTool.toolDefinition.function.name.equals("stillGatheringInformation") && !argName.equals("response")) {
+          continue;
         }
-        Symbol argValue = Factory.createFOL(argString);
-        // If there is an explicit possible_values set, make sure the argument is present
-        if (!targetParam.getPossible_values().isEmpty()) {
-          if (!targetParam.getPossible_values().contains(calledArguments.get(argName))) {
-            validParse = false;
-            //TODO: include type information and use in error message
-            errorMessage.append("- The user's instruction contained an invalid value for the \"").append(argName).append("\" argument\n");
-            continue;
-          }
-          // Replace reference descriptor with variable if type contained in refTypes
-          //TODO: can probably refactor to eliminate duplicate code
-          if (refTypes.contains(argValue.getType())) {
-            if (!varMap.containsKey(argValue)) {
-              Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argValue.getType());
-              varMap.put(argValue, var);
-
-              output.addSupplementalSemantics(Factory.createPredicate(argValue.toUntypedString(), var));
-              Symbol tier = Factory.createSymbol("DEFINITE");
-              output.addTierAssignment(var, tier);
-
-              processedArg = var;
-            } else {
-              processedArg = varMap.get(argValue);
-            }
-          } else {
-            processedArg = argValue;
-          }
-        } else {
-          // Unrestricted argument (at least explicitly), make sure it is otherwise valid (populated, typed correctly, etc.)
-          boolean unpopulatedArgSafe = toolDefinition.function.name.equals("reportIfCanPerform");
-          processedArg = processToolCallArgument(argName, argValue, errorMessage, varMap, output, false,unpopulatedArgSafe);
-          if (processedArg == null) {
-            validParse = false;
-            continue;
-          }
+        Object argValue = calledArguments.get(argName);
+        processedArg = processArgument(argName, argValue, targetParam, toolDefinition, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+        if (processedArg == null) {
+          validParse = false;
+          continue;
         }
         processedArguments.add(processedArg);
       }
@@ -2144,78 +2325,117 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Return appropriate object
     if (validParse) {
-      Predicate semantics = Factory.createPredicate(toolDefinition.function.name, processedArguments);
-      output.setSemantics(semantics);
-      output.setUtteranceType(tool.utteranceType);
-      return output.build();
+      return Factory.createPredicate(toolDefinition.function.name, processedArguments);
     } else {
       return null;
     }
   }
-  private Symbol processToolCallArgument(String argName, Symbol arg, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder output, boolean inner, boolean unpopulatedArgSafe) {
-    if (arg.isPredicate()) {
-      List<Symbol> processedInnerArguments = new ArrayList<>();
-      if (arg.getName().equals("reportIfCanPerform")) {
-        unpopulatedArgSafe = true;
-      }
-      for (Symbol innerArg : ((Predicate)arg).getArgs()) {
-        Symbol processedInnerArg = processToolCallArgument(argName, innerArg, errorMessage, varMap, output, true, unpopulatedArgSafe);
-        processedInnerArguments.add(processedInnerArg);
-      }
-      if (processedInnerArguments.contains(null)) {
-        return null;
-      }
-      return Factory.createPredicate(arg.getName(), processedInnerArguments);
-    } else {
-      String argString = arg.toString();
-
-      // Reject any unpopulated arguments returned by the LLM, unless the semantics specifically allow for that
-      if (unpopulatedArgSafe && argString.startsWith("?")) {
-        return Factory.createSymbol(argString.substring(1).split(":")[0]);
-      } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
-        log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
-        if (inner) {
-          //TODO: Is this case generally another tool call in some form? Could explicitly try to find corresponding ToolDefinition here as well?
-          errorMessage.append("- The user's supplied value for the \"").append(argName).append("\" argument was missing information about the ").append(argString).append(" detail\n");
-        } else {
-          errorMessage.append("- The user's instruction was missing a value for the required \"").append(argName).append("\" argument\n");
-        }
+  // TODO: Do we need to check for unintended JSON strings and reject here?
+  // Process a "leaf" (i.e. maximally a Predicate, not list or map) tool call argument
+  private Symbol processSymbolArgument(String argName, String argString, List<String> possible_values, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder builder, boolean inner, boolean unpopulatedArgSafe) {
+    Symbol processedArg;
+    Symbol argValue = Factory.createFOL(argString);
+    // If there is an explicit possible_values set, make sure the argument is present
+    if (!possible_values.isEmpty()) {
+      if (!possible_values.contains(argString)) {
+        errorMessage.append("- The user's instruction contained an invalid value for the ").append(inner ? "inner " : "").append("\"").append(argName).append("\" argument. Please work with the user to replace this value with one present in the corresponding possible_values set. Supplied value: ").append(argString).append(", possible values: ").append(possible_values).append("\n");
         return null;
       }
 
-      Symbol argSymbol = Factory.createFOL(argString);
-      // Replace reference symbol with Variable and add supplemental semantics
-      if (argSymbol != null && (refTypes.contains(argSymbol.getType()))) {
-        if (!varMap.containsKey(argSymbol)) {
-          Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
-          varMap.put(argSymbol, var);
+      // Replace reference descriptor with variable if type contained in refTypes
+      //TODO: can probably refactor the below blocks to eliminate duplicate code
+      if (refTypes.contains(argValue.getType())) {
+        if (!varMap.containsKey(argValue)) {
+          Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argValue.getType());
+          varMap.put(argValue, var);
 
-          output.addSupplementalSemantics(Factory.createPredicate(argSymbol.toUntypedString(), var));
+          builder.addSupplementalSemantics(Factory.createPredicate(argValue.toUntypedString(), var));
           Symbol tier = Factory.createSymbol("DEFINITE");
-          output.addTierAssignment(var, tier);
+          builder.addTierAssignment(var, tier);
 
-          return var;
+          processedArg = var;
         } else {
-          return varMap.get(argSymbol);
+          processedArg = varMap.get(argValue);
         }
       } else {
-        //TODO: this isn't always the case, if we want to allow variables to be generated by the LLM this needs to change and the prompt needs to be updated
-        //Domain-specific safeguard to prevent the LLM from capitalizing arguments
-        //If argument is a wildcard, don't want it to be capitalized by the LLM just because it recognizes it as a proper noun
-        if (Character.isUpperCase(argString.charAt(0)) && argString.length() > 1) {
-          try {
-            TimeUnit.valueOf(argString);
-            return Factory.createSymbol(argString);
-          } catch (IllegalArgumentException ignored) {
-            String lowercaseArg = argString;
-            lowercaseArg = Character.toLowerCase(lowercaseArg.charAt(0)) + lowercaseArg.substring(1);
-            return Factory.createSymbol(lowercaseArg);
+        processedArg = argValue;
+      }
+      return processedArg;
+    } else {
+      // Unrestricted argument (at least explicitly), make sure it is otherwise valid (populated, typed correctly, etc.)
+      if (argValue.isPredicate()) {
+        List<Symbol> processedInnerArguments = new ArrayList<>();
+        if (argValue.getName().equals("getIfCanPerform")) { // can this be purely on the tool call level?
+          unpopulatedArgSafe = true;
+        }
+        for (Symbol innerArg : ((Predicate) argValue).getArgs()) {
+          Symbol processedInnerArg = processSymbolArgument(argName, innerArg.toString(), new ArrayList<>(), errorMessage, varMap, builder, true, unpopulatedArgSafe);
+          processedInnerArguments.add(processedInnerArg);
+        }
+        if (processedInnerArguments.contains(null)) {
+          return null;
+        }
+        return Factory.createPredicate(argValue.getName(), processedInnerArguments);
+      } else {
+        // Reject any unpopulated arguments returned by the LLM, unless the semantics specifically allow for that
+        if (unpopulatedArgSafe && argString.startsWith("?")) {
+          return Factory.createSymbol(argString.substring(1).split(":")[0]);
+        } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
+          log.warn("[processSymbolArgument] NLU parse has unpopulated argument present, failing: {}", argString);
+          if (inner) {
+            errorMessage.append("- The user's supplied value for the \"").append(argName).append("\" argument was missing information about the ").append(argString).append(" detail\n");
+          } else {
+            errorMessage.append("- The user's instruction was missing a value for the required \"").append(argName).append("\" argument\n");
+          }
+          return null;
+        }
+
+        Symbol argSymbol = Factory.createFOL(argString);
+        // Replace reference symbol with Variable and add supplemental semantics
+        if (argSymbol != null && (refTypes.contains(argSymbol.getType()))) {
+          if (!varMap.containsKey(argSymbol)) {
+            Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
+            varMap.put(argSymbol, var);
+
+            builder.addSupplementalSemantics(Factory.createPredicate(argSymbol.toUntypedString(), var));
+            Symbol tier = Factory.createSymbol("DEFINITE");
+            builder.addTierAssignment(var, tier);
+
+            return var;
+          } else {
+            return varMap.get(argSymbol);
           }
         } else {
-          return Factory.createSymbol(argString);
+          //TODO: this isn't always the case, if we want to allow variables to be generated by the LLM this needs to change and the prompt needs to be updated
+          //Domain-specific safeguard to prevent the LLM from capitalizing arguments
+          //If argument is a wildcard, don't want it to be capitalized by the LLM just because it recognizes it as a proper noun
+          if (Character.isUpperCase(argString.charAt(0)) && argString.length() > 1) {
+            try {
+              TimeUnit.valueOf(argString);
+              return Factory.createSymbol(argString);
+            } catch (IllegalArgumentException ignored) {
+              String lowercaseArg = argString;
+              lowercaseArg = Character.toLowerCase(lowercaseArg.charAt(0)) + lowercaseArg.substring(1);
+              return Factory.createSymbol(lowercaseArg);
+            }
+          } else {
+            return Factory.createSymbol(argString);
+          }
         }
       }
     }
+  }
+  private boolean checkRequiredArgsExist(Set<String> calledArgumentKeys, ToolParameters targetParameters, StringBuilder currentErrorMessage) {
+    boolean valid = true;
+    for (String paramName : targetParameters.getProperties().keySet()) {
+      if (targetParameters.getRequired().contains(paramName)) {
+        if (!calledArgumentKeys.contains(paramName)) {
+          valid = false;
+          currentErrorMessage.append("- The user's instruction was missing a value for the required \"").append(paramName).append("\" argument\n");
+        }
+      }
+    }
+    return valid;
   }
 
   Predicate replaceReferencesInSemantics(Predicate semantics) {
@@ -2396,8 +2616,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //// Should be domain specific
 
-  //TODO: explicitly handle error cases if finding they are still possible
-  private void correctCommonNLUMistakes(Utterance utterance) {
+  // TODO: Revisit old error cases and explicitly handle if finding they are still possible
+  // Modify semantics based on domain specific postprocessing
+  // Return - Error String to add onto baseToolResponse to be sent when hanlding this uetterance as an error.
+  //          Empty String if no issues found
+  private String correctCommonNLUMistakes(Utterance utterance) {
     Symbol actor = utterance.getAddressee();
     try {
       String command = utterance.getSemantics().getName();
@@ -2412,7 +2635,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
           utterance.setSemantics(Factory.createPredicate(command, Factory.createPredicate(innerArg.getName(), argsWithActor)));
         }
-      } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps") || command.equals("urgentPriority")) {
+      } else if (command.equals("forgetTaughtAction") || command.equals("getIfCanPerform") || command.equals("getActionSteps") || command.equals("urgentPriority")) {
         //Not currently prompted to do this
         if (utterance.getSemantics().hasArgs()) {
           Symbol innerArg = ((Term)utterance.getSemantics()).get(1);
@@ -2490,12 +2713,33 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
         }
         utterance.setSemantics(Factory.createPredicate(command,args));
+      } else if (command.equals("tourDefinition")) {
+        List<Symbol> args = ((Predicate)utterance.getSemantics()).getArgs();
+        if (args.size() != 6) {
+          log.error("[correctCommonNLUMistakes] tourDefinition has unexpected number of arguments, this should have been caught in tool processing?");
+        } else {
+          Symbol locationSequence = args.get(4);
+          Symbol actionSequence = args.get(5);
+          if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
+            if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
+              return "- The current tour definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location outside of the startLocation must be explicitly specified.";
+            }
+          }
+          String tourName = args.get(1).toString();
+          if (!tourName.matches("[A-Za-z0-9_]+")) {
+            Symbol cleanedName = Factory.createSymbol(tourName.trim().replaceAll("\\s+", "_").replaceAll("[^a-zA-Z0-9_]", ""));
+            args.remove(1);
+            args.add(1, cleanedName);
+            utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+          }
+        }
       }
     }
     catch (Exception e) {
       log.warn("[correctCommonNLUMistakes] unexpected semantics format {}", utterance.getSemantics());
       //TODO: explicitly fail with a specific message here? Or just return unmodified utterance?
     }
+    return "";
   }
 
   private String getMatchingNameIgnoreCase(String query, List<String> targets) {
@@ -2758,10 +3002,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You go to your default charging dock and charge. An example of instructing this could be \"go back to charge.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("scheduleTask",
-            "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    //definition = new ToolDefinition("scheduleTask",
+    //        "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
+    //        new ArrayList());
+    //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("modifyScheduledGoal",
             "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. An example of instructing this could be \"I want to change the timing of an action.\"",
             new ArrayList());
@@ -2798,10 +3042,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You forget a previously taught action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of instructing this could be \"forget how to go to %exampleLocation.\", which would map to forgetTaughtAction(goToLocation(%exampleLocation))",
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action to forget", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("learnTourAction",
-            "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour (navigating between a sequence of locations while performing specific actions at each one). An example of instructing this could be \"I want to teach you how to perform a tour.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    //definition = new ToolDefinition("learnTourAction",
+    //        "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour (navigating between a sequence of locations while performing specific actions at each one). An example of instructing this could be \"I want to teach you how to perform a tour.\"",
+    //        new ArrayList());
+    //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("updateKioskTimeout",
             "You begin a dialogue interaction with the user to update the configured kiosk timeout. An example of instructing this could be \"I would like to update the kiosk timeout.\"",
             new ArrayList());
@@ -2889,6 +3133,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
+    definition = new ToolDefinition("scheduleTask",
+            "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("learnTour",
+            "You begin a dialogue interaction with the user to learn a new \"tour\" sequence. A tour consists of navigating between a set of saved locations and optionally performing actions at each location. An example of instructing this could be \"Let me tell you how to perform a new tour.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
     ////TODO: need to update this with new social extended interaction structure - Do we still even need this as an action? Or should be rephrased to repeatSystemQuestion
     //definition = new ToolDefinition("repeatLastQuestion",
     //        "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
@@ -2920,7 +3173,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getCurrentLocationString",
-            "Use this to ask the system what saved location on your map you believe you are currently at. An example of when you may need this information is when a user asks \"what is your current location.\"",
+            "Use this to ask the system what saved location on your map you believe you are currently at. You may not be localized and not know where you are. An example of when you may need this information is when a user asks \"what is your current location.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getAllKnownLocations",
@@ -2932,7 +3185,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getIfCanPerform",
-            "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from %exampleLocation to the dock.\", which would map to reportIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
+            "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from %exampleLocation to the dock.\", which would map to getIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 //    definition = new ToolDefinition("reportInstructableActions",
@@ -2950,7 +3203,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     /// /////////////////////STANDIN ///////////////////////////////////////////
     /// /////////////////////STANDIN ///////////////////////////////////////////
     definition = new ToolDefinition("getActionSteps",
-            "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to describeActionSteps(escort)",
+            "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to getActionSteps(escort)",
             List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getKioskSettings",

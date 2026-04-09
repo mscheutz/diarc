@@ -10,10 +10,22 @@ public class ToolParameter {
   String[] possible_values;
   String description;
 
+  //ServiceProvider only <- split json and java reps?
+  boolean processAsTool = false;
+  String toolChatTemplateContextId = "";
+
   public ToolParameter(String type, List<String> possible_values, String description) {
     this.type = type;
     this.possible_values = possible_values.toArray(new String[0]);
     this.description = description;
+  }
+
+  public ToolParameter(String type, List<String> possible_values, String description, boolean processAsTool, String toolChatTemplateContextId) {
+    this.type = type;
+    this.possible_values = possible_values.toArray(new String[0]);
+    this.description = description;
+    this.processAsTool = processAsTool;
+    this.toolChatTemplateContextId = toolChatTemplateContextId;
   }
 
   public String getType() {
@@ -26,5 +38,13 @@ public class ToolParameter {
 
   public String getDescription() {
     return description;
+  }
+
+  public boolean getProcessAsTool() {
+    return processAsTool;
+  }
+
+  public String getToolChatTemplateContextId() {
+    return toolChatTemplateContextId;
   }
 }
