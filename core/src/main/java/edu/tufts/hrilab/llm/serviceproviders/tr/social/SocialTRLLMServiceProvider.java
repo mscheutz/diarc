@@ -3224,10 +3224,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Use this to ask the system for the current volume videos are set to play at. An example of when you may need this information is when a user asks \"what is the video volume set to.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
-    definition = new ToolDefinition("getIsVideoSaved",
-            "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the %exampleVideo video saved.\", which would map to reportIsVideoSaved(?videoName)",
-            List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    //definition = new ToolDefinition("getIsVideoSaved",
+    //        "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the %exampleVideo video saved.\", which would map to reportIsVideoSaved(?videoName)",
+    //        List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getSavedVideos",
             "Use this to ask the system to list out the collection of videos you currently have saved. An example of when you may need this information is when a user asks \"what videos can you play.\"",
             new ArrayList());
@@ -3237,6 +3237,29 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
+    //// Removed ITK targets
+    // Made irrelevant by instruct list present in basically all contexts' system prompts. Can reintroduce if we find we
+    //  want a more formal representation or rigid relationship between itk tool responses and LLM text output. Seems to
+    //  handle information directly from the prompt fairly well though
+    //definition = new ToolDefinition("getIfCanPerform",
+    //        "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from %exampleLocation to the dock.\", which would map to getIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
+    //        List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action queried about", true)));
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+
+    //// Present in prompt
+    //definition = new ToolDefinition("reportInstructableActions",
+    //        "You report the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
+    //        new ArrayList());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt
+    //definition = new ToolDefinition("getTaughtActions",
+    //        "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
+    //        new ArrayList());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    //definition = new ToolDefinition("getPredefinedActions",
+    //        "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
+    //        new ArrayList());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     return itkTools;
   }
 
