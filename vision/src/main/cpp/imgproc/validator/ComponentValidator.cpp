@@ -612,17 +612,30 @@ void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
   }
 
   ////////////////////////////////////////// Color Processing //////////////////////////////////////////////////
-  float colorConf1 = 0.0f;
-  float colorConf2 = 0.0f;
-  float colorConf3 = 0.0f;
+  float redConf = 0.0f;
+  float blueConf = 0.0f;
+  float yellowConf = 0.0f;
   cv::Mat_<float> imageMask;
   std::vector<int> indices = object->getDetectionMask()->getIndicesMask();
   const cv::Mat image = object->getCaptureData()->frame;
-  bool isRed = isTargetColor(image, indices, cv::Scalar(145,0,0), colorConf1, imageMask);
-  bool isBlue = isTargetColor(image, indices, cv::Scalar(0,30,90), colorConf2, imageMask);
-  bool isYellow = isTargetColor(image, indices, cv::Scalar(200,160,0), colorConf3, imageMask);
+  bool isRed = isTargetColor(image, indices, cv::Scalar(145,0,0), redConf, imageMask);
+  bool isBlue = isTargetColor(image, indices, cv::Scalar(0,30,90), blueConf, imageMask);
+  bool isYellow = isTargetColor(image, indices, cv::Scalar(200,160,0), yellowConf, imageMask);
   LOG4CXX_INFO(logger, "Color detection. Red: " << isRed << " Blue: " << isBlue << " Yellow: " << isYellow);
-  LOG4CXX_INFO(logger, "Color detection. Red: " << colorConf1 << " Blue: " << colorConf2 << " Yellow: " << colorConf3);
+  LOG4CXX_INFO(logger, "Color detection. Red: " << redConf << " Blue: " << blueConf << " Yellow: " << yellowConf);
+
+  bool hasColor = false;
+  std::string color = "";
+  if (isRed && redConf > blueConf && redConf > yellowConf) {
+    color = "red";
+    hasColor = true;
+  } else if (isBlue && blueConf > redConf && blueConf > yellowConf) {
+    color = "blue";
+    hasColor = true;
+  } else if (isYellow && yellowConf > redConf && yellowConf > blueConf) {
+    color = "yellow";
+    hasColor = true;
+  }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // get MemoryObject cloud, denoise and upsample it
@@ -736,6 +749,9 @@ void ComponentValidator::processUnknownObject(MemoryObject::Ptr object) {
       std::string descriptor = generateFullDescription(foundPredicatesVector,
                                                        bestDescriptionCandidate.minChamferDist);
       LOG4CXX_INFO(logger, boost::format("Description: %s") % descriptor);
+      if (hasColor) {
+        object->addValidationResult(0.9f, PredicateHelper(color + "(" + object->getVariableName() + ")"));
+      }
       object->addValidationResult(0.9f, PredicateHelper("unknown(" + object->getVariableName() + ")"));
       object->addValidationResult(0.9f, PredicateHelper(descriptor + "(" + object->getVariableName() + ")"));
 
@@ -2305,8 +2321,9 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
 // Generate a full text description based on the identified predicates
 std::string ComponentValidator::generateFullDescription(std::vector<bool> foundPredicatesVector, float chamferDistance) {
   
-  std::string lowConfidenceStatement = ", but I have low confidence in my description.";
-  
+  // std::string lowConfidenceStatement = ", but I have low confidence in my description.";
+  std::string lowConfidenceStatement = "";
+
   // Helper lambdas to determine shape and size
   auto getShape = [&](int rodIndex, int diskIndex, int blockIndex) -> std::string {
     if (foundPredicatesVector[rodIndex]) return "rod";
