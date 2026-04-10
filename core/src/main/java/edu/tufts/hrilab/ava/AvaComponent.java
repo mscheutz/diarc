@@ -1465,17 +1465,19 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           while (is.available() != 0) {
             s.append((char) is.read());
           }
+
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+          } catch (TRADEException e) {
+            log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+          }
+
           log.info("[listenForWWandASR] reading from inputstream: " + s.toString());
           //Display on screen that we are now listening using ASR
           displayText("Understanding speech", 10000);
           //Also play audio indicating listening status
           if (shouldDing) {
             playAudioClip("ding.wav");
-            try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
-            } catch (TRADEException e) {
-              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
-            }
           } else {
             shouldDing = true;
           }
