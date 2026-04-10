@@ -420,7 +420,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void interruptDisplayImageWithName() {
     canvas.cancelSetImage();
     clearImage();
-    clearText();
+    //clearText();
     userImageDisplayed = false;
     continueIdleImageCycle();
   }
@@ -433,7 +433,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
   private void displayUserImage(String imageName, long timeout, boolean blocking) {
     userImageDisplayed = true;
-    clearText();
+    //clearText();
     String path = getMediaPath(userImageDir) + File.separator + imageName;
     displayImage(path, timeout, blocking, true, Color.WHITE);
     userImageDisplayed = false;
@@ -469,6 +469,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     } else {
       canvas.setImage(image, timeout, scaleToFit, backgroundColor);
     }
+    canvas.refreshText();
   }
 
   @TRADEService
@@ -617,25 +618,7 @@ public class AvaDisplayComponent extends DiarcComponent {
         displayText("Ava: " + utterance.getWordsAsString());
       }).start();
     } else if (utterance.getSpeaker().getName().equals("webapp") && utterance.getAddressee().getName().equals("ava")) {
-      try {
-        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-        service.call(void.class,"Received External Command...");
-      } catch (TRADEException e) {
-        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-      }
-      new Thread(() -> {
-        try {
-          Thread.sleep(5000);
-        } catch (InterruptedException e) {
-          log.error("[handleMessage] exception sleeping in clearDisplay thread");
-        }
-        try {
-          TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
-          service.call(void.class);
-        } catch (TRADEException e) {
-          log.warn("[handleMessage] Exception displaying text", e);
-        }
-      }).start();
+      displayText("Received External Command...", 5000);
 
       // Removed from chatAdapter and AvaGuiAdapter - want to add just this to either case?
       //try {

@@ -1593,24 +1593,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private void displayText(String text, int duration) {
     try {
-      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-      service.call(void.class,text);
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class, Long.class));
+      service.call(void.class,text,duration);
     } catch (TRADEException e) {
       log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
     }
-    new Thread(() -> {
-      try {
-        Thread.sleep(duration);
-      } catch (InterruptedException e) {
-        log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
-      }
-      try {
-        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
-        service.call(void.class);
-      } catch (TRADEException e) {
-        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-      }
-    }).start();
+    //new Thread(() -> {
+    //  try {
+    //    Thread.sleep(duration);
+    //  } catch (InterruptedException e) {
+    //    log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+    //  }
+    //  try {
+    //    TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+    //    service.call(void.class);
+    //  } catch (TRADEException e) {
+    //    log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    //  }
+    //}).start();
   }
 
   @Override

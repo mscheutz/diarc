@@ -22,6 +22,11 @@ public class DisplayCanvas extends Canvas {
   private final SimpleTextElement simpleTextElement;
   private DialogueManager dialogueManager;
 
+  private String currentTextString = "";
+  private long currentTextTimeout = -1;
+  private long currentTextStartTime = System.currentTimeMillis();
+
+
   private boolean isIdle = false;
 
   private Logger log = LoggerFactory.getLogger(DisplayCanvas.class);
@@ -106,7 +111,27 @@ public class DisplayCanvas extends Canvas {
    */
   public void setText(String text, long textTimeout) {
     simpleTextElement.setText(text, textTimeout, this::clearText);
+    currentTextString = text;
+    currentTextTimeout = textTimeout;
+    currentTextStartTime = System.currentTimeMillis();
     repaint();
+  }
+
+  /**
+   * Refresh most recently displayed text for the remainder of its originally intended duration (if overwritten by
+   *  canvas redraw due to image, video, ...)
+   */
+  public void refreshText() {
+    if (!currentTextString.isEmpty()) {
+      if (currentTextTimeout <= 0) {
+        setText(currentTextString);
+      } else {
+        long remainingTimeout = currentTextTimeout - (System.currentTimeMillis() - currentTextStartTime);
+        if (remainingTimeout > 0) {
+          setText(currentTextString, remainingTimeout);
+        }
+      }
+    }
   }
 
   /**
@@ -121,6 +146,7 @@ public class DisplayCanvas extends Canvas {
    */
   public void clearText() {
     simpleTextElement.clearText();
+    currentTextString = "";
     repaint();
   }
 
