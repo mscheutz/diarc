@@ -172,7 +172,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
 
     createInstance(SocialTRLLMServiceProvider.class,"");
-    String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6 -tool", service, model);
+    String llmComponentArgs = String.format("-service %s hf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
     llmComponentArgs += " -endpoint " + openaiEndpoint;
     createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
 
