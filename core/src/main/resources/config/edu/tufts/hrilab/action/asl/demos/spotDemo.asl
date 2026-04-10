@@ -10,13 +10,19 @@ import java.util.List;
 //////// Core behaviors //////////
 
 () = init(Symbol ?location = location_0:location) {
+    op:log(debug, "[init] setting up spot");
+    act:undock();
+    tsc:localizeWithFiducial();
+    act:goToLocation(?location);
+    act:dock();
+}
 
-    act:initFacts();
-
-    act:claim();
-    act:powerOn();
-
-    op:log(debug, "[init] set up spot");
+() = shutDown() {
+    act:openGripper(arm);
+    act:goToPose(stow);
+    act:closeGripper(arm);
+    act:goToLocation(location_0:location);
+    act:dock();
 }
 
 () = initFacts() {
@@ -55,15 +61,6 @@ import java.util.List;
     } else {
       act:localizeWithReference(?location);
     }
-}
-
-() = shutDown() {
-    java.lang.Integer !dockId = 521;
-
-    act:openGripper(arm);
-    act:goToPose(stow);
-    act:closeGripper(arm);
-    act:dock(!dockId);
 }
 
 () = stow() {

@@ -4,6 +4,8 @@ import edu.tufts.hrilab.fol.Predicate;
 
 () = lookForObjects() {
 
+  act:undock();
+
   boolean !result = act:searchLocation(location_2:location);
   if (op:equals(!result, false)) {
     !result = act:searchLocation(location_3:location);
