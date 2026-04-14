@@ -158,12 +158,13 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
                     if (value.getName().contains("_") && Character.isDigit(value.getName().charAt(value.getName().length() - 1))) {
                         //  value is a refId
                         try {
-                            Map<Symbol, List<Term>> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, value);
+//                            Map<Symbol, List<Term>> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, value);
+                            List<Term> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("getProperties").argTypes(Symbol.class)).call(List.class, value);
                             if (props == null || props.isEmpty()) {
                                 log.warn("[convertSemanticsToText] no properties found for reference: {}", value);
                             } else {
                                 log.info("[convertSemanticsToText] found properties for reference: {}. properties: {}", value, props);
-                                supplementalSemantics.addAll(props.get(value));
+                                supplementalSemantics.addAll(props);
                             }
                         } catch (TRADEException e) {
                             log.warn("[generateREG]", e);

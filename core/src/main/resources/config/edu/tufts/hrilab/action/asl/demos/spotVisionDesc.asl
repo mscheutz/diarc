@@ -4,7 +4,11 @@ import edu.tufts.hrilab.fol.Predicate;
 
 () = lookForObjects() {
 
-  act:undock();
+  try {
+    act:undock();
+   } catch () {
+     // ignore failure if robot is already undocked
+   }
 
   boolean !result = act:searchLocation(location_2:location);
   if (op:equals(!result, false)) {
@@ -16,9 +20,8 @@ import edu.tufts.hrilab.fol.Predicate;
 
   // no more parts to explore
   if (op:equals(!result, false)) {
-    act:generateResponseFromString("I do not see any other parts.");
-//    act:generateResponseFromString("I do not see any other parts, returning to assembly area");
-//    act:goToLocation(location_1:location);
+    act:generateResponseFromString("I do not see any other parts, returning to assembly area");
+    act:goToLocation(location_1:location);
   }
 
   op:log("info", "Exiting lookForObjects action");
@@ -57,22 +60,25 @@ import edu.tufts.hrilab.fol.Predicate;
   java.util.Map !responseBindings = act:askQuestionFromString(person, "Do you want me to bring it to you?", val(X));
   Predicate !response = op:get(!responseBindings, !x);
   if (op:equalsValue(!response, yes())) {
+    act:generateResponseFromString("okay");
     !objBinding = op:get(!bindings, 0);
     !objectRef = op:get(!objBinding, !x);
     act:bringObjectToPerson(!objectRef);
     ?result = op:newObject("java.lang.Boolean", true);
   } else {
-    ?result = op:newObject("java.lang.Boolean", false);
     act:generateResponseFromString("Searching for other parts");
     act:goToPose(stow);
     act:closeGripper(arm);
+    ?result = op:newObject("java.lang.Boolean", false);
   }
 }
 
 () = bringObjectToPerson(Symbol ?objectRef) {
   act:pickUp(?objectRef);
-  act:goToPose(carry);
+  act:goToPose(stow);
   act:goToLocation(location_1:location);
+
+  act:goToPose(carry);
   act:askQuestionFromString(person, "Say ready when you are ready to grab the object.", val(X));
   op:sleep(1000);
   act:openGripper(arm);

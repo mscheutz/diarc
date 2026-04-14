@@ -54,6 +54,11 @@ import edu.tufts.hrilab.fol.Predicate;
     !groups = op:newArrayList("java.lang.String");
     op:add(!groups, "physobj");
     !visionRefsMap = tsc:getActivatedEntities(!groups);
+    if (op:isEmpty(!visionRefsMap)) {
+      op:log("info", "No detected objects. Looking again...");
+      op:sleep(3000);
+      !visionRefsMap = tsc:getActivatedEntities(!groups);
+    }
 
     // use refs to create binding results (e.g., see(self, physobj_2), see(self, physobj_3))
     !refsSet = op:invokeMethod(!visionRefsMap, "keySet");

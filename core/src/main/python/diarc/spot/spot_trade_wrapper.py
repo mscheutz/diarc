@@ -4,6 +4,7 @@ import argparse
 import traceback
 
 from bosdyn.api.geometry_pb2 import Vec2
+from bosdyn.api.robot_state_pb2 import ManipulatorState
 from bosdyn.client.robot_command import RobotCommandBuilder
 
 from google.protobuf.wrappers_pb2 import DoubleValue
@@ -57,6 +58,7 @@ class SpotTRADEWrapper:
         self.trade = trade_wrapper
         self._mapping = False
         self._recording_client = None
+
         self.spot = SpotWrapper(
             username=config['username'],
             password=config['password'],
@@ -331,6 +333,11 @@ class SpotTRADEWrapper:
             if pose == "putdown" or pose == "putDown":
                 return self.spot.spot_arm.hand_pose(x=1.1, y=0, z=0.4, qx=-0.7071, qy=0, qz=0, qw=0.7071)
             if pose == 'stow':
+                # allow "stow" arm position while holding an object
+                self.spot.spot_arm.override_grasp_or_carry(
+                    grasp_override=manipulation_api_pb2.ApiGraspOverride.Override.OVERRIDE_UNKNOWN,
+                    carry_override=ManipulatorState.CarryState.CARRY_STATE_CARRIABLE_AND_STOWABLE)
+
                 return self.spot.spot_arm.arm_stow()
             if pose == 'unstow':
                 return self.spot.spot_arm.arm_unstow()
@@ -757,7 +764,7 @@ class SpotTRADEWrapper:
             if ref is None:
                 return (False, f"Cannot localize. No reference found for reference: {refId}")
 
-            waypoint_id = ref.getWaypointId()
+            waypoint_id = str(ref.getWaypointId())
             self.spot.spot_graph_nav.set_initial_localization_waypoint([waypoint_id])
             return True, ""
         except Exception as e:

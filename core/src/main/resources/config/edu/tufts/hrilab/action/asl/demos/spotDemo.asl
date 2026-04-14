@@ -12,7 +12,8 @@ import java.util.List;
 () = init(Symbol ?location = location_0:location) {
     op:log(debug, "[init] setting up spot");
     act:undock();
-    tsc:localizeWithFiducial();
+    //act:localizeWithFiducial();
+    act:localizeWithReference(?location);
     act:goToLocation(?location);
     act:dock();
 }

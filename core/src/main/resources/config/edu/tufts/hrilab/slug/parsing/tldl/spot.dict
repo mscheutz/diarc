@@ -234,6 +234,11 @@ search for parts; VERBI; lookForObjects
 search for available objects; VERBI; lookForObjects
 search for objects; VERBI; lookForObjects
 
+done; VERBI; shutDown
+i'm done; VERBI; shutDown
+i am done; VERBI; shutDown
+all done; VERBI; shutDown
+
 look for; VERBT; perceiveEntity
 undock; VERBI; undock
 dock; VERBI; dock

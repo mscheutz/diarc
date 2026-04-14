@@ -21,11 +21,11 @@ import edu.tufts.hrilab.vision.MockVisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = true;
-  boolean useMockSpot = true;
+  boolean useMockVision = false;
+  boolean useMockSpot = false;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
-  boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
+  boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
 
   public SpotConfig() {
   }
