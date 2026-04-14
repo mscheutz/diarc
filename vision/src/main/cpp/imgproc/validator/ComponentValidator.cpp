@@ -305,6 +305,7 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   positionToleranceDepth = config["position_tolerance_front_behind"].asDouble();
   positionToleranceHorizontal = config["position_tolerance_left_right"].asDouble();
   positionToleranceVertical = config["position_tolerance_bottom_top"].asDouble();
+  orientationTolerance = config["orientation_tolerance"].asDouble();
   existenceThreshold = config["existence_threshold"].asDouble();
   volumeThreshold = config["volume_threshold"].asDouble();
   eccentricityTolerance = config["eccentricity_tolerance"].asDouble();
@@ -1906,12 +1907,12 @@ bool ComponentValidator::processSize(const int compIndex, const cv::Mat &semMat,
 
   float volumeRatio = volumeSide / volumeBase;
 
-  if ((semPredIdx == 21 || semPredIdx == 39) && (volumeRatio > 1.5)) {
+  if ((semPredIdx == 23 || semPredIdx == 42) && (volumeRatio > 1.5)) {
     semSizeMatch = true;  // component is larger
-  } else if ((semPredIdx == 22 || semPredIdx == 40) && (volumeRatio < 0.5)) {
+  } else if ((semPredIdx == 24 || semPredIdx == 43) && (volumeRatio < 0.5)) {
     semSizeMatch = true;  // component is smaller
-  } else if ((semPredIdx == 23 || semPredIdx == 41) && (volumeRatio < 1.2) &&
-             (volumeRatio > 0.8)) {
+  } else if ((semPredIdx == 25 || semPredIdx == 44) && (volumeRatio < 1.05) &&
+             (volumeRatio > 0.95)) {
     semSizeMatch = true;  // component is of similar size
   }
 
@@ -1973,12 +1974,14 @@ bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &
 
       if (yAxisDominant) {
         // Looking along Y-axis → azimuth ≈ 0° or 180°
-        if ((azimuth >= -30 && azimuth <= 30) || (azimuth >= 150 && azimuth <= 210)) {
+        if ((azimuth >= -orientationTolerance && azimuth <= orientationTolerance) ||
+            (azimuth >= 180 - orientationTolerance && azimuth <= 180 + orientationTolerance)) {
           semOrientationMatch = true;
         }
       } else if (zAxisDominant) {
         // Looking along Z-axis → azimuth ≈ 90° or 270°
-        if ((azimuth >= 60 && azimuth <= 120) || (azimuth >= 240 && azimuth <= 300)) {
+        if ((azimuth >= 90 - orientationTolerance && azimuth <= 90 + orientationTolerance) ||
+            (azimuth >= 270 - orientationTolerance && azimuth <= 270 + orientationTolerance)) {
           semOrientationMatch = true;
         }
       }
@@ -1991,18 +1994,19 @@ bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &
 
       if (zAxisDominant) {
         // Looking along Z-axis → azimuth ≈ 0° or 180°
-        if ((azimuth >= -30 && azimuth <= 30) || (azimuth >= 150 && azimuth <= 210)) {
+        if ((azimuth >= -orientationTolerance && azimuth <= orientationTolerance) ||
+            (azimuth >= 180 - orientationTolerance && azimuth <= 180 + orientationTolerance)) {
           semOrientationMatch = true;
         }
       } else if (yAxisDominant) {
         // Looking along Y-axis → azimuth ≈ 90° or 270°
-        if ((azimuth >= 60 && azimuth <= 120) || (azimuth >= 240 && azimuth <= 300)) {
+        if ((azimuth >= 90 - orientationTolerance && azimuth <= 90 + orientationTolerance) ||
+            (azimuth >= 270 - orientationTolerance && azimuth <= 270 + orientationTolerance)) {
           semOrientationMatch = true;
         }
         }
     }
   }
-
   return semOrientationMatch;
 }
 
