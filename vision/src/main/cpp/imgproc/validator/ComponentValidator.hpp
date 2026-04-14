@@ -118,6 +118,7 @@ private:
   double positionToleranceDepth = 0.45;
   double positionToleranceHorizontal = 0.45;
   double positionToleranceVertical = 0.45;
+  double orientationTolerance = 35.0;  // in degrees
   double existenceThreshold = 0.8;
   double volumeThreshold = 0.02;
   double eccentricityTolerance = 0.4;

@@ -16,10 +16,11 @@
     "position_tolerance_front_behind" : 25,
     "position_tolerance_left_right" : 3,
     "position_tolerance_bottom_top" : 3,
+    "orientation_tolerance" : 35,
     "existence_threshold" : 0.8,
     "volume_threshold" : 0.02,
-    "eccentricity_tolerance" : 2.0,
-    "chamfer_tolerance" : 0.85
+    "eccentricity_tolerance" : 2.7,
+    "chamfer_tolerance" : 2.85
   },
   "predicates": [
     {
