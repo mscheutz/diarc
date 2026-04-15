@@ -539,7 +539,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //// Send created chat to LLM completion
     Completion response = callChatCompletion(chat, tools);
 
-    if (response == null) {
+     if (response == null) {
       log.error("[parseUtteranceLLMService] have null Completion response");
       handleErrorResponse(utterance, true, false);
       //utterance.setSemantics(Factory.createPredicate("error",utterance.getAddressee().toUntypedString(),generateErrorResponse(false,user,agentTeam,true)));
@@ -1889,7 +1889,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         //TODO: explicitly point to the superseded goal, not just the next one?
         stringBuilder.append("You are currently conversing with the user in order for them to submit a new instruction. This has temporarily suspended the \"current task\", which will continue upon completion of an instruction submission. That task is: ").append(pendingGoalPredicates.get(0)).append("\n");
       } else {
-        stringBuilder.append("Your current task is: ").append(currentGoalPredicate.get(0).toString()).append("\n");
+        stringBuilder.append("Your current task is: ").append(replaceReferencesInSemantics(currentGoalPredicate.get(0)).toString()).append("\n");
       }
     } else {
       stringBuilder.append("<You have no current task>\n");
@@ -1903,7 +1903,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       stringBuilder.append("<You have no pending tasks>\n");
     } else {
       for (Predicate pgPred : pendingGoalPredicates) {
-        stringBuilder.append(pgPred).append("\n");
+        stringBuilder.append(replaceReferencesInSemantics(pgPred)).append("\n");
       }
     }
 
@@ -1913,7 +1913,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     } else {
       stringBuilder.append("Scheduled goals may contain the following information in order: The underlying task to be submitted, the start time to begin submitting the underlying task, the interval at which to keep resubmitting the task, and the end time to stop resubmitting the task. A missing period and end time indicates that the task will only be submitted once. Your scheduled tasks are:\n");
       for (Predicate sg : scheduledGoals) {
-        stringBuilder.append(sg).append("\n");
+        stringBuilder.append(replaceReferencesInSemantics(sg)).append("\n");
       }
     }
     return stringBuilder.toString();
