@@ -4,11 +4,13 @@
 
 package edu.tufts.hrilab.config.spot;
 
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
@@ -19,6 +21,12 @@ import edu.tufts.hrilab.spot.SpotComponent;
 import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+
 public class SpotConfig extends DiarcConfiguration {
 
   boolean useMockVision = false;
@@ -26,6 +34,9 @@ public class SpotConfig extends DiarcConfiguration {
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
+
+  boolean writeSpeechToFile = true;
+  String speechFile = System.getProperty("user.home") + "/Desktop/dialogues/dialogue_history_" + Instant.now().toString() + ".txt";
 
   public SpotConfig() {
   }
@@ -95,6 +106,40 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee self -config spotVisionDesc.simspeech");
 
+    /////////////////////////////////////////////
+    // write speech input and output to file
+
+    if (writeSpeechToFile) {
+      File file = new File(speechFile);
+      if (!file.exists()) {
+        try {
+          File parent = file.getParentFile();
+          parent.mkdirs();
+          file.createNewFile();
+        } catch (IOException e) {
+          log.error("Could not create dialogue history file.", e);
+        }
+      }
+
+      // register writeSpeechToFile service
+      try {
+        TRADE.registerAllServices(this, new ArrayList<>());
+      } catch (TRADEException e) {
+        log.error("Error registering services with TRADE", e);
+      }
+
+      try {
+        TRADEServiceInfo wrapperTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("writeSpeechToFile").argTypes(Object[].class));
+        TRADEServiceInfo sayTextTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class));
+        TRADEServiceInfo reportRecognizedSpeechTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class));
+        TRADE.afterService(wrapperTSI, sayTextTSI);
+        TRADE.afterService(wrapperTSI, reportRecognizedSpeechTSI);
+      } catch (TRADEException e) {
+        log.error("[cancelTaskTest] add join on goal wrapper", e);
+      }
+    }
+    /////////////////////////////////////////////
+
 //    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.spot.SpotInterface");
 //    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");
 
@@ -116,6 +161,25 @@ public class SpotConfig extends DiarcConfiguration {
 //      throw new RuntimeException(e);
 //    }
 
+  }
+  @TRADEService
+  public void writeSpeechToFile(Object[] args) {
+    String service = (String) args[0];
+    Object arg = args[1];
+    try {
+      FileWriter fw = new FileWriter(speechFile, true);
+      if (service.equals("sayText")) {
+        // from sayText
+        fw.write("robot: " + arg.toString() + "\n");
+      } else {
+        // from reportRecognizedSpeech
+        Utterance utterance = (Utterance) arg;
+        fw.write("person: " + utterance.getWordsAsString() + "\n");
+      }
+      fw.close();
+    } catch (IOException e) {
+      log.error("Failed to write dialogue history to file.", e);
+    }
   }
 
 }
