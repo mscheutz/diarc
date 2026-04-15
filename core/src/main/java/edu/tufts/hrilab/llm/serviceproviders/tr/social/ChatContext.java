@@ -14,13 +14,14 @@ public class ChatContext {
   /**
    * General State Variables
    */
-  Chat history;
-  ChatType chatType = ChatType.BASE;
-  ChatState chatState = ChatState.PARSE;
-  Utterance utteranceUpForValidation = null;
+  protected Chat history;
+  protected ChatType chatType = ChatType.BASE;
+  protected ChatState chatState = ChatState.PARSE;
+  protected Utterance utteranceUpForValidation = null;
+  protected String toolCallIdUpForValidation = "";
   // Identifier String of the type of ChatContext - used to gather proper System Messages and Tool sets during Completion
   //  request generation
-  String contextID = "nlu";
+  protected String contextID = "nlu";
   // Consecutive number of parse errors within this context
   private int parseErrorCount = 0;
   protected boolean containsLLMParse = false; //revisit

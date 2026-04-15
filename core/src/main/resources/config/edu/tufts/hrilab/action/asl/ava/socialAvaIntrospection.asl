@@ -351,7 +351,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateBatteryLevelString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -360,7 +361,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateCurrentLocationString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -369,7 +371,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateAllKnownLocationsString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -378,7 +381,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateAllKnownPatrolPathsString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -387,7 +391,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateAllLocationsOnPatrolPathString(?pathName);
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -396,7 +401,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateTaughtActionsString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -405,7 +411,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generatePredefinedActionsString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -414,7 +421,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateActionStepsString(?action);
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -423,7 +431,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateIfCanPerformString(?actionPredicate);
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -432,7 +441,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateKioskSettingsString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -441,7 +451,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateSavedVideosString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -450,7 +461,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateVideoVolumeString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -459,7 +471,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateIsVideoSavedString(?videoName);
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -468,7 +481,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateSavedImagesString();
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
@@ -477,7 +491,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = tsc:getFullGoalsSummary(?actor,?offContextState);
-    !output = tsc:addToolResponse(!user,?actor,!output);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }

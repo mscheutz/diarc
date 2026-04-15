@@ -9,6 +9,7 @@ import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 public class Message {
     public String role;
     public String content;
+    public String function_call;
 
     //response only
     public ToolCall[] tool_calls;

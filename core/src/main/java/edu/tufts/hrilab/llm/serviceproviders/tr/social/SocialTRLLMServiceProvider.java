@@ -25,6 +25,7 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.llm.LLMServiceProvider;
+import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
@@ -503,7 +504,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
         //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
         chat = new Chat();
-        promptVars.put("%chatHistoryAsString", chatContext.history.getMessages().stream().map(m -> m.role + ": " + m.content).collect(Collectors.joining("\n")));
+        promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
         chatContext.history.addUserMessage(utterance.getWordsAsString());
       } else {
         ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
@@ -524,8 +525,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // Add all matching system question response tools based off of expected reply semantics
         tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
       }
-
-      //TODO: Error handling if chat is null
 
       // Apply input as user message
       if (!reattemptedParse) {
@@ -579,45 +578,58 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder);
         }
       }
-      if (output != null) {
-        return output;
-      } else {
 
-        int numRetries = 0;
-        while (numRetries < 3) {
-          // Previously found that any (not to mention invalid) tool calls in the history could bias the LLM to retarget that format.
-          //  Removing from history and instead supplying the information in the error message itself.
-          // TODO: seems like the LLM doesn't react to any \"architecture\" role messages - see if we can explicitly prompt
-          //  it to recognize diarc as an additional entity/user
-          //chatContext.history.addRobotMessage("", llmResponse.toolCalls);
-          //chatContext.history.addMessage("architecture", baseToolResponse.toString());
-          chatContext.history.addMessage("tool", errorResponseBuilder.toString());
-          errorResponseBuilder = new StringBuilder();
-
-          // Re-call completion for text response
-          Completion retryResponse = callChatCompletion(chatContext.history, List.of(textResponseTool.toolDefinition));
-          if (retryResponse == null) {
-            handleErrorResponse(utterance, true, false);
-            return utterance;
-          } else {
-            resetErrorCount(false, user, agentTeam);
-            if (retryResponse.toolCalls.isEmpty()) {
-              resetErrorCount(true, utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
-              output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder);
-            } else {
-              output = handleToolResponse(retryResponse, utterance, chatCollection, errorResponseBuilder);
-            }
-            if (output != null) {
-              return output;
-            }
-          }
-          numRetries += 1;
-          log.warn("[parseUtteranceLLMService] got null response, retrying completion request with added tool error message");
-        }
-        handleErrorResponse(utterance, true, true);
-        return utterance;
+      if (output == null) {
+        output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder);
       }
+      return output;
     }
+  }
+
+  //TODO: revisit - only add calls to this if in synchronized block and understand what you're doing
+  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
+    Symbol user = utterance.getAddressee().toUntyped();
+    Symbol agentTeam = utterance.getSpeaker().toUntyped();
+    ChatContext chatContext = chatCollection.currentChat;
+    int numRetries = 0;
+    Utterance output;
+    ToolCall lastToolCall = (lastResponse != null && !lastResponse.toolCalls.isEmpty()) ? lastResponse.toolCalls.get(0) : null;
+    String tool_call_id;
+    while (numRetries < 3) {
+      // Experimenting with keeping tool calls explicitly in the history - previously had issues with the LLM calling
+      //  tools which didn't exist anymore in different contexts but were present in the history. Have more safeguards
+      //  in place now so that it should be safe
+      if (!errorResponseBuilder.isEmpty()) {
+        tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
+        chatContext.history.addToolMessage(errorResponseBuilder.toString(), tool_call_id);
+      }
+      errorResponseBuilder = new StringBuilder();
+
+      // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
+      Completion retryResponse = callChatCompletion(chatContext.history, toolList);
+
+      if (retryResponse == null) {
+        handleErrorResponse(utterance, true, false);
+        return utterance;
+      } else {
+        resetErrorCount(false, user, agentTeam);
+        if (retryResponse.toolCalls.isEmpty()) {
+          lastToolCall = null;
+          resetErrorCount(true, utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
+          output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder);
+        } else {
+          lastToolCall = retryResponse.toolCalls.get(0);
+          output = handleToolResponse(retryResponse, utterance, chatCollection, errorResponseBuilder);
+        }
+        if (output != null) {
+          return output;
+        }
+      }
+      numRetries += 1;
+      log.warn("[parseUtteranceLLMService] got null response, retrying completion request with added tool error message");
+    }
+    handleErrorResponse(utterance, true, true);
+    return utterance;
   }
 
   /**
@@ -636,13 +648,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both. Only using first...");
     }
     ToolCall toolCall = llmResponse.toolCalls.get(0);
-    log.info("[handleToolResponse] " + toolCall);
+    for (ToolCall tc: llmResponse.toolCalls) {
+      log.info("[handleToolResponse] " + tc);
+    }
 
     ChatContext chatContext = chatCollection.currentChat;
 
-    //// Thought we would have ideally wanted this in the history, but found that LLM would extract tool calls from
-    ////  the history as targets, even if they were taken out of the system prompt based on a state change
-    //chatContext.history.addRobotMessage("", List.of(toolCall));
+    //Experimental - adding tool calls back into history now that we have safeguards against them being called from
+    // incorrect contexts when no longer available
+    chatContext.history.addRobotMessage("", List.of(toolCall));
 
     //// Check that tool response is valid
     ToolFunction functionCall = toolCall.function;
@@ -771,6 +785,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (outputUtterance.needsValidation()) {
           chatContext.chatState = ChatState.VALIDATION;
           chatContext.utteranceUpForValidation = outputUtterance; //copy?
+          chatContext.toolCallIdUpForValidation = toolCall.id;
         } else {
           // noConfirmation case - deferred until dialogue history update in case of external parser hit
           //handleValidatedToolCall(outputUtterance, chatCollection);
@@ -827,7 +842,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       log.warn("[handleValidationResponse] Multiple tool calls returned -> TODO handle both. Currently only using first...");
     }
     ToolCall toolCall = llmResponse.toolCalls.get(0);
-    log.info("[handleValidationResponse] " + toolCall);
+    for (ToolCall tc: llmResponse.toolCalls) {
+      log.info("[handleValidationResponse] " + tc);
+    }
 
     // Tool -> semantics. Yes/No/Abort
     //  Context specific prompt - no special cases. Set utterance semantics and terminate chat if validated or aborted
@@ -1010,7 +1027,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
       semantics = replaceVarsWithDescriptors((Predicate)semantics, varMap);
     }
-    currentContext.history.addMessage("tool", "The user has just informed you that your previous function selection targeting " + semantics + " was not what they intended to instruct. Use the recent user messages to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention, then you may attempt an updated function call targeting the new intention. 2. Otherwise, please continue with your original task by conversing with the user to resolve the misunderstanding.");
+    currentContext.history.addToolMessage("The user has just informed you that your previous function selection targeting " + semantics + " was not what they intended to instruct. Use the recent user messages to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention, then you may attempt an updated function call targeting the new intention. 2. Otherwise, please continue with your original task by conversing with the user to resolve the misunderstanding.", currentContext.toolCallIdUpForValidation);
 
     // Call completion with user response and tool message
     Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
@@ -1088,7 +1105,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (chatCollection != null) {
       ChatContext chatContext = chatCollection.currentChat;
       if (chatContext != null) {
-        promptVars.put("%chatHistoryAsString",chatContext.history.getMessages().stream().map(m -> m.role+": "+m.content).collect(Collectors.joining("\n")));
+        promptVars.put("%chatHistoryAsString",getChatHistoryAsString(chatContext.history));
         if (chatContext.chatState == ChatState.VALIDATION) {
           chatTemplates = this.chatTemplates.get("validation");
         }
@@ -1226,7 +1243,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
             //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
             //  in system prompt itself and resetting message list
-            promptVars.put("%focusedChatHistoryAsString", chat.getMessages().stream().map(m -> m.role + ": " + m.content).collect(Collectors.joining("\n")));
+            promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
             chat.setMessages(new ArrayList<>());
           }
           //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
@@ -1254,12 +1271,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //TODO: can likely refactor code to prevent this and parseUtteranceLLMService from having the same control flow duplicated
           Utterance output;
           int numRetries = 0;
+          ToolCall lastToolCall = null;
           StringBuilder errorResponseBuilder = new StringBuilder();
           while (numRetries < 3) {
 
             if (!errorResponseBuilder.isEmpty()) {
-              chat.addMessage("tool", errorResponseBuilder.toString());
+              String tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
+              chatContext.history.addToolMessage(errorResponseBuilder.toString(), tool_call_id);
             }
+            errorResponseBuilder = new StringBuilder();
             // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
             Completion response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
 
@@ -1274,9 +1294,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
             if (response.toolCalls.isEmpty()) {
               // Text response, presumably querying for information towards new template target
+              lastToolCall = null;
               output = handleTextResponse(response, originalUtterance, collection.currentChat, errorResponseBuilder);
             } else {
               // Direct tool call on transfer
+              lastToolCall = response.toolCalls.get(0);
               output = handleToolResponse(response, originalUtterance, collection, errorResponseBuilder);
               //TODO: if this call returns the utterance unmodified, needs to be an error case
             }
@@ -1597,6 +1619,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   @TRADEService
   public String callChatCompletionForTextResponse(Symbol user, Symbol agentTeam, long id) {
+    // Get chat context
     ChatCollection collection;
     Chat chat;
     long originalChatContextid;
@@ -1611,46 +1634,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{} {}", speaker, addressee, id);
         return "";
       }
-      chat = collection.currentChat.history;
-      originalChatContextid = collection.currentChat.getUid();
-    }
 
-    Completion response = callChatCompletion(chat, List.of(textResponseTool.toolDefinition));
-
-    if (response != null) {
-      synchronized (currentChatCollections) {
-        if (collection.currentChat == null || collection.currentChat.getUid() != originalChatContextid) {
-          log.error("[callChatCompletionForTextResponse] chat context was overwritten during completion request");
-          //TODO: do we still return the response in this case - or just move on?
-          return "";
-        }
-        if (response.getText() != null && !response.getText().isEmpty()) {
-          resetErrorCount(true, user, agentTeam);
-          return response.getText();
-        } else if (!response.toolCalls.isEmpty()) {
-          ToolCall toolCall = response.toolCalls.get(0);
-          if (toolCall.function.name.equals("stillGatheringInformation")) {
-            Map<String, String> calledArguments = new Gson().fromJson(response.toolCalls.get(0).function.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
-            }.getType());
-            calledArguments.values().removeIf(Objects::isNull);
-            String ret = calledArguments.get("response");
-            if (ret == null) {
-              collection.currentChat.incrementNumParseErrors();
-              return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
-            } else {
-              resetErrorCount(true, user, agentTeam);
-             return ret;
-            }
-          } else {
-            collection.currentChat.incrementNumParseErrors();
-            return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
-          }
-        }
+      Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
+      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
+      if (out.getSemantics() != null && out.getSemantics().getName().equals("generateResponseFromString") && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+        return ((Predicate)out.getSemantics()).get(2).toString();
+      } else {
+        log.error("[callChatCompletionForTextResponse] got unexpected output {}", out);
+        return "";
       }
     }
-
-    externalErrorCount += 1;
-    return generateErrorResponse(false,externalErrorCount,false);
   }
 
   //TODO: Should ITK calls be fully synchronized between instruction to this call here? Ideally, yes, but it would be
@@ -1661,15 +1654,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Method used by "social LLM" itk behaviors (llm <-> diarc itk) to add DIARC's response to an ITK request and then
    * call the Completion endpoint with the updated Chat for a text response.
    */
-  //TODO: Relate to original tool call id if keeping in history
   @TRADEService
-  public String addToolResponse(Symbol user, Symbol agentTeam, String toolResponse) {
+  public String addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
     ChatCollection collection;
     ChatContext chatContext;
-    Chat chat;
-    long originalChatContextid;
     synchronized (currentChatCollections) {
       collection = getChatCollection(speaker, addressee);
       if (collection == null) {
@@ -1680,9 +1670,34 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         return "";
       } else {
         chatContext = collection.currentChat;
-        chatContext.history.addMessage("tool", toolResponse);
-        chat = chatContext.history;
-        originalChatContextid = chatContext.getUid();
+        int size = chatContext.history.messages.size();
+        String toolCallId = "";
+        for (int i=size-1;i>0;i--) {
+          Message msg = chatContext.history.messages.get(i);
+          if (msg.tool_calls != null && msg.tool_calls.length>0) {
+            if (msg.tool_calls[0].function.name.equals(toolCallName)) {
+              toolCallId = msg.tool_calls[0].id;
+              break;
+            }
+          }
+        }
+        if (toolCallId.isEmpty()) {
+          log.warn("[addToolResponse] couldn't find matching original tool call {} prompting response {}", toolCallName, toolResponse);
+          chatContext.history.addMessage("tool", toolResponse);
+        } else {
+          chatContext.history.addToolMessage(toolResponse, toolCallId);
+        }
+      }
+
+      Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
+      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
+      //// Preventing WW trigger after ITK responses <- TODO see if we want to change this
+      //chatContext.lastResponseString = "";
+      if (out.getSemantics() != null && out.getSemantics().getName().equals("generateResponseFromString") && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+        return ((Predicate)out.getSemantics()).get(2).toString();
+      } else {
+        log.error("[callChatCompletionForTextResponse] got unexpected output {}", out);
+        return "";
       }
     }
 
@@ -1782,7 +1797,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       //TODO: this message needs to be tuned
       ChatContext chatContext = collection.suspendedChats.remove(index);
-      chatContext.history.addMessage("tool", "Your interaction with the user was paused for some amount of time while you both performed other actions. Please refamiliarize the user with the task you are performing and the current state of progress.");
+      //TODO: relate this response id to the suspend tool call?
+      chatContext.history.addMessage("tool", "Your interaction with the user was paused for some amount of time while you both performed other actions. It has now been resumed by the system. Please refamiliarize the user with the task you are performing and the current state of progress.");
       collection.currentChat = chatContext;
 
       //chatContext.waitToProcessInput(cid);
@@ -2193,7 +2209,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           ChatContext chatContext = chatCollection.currentChat;
           if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
             chatCollection.signalInputProcessed();
-            chatCollection.currentChat = null;
+            if (chatContext.chatType == ChatType.FOCUSED) {
+              chatContext.chatState = ChatState.PARSE;
+              chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \""+chatContext.contextID+"\" and will need to call your target tool call again if they try answering your question affirmatively.",chatContext.toolCallIdUpForValidation);
+              chatContext.toolCallIdUpForValidation = "";
+              chatContext.utteranceUpForValidation = null;
+            } else {
+              chatCollection.currentChat = null;
+            }
+            //chatCollection.releaseLocks();
+            //chatCollection.currentChat = null;
           }
         }
       }
@@ -2643,6 +2668,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
       }
     }
+  }
+
+  private String getChatHistoryAsString(Chat chat) {
+    if (chat == null) {
+      return "";
+    }
+    Gson gson = new Gson();
+    //return chat.getMessages().stream().map(m -> m.role + ": " + ((m.tool_calls == null || m.tool_calls.length < 1) ? m.content : gson.toJson(m.tool_calls[0]))).collect(Collectors.joining("\n"));
+    return chat.getMessages().stream().map(gson::toJson).collect(Collectors.joining("\n"));
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
