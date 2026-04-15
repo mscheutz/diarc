@@ -56,7 +56,7 @@ import edu.tufts.hrilab.fol.Predicate;
     !visionRefsMap = tsc:getActivatedEntities(!groups);
     if (op:isEmpty(!visionRefsMap)) {
       op:log("info", "No detected objects. Looking again...");
-      op:sleep(3000);
+      op:sleep(5000);
       !visionRefsMap = tsc:getActivatedEntities(!groups);
     }
 
