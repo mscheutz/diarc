@@ -557,7 +557,7 @@ import java.lang.String;
     act:submitGoal(!actionPred);
 
     !name = op:getName(?startAction);
-    if (~op:equalsValue(!name,"none") {
+    if (~op:equalsValue(!name,"none")) {
         act:submitGoal(?startAction);
     }
 
@@ -570,7 +570,7 @@ import java.lang.String;
         !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
         act:submitGoal(!actionPred);
         !action = op:get(!actions,!index);
-        if (~op:equalsValue(!action,"none") {
+        if (~op:equalsValue(!action,"none")) {
             act:submitGoal(!action);
         }
     }

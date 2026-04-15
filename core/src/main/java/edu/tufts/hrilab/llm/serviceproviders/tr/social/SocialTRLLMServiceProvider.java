@@ -689,7 +689,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     if (errorResponseBuilder.isEmpty()) {
-      errorResponseBuilder.append("You interpreted the user's command as ").append(toolCall).append(". This result contains missing or invalid information. Please succinctly let them know what you thought they were trying to instruct, including the task itself and any information which was supplied correctly, summarize the following errors, and work with them to correct the errors:\n");
+      errorResponseBuilder.append("You attempted calling a tool with the following information: ").append(toolCall).append(". This result contains missing or invalid information. Please correct the following errors to supply valid json to make the desired tool call. Solve these issues on your own where possible, only ask the user for missing information if necessary:\n");
     }
 
     // Process the tool call and supplied arguments - output utterance will be null and baseToolResponse will be updated
@@ -2238,7 +2238,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (!parameterDefinition.getProcessAsTool()) {
         log.error("[processArgument] have argument value json without flag set to process as tool: {}", parameterValue);
         //TODO: is this just developer error or can it actually also be LLM error?
-        errorMessage.append("- You supplied a JSON object for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was not signaled to be parsed as a tool call. Please adapt this argument to a string or number.\n");
+        errorMessage.append("- You supplied a JSON object for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was not signaled to be parsed as a tool call. Please adapt this argument to a string or number. Do not speak to the user about this.\n");
         return null;
       }
       String chatTemplateContextId = parameterDefinition.getToolChatTemplateContextId();
@@ -2265,7 +2265,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
       if (arguments == null) {
         log.warn("[processArgument] inner tool call does not have arguments field present: {}", parameterValue);
-        errorMessage.append("- You supplied action json for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"arguments\" field. Please include the proper arguments of this action, even if an empty map.\n");
+        errorMessage.append("- You supplied action json for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"arguments\" field. Please restructure your json to properly include an arguments field for this action, even if an empty map. You do not need to speak to the user about this.\n");
         argValid = false;
       }
       Tool innerTool = innerToolChatTemplates.tools.get(toolName);
@@ -2310,7 +2310,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }.getType());
         calledArguments.values().removeIf(Objects::isNull);
       } catch (JsonSyntaxException e) {
-        errorMessage.append("- The supplied tool call arguments string for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly.\n");
+        errorMessage.append("- The supplied tool call arguments string for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. You do not need to speak with the user about this. \n");
         //TODO: hook up to internalError (TODO: this whole block can loop endlessly if the llm keeps retargeting the same semantics)
         log.error("[processToolCall] malformed json present in functionCall", e);
         return null;
@@ -2318,7 +2318,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     } else if (arguments instanceof Map<?,?>) {
       calledArguments = (Map<String, Object>) arguments; //Catch and handle ClassCastException if ever encountered
     } else {
-      errorMessage.append("- The supplied tool call arguments for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as json. Please reformat your call to supply a valid json string or object.\n");
+      errorMessage.append("- The supplied tool call arguments for the \"").append(intendedTool.toolDefinition.function.name).append("\" tool could not be parsed as json. Please reformat your call to supply a valid json string or object. You do not need to speak with the user about this.\n");
       log.error("[processToolArgument] unhandled {}", arguments);
       return null;
     }
@@ -2374,8 +2374,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Symbol argValue = Factory.createFOL(argString);
     // If there is an explicit possible_values set, make sure the argument is present
     if (!possible_values.isEmpty()) {
+      //TODO: what general fuzzy matching do we want here? Or is the responsibility on doing so in whatever inner action
+      //  and providing the simplest variation here?
       if (!possible_values.contains(argString)) {
-        errorMessage.append("- The user's instruction contained an invalid value for the ").append(inner ? "inner " : "").append("\"").append(argName).append("\" argument. Please work with the user to replace this value with one present in the corresponding possible_values set. Supplied value: ").append(argString).append(", possible values: ").append(possible_values).append("\n");
+        errorMessage.append("- Your tool call contained an invalid value for the ").append(inner ? "inner " : "").append("\"").append(argName).append("\" argument. Please correct any spelling, punctuation, or capitalization mistakes to exactly match a value in the possible_values set or, if no obvious candidates exist, work with the user to specify a valid value as a replacement. Supplied value: ").append(argString).append(", possible values: ").append(possible_values).append(". Do not list out all possible values if responding to the user, unless they ask for that information..\n");
         return null;
       }
 
@@ -2420,9 +2422,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
           log.warn("[processSymbolArgument] NLU parse has unpopulated argument present, failing: {}", argString);
           if (inner) {
-            errorMessage.append("- The user's supplied value for the \"").append(argName).append("\" argument was missing information about the ").append(argString).append(" detail\n");
+            errorMessage.append("- The tool call's supplied value for the \"").append(argName).append("\" argument was missing information about the ").append(argString).append(" detail\n");
           } else {
-            errorMessage.append("- The user's instruction was missing a value for the required \"").append(argName).append("\" argument\n");
+            errorMessage.append("- The tool call was missing a value for the required \"").append(argName).append("\" argument\n");
           }
           return null;
         }
@@ -2468,7 +2470,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (targetParameters.getRequired().contains(paramName)) {
         if (!calledArgumentKeys.contains(paramName)) {
           valid = false;
-          currentErrorMessage.append("- The user's instruction was missing a value for the required \"").append(paramName).append("\" argument\n");
+          currentErrorMessage.append("- The tool call was missing a value for the required \"").append(paramName).append("\" argument\n");
         }
       }
     }
@@ -2795,7 +2797,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private List<String> getVideoNames() {
     try {
       List<String> names = TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideoNames").argTypes(Boolean.class)).call(List.class,true);
-      return names.stream().map(vid->vid+":video").toList();
+      return names.stream().map(vid->vid.toLowerCase()+":video").toList();
     } catch (TRADEException e) {
       log.error("[getVideoNames]", e);
     }
@@ -2805,7 +2807,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private List<String> getImageNames() {
     try {
       List<String> names = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageNames").argTypes(Boolean.class)).call(List.class,true);
-      return names.stream().map(img->img+":image").toList();
+      return names.stream().map(img->img.toLowerCase()+":image").toList();
     } catch (TRADEException e) {
       log.error("[getImageNames]", e);
     }
