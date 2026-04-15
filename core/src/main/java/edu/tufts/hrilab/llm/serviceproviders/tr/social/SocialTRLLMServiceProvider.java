@@ -818,13 +818,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return null;
     }
 
+    chatContext.lastResponseString = responseString;
+
     if(!(responseString.startsWith("\"") && responseString.endsWith("\""))) {
       responseString = "\"" + responseString + "\"";
     }
 
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString);
-    Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), "\""+responseString+"\"");
+    Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
     inputUtterance.setSemantics(generateResponsePred);
     inputUtterance.setType(UtteranceType.INSTRUCT);
     inputUtterance.setNeedsValidation(false);
@@ -1621,8 +1623,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public String callChatCompletionForTextResponse(Symbol user, Symbol agentTeam, long id) {
     // Get chat context
     ChatCollection collection;
-    Chat chat;
-    long originalChatContextid;
     synchronized (currentChatCollections) {
       Symbol speaker = getUntypedSymbol(user);
       Symbol addressee = getUntypedSymbol(agentTeam);
@@ -1700,43 +1700,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         return "";
       }
     }
-
-    Completion response = callChatCompletion(chat, List.of(textResponseTool.toolDefinition));
-
-    if (response != null) {
-      synchronized (currentChatCollections) {
-        if (collection.currentChat == null || collection.currentChat.getUid() != originalChatContextid) {
-          log.error("[addToolResponse] chat context was overwritten during completion request");
-          //TODO: do we still return the response in this case - or just move on?
-          return "";
-        }
-        if (response.getText() != null && !response.getText().isEmpty()) {
-          //collection.currentChat.history.addRobotMessage(response.getText());
-          return response.getText();
-        } else if (!response.toolCalls.isEmpty()) {
-          ToolCall toolCall = response.toolCalls.get(0);
-          if (toolCall.function.name.equals("stillGatheringInformation")) {
-            Map<String, String> calledArguments = new Gson().fromJson(response.toolCalls.get(0).function.arguments, new TypeToken<LinkedTreeMap<String, String>>() {
-            }.getType());
-            calledArguments.values().removeIf(Objects::isNull);
-            String ret = calledArguments.get("response");
-            if (ret == null) {
-              collection.currentChat.incrementNumParseErrors();
-              return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
-            } else {
-              resetErrorCount(true, user, agentTeam);
-              return ret;
-            }
-          } else {
-            collection.currentChat.incrementNumParseErrors();
-            return generateErrorResponse(true, collection.currentChat.getNumParseErrors(), false);
-          }
-        }
-      }
-    }
-
-    externalErrorCount += 1;
-    return generateErrorResponse(false,externalErrorCount,false);
   }
 
   //// Inner suspend/resume methods for runContextSpecificChat ////
@@ -2618,7 +2581,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     if (parse) {
-      utterance.setSemantics(Factory.createPredicate("generateResponseFromString", agentTeam.toUntypedString(), user.toUntypedString(),"\""+errorMessage+"\""));
+      utterance.setSemantics(Factory.createPredicate("generateResponseFromString", agentTeam.toUntypedString(), user.toUntypedString(),errorMessage));
       utterance.setNeedsValidation(false);
     } else {
       utterance.setWords(errorMessage);
@@ -2677,6 +2640,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Gson gson = new Gson();
     //return chat.getMessages().stream().map(m -> m.role + ": " + ((m.tool_calls == null || m.tool_calls.length < 1) ? m.content : gson.toJson(m.tool_calls[0]))).collect(Collectors.joining("\n"));
     return chat.getMessages().stream().map(gson::toJson).collect(Collectors.joining("\n"));
+  }
+
+  @TRADEService
+  public String getLastResponseString(Symbol user, Symbol agentTeam) {
+    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        return chatContext.lastResponseString;
+      }
+    }
+    return "";
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////

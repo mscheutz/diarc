@@ -1,6 +1,11 @@
 package edu.tufts.hrilab.ava.tts;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.tts.MaryTTSComponent;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -23,7 +28,26 @@ public class AvaMaryTTSComponent extends MaryTTSComponent {
   @Override
   public boolean sayText(Utterance utterance, boolean wait) {
     if (!utterance.getAddressee().getName().equals("webapp")) {
-      return sayText(utterance.getWordsAsString(), wait);
+      boolean result = sayText(utterance.getWordsAsString(), wait);
+      // Experimental - automatically trigger WW on any SocialLLM text response call. Will still cause a few unnecessary
+      //  "false positive" WW triggers in practice.
+      // TODO: make this trigger a "careful" call where background noise heuristics are made more restrictive?
+      try {
+        // "lastResponseString" set from parseUtteranceLLMService, focusDialogueChat, callChatCompletionForTextResponse, addToolResponse
+        String lastResponseString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastResponseString").argTypes(Symbol.class, Symbol.class)).call(String.class, utterance.getAddressee(), utterance.getSpeaker());
+        if (utterance.getWordsAsString().equals(lastResponseString)) {
+          if (utterance.getType() == UtteranceType.REPLY) {
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
+            } catch (TRADEException e) {
+              log.error("[updateLLMConversationHistory] unable to call triggerWW on ava component");
+            }
+          }
+        }
+      } catch (TRADEException e) {
+        log.debug("[sayText] unable to get lastResponseString from SocialLLMServiceProvider - should only occur if SocialLLM is disabled");
+      }
+      return result;
     } else {
       log.info("published in webapp chat: {}", utterance.getWordsAsString());
       return false;
