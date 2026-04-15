@@ -111,12 +111,15 @@ public class OpenaiClient implements LLMClient {
 
   @Override
   public void setStopWords(String[] stopWords) {
-    log.warn("OpenAI API does not support stop words");
+    log.warn("OpenAI client not set up to support stop words definition");
   }
 
   @Override
   public void setTemperature(float temperature) {
-    log.warn("OpenAI API does not support stop temperature");
+    log.info("[setTemperature] using temperature {}", temperature);
+    model_parameters.put("temperature", (double)temperature);
+    //model_parameters.put("frequency_penalty",1.5);
+    //model_parameters.put("presence_penalty",1.5);
   }
 
   /**
