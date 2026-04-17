@@ -33,6 +33,10 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
   @TRADEService
   Justification sit();
 
+  /**
+   * TODO: why won't this work from asl as a tsc: ??
+   * @return
+   */
   @TRADEService
   @Action
   boolean isLocalized();
@@ -44,6 +48,13 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
   @Action
   @TRADEService
   Justification localizeWithFiducial();
+
+  /**
+   * TODO: why won't this work from asl as a tsc: ??
+   * @return
+   */
+   @TRADEService
+   boolean isHoldingObject();
 
   /**
    * TODO: remove this in favor of the graspObject method in the ArmInterface

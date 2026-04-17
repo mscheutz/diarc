@@ -64,6 +64,11 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
+  public boolean isHoldingObject() {
+    return false;
+  }
+
+  @Override
   public Justification grabObject(Symbol refId) {
     return new ConditionJustification(true);
   }

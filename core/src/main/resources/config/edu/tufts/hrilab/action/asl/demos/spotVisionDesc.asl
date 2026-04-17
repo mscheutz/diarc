@@ -63,7 +63,7 @@ import edu.tufts.hrilab.fol.Predicate;
     act:generateResponseFromString("okay");
     !objBinding = op:get(!bindings, 0);
     !objectRef = op:get(!objBinding, !x);
-    act:bringObjectToPerson(!objectRef);
+    act:bringObjectToPerson(!objectRef, ?locRef);
     ?result = op:newObject("java.lang.Boolean", true);
   } else {
     act:generateResponseFromString("Searching for other parts");
@@ -73,8 +73,18 @@ import edu.tufts.hrilab.fol.Predicate;
   }
 }
 
-() = bringObjectToPerson(Symbol ?objectRef) {
+() = bringObjectToPerson(Symbol ?objectRef, Symbol ?locRef) {
   act:pickUp(?objectRef);
+
+  if (~tsc:isHoldingObject()) {
+    op:log("warn", "Failed to pick up object. Trying again...");
+    act:goToPose(stow);
+    act:goToLocation(?locRef);
+    act:goToPose(detection);
+    act:openGripper(arm);
+    act:pickUp(?objectRef);
+  }
+
   act:goToPose(stow);
   act:goToLocation(location_1:location);
 

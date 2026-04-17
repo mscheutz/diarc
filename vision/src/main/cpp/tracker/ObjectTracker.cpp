@@ -197,6 +197,15 @@ void ObjectTracker::handleMemoryObjectNotification(MemoryObjectNotification::Con
     return;
   }
 
+  // check if this tracker should still be handling objects of a particular typeId. This can happen if a visual search
+  // is shut down while there's still a MO being passed through the search pipeline
+  DescriptorsByTypeConstPtr descriptorsByType = getTypes();
+  if (descriptorsByType->find(notification->object->getTypeId()) == descriptorsByType->end()) {
+    //if all descriptors of type have been removed, don't process MO
+    LOG4CXX_DEBUG(logger, "[handleMemoryObjectNotification] ignoring MO notification for typeId: " << notification->object->getTypeId());
+    return;
+  }
+
   LOG4CXX_TRACE(logger, boost::format("[handleMemoryObjectNotification] MO with validation: %s.") %
                 notification->object->getValidationResultsString());
   if (notification->object->isTracked()) {
