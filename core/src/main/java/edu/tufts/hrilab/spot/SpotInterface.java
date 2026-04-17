@@ -53,6 +53,7 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
    * TODO: why won't this work from asl as a tsc: ??
    * @return
    */
+   @Action
    @TRADEService
    boolean isHoldingObject();
 

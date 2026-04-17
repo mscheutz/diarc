@@ -185,14 +185,14 @@ int TrackedObjects::getSizeTypeId(const long long& typeId) const {
 
 //get all memoryObjects
 void TrackedObjects::getMemoryObjects(ArrayListInterface& toSend, JNIEnv* env) const {
-  LOG4CXX_TRACE(logger, "[getMemoryObjects] method entered.");
+  LOG4CXX_DEBUG(logger, "[getMemoryObjects] method entered.");
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
   MemoryObjects_HashedById_Map::const_iterator mo_id_iter;
   for (mo_id_iter = mo_tokenId.begin(); mo_id_iter != mo_tokenId.end(); ++mo_id_iter) {
     const MemoryObject::Ptr& currMO = (*mo_id_iter).second;
-    LOG4CXX_TRACE(logger, boost::format("memory object id: %lld. track conf: %f. detect conf: %f.")
+    LOG4CXX_DEBUG(logger, boost::format("memory object id: %lld. track conf: %f. detect conf: %f.")
             % currMO->getId() % currMO->getTrackingConfidence()
             % currMO->getDetectionConfidence());
 

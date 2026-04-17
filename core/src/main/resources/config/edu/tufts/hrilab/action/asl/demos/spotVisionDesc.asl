@@ -75,17 +75,25 @@ import edu.tufts.hrilab.fol.Predicate;
 
 () = bringObjectToPerson(Symbol ?objectRef, Symbol ?locRef) {
   act:pickUp(?objectRef);
+  act:goToPose(stow);
 
-  if (~tsc:isHoldingObject()) {
+  Long !count = 0;
+  Long !attempts = 3;
+  while (~act:isHoldingObject() && op:lt(!count, !attempts)) {
     op:log("warn", "Failed to pick up object. Trying again...");
+    !count = op:++(!count);
+
+    // reset
     act:goToPose(stow);
     act:goToLocation(?locRef);
     act:goToPose(detection);
     act:openGripper(arm);
+
+    // try again
     act:pickUp(?objectRef);
+    act:goToPose(stow);
   }
 
-  act:goToPose(stow);
   act:goToLocation(location_1:location);
 
   act:goToPose(carry);

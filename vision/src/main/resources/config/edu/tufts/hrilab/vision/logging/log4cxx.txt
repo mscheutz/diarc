@@ -33,10 +33,10 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 
 # Trackers
 #log4j.logger.diarc.opentld.TLD=DEBUG, file1
-#log4j.logger.diarc.stm.TrackedObjects=TRACE, file1
+#log4j.logger.diarc.stm.TrackedObjects=DEBUG, file1
 #log4j.logger.diarc.tracker.CMTTracker=TRACE, file1
 #log4j.logger.diarc.tracker.GenericTracker=TRACE, file1
-#log4j.logger.diarc.tracker.KCFTracker=DEBUG
+#log4j.logger.diarc.tracker.KCFTracker=DEBUG, file1
 #log4j.logger.diarc.tracker.OpenCVTracker=DEBUG
 #log4j.logger.diarc.tracker.RelationTracker=DEBUG, file1
 #log4j.logger.diarc.tracker.RelationTracker=DEBUG, file1

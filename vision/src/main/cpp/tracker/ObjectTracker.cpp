@@ -143,7 +143,7 @@ bool ObjectTracker::removeProcessingDescriptor(const std::string &descriptor, co
   DescriptorsByTypeConstPtr descriptorsByType = getTypes();
   if (descriptorsByType->find(typeId) == descriptorsByType->end()) {
     //if all descriptors of type have been removed, remove tracked objects of specified SearchType
-    LOG4CXX_DEBUG(logger, "[removeProcessingDescriptor] calling stopTracking.");
+    LOG4CXX_DEBUG(logger, "[removeProcessingDescriptor] calling stopTracking. TypeId: " << typeId);
     stopTrackingType(typeId);
   } else if (logger->isDebugEnabled()) {
     DescriptorsByType::const_iterator itr = descriptorsByType->find(typeId);
@@ -456,7 +456,7 @@ void ObjectTracker::stopTracking(const MemoryObject::Ptr &existingMemObj) {
 }
 
 void ObjectTracker::stopTrackingType(const long long &typeId) {
-  LOG4CXX_TRACE(logger, "[stopTrackingType] method entered.");
+  LOG4CXX_DEBUG(logger, "[stopTrackingType] method entered. TypeId: " << typeId);
   //stop tracking MemoryObjects as typeId
   MemoryObjects_HashedById_Set memoryObjects = trackedObjects->getByTypeId(typeId);
   MemoryObjects_HashedById_Set::iterator memoryObjects_itr;

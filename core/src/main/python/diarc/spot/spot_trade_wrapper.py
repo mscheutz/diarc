@@ -758,9 +758,12 @@ class SpotTRADEWrapper:
 
     @JOverride
     def isHoldingObject(self) -> bool:
-        is_holding = self.spot._robot_state_client.get_robot_state().manipulator_state.is_gripper_holding_item
-        logging.info(f"Is Spot holding an object: {is_holding}")
-        return is_holding
+        robot_state = self.spot._robot_state_client.get_robot_state()
+        # is_holding = robot_state.manipulator_state.is_gripper_holding_item
+        #logging.info(f"Is Spot holding an object: {is_holding}")
+        open_percentage = robot_state.manipulator_state.gripper_open_percentage
+        logging.info(f"Spot gripper open percentage: {open_percentage}")
+        return not (open_percentage < 3.0)
 
     @handle_return
     @JOverride
