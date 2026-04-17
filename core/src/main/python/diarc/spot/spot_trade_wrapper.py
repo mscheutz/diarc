@@ -756,6 +756,12 @@ class SpotTRADEWrapper:
             logging.error(f"Error calling grabObject: {traceback.format_exc()}")
             return False, "error msg"
 
+    @JOverride
+    def isHoldingObject(self) -> bool:
+        is_holding = self.spot._robot_state_client.get_robot_state().manipulator_state.is_gripper_holding_item
+        logging.info(f"Is Spot holding an object: {is_holding}")
+        return is_holding
+
     @handle_return
     @JOverride
     def localizeWithReference(self, refId):
