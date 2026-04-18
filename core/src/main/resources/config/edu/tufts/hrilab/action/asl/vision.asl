@@ -111,6 +111,14 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     ?tokenIds = act:lookForObject(?objectRef);
+
+    // retry visual search one time
+    if (op:isEmpty(?tokenIds)) {
+      op:log("warn", "No objects found. Retrying visual search.");
+      act:stopVisualSearch(?objectRef);
+      ?tokenIds = act:lookForObject(?objectRef);
+    }
+
     if (op:isEmpty(?tokenIds)) {
       op:log("warn", "No objects found. Exiting.");
       !failCond = op:createPredicate("not(see(?actor, ?objectRef))");
