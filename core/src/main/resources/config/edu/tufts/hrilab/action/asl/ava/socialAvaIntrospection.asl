@@ -113,6 +113,68 @@ import edu.tufts.hrilab.action.goal.Goal;
      ?output = op:newObject("java.lang.String","I don't have a patrol path saved under the name ?pathName");
     }
 }
+(String ?output) = generateWifiAtLocationString(Symbol ?location) {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Map !elem;
+    List !bindings;
+    Symbol !rssi;
+    java.lang.String !rssiStr;
+    java.lang.String !label;
+    java.lang.String !locName;
+
+    !locName = act:locationRefToName(?location);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(?location,X)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        !elem = op:get(!bindings, 0);
+        !rssi = op:get(!elem,!x);
+        !rssiStr = op:invokeMethod(!rssi, "toString");
+        !label = act:rssiQualityLabel(!rssi);
+        ?output = op:invokeStaticMethod("java.lang.String", "format", "wifi at %s was %s dBm, %s", !locName, !rssiStr, !label);
+    } else {
+        ?output = op:invokeStaticMethod("java.lang.String", "format", "I have not measured wifi at %s", !locName);
+    }
+}
+
+(String ?output) = generateWifiSummaryString() {
+    Predicate !queryPred;
+    Variable !loc = "L";
+    Variable !rssiVar = "R";
+    Map !elem;
+    List !bindings;
+    Symbol !location;
+    Symbol !rssi;
+    java.lang.String !locStr;
+    java.lang.String !rssiStr;
+    java.lang.String !label;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(L,R)");
+    !bindings = act:queryBelief(!queryPred);
+    if (op:isEmpty(!bindings)) {
+        ?output = op:newObject("java.lang.String","I have not measured wifi anywhere");
+    } else {
+        foreach(!elem : !bindings) {
+            op:invokeMethod(!sb,"append",!sep);
+            !location = op:get(!elem,!loc);
+            !rssi = op:get(!elem,!rssiVar);
+            !locStr = act:locationRefToName(!location);
+            !rssiStr = op:invokeMethod(!rssi, "toString");
+            !label = act:rssiQualityLabel(!rssi);
+            op:invokeMethod(!sb,"append",!locStr);
+            op:invokeMethod(!sb,"append"," ");
+            op:invokeMethod(!sb,"append",!rssiStr);
+            op:invokeMethod(!sb,"append"," dBm ");
+            op:invokeMethod(!sb,"append",!label);
+            !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+    act:generateResponseFromString(?output);
+}
+
 (String ?output) = generateTaughtActionsString() {
     List !taughtActions;
     Predicate !actionPred;

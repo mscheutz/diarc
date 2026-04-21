@@ -154,6 +154,18 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
 
   @TRADEService
   @Action
+  public Integer measureWifiRssi();
+
+  @TRADEService
+  @Action
+  public String rssiQualityLabel(edu.tufts.hrilab.fol.Symbol rssi);
+
+  @TRADEService
+  @Action
+  public String locationRefToName(edu.tufts.hrilab.fol.Symbol ref);
+
+  @TRADEService
+  @Action
   @OnInterrupt(onCancelServiceCall = "interruptChargingBlock()", onSuspendServiceCall = "interruptChargingBlock()")
   public void blockToCharge();
 

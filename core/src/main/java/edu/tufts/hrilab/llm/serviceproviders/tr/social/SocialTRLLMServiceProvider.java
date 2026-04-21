@@ -3184,6 +3184,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getIsVideoSaved":
         case "getSavedVideos":
         case "getSavedImages":
+        case "getWifiAtLocationString":
         case "getCurrentPendingScheduledGoalInformation":
         case "resetConversation":
         case "learnTour":
@@ -3301,6 +3302,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("goHome",
             "You go to your default charging dock and charge. An example of instructing this could be \"go back to charge.\"",
             new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureWifiAtLocations",
+            "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. An example of instructing this could be \"check the wifi at %exampleLocation and the dock\", which would map to {\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\",\"dock:location\"]}}",
+            List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Each value must be a saved location.", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
+            "You drive to each of the supplied locations in order, measure wifi at each one, then drive to reportLocation and speak a brief summary. Use this when the user wants a survey with a specific return-and-report location.",
+            List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Each value must be a saved location.", true),
+                    new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //definition = new ToolDefinition("scheduleTask",
     //        "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
@@ -3534,6 +3544,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("getSavedImages",
             "Use this to ask the system to list out the collection of images you currently have saved. An example of when you may need this information is when a user asks \"what images can you display.\"",
             new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getWifiAtLocationString",
+            "Use this to ask the system what wifi signal strength you previously measured at the supplied location. Only returns a useful value after measureWifiAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation.\"",
+            List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
     //// Removed ITK targets

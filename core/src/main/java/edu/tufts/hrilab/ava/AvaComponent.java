@@ -1343,6 +1343,82 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return -1;
   }
 
+  private static final boolean IS_TERMUX =
+          System.getenv("PREFIX") != null
+          && System.getenv("PREFIX").startsWith("/data/data/com.termux");
+
+  @Override
+  public Integer measureWifiRssi() {
+    try {
+      String output = IS_TERMUX ? readTermuxWifiScan() : readProcNetWireless();
+      if (output == null || output.isEmpty()) {
+        return Integer.MIN_VALUE;
+      }
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("-?\\d+").matcher(output);
+      int best = Integer.MIN_VALUE;
+      while (m.find()) {
+        int v = Integer.parseInt(m.group());
+        if (v < 0 && v > best) best = v;
+      }
+      return best;
+    } catch (Exception e) {
+      log.error("[measureWifiRssi] failed", e);
+      return Integer.MIN_VALUE;
+    }
+  }
+
+  private String readTermuxWifiScan() throws IOException, InterruptedException {
+    Process p = new ProcessBuilder("termux-wifi-scaninfo").redirectErrorStream(true).start();
+    String out = new String(p.getInputStream().readAllBytes());
+    p.waitFor();
+    StringBuilder rssis = new StringBuilder();
+    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"rssi\"\\s*:\\s*(-?\\d+)").matcher(out);
+    while (m.find()) rssis.append(m.group(1)).append(' ');
+    return rssis.toString();
+  }
+
+  private String readProcNetWireless() throws IOException, InterruptedException {
+    Process p = new ProcessBuilder("awk", "NR>=3 {print $4}", "/proc/net/wireless")
+            .redirectErrorStream(true).start();
+    String out = new String(p.getInputStream().readAllBytes());
+    p.waitFor();
+    return out;
+  }
+
+  @TRADEService
+  @Action
+  public String locationRefToName(Symbol ref) {
+    if (ref == null) return "unknown";
+    try {
+      PoseReference pr = TRADE.getAvailableService(
+              new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
+              .call(PoseReference.class, ref);
+      if (pr != null && !pr.properties.isEmpty()) {
+        return pr.properties.get(0).getName();
+      }
+    } catch (TRADEException e) {
+      log.error("[locationRefToName] lookup failed for {}", ref, e);
+    }
+    return ref.toUntypedString();
+  }
+
+  @TRADEService
+  @Action
+  public String rssiQualityLabel(Symbol rssi) {
+    int v;
+    try {
+      v = Integer.parseInt(rssi.getName());
+    } catch (NumberFormatException e) {
+      return "unknown";
+    }
+    if (v == Integer.MIN_VALUE) return "unknown";
+    if (v >= -50) return "excellent";
+    if (v >= -60) return "strong";
+    if (v >= -70) return "good";
+    if (v >= -80) return "weak";
+    return "poor";
+  }
+
   @Override
   public void blockToCharge() {
     log.info("[blockToCharge] blocking on chargingTerminatedCondition");

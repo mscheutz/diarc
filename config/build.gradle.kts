@@ -49,10 +49,11 @@ dependencies {
   implementation(project(":vision","mockJar"))
   implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
-  // TEMP tablet bring-up: mtracs jar not reachable from tablet; restore before committing.
-  // implementation("ai.thinkingrobots:mtracs:1.12.55-SNAPSHOT") {
-  //   exclude(group = "edu.tufts.hrilab", module = "diarc-core")
-  // }
+  if(project.hasProperty("diarc.enableMtracs") && project.property("diarc.enableMtracs").toString().toBoolean()) {
+    implementation("ai.thinkingrobots:mtracs:1.12.55-SNAPSHOT") {
+      exclude(group = "edu.tufts.hrilab", module = "diarc-core")
+    }
+  }
 
   if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     implementation(project(":diarcRos"))
@@ -62,10 +63,11 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  // TEMP tablet bring-up: mtracs-mock jar not reachable from tablet; restore before committing.
-  // testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55-SNAPSHOT") {
-  //   exclude(group = "edu.tufts.hrilab", module = "diarc-core")
-  // }
+  if(project.hasProperty("diarc.enableMtracs") && project.property("diarc.enableMtracs").toString().toBoolean()) {
+    testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55-SNAPSHOT") {
+      exclude(group = "edu.tufts.hrilab", module = "diarc-core")
+    }
+  }
 
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
   testImplementation("com.fasterxml.jackson.core:jackson-core:2.7.4")

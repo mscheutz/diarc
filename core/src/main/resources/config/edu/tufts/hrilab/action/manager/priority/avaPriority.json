@@ -207,6 +207,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "getWifiAtLocationString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "getTaughtActions":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

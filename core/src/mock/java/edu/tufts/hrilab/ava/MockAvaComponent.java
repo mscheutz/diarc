@@ -400,6 +400,28 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
+  public Integer measureWifiRssi() {
+    toggle = !toggle;
+    return toggle ? -55 : -72;
+  }
+
+  @Override
+  public String locationRefToName(edu.tufts.hrilab.fol.Symbol ref) {
+    return ref == null ? "unknown" : ref.toUntypedString();
+  }
+
+  @Override
+  public String rssiQualityLabel(edu.tufts.hrilab.fol.Symbol rssi) {
+    int v;
+    try { v = Integer.parseInt(rssi.getName()); } catch (NumberFormatException e) { return "unknown"; }
+    if (v >= -50) return "excellent";
+    if (v >= -60) return "strong";
+    if (v >= -70) return "good";
+    if (v >= -80) return "weak";
+    return "poor";
+  }
+
+  @Override
   public void blockToCharge() {
     log.info("[blockToCharge] blocking on chargingTerminatedCondition");
     try {
