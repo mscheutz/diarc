@@ -14,6 +14,7 @@ import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
@@ -885,8 +886,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<Predicate> getScheduledGoals() {
     List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      result.add(g.getPredicate());
+    for (ScheduledGoal sg : em.getScheduledGoals()) {
+      result.add(sg.getDisplayPredicate());
     }
     return result;
   }
@@ -900,9 +901,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<Predicate> getScheduledGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(agentTeam)) {
-        pg.add(g.getPredicate());
+    for (ScheduledGoal sg : em.getScheduledGoals()) {
+      if (sg.getActor().equals(agentTeam)) {
+        pg.add(sg.getDisplayPredicate());
       }
     }
     return pg;

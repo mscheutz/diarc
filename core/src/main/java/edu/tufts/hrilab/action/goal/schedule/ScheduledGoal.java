@@ -64,6 +64,55 @@ public class ScheduledGoal extends Goal {
     setScheduledState(1);
   }
 
+  public Predicate getDisplayPredicate() {
+    List<Symbol> args = new ArrayList<>();
+    args.add(super.getPredicate());
+    if (start != null && scheduleInfo.startTime != null) {
+      long remainingMs = scheduleInfo.startTime.getTime() - System.currentTimeMillis();
+      if (remainingMs > 0) {
+        args.add(toRelativeTimePred("start", remainingMs));
+      } else {
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(scheduleInfo.startTime);
+        Calendar now = Calendar.getInstance();
+        if (startCal.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+                && startCal.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)) {
+          args.add(Factory.createPredicate("start",
+                  new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.startTime)));
+        } else {
+          args.add(Factory.createPredicate("start",
+                  new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.startTime)));
+        }
+      }
+    }
+    if (period != null) {
+      args.add(period);
+    }
+    if (end != null && scheduleInfo.endTime != null) {
+      long remainingMs = scheduleInfo.endTime.getTime() - System.currentTimeMillis();
+      if (remainingMs > 0) {
+        args.add(toRelativeTimePred("end", remainingMs));
+      } else {
+        args.add(Factory.createPredicate("end",
+                new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.endTime)));
+      }
+    }
+    return Factory.createPredicate("scheduled", args);
+  }
+
+  private static Predicate toRelativeTimePred(String name, long millis) {
+    if (millis >= TimeUnit.DAYS.toMillis(1)) {
+      long days = TimeUnit.MILLISECONDS.toDays(millis);
+      return Factory.createPredicate(name, String.valueOf(days), "DAYS");
+    } else if (millis >= TimeUnit.HOURS.toMillis(1)) {
+      long hours = TimeUnit.MILLISECONDS.toHours(millis);
+      return Factory.createPredicate(name, String.valueOf(hours), "HOURS");
+    } else {
+      long minutes = Math.max(1, TimeUnit.MILLISECONDS.toMinutes(millis));
+      return Factory.createPredicate(name, String.valueOf(minutes), "MINUTES");
+    }
+  }
+
   @Override
   public Predicate getPredicate() {
     return getPredicate(false);
