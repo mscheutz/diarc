@@ -301,8 +301,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       dockName = dockNames.get(0);
     }
 
-    dockName = "dock1";
-    dock2Name = "dock2";
     for (Symbol refId : poseReferences.keySet()) {
       //abosultely shouldn't be blind indexing into the ref to get the name!!!!!!!
       if (poseReferences.get(refId).properties.get(0).getName().equals(dockName)) {
