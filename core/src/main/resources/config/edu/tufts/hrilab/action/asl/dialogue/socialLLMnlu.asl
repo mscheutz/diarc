@@ -534,7 +534,7 @@ import java.lang.String;
 //  Without other goals being submitted and added to learning state - Not currently possible?
 //      Lock EM temporarily
 //      Make independent learning state and submission API
-() = tourDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
+() = submitTourDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
     Predicate !actionSignature;
     Predicate !actionPred;
     String !name;
@@ -545,7 +545,7 @@ import java.lang.String;
     Symbol !location;
     Symbol !action;
 
-    op:log(info,"[tourDefinition] ?actionName : ?startLocation : ?startAction : ?locationSequence : ?actionSequence");
+    op:log(info,"[submitTourDefinition] ?actionName : ?startLocation : ?startAction : ?locationSequence : ?actionSequence");
 
     !actionSignature = op:createPredicate(?actionName);
     async {

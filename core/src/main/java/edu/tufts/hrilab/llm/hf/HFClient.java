@@ -44,7 +44,7 @@ public class HFClient implements LLMClient {
     public String model = "meta-llama/Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
-    private int maxNewTokens = 128;
+    private int maxNewTokens = 1024;
     private float temperature = 0.6f;
 
     public HFClient () {

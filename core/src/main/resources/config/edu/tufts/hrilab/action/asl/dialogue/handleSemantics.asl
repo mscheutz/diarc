@@ -243,7 +243,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
       try {
         //TODO: Empirically tune ack semantics
-        !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+        !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
         !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
         act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType, ?priorityTier);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
@@ -289,7 +289,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
     try {
       //TODO: Empirically tune ack semantics
-      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
       !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
       act:achieveState(?speaker, ?recovery, !defaultTentativeResponse, !defaultResponse, indirect);
     } catch(FAIL_PRECONDITONS, !failureConditions) {
@@ -310,7 +310,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
 
     try {
       //TODO: Empirically tune ack semantics
-      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willAttempt(?actor,?state))");
+      !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
       !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
       act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType);
     } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
@@ -402,11 +402,15 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
     edu.tufts.hrilab.action.justification.Justification !failureConditions;
     Predicate !becausePredicate;
-    java.lang.Boolean !madeTentativeAccept = false;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Boolean !waitingForResponse;
     Predicate !responsePredicate;
     java.lang.Long !priority;
+    java.util.List !currentGoals;
+    Predicate !goalPred;
+    java.lang.String !currentStatus;
+    java.lang.Boolean !currentGoalActive = true;
+    Predicate !goalSubmittedPred;
 
     conditions : {
       or : {
@@ -428,55 +432,45 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
       //obligation infer : not(isForbidden(?state));
     }
 
-    // Q: The motivation behind using SKIPPENDING (i.e. lack of resource conflict) to be the conditional here was to still
-    //  allow the user to do things like ask the system for relevant information to inform question answers, modify task
-    //  execution, or supply information to the system. Should there be a different check made?
-    //      handleITK and handleWantBel go through separate pipelines, so maybe this is an accurate check.
-    // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
-    //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
-    //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
+    // Pre-submission checks
     if (~op:equalsValue(?priorityTier,SKIPPENDING)) {
-        //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
-        //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
+        // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
+        //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
+        //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
         if (~op:equalsValue(?priorityTier,URGENT)) {
+            // Q: The motivation behind using SKIPPENDING (i.e. lack of resource conflict) to be the conditional here was to still
+            //  allow the user to do things like ask the system for relevant information to inform question answers, modify task
+            //  execution, or supply information to the system. Should there be a different check made?
+            //      handleITK and handleWantBel go through separate pipelines, so maybe this is an accurate check.
+            //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
+            //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
             if (tsc:isAgentWaitingForResponse(?actor)) {
                 //act:generateResponseFromString(?speaker, "Please answer my question before sending further instructions");
                 act:generateResponse(?speaker, please(before(youSendFurtherInstruction,answer(myQuestion))));
                 return;
             }
         }
-    }
 
-    //Can also reimplement ignoreTentativeAccept filter if desired
-    if(~act:checkIgnoreTentativeAccept(?state)){
-        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-    }
-    !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
-
-    !priority = act:getPriorityForGoal(?state);
-    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
-    //!goalID = act:submitGoal(?state,!execType,?priorityTier);
-    !goalStatus = act:joinOnGoal(!goalID, 1000);
-//    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
-//      op:log("debug", "tentative accept for ?state with status !goalStatus");
-//      act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-//      !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
-//    }
-
-    //TODO: Do we need to make this explicitly a queueEM only change?
-    // Report to the user that the goal is waiting as PENDING until unblocked by relevant resources being freed
-    java.util.List !currentGoals;
-    Predicate !goalPred;
-    java.lang.String !currentStatus;
-    java.lang.Boolean !currentGoalActive = true;
-    Predicate !goalSubmittedPred;
-    if (op:equalsValue(!goalStatus,"PENDING")) {
+        //// Tentative Accept, 3 cases:
+        //      1. Report attempting to achieve goal
+        //      2. Report goal has been put in the pending queue
+        //      3. Report goal has failed on submission
+        //TODO: Make this explicitly a queueEM only change
+        // Report to the user that the goal is waiting as PENDING until unblocked by relevant resources being freed
         !currentGoals = act:getSystemGoalsPredicates(?actor);
 
         // Do we want distinction of reporting when placing behind a suspended goal vs an active goal?
         //  ^Eventually this logic will need to be extended to explicitly find the goal(s) occupying the required resources
         if (op:isEmpty(!currentGoals)) {
-            op:log("warn", "Submitted goal for ?state is still PENDING, but no active goal found");
+            if(~act:checkIgnoreTentativeAccept(?state)){
+                //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
+                ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
+                ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
+                ////  if not terminated and/or conditional timing based on the goal itself.
+                //async {
+                    act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+                //}
+            }
         } else {
             foreach (!goalPred : !currentGoals) {
                 !currentStatus = op:getName(!goalPred);
@@ -486,14 +480,26 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
             }
             //TODO: experiment with phrasing of these preds / format for LLM NLG in a smarter way relating to current conflicting task(s)
             if (op:equals(!currentGoalActive,true)) {
-                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iAmCurrentlyBusyIWillAddThatTaskToMyQueue()");
+                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,IWillDoSoWhenFinishedWithMyHigherPriorityTasks)");
+                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willPerform(?state,whenFinishedWithHigherPriorityTasks)");
             } else {
-                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "myCurrentTaskIsSuspendedIWillAddThisToMyQueue()");
+                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,IAmCurrentlyWaitingOnASuspendedTaskButWillGetToThatWhenICan)");
             }
-            act:generateResponse(?speaker,!goalSubmittedPred);
+            //async {
+                act:generateResponse(?speaker,!goalSubmittedPred);
+            //}
+        }
+    } else {
+        if(~act:checkIgnoreTentativeAccept(?state)){
+            //async {
+                act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+            //}
         }
     }
 
+    //// Submit goal
+    !priority = act:getPriorityForGoal(?state);
+    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
     op:log("debug", "waiting to get into state: ?state goalId: !goalID");
     !goalStatus = act:joinOnGoal(!goalID);
     op:log("debug", "?state status !goalStatus");
@@ -503,9 +509,6 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
       !actionStatus = act:getActionStatus(!goalID);
       op:log("debug", "action status: !actionStatus");
       exit(!actionStatus, !failureConditions);
-    } elseif (op:==(!madeTentativeAccept, false)) {
-      op:log("debug", "?state achieved with status !goalStatus");
-      act:generateResponse(?speaker, ?acceptSemantics, ?semanticType);
     }
 }
 

@@ -99,7 +99,7 @@ Output:{"translation":"I have added a new scheduled task to say "Welcome to our 
 Input:REPLY(ava,%addressee,ack(okay),{})
 Output:{"translation":"okay"}
 #
-Input:REPLY(ava,%addressee,scheduled(escortFromLocationToLocation(ava,patient,reception,chair 1),period(2,hours)),{})
+Input:REPLY(ava,%addressee,scheduled(escortFromLocationToLocation(ava,patient,reception:location,chair 1:location),period(2,hours)),{})
 Output:{"translation":"escorting the patient from reception to chair 1 is scheduled to occur every 2 hours"}
 #
 Input:REPLY(ava,%addressee,added(scheduled(stand(ava),start(20-00-00))),{})
@@ -120,7 +120,10 @@ Output:{"translation":"Discarded"}
 Input:REPLY(ava,%addressee,learnNewTask(ava),{})
 Output:{"translation":"I learn a new task"}
 #
-Input:REPLY(ava,%addressee,escortFromLocationToLocation(ava,%addressee,coffee maker,desk a),{})
+Input:REPLY(ava,%addressee,learnTour(ava),{})
+Output:{"translation":"I am learning a new tour"}
+#
+Input:REPLY(ava,%addressee,escortFromLocationToLocation(ava,%addressee,coffee maker:location,desk a:location),{})
 Output:{"translation":"I escort user from the coffee maker to desk a"}
 #
 Input:REPLY(ava,%addressee,scheduled(playVideo(ava),start(5,minutes),period(1,hours)),{})
@@ -167,6 +170,18 @@ Output:{"translation":"The greet people action has no steps"}
 #
 Input:REPLY(ava,webapp,and(ack(okay),forgettingAbout(self,attemptedInstruction),letMeKnowHowICanFurtherAssistYou()),{})
 Output:{"translation":"Okay, I am discarding that instruction. Let me know how I can further assist you."}
+#
+Input:REPLY(ava,webapp,ack(okay,attempting(ava,goToLocation(ava,reception:location))),{})
+Output:{"translation":"Going to reception."}
+#
+Input:REPLY(ava,webapp,ack(okay,attempting(ava,follow(ava))),{})
+Output:{"translation":"Okay, following."}
+#
+Input:REPLY(ava,webapp,ack(okay,attempting(ava,sit(ava))),{})
+Output:{"translation":"Okay, sitting down."}
+#
+Input:REPLY(ava,webapp,ack(okay,attempting(ava,waitForDuration(ava,10))),{})
+Output:{"translation":"Okay, standing by for 10 seconds."}
 ###
 The chat history between the system \"assistant\" and the human \"user\" leading up to this output request is contained below. You may use the history to modify and contextualize your translation of the supplied form. CHAT HISTORY:
 

@@ -1925,6 +1925,23 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Get a list of goalIds of all goals currently found in the active collection for the supplied actor, which are not
+   *  scheduled or SKIPPENDING priority.
+   */
+  public List<Long> getSystemGoalsIds(Symbol agentTeam) {
+    Set<Goal> activeGoals;
+    synchronized (goalsLock) {
+      activeGoals = getActiveGoalsHelper(agentTeam, 3, false);
+    }
+
+    if (activeGoals != null) {
+      return activeGoals.stream().map(Goal::getId).toList();
+    }
+
+    return new ArrayList<>();
+  }
+
+  /**
    * Get the predicate corresponding to the goal with the highest priority found in the pending collection
    */
   public Predicate getNextGoalPredicate() {

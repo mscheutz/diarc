@@ -38,6 +38,7 @@ public class AvaHybridParserComponent extends HybridParserComponent {
     return output;
   }
 
+  //TODO: not sure if any of this is relevant anymore for smarter "social" setup
   private Utterance applyContextToOutput(Utterance utterance) {
     if (utterance.getSemantics() == null) {
       return utterance;
@@ -145,6 +146,14 @@ public class AvaHybridParserComponent extends HybridParserComponent {
 
     // If semantics are taskName, then just return. Do not cache
     if (utterance.getSemantics() != null && utterance.getSemantics().getName().equals("taskName")) {
+      return;
+    }
+
+    // TODO: where should general mechanism for this live? "Social" LLM version - do not want to cache any parses
+    //  targeting "focused context template population" scripts. Currently, doing so and hitting these cache targets
+    //  would discard relevant pre-validation conversation history which may include relevant information about target
+    //  template arguments
+    if (utterance.getSemantics() != null && (utterance.getSemantics().getName().equals("learnTour") || utterance.getSemantics().getName().equals("scheduleTask"))) {
       return;
     }
 

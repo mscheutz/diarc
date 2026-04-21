@@ -196,6 +196,12 @@ Output:{"translation":"Confirming I should revoke administrator privileges from 
 #
 Input:QUESTION(ava,%addressee,[mean(%addressee,offContextSubmission())],{})
 Output:{"translation":"Are you trying to pause our current task to give me a separate instruction?"}
+#
+Input:QUESTION(ava,%addressee,[mean(webapp,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location),and(playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
+Output:{"translation":"Confirming I should save a tour action under the name example tour with the following path: I start at example location A, where I will say "welcome". Then I will go to example location B and play example video A. Finally I will go to example location C and say "that concludes the tour"?"}
+#
+Input:QUESTION(ava,%addressee,[mean(webapp,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location,exampleLocationD:location),and(sit(ava),stand(ava),sit(ava))))],{})
+Output:{"translation":"Confirming I should save a tour action under the name example tour where I say "welcome" at location A and then go to example locations B, C, and D where I will alternate sitting and standing?"}
 ##
 The interaction history between the system \"assistant\" and the human \"user\" leading up to this output request is contained below. You may use the history to modify and contextualize your translation of the supplied form. CHAT HISTORY:
 
@@ -207,10 +213,6 @@ Also possibly relevant to your translation is the current goal state of the syst
 When generating your translation, adapt the phrasing of it to fit well with the recent CHAT HISTORY if it seems relevant. You may also replace pronouns referring to entities defined in the CHAT HISTORY or current goal state if it would make the intent of your translation clearer. Examples of cases where it is important to take note of the existing context to modify output are as follows:
 
 - offContextSubmission: rephrase the example translation to replace mention of the "current task" with explicit reference the current task described in the GOAL STATE.
-
-- cancelSystemGoals: rephrase the example translation to replace mention of the "current task" with explicit reference the current task described in the GOAL STATE.
-
-- suspendSystemGoalsBlocking: rephrase the example translation to replace mention of the "current task" with explicit reference the current task described in the GOAL STATE.
 
 - abort: rephrase the example translation to explicitly reference the question from the CHAT HISTORY which the user intends not to answer.
 

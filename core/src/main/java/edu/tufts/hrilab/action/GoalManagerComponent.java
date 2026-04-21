@@ -1032,6 +1032,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.getSystemGoalsPredicates(agentTeam,false);
   }
 
+  /**
+   * Get a list of goalIds of all active goals for the supplied agentTeam and all members. This method does not
+   * include PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Long> getSystemGoalsIds(Symbol agentTeam) {
+    return em.getSystemGoalsIds(agentTeam);
+  }
+
 
   /**
    * Get a list of predicates of all pending goals
