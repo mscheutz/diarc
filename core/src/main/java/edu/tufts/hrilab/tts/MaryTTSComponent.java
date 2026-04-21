@@ -97,6 +97,12 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
   private int mixerID = -1;
   private boolean muteMics;
 
+  // Termux on Android has no javax.sound.sampled provider. Detect and route
+  // playback through paplay (pulseaudio CLI) instead.
+  private static final boolean IS_TERMUX =
+          System.getenv("PREFIX") != null
+          && System.getenv("PREFIX").startsWith("/data/data/com.termux");
+
   // boolean markers set by args flags
   private boolean saveToWav;
   private String markup;
@@ -416,6 +422,8 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
       if (saveToWav) {
         File f = new File(wavFilename);
         AudioSystem.write(ais, audioFileFormat.getType(), f);
+      } else if (IS_TERMUX) {
+        playViaShell(ais, audioFileFormat.getType(), wait);
       } else {
         Clip playbackClip = null;
 
@@ -474,6 +482,37 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
     }
   }
 
+  // paplay volume: 0..65536 = 0..100%. Mirrors Clip MASTER_GAIN behavior at init.
+  private int paplayVolume() {
+    return (int) Math.round(65536 * Math.max(0f, Math.min(1f, volume)));
+  }
+
+  /**
+   * Write an AudioInputStream to a temp WAV, play it via paplay, optionally wait.
+   * Used on Termux where javax.sound.sampled has no output provider.
+   */
+  private boolean playViaShell(AudioInputStream src, AudioFileFormat.Type type, boolean wait) {
+    File tmp = null;
+    try {
+      tmp = File.createTempFile("diarc-tts-", ".wav");
+      AudioSystem.write(src, type, tmp);
+      ProcessBuilder pb = new ProcessBuilder("paplay", "--volume=" + paplayVolume(), tmp.getAbsolutePath());
+      pb.redirectErrorStream(true);
+      Process p = pb.start();
+      if (wait) {
+        p.waitFor();
+      }
+      return true;
+    } catch (Exception e) {
+      log.error("paplay shell playback failed", e);
+      return false;
+    } finally {
+      if (tmp != null && wait) {
+        tmp.delete();
+      }
+    }
+  }
+
   @TRADEService
   public void playAudioClip(String path) {
     speaking = true;
@@ -483,6 +522,12 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
       log.info("[playAudioClip] playing audio clip at path: " + path);
       File audioFile = new File(path);
       ais = AudioSystem.getAudioInputStream(audioFile);
+
+      if (IS_TERMUX) {
+        playViaShell(ais, AudioFileFormat.Type.WAVE, true);
+        speaking = false;
+        return;
+      }
 
       Clip playbackClip = null;
 

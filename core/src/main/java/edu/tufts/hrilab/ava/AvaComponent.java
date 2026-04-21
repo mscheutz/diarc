@@ -1429,16 +1429,35 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     // --asr_mode: 1 == local, 2 == remote
     // --endpoint: http://<ip>:5000/
     String home = getProperty("user.home");
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
     // moonshine base cpu
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+    // On Termux the python venv lives inside a proot-distro Ubuntu rootfs and
+    // audio routes through pulseaudio over TCP. Invoke through proot-distro
+    // instead of calling the venv python directly.
+    ProcessBuilder processBuilder;
+    boolean isTermux = System.getenv("PREFIX") != null
+            && System.getenv("PREFIX").startsWith("/data/data/com.termux");
+    if (isTermux) {
+      processBuilder = new ProcessBuilder(
+              "proot-distro", "login", "ubuntu",
+              "--bind", home + ":" + home,
+              "--", "env",
+              "HOME=" + home,
+              "PULSE_SERVER=tcp:127.0.0.1:4713",
+              home + "/.diarc/python/ww/venv/bin/python",
+              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+    } else {
+      processBuilder = new ProcessBuilder(
+              home + "/.diarc/python/ww/venv/bin/python",
+              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+    }
 
     // fasterwhisper small gpu
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
 
     // remote fasterwhisper small gpu
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--use_faster_whisper","--asr_mode","2","--endpoint", "http://localhost:5000/");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--use_faster_whisper","--asr_mode","2","--endpoint", "http://localhost:5000/");
 
     //********If haven't updated ww env and script, use the below*******
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
@@ -1616,7 +1635,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void waitForReadyAck() {
     String home = getProperty("user.home");
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();

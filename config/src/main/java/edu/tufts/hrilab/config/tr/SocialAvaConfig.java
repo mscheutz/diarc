@@ -124,7 +124,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    String maryTTSArgs = " -female -volume 0.4 -showMixers";
+    String maryTTSArgs = " -female -volume 1.0 -showMixers";
     if (!speakerId.isEmpty()) {
       maryTTSArgs += " -matchMixer " + speakerId;
     }
