@@ -263,6 +263,7 @@ import java.lang.String;
     Predicate !indirectSemantics;
     Predicate !suppSemantics;
     java.lang.Integer !indirectSemanticsSize;
+    Boolean !validated = op:invokeMethod(?utterance,"isValidated");
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
@@ -277,7 +278,7 @@ import java.lang.String;
 
     // handle direct semantics
     // has the form "semantics(boundOption1, boundOption2, ...)"
-    act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct);
+    act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct, !validated);
 
     // handle indirect semantics
     // has the form "indirectSemantics(semantics(boundOption1, boundOption2, ...), semantics(...),...)"
@@ -287,7 +288,7 @@ import java.lang.String;
     Predicate !currIndirectSemantics;
     for (!i=0; !i lt !indirectSemanticsSize; !i ++) {
       !currIndirectSemantics = op:invokeMethod(!indirectSemantics, "get", !i);
-      act:handleSemantics(!speaker, !addressee, !currIndirectSemantics, !suppSemantics, indirect);
+      act:handleSemantics(!speaker, !addressee, !currIndirectSemantics, !suppSemantics, indirect, !validated);
     }
 }
 
