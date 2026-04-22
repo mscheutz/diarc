@@ -263,7 +263,7 @@ import java.lang.String;
     Predicate !indirectSemantics;
     Predicate !suppSemantics;
     java.lang.Integer !indirectSemanticsSize;
-    Boolean !validated = op:invokeMethod(?utterance,"isValidated");
+    java.lang.Boolean !validated = op:invokeMethod(?utterance,"isValidated");
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 

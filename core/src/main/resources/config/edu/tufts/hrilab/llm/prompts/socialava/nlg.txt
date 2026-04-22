@@ -93,70 +93,70 @@ Description: The specification of a 'kiosk goal' configuration. ?actionPredicate
 When performing you task, output your response in the format {"translation":"<your_translation>"}. Examples of this task being performed correctly are as follows:
 ###
 #
-Input:REPLY(ava,%addressee,added(scheduled(say(ava,"Welcome to our office!"),start(15-00-00),period(1,hours))),{})
+Input:REPLY(ava,%user,added(scheduled(say(ava,"Welcome to our office!"),start(15-00-00),period(1,hours))),{})
 Output:{"translation":"I have added a new scheduled task to say "Welcome to our office!" starting at 3:00 p.m., repeating every 1 hour"}
 #
-Input:REPLY(ava,%addressee,ack(okay),{})
+Input:REPLY(ava,%user,ack(okay),{})
 Output:{"translation":"okay"}
 #
-Input:REPLY(ava,%addressee,scheduled(escortFromLocationToLocation(ava,patient,reception:location,chair 1:location),period(2,hours)),{})
+Input:REPLY(ava,%user,scheduled(escortFromLocationToLocation(ava,patient,reception:location,chair 1:location),period(2,hours)),{})
 Output:{"translation":"escorting the patient from reception to chair 1 is scheduled to occur every 2 hours"}
 #
-Input:REPLY(ava,%addressee,added(scheduled(stand(ava),start(20-00-00))),{})
+Input:REPLY(ava,%user,added(scheduled(stand(ava),start(20-00-00))),{})
 Output:{"translation":"I have scheduled myself to stand at 8:00 p.m."}
 #
-Input:REPLY(ava,%addressee,cannot(goToLocation(ava,lab),because(not(known(lab)))),{})
+Input:REPLY(ava,%user,cannot(goToLocation(ava,lab),because(not(known(lab)))),{})
 Output:{"translation":"I don't have a location saved under the name lab, so I can't go there"}
 #
-Input:REPLY(ava,%addressee,cannot(learnNewTask(ava),because(not(wasAnswered(myQuestion)))),{})
+Input:REPLY(ava,%user,cannot(learnNewTask(ava),because(not(wasAnswered(myQuestion)))),{})
 Output:{"translation":"I failed learning a task because my question wasn't answered"}
 #
-Input:REPLY(ava,%addressee,cannot(handleSemantics(ava,location(desk beta)),because(not(know(ava,how(handled(ava,ava,location(desk beta),direct)))))),{})
+Input:REPLY(ava,%user,cannot(handleSemantics(ava,location(desk beta)),because(not(know(ava,how(handled(ava,ava,location(desk beta),direct)))))),{})
 Output:{"translation":"Sorry, I don't know where to apply the specification of desk beta"}
 #
-Input:REPLY(ava,%addressee,cannot(handleReply(ava,abort(question)),because(noMatchingQuestionWasAsked)),{})
+Input:REPLY(ava,%user,cannot(handleReply(ava,abort(question)),because(noMatchingQuestionWasAsked)),{})
 Output:{"translation":"Discarded"}
 #
-Input:REPLY(ava,%addressee,learnNewTask(ava),{})
+Input:REPLY(ava,%user,learnNewTask(ava),{})
 Output:{"translation":"I learn a new task"}
 #
-Input:REPLY(ava,%addressee,learnTour(ava),{})
+Input:REPLY(ava,%user,learnTour(ava),{})
 Output:{"translation":"I am learning a new tour"}
 #
-Input:REPLY(ava,%addressee,escortFromLocationToLocation(ava,%addressee,coffee maker:location,desk a:location),{})
+Input:REPLY(ava,%user,escortFromLocationToLocation(ava,%addressee,coffee maker:location,desk a:location),{})
 Output:{"translation":"I escort user from the coffee maker to desk a"}
 #
-Input:REPLY(ava,%addressee,scheduled(playVideo(ava),start(5,minutes),period(1,hours)),{})
+Input:REPLY(ava,%user,scheduled(playVideo(ava),start(5,minutes),period(1,hours)),{})
 Output:{"translation":"Play a video starting in 5 minutes, and every hour thereafter"}
 #
-Input:REPLY(ava,%addressee,cannot(goToLocation(ava,back door),because(not(at(ava,back door)))),{})
+Input:REPLY(ava,%user,cannot(goToLocation(ava,back door),because(not(at(ava,back door)))),{})
 Output:{"translation":"I failed navigating to the back door"}
 #
-Input:REPLY(ava,%addressee,scheduled(goHome(ava),period(16-30-00)),{})
+Input:REPLY(ava,%user,scheduled(goHome(ava),period(16-30-00)),{})
 Output:{"translation":"I am scheduled to dock every day at 4:30 p.m."}
 #
-Input:REPLY(ava,%addressee,scheduled(ava,goHome(ava),start(5,minutes),period(17-00-00)),{})
+Input:REPLY(ava,%user,scheduled(ava,goHome(ava),start(5,minutes),period(17-00-00)),{})
 Output:{"translation":"In 5 minutes I am scheduling myself to dock every day at 5:00 p.m."}
 #
-Input:REPLY(ava,%addressee,scheduled(goHome(ava),start(23-07-58),period(2,hours)),{})
+Input:REPLY(ava,%user,scheduled(goHome(ava),start(23-07-58),period(2,hours)),{})
 Output:{"translation":"I am set to dock at around 11:08 p.m., and every 2 hours thereafter"}
 #
-Input:REPLY(ava,%addressee,batteryLevel(50),{})
+Input:REPLY(ava,%user,batteryLevel(50),{})
 Output:{"translation":"I have 50 percent charge"}
 #
-Input:REPLY(ava,%addressee,[currentGoals(are(ava,active(goHomeAndChargeToPercent(ava,50.0))))],{})
+Input:REPLY(ava,%user,[currentGoals(are(ava,active(goHomeAndChargeToPercent(ava,50.0))))],{})
 Output:{"translation":"I am currently going home to charge until 50 percent battery"}
 #
-Input:REPLY(ava,person,how(ava,perform(greet people)),{})
+Input:REPLY(ava,%user,how(ava,perform(greet people)),{})
 Output:{"translation":"What are the steps to \"greet people\"?"}
 #
-Input:REPLY(ava,person,kioskGoal(goHomeAndCharge(ava),2700),{})
+Input:REPLY(ava,%user,kioskGoal(goHomeAndCharge(ava),2700),{})
 Output:{"translation":"The kiosk goal is to return to my dock and charge, after 45 minutes of inactivity"}
 #
-Input:REPLY(ava,person,and(learnedTourSequence(introductionguideexampletour),canAskToPerformBySaying(pleasePerform,introductionguideexampletour)),{})
+Input:REPLY(ava,%user,and(learnedTourSequence(introductionguideexampletour),canAskToPerformBySaying(pleasePerform,introductionguideexampletour)),{})
 Output:{"translation":"I have learned the new tour sequence; ask me to perform this by saying \"please perform introduction guide example tour\""}
 #
-Input:REPLY(ava,local_visitor,cannot(learnNewTask(ava),because(is(gerund(learnNewTask(ava)),adminGoal))),{})
+Input:REPLY(ava,%user,cannot(learnNewTask(ava),because(is(gerund(learnNewTask(ava)),adminGoal))),{})
 Output:{"translation":"Sorry, teaching an action requires administrator privileges"}
 #
 Input:REPLY(self,webapp,ack(sorry,error(ava,not(savedImage(test video)))),{})
@@ -165,22 +165,22 @@ Output:{"translation":"sorry, \"test video\" is not an image I have saved"}
 Input:REPLY(self,webapp,ack(sorry,error(ava,not(savedVideo(welcome image)))),{})
 Output:{"translation":"sorry, \"welcome image\" is not a video I have saved"}
 #
-Input:REPLY(ava,webapp,actionDescription(greetpeople(ava),steps()),{})
+Input:REPLY(ava,%user,actionDescription(greetpeople(ava),steps()),{})
 Output:{"translation":"The greet people action has no steps"}
 #
-Input:REPLY(ava,webapp,and(ack(okay),forgettingAbout(self,attemptedInstruction),letMeKnowHowICanFurtherAssistYou()),{})
+Input:REPLY(ava,%user,and(ack(okay),forgettingAbout(self,attemptedInstruction),letMeKnowHowICanFurtherAssistYou()),{})
 Output:{"translation":"Okay, I am discarding that instruction. Let me know how I can further assist you."}
 #
-Input:REPLY(ava,webapp,ack(okay,attempting(ava,goToLocation(ava,reception:location))),{})
+Input:REPLY(ava,%user,ack(okay,attempting(ava,goToLocation(ava,reception:location))),{})
 Output:{"translation":"Going to reception."}
 #
-Input:REPLY(ava,webapp,ack(okay,attempting(ava,follow(ava))),{})
+Input:REPLY(ava,%user,ack(okay,attempting(ava,follow(ava))),{})
 Output:{"translation":"Okay, following."}
 #
-Input:REPLY(ava,webapp,ack(okay,attempting(ava,sit(ava))),{})
+Input:REPLY(ava,%user,ack(okay,attempting(ava,sit(ava))),{})
 Output:{"translation":"Okay, sitting down."}
 #
-Input:REPLY(ava,webapp,ack(okay,attempting(ava,waitForDuration(ava,10))),{})
+Input:REPLY(ava,%user,ack(okay,attempting(ava,waitForDuration(ava,10))),{})
 Output:{"translation":"Okay, standing by for 10 seconds."}
 ###
 The chat history between the system \"assistant\" and the human \"user\" leading up to this output request is contained below. You may use the history to modify and contextualize your translation of the supplied form. CHAT HISTORY:

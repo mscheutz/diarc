@@ -6,214 +6,208 @@ The set of actions this agent can perform, which may be referenced in the output
 %instructNLGList
 ###
 General examples of this task being performed correctly are outlined below. When performing this task, the specific parameterization of the robot's output may change, but the general structure and outer values will be the same.
-Input:QUESTION(ava,%addressee,mean(%addressee,goToLocation(ava,?destination:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,goToLocation(ava,?destination:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should go to the ?destination location?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,reportBatteryLevel(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,reportBatteryLevel(ava)),{})
 Output:{"translation":"Did you mean to ask me what percent my battery is at?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,follow(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,follow(ava)),{})
 Output:{"translation":"Confirming I should follow you?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,say(ava,?words)),{})
+Input:QUESTION(ava,%user,mean(%user,say(ava,?words)),{})
 Output:{"translation":"Confirming I should say the phrase \'?words\"?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,stopFollow(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,stopFollow(ava)),{})
 Output:{"translation":"Confirming I should stop following you?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,playNextVideo(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,playNextVideo(ava)),{})
 Output:{"translation":"Confirming I should play a video on my screen?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,escortToLocation(ava,?name,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,escortToLocation(ava,?name,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should escort ?name to the ?destination location?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,escortFromLocationToLocation(ava,?name,?start:location,?destination:location)),{?start(VAR0:location),DEFINITE(VAR0:location),?destination(VAR1:location),DEFINITE(VAR1:location)})
+Input:QUESTION(ava,%user,mean(%user,escortFromLocationToLocation(ava,?name,?start:location,?destination:location)),{?start(VAR0:location),DEFINITE(VAR0:location),?destination(VAR1:location),DEFINITE(VAR1:location)})
 Output:{"translation":"Confirming I should escort ?name from ?start to ?destination"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,saveLocation(ava,?name)),{})
+Input:QUESTION(ava,%user,mean(%user,saveLocation(ava,?name)),{})
 Output:{"translation":"Confirming I should save this location as ?name"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,saveLocationsToFile(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,saveLocationsToFile(ava)),{})
 Output:{"translation":"Confirming I should back up all my saved locations?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,sit(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,sit(ava)),{})
 Output:{"translation":"Confirming I should lower my screen?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,stand(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,stand(ava)),{})
 Output:{"translation":"Confirming I should raise my screen?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,deliver(ava,?objectName, ?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,deliver(ava,?objectName, ?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should deliver ?objectName to location ?location"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,goHome(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,goHome(ava)),{})
 Output:{"translation":"Confirming I should return to the dock to charge?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,dock(ava,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,dock(ava,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should dock at ?destination?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,scheduleTaskl(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,scheduleTaskl(ava)),{})
 Output:{"translation":"Confirming you want to schedule a new task?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,modifyScheduledGoal(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,modifyScheduledGoal(ava)),{})
 Output:{"translation":"Confirming you want to modify the timing of an existing scheduled goal?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,describeScheduledGoals(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,describeScheduledGoals(ava)),{})
 Output:{"translation":"Confirming I should list all of my scheduled tasks"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,describeCurrentGoal(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,describeCurrentGoal(ava)),{})
 Output:{"translation":"Confirming I should report what I am currently doing?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,describePendingGoals(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,describePendingGoals(ava)),{})
 Output:{"translation":"Confirming I should report my currently pending tasks?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,cancelSystemGoals(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,cancelSystemGoals(ava)),{})
 Output:{"translation":"Confirming I should discard my current task?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,suspendSystemGoalsBlocking(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,suspendSystemGoalsBlocking(ava)),{})
 Output:{"translation":"Confirming I should pause my current task?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,resumeSystemGoals(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,resumeSystemGoals(ava)),{})
 Output:{"translation":"Confirming I should continue with my paused task?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,cancelAllScheduledGoals(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,cancelAllScheduledGoals(ava)),{})
 Output:{"translation":"Confirming I should cancel all of my scheduled goals?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,cancelScheduledGoal(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,cancelScheduledGoal(ava)),{})
 Output:{"translation":"Confirming you want to cancel a particular scheduled goal?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,learnNewTask(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,learnNewTask(ava)),{})
 Output:{"translation":"Confirming that you will begin teaching me how to perform a new action?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,endActionLearning(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,endActionLearning(ava)),{})
 Output:{"translation":"Confirming that you are done teaching me a new action?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,describeAllKnownLocations(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,describeAllKnownLocations(ava)),{})
 Output:{"translation":"Confirming I should list all of my saved locations?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,val(yes)),{})
+Input:QUESTION(ava,%user,mean(%user,val(yes)),{})
 Output:{"translation":"Are you saying yes?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,val(no)),{})
+Input:QUESTION(ava,%user,mean(%user,val(no)),{})
 Output:{"translation":"Are you saying no?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,location(?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,location(?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Are you answering with the location ?location?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,location(none)),{})
+Input:QUESTION(ava,%user,mean(%user,location(none)),{})
 Output:{"translation":"Confirming that you're done supplying locations?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,taskPredicate(goHome(ava)),{}))
+Input:QUESTION(ava,%user,mean(%user,taskPredicate(goHome(ava)),{}))
 Output:{"translation":"Confirming you are specifying going home?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,taskPredicate(say(ava,?words)),{}))
+Input:QUESTION(ava,%user,mean(%user,taskPredicate(say(ava,?words)),{}))
 Output:{"translation":"Confirming you are specifying to say \"?words\"?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,relativeTime(?number, ?type)),{})
+Input:QUESTION(ava,%user,mean(%user,relativeTime(?number, ?type)),{})
 Output:{"translation":"Confirming you are indicating ?number ?type from now?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,absoluteTime(?number, ?type)),{})
+Input:QUESTION(ava,%user,mean(%user,absoluteTime(?number, ?type)),{})
 Output:{"translation":"Confirming you are specifying ?number ?type?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,timingOf(execution)),{})
+Input:QUESTION(ava,%user,mean(%user,timingOf(execution)),{})
 Output:{"translation":"Confirming you are indicating the timing of next execution?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,timingOf(interval)),{})
+Input:QUESTION(ava,%user,mean(%user,timingOf(interval)),{})
 Output:{"translation":"Confirming you are indicating the time between executions?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,abort(question)),{})
+Input:QUESTION(ava,%user,mean(%user,abort(question)),{})
 Output:{"translation":"Confirming to forget about my last question?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,taskName(?name)),{})
+Input:QUESTION(ava,%user,mean(%user,taskName(?name)),{})
 Output:{"translation":"Confirming you want it to be called ?name"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,option(?number)),{})
+Input:QUESTION(ava,%user,mean(%user,option(?number)),{})
 Output:{"translation":"Confirming option ?number?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,actionType(?type)),{})
+Input:QUESTION(ava,%user,mean(%user,actionType(?type)),{})
 Output:{"translation":"Confirming you are indicating ?type actions?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,amount(?num)),{})
+Input:QUESTION(ava,%user,mean(%user,amount(?num)),{})
 Output:{"translation":"Confirming you meant ?num?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,reportTaughtActions(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,reportTaughtActions(ava)),{})
 Output:{"translation":"Confirming I should list my learned actions?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,forgetTaughtAction(ava,follow(ava))),{})
+Input:QUESTION(ava,%user,mean(%user,forgetTaughtAction(ava,follow(ava))),{})
 Output:{"translation":"Confirming I should forget how to follow you?"}
 ##
 In all future examples of this task you will not be given robot output with variables (inner words starting with ?). These variables will be replaced with input values from the user. Your output should reflect this and include the user values. For example:
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,goToLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,[mean(%user,goToLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should go to the ?location location?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,learnTour(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,learnTour(ava))],{})
 Output:{"translation":"Confirming I should learn a new tour sequence?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,reportKioskSettings(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,reportKioskSettings(ava))],{})
 Output:{"translation":"Confirming I should tell you the current kiosk settings?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,updateKioskTimeout(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,updateKioskTimeout(ava))],{})
 Output:{"translation":"Confirming I should update the kiosk timeout duration?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,setKioskTimeout(ava,600,seconds))],{})
+Input:QUESTION(ava,%user,[mean(%user,setKioskTimeout(ava,600,seconds))],{})
 Output:{"translation":"Confirming I should set the kiosk timeout to 10 minutes?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,setKioskModeEnabled(ava,false))],{})
+Input:QUESTION(ava,%user,[mean(%user,setKioskModeEnabled(ava,false))],{})
 Output:{"translation":"Confirming I should disable kiosk mode?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,updateKioskAction(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,updateKioskAction(ava))],{})
 Output:{"translation":"Confirming I should update the configured kiosk action?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,playNextVideo(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,playNextVideo(ava))],{})
 Output:{"translation":"Confirming I should play the next video in the rotation?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,playNextVideoAtLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,[mean(%user,playNextVideoAtLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should play the next video in the rotation at ?location?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,playSpecificVideo(ava,?videoName))],{})
+Input:QUESTION(ava,%user,[mean(%user,playSpecificVideo(ava,?videoName))],{})
 Output:{"translation":"Confirming I should play the ?videoName video?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,playSpecificVideoAtLocation(ava,?videoName,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,[mean(%user,playSpecificVideoAtLocation(ava,?videoName,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should play the ?videoName video at ?location?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,setVideoVolume(?volume))],{})
+Input:QUESTION(ava,%user,[mean(%user,setVideoVolume(?volume))],{})
 Output:{"translation":"Confirming to set video volume to ?volume percent?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,waitForDuration(?seconds))],{})
+Input:QUESTION(ava,%user,[mean(%user,waitForDuration(?seconds))],{})
 Output:{"translation":"Confirming I should wait for ?seconds seconds?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,urgentPriority(goToLocation(ava,?destination:location))),{?location(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%user,mean(%user,urgentPriority(goToLocation(ava,?destination:location))),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should go to the ?destination location with high assigned priority?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,cancelTaskInQueueByIndex(0))],{})
+Input:QUESTION(ava,%user,[mean(%user,cancelTaskInQueueByIndex(0))],{})
 Output:{"translation":"Confirming I should not perform my next task?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,enableAdminMode())],{})
+Input:QUESTION(ava,%user,[mean(%user,enableAdminMode())],{})
 Output:{"translation":"Confirming I should grant administrator privileges to users speaking directly to me?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,disableAdminMode())],{})
+Input:QUESTION(ava,%user,[mean(%user,disableAdminMode())],{})
 Output:{"translation":"Confirming I should revoke administrator privileges from users speaking directly to me?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,offContextSubmission())],{})
+Input:QUESTION(ava,%user,[mean(%user,offContextSubmission())],{})
 Output:{"translation":"Are you trying to pause our current task to give me a separate instruction?"}
 #
-Input:QUESTION(ava,%addressee,[mean(webapp,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location),and(playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
+Input:QUESTION(ava,%user,[mean(%user,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location),and(playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
 Output:{"translation":"Confirming I should save a tour action under the name example tour with the following path: I start at example location A, where I will say "welcome". Then I will go to example location B and play example video A. Finally I will go to example location C and say "that concludes the tour"?"}
 #
-Input:QUESTION(ava,%addressee,[mean(webapp,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location,exampleLocationD:location),and(sit(ava),stand(ava),sit(ava))))],{})
+Input:QUESTION(ava,%user,[mean(%user,submitTourDefinition(ava,example_tour,exampleLocationA:location,say(ava,"welcome"),and(exampleLocationB:location,exampleLocationC:location,exampleLocationD:location),and(sit(ava),stand(ava),sit(ava))))],{})
 Output:{"translation":"Confirming I should save a tour action under the name example tour where I say "welcome" at location A and then go to example locations B, C, and D where I will alternate sitting and standing?"}
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,cancelGoal(%addressee,scheduleTask(%addressee)))],{})
+Input:QUESTION(ava,%user,[mean(%user,cancelGoal(%addressee,scheduleTask(%addressee)))],{})
 Output:{"translation":"Confirming I should stop scheduling this task?"}
 ##
 The interaction history between the system \"assistant\" and the human \"user\" leading up to this output request is contained below. You may use the history to modify and contextualize your translation of the supplied form. CHAT HISTORY:
 
 %chatHistoryAsString
-
-When generating your translation, adapt the phrasing of it to fit well with the recent CHAT HISTORY if it seems relevant. You may also replace pronouns referring to entities defined in the CHAT HISTORY or current goal state if it would make the intent of your translation clearer. Examples of cases where it is important to take note of the existing context to modify output are as follows:
-
-- offContextSubmission: rephrase the example translation to replace mention of the "current task" with explicit reference the current task described in the GOAL STATE.
-
-- abort: rephrase the example translation to explicitly reference the question from the CHAT HISTORY which the user intends not to answer.
 
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples.

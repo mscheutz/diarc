@@ -1068,9 +1068,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       semantics = replaceVarsWithDescriptors((Predicate)semantics, varMap);
     }
     currentContext.history.addToolMessage("The user has just informed you that your previous interpretation of their command " +
-            "represented by " + semantics + " was not what they intended to instruct. Use the recent user messages to " +
-            "determine one of two ways to proceed: 1. If the user's message includes additional information clarifying " +
-            "their original intention, then you may attempt an updated function call targeting the new intention. " +
+            "which resulted in your tool call represented by " + semantics + " was not what they intended to instruct. Use the last " +
+            "user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying " +
+            "their original intention, then you may update your definition with the new information and attempt another updated tool submission call. " +
             "2. Otherwise, please continue with your original task to resolve the misunderstanding. In this case, only " +
             "ask the user how or what to correct in one short sentence.", currentContext.toolCallIdUpForValidation);
 
@@ -1158,6 +1158,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     } else {
       promptVars.put("%chatHistoryAsString","<There is no relevant chat history>");
     }
+    promptVars.put("%user", user.getName());
     if (chatTemplates == null) {
       chatTemplates = this.chatTemplates.get("nlg");
     }
