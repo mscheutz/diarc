@@ -142,6 +142,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //protected abstract Prompt getNluSystemPrompt();
   //protected abstract Prompt getNlgSystemPrompt();
   //protected abstract Prompt getValidationSystemPrompt();
+  private Prompt goalTranslationPrompt = Prompts.getPrompt("socialava/goalPredToString");
 
   /**
    * Explicitly holding REPLY Tool set separate because they will conditionally be added to outgoing parse requests as
@@ -436,9 +437,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Symbol agent = parsing ? utterance.getAddressee() : utterance.getSpeaker();
     Symbol user = parsing ? utterance.getSpeaker() : utterance.getAddressee();
     if (parsing) {
-      promptVars.put("%worldState", getWorldStateString(agent));
-      //TODO: only include goal summary as architecture itk action rather than putting in prompts explicitly?
-      promptVars.put("%goals", getFullGoalsSummary(agent, false));
+      //promptVars.put("%worldState", getWorldStateString(agent));
+      //promptVars.put("%goals", getFullGoalsSummary(agent, false));
       promptVars.put("%questionList", getCurrentQuestionsString(agent));
       ChatCollection chatCollection = getChatCollection(user,agent);
       if (chatCollection != null) {
@@ -448,9 +448,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           promptVars.put("%toolUpForValidationDescription",chatContext.utteranceUpForValidation.getSemantics().toString());
         }
       }
-    } else {
-      promptVars.put("%goals", getFullGoalsSummary(agent,false));
     }
+    //else {
+    //  promptVars.put("%goals", getFullGoalsSummary(agent,false));
+    //}
     promptVars.put("%addressee", agent.getName());
   }
 
@@ -652,7 +653,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Method for handling Completion responses containing Tool calls, 3 main cases:
    *  - Base: Return an Utterance populated with the Tool's underlying semantics. In the case of an external cache hit,
    *          the context will be discarded and handleValidatedToolResponse will be called from the corresponding dialogue history update.
-   *  - LLM ITK - will return semantics for goal without validation (Underlying semantics should match a SKIPPENDING priority goal which calls {@link #addToolResponse(Symbol, Symbol, String)})
+   *  - LLM ITK - will return semantics for goal without validation (Underlying semantics should match a SKIPPENDING priority goal which calls {@link #addToolResponse(Symbol, Symbol, String, String)})
    *  - Invalid parse - Add a system error message to the Chat, call the completion again, and return a text response to the user with the result
    *  - *NEW* Stand-in tool(s) for text responses - Experimenting targeting a specific tool to give text responses rather than using
    *      handleTextResponse above with promising initial success. Allowing the LLM to target text responses or tool calls was giving it a
@@ -1219,7 +1220,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           String gid = matcher.group(3);
           try {
             GoalInfo goalInfo = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalInfo").argTypes(Long.class)).call(GoalInfo.class, Long.valueOf(gid));
-            Predicate goalPred = goalInfo.goal;
+            Predicate goalPred = replaceReferencesInSemantics(goalInfo.goal);
             String updatedString = inputString.replaceAll(patternString, command+"(" + actor + "," + goalPred.toString() + ")");
             Symbol updatedSymbol = Factory.createSymbol(updatedString);
             if (updatedSymbol != null) {
@@ -1378,6 +1379,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
             if (output != null) {
               // Need to store utterance whose semantics we need to update in order for proper side effect to occur in the NLU pipeline
+              // Reset validated state - don't want to carry over from originalUtterance
+              output.setIsValidated(false);
               contextTransferResponseUtterances.put(cid, output);
               return output;
             }
@@ -1953,44 +1956,146 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   ////TODO: don't want to generate each time?
   @TRADEService
   public String getFullGoalsSummary(Symbol agent, boolean offContext) {
-    List<Predicate> currentGoalPredicate = getCurrentGoals(agent);
+    List<Predicate> currentGoalPredicates = getCurrentGoals(agent);
     List<Predicate> pendingGoalPredicates = getPendingGoals(agent);
     List<Predicate> scheduledGoals = getScheduledGoals(agent);
+    //TODO: call endpoint to transform all of the predicates to String descs
+    int numCurrent = currentGoalPredicates.size();
+    numCurrent = numCurrent == 0 ? 0 : 1; //TODO: handle multiple current if not using queue
+    int numPending = pendingGoalPredicates.size();
+    int numScheduled = scheduledGoals.size();
+    //currentGoalPredicates.addAll(pendingGoalPredicates);
+    //currentGoalPredicates.addAll(scheduledGoals);
+    List<String> translatedGoalList = new ArrayList<>();
+    if (numCurrent + numPending + numScheduled != 0) {
+      //String modifiedPromptBuilder = getNlgSystemPrompt().getText() + "\n\n ---------------------- \n Please perform the above stated task for each input present" +
+      //        "in the supplied user message. Generate and list your translations in the format the inputs are present, in other" +
+      //        "words:\nOutput 1:<translation_1_json_here>\nOutput 2:<translation_2_json_here>\n...";
+      //Chat goalGenChat = new Chat(modifiedPromptBuilder);
+      Chat goalGenChat = new Chat(goalTranslationPrompt.apply(promptVars));
+      StringBuilder goalListString = new StringBuilder();
 
-    StringBuilder stringBuilder = new StringBuilder("At any time, you may have up to one current task, an arbitrary amount of upcoming tasks pending completion of the current task, and an arbitrary amount of scheduled tasks which will be submitted to the pending task queue at certain times. The current task may be active or temporarily suspended.\n");
-
-    if (!currentGoalPredicate.isEmpty()) {
-      if (offContext && !pendingGoalPredicates.isEmpty()) {
-        //TODO: explicitly point to the superseded goal, not just the next one?
-        stringBuilder.append("You are currently conversing with the user in order for them to submit a new instruction. This has temporarily suspended the \"current task\", which will continue upon completion of an instruction submission. That task is: ").append(pendingGoalPredicates.get(0)).append("\n");
-      } else {
-        stringBuilder.append("Your current task is: ").append(replaceReferencesInSemantics(currentGoalPredicate.get(0)).toString()).append("\n");
+      if (numCurrent != 0) {
+        String goalString;
+        if (currentGoalPredicates.get(0).hasArgs()) {
+          goalString = currentGoalPredicates.get(0).get(0).isPredicate() ?
+                  replaceReferencesInSemantics((Predicate) currentGoalPredicates.get(0).get(0)).toString() :
+                  currentGoalPredicates.get(0).get(0).toString();
+        } else {
+          goalString = replaceReferencesInSemantics(currentGoalPredicates.get(0)).toString();
+        }
+        goalListString.append("\nInput 1: ").append(goalString);
       }
-    } else {
-      stringBuilder.append("<You have no current task>\n");
+
+      if (numPending != 0) {
+        for (int i = 0; i < numPending; i++) {
+          goalListString.append("\nInput ").append(i+2).append(": ").append(replaceReferencesInSemantics(pendingGoalPredicates.get(i)));
+        }
+      }
+
+      if (numScheduled != 0) {
+        int buffer = numCurrent == 0 ? 1 : 2 + numPending;
+        for (int i = 0; i < numScheduled; i++) {
+          goalListString.append("\nInput ").append(i+buffer).append(": ").append(replaceReferencesInSemantics(scheduledGoals.get(i)));
+        }
+      }
+
+      goalGenChat.addUserMessage(goalListString.toString());
+      Completion response = callChatEndpoint(goalGenChat);
+      if (response == null) {
+        log.error("[getFullGoalsSummary] received null completion response");
+        return "There was an error with losing connection while making this request. Please try to make this call again.";
+      }
+
+      String responseString = response.getText().trim();
+      Pattern outputPattern = Pattern.compile(".*?\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*?", Pattern.DOTALL);
+      Matcher m = outputPattern.matcher(responseString);
+      while (m.find()) {
+        translatedGoalList.add(m.group(1));
+      }
+      if (translatedGoalList.isEmpty()) {
+        //TODO: better recovery
+        log.error("[getFullGoalsSummary] unable to parse completion response");
+        return "There was an error retrieving your task list";
+      } else if (translatedGoalList.size() != numPending + numScheduled + numCurrent) {
+        //TODO: better recovery
+        log.error("[getFullGoalsSummary] unexpected number of goal translations parsed from completion response");
+        return "There was an error retrieving your task list";
+      }
     }
 
-    stringBuilder.append("Your pending tasks are:\n");
-    if (offContext && !pendingGoalPredicates.isEmpty()) {
-      pendingGoalPredicates.remove(0);
+    StringBuilder stringBuilder = new StringBuilder("At any point in time, you may have been instructed to perform various" +
+            " tasks by different users, but cannot do everything all at once. As a result, you keep track of the list of" +
+            "things you need to do and order them according to a priority value. By default, this is the order in which the tasks" +
+            "are submitted. You do not currently have the capability to change priority of submitted tasks, but will be able" +
+            "to soon in a future update. Because you cannot perform multiple tasks at once, there will be one task which" +
+            "you are actively focused on. This task can be referred to as the \"active task\", \"suspended task\", \"current task\"," +
+            "or simply \"what you are currently doing\". As stated, this task can be temporarily \"suspended\". In this state, that task" +
+            "will remain as your current focus, and you will wait until it is resumed or canceled to perform any other tasks, even if" +
+            "others are present. The rest of the list of things you need to do can be referred to as your \"pending tasks\", " +
+            "\"upcoming tasks\", or simply \"what you still need to do\" after your current task. There is no limit to the amount of" +
+            "pending tasks you can have at once. Finally, there are also \"scheduled tasks\". These are tasks which are scheduled" +
+            "to occur at some specific point in the future, optionally on a repeating interval, but are not currently on" +
+            "the active or pending list of tasks to perform. When the scheduled time arrives, the associated task will be added to the" +
+            " list of things you must do.\n");
+
+    if (!currentGoalPredicates.isEmpty()) {
+      //if (offContext && !pendingGoalPredicates.isEmpty()) {
+      //  //TODO: explicitly point to the superseded goal, not just the next one?
+      //  stringBuilder.append("You are currently conversing with the user in order for them to submit a new instruction. " +
+      //          "This has temporarily suspended the \"current task\", which will continue upon completion of an instruction" +
+      //          " submission. That task is: ").append(pendingGoalPredicates.get(0)).append("\n");
+      //} else {
+        if (currentGoalPredicates.get(0).hasArgs()) {
+          String statusString = currentGoalPredicates.get(0).getName();
+          //String goalString = currentGoalPredicates.get(0).get(0).isPredicate() ?
+          //        replaceReferencesInSemantics((Predicate) currentGoalPredicates.get(0).get(0)).toString() :
+          //        currentGoalPredicates.get(0).get(0).toString();
+          //stringBuilder.append("Your \"current task\" is ").append(statusString).append(": ").append(goalString).append("\n");
+          stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is ").append(statusString).append(": ").append(translatedGoalList.get(0)).append("\n");
+        } else {
+          //stringBuilder.append("Your \"current task\" is: ").append(replaceReferencesInSemantics(currentGoalPredicates.get(0)).toString()).append("\n");
+          stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is: ").append(translatedGoalList.get(0)).append("\n");
+        }
+      //}
+    } else {
+      stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is: \n<You have no current task>\n");
     }
+
+    stringBuilder.append("Your list of \"pending tasks\"/\"upcoming tasks\"/\"next tasks\" are:\n");
+    //if (offContext && !pendingGoalPredicates.isEmpty()) {
+    //  pendingGoalPredicates.remove(0);
+    //}
     if (pendingGoalPredicates.isEmpty()) {
       stringBuilder.append("<You have no pending tasks>\n");
     } else {
-      for (Predicate pgPred : pendingGoalPredicates) {
-        stringBuilder.append(replaceReferencesInSemantics(pgPred)).append("\n");
+      //for (Predicate pgPred : pendingGoalPredicates) {
+      //  stringBuilder.append(replaceReferencesInSemantics(pgPred)).append("\n");
+      //}
+      for (int i = 0; i < numPending; i++) {
+        stringBuilder.append(translatedGoalList.get(i+1)).append("\n");
       }
     }
 
+    stringBuilder.append("Your list of \"scheduled tasks\" are:\n");
     if (scheduledGoals.isEmpty()) {
-      stringBuilder.append("Your scheduled tasks are:\n");
       stringBuilder.append("<You have no scheduled tasks>\n");
     } else {
-      stringBuilder.append("Scheduled goals may contain the following information in order: The underlying task to be submitted, the start time to begin submitting the underlying task, the interval at which to keep resubmitting the task, and the end time to stop resubmitting the task. A missing period and end time indicates that the task will only be submitted once. Your scheduled tasks are:\n");
-      for (Predicate sg : scheduledGoals) {
-        stringBuilder.append(replaceReferencesInSemantics(sg)).append("\n");
+      //stringBuilder.append("Scheduled goals may contain the following information in order: The underlying task to be submitted, the start time to begin submitting the underlying task, the interval at which to keep resubmitting the task, and the end time to stop resubmitting the task. A missing period and end time indicates that the task will only be submitted once. Your scheduled tasks are:\n");
+      //for (Predicate sg : scheduledGoals) {
+      //  stringBuilder.append(replaceReferencesInSemantics(sg)).append("\n");
+      //}
+      for (int i = 0; i < numScheduled; i++) {
+        stringBuilder.append(translatedGoalList.get(i+numCurrent+numPending)).append("\n");
       }
     }
+    //Doesn't seem to do anything - may need to just split calls for retrieving current vs pending vs scheduled vs all tasks
+    stringBuilder.append("-------\nOnly respond to the user with information relevant to what they actually asked about " +
+            "which caused you to trigger the getCurrentPendingScheduledGoalInformation tool call. For example: asking what" +
+            "you are doing should cause you to only say what your current task is, being asked how many scheduled goals you have" +
+            "should cause you to only answer with the number of scheduled goals, and being asked what you have to do after your" +
+            "current task should cause you to only begin listing your pending tasks. Do not list more than 5 tasks at once" +
+            "without being asked to list more.");
     return stringBuilder.toString();
   }
 
@@ -2656,13 +2761,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       } else {
         if (refTypes.contains(arg.getType())) {
           Map<Symbol, List<Term>> refs = new HashMap<>();
-          try {
-            refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
-            if (refs.get(arg).size() == 1) {
-              transformedArgs.add(Factory.createSymbol(refs.get(arg).get(0).getName(),refs.get(arg).get(0).get(0).getType()));
+          Symbol transformedArg = null;
+          int maxAttempts = 3;
+          for (int i=0; i<maxAttempts;i++) {
+            try {
+              refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
+              if (refs.get(arg).size() == 1) {
+                transformedArg = Factory.createSymbol(refs.get(arg).get(0).getName(), refs.get(arg).get(0).get(0).getType());
+                //transformedArgs.add(Factory.createSymbol(refs.get(arg).get(0).getName(), refs.get(arg).get(0).get(0).getType()));
+              }
+            } catch (TRADEException e) {
+              log.warn("[generateREG] {}", arg, e);
+              //transformedArgs.add(arg);
             }
-          } catch (TRADEException e) {
-            log.warn("[generateREG] {}", arg, e);
+          }
+          if (transformedArg != null) {
+            transformedArgs.add(transformedArg);
+          } else {
             transformedArgs.add(arg);
           }
         } else {
@@ -3189,8 +3304,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "resetConversation":
         case "learnTour":
         case "scheduleTask":
-        case "submitTourDefinition":
-        case "submitScheduledTaskDefinition":
+        //case "submitTourDefinition":
+        //case "submitScheduledTaskDefinition":
+        //case "scheduled":
+        //// Set of actions which should perhaps be "reduced ack"?
+        //case "escortToLocation":
           return true;
         default:
           return false;

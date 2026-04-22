@@ -177,7 +177,7 @@ public class DialogueComponent extends DiarcComponent {
     for (int i = history.size()-1;i>=0;i--) {
       // With unbound dialogue history size, don't want to traverse entire history? What's a safe number of messages
       //  to check back through?
-      if (i > 50 || history.get(i).getUid() == utt.getUid()) {
+      if (i < history.size()-50 || history.get(i).getUid() == utt.getUid()) {
         newUtterance = false;
         break;
       }

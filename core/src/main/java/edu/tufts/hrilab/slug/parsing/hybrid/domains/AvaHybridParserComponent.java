@@ -138,6 +138,12 @@ public class AvaHybridParserComponent extends HybridParserComponent {
   }
 
   @Override
+  public void cacheLLMParse(Utterance utterance) {
+    if (cacheLLM) {
+      cacheParse(utterance);
+    }
+  }
+  @Override
   public void cacheParse(Utterance utterance) {
     // Don't cache entries whose output were modified due to context
     if (modifiedUtteranceUids.contains(utterance.getUid())) {
@@ -145,16 +151,25 @@ public class AvaHybridParserComponent extends HybridParserComponent {
     }
 
     // If semantics are taskName, then just return. Do not cache
-    if (utterance.getSemantics() != null && utterance.getSemantics().getName().equals("taskName")) {
-      return;
-    }
-
-    // TODO: where should general mechanism for this live? "Social" LLM version - do not want to cache any parses
-    //  targeting "focused context template population" scripts. Currently, doing so and hitting these cache targets
-    //  would discard relevant pre-validation conversation history which may include relevant information about target
-    //  template arguments
-    if (utterance.getSemantics() != null && (utterance.getSemantics().getName().equals("learnTour") || utterance.getSemantics().getName().equals("scheduleTask"))) {
-      return;
+    if (utterance.getSemantics() != null) {
+      String command = utterance.getSemantics().getName();
+      if (command.equals("taskName")) {
+        return;
+      } else if (command.equals("learnTour") || command.equals("scheduleTask") || command.equals("scheduled") || command.equals("submitTourDefinition")) {
+        // TODO: where should general mechanism for this live? "Social" LLM version - do not want to cache any parses
+        //  targeting "focused context template population" scripts. Currently, doing so and hitting these cache targets
+        //  would discard relevant pre-validation conversation history which may include relevant information about target
+        //  template arguments
+        return;
+      } else if (command.equals("cancelGoal")) {
+        Utterance copy = new Utterance.Builder(utterance).setSemantics(Factory.createPredicate("cancelSystemGoals",utterance.getAddressee())).build();
+        super.cacheParse(copy);
+        return;
+      } else if (command.equals("suspendGoal")) {
+        Utterance copy = new Utterance.Builder(utterance).setSemantics(Factory.createPredicate("suspendSystemGoalsBlocking",utterance.getAddressee())).build();
+        super.cacheParse(copy);
+        return;
+      }
     }
 
     super.cacheParse(utterance);

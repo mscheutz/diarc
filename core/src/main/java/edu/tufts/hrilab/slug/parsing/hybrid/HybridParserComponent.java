@@ -54,7 +54,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String[] cacheLoads = null;
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
-  private boolean cacheLLM = true;
+  protected boolean cacheLLM = true;
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = null;

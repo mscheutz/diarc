@@ -31,7 +31,7 @@ When interacting with the user, please respond concisely. Your stillGatheringInf
 <start example 1 previous history>
 {"role":"user","content":"I want to schedule a new task"}
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid1","type":"function","function":{"name":"scheduleTask","arguments":{}}}]}
-{"role":"assistant","content":"Confirming you want to begin scheduling a new task?"}
+{"role":"assistant","content":"Confirming you want to schedule a new task?"}
 {"role":"user","content":"yes"}
 <end example 1 previous history>
 
@@ -54,7 +54,7 @@ When interacting with the user, please respond concisely. Your stillGatheringInf
 <start example 2 previous history>
 {"role":"user","content":"I want you to say \"this is an example instruction\" now and every 45 minutes afterwards until 5pm"}
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid7","type":"function","function":{"name":"scheduleTask","arguments":{}}}]}
-{"role":"assistant","content":"Confirming you want to begin scheduling a new task?"}
+{"role":"assistant","content":"Confirming you want to schedule a new task?"}
 {"role":"user","content":"yes"}
 <end example 2 previous history>
 
@@ -65,7 +65,7 @@ When interacting with the user, please respond concisely. Your stillGatheringInf
 <start example 3 previous history>
 {"role":"user","content":"I want to schedule a task for you to go to example location 1 in 10 minutes"}
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid9","type":"function","function":{"name":"scheduleTask","arguments":{}}}]}
-{"role":"assistant","content":"Confirming you want to begin scheduling a new task?"}
+{"role":"assistant","content":"Confirming you want to schedule a new task?"}
 {"role":"user","content":"yes"}
 <end example 3 previous history>
 
