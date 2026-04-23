@@ -211,6 +211,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "getTemperatureAtLocationString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "getTaughtActions":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

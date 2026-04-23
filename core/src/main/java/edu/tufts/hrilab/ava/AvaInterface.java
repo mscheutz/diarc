@@ -162,6 +162,10 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
 
   @TRADEService
   @Action
+  public Integer measureTemperatureDegrees();
+
+  @TRADEService
+  @Action
   public String locationRefToName(edu.tufts.hrilab.fol.Symbol ref);
 
   @TRADEService

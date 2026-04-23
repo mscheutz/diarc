@@ -3300,6 +3300,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getSavedVideos":
         case "getSavedImages":
         case "getWifiAtLocationString":
+        case "getTemperatureAtLocationString":
         case "getCurrentPendingScheduledGoalInformation":
         case "resetConversation":
         case "learnTask":
@@ -3436,6 +3437,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
             "You drive to each of the supplied locations in order, measure wifi at each one, then drive to reportLocation and speak a brief summary. Use this when the user wants a survey with a specific return-and-report location.",
+            List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Each value must be a saved location.", true),
+                    new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary.", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureTemperature",
+            "You measure the temperature in degrees Fahrenheit at your current location when this task is performed. Use this when a user generally asks you to check temperature. An example of instructing this could be \"check the temperature\", which would map to {\"name\":\"measureTemperature\", \"arguments\":{}}",
+            new ArrayList<>());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureTemperatureAtLocations",
+            "You drive to each of the supplied locations in order and measure temperature in degrees Fahrenheit at each one. Use this when a user asks you to survey or check temperature at a set of places. For a single location, still supply a one-element list.",
+            List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Each value must be a saved location.", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureTemperatureAtLocationsAndReportAt",
+            "You drive to each of the supplied locations in order, measure temperature at each one, then drive to reportLocation and speak a brief summary. Use this when the user wants a temperature survey with a specific return-and-report location.",
             List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Each value must be a saved location.", true),
                     new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -3679,6 +3693,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("getWifiAtLocationsString",
             "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
             List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Each value must be a saved location.", true)));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getTemperatureAtLocationString",
+            "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at the supplied location. Only returns a useful value after measureTemperatureAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?\"",
+            List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getWifiAtCurrentLocationString",
             "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",

@@ -1419,6 +1419,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return "poor";
   }
 
+  @TRADEService
+  @Action
+  public Integer measureTemperatureDegrees() {
+    return 62 + (int) (Math.random() * 20);
+  }
+
   @Override
   public void blockToCharge() {
     log.info("[blockToCharge] blocking on chargingTerminatedCondition");

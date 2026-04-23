@@ -195,6 +195,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
                     "ava/avaASR.asl " +
                     "ava/avaTMCDemo.asl " +
                     "ava/wifiScan.asl " +
+                    "ava/tempScan.asl " +
                     "demos/queueEM.asl"
                     + " -priorityFile default.json avaPriority.json"
                     + " -scheduledGoalsFile ava.ser"

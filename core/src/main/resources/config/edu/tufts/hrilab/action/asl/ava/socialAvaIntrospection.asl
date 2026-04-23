@@ -175,6 +175,63 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponseFromString(?output);
 }
 
+(String ?output) = generateTemperatureAtLocationString(Symbol ?location) {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Map !elem;
+    List !bindings;
+    Symbol !temp;
+    java.lang.String !tempStr;
+    java.lang.String !locName;
+
+    !locName = act:locationRefToName(?location);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "temperature(?location,X)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        !elem = op:get(!bindings, 0);
+        !temp = op:get(!elem,!x);
+        !tempStr = op:invokeMethod(!temp, "toString");
+        ?output = op:invokeStaticMethod("java.lang.String", "format", "temperature at %s was %s degrees", !locName, !tempStr);
+    } else {
+        ?output = op:invokeStaticMethod("java.lang.String", "format", "I have not measured temperature at %s", !locName);
+    }
+}
+
+(String ?output) = generateTemperatureSummaryString() {
+    Predicate !queryPred;
+    Variable !loc = "L";
+    Variable !tempVar = "T";
+    Map !elem;
+    List !bindings;
+    Symbol !location;
+    Symbol !temp;
+    java.lang.String !locStr;
+    java.lang.String !tempStr;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+    java.lang.String !sep = "";
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "temperature(L,T)");
+    !bindings = act:queryBelief(!queryPred);
+    if (op:isEmpty(!bindings)) {
+        ?output = op:newObject("java.lang.String","I have not measured temperature anywhere");
+    } else {
+        foreach(!elem : !bindings) {
+            op:invokeMethod(!sb,"append",!sep);
+            !location = op:get(!elem,!loc);
+            !temp = op:get(!elem,!tempVar);
+            !locStr = act:locationRefToName(!location);
+            !tempStr = op:invokeMethod(!temp, "toString");
+            op:invokeMethod(!sb,"append",!locStr);
+            op:invokeMethod(!sb,"append"," ");
+            op:invokeMethod(!sb,"append",!tempStr);
+            op:invokeMethod(!sb,"append"," degrees");
+            !sep = op:newObject("java.lang.String",", ");
+        }
+        ?output = op:invokeMethod(!sb,"toString");
+    }
+    act:generateResponseFromString(?output);
+}
+
 (String ?output) = generateTaughtActionsString() {
     List !taughtActions;
     Predicate !actionPred;

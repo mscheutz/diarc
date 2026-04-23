@@ -422,6 +422,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
+  public Integer measureTemperatureDegrees() {
+    return 62 + (int) (Math.random() * 20);
+  }
+
+  @Override
   public void blockToCharge() {
     log.info("[blockToCharge] blocking on chargingTerminatedCondition");
     try {
