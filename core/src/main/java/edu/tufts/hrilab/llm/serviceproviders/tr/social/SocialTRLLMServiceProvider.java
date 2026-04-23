@@ -3410,14 +3410,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "backup your current locations",
     //        "saveLocationsToFile()", 10);
     //toolDefinitions.add(definition);
-    definition = new ToolDefinition("sit",
-            "You lower your screen. An example of instructing this could be \"sit down.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("stand",
-            "You raise your screen. An example of instructing this could be \"stand up.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("sit",
+//            "You lower your screen. An example of instructing this could be \"sit down.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("stand",
+//            "You raise your screen. An example of instructing this could be \"stand up.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //definition = new ToolDefinition("deliver(?objectName, ?location:location)",
     //        "You deliver ?objectName to location ?location:location",
     //        "bring the mug to %exampleLocation",
@@ -3444,10 +3444,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
     //        new ArrayList());
     //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("modifyScheduledGoal",
-            "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. An example of instructing this could be \"I want to change the timing of an action.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("modifyScheduledGoal",
+//            "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. An example of instructing this could be \"I want to change the timing of an action.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("cancelSystemGoals",
             "You stop and fully discard your current task. An example of instructing this could be \"cancel\" or \"stop pursuing your current task\"",
             new ArrayList());
@@ -3464,18 +3464,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You cancel all currently scheduled goals which have yet to begin execution. An example of instructing this could be \"cancel all scheduled tasks.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("cancelScheduledGoal",
-            "You begin a dialogue interaction with the user to cancel a particular scheduled goal. An example of instructing this could be \"I want to cancel a scheduled task.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("learnNewTask",
-            "You begin a dialogue interaction with the user to learn the steps of a new instructable action. An example of instructing this could be \"i will teach you a new task.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("endActionLearning",
-            "You conclude learning the steps of a new instructable action. Examples of instructing this could be \"those are the steps of the task\" or \"im done\".",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("cancelScheduledGoal",
+//            "You begin a dialogue interaction with the user to cancel a particular scheduled goal. An example of instructing this could be \"I want to cancel a scheduled task.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("learnNewTask",
+//            "You begin a dialogue interaction with the user to learn the steps of a new instructable action. An example of instructing this could be \"i will teach you a new task.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("endActionLearning",
+//            "You conclude learning the steps of a new instructable action. Examples of instructing this could be \"those are the steps of the task\" or \"im done\".",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("forgetTaughtAction",
             "You forget a previously taught action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of instructing this could be \"forget how to go to %exampleLocation.\", which would map to {\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}",
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action to forget", true, true, "nlu")));
@@ -3484,10 +3484,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour (navigating between a sequence of locations while performing specific actions at each one). An example of instructing this could be \"I want to teach you how to perform a tour.\"",
     //        new ArrayList());
     //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("updateKioskTimeout",
-            "You begin a dialogue interaction with the user to update the configured kiosk timeout. An example of instructing this could be \"I would like to update the kiosk timeout.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("updateKioskTimeout",
+//            "You begin a dialogue interaction with the user to update the configured kiosk timeout. An example of instructing this could be \"I would like to update the kiosk timeout.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("setKioskTimeout",
             "You update the configured kiosk timeout. An example of instructing this could be \"Set the kiosk timeout to 30 minutes.\", which would map to {\"name\":\"setKioskTimeout\", \"arguments\":{\"duration\":\"30\",\"timeunit\":\"MINUTES\"}}",
             List.of(new ToolParameterHelper("duration", "integer", new ArrayList(), "The number of timeunits defining the timeout", true),
@@ -3498,10 +3498,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You set whether or not kiosk mode is enabled. An example of instructing this could be \"turn on kiosk mode.\", which would map to {\"name\":\"setKioskModeEnabled\", \"arguments\":{\"enabled\":\"true\"}}",
             List.of(new ToolParameterHelper("enabled", "boolean", new ArrayList<>(), "the truth value of kiosk mode being enabled", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("updateKioskAction",
-            "You begin a dialogue interaction with the user to update the configured kiosk action. An example of instructing this could be \"I want to change the kiosk action.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("updateKioskAction",
+//            "You begin a dialogue interaction with the user to update the configured kiosk action. An example of instructing this could be \"I want to change the kiosk action.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("setVideoVolume",
             "You set the volume of videos played on your screen. An example of instructing this could be \"Set the video volume to max.\", which would map to {\"name\":\"setVideoVolume\", \"arguments\":{\"volume\":\"100\"}}",
             List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
@@ -3585,22 +3585,22 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You cancel and remove a task in the task queue specified by its index. An example of instructing this could be \"Remove the first task from the queue.\", which would map to {\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":\"0\"}}",
             List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("enableAdminMode",
-            "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.. An example of instructing this could be \"enable admin mode.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("disableAdminMode",
-            "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.. An example of instructing this could be \"disable admin mode.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("switchDisplayToTelepresence",
-            "Change the output on your display to the telepresence stream. An example of instructing this could be \"start telepresence.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("switchDisplayToTRACS",
-            "Change the output on your display to what is shown by TRACS, the default setting. An example of instructing this could be \"return to TRACS.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("enableAdminMode",
+//            "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.. An example of instructing this could be \"enable admin mode.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("disableAdminMode",
+//            "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.. An example of instructing this could be \"disable admin mode.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("switchDisplayToTelepresence",
+//            "Change the output on your display to the telepresence stream. An example of instructing this could be \"start telepresence.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//    definition = new ToolDefinition("switchDisplayToTRACS",
+//            "Change the output on your display to what is shown by TRACS, the default setting. An example of instructing this could be \"return to TRACS.\"",
+//            new ArrayList());
+//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
     definition = new ToolDefinition("scheduleTask",
             "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
