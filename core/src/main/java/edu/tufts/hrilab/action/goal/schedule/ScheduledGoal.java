@@ -101,14 +101,17 @@ public class ScheduledGoal extends Goal {
   }
 
   private static Predicate toRelativeTimePred(String name, long millis) {
-    if (millis >= TimeUnit.DAYS.toMillis(1)) {
-      long days = TimeUnit.MILLISECONDS.toDays(millis);
+    long dayMs = TimeUnit.DAYS.toMillis(1);
+    long hourMs = TimeUnit.HOURS.toMillis(1);
+    long minMs = TimeUnit.MINUTES.toMillis(1);
+    if (millis >= dayMs) {
+      long days = (millis + dayMs - 1) / dayMs;
       return Factory.createPredicate(name, String.valueOf(days), "DAYS");
-    } else if (millis >= TimeUnit.HOURS.toMillis(1)) {
-      long hours = TimeUnit.MILLISECONDS.toHours(millis);
+    } else if (millis >= hourMs) {
+      long hours = (millis + hourMs - 1) / hourMs;
       return Factory.createPredicate(name, String.valueOf(hours), "HOURS");
     } else {
-      long minutes = Math.max(1, TimeUnit.MILLISECONDS.toMinutes(millis));
+      long minutes = Math.max(1, (millis + minMs - 1) / minMs);
       return Factory.createPredicate(name, String.valueOf(minutes), "MINUTES");
     }
   }
