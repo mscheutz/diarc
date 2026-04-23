@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -56,6 +57,7 @@ public class ActionLearning {
   private Map<String, LearningState> pausedLearningStates = new HashMap<>();
   private Condition learningStateUpdateCondition = goalQueueEmptyLock.newCondition();
   private Map<Predicate,Boolean> learningStateUpdateListenerInterrupted = new HashMap<>();
+  private final AtomicBoolean consumerBusy = new AtomicBoolean(false);
   private ActionLearningGui learningGui;
 
   /**
@@ -124,8 +126,24 @@ public class ActionLearning {
   public void startQueuingGoals() {
     goalQueueManager = new Thread(() -> {
       while (learningStatus.equals(ActionLearningStatus.ACTIVE)) {
-        if (!goalQueue.isEmpty()) {
-          Goal g = goalQueue.remove();
+        Goal g = null;
+        goalQueueEmptyLock.lock();
+        try {
+          if (!goalQueue.isEmpty()) {
+            g = goalQueue.remove();
+            consumerBusy.set(true);
+          } else {
+            try {
+              goalQueueNotEmpty.await();
+            } catch (InterruptedException ignored) {}
+          }
+        } finally {
+          goalQueueEmptyLock.unlock();
+        }
+        if (g == null) {
+          continue;
+        }
+        try {
           if (shouldExecute()) {
             //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
             ignoreActionSet.add(g.getPredicate());
@@ -135,22 +153,24 @@ public class ActionLearning {
             ignoreActionSet.remove(g.getPredicate());
 
             if (goalStatus == GoalStatus.SUCCEEDED) {
-              currentLearningState.createEventSpec(g);
+              if (currentLearningState != null) {
+                currentLearningState.createEventSpec(g);
+              }
             } else {
               log.error("not adding goal to learned action because it failed: " + g);
               //TODO:brad:how should the rest of the system find out about this
             }
           } else {
             g.setStatus(GoalStatus.SUCCEEDED);
-            currentLearningState.createEventSpec(g);
+            if (currentLearningState != null) {
+              currentLearningState.createEventSpec(g);
+            }
           }
-
-        } else {
+        } finally {
+          consumerBusy.set(false);
           goalQueueEmptyLock.lock();
           try {
-            goalQueueNotEmpty.await();
-          } catch (Exception e) {
-            log.error("[startQueuingGoals]", e);
+            learningStateUpdateCondition.signalAll();
           } finally {
             goalQueueEmptyLock.unlock();
           }
@@ -238,6 +258,23 @@ public class ActionLearning {
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
     log.debug("[endActionLearning] " + newAction);
+
+    // Wait for the consumer thread to drain any pending goals and finish event-spec'ing
+    // the one currently in flight before we touch currentLearningState.
+    goalQueueEmptyLock.lock();
+    try {
+      long deadline = System.currentTimeMillis() + 30000;
+      while ((!goalQueue.isEmpty() || consumerBusy.get()) && System.currentTimeMillis() < deadline) {
+        try {
+          learningStateUpdateCondition.await(200, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ignored) {}
+      }
+      if (!goalQueue.isEmpty() || consumerBusy.get()) {
+        log.warn("[endActionLearning] timed out waiting for learning goal queue to drain");
+      }
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
 
     boolean currentState;
     LearningState learningState;
