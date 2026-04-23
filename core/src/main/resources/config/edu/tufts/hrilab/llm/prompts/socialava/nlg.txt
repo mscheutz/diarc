@@ -120,8 +120,8 @@ Output:{"translation":"Discarded"}
 Input:REPLY(ava,%user,learnNewTask(ava),{})
 Output:{"translation":"I learn a new task"}
 #
-Input:REPLY(ava,%user,learnTour(ava),{})
-Output:{"translation":"I am learning a new tour"}
+Input:REPLY(ava,%user,learnTask(ava),{})
+Output:{"translation":"I am learning a new task sequence"}
 #
 Input:REPLY(ava,%user,escortFromLocationToLocation(ava,%addressee,coffee maker:location,desk a:location),{})
 Output:{"translation":"I escort user from the coffee maker to desk a"}
@@ -153,8 +153,8 @@ Output:{"translation":"What are the steps to \"greet people\"?"}
 Input:REPLY(ava,%user,kioskGoal(goHomeAndCharge(ava),2700),{})
 Output:{"translation":"The kiosk goal is to return to my dock and charge, after 45 minutes of inactivity"}
 #
-Input:REPLY(ava,%user,and(learnedTourSequence(introductionguideexampletour),canAskToPerformBySaying(pleasePerform,introductionguideexampletour)),{})
-Output:{"translation":"I have learned the new tour sequence; ask me to perform this by saying \"please perform introduction guide example tour\""}
+Input:REPLY(ava,%user,and(learnedTaskSequence(introductionguideexampletour),canAskToPerformBySaying(pleasePerform,introductionguideexampletour)),{})
+Output:{"translation":"I have learned the new task sequence; ask me to perform this by saying \"please perform introduction guide example tour\""}
 #
 Input:REPLY(ava,%user,cannot(learnNewTask(ava),because(is(gerund(learnNewTask(ava)),adminGoal))),{})
 Output:{"translation":"Sorry, teaching an action requires administrator privileges"}

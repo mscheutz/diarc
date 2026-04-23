@@ -340,10 +340,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //    of this interaction. E.g. hold an explicit representation of the learning state in Java and provide an API to
     //    the LLM through tools to modify specific existing steps, add/insert new one, etc.
     List<Tool> learnTourTools = new ArrayList<>();
-    learnTourTools.add(new Tool(new ToolDefinition("submitTourDefinition",
-            "Submit the details of the fully defined tour sequence for storage and future use. Call this when you believe you have all information about the tour finalized and are ready to save.", List.of(
-            new ToolParameterHelper("tourName","string",new ArrayList<>(),"The name this tour should be saved under and later instructed as",true),
-            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the tour should begin at",true),
+    learnTourTools.add(new Tool(new ToolDefinition("submitTaskDefinition",
+            "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", List.of(
+            new ToolParameterHelper("taskName","string",new ArrayList<>(),"The name this task should be saved under and later instructed as",true),
+            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the task sequence should begin at",true),
             new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide \"none\".",true,true,"nlu"),
             //TODO: technically here we want to provide a possible_values list for postprocessing but not necessarily to the LLM (unless it can understand that the possible_values apply to each value in the sequence rather than the sequence as a whole)
             new ToolParameterHelper("locationSequence","array",new ArrayList<>(),"The list of locations to visit in order after leaving the start location. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location, in other words, one of the acceptable values of startLocation.",true),
@@ -353,16 +353,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ));
     learnTourTools.addAll(universalFocusedTools);
     Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
-            "You are still being taught new or modifying existing tour steps by the user. You will respond to" +
+            "You are still being taught new or modifying existing task steps by the user. You will respond to" +
                     "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
-                    "to gather missing information in order to define the tour.",
-            List.of(new ToolParameterHelper("currentTourDefinition","object",new ArrayList<>(),
-                    "Your current understanding of the steps of the tour being taught to you. The expected format is json matching the submitTourDefinition function described above.", true),
+                    "to gather missing information in order to define the task sequence.",
+            List.of(new ToolParameterHelper("currentTaskDefinition","object",new ArrayList<>(),
+                    "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskDefinition function described above.", true),
                     new ToolParameterHelper("response","string",new ArrayList<>(),
                     "What you want to say to the user", true))),
             UtteranceType.INSTRUCT);
     learnTourTools.add(modifiedTextResponseTool2);
-    chatTemplates.put("learnTour", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
+    chatTemplates.put("learnTask", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
 
     //TODO: apply promptVars to Tool definitions/examples and most importantly possible_values sets as well
     //// init prompt vars
@@ -2716,7 +2716,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           int expectedSize = -1;
           if (templateArgName.equals("currentScheduledDefinition")) {
             expectedSize = 4;
-          } else if (templateArgName.equals("currentTourDefinition")) {
+          } else if (templateArgName.equals("currentTaskDefinition")) {
             expectedSize = 5;
           } else {
             log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
@@ -2744,8 +2744,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             // Should we rephrase the base error message or make a new one in this case?
             errorMessage.append("- It looks like your current definition of the target to be submitted is fully filled " +
                     "out. If this seems to be the case, try submitting the target submission tool call directly instead" +
-                    "of responding to the user. If you believe you are still missing information, you may return the same" +
-                    " response");
+                    "of responding to the user.");
             return true;
           }
         }
@@ -3120,7 +3119,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           return errorStringBuilder.toString();
         }
-      } else if (command.equals("submitTourDefinition")) {
+      } else if (command.equals("submitTaskDefinition")) {
         List<Symbol> args = ((Predicate)utterance.getSemantics()).getArgs();
         if (args.size() != 6) {
           log.error("[correctCommonNLUMistakes] tourDefinition has unexpected number of arguments, this should have been caught in tool processing?");
@@ -3129,7 +3128,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           Symbol actionSequence = args.get(5);
           if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
             if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
-              return "- The current tour definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location outside of the startLocation must be explicitly specified.";
+              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location outside of the startLocation must be explicitly specified.";
             }
           }
           String tourName = args.get(1).toString();
@@ -3303,7 +3302,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getWifiAtLocationString":
         case "getCurrentPendingScheduledGoalInformation":
         case "resetConversation":
-        case "learnTour":
+        case "learnTask":
         case "scheduleTask":
         case "explainHowToTeachATask":
         case "explainWhatALearnedTaskIs":
@@ -3603,11 +3602,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
     definition = new ToolDefinition("scheduleTask",
-            "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be \"I want to schedule a goal.\"",
+            "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("learnTour",
-            "You begin a dialogue interaction with the user to learn a new \"tour\" sequence. A tour consists of navigating between a set of saved locations and optionally performing actions at each location. An example of instructing this could be \"Let me tell you how to perform a new tour.\"",
+    definition = new ToolDefinition("learnTask",
+            "You begin a dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. An example of instructing this could be \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 

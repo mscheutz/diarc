@@ -499,7 +499,7 @@ import java.lang.String;
     op:log("info", "[scheduleTask] out");
 }
 
-() = learnTour() {
+() = learnTask() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -535,7 +535,7 @@ import java.lang.String;
 //  Without other goals being submitted and added to learning state - Not currently possible?
 //      Lock EM temporarily
 //      Make independent learning state and submission API
-() = submitTourDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
+() = submitTaskDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
     Predicate !actionSignature;
     Predicate !actionPred;
     String !name;
@@ -578,6 +578,6 @@ import java.lang.String;
 
     act:endActionLearning(!actionSignature);
 
-    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTour(?actionName))");
+    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
     act:generateResponse(!actionPred);
 }
