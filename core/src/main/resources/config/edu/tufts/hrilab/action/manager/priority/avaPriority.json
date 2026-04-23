@@ -254,5 +254,17 @@
   "resetConversation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "explainHowToTeachATask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "explainWhatALearnedTaskIs": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "explainWhatActionsCanBePerformedAlongALearnedTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

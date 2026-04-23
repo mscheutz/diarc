@@ -559,3 +559,45 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString(!output);
     }
 }
+
+() = explainHowToTeachATask() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = op:newObject("java.lang.String","You can teach me how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\". I can take it from there and guide you through supplying all the information I need to learn the task. Alternatively, ask me for an explanation of what a taught task sequence consists of and you can supply all the necessary information yourself!");
+    //String !contextId = this:getCommand();
+    //!output = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    //if (~op:invokeMethod(!output,"isEmpty")) {
+    act:generateResponseFromString(!output);
+    if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        act:triggerWW();
+    }
+    //}
+}
+
+() = explainWhatALearnedTaskIs() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = op:newObject("java.lang.String","Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.");
+    //String !contextId = this:getCommand();
+    //!output = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    //if (~op:invokeMethod(!output,"isEmpty")) {
+    act:generateResponseFromString(!output);
+    if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        act:triggerWW();
+    }
+    //}
+}
+
+() = explainWhatActionsCanBePerformedAlongALearnedTask() {
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    !output = op:newObject("java.lang.String","Steps of a taught task sequence can include things like playing a video, saying a phrase, taking a wi-fi measurement, and more. I can also simply pause briefly at each location if desired.");
+    //String !contextId = this:getCommand();
+    //!output = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    //if (~op:invokeMethod(!output,"isEmpty")) {
+    act:generateResponseFromString(!output);
+    if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        act:triggerWW();
+    }
+    //}
+}

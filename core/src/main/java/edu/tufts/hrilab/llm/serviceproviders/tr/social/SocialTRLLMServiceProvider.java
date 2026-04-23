@@ -3305,6 +3305,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "resetConversation":
         case "learnTour":
         case "scheduleTask":
+        case "explainHowToTeachATask":
+        case "explainWhatALearnedTaskIs":
+        case "explainWhatActionsCanBePerformedAlongALearnedTask":
+        case "getWifiAtLocationsString":
+        case "getWifiAtCurrentLocationString":
         //case "submitTourDefinition":
         //case "submitScheduledTaskDefinition":
         //case "scheduled":
@@ -3421,6 +3426,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("goHome",
             "You go to your default charging dock and charge. An example of instructing this could be \"go back to charge.\"",
             new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("measureWifi",
+            "You measure the wifi signal strength at your current location when this task is performed. Use this when a user generally asks you to survey or check wifi. An example of instructing this could be \"check the wifi signal strength\", which would map to {\"name\":\"measureWifi\", \"arguments\":{}}",
+            new ArrayList<>());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureWifiAtLocations",
             "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. An example of instructing this could be \"check the wifi at %exampleLocation and the dock\", which would map to {\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\",\"dock:location\"]}}",
@@ -3665,8 +3674,29 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getWifiAtLocationString",
-            "Use this to ask the system what wifi signal strength you previously measured at the supplied location. Only returns a useful value after measureWifiAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation.\"",
+            "Use this to ask the system what wifi signal strength you previously measured at the supplied location is. Only returns a useful value after measureWifiAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation?\"",
             List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getWifiAtLocationsString",
+            "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
+            List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Each value must be a saved location.", true)));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getWifiAtCurrentLocationString",
+            "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+
+    definition = new ToolDefinition("explainHowToTeachATask",
+            "Use this to get an explanation from the system on how a user can teach you new tasks, which you could relay to the user. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("explainWhatALearnedTaskIs",
+            "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("explainWhatActionsCanBePerformedAlongALearnedTask",
+            "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
+            new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
     //// Removed ITK targets
