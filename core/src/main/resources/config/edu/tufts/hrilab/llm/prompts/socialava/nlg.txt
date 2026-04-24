@@ -111,6 +111,9 @@ Output:{"translation":"I don't have a location saved under the name lab, so I ca
 Input:REPLY(ava,%user,cannot(learnNewTask(ava),because(not(wasAnswered(myQuestion)))),{})
 Output:{"translation":"I failed learning a task because my question wasn't answered"}
 #
+Input:REPLY(ava,%user,cannot(performTask(ava),because(unknown())),{})
+Output:{"translation":"I was unable to perform the task for an unknown reason"}
+#
 Input:REPLY(ava,%user,cannot(handleSemantics(ava,location(desk beta)),because(not(know(ava,how(handled(ava,ava,location(desk beta),direct)))))),{})
 Output:{"translation":"Sorry, I don't know where to apply the specification of desk beta"}
 #

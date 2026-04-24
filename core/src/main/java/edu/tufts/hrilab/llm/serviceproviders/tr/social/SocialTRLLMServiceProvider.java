@@ -672,8 +672,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ChatContext chatContext = chatCollection.currentChat;
 
     //Experimental - adding tool calls back into history now that we have safeguards against them being called from
-    // incorrect contexts when no longer available
-    chatContext.history.addRobotMessage("", List.of(toolCall));
+    // incorrect contexts when no longer available. Text response tool calls will be added from the dialogue history listener.
+    if (!toolCall.function.name.equals("stillGatheringInformation")) {
+      //TODO: make sure it is okay to not include stillGatheringInformation calls here. Believe the only time it
+      //    really matters would be on malformed/invalid target.
+      chatContext.history.addRobotMessage("", List.of(toolCall));
+    }
 
     //// Check that tool response is valid
     ToolFunction functionCall = toolCall.function;
@@ -848,7 +852,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // TODO: need more postprocessing here for various special characters?
     if (responseString.contains("<tool_call>")) {
       log.warn("[handleTextResponse] detected uncaught tool call in completion text response");
-      errorResponseBuilder.append("- Your initial response \"").append(responseString).append(" includes a <tool_call> tag but was not picked up by the tool call parser. Please make sure your response is formatted correctly to be picked up by the tool parser. For example, prevent any white space between tags. If this tag is found elsewhere in your response, please use a different value as this is a reserved character sequence.");
+      errorResponseBuilder.append("- Your initial response \"").append(responseString).append("\" includes a <tool_call> tag but was not picked up by the tool call parser. Please make sure your response is formatted correctly to be picked up by the tool parser. For example, prevent any white space between tags. If this tag is found elsewhere in your response, please use a different value as this is a reserved character sequence.");
       return null;
     } else if (responseString.startsWith("{") && responseString.endsWith("}")) {
       log.warn("[handleTextResponse] detected unexpected json in completion text response");
@@ -1321,7 +1325,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
             chat.setMessages(new ArrayList<>());
             // Qwen3.5 chat template requires a user message
-            chat.addUserMessage("Continue.");
+            chat.addUserMessage("Perform the stated task");
           }
           //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
           chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
@@ -1843,8 +1847,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       ChatContext chatContext = collection.suspendedChats.remove(index);
       //TODO: relate this response id to the suspend tool call?
       chatContext.history.addMessage("tool", "Your interaction with the user was paused for some amount of time while you both performed other actions. It has now been resumed by the system. Please refamiliarize the user with the task you are performing and the current state of progress.");
-      // Qwen3.5 chat template requires a user message
-      chatContext.history.addUserMessage("Continue.");
+      boolean userMessageRequired = true;
+      for (Message message : chatContext.history.messages) {
+        if (message.role.equals("user")) {
+          userMessageRequired = false;
+          break;
+        }
+      }
+      if (userMessageRequired) {
+        // Think it may be theoretically possible, but don't think it should usually be case that you won't have a user
+        //    message at this point.
+        // Qwen3.5 chat template requires a user message
+        chatContext.history.addUserMessage("Perform the stated task");
+      }
       collection.currentChat = chatContext;
 
       //chatContext.waitToProcessInput(cid);
@@ -2315,7 +2330,25 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (chatCollection != null) {
           ChatContext chatContext = chatCollection.currentChat;
           if (chatContext != null) {
-            chatContext.history.addRobotMessage(utterance.getWordsAsString());
+            //// Add as assistant message "content" string
+            //chatContext.history.addRobotMessage(utterance.getWordsAsString());
+
+            //TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
+            //// Add as assistant message text response tool call
+            Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get("stillGatheringInformation");
+            if (textResponseTool != null) {
+              ToolCall toolCall = new ToolCall();
+              toolCall.id = "";
+              toolCall.type = "function";
+              ToolFunction toolFunction = new ToolFunction();
+              toolFunction.name = "stillGatheringInformation";
+              //TODO: When in focused contexts, do we need to pull the most recent "current template state" and copy into
+              //  this message?
+              //textResponseTool.toolDefinition.function.parameters.getProperties().keySet();
+              toolFunction.arguments = "{\"response\": \"" + utterance.getWordsAsString() + "\"}";
+              toolCall.function = toolFunction;
+              chatContext.history.addRobotMessage("", List.of(toolCall));
+            }
           }
           //TODO: Should this be added to a new history/context if none currently exists? Hard question to answer because
           //  sometimes it may be relevant and sometimes it may throw off future parses significantly. Best case is to
