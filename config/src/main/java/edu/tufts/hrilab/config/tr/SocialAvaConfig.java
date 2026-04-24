@@ -18,7 +18,8 @@ public class SocialAvaConfig extends DiarcConfiguration {
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
   String service = "openai";
-  String model = "Qwen/Qwen3-14B-AWQ";
+  String model = "QuantTrio/Qwen3.5-9B-AWQ";
+  //  String model = "Qwen/Qwen3-14B-AWQ";
   //  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
   String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg

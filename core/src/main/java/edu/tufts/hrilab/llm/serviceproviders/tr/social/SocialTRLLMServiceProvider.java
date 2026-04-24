@@ -1320,6 +1320,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             //  in system prompt itself and resetting message list
             promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
             chat.setMessages(new ArrayList<>());
+            // Qwen3.5 chat template requires a user message
+            chat.addUserMessage("Continue.");
           }
           //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
           chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
@@ -1841,6 +1843,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       ChatContext chatContext = collection.suspendedChats.remove(index);
       //TODO: relate this response id to the suspend tool call?
       chatContext.history.addMessage("tool", "Your interaction with the user was paused for some amount of time while you both performed other actions. It has now been resumed by the system. Please refamiliarize the user with the task you are performing and the current state of progress.");
+      // Qwen3.5 chat template requires a user message
+      chatContext.history.addUserMessage("Continue.");
       collection.currentChat = chatContext;
 
       //chatContext.waitToProcessInput(cid);

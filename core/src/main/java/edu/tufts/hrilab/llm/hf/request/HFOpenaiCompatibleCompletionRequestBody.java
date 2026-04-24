@@ -60,7 +60,7 @@ public class HFOpenaiCompatibleCompletionRequestBody {
   }
 
   public void setRepetition_penalty(float repetition_penalty) {
-    parameters.put("repetition_penalty ",repetition_penalty);
+    parameters.put("repetition_penalty", repetition_penalty);
   }
 
   public void setReturn_full_text(boolean return_full_text) {

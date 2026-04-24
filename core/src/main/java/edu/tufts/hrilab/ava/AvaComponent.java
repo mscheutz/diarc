@@ -1526,7 +1526,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               "HOME=" + home,
               "PULSE_SERVER=tcp:127.0.0.1:4713",
               home + "/.diarc/python/ww/venv/bin/python",
-              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc",
+              "--model_type", "0",
+              "--model_size", "base",
+              "--endpoint", "http://100.113.66.111:5000/");
+
     } else {
       processBuilder = new ProcessBuilder(
               home + "/.diarc/python/ww/venv/bin/python",

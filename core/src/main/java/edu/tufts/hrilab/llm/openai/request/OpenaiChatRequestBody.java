@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.llm.openai.request;
 
 import java.util.List;
+import java.util.Map;
 
 import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
@@ -15,6 +16,9 @@ public class OpenaiChatRequestBody {
   public List<ToolDefinition> tools = null;
   public Double temperature = null;
   public Double top_p = null;
+  public Integer top_k = null;
+  public Double min_p = null;
+  public Double repetition_penalty = null;
   public Integer max_tokens;
   public Double frequency_penalty;
   public Double presence_penalty;
@@ -25,6 +29,7 @@ public class OpenaiChatRequestBody {
   public Integer seed;
   public String tool_choice;
   public String tool_prompt;
+  public Map<String, Object> chat_template_kwargs = null;
 
   public OpenaiChatRequestBody () {
 

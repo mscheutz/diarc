@@ -104,6 +104,13 @@ public class OpenaiClient implements LLMClient {
         //max_tokens = 6000;
         //HashMap<String,Object> chat_template_kwargs = new HashMap<>();
         //chat_template_kwargs.put("enable_thinking", false);
+      } else if (modelStr.equals("QuantTrio/Qwen3.5-9B-AWQ")) {
+        //Non-Thinking Mode
+        model_parameters = new HashMap<>();
+        model_parameters.put("temperature", 0.7);
+        model_parameters.put("top_p", 0.8);
+        model_parameters.put("top_k", 20);
+        model_parameters.put("presence_penalty", 1.5);
       }
     }
     model = modelStr;
