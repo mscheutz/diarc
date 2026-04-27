@@ -445,7 +445,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         ChatContext chatContext = chatCollection.currentChat;
         if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
           //TODO: include tool information, not parsed semantics
-          promptVars.put("%toolUpForValidationDescription",chatContext.utteranceUpForValidation.getSemantics().toString());
+          Map<Variable, Symbol> varMap = new HashMap<>();
+          for (Term t : chatContext.utteranceUpForValidation.getSupplementalSemantics()) {
+            varMap.put((Variable) t.get(0), Factory.createSymbol(t.getName(), t.getType()));
+          }
+          promptVars.put("%toolUpForValidationDescription",replaceVarsWithDescriptors((Predicate) chatContext.utteranceUpForValidation.getSemantics(), varMap).toString());
         }
       }
     }
@@ -849,16 +853,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder) {
     String responseString = llmResponse.getText().trim();
 
-    // TODO: need more postprocessing here for various special characters?
     if (responseString.contains("<tool_call>")) {
+      //TODO: attempt to remove unmatched tags and process as a tool json string?
       log.warn("[handleTextResponse] detected uncaught tool call in completion text response");
       errorResponseBuilder.append("- Your initial response \"").append(responseString).append("\" includes a <tool_call> tag but was not picked up by the tool call parser. Please make sure your response is formatted correctly to be picked up by the tool parser. For example, prevent any white space between tags. If this tag is found elsewhere in your response, please use a different value as this is a reserved character sequence.");
       return null;
     } else if (responseString.startsWith("{") && responseString.endsWith("}")) {
+      //TODO: attempt to process as a tool call?
       log.warn("[handleTextResponse] detected unexpected json in completion text response");
-      errorResponseBuilder.append("- Your initial response \"").append(responseString).append(" looks like json was supplied but was not picked up by the tool call parser. If you were intending to call a tool, please include <tool_call> tags so it is recognized by the parser. Otherwise, please prefix your output with json: ");
+      //TODO: what if a json string was actually meant to be supplied as a response?
+      errorResponseBuilder.append("- Your initial response \"").append(responseString).append("\" looks like json was supplied but was not picked up by the tool call parser. Please wrap your output in <tool_call> tags so it is recognized by the parser.");
       return null;
     }
+    // TODO: need more postprocessing cases here for various special characters?
 
     chatContext.lastResponseString = responseString;
 
@@ -1072,7 +1079,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       semantics = replaceVarsWithDescriptors((Predicate)semantics, varMap);
     }
     currentContext.history.addToolMessage("The user has just informed you that your previous interpretation of their command " +
-            "which resulted in your tool call represented by " + semantics + " was not what they intended to instruct. Use the last " +
+            "which resulted in your tool call with id " + currentContext.toolCallIdUpForValidation + " represented by " + semantics + " was not what they intended to instruct. Use the last " +
             "user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying " +
             "their original intention, then you may update your definition with the new information and attempt another updated tool submission call. " +
             "2. Otherwise, please continue with your original task to resolve the misunderstanding. In this case, only " +
@@ -2496,13 +2503,26 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }.getType());
         toolDefinitionMap.values().removeIf(Objects::isNull);
       } catch (JsonSyntaxException e) {
+        //TODO: this error message doesn't actually cause the LLM to fix itself all the time - manually inspect what type of object it is and try to process as such manually?
         errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. You do not need to speak with the user about this. \n");
-        //TODO: hook up to internalError (TODO: this whole block can loop endlessly if the llm keeps retargeting the same semantics)
         log.error("[processToolCall] malformed json present in functionCall", e);
         return null;
       }
     } else if (argumentValue instanceof Map<?,?>) {
       toolDefinitionMap = (Map<String, Object>) argumentValue; //Catch and handle ClassCastException if ever encountered
+    } else if (argumentValue instanceof List<?>) {
+      //TODO: added this 4/27, definitely duplicating a ton of cases at this point
+      //// Handle List
+      List<Object> argObjectList = (List<Object>) argumentValue; //Can you actually have a ClassCastException here? Catch and handle if so
+      List<Symbol> innerArgs = new ArrayList<>();
+      for (Object argValue : argObjectList) {
+        Symbol innerArg = processToolArgument(argumentName, argValue, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+        if (innerArg == null) {
+          return null;
+        }
+        innerArgs.add(innerArg);
+      }
+      return Factory.createPredicate("and", innerArgs);
     } else {
       errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as json. Please reformat your call to supply a valid json string or object. You do not need to speak with the user about this.\n");
       log.error("[processToolArgument] unhandled {}", argumentValue);
@@ -2559,7 +2579,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         calledArguments.values().removeIf(Objects::isNull);
       } catch (JsonSyntaxException e) {
         errorMessage.append("- The supplied tool call arguments string for the \"").append(name).append("\" tool could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. You do not need to speak with the user about this. \n");
-        //TODO: hook up to internalError (TODO: this whole block can loop endlessly if the llm keeps retargeting the same semantics)
         log.error("[processToolCall] malformed json present in functionCall", e);
         return null;
       }
@@ -3800,7 +3819,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     replyTools.put("val",new Tool(definition,UtteranceType.REPLY));
     definition = new ToolDefinition("validated",
             "You inform the system that the user has answered its current outstanding validation question.",
-            List.of(new ToolParameterHelper("response","string",List.of("yes","no"),"The response value should be yes when the user has validated your interpretation of the their instruction, the response value should be no when the user does not validate the parsed meaning of their instruction",true)));
+            List.of(new ToolParameterHelper("response","string",List.of("yes","no"),"The response value should be yes when the user has validated your interpretation of the their instruction, the response value should be no when the user denies your interpretation of their instruction or adds clarifying or additional details to your interpretation",true)));
     replyTools.put("validated",new Tool(definition,UtteranceType.REPLY));
     //replyTools.put(Factory.createPredicate("val(X)"), new Tool(definition,UtteranceType.REPLY));
     definition = new ToolDefinition("location",
