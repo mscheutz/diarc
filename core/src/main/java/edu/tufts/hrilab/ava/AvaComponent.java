@@ -28,6 +28,7 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
@@ -1551,22 +1552,38 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       Process process = processBuilder.start();
       InputStream is = process.getInputStream();
       ww_process_os = process.getOutputStream();
+      // Line-based reader so we never tear lines across is.available() polls. The
+      // previous byte-poll-glob approach silently de-synced when pulse wedged or
+      // print/flush split, letting the "ww detected" marker leak into the ASR
+      // result phase.
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
       String result = "";
       while (listenForWW) {
         while (result.isEmpty()) {
           //// Wake Word ////
-          //Wait for WW detection
-          while (is.available() == 0 && listenForWW) {
-            Thread.sleep(100);
+          //Wait for "ww detected" marker line; skip any stray stdout defensively.
+          boolean wwDetected = false;
+          while (listenForWW && !wwDetected) {
+            while (!reader.ready() && listenForWW) {
+              Thread.sleep(100);
+            }
+            if (!listenForWW) {
+              break;
+            }
+            String line = reader.readLine();
+            if (line == null) {
+              log.error("[listenForWWandASR] python stdout closed; exiting");
+              listenForWW = false;
+              break;
+            }
+            if (line.equals("ww detected")) {
+              wwDetected = true;
+            } else {
+              log.warn("[listenForWWandASR] unexpected line awaiting WW marker: {}", line);
+            }
           }
-          //WW detected, check if due to model trigger or external interrupt (mute or shutdown)
           if (!listenForWW) {
             break;
-          }
-          //Read message indicating WW detection from stream buffer
-          StringBuilder s = new StringBuilder();
-          while (is.available() != 0) {
-            s.append((char) is.read());
           }
 
           try {
@@ -1575,7 +1592,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
           }
 
-          log.info("[listenForWWandASR] reading from inputstream: " + s.toString());
+          log.info("[listenForWWandASR] WW detected, listening for ASR");
           //Display on screen that we are now listening using ASR
           displayText("Understanding speech", 10000);
           //Also play audio indicating listening status
@@ -1586,17 +1603,32 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           }
 
           //// ASR ////
-          //Wait for ASR result:
+          //Wait for ASR result line with known prefix; skip any stray stdout defensively.
           log.info("waiting for ASR result");
-          while (is.available() == 0) {
-            Thread.sleep(100);
+          while (listenForWW && result.isEmpty()) {
+            while (!reader.ready() && listenForWW) {
+              Thread.sleep(100);
+            }
+            if (!listenForWW) {
+              break;
+            }
+            String line = reader.readLine();
+            if (line == null) {
+              log.error("[listenForWWandASR] python stdout closed during ASR; exiting");
+              listenForWW = false;
+              break;
+            }
+            if (line.startsWith("<full>") || line.startsWith("<novad>")
+                || line.startsWith("<unk>") || line.startsWith("<cutoff>")) {
+              // Preserve trailing newline so the existing equals/startsWith checks below still match.
+              result = line + "\n";
+            } else {
+              log.warn("[listenForWWandASR] unexpected line during ASR phase: {}", line);
+            }
           }
-          //Get ASR result (using <unk> to signal ASR timed out before any results were detected)
-          s.setLength(0);
-          while (is.available() != 0) {
-            s.append((char) is.read());
+          if (!listenForWW) {
+            break;
           }
-          result = s.toString();
         }
 
         //Parse ASR result - form: <prefix> <speech>
