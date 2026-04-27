@@ -535,7 +535,8 @@ import java.lang.String;
 //  Without other goals being submitted and added to learning state - Not currently possible?
 //      Lock EM temporarily
 //      Make independent learning state and submission API
-() = submitTaskDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
+//() = submitTaskDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
+() = submitTaskDefinition(Symbol ?actionName, Predicate ?locationSequence, Predicate ?actionSequence) {
     Predicate !actionSignature;
     Predicate !actionPred;
     String !name;
@@ -546,7 +547,8 @@ import java.lang.String;
     Symbol !location;
     Symbol !action;
 
-    op:log(info,"[submitTourDefinition] ?actionName : ?startLocation : ?startAction : ?locationSequence : ?actionSequence");
+    //op:log(info,"[submitTourDefinition] ?actionName : ?startLocation : ?startAction : ?locationSequence : ?actionSequence");
+    op:log(info,"[submitTourDefinition] ?actionName : ?locationSequence : ?actionSequence");
 
     !actionSignature = op:createPredicate(?actionName);
     async {
@@ -554,13 +556,12 @@ import java.lang.String;
     }
     act:waitForActionLearningStart(!actionSignature);
 
-    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,?startLocation);
-    act:submitGoal(!actionPred);
-
-    !name = op:getName(?startAction);
-    if (~op:equalsValue(!name,"none")) {
-        act:submitGoal(?startAction);
-    }
+    //!actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,?startLocation);
+    //act:submitGoal(!actionPred);
+    //!name = op:getName(?startAction);
+    //if (~op:equalsValue(!name,"none")) {
+    //    act:submitGoal(?startAction);
+    //}
 
     !locations = op:invokeMethod(?locationSequence, "getArgs");
     !actions = op:invokeMethod(?actionSequence, "getArgs");

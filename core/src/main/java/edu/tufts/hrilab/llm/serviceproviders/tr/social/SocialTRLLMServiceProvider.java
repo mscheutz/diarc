@@ -343,11 +343,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     learnTourTools.add(new Tool(new ToolDefinition("submitTaskDefinition",
             "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", List.of(
             new ToolParameterHelper("taskName","string",new ArrayList<>(),"The name this task should be saved under and later instructed as",true),
-            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the task sequence should begin at",true),
-            new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide \"none\".",true,true,"nlu"),
-            //TODO: technically here we want to provide a possible_values list for postprocessing but not necessarily to the LLM (unless it can understand that the possible_values apply to each value in the sequence rather than the sequence as a whole)
-            new ToolParameterHelper("locationSequence","array",new ArrayList<>(),"The list of locations to visit in order after leaving the start location. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location, in other words, one of the acceptable values of startLocation.",true),
-            new ToolParameterHelper("actionSequence","array",new ArrayList<>(),"The list of tasks to perform at each corresponding location in locationSequence. The final length of this list must be equal to the length of locationSequence. Each individual value in this list must follow the same format as startAction, in other words, a populated form from the Action List above.",true,true,"nlu")
+//            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the task sequence should begin at",true),
+//            new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide {\"name\":\"waitForDuration\", \"arguments\":{\"seconds\":1}}. If multiple actions are to be performed at the start location, please use a \"multipleToolCalls\" tool definition to signal this.",true,true,"nlu"),
+            new ToolParameterHelper("locationSequence","array",getLocations("self",true),"The list of locations to visit in order during this task sequence. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location.",true),
+            new ToolParameterHelper("actionSequence","array",new ArrayList<>(),"The list of tasks to perform at each corresponding location in locationSequence. The final length of this list must be equal to the length of locationSequence. Each individual value in this list must match a populated form from the Action List above.",true,true,"nlu")
     )),
             UtteranceType.INSTRUCT
     ));
@@ -3177,14 +3176,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
       } else if (command.equals("submitTaskDefinition")) {
         List<Symbol> args = ((Predicate)utterance.getSemantics()).getArgs();
-        if (args.size() != 6) {
+        //if (args.size() != 6) {
+        if (args.size() != 4) {
           log.error("[correctCommonNLUMistakes] tourDefinition has unexpected number of arguments, this should have been caught in tool processing?");
         } else {
-          Symbol locationSequence = args.get(4);
-          Symbol actionSequence = args.get(5);
+          Symbol locationSequence = args.get(2);
+          Symbol actionSequence = args.get(3);
           if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
             if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
-              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location outside of the startLocation must be explicitly specified.";
+              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location must be explicitly specified.";
             }
           }
           String tourName = args.get(1).toString();
