@@ -76,7 +76,7 @@ import java.lang.Boolean;
     }
 }
 
-() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType, Boolean ?validated) {
+() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType, Boolean ?validated=false) {
     Predicate !response;
 
     effects : {
