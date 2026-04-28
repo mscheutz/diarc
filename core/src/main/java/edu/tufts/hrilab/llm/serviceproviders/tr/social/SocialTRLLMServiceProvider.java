@@ -2352,7 +2352,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
               //TODO: When in focused contexts, do we need to pull the most recent "current template state" and copy into
               //  this message?
               //textResponseTool.toolDefinition.function.parameters.getProperties().keySet();
-              toolFunction.arguments = "{\"response\": \"" + utterance.getWordsAsString() + "\"}";
+              toolFunction.arguments = new Gson().toJson(java.util.Map.of("response", utterance.getWordsAsString()));
               toolCall.function = toolFunction;
               chatContext.history.addRobotMessage("", List.of(toolCall));
             }
