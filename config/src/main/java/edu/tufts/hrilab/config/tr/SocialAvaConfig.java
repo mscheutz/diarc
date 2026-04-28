@@ -173,7 +173,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
 
     createInstance(SocialTRLLMServiceProvider.class,"");
-    String llmComponentArgs = String.format("-service %s hf -model %s Qwen/Qwen3-14B -temperature 0.7 0.7 -endpoint %s", service, model, openaiEndpoint);
+    String llmComponentArgs = String.format("-service %s hf -model %s Qwen/Qwen3-14B -temperature 0.5 0.5 -endpoint %s", service, model, openaiEndpoint);
     //HF only
     //String llmComponentArgs = String.format("-service hf -model Qwen/Qwen3-14B -temperature 0.7", service, model);
     //Marvin only
@@ -182,7 +182,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
             "-historylength 3600000 "
-                    +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
+                    +   "-goal listen(self) monitorBattery(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl domains/ava.pl"
                     + " -dbfile " +
                     "core.asl " +

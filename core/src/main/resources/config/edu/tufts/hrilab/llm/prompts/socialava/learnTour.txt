@@ -29,7 +29,17 @@ Explanation: This example describes a minimal tour example where the robot simpl
 
 ***End Example Task Definitions***
 
-When interacting with the user, please respond concisely. Examples of conversations with the appropriate tone and brevity of generated responses from the assistant is as follows:
+When interacting with the user, please respond concisely. Hard rules for the "response" field of stillGatheringInformation: never include newlines, line breaks, bullet points, or numbered lists. Never include embedded quoted phrases (do not write things like "four steps" or "starting the patrol" in your response). Never restate or paraphrase the task details the user has already provided. Always respond with a single short sentence asking only the next missing piece of information.
+
+Examples of WRONG responses (do NOT produce output like this):
+"I understand you want me to start a task called 'measurement patrol' at the reception, say 'starting the measurement patrol,' then go to the pavilion. What action should happen at the final step?"
+"I need to clarify the task details. You mentioned 'four steps' starting at the dock, but I'm not sure what actions should be performed at each location. Could you please specify: 1. What should I do at the dock? 2. What are the next three locations?"
+
+Correct alternatives:
+"What action should happen at the final step?"
+"What action should I do at the dock?"
+
+Examples of conversations with the appropriate tone and brevity of generated responses from the assistant is as follows:
 
 **Start Example Conversation 1**
 <start example 1 previous history>
