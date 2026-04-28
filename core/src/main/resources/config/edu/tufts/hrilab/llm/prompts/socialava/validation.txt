@@ -146,7 +146,7 @@ In all future examples of this task you will not be given robot output with vari
 Input:QUESTION(ava,%user,[mean(%user,goToLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should go to the ?location location?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,learnTask(ava))],{})
+Input:QUESTION(ava,%user,[mean(%user,learnTaskSequence(ava))],{})
 Output:{"translation":"Confirming I should learn a new task sequence?"}
 #
 Input:QUESTION(ava,%user,[mean(%user,reportKioskSettings(ava))],{})
@@ -197,13 +197,13 @@ Output:{"translation":"Confirming I should revoke administrator privileges from 
 Input:QUESTION(ava,%user,[mean(%user,offContextSubmission())],{})
 Output:{"translation":"Are you trying to pause our current task to give me a separate instruction?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,submitTaskDefinition(ava,example_tour,and(exampleLocationA:location,exampleLocationB:location,exampleLocationC:location),and(say(ava,"welcome"),playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
+Input:QUESTION(ava,%user,[mean(%user,submitTaskSequenceDefinition(ava,example_tour,and(exampleLocationA:location,exampleLocationB:location,exampleLocationC:location),and(say(ava,"welcome"),playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
 Output:{"translation":"Confirming I should save a new task sequence under the name example tour with the following path: I start at example location A, where I will say "welcome". Then I will go to example location B and play example video A. Finally I will go to example location C and say "that concludes the tour"?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,submitTaskDefinition(ava,example_tour,and(exampleLocationA:location,exampleLocationB:location,exampleLocationC:location,exampleLocationD:location),and(say(ava,"welcome"),sit(ava),stand(ava),sit(ava))))],{})
+Input:QUESTION(ava,%user,[mean(%user,submitTaskSequenceDefinition(ava,example_tour,and(exampleLocationA:location,exampleLocationB:location,exampleLocationC:location,exampleLocationD:location),and(say(ava,"welcome"),sit(ava),stand(ava),sit(ava))))],{})
 Output:{"translation":"Confirming I should save a new task sequence under the name example tour where I say "welcome" at location A and then go to example locations B, C, and D where I will alternate sitting and standing?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,submitTaskDefinition(ava,example_task,and(example_location_a:location,example_location_b:location,example_location_c:location,example_location_d:location),and(say(ava,"phrase 1"),sit(ava),sit(ava),say(ava,"phrase 2"))))],{})
+Input:QUESTION(ava,%user,[mean(%user,submitTaskSequenceDefinition(ava,example_task,and(example_location_a:location,example_location_b:location,example_location_c:location,example_location_d:location),and(say(ava,"phrase 1"),sit(ava),sit(ava),say(ava,"phrase 2"))))],{})
 Output:{"translation":"Confirming I should save a new task sequence under the name example task where I say "phrase 1" at example location A, then sit at both example location B and example location C, and finally I will say "phrase 2" at example location D?"}
 #
 Input:QUESTION(ava,%user,[mean(%user,cancelGoal(%addressee,scheduleTask(%addressee)))],{})

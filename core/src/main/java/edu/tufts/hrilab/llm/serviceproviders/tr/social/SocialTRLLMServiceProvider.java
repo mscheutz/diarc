@@ -340,13 +340,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //    of this interaction. E.g. hold an explicit representation of the learning state in Java and provide an API to
     //    the LLM through tools to modify specific existing steps, add/insert new one, etc.
     List<Tool> learnTourTools = new ArrayList<>();
-    learnTourTools.add(new Tool(new ToolDefinition("submitTaskDefinition",
+    learnTourTools.add(new Tool(new ToolDefinition("submitTaskSequenceDefinition",
             "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", List.of(
             new ToolParameterHelper("taskName","string",new ArrayList<>(),"The name this task should be saved under and later instructed as",true),
-//            new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the task sequence should begin at",true),
-//            new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide {\"name\":\"waitForDuration\", \"arguments\":{\"seconds\":1}}. If multiple actions are to be performed at the start location, please use a \"multipleToolCalls\" tool definition to signal this.",true,true,"nlu"),
-            new ToolParameterHelper("locationSequence","array",getLocations("self",true),"The list of locations to visit in order during this task sequence. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location.",true),
-            new ToolParameterHelper("actionSequence","array",new ArrayList<>(),"The list of tasks to perform at each corresponding location in locationSequence. The final length of this list must be equal to the length of locationSequence. Each individual value in this list must match a populated form from the Action List above.",true,true,"nlu")
+
+            ////new ToolParameterHelper("startLocation","string",getLocations("self",true),"What location the task sequence should begin at",true),
+            ////new ToolParameterHelper("startAction","object",new ArrayList<>(),"The task to be performed at the startLocation. Please refer to the Action List in order to understand acceptable values and forms. If no action is to be performed at the start location, simply provide {\"name\":\"waitForDuration\", \"arguments\":{\"seconds\":1}}. If multiple actions are to be performed at the start location, please use a \"multipleToolCalls\" tool definition to signal this.",true,true,"nlu"),
+            //new ToolParameterHelper("locationSequence","array",getLocations("self",true),"The list of locations to visit in order during this task sequence. The final length of this list must be equal to the length of actionSequence. Each individual value in this list must be a saved location.",true),
+            //new ToolParameterHelper("actionSequence","array",new ArrayList<>(),"The list of tasks to perform at each corresponding location in locationSequence. The final length of this list must be equal to the length of locationSequence. Each individual value in this list must match a populated form from the Action List above.",true,true,"nlu")
+            new ToolParameterHelper("locationActionPairs","array",new ArrayList<>(),"The list of action/location pairs defining this task sequence. Execution of this task will consist of iterating over the pairs in this list, visiting each location in sequence, and then performing the corresponding task at that location. Each individual value in this list should be a json object following the form {\"location\":<location_name_here>, \"action\":<tool_call_definition_here>}, where the location field must contain a saved location and the action field must contain a valid tool call definition matching a form in the supplied actionList.",true, true, "nlu")
     )),
             UtteranceType.INSTRUCT
     ));
@@ -355,13 +357,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You are still being taught new or modifying existing task steps by the user. You will respond to" +
                     "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
                     "to gather missing information in order to define the task sequence.",
-            List.of(new ToolParameterHelper("currentTaskDefinition","object",new ArrayList<>(),
-                    "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskDefinition function described above.", true),
+            List.of(new ToolParameterHelper("currentTaskSequenceDefinition","object",new ArrayList<>(),
+                    "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above.", true),
                     new ToolParameterHelper("response","string",new ArrayList<>(),
                     "What you want to say to the user", true))),
             UtteranceType.INSTRUCT);
     learnTourTools.add(modifiedTextResponseTool2);
-    chatTemplates.put("learnTask", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
+    chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
 
     //TODO: apply promptVars to Tool definitions/examples and most importantly possible_values sets as well
     //// init prompt vars
@@ -620,8 +622,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //  tools which didn't exist anymore in different contexts but were present in the history. Have more safeguards
       //  in place now so that it should be safe
       if (!errorResponseBuilder.isEmpty()) {
+        String errorString = errorResponseBuilder.toString();
+        log.info("[runCompletionRetryLoop] running extra chatCompletion request with additional error message: {}", errorString);
         tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
-        chatContext.history.addToolMessage(errorResponseBuilder.toString(), tool_call_id);
+        chatContext.history.addToolMessage(errorString, tool_call_id);
       }
       errorResponseBuilder = new StringBuilder();
 
@@ -2503,7 +2507,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         toolDefinitionMap.values().removeIf(Objects::isNull);
       } catch (JsonSyntaxException e) {
         //TODO: this error message doesn't actually cause the LLM to fix itself all the time - manually inspect what type of object it is and try to process as such manually?
-        errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. You do not need to speak with the user about this. \n");
+        errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. \n");
         log.error("[processToolCall] malformed json present in functionCall", e);
         return null;
       }
@@ -2540,8 +2544,33 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //TODO: also definitely developer error - what do we do?
       return null;
     }
-
     toolDefinitionMap.values().removeIf(Objects::isNull);
+
+    //TODO: remove this block and extend framework to allow for arbitrary definition of specific json object forms without necessarily being tool calls
+    if (argumentName.equals("locationActionPairs")) {
+      String locationVal = (String)toolDefinitionMap.get("location");
+      Object actionVal = toolDefinitionMap.get("action");
+      Symbol locationSymbol = null;
+      Symbol actionSymbol = null;
+      if (locationVal == null) {
+        log.warn("[processArgument] locationActionPair does not have location field present");
+        errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"location\" field. Each locationPair needs a \"location\" field.\n");
+      } else {
+        locationSymbol = processSymbolArgument(argumentName, locationVal, getLocations("self",true),errorMessage,varMap,builder,false,unpopulatedArgSafe);
+      }
+      if (actionVal == null) {
+        log.warn("[processArgument] locationActionPair does not have action field present");
+        errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"action\" field. Each locationPair needs an \"action\" field.\n");
+      } else {
+        actionSymbol = processToolArgument("inner location action pair's action", actionVal, argumentDefinition, parentTool,actor, builder,varMap,errorMessage,unpopulatedArgSafe);
+      }
+      if (actionSymbol == null || locationSymbol == null) {
+        return null;
+      } else {
+       return Factory.createPredicate("and",locationSymbol,actionSymbol);
+      }
+    }
+
     String toolName = (String)toolDefinitionMap.get("name");
     Object innerArguments = toolDefinitionMap.get("arguments");
     if (toolName == null) {
@@ -2771,8 +2800,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           int expectedSize = -1;
           if (templateArgName.equals("currentScheduledDefinition")) {
             expectedSize = 4;
-          } else if (templateArgName.equals("currentTaskDefinition")) {
-            expectedSize = 5;
+          } else if (templateArgName.equals("currentTaskSequenceDefinition")) {
+            expectedSize = 2;
           } else {
             log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
           }
@@ -3174,7 +3203,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           return errorStringBuilder.toString();
         }
-      } else if (command.equals("submitTaskDefinition")) {
+      } else if (command.equals("submitTaskSequenceDefinition")) {
         List<Symbol> args = ((Predicate)utterance.getSemantics()).getArgs();
         //if (args.size() != 6) {
         if (args.size() != 4) {
@@ -3184,7 +3213,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           Symbol actionSequence = args.get(3);
           if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
             if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
-              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. An action to be performed at each location must be explicitly specified.";
+              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. Every action must have an explicitly associated location defined and vice versa. For example, two actions performed at the same location require two explicit entries of that location in the corresponding indices of the locationSequence. If the user has told you an equal number of locations and actions, attempt to update your sequence definitions and resolve this on your own.";
             }
           }
           String tourName = args.get(1).toString();
@@ -3359,7 +3388,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getTemperatureAtLocationString":
         case "getCurrentPendingScheduledGoalInformation":
         case "resetConversation":
-        case "learnTask":
+        case "learnTaskSequence":
         case "scheduleTask":
         case "explainHowToTeachATask":
         case "explainWhatALearnedTaskIs":
@@ -3675,7 +3704,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("learnTask",
+    definition = new ToolDefinition("learnTaskSequence",
             "You begin a dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. An example of instructing this could be \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
