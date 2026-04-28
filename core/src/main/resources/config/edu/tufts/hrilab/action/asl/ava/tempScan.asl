@@ -60,3 +60,40 @@ import java.lang.Integer;
         act:generateResponseFromString(!output);
     }
 }
+
+() = getTemperatureAtLocationsString(Predicate ?locations) {
+    List !locList;
+    Symbol !location;
+    String !output;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+
+    !locList = op:invokeMethod(?locations, "getArgs");
+    foreach(!location : !locList) {
+        !output = act:generateTemperatureAtLocationString(!location);
+        op:invokeMethod(!sb,"append",!output);
+        op:invokeMethod(!sb,"append",".");
+    }
+    !output = op:invokeMethod(!sb,"toString");
+
+    Symbol !user = this:getOriginalSubmitter();
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}
+
+() = getTemperatureAtCurrentLocationString() {
+    act:measureTemperature();
+
+    Symbol !currentLocation;
+    String !output;
+    !currentLocation = act:getCurrentLocation();
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateTemperatureAtLocationString(!location);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}

@@ -3810,8 +3810,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at the supplied location. Only returns a useful value after measureTemperatureAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?\"",
             List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getTemperatureAtLocationsString",
+            "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
+            List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Each value must be a saved location.", true)));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     definition = new ToolDefinition("getWifiAtCurrentLocationString",
             "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getTemperatureAtCurrentLocationString",
+            "Use this to ask the system what the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
