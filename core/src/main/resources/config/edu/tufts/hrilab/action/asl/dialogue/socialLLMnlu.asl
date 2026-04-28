@@ -499,7 +499,7 @@ import java.lang.String;
     op:log("info", "[scheduleTask] out");
 }
 
-() = learnTask() {
+() = learnTaskSequence() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -535,18 +535,20 @@ import java.lang.String;
 //  Without other goals being submitted and added to learning state - Not currently possible?
 //      Lock EM temporarily
 //      Make independent learning state and submission API
-() = submitTaskDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
-    Predicate !actionSignature;
-    Predicate !actionPred;
-    String !name;
+//() = submitTaskSequenceDefinition(Symbol ?actionName, Symbol ?startLocation, Predicate ?startAction, Predicate ?locationSequence, Predicate ?actionSequence) {
+//() = submitTaskSequenceDefinition(Symbol ?actionName, Predicate ?locationSequence, Predicate ?actionSequence) {
+() = submitTaskSequenceDefinition(Symbol ?actionName, Predicate ?locationActionPairs) {
     Integer !index;
-    Integer !numActions;
-    java.util.List !locations;
-    java.util.List !actions;
+    java.util.List !pairs;
+    Integer !numPairs;
+    Predicate !pair;
+    java.util.List !pairArgs;
+    Predicate !actionPred;
+    Predicate !actionSignature;
     Symbol !location;
     Symbol !action;
 
-    op:log(info,"[submitTourDefinition] ?actionName : ?startLocation : ?startAction : ?locationSequence : ?actionSequence");
+    op:log(info,"[submitTourDefinition] ?locationActionPairs");
 
     !actionSignature = op:createPredicate(?actionName);
     async {
@@ -554,26 +556,16 @@ import java.lang.String;
     }
     act:waitForActionLearningStart(!actionSignature);
 
-    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,?startLocation);
-    act:submitGoal(!actionPred);
-
-    !name = op:getName(?startAction);
-    if (~op:equalsValue(!name,"none")) {
-        act:submitGoal(?startAction);
-    }
-
-    !locations = op:invokeMethod(?locationSequence, "getArgs");
-    !actions = op:invokeMethod(?actionSequence, "getArgs");
-    !numActions = op:invokeMethod(!actions,"size");
-    //Explicitly check sizes again?
-    for (!index=0; !index lt !numActions; !index ++) {
-        !location = op:get(!locations,!index);
+    !pairs = op:invokeMethod(?locationActionPairs, "getArgs");
+    !numPairs = op:invokeMethod(!pairs,"size");
+    for (!index=0; !index lt !numPairs; !index ++) {
+        !pair = op:get(!pairs,!index);
+        !pairArgs = op:invokeMethod(!pair, "getArgs");
+        !location = op:get(!pairArgs,0);
         !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
         act:submitGoal(!actionPred);
-        !action = op:get(!actions,!index);
-        if (~op:equalsValue(!action,"none")) {
-            act:submitGoal(!action);
-        }
+        !action = op:get(!pairArgs,1);
+        act:submitGoal(!action);
     }
 
     act:endActionLearning(!actionSignature);
