@@ -7,6 +7,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedTreeMap;
 import edu.tufts.hrilab.action.annotations.Action;
@@ -2506,10 +2507,36 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }.getType());
         toolDefinitionMap.values().removeIf(Objects::isNull);
       } catch (JsonSyntaxException e) {
-        //TODO: this error message doesn't actually cause the LLM to fix itself all the time - manually inspect what type of object it is and try to process as such manually?
-        errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. \n");
-        log.error("[processToolCall] malformed json present in functionCall", e);
-        return null;
+        //TODO: added this 4/28, definitely definitely duplicating a ton of cases at this point
+        try {
+          log.info("[processToolArgument] hit array as string case, trying to handle as list");
+          String temp = (String)argumentValue;
+          if (temp.startsWith("[") && temp.endsWith("]")) {
+            while (temp.startsWith("[")) {
+              temp = temp.substring(1);
+            }
+            while (temp.endsWith("]")) {
+              temp = temp.substring(0,temp.length()-1);
+            }
+            argumentValue = "[" + temp + "]";
+          }
+          List<Object> argObjectList = new GsonBuilder().setLenient().create().fromJson((String)argumentValue, new TypeToken<ArrayList<Object>>() {
+          }.getType());
+          List<Symbol> innerArgs = new ArrayList<>();
+          for (Object argValue : argObjectList) {
+            Symbol innerArg = processToolArgument(argumentName, argValue, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+            if (innerArg == null) {
+              return null;
+            }
+            innerArgs.add(innerArg);
+          }
+          return Factory.createPredicate("and", innerArgs);
+        } catch (JsonSyntaxException e2) {
+          //TODO: this error message doesn't actually cause the LLM to fix itself all the time - manually inspect what type of object it is and try to process as such manually?
+          errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. \n");
+          log.error("[processToolCall] malformed json present in functionCall", e);
+          return null;
+        }
       }
     } else if (argumentValue instanceof Map<?,?>) {
       toolDefinitionMap = (Map<String, Object>) argumentValue; //Catch and handle ClassCastException if ever encountered
@@ -3206,16 +3233,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       } else if (command.equals("submitTaskSequenceDefinition")) {
         List<Symbol> args = ((Predicate)utterance.getSemantics()).getArgs();
         //if (args.size() != 6) {
-        if (args.size() != 4) {
+        if (args.size() != 3) {
           log.error("[correctCommonNLUMistakes] tourDefinition has unexpected number of arguments, this should have been caught in tool processing?");
         } else {
-          Symbol locationSequence = args.get(2);
-          Symbol actionSequence = args.get(3);
-          if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
-            if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
-              return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. Every action must have an explicitly associated location defined and vice versa. For example, two actions performed at the same location require two explicit entries of that location in the corresponding indices of the locationSequence. If the user has told you an equal number of locations and actions, attempt to update your sequence definitions and resolve this on your own.";
-            }
-          }
+          //Symbol locationSequence = args.get(2);
+          //Symbol actionSequence = args.get(3);
+          //if (locationSequence.isPredicate() && actionSequence.isPredicate()) {
+          //  if (((Predicate) locationSequence).getArgs().size() != ((Predicate) actionSequence).getArgs().size()) {
+          //    return "- The current task definition has an unequal amount of locations and actions supplied in locationSequence and actionSequence respectively. Every action must have an explicitly associated location defined and vice versa. For example, two actions performed at the same location require two explicit entries of that location in the corresponding indices of the locationSequence. If the user has told you an equal number of locations and actions, attempt to update your sequence definitions and resolve this on your own.";
+          //  }
+          //}
           String tourName = args.get(1).toString();
           if (!tourName.matches("[A-Za-z0-9_]+")) {
             Symbol cleanedName = Factory.createSymbol(tourName.trim().replaceAll("\\s+", "_").replaceAll("[^a-zA-Z0-9_]", ""));
