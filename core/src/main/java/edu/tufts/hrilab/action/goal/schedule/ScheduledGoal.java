@@ -68,20 +68,33 @@ public class ScheduledGoal extends Goal {
     List<Symbol> args = new ArrayList<>();
     args.add(super.getPredicate());
     if (start != null && scheduleInfo.startTime != null) {
-      long remainingMs = scheduleInfo.startTime.getTime() - System.currentTimeMillis();
+      long nowMs = System.currentTimeMillis();
+      long startMs = scheduleInfo.startTime.getTime();
+      long effectiveStartMs;
+      if (startMs >= nowMs) {
+        effectiveStartMs = startMs;
+      } else if (scheduleInfo.period > 0) {
+        long elapsed = nowMs - startMs;
+        long cyclesElapsed = (elapsed / scheduleInfo.period) + 1;
+        effectiveStartMs = startMs + cyclesElapsed * scheduleInfo.period;
+      } else {
+        effectiveStartMs = startMs;
+      }
+      long remainingMs = effectiveStartMs - nowMs;
       if (remainingMs > 0) {
         args.add(toRelativeTimePred("start", remainingMs));
       } else {
+        Date displayDate = new Date(effectiveStartMs);
         Calendar startCal = Calendar.getInstance();
-        startCal.setTime(scheduleInfo.startTime);
+        startCal.setTime(displayDate);
         Calendar now = Calendar.getInstance();
         if (startCal.get(Calendar.YEAR) == now.get(Calendar.YEAR)
                 && startCal.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)) {
           args.add(Factory.createPredicate("start",
-                  new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.startTime)));
+                  new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH).format(displayDate)));
         } else {
           args.add(Factory.createPredicate("start",
-                  new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.startTime)));
+                  new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH).format(displayDate)));
         }
       }
     }
