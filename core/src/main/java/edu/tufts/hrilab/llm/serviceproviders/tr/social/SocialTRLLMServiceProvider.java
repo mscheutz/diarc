@@ -3422,6 +3422,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "explainWhatActionsCanBePerformedAlongALearnedTask":
         case "getWifiAtLocationsString":
         case "getWifiAtCurrentLocationString":
+        case "getTemperatureAtLocationsString":
+        case "getTemperatureAtCurrentLocationString":
         //case "submitTourDefinition":
         //case "submitScheduledTaskDefinition":
         //case "scheduled":
