@@ -606,10 +606,10 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString(!output);
     }
 }
-() = getCurrentPendingScheduledGoalInformation(java.lang.Boolean ?offContextState) {
+() = getCurrentPendingScheduledGoalInformation() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = tsc:getFullGoalsSummary(?actor,?offContextState);
+    !output = tsc:getFullGoalsSummary(?actor);
     String !contextId = this:getCommand();
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {

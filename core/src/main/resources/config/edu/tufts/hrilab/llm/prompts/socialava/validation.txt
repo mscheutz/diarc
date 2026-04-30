@@ -194,9 +194,6 @@ Output:{"translation":"Confirming I should grant administrator privileges to use
 Input:QUESTION(ava,%user,[mean(%user,disableAdminMode())],{})
 Output:{"translation":"Confirming I should revoke administrator privileges from users speaking directly to me?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,offContextSubmission())],{})
-Output:{"translation":"Are you trying to pause our current task to give me a separate instruction?"}
-#
 Input:QUESTION(ava,%user,[mean(%user,submitTaskSequenceDefinition(ava,example_tour,and(exampleLocationA:location,exampleLocationB:location,exampleLocationC:location),and(say(ava,"welcome"),playVideo(ava,exampleVideoA:video,exampleLocationB:location),say(ava,"that concludes the tour"))))],{})
 Output:{"translation":"Confirming I should save a new task sequence under the name example tour with the following path: I start at example location A, where I will say "welcome". Then I will go to example location B and play example video A. Finally I will go to example location C and say "that concludes the tour"?"}
 #

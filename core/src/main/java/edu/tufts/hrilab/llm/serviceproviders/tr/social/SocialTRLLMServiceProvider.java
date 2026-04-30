@@ -152,16 +152,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   Map<String,Tool> replyToolset;
 
   /**
-   * For "focused" dialogue contexts; Tool target to allow the user to temporarily back out of the specific context into
-   * the base, standard "nlu" context to give one off instructions. Providing internal, standard functionality to
-   * support this without forcing the user to understand how to explicitly suspend and resume these types of goals in
-   * order to give other instructions.
-   *
-   * //TODO: not sure how well the LLM actually handles this target. Needs more testing and development
-   */
-  Tool offContextSubmissionTool;
-
-  /**
    * (More recent update with promising results)
    * Universal Tool target for the LLM to respond to a user without terminating the current conversation context. Was
    * having issues where the LLM would not target Tool calls when appropriate and just reported to the user that it had
@@ -208,21 +198,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     replyToolset = generateReplyTools();
 
     //// Generate universal Tools ////
-    //TODO: Once everything is in place and doing final polish, update these descriptions and names for best performance
-    offContextSubmissionTool = new Tool(new ToolDefinition("offContextSubmission",
-            "Call this function when it seems like the user is attempting to instruct you to do something out " +
-                    "of context for your current conversation. Common examples would be asking to cancel or suspend your " +
-                    "current task.",new ArrayList<>()), UtteranceType.INSTRUCT);
     Tool focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
             "End the conversation with the user. This is usually desired in two main cases. 1. The user no" +
                     " longer wants to perform your shared task. Or 2. The user has said goodbye or needs to leave.",
-            new ArrayList<>()),
-            UtteranceType.INSTRUCT
-    );
-    //TODO: give signal in prompt that a task has been superseded/in offtopic state
-    Tool offtopicEndConversationTool = new Tool(new ToolDefinition("endConversation",
-            "Call this function when the user signals that they want to return to your previous task or no " +
-                    "longer want to give you a new instruction.",
             new ArrayList<>()),
             UtteranceType.INSTRUCT
     );
@@ -231,14 +209,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                     "tool in order to get relevant information to help answer user questions about what you are currently" +
                     " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
                     "perform in the future",
-            List.of(new ToolParameterHelper("supersededGoal","boolean",List.of("false"),"",true))),
-            UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
-    Tool offtopicGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledGoalInformation",
-            "Use this to ask the system for up to date information about your current list of tasks. Call this" +
-                    "tool in order to get relevant information to help answer user questions about what you are currently" +
-                    " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
-                    "perform in the future",
-            List.of(new ToolParameterHelper("supersededGoal","boolean",List.of("true"),"",true))),
+            new ArrayList<>()),
             UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     itkActionNames.add("getCurrentPendingScheduledGoalInformation");
 
@@ -271,7 +242,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  - Base LLM<->Diarc ITK targets - TODO: temporarily removed - should these be available or not? Only a specific subset?
     //  - relevant REPLY targets - TODO: temporarily removed, should these be allowed? Should there be a mechanism to define REPLY targets per focused context?
     //  - endConversation==cancelGoal
-    //  - offContextSubmission - Should this be replaced with explicit suspend/cancelGoal targets?
     List<Tool> universalFocusedTools = new ArrayList<>();
     universalFocusedTools.add(focusedEndConversationTool);
     universalFocusedTools.add(new Tool(new ToolDefinition("suspendCurrentInteraction",
@@ -285,18 +255,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             UtteranceType.INSTRUCT));
     //universalFocusedTools.addAll(itkTools);
     //universalFocusedTools.add(defaultGoalInfoTool);
-    //universalFocusedTools.add(offContextSubmissionTool); //Done in parse method
     //universalFocusedTools.add(textResponseTool); //Add per focused entry - using custom text response in learnTour
-
-    // OffContext submission toolset: Everything from base context, but overriding:
-    //  - getCurrentGoalInfo (to hide the "offContextSubmission" action / explicitly handle reasoning around the fact
-    //                        that the spiritual "current goal" is what was superseded by this goal)
-    //  - Specific endConversation tool - description includes notion of the "superseded" task this is interrupting
-    List<Tool> offTopicTools = new ArrayList<>(instructTools);
-    offTopicTools.add(offtopicEndConversationTool);
-    offTopicTools.add(offtopicGoalInfoTool);
-    offTopicTools.add(textResponseTool);
-    chatTemplates.put("offContextSubmission", new ChatTemplates(getNluSystemPrompt(), offTopicTools)); //TODO: augment system prompt
 
     // Validation tool set:
     //  - Just reply forms, which are added dynamically (yes,no,abort)
@@ -539,11 +498,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chat = chatContext.history;
       }
 
-      if (chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION) {
-        // Add special offContextSubmission Tool if in a focused context
-        //tools.add(offContextSubmissionTool.toolDefinition);
-      } else {
-        // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+      // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+      if (!(chatContext.chatType == ChatType.FOCUSED && chatContext.chatState == ChatState.VALIDATION)) {
         // Add all matching system question response tools based off of expected reply semantics
         tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
       }
@@ -692,17 +648,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Tool correspondingTool = null;
     try {
       if (chatContext.chatType == ChatType.FOCUSED) {
-        if (functionCall.name.equals("offContextSubmission")) {
-          correspondingTool = offContextSubmissionTool;
-        } else {
-          correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
-        }
+        correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
       } else {
-        if (chatContext.chatType == ChatType.OFFTOPIC) {
-          correspondingTool = chatTemplates.get("offContextSubmission").tools.get(functionCall.name);
-        } else {
-          correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
-        }
+        correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
         if (correspondingTool == null) {
           correspondingTool = replyToolset.get(functionCall.name);
         }
@@ -766,42 +714,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       String toolName = outputUtterance.getSemantics().getName();
       chatContext.lastToolCallName = toolName;
 
-      //// "Off topic" Submission targeting suspend or cancel current goal - should be applied to the superseded dialogue
-      ////  goal rather than the currently active "offContextSubmission" wrapper
-      //// TODO: If using, make sure Validation NLG hides this distinction in this case - whether using a different action, providing examples
-      //if (chatContext.chatType == ChatType.OFFTOPIC) {
-      //  if (toolName.equals("suspendSystemGoalsBlocking") || toolName.equals("cancelSystemGoals")) {
-      //    if (chatCollection.suspendedChats.isEmpty()) {
-      //      log.error("[handleToolResponse] targeted suspend or cancel in OFFTOPIC state, but no suspended focused context exists. Simply abandoning instruction");
-      //      toolName = "endConversation";
-      //    } else {
-      //      String contextId = chatCollection.suspendedChats.get(0).contextID;
-      //      Predicate pred = Factory.createPredicate(contextId, inputUtterance.getAddressee());
-      //      long gid = -1;
-      //      try {
-      //        gid = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalId").argTypes(Predicate.class)).call(long.class, pred);
-      //      } catch (TRADEException e) {
-      //        log.error("[handleToolResponse] exception getting goal ID for suspended focused goal: {}", pred, e);
-      //      }
-      //      //// Not currently safe
-      //      //if (gid == -1) {
-      //      //  log.warn("[handleToolResponse] could not find goalId for suspended focused chat");
-      //      //  //TODO; Any associated cleanup necessary?
-      //      //  inputUtterance.setSemantics(Factory.createPredicate("error","internalErrorOccurred","couldNotStopDesiredGoal"));
-      //      //  inputUtterance.setNeedsValidation(false);
-      //      //  return inputUtterance;
-      //      //} else {
-      //        if (toolName.equals("suspendSystemGoalsBlocking")) {
-      //          outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-      //        } else {
-      //          outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-      //        }
-      //      //}
-      //    }
-      //  }
-      //}
-
-      // Temporary special wrappers - revisit when reintroducing "offContext" functionality
+      // Temporary special wrappers - revisit if ever reintroducing "offContext" functionality
       if (chatContext.chatType != ChatType.BASE) {
         if (toolName.equals("endConversation") || toolName.equals("cancelCurrentInteraction")) {
           //outputUtterance.setSemantics(Factory.createPredicate("cancelSystemGoals", inputUtterance.getAddressee()));
@@ -949,72 +862,53 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private void handleValidatedToolCall(String toolName, ChatCollection chatCollection) {
     ChatContext chatContext = chatCollection.currentChat;
 
-    // TODO: revisit offContextSubmission handling
-    if (toolName.equals("offContextSubmission")) {
-      //Make a copy for new submission context
+    // If tool is targeting a 'focused dialogue action', store the current chat history for retrieval by that action
+    if (chatTemplates.containsKey(toolName)) {
+      // Kind of a hack? Can remove if extending synchronization around tentativeAccept/Submission dialogue or figuring
+      //  out another solution for integrating NLG into relevant chats.
+      // Remove potential excess system NLG for unrelated goals before storing this chat
       ChatContext copy = new ChatContext(chatContext);
+      for (int i = copy.history.messages.size() - 1; i > 0; i--) {
+        if (copy.history.messages.get(i).role.equals(copy.history.userName)) {
+          break;
+        }
+        copy.history.messages.remove(i);
+      }
+
+      // Storing submission time so that action can conditionally add a disclaimer stating that this instruction
+      //  was given T time ago (because the goal may end up being stuck in the queue for an arbitrary amount of time)
       copy.submissionTime = System.currentTimeMillis();
       chatCollection.pendingFocusedChats.put(toolName, copy);
-      chatContext.chatState = ChatState.PARSE;
+    }
 
-      //TODO: test and iterate on this. What chat state do we want when entering offcontext submission case?
-      //  Do we want the suspended conversation history to be in context? If so, in what form?
-      //  Add architecture message explaining "offcontext" status? and/or summary of suspended context?
-      //chatContext.history = new Chat();
-      //chatContext.history.addMessage();
-      copy.history.addMessage("tool", "The user has signalled they are attempting to give a new instruction, independent of the target of the original suspended interaction. If they have already supplied enough information about the new instruction to call a function below, please do so. Otherwise, please continue with the system task to figure out what the new instruction is.");
-
-      //TODO: better way to do this w.r.t synchronization/safety?
-      //Don't remove current state so it can be handled on suspend
-    } else {
-      // If tool is targeting a 'focused dialogue action', store the current chat history for retrieval by that action
-      if (chatTemplates.containsKey(toolName)) {
-        // Kind of a hack? Can remove if extending synchronization around tentativeAccept/Submission dialogue or figuring
-        //  out another solution for integrating NLG into relevant chats.
-        // Remove potential excess system NLG for unrelated goals before storing this chat
-        ChatContext copy = new ChatContext(chatContext);
-        for (int i = copy.history.messages.size() - 1; i > 0; i--) {
-          if (copy.history.messages.get(i).role.equals(copy.history.userName)) {
-            break;
-          }
-          copy.history.messages.remove(i);
-        }
-
-        // Storing submission time so that action can conditionally add a disclaimer stating that this instruction
-        //  was given T time ago (because the goal may end up being stuck in the queue for an arbitrary amount of time)
-        copy.submissionTime = System.currentTimeMillis();
-        chatCollection.pendingFocusedChats.put(toolName, copy);
+    Tool.PostCallBehavior postCallBehavior = Tool.PostCallBehavior.CLEAR_CONTEXT;
+    ChatTemplates ct = chatTemplates.get(chatCollection.currentChat.contextID);
+    if (ct != null) {
+      Tool calledTool = ct.tools.get(toolName);
+      if (calledTool == null) {
+        calledTool = ct.tools.get(chatContext.lastToolCallName);
       }
-
-      Tool.PostCallBehavior postCallBehavior = Tool.PostCallBehavior.CLEAR_CONTEXT;
-      ChatTemplates ct = chatTemplates.get(chatCollection.currentChat.contextID);
-      if (ct != null) {
-        Tool calledTool = ct.tools.get(toolName);
-        if (calledTool == null) {
-          calledTool = ct.tools.get(chatContext.lastToolCallName);
-        }
-        if (calledTool != null) {
-          postCallBehavior = calledTool.postCallBehavior;
-        }
+      if (calledTool != null) {
+        postCallBehavior = calledTool.postCallBehavior;
       }
+    }
 
-      switch (postCallBehavior) {
-        case CLEAR_CONTEXT:
-          // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
-          chatCollection.currentChat.signalCompletion();
-          chatCollection.currentChat = null;
-          break;
-        case CLEAR_HISTORY:
-          //TODO: merge into "previous history" state? Clear "previous history" promptVar completely?
-          chatCollection.currentChat.history.messages.clear();
-        case KEEP_HISTORY:
-          // Reset to parse state for future input
-          chatCollection.currentChat.chatState = ChatState.PARSE;
-          // Reset all "last tool call input" details
-          chatCollection.currentChat.toolCallIdUpForValidation = "";
-          chatCollection.currentChat.utteranceUpForValidation = null;
-          chatCollection.currentChat.lastToolCallName = "";
-      }
+    switch (postCallBehavior) {
+      case CLEAR_CONTEXT:
+        // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
+        chatCollection.currentChat.signalCompletion();
+        chatCollection.currentChat = null;
+        break;
+      case CLEAR_HISTORY:
+        //TODO: merge into "previous history" state? Clear "previous history" promptVar completely?
+        chatCollection.currentChat.history.messages.clear();
+      case KEEP_HISTORY:
+        // Reset to parse state for future input
+        chatCollection.currentChat.chatState = ChatState.PARSE;
+        // Reset all "last tool call input" details
+        chatCollection.currentChat.toolCallIdUpForValidation = "";
+        chatCollection.currentChat.utteranceUpForValidation = null;
+        chatCollection.currentChat.lastToolCallName = "";
     }
   }
 
@@ -1347,30 +1241,22 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatContext.contextID = contextIdentifier;
           collection.currentChat = chatContext;
           chat = chatContext.history;
-          if (!contextIdentifier.equals("offContextSubmission")) {
-            // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
-            //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
-            //  in system prompt itself and resetting message list
-            promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
-            chat.setMessages(new ArrayList<>());
-            // Qwen3.5 chat template requires a user message
-            chat.addUserMessage("Perform the stated task");
-          }
-          //else TODO: should just have slightly modified prompt for offtopic which includes superseded goal info
+          // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
+          //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
+          //  in system prompt itself and resetting message list
+          promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
+          chat.setMessages(new ArrayList<>());
+          // Qwen3.5 chat template requires a user message
+          chat.addUserMessage("Perform the stated task");
           chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
 
           // Update chat status
-          if (contextIdentifier.equals("offContextSubmission")) {
-            chatContext.chatType = ChatType.OFFTOPIC;
-          } else {
-            chatContext.chatType = ChatType.FOCUSED;
-
-            // Check time elapsed since storage, if greater than N, add architecture message
-            long timeSinceSubmission = (System.currentTimeMillis() - chatContext.submissionTime) / 1000;
-            //TODO: what amount of time here? + Test if/how this actually modified response once everything else is settled
-            if (timeSinceSubmission > 15) {
-              chatContext.history.addMessage("tool", String.format("%d seconds have passed since the user gave you the previous instruction. In your next response, unless you are calling a function, please briefly remind the user that they previously instructed you to perform the current task.", timeSinceSubmission));
-            }
+          chatContext.chatType = ChatType.FOCUSED;
+          // Check time elapsed since storage, if greater than N, add architecture message
+          long timeSinceSubmission = (System.currentTimeMillis() - chatContext.submissionTime) / 1000;
+          //TODO: what amount of time here? + Test if/how this actually modified response once everything else is settled
+          if (timeSinceSubmission > 15) {
+            chatContext.history.addMessage("tool", String.format("%d seconds have passed since the user gave you the previous instruction. In your next response, unless you are calling a function, please briefly remind the user that they previously instructed you to perform the current task.", timeSinceSubmission));
           }
           chatContext.cid = cid;
 
@@ -1450,7 +1336,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         log.error("[interruptWaitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
         return false;
       } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
-        //TODO: is this now very much possible if the offcontext submission immediately goes through?
         log.warn("[interruptWaitOnFocusedChat] no matching chat for pair and id {}/{} {}", speaker, addressee, collection);
         return false;
       }
@@ -1466,12 +1351,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * @param user external interactor who is a part of this conversation
    * @param agentTeam DIARC AgentTeam which is a part of this conversation
    * @param cid unique identifier for this focused chat context ("context ID" as in DIARC Context class ID)
-   * @return validated semantic result of this focused chat context - currently only relevant for offContextSubmission
    */
   @OnInterrupt(onCancelServiceCall = "interruptWaitOnFocusedChat(?user,?agentTeam,?cid)", onSuspendServiceCall = "interruptWaitOnFocusedChat(?user,?agentTeam,?cid)")
   @Action
   @TRADEService
-  public Predicate waitOnFocusedChat(Symbol user, Symbol agentTeam, long cid) {
+  public void waitOnFocusedChat(Symbol user, Symbol agentTeam, long cid) {
     log.info("[waitOnFocusedChat] in method {}/{} {}", user, agentTeam, cid);
 
     // Get Chat for supplied user/agentTeam pair
@@ -1483,31 +1367,21 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       collection = getChatCollection(speaker, addressee);
       if (collection == null) {
         log.error("[waitOnFocusedChat] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-        return null;
+        return;
       } else if (collection.currentChat == null || collection.currentChat.cid != cid) {
-        //TODO: is this now very much possible if the offcontext submission immediately goes through?
         log.warn("[waitOnFocusedChat] no matching chat for pair and id {}/{} {}. This should only be possible if the initial instruction contained all relevant information", speaker, addressee, collection);
-        return null;
+        return;
       }
       chatContext = collection.currentChat;
     }
 
     // Wait for focused context to terminate
-    Predicate resultOfFocusedContext = chatContext.waitForCompletion();
+    //Predicate resultOfFocusedContext = chatContext.waitForCompletion();
+    chatContext.waitForCompletion();
 
     Utterance utt = contextTransferResponseUtterances.remove(cid);
-    //TODO: see if can do offContext cancel/suspendCurrentGoal transformation shenanigans here instead
-
-    if (resultOfFocusedContext == null && utt != null) {
-      // If we immediately called a populated template (noConfirmation) tool target, resultOfFocusedContext will be null,
-      //  but not due to failure. Only if utt is also null did we actually fail in initial focused completion.
-      //TODO: is this okay for offContextSubmission? And do same in above case "no matching chat for pair"
-      resultOfFocusedContext = Factory.createPredicate("dummy","response");
-    }
 
     log.info("[waitOnFocusedChat] out method {}/{} {}", user, agentTeam, cid);
-
-    return resultOfFocusedContext;
   }
 
   /**
@@ -1551,127 +1425,126 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return null;
   }
 
-  /**
-   * Utility class for Map indexing using Predicates matching on signatures regardless of bound state
-   * TODO: revisit
-   */
-  class PredicateSignature {
-    Predicate predicate;
-
-    public PredicateSignature(Predicate predicate) {
-      this.predicate = predicate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == null || getClass() != o.getClass()) return false;
-      PredicateSignature that = (PredicateSignature) o;
-      return that.predicate.instanceOf(predicate);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(predicate == null ? "" : predicate.getName());
-    }
-  }
-  private final Lock goalSubmissionLock = new ReentrantLock();
-  private final Map<PredicateSignature, Condition> goalSubmissionMap = Collections.synchronizedMap(new HashMap<>());
-
-  /**
-   * Wait for a goal matching the supplied goalPred's form to be submitted. Return that goal's gid (-1 if timed out)
-   * Utility method used when handling multiple, disjoint side effects during transfer to a focused/offcontextsubmission.
-   */
-  @TRADEService
-  public long waitForGoalSubmission(Predicate goalPred, long timeout) {
-    if (goalPred == null) {
-      log.error("[waitForGoalSubmission] null goalPred supplied");
-      return -1;
-    }
-
-    long startTime = System.currentTimeMillis() - 1000;
-
-    //Start thread to wait on notification of goal submission
-    Thread waitForSubmissionThread = new Thread(() -> {
-      TRADEServiceInfo statusNotificationHandler;
-      TRADEServiceInfo unregisterService;
-      try {
-        TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-        statusNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalUpdate").argTypes(GoalInfo.class));
-        registerService.call(void.class, statusNotificationHandler, NotificationType.GOAL_STATUS_CHANGE);
-        unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-      } catch (TRADEException e) {
-        log.error("[waitForGoalSubmission] could not register for goal status updates", e);
-        return;
-      }
-
-      Condition submissionCondition;
-      goalSubmissionLock.lock();
-      submissionCondition = goalSubmissionMap.get(new PredicateSignature(goalPred));
-      if (submissionCondition == null) {
-        submissionCondition = goalSubmissionLock.newCondition();
-        goalSubmissionMap.put(new PredicateSignature(goalPred),submissionCondition);
-      }
-      try {
-        submissionCondition.await(timeout, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-        log.error("[waitForGoalSubmission] exception waiting on goal submission", e);
-      }
-      try {
-        unregisterService.call(void.class, statusNotificationHandler, NotificationType.DATABASE_ADDITION);
-      } catch (TRADEException e) {
-        log.error("[waitForGoalSubmission] could not unregister goal status update handler", e);
-        return;
-      }
-      goalSubmissionLock.unlock();
-    });
-    waitForSubmissionThread.start();
-
-    //Check current collections to see if the goal has already been submitted
-    long gid = getSubmittedGoalId(goalPred, startTime);
-
-    if (gid == -1) {
-      //No -> wait on thread and the look for goal again
-      try {
-        waitForSubmissionThread.join();
-      } catch (InterruptedException e) {
-        log.error("[waitForGoalSubmission] exception joining on goal submission thread", e);
-      }
-      gid = getSubmittedGoalId(goalPred, startTime);
-    }
-    // Commented out this branch - need to let notification handler be unregistered. (will we ever practically have
-    //    long enough timeout values where this is an issue?)
-    //else {
-    //  //Yes -> interrupt thread. Return gid
-    //  waitForSubmissionThread.interrupt();
-    //}
-    return gid;
-  }
-  @TRADEService
-  public void handleGoalUpdate(GoalInfo goalInfo) {
-    goalSubmissionLock.lock();
-    Symbol unboundGoal = goalInfo.unboundGoal;
-    if (!unboundGoal.isPredicate()) {
-      return;
-    }
-    Condition condition = goalSubmissionMap.remove(new PredicateSignature((Predicate) goalInfo.unboundGoal));
-    if (condition != null) {
-      condition.signalAll();
-    }
-    goalSubmissionLock.unlock();
-  }
-  protected long getSubmittedGoalId(Predicate goalPred, long startTime) {
-    try {
-      List<GoalInfo> goals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalInfos").argTypes(Predicate.class)).call(List.class,goalPred);
-      for (GoalInfo info : goals) {
-        if (!(info.status.isTerminated() && info.start < startTime)) {
-          return info.gid;
-        }
-      }
-    } catch (TRADEException e) {
-      log.error("[getSubmittedGoalId] exception while searching for matching goal", e);
-    }
-    return -1;
-  }
+  ///**
+  // * Utility class for Map indexing using Predicates matching on signatures regardless of bound state
+  // * TODO: revisit
+  // */
+  //class PredicateSignature {
+  //  Predicate predicate;
+//
+  //  public PredicateSignature(Predicate predicate) {
+  //    this.predicate = predicate;
+  //  }
+//
+  //  @Override
+  //  public boolean equals(Object o) {
+  //    if (o == null || getClass() != o.getClass()) return false;
+  //    PredicateSignature that = (PredicateSignature) o;
+  //    return that.predicate.instanceOf(predicate);
+  //  }
+//
+  //  @Override
+  //  public int hashCode() {
+  //    return Objects.hashCode(predicate == null ? "" : predicate.getName());
+  //  }
+  //}
+  //private final Lock goalSubmissionLock = new ReentrantLock();
+  //private final Map<PredicateSignature, Condition> goalSubmissionMap = Collections.synchronizedMap(new HashMap<>());
+  ///**
+  // * Wait for a goal matching the supplied goalPred's form to be submitted. Return that goal's gid (-1 if timed out)
+  // * Utility method used when handling multiple, disjoint side effects during transfer to a focused/offcontextsubmission.
+  // */
+  //@TRADEService
+  //public long waitForGoalSubmission(Predicate goalPred, long timeout) {
+  //  if (goalPred == null) {
+  //    log.error("[waitForGoalSubmission] null goalPred supplied");
+  //    return -1;
+  //  }
+//
+  //  long startTime = System.currentTimeMillis() - 1000;
+//
+  //  //Start thread to wait on notification of goal submission
+  //  Thread waitForSubmissionThread = new Thread(() -> {
+  //    TRADEServiceInfo statusNotificationHandler;
+  //    TRADEServiceInfo unregisterService;
+  //    try {
+  //      TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+  //      statusNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalUpdate").argTypes(GoalInfo.class));
+  //      registerService.call(void.class, statusNotificationHandler, NotificationType.GOAL_STATUS_CHANGE);
+  //      unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+  //    } catch (TRADEException e) {
+  //      log.error("[waitForGoalSubmission] could not register for goal status updates", e);
+  //      return;
+  //    }
+//
+  //    Condition submissionCondition;
+  //    goalSubmissionLock.lock();
+  //    submissionCondition = goalSubmissionMap.get(new PredicateSignature(goalPred));
+  //    if (submissionCondition == null) {
+  //      submissionCondition = goalSubmissionLock.newCondition();
+  //      goalSubmissionMap.put(new PredicateSignature(goalPred),submissionCondition);
+  //    }
+  //    try {
+  //      submissionCondition.await(timeout, TimeUnit.MILLISECONDS);
+  //    } catch (InterruptedException e) {
+  //      log.error("[waitForGoalSubmission] exception waiting on goal submission", e);
+  //    }
+  //    try {
+  //      unregisterService.call(void.class, statusNotificationHandler, NotificationType.DATABASE_ADDITION);
+  //    } catch (TRADEException e) {
+  //      log.error("[waitForGoalSubmission] could not unregister goal status update handler", e);
+  //      return;
+  //    }
+  //    goalSubmissionLock.unlock();
+  //  });
+  //  waitForSubmissionThread.start();
+//
+  //  //Check current collections to see if the goal has already been submitted
+  //  long gid = getSubmittedGoalId(goalPred, startTime);
+//
+  //  if (gid == -1) {
+  //    //No -> wait on thread and the look for goal again
+  //    try {
+  //      waitForSubmissionThread.join();
+  //    } catch (InterruptedException e) {
+  //      log.error("[waitForGoalSubmission] exception joining on goal submission thread", e);
+  //    }
+  //    gid = getSubmittedGoalId(goalPred, startTime);
+  //  }
+  //  // Commented out this branch - need to let notification handler be unregistered. (will we ever practically have
+  //  //    long enough timeout values where this is an issue?)
+  //  //else {
+  //  //  //Yes -> interrupt thread. Return gid
+  //  //  waitForSubmissionThread.interrupt();
+  //  //}
+  //  return gid;
+  //}
+  //@TRADEService
+  //public void handleGoalUpdate(GoalInfo goalInfo) {
+  //  goalSubmissionLock.lock();
+  //  Symbol unboundGoal = goalInfo.unboundGoal;
+  //  if (!unboundGoal.isPredicate()) {
+  //    return;
+  //  }
+  //  Condition condition = goalSubmissionMap.remove(new PredicateSignature((Predicate) goalInfo.unboundGoal));
+  //  if (condition != null) {
+  //    condition.signalAll();
+  //  }
+  //  goalSubmissionLock.unlock();
+  //}
+  //protected long getSubmittedGoalId(Predicate goalPred, long startTime) {
+  //  try {
+  //    List<GoalInfo> goals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalInfos").argTypes(Predicate.class)).call(List.class,goalPred);
+  //    for (GoalInfo info : goals) {
+  //      if (!(info.status.isTerminated() && info.start < startTime)) {
+  //        return info.gid;
+  //      }
+  //    }
+  //  } catch (TRADEException e) {
+  //    log.error("[getSubmittedGoalId] exception while searching for matching goal", e);
+  //  }
+  //  return -1;
+  //}
 
   //// General Completion / ChatCollection Utilities ////
 
@@ -2004,7 +1877,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   ////TODO: don't want to generate each time?
   @TRADEService
-  public String getFullGoalsSummary(Symbol agent, boolean offContext) {
+  public String getFullGoalsSummary(Symbol agent) {
     List<Predicate> currentGoalPredicates = getCurrentGoals(agent);
     List<Predicate> pendingGoalPredicates = getPendingGoals(agent);
     List<Predicate> scheduledGoals = getScheduledGoals(agent);
@@ -2226,9 +2099,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Add as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.add(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.put(signature.getName(), correspondingTool);
-      // Add as tool target in offTopic context
-      chatTemplates.get("offContextSubmission").toolDefinitions.add(correspondingTool.toolDefinition);
-      chatTemplates.get("offContextSubmission").tools.put(signature.getName(), correspondingTool);
     }
   }
 
@@ -2249,9 +2119,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Remove as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.remove(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.remove(name);
-      // Remove as tool target in offTopic context
-      chatTemplates.get("offContextSubmission").toolDefinitions.remove(correspondingTool.toolDefinition);
-      chatTemplates.get("offContextSubmission").tools.remove(name);
     }
   }
 

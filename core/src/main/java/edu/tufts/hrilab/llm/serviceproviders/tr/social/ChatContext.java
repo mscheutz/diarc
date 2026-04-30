@@ -80,14 +80,6 @@ public class ChatContext {
   public void signalCompletion() {
     if (chatType != ChatType.BASE) {
       contextLock.release();
-
-      if (chatType == ChatType.OFFTOPIC) {
-        try {
-          postprocessingLock.acquire();
-        } catch (InterruptedException e) {
-          log.error("[ChatContext.singalCompletion] interrupted waiting on postprocessing lock", e);
-        }
-      }
     }
   }
 
@@ -118,12 +110,6 @@ public class ChatContext {
           ret = (Predicate) ret.get(1);
         }
       }
-    }
-
-    // In offContext case, give waitOnFocusedChat a chance to grab the output semantics (in order to know if the goal
-    //  is modifying the superseded goal directly or not - requires special handling)
-    if (chatType == ChatType.OFFTOPIC) {
-      postprocessingLock.release();
     }
 
     return ret;
