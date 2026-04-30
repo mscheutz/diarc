@@ -232,14 +232,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                     " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
                     "perform in the future",
             List.of(new ToolParameterHelper("supersededGoal","boolean",List.of("false"),"",true))),
-            UtteranceType.QUESTION);
+            UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     Tool offtopicGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledGoalInformation",
             "Use this to ask the system for up to date information about your current list of tasks. Call this" +
                     "tool in order to get relevant information to help answer user questions about what you are currently" +
                     " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
                     "perform in the future",
             List.of(new ToolParameterHelper("supersededGoal","boolean",List.of("true"),"",true))),
-            UtteranceType.QUESTION);
+            UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     itkActionNames.add("getCurrentPendingScheduledGoalInformation");
 
     //Brainstorm: Add an argument which explicitly tracks current \"best guess\" parse at each step? (Even if not fully parameterized)
@@ -278,7 +278,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You pause your current task, which can be later resumed. An example of instructing this could be \"pause what you're doing.\"" +
                     "This may be instructed directly as shown in the example, or could be intended when the user wants to temporarily have a separate conversation on a different topic.",
             new ArrayList<>()),
-            UtteranceType.INSTRUCT));
+            UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
     universalFocusedTools.add(new Tool(new ToolDefinition("cancelCurrentInteraction",
             "You stop and fully discard your current task. An example of instructing this could be \"stop what you're doing.\"",
             new ArrayList<>()),
@@ -681,8 +681,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     //Experimental - adding tool calls back into history now that we have safeguards against them being called from
     // incorrect contexts when no longer available. Text response tool calls will be added from the dialogue history listener.
-    if (!toolCall.function.name.equals("stillGatheringInformation")) {
-      //TODO: make sure it is okay to not include stillGatheringInformation calls here. Believe the only time it
+    if (!toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+      //TODO: make sure it is okay to not include text response calls here. Believe the only time it
       //    really matters would be on malformed/invalid target.
       chatContext.history.addRobotMessage("", List.of(toolCall));
     }
@@ -713,7 +713,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Internal LLM error - should there be LLM specific error responses in this case?
     if (correspondingTool == null) {
-      errorResponseBuilder.append("- Your chosen tool \"").append(toolCall.function.name).append("\" is no longer available for you to call in your current context. Please find an alternate specific tool call to use which is explicitly present in the tool list, or respond using the stillGatheringInformation tool");
+      errorResponseBuilder.append("- Your chosen tool \"").append(toolCall.function.name).append("\" is no longer available for you to call in your current context. Please find an alternate specific tool call to use which is explicitly present in the tool list, or respond using the " + textResponseTool.toolDefinition.function.name + " tool");
       return null;
     }
 
@@ -746,12 +746,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //Valid parse - proceed to validation
 
       // Experimental text response tool stand-in (described above)
-      if (toolCall.function.name.equals("stillGatheringInformation")) {
+      if (toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
         if (!outputUtterance.getSemantics().isPredicate() || ((Predicate)outputUtterance.getSemantics()).getArgs().size() < 2) {
           // Is this case even possible anymore?? Don't think so. Think would have to be developer error, otherwise would
           // have been caught in tool postprocessing.
-          log.error("[handleToolResponse] malformed stillGatheringInformation response **Believe this must be due to Developer Error**");
-          errorResponseBuilder.append("- your stillGatheringInformation tool call needs to be properly formatted json including a response field");
+          log.error("[handleToolResponse] malformed text response tool call **Believe this must be due to Developer Error**");
+          errorResponseBuilder.append("- your " + textResponseTool.toolDefinition.function.name + " tool call needs to be properly formatted json including a response field");
           return null;
         }
         llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
@@ -764,6 +764,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //// Universal postprocessing for accepted cases
       // TODO: Reevaluate if these are in fact conventions we want to universally accept / how we want to do these things
       String toolName = outputUtterance.getSemantics().getName();
+      chatContext.lastToolCallName = toolName;
 
       //// "Off topic" Submission targeting suspend or cancel current goal - should be applied to the superseded dialogue
       ////  goal rather than the currently active "offContextSubmission" wrapper
@@ -908,7 +909,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ChatContext chatContext = chatCollection.currentChat;
 
     // Experimental text response tool stand-in (described above)
-    if (toolCall.function.name.equals("stillGatheringInformation")) {
+    if (toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
       return handleToolResponse(llmResponse, inputUtterance, chatCollection, errorResponseBuilder);
     }
 
@@ -985,17 +986,34 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatCollection.pendingFocusedChats.put(toolName, copy);
       }
 
-      //TODO: shouldn't be here - don't need to validate ITK, but hitting this in noConfirmation case now
-      if (!itkActionNames.contains(toolName)) {
-        // Temp workaround until reintroducing offContextSubmission - don't terminate context here if suspending a focused context
-        if (!(chatCollection.currentChat.chatType == ChatType.FOCUSED && (toolName.equals("suspendSystemGoalsBlocking") || toolName.equals("suspendGoal")))) {
+      Tool.PostCallBehavior postCallBehavior = Tool.PostCallBehavior.CLEAR_CONTEXT;
+      ChatTemplates ct = chatTemplates.get(chatCollection.currentChat.contextID);
+      if (ct != null) {
+        Tool calledTool = ct.tools.get(toolName);
+        if (calledTool == null) {
+          calledTool = ct.tools.get(chatContext.lastToolCallName);
+        }
+        if (calledTool != null) {
+          postCallBehavior = calledTool.postCallBehavior;
+        }
+      }
+
+      switch (postCallBehavior) {
+        case CLEAR_CONTEXT:
           // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
           chatCollection.currentChat.signalCompletion();
           chatCollection.currentChat = null;
-        } else {
-          // Else reset to parse state for when focused context is resumed
+          break;
+        case CLEAR_HISTORY:
+          //TODO: merge into "previous history" state? Clear "previous history" promptVar completely?
+          chatCollection.currentChat.history.messages.clear();
+        case KEEP_HISTORY:
+          // Reset to parse state for future input
           chatCollection.currentChat.chatState = ChatState.PARSE;
-        }
+          // Reset all "last tool call input" details
+          chatCollection.currentChat.toolCallIdUpForValidation = "";
+          chatCollection.currentChat.utteranceUpForValidation = null;
+          chatCollection.currentChat.lastToolCallName = "";
       }
     }
   }
@@ -2258,13 +2276,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     synchronized (currentChatCollections) {
       if (utterance.isInputUtterance()) {
+        //NLU
          if (utterance.getSemantics() == null || !utterance.getSemantics().isPredicate()) {
            return;
          }
-        //NLU
         Symbol agentTeam = utterance.getAddressee().toUntyped();
         Symbol user = utterance.getSpeaker().toUntyped();
         ChatCollection chatCollection = getChatCollection(user, agentTeam);
+        Predicate semantics = (Predicate) utterance.getSemantics();
+
         // Create new collection in case another parser hit completes and triggers a history update
         //  before the input even reaches this parser. In this case, we want to short-circuit the parse call for this
         //  utterance to prevent any unncessary side effects.
@@ -2275,6 +2295,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
         if (chatCollection.currentChat != null) {
           ChatContext chatContext = chatCollection.currentChat;
+
           // Reset validation Question timeout on any user input
           if (chatContext.chatState == ChatState.VALIDATION) {
             try {
@@ -2285,47 +2306,25 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }
           }
 
-          Predicate semantics = (Predicate) utterance.getSemantics();
-          // If negative validation response, don't unlock until reattemptParse completes
+          // If negative validation response, don't release inputLock until reattemptParse completes
           if ((semantics.getName().equals("val") || semantics.getName().equals("validated")) && semantics.get(0).getName().equals("no")) {
             return;
           }
 
-          // TODO: How to detect all ITK cases to know whether to keep result in the history? Currently not using the
-          //  itk pipeline due to issues interacting with EM queueing. Can at least match against any LLM itk tool..
           // Perform necessary side effects to current chat. 2 cases handled collectively here:
           //   External parser hit for an action instruction - discard chat context holding any side effects from unused LLM parse
           //   LLM noConfirmation case - handle side effects as if a validated instruction just occurred
           if (utterance.getType() == UtteranceType.INSTRUCT && !utterance.needsValidation()) {
-            boolean preserveHistory = false;
-
-            // (noConfirmation LLM cases only)
-            if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
-              if (semantics.getArgs().size() > 1) {
-                String command = semantics.get(1).getName();
-                // TODO: should this check be for all SKIPPENDING?
-                if (command.equals("generateResponseFromString") || itkActionNames.contains(command) || command.equals("resetConversation")) {
-                  // Remove history unless LLM text response or ITK call
-                  preserveHistory = true;
-                } else if (chatContext.chatType == ChatType.FOCUSED && (command.equals("suspendSystemGoalsBlocking") || command.equals("suspendGoal"))) {
-                  // Temp workaround until reintroducing offContextSubmission - don't terminate context here if suspending a focused context
-                  preserveHistory = true;
-                } else {
-                  if (command.equals("offContextSubmission")) {
-                    // TODO: can this be moved somewhere else
-                    // Moved to suspended context on suspend
-                    preserveHistory = true;
-                    chatContext.utteranceUpForValidation = utterance;
-                  }
-                  // For LLM targets under noConfirmation - perform special side effects for "focused" contexts
-                  handleValidatedToolCall(command, chatCollection);
+            String command = chatContext.lastToolCallName;
+            if (command.isEmpty()) {
+              if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
+                if (semantics.getArgs().size() > 1) {
+                  command = semantics.get(1).getName();
                 }
               }
             }
-
-            // Clear history unless noConfirmation LLM target dictates it should be retained
-            if (!preserveHistory) {
-              endChatContext(user, agentTeam);
+            if (!command.equals("generateResponseFromString")) {
+              handleValidatedToolCall(command, chatCollection);
             }
           }
         }
@@ -2346,13 +2345,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
             //TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
             //// Add as assistant message text response tool call
-            Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get("stillGatheringInformation");
+            Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
             if (textResponseTool != null) {
               ToolCall toolCall = new ToolCall();
               toolCall.id = "";
               toolCall.type = "function";
               ToolFunction toolFunction = new ToolFunction();
-              toolFunction.name = "stillGatheringInformation";
+              toolFunction.name = this.textResponseTool.toolDefinition.function.name;
               //TODO: When in focused contexts, do we need to pull the most recent "current template state" and copy into
               //  this message?
               //textResponseTool.toolDefinition.function.parameters.getProperties().keySet();
@@ -2478,7 +2477,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       } else {
         //// Handle General String (Symbol/Predicate)
         String stringValue = (String) parameterValue;
-        if (parentTool.function.name.equals("stillGatheringInformation") || parentTool.function.name.equals("say")) {
+        if (parentTool.function.name.equals(textResponseTool.toolDefinition.function.name) || parentTool.function.name.equals("say")) {
           if (!(stringValue.startsWith("\"") && stringValue.endsWith("\""))) {
             stringValue = "\"" + stringValue + "\"";
           }
@@ -2670,7 +2669,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       } else {
         //TODO: general mechanism to ignore fields when extracting final result? E.g. want the llm to keep track of the
         // template during the extended dialogue, but don't care if it's fully valid yet.
-        if (intendedTool.toolDefinition.function.name.equals("stillGatheringInformation") && !argName.equals("response")) {
+        if (intendedTool.toolDefinition.function.name.equals(textResponseTool.toolDefinition.function.name) && !argName.equals("response")) {
           //TODO: Revisit where to best detect and address this in general when transitioning to collapse focused
           //  cases into standardized representation/dynamic gen of tool targets and prompts. On transition, if
           //  text response target is called but the template is fully defined, instruct LLM to try calling
@@ -3767,27 +3766,27 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("getBatteryLevelString",
             "Use this to ask the system what the current battery level of the robot as a percentage is. An example of when you may need this information is when a user asks \"how much charge do you have.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getCurrentLocationString",
             "Use this to ask the system what saved location on your map you believe you are currently at. You may not be localized and not know where you are. An example of when you may need this information is when a user asks \"what is your current location.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getAllKnownLocations",
             "Use this to ask the system for a list of all currently saved locations. An example of when you may need this information is when a user asks \"what are your saved locations.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getActionSteps",
             "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to {\"name\":\"getActionSteps\", \"arguments\":{\"action\":\"escort\"}}",
             List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getKioskSettings",
             "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getVideoVolume",
             "Use this to ask the system for the current volume videos are set to play at. An example of when you may need this information is when a user asks \"what is the video volume set to.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     //definition = new ToolDefinition("getIsVideoSaved",
     //        "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the %exampleVideo video saved.\", which would map to reportIsVideoSaved(?videoName)",
     //        List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
@@ -3795,48 +3794,48 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("getSavedVideos",
             "Use this to ask the system to list out the collection of videos you currently have saved. An example of when you may need this information is when a user asks \"what videos can you play.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getSavedImages",
             "Use this to ask the system to list out the collection of images you currently have saved. An example of when you may need this information is when a user asks \"what images can you display.\"",
             new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtLocationString",
             "Use this to ask the system what wifi signal strength you previously measured at the supplied location is. Only returns a useful value after measureWifiAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation?\"",
             List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtLocationsString",
             "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
             List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Each value must be a saved location.", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtLocationString",
             "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at the supplied location. Only returns a useful value after measureTemperatureAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?\"",
             List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtLocationsString",
             "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
             List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Each value must be a saved location.", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtCurrentLocationString",
             "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
             new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtCurrentLocationString",
             "Use this to ask the system what the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
             new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     definition = new ToolDefinition("explainHowToTeachATask",
             "Use this to get an explanation from the system on how a user can teach you new tasks, which you could relay to the user. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
             new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("explainWhatALearnedTaskIs",
             "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
             new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("explainWhatActionsCanBePerformedAlongALearnedTask",
             "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
             new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     //// Removed ITK targets
     // Made irrelevant by instruct list present in basically all contexts' system prompts. Can reintroduce if we find we

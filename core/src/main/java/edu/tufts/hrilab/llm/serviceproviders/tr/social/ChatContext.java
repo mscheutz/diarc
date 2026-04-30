@@ -19,6 +19,7 @@ public class ChatContext {
   protected ChatState chatState = ChatState.PARSE;
   protected Utterance utteranceUpForValidation = null;
   protected String toolCallIdUpForValidation = "";
+  protected String lastToolCallName = "";
   // Identifier String of the type of ChatContext - used to gather proper System Messages and Tool sets during Completion
   //  request generation
   protected String contextID = "nlu";
