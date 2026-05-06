@@ -1389,7 +1389,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @TRADEService
   @Action
   public String locationRefToName(Symbol ref) {
-    if (ref == null) return "unknown";
+    if (ref == null) return "current location";
     try {
       PoseReference pr = TRADE.getAvailableService(
               new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))

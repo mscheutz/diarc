@@ -270,5 +270,9 @@
   "explainWhatActionsCanBePerformedAlongALearnedTask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "getExtendedConversationHistory": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

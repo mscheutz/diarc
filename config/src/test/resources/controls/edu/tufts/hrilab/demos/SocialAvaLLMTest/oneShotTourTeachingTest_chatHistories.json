@@ -1,0 +1,173 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Learn a new task called measurement patrol made up of four steps. Start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-80da95a588cb4bb5",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"Learn a new task called measurement patrol made up of four steps. Start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-80da95a588cb4bb5\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"learnTaskSequence\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should learn a new task sequence?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nUse this interaction history to populate the \"currentTaskSequenceDefinition\" argument of your initial reply and then fill out the response accordingly",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-8844d37ceeee6f24",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentTaskSequenceDefinition\": {\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"starting the measurement patrol\\\"\"}}}, {\"location\": \"reception:location\", \"action\": {}}, {\"location\": \"pavilion:location\", \"action\": {}}, {\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"done measuring\\\"\"}}}]}, \"response\": \"I understand you want me to measure wifi and temperature at reception and pavilion. What actions should I perform at those locations?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Your most recent tool call with id chatcmpl-tool-8844d37ceeee6f24 contains missing or invalid information. Please correct the following errors to supply valid json to make the desired tool call. Solve these issues on your own where possible. If you must ask the user for missing or clarifying information, precede your question by saying that your interpretation of the instruction contained invalid information:\n- It looks like your current definition of the target to be submitted is fully filled out. If this seems to be the case, try submitting the target submission tool call directly insteadof responding to the user.",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-aeb630d4c9b469e7",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"starting the measurement patrol\\\"\"}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureTemperature\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureTemperature\", \"arguments\": {}}}, {\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"done measuring\\\"\"}}}]}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "What are the steps of the measurement patrol I taught you?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b32d9bdd28783669",
+        "type" : "function",
+        "function" : {
+          "name" : "getActionSteps",
+          "arguments" : "{\"action\": \"measurement patrol\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "As of right now, I can only describe the actions which have been taught to me by a user. For predefined actions, please refer to my user guide",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"I don\\u0027t have the steps for the measurement patrol saved yet.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "forget how to perform the measurement patrol",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-989f29f1cb0ff166",
+        "type" : "function",
+        "function" : {
+          "name" : "forgetTaughtAction",
+          "arguments" : "{\"actionPredicate\": \"{\\\"name\\\": \\\"learnTaskSequence\\\", \\\"arguments\\\": {}}\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should forget how to learn a new task sequence?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}

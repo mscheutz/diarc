@@ -1,0 +1,103 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Can I teach you to do new things?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-aa3459d34026c4f2",
+        "type" : "function",
+        "function" : {
+          "name" : "explainHowToTeachATask",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"You can teach me how to perform new tasks for future instruction simply by saying \\\"please learn a new task sequence!\\\". I can take it from there and guide you through supplying all the information I need to learn the task. Alternatively, ask me for an explanation of what a taught task sequence consists of and you can supply all the necessary information yourself!\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "What information would I need to prepare to teach you something?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-af0bcc8696c4b9a4",
+        "type" : "function",
+        "function" : {
+          "name" : "explainWhatALearnedTaskIs",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "Okay let me try it out",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-bc74a4c6608427f7",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

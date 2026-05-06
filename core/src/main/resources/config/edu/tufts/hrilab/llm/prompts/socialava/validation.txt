@@ -51,7 +51,7 @@ Output:{"translation":"Confirming I should return to the dock to charge?"}
 Input:QUESTION(ava,%user,mean(%user,dock(ava,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should dock at ?destination?"}
 #
-Input:QUESTION(ava,%user,mean(%user,scheduleTaskl(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,scheduleTask(ava)),{})
 Output:{"translation":"Confirming you want to schedule a new task?"}
 #
 Input:QUESTION(ava,%user,mean(%user,modifyScheduledGoal(ava)),{})

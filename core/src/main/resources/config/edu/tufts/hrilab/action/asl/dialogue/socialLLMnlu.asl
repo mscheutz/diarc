@@ -462,6 +462,7 @@ import java.lang.String;
     Predicate !actionPred;
     Predicate !actionSignature;
     Symbol !location;
+    Symbol !lastLocation;
     Symbol !action;
 
     op:log(info,"[submitTourDefinition] ?locationActionPairs");
@@ -478,8 +479,16 @@ import java.lang.String;
         !pair = op:get(!pairs,!index);
         !pairArgs = op:invokeMethod(!pair, "getArgs");
         !location = op:get(!pairArgs,0);
-        !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
-        act:submitGoal(!actionPred);
+        // ASL bug(?) with || not short circuiting requires duplicate blocks
+        if (op:isNull(!lastLocation))
+            !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+            !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+            act:submitGoal(!actionPred);
+        } elseif (~op:equalsValue(!location,!lastLocation)) {
+            !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+            !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+            act:submitGoal(!actionPred);
+        }
         !action = op:get(!pairArgs,1);
         act:submitGoal(!action);
     }

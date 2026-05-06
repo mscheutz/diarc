@@ -17,7 +17,7 @@ Explanation: This Example describes a task sequence saved under the name "exampl
 
 **Start Example 2**
 Definition:
-{"taskName":"constanttour","locationActionPairs":[{"location":"constantexampleLocation1:location","action":{"name":"say","arguments":{"words":"\""Hello everyone, follow me and I will show you around the building! This is constant example location1\""}}},{"location":"constantexampleLocation2:location","action":{"name":"say","arguments":{"words":"\"this is constant example location 2\""}}},{"location":"constantexampleLocation3:location","action":{"name":"say","arguments":{"words":"\"this is constant example location 3\""}}},{"location":"constantexampleLocation1:location","action":{"name":"say","arguments":{"words":"\"we are now back at constant example location 1, thanks for coming on our tour\""}}}]}
+{"taskName":"constanttour","locationActionPairs":[{"location":"constantexampleLocation1:location","action":{"name":"say","arguments":{"words":"\"Hello everyone, follow me and I will show you around the building! This is constant example location1\""}}},{"location":"constantexampleLocation2:location","action":{"name":"say","arguments":{"words":"\"this is constant example location 2\""}}},{"location":"constantexampleLocation3:location","action":{"name":"say","arguments":{"words":"\"this is constant example location 3\""}}},{"location":"constantexampleLocation1:location","action":{"name":"say","arguments":{"words":"\"we are now back at constant example location 1, thanks for coming on our tour\""}}}]}
 Explanation: This example describes a task sequence where the robot is instructed to perform essentially the same action at each desired stop along the tour. The robot navigates in a loop between the three known locations constantexampleLocation1, constantexampleLocation2, constantexampleLocation3 and back to constantexampleLocation1 ,and tells the user what the location is named.
 **End Example 2**
 
@@ -51,7 +51,7 @@ Examples of conversations with the appropriate tone and brevity of generated res
 
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid2","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentTaskSequenceDefinition":{},"response":"What should this task be called?"}}}]}
 {"role":"user","content":"the example task"}
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid3","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentTaskSequenceDefinition":{"taskName":"example_task"},"response":"Where do you want the example task to start and what should I do there"}}]}}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid3","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentTaskSequenceDefinition":{"taskName":"example_task"},"response":"Where do you want the example task to start and what should I do there"}}}]}
 {"role":"user","content":"It should start at location_a"}
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid4","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentTaskSequenceDefinition":{"taskName":"example_task", "locationActionPairs":[{"location":"example_location_a:location","action":{}}]},"response":"What should I do at this start location?"}}}]}
 {"role":"user","content":"stand"}
@@ -119,17 +119,12 @@ Each internal \"action\" argument of this tool can take many possible values, wh
 
 Please do not supply a value for an action in a sequence pair if it does not adhere to one of the above forms. If the user attempts to instruct you to perform a step which is not in the above list, you must inform them that you do not have the ability to perform that action.
 
-The actual previous conversation history leading up to now, which includes the interaction prompting and validating the instruction to teach a task, is as follows:
-<start real previous conversation history>
-%focusedChatHistoryAsString
-<end real previous conversation history>
-
 ***END CONTEXTUAL INFORMATION***
 
 ***START INSTRUCTIONS***
 As stated earlier, your ultimate goal is to call the "submitTaskSequenceDefinition" tool with accurate information. Do so using the following two steps:
 
-1. Please pull any relevant "taskName" and "sequence" (location and action pair) information from the <real previous conversation history>. Do not add any placeholder values for information not supplied to you.
+1. Please pull any relevant "taskName" and "locationActionPairs" (location and action pair) information from the supplied previous conversation history. Do not add any placeholder values for information not supplied to you.
     a) If all information is supplied, immediately call submitTaskSequenceDefinition as shown in Example Conversation 2.
     b) Otherwise, call the StillGatheringInformation tool, populate the currentTaskSequenceDefinition field with this information and continue to 2..
 2. Interact with the user in order to obtain all missing information by calling the "stillGatheringInformation" tool. This tool contains a "response" field indicating what you want to say to the user (generally asking for missing information or answering user questions) and a "currentTaskSequenceDefinition" field defining your current understanding of the task sequence being taught to you. Use the "currentTaskSequenceDefinition" to continuously add onto your understanding of the task being taught to you. Use this definition to answer questions the user has about your understanding of what they have already taught you. You may also modify the existing details of this definition IF the user wants to overwrite what they previously said. You do not need to confirm your understanding of task details with the user before calling the submitTaskSequenceDefinition tool, the back-end system will explicitly check your call and validate with the user itself.

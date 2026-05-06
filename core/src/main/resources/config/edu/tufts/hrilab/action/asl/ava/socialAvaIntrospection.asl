@@ -658,3 +658,14 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
     //}
 }
+
+() = getExtendedConversationHistory(Symbol ?user, Symbol ?agentTeam) {
+    String !output;
+    Symbol !submitter = this:getOriginalSubmitter();
+    !output = tsc:getExtendedConversationHistoryString(?user, ?agentTeam);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
+}

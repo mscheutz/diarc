@@ -1,0 +1,205 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "I want to schedule a new task",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-85e9574f0f5bffe8",
+        "type" : "function",
+        "function" : {
+          "name" : "scheduleTask",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming you want to schedule a new task?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want to schedule a new task\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-85e9574f0f5bffe8\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming you want to schedule a new task?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nExtract relevant information from this conversation history to populate corresponding details of the \"currentScheduledDefinition\" argument of your initial stillGatheringInformation reply. Then generate the response accordingly",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"What is the task you want to schedule?\",\"currentScheduledDefinition\":{}}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "the task is to say hi this is a new task",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"When do you want it to first occur?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"say\",\"arguments\":{\"words\":\"\\\"hi this is a new task\\\"\"}}}}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "perform it first in 15 minutes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"Do you want it to occur more than once?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"say\",\"arguments\":{\"words\":\"\\\"hi this is a new task\\\"\"}},\"start\":\"start(15,MINUTES)\"}}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "i want it to repeat every hour",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"Do you want it to repeat indefinitely or until a specific end time?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"say\",\"arguments\":{\"words\":\"\\\"hi this is a new task\\\"\"}},\"start\":\"start(15,MINUTES)\",\"period\":\"period(60,MINUTES)\"}}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "stop in 3 hours",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b2d2532ea95d99c2",
+        "type" : "function",
+        "function" : {
+          "name" : "submitScheduledTaskDefinition",
+          "arguments" : "{\"action\": \"{\\\"name\\\": \\\"say\\\", \\\"arguments\\\": {\\\"words\\\": \\\"\\\\\\\"hi this is a new task\\\\\\\"\\\"}}\", \"start\": \"start(15,MINUTES)\", \"period\": \"period(60,MINUTES)\", \"end\": \"end(3,HOURS)\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should schedule a task to say \\\\\\\"hi this is a new task\\\\\\\" starting in 15 minutes, repeating every hour, and stopping after 3 hours?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "cancel all scheduled tasks",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b24611e4f0c25691",
+        "type" : "function",
+        "function" : {
+          "name" : "cancelAllScheduledGoals",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should cancel all of my scheduled goals?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}

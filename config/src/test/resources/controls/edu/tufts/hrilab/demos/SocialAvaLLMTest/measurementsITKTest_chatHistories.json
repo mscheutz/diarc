@@ -1,0 +1,220 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "do you know the wifi signal strength at reception?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-957bce5f349c133d",
+        "type" : "function",
+        "function" : {
+          "name" : "getWifiAtLocationString",
+          "arguments" : "{\"location\": \"reception:location\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "I have not measured wifi at reception",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"I have not measured wifi at reception.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "could you go figure that out for me?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-866bc9355669cecd",
+        "type" : "function",
+        "function" : {
+          "name" : "measureWifiAtLocations",
+          "arguments" : "{\"locations\": [\"reception:location\"]}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should check the wifi signal strength at reception?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "What is the wifi signal strength at reception?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b747570d93323695",
+        "type" : "function",
+        "function" : {
+          "name" : "getWifiAtLocationString",
+          "arguments" : "{\"location\": \"reception:location\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "wifi at reception was -55 dBm, strong",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "chatcmpl-tool-b747570d93323695"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"The wifi signal strength at reception is strong, measuring -55 dBm.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "What is the wifi signal strength where you are right now?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-a9905d78c4b41e13",
+        "type" : "function",
+        "function" : {
+          "name" : "getWifiAtCurrentLocationString",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "wifi at current location was -72 dBm, weak",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "chatcmpl-tool-a9905d78c4b41e13"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"The wifi signal strength here is weak, measuring -72 dBm.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "get and tell me the temperature of where you are",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-bd429186d30f07fe",
+        "type" : "function",
+        "function" : {
+          "name" : "getTemperatureAtCurrentLocationString",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "temperature at current location was 64 degrees",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "chatcmpl-tool-bd429186d30f07fe"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"The temperature here is 64 degrees.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"You\\u0027re welcome.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

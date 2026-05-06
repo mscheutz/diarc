@@ -19,6 +19,7 @@ import edu.tufts.hrilab.ava.message.response.Obstacle;
 import edu.tufts.hrilab.ava.message.response.RMSListTagsResponse;
 import edu.tufts.hrilab.ava.message.response.RMSMapMetadataResponse;
 import edu.tufts.hrilab.ava.message.response.Tag;
+import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -405,9 +406,21 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return toggle ? -55 : -72;
   }
 
-  @Override
-  public String locationRefToName(edu.tufts.hrilab.fol.Symbol ref) {
-    return ref == null ? "unknown" : ref.toUntypedString();
+  @TRADEService
+  @Action
+  public String locationRefToName(Symbol ref) {
+    if (ref == null) return "current location";
+    try {
+      PoseReference pr = TRADE.getAvailableService(
+                      new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
+              .call(PoseReference.class, ref);
+      if (pr != null && !pr.properties.isEmpty()) {
+        return pr.properties.get(0).getName();
+      }
+    } catch (TRADEException e) {
+      log.error("[locationRefToName] lookup failed for {}", ref, e);
+    }
+    return ref.toUntypedString();
   }
 
   @Override
@@ -518,7 +531,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
 
     // remote only (faster_whisper)
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--asr_mode","2","--endpoint", "http://localhost:5000/");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc", "--model_type","2","--endpoint", "http://10.20.9.98:5000/");
 
     //dual local + remote
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--asr_mode","0","--endpoint", "http://localhost:5000/");

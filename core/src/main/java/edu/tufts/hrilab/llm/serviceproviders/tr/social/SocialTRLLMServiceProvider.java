@@ -71,6 +71,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   protected final Map<Pair<Symbol,Symbol>,ChatCollection> currentChatCollections = new HashMap<>();
 
   /**
+   * Extended History of chat contexts, stored for reference from ITK actions for the LLM to conditionally
+   * retrieve information about past interactions without cluttering current chat context.
+   */
+  protected final Map<Pair<Symbol,Symbol>,List<ChatContext>> chatContextHistories = new HashMap<>();
+
+  /**
    *  Prompt variables to be replaced in sent Completion requests. Refer to the Prompt class and apply method if this
    *   notion is unfamiliar to you.
    */
@@ -240,7 +246,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You stop and fully discard your current task. An example of instructing this could be \"stop what you're doing.\"",
             new ArrayList<>()),
             UtteranceType.INSTRUCT));
-    //universalFocusedTools.addAll(itkTools);
+    universalFocusedTools.addAll(itkTools);
 
     // Validation tool set:
     //  - Just reply forms, which are added dynamically (yes,no,abort)
@@ -258,8 +264,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Submit the details of the fully defined scheduled task for execution. Call this when you believe you have all information about the scheduled task finalized and are ready to save.", List.of(
                 new ToolParameterHelper("action","string",new ArrayList<>(),"The action to be performed. Please refer to the Action List in order to understand acceptable values and forms.",true, true, "nlu"),
                 new ToolParameterHelper("start","string",new ArrayList<>(),"When to first execute the task. Valid forms are a relative time represented by start(<number>,<timeunit>) or an absolute time represented by start(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of 2 hours from now == start(2,HOURS). The absolute time of noon == start(12-00-00). Being told to perform the first execution immediately == start(0,SECONDS).",true),
-                new ToolParameterHelper("period","string",new ArrayList<>(),"On what interval to repeat execution of the task. Valid forms are a relative time represented by period(<number>,<timeunit>). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. For example, the relative time of 30 minutes from now == period(30,MINUTES). If the task should only be performed once and not repeated, supply a value of period(nonrepeating).",true),
-                new ToolParameterHelper("end","string",new ArrayList<>(),"When to stop repeating execution of the task. If this task is not repeating (meaning period is defined as period(nonrepeating)), you must supply the value end(nonrepeating). If end(indefinitely) is provided as the value, that means the task will continue repeating execution on the defined period until it is explicitly canceled by the user. Otherwise, valid forms are a relative time represented by end(<number>,<timeunit>) or an absolute time represented by end(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of in a quarter of an hour == end(15,MINUTES). The absolute time of 5:30pm == end(17-30-00).",true)
+                new ToolParameterHelper("repeat","string",new ArrayList<>(),"On what interval to repeat execution of the task. Valid forms are a relative time represented by repeat(<number>,<timeunit>). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. For example, the relative time of 30 minutes from now == repeat(30,MINUTES). If the task should only be performed once and not repeated, supply a value of repeat(nonrepeating).",true),
+                new ToolParameterHelper("end","string",new ArrayList<>(),"When to stop repeating execution of the task. If this task is not repeating (meaning repeat is defined as repeat(nonrepeating)), you must supply the value end(nonrepeating). If end(indefinitely) is provided as the value, that means the task will continue repeating execution on the defined repeat until it is explicitly canceled by the user. Otherwise, valid forms are a relative time represented by end(<number>,<timeunit>) or an absolute time represented by end(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of in a quarter of an hour == end(15,MINUTES). The absolute time of 5:30pm == end(17-30-00).",true)
             )),
                     UtteranceType.INSTRUCT
             ));
@@ -443,29 +449,35 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       //// Update chats based on current state
       Prompt systemTemplate;
+      ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+      if (chatTemplates == null) {
+        log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
+        return utterance;
+      }
       // Pull correct template and update system message and tool targets based off current state
       if (chatContext.chatState == ChatState.VALIDATION) {
-        systemTemplate = new Prompt(chatTemplates.get("validationnlu").systemMessageTemplate.getText());
+        systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
         tools = new ArrayList<>();
-        tools.add(textResponseTool.toolDefinition);
+        Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+        if (focusedTextResponseTool != null) {
+          tools.add(focusedTextResponseTool.toolDefinition);
+        } else {
+          tools.add(textResponseTool.toolDefinition);
+        }
+
         // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
         //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
         chat = new Chat();
         promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
         chatContext.history.addUserMessage(utterance.getWordsAsString());
       } else {
-        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
-        if (chatTemplates == null) {
-          log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
-          return utterance;
-        }
         systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
         tools = new ArrayList<>(chatTemplates.toolDefinitions);
         chat = chatContext.history;
       }
 
       // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
-      if (!(chatContext.chatType == ChatType.FOCUSED && chatContext.chatState == ChatState.VALIDATION)) {
+      if (!(chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION)) {
         // Add all matching system question response tools based off of expected reply semantics
         tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
       }
@@ -543,6 +555,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //  tools which didn't exist anymore in different contexts but were present in the history. Have more safeguards
       //  in place now so that it should be safe
       if (!errorResponseBuilder.isEmpty()) {
+        if (lastToolCall != null && lastToolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+          // Need to add errant tool call so that added error message actually references something?
+          chatContext.history.addRobotMessage("", List.of(lastToolCall));
+        }
         String errorString = errorResponseBuilder.toString();
         log.info("[runCompletionRetryLoop] running extra chatCompletion request with additional error message: {}", errorString);
         tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
@@ -800,6 +816,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (argument.equals("yes")) {
         handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
       } else {
+        chatContext.lastToolCallName = "";
         // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
         //  side effects will be triggered from reattemptParse / the NLU asl pipeline
         chatContext.chatState = ChatState.PARSE;
@@ -810,19 +827,29 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
       chatCollection.currentChat.signalCompletion();
+      saveContextHistory(inputUtterance.getSpeaker(), inputUtterance.getAddressee(), chatCollection.currentChat);
       chatCollection.currentChat = null;
     }
     return output.build();
   }
 
   private void handleValidatedToolCall(Utterance validatedUtterance, ChatCollection chatCollection) {
-    handleValidatedToolCall(validatedUtterance.getSemantics().getName(), chatCollection);
+    Symbol user;
+    Symbol agentTeam;
+    if (validatedUtterance.isInputUtterance()) {
+      user = validatedUtterance.getSpeaker();
+      agentTeam = validatedUtterance.getAddressee();
+    } else {
+      user = validatedUtterance.getAddressee();
+      agentTeam = validatedUtterance.getSpeaker();
+    }
+    handleValidatedToolCall(validatedUtterance.getSemantics().getName(), user, agentTeam, chatCollection);
   }
 
   /**
    * Method to perform relevant side effects for a validated (or noConfirmation) tool call
    */
-  private void handleValidatedToolCall(String toolName, ChatCollection chatCollection) {
+  private void handleValidatedToolCall(String toolName, Symbol user, Symbol agentTeam, ChatCollection chatCollection) {
     ChatContext chatContext = chatCollection.currentChat;
 
     // If tool is targeting a 'focused dialogue action', store the current chat history for retrieval by that action
@@ -860,10 +887,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       case CLEAR_CONTEXT:
         // Wait on two-way lock so thread waiting on focused chat context to terminate can get any relevant result information
         chatCollection.currentChat.signalCompletion();
+        saveContextHistory(user, agentTeam, chatCollection.currentChat);
         chatCollection.currentChat = null;
         break;
       case CLEAR_HISTORY:
-        //TODO: merge into "previous history" state? Clear "previous history" promptVar completely?
+        saveContextHistory(user, agentTeam, chatCollection.currentChat);
+        //TODO: merge into "previous history" promptVar state? Clear "previous history" promptVar completely?
         chatCollection.currentChat.history.messages.clear();
       case KEEP_HISTORY:
         // Reset to parse state for future input
@@ -1199,10 +1228,21 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           // Found issues with changing prompt but maintaining history in Message list - LLM interprets it as future input
           //   regardless of explanations in system prompt and will attempt to call tools based on that history. Including
           //  in system prompt itself and resetting message list
-          promptVars.put("%focusedChatHistoryAsString", getChatHistoryAsString(chat));
+          String chatHistoryAsString = getChatHistoryAsString(chat);
+          //promptVars.put("%focusedChatHistoryAsString", chatHistoryAsString);
           chat.setMessages(new ArrayList<>());
           // Qwen3.5 chat template requires a user message
-          chat.addUserMessage("Perform the stated task");
+          String templateArgumentName = "target template";
+          Tool focusedTextResponseTool = contextSpecificTemplate.tools.get(textResponseTool.toolDefinition.function.name);
+          if (focusedTextResponseTool != null) {
+            //TODO: this isn't the most principled way to get this value
+            Set<String> argNames = focusedTextResponseTool.toolDefinition.function.parameters.getProperties().keySet();
+            argNames.remove("response");
+            if (!argNames.isEmpty()) {
+              templateArgumentName = argNames.iterator().next();
+            }
+          }
+          chat.addUserMessage("The previous conversation history leading up to this point is as follows:\n" + chatHistoryAsString + "\nExtract relevant information from this conversation history to populate corresponding details of the \"" + templateArgumentName + "\" argument of your initial " + textResponseTool.toolDefinition.function.name + " reply. Then generate the response accordingly");
           chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
 
           // Update chat status
@@ -1220,11 +1260,17 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           int numRetries = 0;
           ToolCall lastToolCall = null;
           StringBuilder errorResponseBuilder = new StringBuilder();
+          String tool_call_id;
           while (numRetries < 3) {
-
             if (!errorResponseBuilder.isEmpty()) {
-              String tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
-              chatContext.history.addToolMessage(errorResponseBuilder.toString(), tool_call_id);
+              if (lastToolCall != null && lastToolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+                // Need to add errant tool call so that added error message actually references something?
+                chatContext.history.addRobotMessage("", List.of(lastToolCall));
+              }
+              String errorString = errorResponseBuilder.toString();
+              log.info("[runCompletionRetryLoop] running extra chatCompletion request with additional error message: {}", errorString);
+              tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
+              chatContext.history.addToolMessage(errorString, tool_call_id);
             }
             errorResponseBuilder = new StringBuilder();
             // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
@@ -1416,6 +1462,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatCollection.currentChat.history = new Chat();
         } else {
           chatCollection.releaseLocks();
+          // This method is only currently called during error cases - make sure all relevant error messages make it
+          //  into the appropriate Chat stored in the extended history
+          saveContextHistory(user, agentTeam, chatCollection.currentChat);
           chatCollection.currentChat = null;
         }
       }
@@ -1585,7 +1634,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // Think it may be theoretically possible, but don't think it should usually be case that you won't have a user
         //    message at this point.
         // Qwen3.5 chat template requires a user message
-        chatContext.history.addUserMessage("Perform the stated task");
+        chatContext.history.addUserMessage("follow the previous instructions");
       }
       collection.currentChat = chatContext;
     }
@@ -1607,6 +1656,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           log.error("[cancelLLMChatContext] active chat for {}/{} does not have ChatType FOCUSED, has {}", user, agentTeam, collection.currentChat.chatType);
           return new ConditionJustification(false);
         }
+        //TODO: add explicit message indicating chat was canceled? Or indication should probably already exist
+        saveContextHistory(user, agentTeam, collection.currentChat);
         collection.currentChat = null;
       } else {
         int index = -1;
@@ -1763,45 +1814,46 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     StringBuilder stringBuilder = new StringBuilder("At any point in time, you may have been instructed to perform various" +
             " tasks by different users, but cannot do everything all at once. As a result, you keep track of the list of" +
-            "things you need to do and order them according to a priority value. By default, this is the order in which the tasks" +
-            "are submitted. You do not currently have the capability to change priority of submitted tasks, but will be able" +
-            "to soon in a future update. Because you cannot perform multiple tasks at once, there will be one task which" +
-            "you are actively focused on. This task can be referred to as the \"active task\", \"suspended task\", \"current task\"," +
-            "or simply \"what you are currently doing\". As stated, this task can be temporarily \"suspended\". In this state, that task" +
-            "will remain as your current focus, and you will wait until it is resumed or canceled to perform any other tasks, even if" +
-            "others are present. The rest of the list of things you need to do can be referred to as your \"pending tasks\", " +
+            " things you need to do and order them according to a priority value. By default, this is the order in which the tasks" +
+            " are submitted. You do not currently have the capability to change priority of submitted tasks, but will be able" +
+            " to soon in a future update. Because you cannot perform multiple tasks at once, there will be one task which" +
+            " you are actively focused on. This task can be referred to as the \"active task\", \"suspended task\", \"current task\"," +
+            " or simply \"what you are currently doing\". As stated, this task can be temporarily \"suspended\". In this state, that task" +
+            " will remain as your current focus, and you will wait until it is resumed or canceled to perform any other tasks, even if" +
+            " others are present. The rest of the list of things you need to do can be referred to as your \"pending tasks\", " +
             "\"upcoming tasks\", or simply \"what you still need to do\" after your current task. There is no limit to the amount of" +
-            "pending tasks you can have at once. Finally, there are also \"scheduled tasks\". These are tasks which are scheduled" +
-            "to occur at some specific point in the future, optionally on a repeating interval, but are not currently on" +
-            "the active or pending list of tasks to perform. When the scheduled time arrives, the associated task will be added to the" +
-            " list of things you must do.\n");
+            " pending tasks you can have at once. Finally, there are also \"scheduled tasks\". These are tasks which are scheduled" +
+            " to occur at some specific point in the future, optionally on a repeating interval, but are not currently on" +
+            " the active or pending list of tasks to perform. When the scheduled time arrives, the associated task will be added to the" +
+            " list of things you must do.\n-------\n");
 
+    stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is:\n");
     if (!currentGoalPredicates.isEmpty()) {
         if (currentGoalPredicates.get(0).hasArgs()) {
           String statusString = currentGoalPredicates.get(0).getName();
-          stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is ").append(statusString).append(": ").append(translatedGoalList.get(0)).append("\n");
+          stringBuilder.append(" - Status: ").append(statusString).append(", Description: ").append(translatedGoalList.get(0)).append("\n");
         } else {
-          stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is: ").append(translatedGoalList.get(0)).append("\n");
+          stringBuilder.append("- Description: ").append(translatedGoalList.get(0)).append("\n");
         }
     } else {
-      stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is: \n<You have no current task>\n");
+      stringBuilder.append(" - <You have no current task>\n");
     }
 
     stringBuilder.append("Your list of \"pending tasks\"/\"upcoming tasks\"/\"next tasks\" are:\n");
     if (pendingGoalPredicates.isEmpty()) {
-      stringBuilder.append("<You have no pending tasks>\n");
+      stringBuilder.append(" - <You have no pending tasks>\n");
     } else {
       for (int i = 0; i < numPending; i++) {
-        stringBuilder.append(translatedGoalList.get(i+1)).append("\n");
+        stringBuilder.append(" - ").append(translatedGoalList.get(i+1)).append("\n");
       }
     }
 
     stringBuilder.append("Your list of \"scheduled tasks\" are:\n");
     if (scheduledGoals.isEmpty()) {
-      stringBuilder.append("<You have no scheduled tasks>\n");
+      stringBuilder.append(" - <You have no scheduled tasks>\n");
     } else {
       for (int i = 0; i < numScheduled; i++) {
-        stringBuilder.append(translatedGoalList.get(i+numCurrent+numPending)).append("\n");
+        stringBuilder.append(" - ").append(translatedGoalList.get(i+numCurrent+numPending)).append("\n");
       }
     }
     //Doesn't seem to do anything - may need to just split calls for retrieving current vs pending vs scheduled vs all tasks
@@ -1812,6 +1864,61 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "current task should cause you to only begin listing your pending tasks. Do not list more than 5 tasks at once" +
             "without being asked to list more.");
     return stringBuilder.toString();
+  }
+
+  private void saveContextHistory(Symbol user, Symbol agentTeam, ChatContext chatContext) {
+    List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agentTeam.toUntyped()));
+    if (extendedHistory == null) {
+      extendedHistory = new ArrayList<>();
+      chatContextHistories.put(Pair.of(user.toUntyped(),agentTeam.toUntyped()),extendedHistory);
+    } else if (extendedHistory.size() > 20) {
+      //What should cap size be ^? Should this be different than what is retrieved by itk? (first case where the answer
+      //  may be yes is in order to retrieve full history for tests)
+      extendedHistory.remove(extendedHistory.size()-1);
+    }
+
+    extendedHistory.add(0,chatContext);
+  }
+
+  public List<ChatContext> getExtendedConversationHistories(Symbol user, Symbol agentTeam) {
+    return chatContextHistories.getOrDefault(Pair.of(user.toUntyped(),agentTeam.toUntyped()), new ArrayList<>());
+  }
+
+  @TRADEService
+  public String getExtendedConversationHistoryString(Symbol user, Symbol agentTeam) {
+    List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agentTeam.toUntyped()));
+
+    StringBuilder extendedHistoryString = new StringBuilder("The extended interaction history between you and this user is copied below:\n#\n");
+
+    if (extendedHistory == null) {
+      extendedHistoryString.append("<There are no stored past histories found>\n\n");
+    } else {
+      // What should cap size be? Should we allow iteratively longer history retrieval?
+      int numHistories = Math.min(extendedHistory.size(), 5);
+      for (int i=0; i<numHistories;i++) {
+        ChatContext cc = extendedHistory.get(i);
+        extendedHistoryString.append("Past conversation context # ").append(i).append(":\n");
+        extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n\n");
+      }
+      ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+      if (collection != null && !collection.suspendedChats.isEmpty()) {
+        extendedHistoryString.append("You also have some interrupted conversations which you may still eventually return to and complete. They are as follows:\n");
+        List<ChatContext> suspendedContexts = collection.suspendedChats;
+        for (int i=0; i<suspendedContexts.size();i++) {
+          ChatContext cc = suspendedContexts.get(i);
+          extendedHistoryString.append("Suspended conversation context # ").append(i).append(":\n");
+          extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n\n");
+        }
+      }
+    }
+
+    extendedHistoryString.append("\n#\nPlease use this information in order to help fulfill the user's request, whether it is to answer " +
+            "a question directly about what you have discussed in the past or to simply understand something from the past" +
+            "that the user is referring to. Do not relay this information back to the user unless they have directly asked about it, in" +
+            "which case you may summarize relevant conversations. If the user has asked about something which you cannot find" +
+            "in either these histories or your current one, you must tell the user that you are sorry and cannot remember" +
+            "what they are referring to.");
+    return extendedHistoryString.toString();
   }
 
   //TODO: does this need to be extended to agent pairs?
@@ -1971,17 +2078,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           // Perform necessary side effects to current chat. 2 cases handled collectively here:
           //   External parser hit for an action instruction - discard chat context holding any side effects from unused LLM parse
           //   LLM noConfirmation case - handle side effects as if a validated instruction just occurred
+          //   +1
           if (utterance.getType() == UtteranceType.INSTRUCT && !utterance.needsValidation()) {
             String command = chatContext.lastToolCallName;
-            if (command.isEmpty()) {
-              if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
-                if (semantics.getArgs().size() > 1) {
+            chatContext.lastToolCallName = "";
+            if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
+              if (semantics.getArgs().size() > 1) {
+                if (command.isEmpty() || semantics.get(1).getName().equals("generateResponseFromString")) {
                   command = semantics.get(1).getName();
                 }
               }
             }
             if (!command.equals("generateResponseFromString")) {
-              handleValidatedToolCall(command, chatCollection);
+              handleValidatedToolCall(command, utterance.getSpeaker(), utterance.getAddressee(), chatCollection);
             }
           }
         }
@@ -2000,21 +2109,39 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             //// Add as assistant message "content" string
             //chatContext.history.addRobotMessage(utterance.getWordsAsString());
 
-            //TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
             //// Add as assistant message text response tool call
-            Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
-            if (textResponseTool != null) {
+            if (chatContext.chatState == ChatState.VALIDATION) {
+              // TODO: keep an eye on this, make sure the LLM doesn't try to target this fabricated tool in the future
+              // (Not sure how to best represent this; Balancing act of accurately conveying what is actually happening
+              //  vs preventing LLM from targeting tool calls which aren't exposed to it / doing validation on its own)
               ToolCall toolCall = new ToolCall();
               toolCall.id = "";
               toolCall.type = "function";
               ToolFunction toolFunction = new ToolFunction();
-              toolFunction.name = this.textResponseTool.toolDefinition.function.name;
-              //TODO: When in focused contexts, do we need to pull the most recent "current template state" and copy into
-              //  this message?
-              //textResponseTool.toolDefinition.function.parameters.getProperties().keySet();
-              toolFunction.arguments = new Gson().toJson(java.util.Map.of("response", utterance.getWordsAsString()));
+              toolFunction.name = "validatingToolSubmission";
+              Map<String, Object> responseArguments = new HashMap<>();
+              responseArguments.put("response", utterance.getWordsAsString());
+              toolFunction.arguments = new Gson().toJson(responseArguments);
               toolCall.function = toolFunction;
               chatContext.history.addRobotMessage("", List.of(toolCall));
+            } else {
+              // TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
+              Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
+              if (textResponseTool != null) {
+                ToolCall toolCall = new ToolCall();
+                toolCall.id = "";
+                toolCall.type = "function";
+                ToolFunction toolFunction = new ToolFunction();
+                toolFunction.name = this.textResponseTool.toolDefinition.function.name;
+                Map<String, Object> responseArguments = new LinkedTreeMap<>();
+                if (!chatContext.lastTemplateName.isEmpty() && textResponseTool.toolDefinition.function.parameters.getProperties().containsKey(chatContext.lastTemplateName)) {
+                  responseArguments.put(chatContext.lastTemplateName, chatContext.lastTemplateValue);
+                }
+                responseArguments.put("response", utterance.getWordsAsString());
+                toolFunction.arguments = new Gson().toJson(responseArguments);
+                toolCall.function = toolFunction;
+                chatContext.history.addRobotMessage("", List.of(toolCall));
+              }
             }
           }
           //TODO: Should this be added to a new history/context if none currently exists? Hard question to answer because
@@ -2063,6 +2190,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
               chatContext.toolCallIdUpForValidation = "";
               chatContext.utteranceUpForValidation = null;
             } else {
+              //TODO: add message indicating timeout occurred?
+              saveContextHistory(user, agentTeam, chatCollection.currentChat);
               chatCollection.currentChat = null;
             }
           }
@@ -2330,6 +2459,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //  text response target is called but the template is fully defined, instruct LLM to try calling
           //  template submission tool directly. Currently using a lot of duplicate code.
           Utterance temp = builder.build();
+          ChatCollection collection = getChatCollection(temp.getSpeaker().toUntyped(), temp.getAddressee().toUntyped());
+          if (collection != null) {
+            ChatContext context = collection.currentChat;
+            if (context!= null) {
+              context.lastTemplateName = argName;
+              context.lastTemplateValue = calledArguments.get(argName);
+            }
+          }
           validParse = validParse && !checkForFullyPopulatedTemplate(argName, calledArguments.get(argName), temp.getSpeaker(), temp.getAddressee(), errorMessage);
           continue;
         }
@@ -2669,11 +2806,44 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
-  private String getChatHistoryAsString(Chat chat) {
+  public List<Message> getChatHistory(Symbol user, Symbol agentTeam) {
+    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        return chatContext.history.messages;
+      }
+    }
+    return null;
+  }
+
+  public String getChatHistoryAsJSON(Symbol user, Symbol agentTeam) {
+    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        return new Gson().toJson(chatContext.history.messages);
+      }
+    }
+    return null;
+  }
+
+  public String getChatHistoryAsString(Symbol user, Symbol agentTeam) {
+    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        return getChatHistoryAsString(chatContext.history);
+      }
+    }
+    return null;
+  }
+
+  public String getChatHistoryAsString(Chat chat) {
     if (chat == null) {
       return "";
     }
-    Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     //return chat.getMessages().stream().map(m -> m.role + ": " + ((m.tool_calls == null || m.tool_calls.length < 1) ? m.content : gson.toJson(m.tool_calls[0]))).collect(Collectors.joining("\n"));
     return chat.getMessages().stream().map(gson::toJson).collect(Collectors.joining("\n"));
   }
@@ -2747,24 +2917,25 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                 hasStart = true;
                 args.add(arg);
               }
-            } else if (arg.getName().equals("period")) {
+            } else if (arg.getName().equals("repeat")) {
               if (argPred.hasArgs() && !argPred.get(0).getName().equals("nonrepeating")) {
                 if (argPred.size() == 2) {
                   // "period(num, time-unit)"
                   try {
                     long delay = Long.parseLong(argPred.get(0).toString());
                   } catch (NumberFormatException e) {
-                    errorStringBuilder.append("- The period value of the submitted scheduled task definition could not be parsed. A relative time must contain a valid integer and a TimeUnit ").append(argPred.get(0).toString()).append("was not detected as a valid integer, please fix your supplied start time.");
+                    errorStringBuilder.append("- The repeat value of the submitted scheduled task definition could not be parsed. A relative time must contain a valid integer and a TimeUnit ").append(argPred.get(0).toString()).append("was not detected as a valid integer, please fix your supplied start time.");
                   }
                   try {
                     TimeUnit millis = TimeUnit.valueOf(argPred.get(1).toString().toUpperCase());
                   } catch (IllegalArgumentException e) {
-                    errorStringBuilder.append("- The period value of the submitted scheduled task definition could not be parsed. A relative time must contain a valid integer and a TimeUnit ").append(argPred.get(1).toString()).append("was not detected as a valid Java TimeUnit, please fix your supplied start time.");
+                    errorStringBuilder.append("- The repeat value of the submitted scheduled task definition could not be parsed. A relative time must contain a valid integer and a TimeUnit ").append(argPred.get(1).toString()).append("was not detected as a valid Java TimeUnit, please fix your supplied start time.");
                   }
                 } else {
-                  errorStringBuilder.append("- The period value of the submitted scheduled task definition could not be parsed.").append(argPred.get(0).toString()).append("was not detected to follow the defined rules for this argument, please update the supplied format.");
+                  errorStringBuilder.append("- The repeat value of the submitted scheduled task definition could not be parsed.").append(argPred.get(0).toString()).append("was not detected to follow the defined rules for this argument, please update the supplied format.");
                 }
                 hasPeriod = true;
+                arg = Factory.createPredicate("period",argPred.getArgs());
                 args.add(arg);
               }
             } else if (arg.getName().equals("end")) {
@@ -2801,7 +2972,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (!hasStart && !hasPeriod) {
           errorStringBuilder.append("- The submitted scheduled task definition must have a future start time or an interval to repeat on. Scheduled tasks may not occur immediately and without repeating on some interval. Let the user know this fact and ask for one of these values.");
         } else if (hasEnd && !hasPeriod) {
-          errorStringBuilder.append("- The submitted scheduled task definition contains an explicit end time, but no defined interval to repeat on. Either discard the end time if the task is not meant to repeat, or fill out the period interval appropriately. If you cannot do so on your own, you may let the user know a properly defined execution interval is necessary.");
+          errorStringBuilder.append("- The submitted scheduled task definition contains an explicit end time, but no defined interval to repeat on. Either discard the end time if the task is not meant to repeat, or fill out the repeat interval appropriately. If you cannot do so on your own, you may let the user know a properly defined execution interval is necessary.");
         }
 
         if (errorStringBuilder.isEmpty()) {
@@ -2822,6 +2993,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
           }
         }
+      } else if (command.equals("getExtendedConversationHistory")) {
+        Predicate semantics = (Predicate) utterance.getSemantics();
+        List<Symbol> args = semantics.getArgs();
+        args.add(utterance.getSpeaker());
+        args.add(utterance.getAddressee());
+        utterance.setSemantics(Factory.createPredicate(semantics.getName(), args));
       }
     }
     catch (Exception e) {
@@ -3291,6 +3468,32 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 //            new ArrayList());
 //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
+    definition = new ToolDefinition("reportWifiAtLocation",
+            "Use this to ask the system what wifi signal strength you previously measured at the supplied location is. Only returns a useful value after measureWifiAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation?\"",
+            List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("reportWifiAtLocations",
+            "You report the wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
+            List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Each value must be a saved location.", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("reportTemperatureAtLocation",
+            "You report the temperature (in degrees Fahrenheit) you previously measured at the supplied location. Only returns a useful value after measureTemperatureAtLocations has been run for that location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?\"",
+            List.of(new ToolParameterHelper("location", "string", getLocations("self", true), "The saved location being queried about", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("reportTemperatureAtLocations",
+            "You report the temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
+            List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Each value must be a saved location.", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("reportWifiAtCurrentLocation",
+            "You report the the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
+            new ArrayList<>());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("reportTemperatureAtCurrentLocation",
+            "You report the the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
+            new ArrayList<>());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+
     definition = new ToolDefinition("scheduleTask",
             "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. An example of instructing this could be direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
             new ArrayList());
@@ -3305,7 +3508,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
     //        new ArrayList());
     //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
 
     return instructTools;
   }
@@ -3336,14 +3538,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getAllKnownLocations",
             "Use this to ask the system for a list of all currently saved locations. An example of when you may need this information is when a user asks \"what are your saved locations.\"",
-            new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getActionSteps",
-            "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to {\"name\":\"getActionSteps\", \"arguments\":{\"action\":\"escort\"}}",
-            List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getKioskSettings",
-            "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getVideoVolume",
@@ -3387,6 +3581,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
+    // General ITK
     definition = new ToolDefinition("explainHowToTeachATask",
             "Use this to get an explanation from the system on how a user can teach you new tasks, which you could relay to the user. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
             new ArrayList<>());
@@ -3399,6 +3594,20 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    definition = new ToolDefinition("getActionSteps",
+            "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by a populated instance of another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\", which would map to {\"name\":\"getActionSteps\", \"arguments\":{\"action\":\"escort\"}}",
+            List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    definition = new ToolDefinition("getKioskSettings",
+            "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
+            new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    definition = new ToolDefinition("getExtendedConversationHistory",
+            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
+            new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    // "If not contained in this history, then you must tell the user you cannot remember this interaction"
+
 
     //// Removed ITK targets
     // Made irrelevant by instruct list present in basically all contexts' system prompts. Can reintroduce if we find we

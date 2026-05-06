@@ -2,6 +2,7 @@ package edu.tufts.hrilab.config.tr;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.serviceproviders.tr.social.SocialTRLLMServiceProvider;
+import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -9,10 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SocialAvaConfig extends DiarcConfiguration {
-  boolean useMockAva = false;
+  public boolean useMockAva = false;
   boolean useMicrophone = false;
   boolean useVision = false;
-  boolean useGUI = false;
+  public boolean useGUI = false;
   boolean useQueueEM = true;
   String avaArgs = "";
   boolean useLLMParser = true;
@@ -23,12 +24,15 @@ public class SocialAvaConfig extends DiarcConfiguration {
   //  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
   String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
-  private String locationRefs = "refs/locations.json";
-  private String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
-  private boolean initKiosk = false;
-  private boolean persistKiosk = true;
-  private String mediaDir = "ava";
-  private boolean useDisplay = true;
+  public String locationRefs = "refs/locations.json";
+  public String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
+  public boolean initKiosk = false;
+  public boolean persistKiosk = true;
+  public String mediaDir = "ava";
+  public boolean useDisplay = true;
+  public SimSpeechRecognitionComponent simSpeechRec;
+  public SocialTRLLMServiceProvider serviceProvider;
+  public boolean llmOnly = false;
 
 
   @Override
@@ -88,9 +92,14 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    // Added LLM before TLDL in sequence because some TLDL ITK targets (and just in general targets) are problematic/out of date
-    //  TODO: ^at least want this for testing. If we want direct ITK versions still available for deployment can swap back
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache llm tldl";
+    String parserArgs;
+    if (llmOnly) {
+      parserArgs = "-llm";
+    } else {
+      // Added LLM before TLDL in sequence because some TLDL ITK targets (and just in general targets) are problematic/out of date
+      //  TODO: ^at least want this for testing. If we want direct ITK versions still available for deployment can swap back
+      parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache llm tldl";
+    }
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.domains.AvaHybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
@@ -122,7 +131,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
 //    }
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
+      simSpeechRec = createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
     String maryTTSArgs = " -female -volume 1.0 -showMixers";
@@ -172,7 +181,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       kioskArgs += " -kioskSettingsFile ava.ser";
     }
 
-    createInstance(SocialTRLLMServiceProvider.class,"");
+    serviceProvider = createInstance(SocialTRLLMServiceProvider.class,"");
     String llmComponentArgs = String.format("-service %s hf -model %s Qwen/Qwen3-14B -temperature 0.5 0.5 -endpoint %s", service, model, openaiEndpoint);
     //HF only
     //String llmComponentArgs = String.format("-service hf -model Qwen/Qwen3-14B -temperature 0.7", service, model);
@@ -182,7 +191,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
             "-historylength 3600000 "
-                    +   "-goal listen(self) monitorBattery(ava) " +
+                    +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl domains/ava.pl"
                     + " -dbfile " +
                     "core.asl " +

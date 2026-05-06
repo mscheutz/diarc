@@ -1,0 +1,64 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "what locations do you know about?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-a669f13a7e505abb",
+        "type" : "function",
+        "function" : {
+          "name" : "getAllKnownLocations",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "I know the following locations: pavilion, cardiology checkin, reception, infectious disease, pharmacy, visitors center, floating elevators, piano, proger elevators, elevator, emergency, mother and infant unit, tv, garage stairs, atrium three elevators, rheumatology checkin, bieward elevators, biewend lab, dock",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "chatcmpl-tool-a669f13a7e505abb"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"I know the pavilion, cardiology checkin, reception, infectious disease, pharmacy, visitors center, floating elevators, piano, proger elevators, elevator, emergency, mother and infant unit, tv, garage stairs, atrium three elevators, rheumatology checkin, bieward elevators, biewend lab, and dock.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "can you tell me more?",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"I can provide details about those locations if you ask about a specific one.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

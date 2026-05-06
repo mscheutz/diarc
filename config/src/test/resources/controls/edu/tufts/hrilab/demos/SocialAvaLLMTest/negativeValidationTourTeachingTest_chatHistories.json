@@ -1,0 +1,205 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Learn a new task called measurement patrol made up of four steps. Start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure wifi signal at reception and at the pavilion. Step 4 is to say “done measuring” back at dock",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-91a2c3dd713e0a4a",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"Learn a new task called measurement patrol made up of four steps. Start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure wifi signal at reception and at the pavilion. Step 4 is to say “done measuring” back at dock\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-91a2c3dd713e0a4a\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"learnTaskSequence\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should learn a new task sequence?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nUse this interaction history to populate the \"currentTaskSequenceDefinition\" argument of your initial reply and then fill out the response accordingly",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b5e13d7f7fcbe228",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentTaskSequenceDefinition\": {\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"starting the measurement patrol\\\"\"}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"done measuring\\\"\"}}}]}, \"response\": \"I understand you want me to save a task called 'measurement patrol' with four steps. I've captured all the details correctly - starting at dock saying 'starting the measurement patrol', then measuring wifi at reception and pavilion, and finally saying 'done measuring' back at dock. Is there anything else you'd like to add or modify?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Your most recent tool call with id chatcmpl-tool-b5e13d7f7fcbe228 contains missing or invalid information. Please correct the following errors to supply valid json to make the desired tool call. Solve these issues on your own where possible. If you must ask the user for missing or clarifying information, precede your question by saying that your interpretation of the instruction contained invalid information:\n- It looks like your current definition of the target to be submitted is fully filled out. If this seems to be the case, try submitting the target submission tool call directly insteadof responding to the user.",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-a6774b46eb7b4048",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"starting the measurement patrol\\\"\"}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"done measuring\\\"\"}}}]}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should save a new task sequence under the name measurement patrol where I start at dock saying \\\\\\\"starting the measurement patrol\\\\\\\", then go to reception and measure wifi, then go to pavilion and measure wifi, and finally return to dock to say \\\\\\\"done measuring\\\\\\\"?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "No, can you actually add a step at the elevators between the reception and the pavilion where you say this step was added",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "The user has just informed you that your previous interpretation of their command which resulted in your tool call with id chatcmpl-tool-a6774b46eb7b4048 represented by submitTaskSequenceDefinition(ava,measurement_patrol,and(and(dock,say(ava,\"starting the measurement patrol\")),and(reception,measureWifi(ava)),and(pavilion,measureWifi(ava)),and(dock,say(ava,\"done measuring\")))) was not what they intended to instruct. Use the last user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention, then you may update your definition with the new information and attempt another updated tool submission call. 2. Otherwise, please continue with your original task to resolve the misunderstanding. In this case, only ask the user how or what to correct in one short sentence.",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"say\",\"arguments\":{\"words\":\"\\\"starting the measurement patrol\\\"\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifi\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifi\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"say\",\"arguments\":{\"words\":\"\\\"done measuring\\\"\"}}}]},\"response\":\"I need to add a step at the elevators between reception and pavilion where I say this step was added. Could you clarify which elevator location should I use?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "please save that task sequence",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-ac2a13e674d340c1",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"starting the measurement patrol\\\"\"}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"elevator:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"this step was added\\\"\"}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"dock:location\", \"action\": {\"name\": \"say\", \"arguments\": {\"words\": \"\\\"done measuring\\\"\"}}}]}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should save a new task sequence under the name measurement patrol where I start at dock saying \\\\\\\"starting the measurement patrol\\\\\\\", then go to reception and measure wifi, then go to elevator and say \\\\\\\"this step was added\\\\\\\", then go to pavilion and measure wifi, and finally return to dock to say \\\\\\\"done measuring\\\\\\\"?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "forget how to perform the measurement patrol",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-b8994b45744cc332",
+        "type" : "function",
+        "function" : {
+          "name" : "forgetTaughtAction",
+          "arguments" : "{\"actionPredicate\": \"{\\\"name\\\": \\\"measurement_patrol\\\", \\\"arguments\\\": {}}\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should forget how to perform the measurement patrol?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}

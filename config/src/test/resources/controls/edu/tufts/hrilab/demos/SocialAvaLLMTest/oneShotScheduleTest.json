@@ -1,0 +1,10 @@
+{
+  "testName" : "oneShotScheduleTest",
+  "testlets" : [ {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  } ]
+}

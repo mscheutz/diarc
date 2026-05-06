@@ -50,6 +50,12 @@ import java.lang.Integer;
     act:generateTemperatureSummaryString();
 }
 
+() = reportTemperatureAtLocation(Symbol ?location) {
+    String !output;
+    !output = act:generateTemperatureAtLocationString(?location);
+    act:generateResponseFromString(!output);
+}
+
 () = getTemperatureAtLocationString(Symbol ?location) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
@@ -59,6 +65,22 @@ import java.lang.Integer;
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
+}
+
+() = reportTemperatureAtLocations(Predicate ?locations) {
+    List !locList;
+    Symbol !location;
+    String !output;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+
+    !locList = op:invokeMethod(?locations, "getArgs");
+    foreach(!location : !locList) {
+        !output = act:generateTemperatureAtLocationString(!location);
+        op:invokeMethod(!sb,"append",!output);
+        op:invokeMethod(!sb,"append",".");
+    }
+    !output = op:invokeMethod(!sb,"toString");
+    act:generateResponseFromString(!output);
 }
 
 () = getTemperatureAtLocationsString(Predicate ?locations) {
@@ -81,6 +103,16 @@ import java.lang.Integer;
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
+}
+
+() = reportTemperatureAtCurrentLocation() {
+    act:measureTemperature();
+
+    Symbol !currentLocation;
+    String !output;
+    !currentLocation = act:getCurrentLocation();
+    !output = act:generateTemperatureAtLocationString(!location);
+    act:generateResponseFromString(!output);
 }
 
 () = getTemperatureAtCurrentLocationString() {

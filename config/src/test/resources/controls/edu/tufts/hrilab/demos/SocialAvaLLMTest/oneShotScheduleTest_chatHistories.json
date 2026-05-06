@@ -1,0 +1,87 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "I want you to play the test video every 5 minutes starting in 10 minutes and repeating indefinitely",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-bd905e8e2f26b4b1",
+        "type" : "function",
+        "function" : {
+          "name" : "scheduleTask",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming you want to schedule a new task?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to play the test video every 5 minutes starting in 10 minutes and repeating indefinitely\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-bd905e8e2f26b4b1\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming you want to schedule a new task?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nExtract relevant information from this conversation history to populate corresponding details of the \"currentScheduledDefinition\" argument of your initial stillGatheringInformation reply. Then generate the response accordingly",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(10,MINUTES)\",\"repeat\":\"repeat(5,MINUTES)\"},\"response\":\"Do you want it to repeat indefinitely?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(10,MINUTES)\",\"repeat\":\"repeat(5,MINUTES)\",\"end\":\"end(indefinitely)\"},\"response\":\"Do you want it to repeat indefinitely?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}
