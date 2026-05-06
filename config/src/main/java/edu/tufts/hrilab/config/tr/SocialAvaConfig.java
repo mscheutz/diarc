@@ -24,8 +24,8 @@ public class SocialAvaConfig extends DiarcConfiguration {
   String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
-  private String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
-  private String videoAudioDevice = "hdmi:CARD=PCH,DEV=0";
+  private String speakerId = "";
+  private String videoAudioDevice = "";
   private boolean initKiosk = false;
   private boolean persistKiosk = true;
   private String mediaDir = "ava";
