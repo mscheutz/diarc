@@ -182,7 +182,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
             "-historylength 3600000 "
-                    +   "-goal listen(self) monitorBattery(ava) " +
+                    +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl domains/ava.pl"
                     + " -dbfile " +
                     "core.asl " +
