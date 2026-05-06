@@ -19,6 +19,7 @@ import edu.tufts.hrilab.ava.message.response.Obstacle;
 import edu.tufts.hrilab.ava.message.response.RMSListTagsResponse;
 import edu.tufts.hrilab.ava.message.response.RMSMapMetadataResponse;
 import edu.tufts.hrilab.ava.message.response.Tag;
+import edu.tufts.hrilab.ava.stats.AvaStatisticsEvent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -57,9 +58,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -93,6 +97,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -108,6 +113,39 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
     return options;
+  }
+
+  @TRADEService
+  public void registerForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    if (statisticsSubscribers.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerForAvaStatisticsNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      statisticsSubscribers.add(callback);
+    }
+  }
+
+  @TRADEService
+  public void unregisterForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    statisticsSubscribers.remove(callback);
+  }
+
+  private void notifyStatisticsSubscribers(AvaStatisticsEvent event) {
+    List<TRADEServiceInfo> toRemove = new ArrayList<>();
+    synchronized (statisticsSubscribers) {
+      for (TRADEServiceInfo subscriber : statisticsSubscribers) {
+        try {
+          subscriber.call(void.class, event);
+        } catch (Exception e) {
+          log.error("Could not notify statistics subscriber: {}", subscriber, e);
+          if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || (e.getMessage() != null && e.getMessage().contains("tsi") && e.getMessage().contains("null"))) {
+            toRemove.add(subscriber);
+          }
+        }
+      }
+    }
+    for (TRADEServiceInfo s : toRemove) {
+      statisticsSubscribers.remove(s);
+    }
   }
 
   @Override

@@ -163,6 +163,7 @@ public class AvaDemo extends DiarcConfiguration {
       }
       createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs);
     }
+    createInstance(edu.tufts.hrilab.ava.stats.AvaStatisticsManagerComponent.class, "");
 
     String kioskArgs = "";
     if (initKiosk) {
