@@ -1715,7 +1715,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       processBuilder = new ProcessBuilder(
               home + "/.diarc/python/ww/venv/bin/python",
-              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc",
+              "--model_type", "0",
+              "--model_size", "small",
+              "--endpoint", "http://marvin:5000/");
     }
 
     // fasterwhisper small gpu
