@@ -11,6 +11,7 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.ava.MediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,18 +19,38 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FileHandlerService {
+  private static final int NORMALIZE_TIMEOUT_SEC = 600;
+
   String userVideoDir;
   String userImageDir;
+
+  /** From application.properties (ava.video.normalize-audio); env AVA_VIDEO_NORMALIZE_AUDIO or -Dava.video.normalizeAudio override. */
+  private final boolean normalizeVideoAudio;
 
   protected Logger log = LoggerFactory.getLogger(this.getClass());
 
   private final ConcurrentHashMap<String, ChunkedUploadInfo> activeUploads = new ConcurrentHashMap<>();
+
+  public FileHandlerService(@Value("${ava.video.normalize-audio:true}") boolean normalizeVideoAudio) {
+    this.normalizeVideoAudio = normalizeVideoAudio;
+    TRADEServiceInfo tsi = null;
+    try {
+      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideosDir").argTypes());
+      userVideoDir = tsi.call(String.class);
+      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getUserImageDir").argTypes());
+      userImageDir = tsi.call(String.class);
+    } catch (TRADEException e) {
+      log.error("[FileHandlerService] error calling TRADE services to identify media paths for Ava media management");
+    }
+  }
 
   private static class ChunkedUploadInfo {
     final String fileName;
@@ -40,18 +61,6 @@ public class FileHandlerService {
       this.fileName = fileName;
       this.totalChunks = totalChunks;
       this.tempDir = tempDir;
-    }
-  }
-
-  public FileHandlerService() {
-    TRADEServiceInfo tsi = null;
-    try {
-      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideosDir").argTypes());
-      userVideoDir = tsi.call(String.class);
-      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getUserImageDir").argTypes());
-      userImageDir = tsi.call(String.class);
-    } catch (TRADEException e) {
-      log.error("[FileHandlerService] error calling TRADE services to identify media paths for Ava media management");
     }
   }
 
@@ -71,6 +80,9 @@ public class FileHandlerService {
     log.info("[store] path: " + targetLocation);
     try {
       Files.copy(file.getInputStream(), targetLocation);
+      if (MediaTypes.isVideo(filename) && normalizeVideoAudio) {
+        normalizeVideoAudio(targetLocation);
+      }
     } catch (IOException e) {
       log.error("[store] error attempting to write file from stream");
     }
@@ -143,6 +155,11 @@ public class FileHandlerService {
 
       cleanupTempDir(info.tempDir);
       activeUploads.remove(uploadId);
+
+      if (MediaTypes.isVideo(info.fileName) && normalizeVideoAudio) {
+        normalizeVideoAudio(targetLocation);
+      }
+
       return info.fileName;
 
     } catch (IOException | UncheckedIOException e) {
@@ -176,6 +193,61 @@ public class FileHandlerService {
       }
     } catch (IOException e) {
       log.warn("[cleanupTempDir] failed for {}", tempDir);
+    }
+  }
+
+  /**
+   * Normalize video audio to a consistent loudness (EBU R128-style -24 LUFS) so playback
+   * volume is predictable across videos. If ffmpeg is missing or fails, the original file
+   * is left unchanged.
+   */
+  private void normalizeVideoAudio(Path videoPath) {
+    Path dir = videoPath.getParent();
+    String name = videoPath.getFileName().toString();
+    Path normalized = dir.resolve(".normalize." + name);
+    try {
+      ProcessBuilder pb = new ProcessBuilder(
+          "ffmpeg",
+          "-i", videoPath.toAbsolutePath().toString(),
+          "-filter:a", "loudnorm=I=-24:LRA=7:TP=-2",
+          "-c:v", "copy",
+          "-c:a", "aac",
+          "-b:a", "192k",
+          "-y",
+          normalized.toAbsolutePath().toString()
+      );
+      pb.redirectErrorStream(true);
+      Process p = pb.start();
+      StringBuilder err = new StringBuilder();
+      try (BufferedReader r = new BufferedReader(
+          new InputStreamReader(p.getInputStream()))) {
+        String line;
+        while ((line = r.readLine()) != null) err.append(line).append('\n');
+      }
+      boolean finished = p.waitFor(NORMALIZE_TIMEOUT_SEC, TimeUnit.SECONDS);
+      if (!finished) {
+        p.destroyForcibly();
+        log.warn("[normalizeVideoAudio] ffmpeg timed out for {}; leaving original", name);
+        return;
+      }
+      if (p.exitValue() != 0) {
+        log.warn("[normalizeVideoAudio] ffmpeg failed for {} (exit {}); leaving original. stderr: {}",
+            name, p.exitValue(), err.length() > 500 ? err.substring(0, 500) + "..." : err);
+        return;
+      }
+      Files.move(normalized, videoPath, StandardCopyOption.REPLACE_EXISTING);
+      log.info("[normalizeVideoAudio] normalized audio for {}", name);
+    } catch (IOException e) {
+      log.warn("[normalizeVideoAudio] failed for {}: {}; leaving original", name, e.getMessage());
+      try {
+        if (Files.exists(normalized)) Files.delete(normalized);
+      } catch (IOException ignored) {}
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.warn("[normalizeVideoAudio] interrupted for {}; leaving original", name);
+      try {
+        if (Files.exists(normalized)) Files.delete(normalized);
+      } catch (IOException ignored) {}
     }
   }
 }

@@ -363,9 +363,20 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   }
 
+  /**
+   * Normalize a filename for matching: lowercase, collapse dashes/underscores/spaces
+   * so "RobotLedgerPage.png", "robot-ledger-page.png", "robot_ledger_page.png" all match.
+   */
+  private static String normalizeForMatch(String name) {
+    if (name == null) return "";
+    return name.toLowerCase().replaceAll("[-_\\s]+", "");
+  }
+
   private String getMatchingImageName(String name) {
+    String normalizedRequest = normalizeForMatch(name);
+    if (normalizedRequest.isEmpty()) return "";
     for (String image : userImages) {
-      if (image.equalsIgnoreCase(name)) {
+      if (normalizeForMatch(image).equals(normalizedRequest)) {
         return image;
       }
     }
@@ -394,7 +405,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       return false;
     }
 
-    displayUserImage(imageName, timeout, true);
+    displayUserImage(name, timeout, true);
 
     return true;
   }

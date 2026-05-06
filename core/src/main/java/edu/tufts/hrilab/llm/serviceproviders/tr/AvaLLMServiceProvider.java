@@ -152,7 +152,7 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
           videoList += ":video\n";
         }
         String imageList = String.join(":image\n", images);
-        if (!videoList.isEmpty()) {
+        if (!imageList.isEmpty()) {
           imageList += ":image\n";
         }
         promptVars.put("%actionList", generateLLMActionListString(true));
