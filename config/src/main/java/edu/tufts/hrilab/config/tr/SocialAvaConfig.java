@@ -25,6 +25,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
+  private String videoAudioDevice = "hdmi:CARD=PCH,DEV=0";
   private boolean initKiosk = false;
   private boolean persistKiosk = true;
   private String mediaDir = "ava";
@@ -42,6 +43,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
+    options.add(Option.builder("videoAudioDevice").hasArg().desc("ALSA device for video playback (empty = vlc/system default)").build());
     options.add(Option.builder("kiosk").desc("start the demo with kiosk mode enabled").build());
     options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
@@ -71,6 +73,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("speakerId")) {
       speakerId = cmdLine.getOptionValue("speakerId");
+    }
+    if (cmdLine.hasOption("videoAudioDevice")) {
+      videoAudioDevice = cmdLine.getOptionValue("videoAudioDevice");
     }
     if (cmdLine.hasOption("mediaDir")) {
       mediaDir = cmdLine.getOptionValue("mediaDir");
@@ -153,7 +158,11 @@ public class SocialAvaConfig extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
+      String displayArgs = ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90";
+      if (!videoAudioDevice.isEmpty()) {
+        displayArgs += " -videoAudioDevice " + videoAudioDevice;
+      }
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, displayArgs);
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
