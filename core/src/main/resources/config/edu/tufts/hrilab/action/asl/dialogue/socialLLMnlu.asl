@@ -480,7 +480,7 @@ import java.lang.String;
         !pairArgs = op:invokeMethod(!pair, "getArgs");
         !location = op:get(!pairArgs,0);
         // ASL bug(?) with || not short circuiting requires duplicate blocks
-        if (op:isNull(!lastLocation))
+        if (op:isNull(!lastLocation)) {
             !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
             !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
             act:submitGoal(!actionPred);
