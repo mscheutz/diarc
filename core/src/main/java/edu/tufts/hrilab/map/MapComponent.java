@@ -518,6 +518,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
         locationNames.add(ref.properties.get(0).getName());
       }
     }
+    locationNames.sort(String::compareTo);
     return locationNames;
   }
 

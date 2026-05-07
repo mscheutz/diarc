@@ -3439,8 +3439,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("displayNamedImageForDurationAtLocation",
             "You display an image from your saved collection on your built-in display at a specified location for a certain duration.",
             List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display", true),
-                    new ToolParameterHelper("location", "string", locationNames, "The location at which to display the image. ", true),
-                    new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true)
+                    new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true),
+                    new ToolParameterHelper("location", "string", locationNames, "The location at which to display the image. ", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("urgentPriority",
