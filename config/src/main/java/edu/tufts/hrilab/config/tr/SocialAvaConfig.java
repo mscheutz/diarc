@@ -33,6 +33,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public boolean useDisplay = true;
   public boolean useCartesia = false;
   public String cartesiaVoiceId = "";
+  public String voiceVolume = "1.0";
+  public String voiceSpeed = "normal";
+  public String voiceClipVolume = "0.4";
   public SimSpeechRecognitionComponent simSpeechRec;
   public SocialTRLLMServiceProvider serviceProvider;
   public boolean llmOnly = false;
@@ -55,6 +58,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
     options.add(Option.builder("cartesia").desc("use Cartesia TTS instead of MaryTTS").build());
     options.add(Option.builder("cartesiaVoiceId").hasArg().desc("Cartesia voice UUID; overrides CARTESIA_VOICE_ID env").build());
+    options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
+    options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());
+    options.add(Option.builder("voiceClipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
     return options;
   }
 
@@ -103,6 +109,15 @@ public class SocialAvaConfig extends DiarcConfiguration {
     if (cmdLine.hasOption("cartesiaVoiceId")) {
       cartesiaVoiceId = cmdLine.getOptionValue("cartesiaVoiceId");
     }
+    if (cmdLine.hasOption("voiceVolume")) {
+      voiceVolume = cmdLine.getOptionValue("voiceVolume");
+    }
+    if (cmdLine.hasOption("voiceSpeed")) {
+      voiceSpeed = cmdLine.getOptionValue("voiceSpeed");
+    }
+    if (cmdLine.hasOption("voiceClipVolume")) {
+      voiceClipVolume = cmdLine.getOptionValue("voiceClipVolume");
+    }
   }
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
@@ -150,7 +165,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
     if (useCartesia) {
-      String cartesiaArgs = " -volume 1.0";
+      String cartesiaArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
       if (!speakerId.isEmpty()) {
         cartesiaArgs += " -matchMixer " + speakerId;
       }

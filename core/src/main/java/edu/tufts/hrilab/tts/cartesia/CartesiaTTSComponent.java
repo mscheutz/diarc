@@ -69,6 +69,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private Mixer.Info mixer;
   private boolean muteMics;
   private float volume = 1.0f;
+  private float clipVolume = 0.4f;
   private volatile boolean speaking = false;
 
   private HttpClient httpClient;
@@ -86,6 +87,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     options.add(Option.builder("language").hasArg().desc("language code (default en)").build());
     options.add(Option.builder("speed").hasArg().desc("speech speed: slowest|slow|normal|fast|fastest or float").build());
     options.add(Option.builder("volume").hasArg().desc("output volume 0.0-1.0").build());
+    options.add(Option.builder("clipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
     options.add(Option.builder("showMixers").desc("Show all mixers").build());
     options.add(Option.builder("matchMixer").hasArgs().desc("String to match for mixer. Do not quote argument if spaces needed.").build());
     options.add(Option.builder("mixer").hasArg().desc("ID of mixer for speaker output").build());
@@ -111,9 +113,18 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       try {
         volume = Float.parseFloat(cmdLine.getOptionValue("volume"));
         if (volume < 0.0f) volume = 0.0f;
-        if (volume > 1.0f) volume = 1.0f;
+        if (volume > 2.0f) volume = 2.0f;
       } catch (NumberFormatException e) {
         log.error("[parseArgs] cannot parse volume", e);
+      }
+    }
+    if (cmdLine.hasOption("clipVolume")) {
+      try {
+        clipVolume = Float.parseFloat(cmdLine.getOptionValue("clipVolume"));
+        if (clipVolume < 0.0f) clipVolume = 0.0f;
+        if (clipVolume > 1.0f) clipVolume = 1.0f;
+      } catch (NumberFormatException e) {
+        log.error("[parseArgs] cannot parse clipVolume", e);
       }
     }
     if (cmdLine.hasOption("showMixers")) {
@@ -305,6 +316,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     }
 
     speaking = true;
+    line.start();
     int frameSize = (BITS_PER_SAMPLE / 8) * CHANNELS;
     byte[] tail = new byte[frameSize];
     int tailLen = 0;
@@ -325,6 +337,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             byte[] head = prime.toByteArray();
             int aligned = (head.length / frameSize) * frameSize;
             int leftover = head.length - aligned;
+            if (volume > 1.0f && aligned > 0) applySoftGain(head, 0, aligned);
             if (aligned > 0) line.write(head, 0, aligned);
             if (leftover > 0) {
               System.arraycopy(head, aligned, tail, 0, leftover);
@@ -339,11 +352,13 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
           int newTailLen = total - aligned;
           if (aligned > 0) {
             if (tailLen == 0) {
+              if (volume > 1.0f) applySoftGain(chunk, 0, aligned);
               line.write(chunk, 0, aligned);
             } else {
               byte[] merged = new byte[aligned];
               System.arraycopy(tail, 0, merged, 0, tailLen);
               System.arraycopy(chunk, 0, merged, tailLen, aligned - tailLen);
+              if (volume > 1.0f) applySoftGain(merged, 0, aligned);
               line.write(merged, 0, aligned);
             }
           }
@@ -365,6 +380,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       if (!started && prime.size() > 0) {
         byte[] head = prime.toByteArray();
         int aligned = (head.length / frameSize) * frameSize;
+        if (volume > 1.0f && aligned > 0) applySoftGain(head, 0, aligned);
         if (aligned > 0) line.write(head, 0, aligned);
         tFirstAudio = System.nanoTime();
       }
@@ -383,6 +399,17 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             totalBytes);
     speaking = false;
     return true;
+  }
+
+  private void applySoftGain(byte[] pcm, int off, int len) {
+    for (int i = off; i + 1 < off + len; i += 2) {
+      short s = (short) ((pcm[i] & 0xff) | (pcm[i + 1] << 8));
+      int scaled = Math.round(s * volume);
+      if (scaled > Short.MAX_VALUE) scaled = Short.MAX_VALUE;
+      if (scaled < Short.MIN_VALUE) scaled = Short.MIN_VALUE;
+      pcm[i] = (byte) (scaled & 0xff);
+      pcm[i + 1] = (byte) ((scaled >> 8) & 0xff);
+    }
   }
 
   private SourceDataLine openLine() {
@@ -476,6 +503,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         line = audioLine;
       }
       if (line == null) return;
+      line.start();
       line.write(pcm, 0, pcm.length);
       line.drain();
     });
@@ -495,8 +523,18 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       int n;
       while ((n = conv.read(buf)) > 0) out.write(buf, 0, n);
       byte[] pcm = out.toByteArray();
-      log.info("[loadAndConvert] cached {} -> {} bytes ({} ms audio)", path, pcm.length,
-              pcm.length * 1000L / (SAMPLE_RATE * (BITS_PER_SAMPLE / 8) * CHANNELS));
+      if (clipVolume < 1.0f) {
+        for (int i = 0; i + 1 < pcm.length; i += 2) {
+          short s = (short) ((pcm[i] & 0xff) | (pcm[i + 1] << 8));
+          int scaled = Math.round(s * clipVolume);
+          if (scaled > Short.MAX_VALUE) scaled = Short.MAX_VALUE;
+          if (scaled < Short.MIN_VALUE) scaled = Short.MIN_VALUE;
+          pcm[i] = (byte) (scaled & 0xff);
+          pcm[i + 1] = (byte) ((scaled >> 8) & 0xff);
+        }
+      }
+      log.info("[loadAndConvert] cached {} -> {} bytes ({} ms audio, gain {})", path, pcm.length,
+              pcm.length * 1000L / (SAMPLE_RATE * (BITS_PER_SAMPLE / 8) * CHANNELS), clipVolume);
       return pcm;
     } catch (UnsupportedAudioFileException | IOException | IllegalArgumentException e) {
       log.error("[loadAndConvert] cannot decode {}", path, e);
