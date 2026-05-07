@@ -359,7 +359,7 @@ public class ScheduledGoal extends Goal {
     if (end.size() == 1) {
       // "end(date-string)"
       scheduleInfo.endTime = parseDateString(end.get(0).toString());
-    } else if (start.size() == 2) {
+    } else if (end.size() == 2) {
       // "end(num, time-unit)"
       long delay = Long.parseLong(end.get(0).toString());
       long millis = TimeUnit.valueOf(end.get(1).toString().toUpperCase()).toMillis(delay);

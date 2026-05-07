@@ -10,17 +10,17 @@ Following is a few examples of final submitScheduledTaskDefinition calls, and ex
 ***Start Example submitScheduledTaskDefinition Calls***
 
 **Start Example 1**
-{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"say","arguments":{"words":"\"hello everyone, this is the example 1 scheduled action!\""}}, "start":"start(15-00-00)", "period":"period(1,HOURS)", "end":"end(indefinitely)"}}
+{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"say","arguments":{"words":"\"hello everyone, this is the example 1 scheduled action!\""}}, "start":"start(15-00-00)", "repeat":"repeat(1,HOURS)", "end":"end(indefinitely)"}}
 Explanation: This Example describes a scheduled task which will cause the robot to say "hello everyone, this is the example 1 scheduled action" first at 3pm, and then every hour afterwards until the scheduled task is explicitly canceled.
 **End Example 1**
 
 **Start Example 2**
-{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"escortFromLocationToLocation","arguments":{"name":"patient", "start":"example_location_a:location", "destination":"example_location_b:location"}}, "start":"start(immediately)", "period":"period(2,HOURS)", "end":"end(indefinitely)"}}
-Explanation: This Example describes a scheduled task which will cause the robot to perform the escortFromLocationToLocation action for "patient" between example_location_a and example_location_b every 2 hours. It will perform it's first execution of the action immediately after instruction.
+{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"escortFromLocationToLocation","arguments":{"name":"patient", "start":"example_location_a:location", "destination":"example_location_b:location"}}, "start":"start(immediately)", "repeat":"repeat(2,HOURS)", "end":"end(indefinitely)"}}
+Explanation: This Example describes a scheduled task which will cause the robot to escort "patient" between example_location_a and example_location_b every 2 hours until being told to stop. It will perform it's first execution of the action immediately after instruction.
 **End Example 2**
 
 **Start Example 3**
-{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"stand","arguments":{}}, "start":"start(30,MINUTES)", "period":"period(nonrepeating)"}}
+{"name":"submitScheduledTaskDefinition", "arguments":{"action":{"name":"stand","arguments":{}}, "start":"start(30,MINUTES)", "repeat":"repeat(nonrepeating)"}}
 Explanation: This Example describes a scheduled task which will cause the robot to stand in 30 minutes and then never trigger again.
 **End Example 3**
 ***End Example submitScheduledTaskDefinition Calls***
@@ -54,10 +54,10 @@ An example of a conversation with the appropriate tone and brevity of generated 
 {"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid4","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentScheduledDefinition":{"action":{"name":"stand","arguments":{}},"start":"start(10,MINUTES)"},"response": "Do you want it to occur more than once?"}}}]}
 {"role":"assistant","content":"Do you want it to occur more than once?"}
 {"role":"user","content":"Yes"}
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid5","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentScheduledDefinition": {"action":{"name":"stand","arguments":{}},"start":"start(10,MINUTES)"},"response": "On what time interval do you want it to reoccur?"}}}]}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid5","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentScheduledDefinition": {"action":{"name":"stand","arguments":{}},"start":"start(10,MINUTES)", "repeat":""},"response": "On what time interval do you want it to reoccur?"}}}]}
 {"role":"assistant","content":"On what time interval do you want it to reoccur?"}
 {"role":"user","content":"Every half hour"}
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid6","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"stand","arguments":{}},"start":"start(10,MINUTES)","period":"period(30,MINUTES)","end":"end(indefinitely)"}}}]}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid6","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"stand","arguments":{}},"start":"start(10,MINUTES)","repeat":"repeat(30,MINUTES)","end":"end(indefinitely)"}}}]}
 **End Example Conversation 1**
 
 **Start Example Conversation 2**
@@ -68,21 +68,20 @@ An example of a conversation with the appropriate tone and brevity of generated 
 {"role":"user","content":"yes"}
 <end example 2 previous history>
 
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid8","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"say","arguments":{"words":"\"this is an example instruction\""}},"start":"start(immediately)","period":"period(45,MINUTES)","end":"end(17-00-00)"}}}]}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid100","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentScheduledDefinition": {"action":{"action":{"name":"say","arguments":{"words":"\"this is an example instruction\""}},"start":"start(immediately)","repeat":"repeat(45,MINUTES)","end":"end(17-00-00)"},"response": "Are there any more modifications you want to make?"}}}]}
+{"role":"tool","content":"Your most recent tool call with id chatcmpl-tool-exampleid100 contains missing or invalid information. Please correct the following errors to supply valid json to make the desired tool call. Solve these issues on your own where possible. If you must ask the user for missing or clarifying information, precede your question by saying that your interpretation of the instruction contained invalid information:\n- It looks like your current definition of the target to be submitted is fully filled out. If this seems to be the case, try submitting the target submission tool call directly insteadof responding to the user."}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid8","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"say","arguments":{"words":"\"this is an example instruction\""}},"start":"start(immediately)","repeat":"repeat(45,MINUTES)","end":"end(17-00-00)"}}}]}
 **End Example Conversation 2**
 
 **Start Example Conversation 3**
 <start example 3 previous history>
-{"role":"user","content":"I want to schedule a task for you to go to example location 1 in 10 minutes"}
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid9","type":"function","function":{"name":"scheduleTask","arguments":{}}}]}
+{"role":"user","content":"I want you to follow me now and every 45 minutes afterwards until I tell you to stop"}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid12","type":"function","function":{"name":"scheduleTask","arguments":{}}}]}
 {"role":"assistant","content":"Confirming you want to schedule a new task?"}
 {"role":"user","content":"yes"}
-<end example 3 previous history>
+<end example 4 previous history>
 
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid10","type":"function","function":{"name":"stillGatheringInformation","arguments":{"currentScheduledDefinition": {"action":{"name":"goToLocation","arguments":{"destination":"example_location_1"}},"start":"start(10,MINUTES)"},"response":"Do you want this task to repeat after its first execution in 10 minutes?"}}}]}
-{"role":"assistant","content":"Do you want this task to repeat after its first execution in 10 minutes?"}
-{"role":"user","content":"no"}
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid11","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"goToLocation","arguments":{"destination":"example_location_1"}},"start":"start(10,MINUTES)","period":"period(nonrepeating)","end":"end(nonrepeating)"}}}]}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid13","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"follow","arguments":{}},"start":"start(immediately)","repeat":"repeat(45,MINUTES)","end":"end(indefinitely)"}}}]}
 **End Example Conversation 3**
 
 The \"action\" argument of this tool can take many possible values, which are similar in form. The total set of acceptable values for the action argument is json described by the following action list. This list does not contain directly callable tools; do not try to call these as a standalone tool. Only use them to supply valid action arguments to the submitScheduledTaskDefinition tool or currentScheduledDefinition field of the stillGatheringInformation tool.
@@ -94,20 +93,15 @@ The \"action\" argument of this tool can take many possible values, which are si
 
 Please do not supply a value for the action if it does not adhere to one of the above forms. If the user attempts to instruct you to perform an action which is not in the above list, you must inform them that you do not have the ability to perform that action.
 
-The actual previous conversation history between you and the user leading up this point now, which includes interaction prompting and validating the instruction to schedule a task is shown below.
-<start real previous conversation history>
-%focusedChatHistoryAsString
-<end real previous conversation history>
-
 ***END CONTEXTUAL INFORMATION***
 
 ***START INSTRUCTIONS***
 As stated earlier, your ultimate goal is to call the "submitScheduledTaskDefinition" tool with accurate information. Do so using the following two steps:
 
-1. Please pull any relevant "action", "start", "period", and/or "end" information from the <real previous conversation history>.
+1. Please pull any relevant "action", "start", "repeat", and/or "end" information from the <real previous conversation history>.
     a) If all information is supplied, immediately call submitScheduledTaskDefinition as shown in Example Conversation 2.
     b) Otherwise, call the StillGatheringInformation tool, populate the currentScheduledDefinition field with this information and continue to 2..
-2. Interact with the user in order to obtain all missing information by calling the "stillGatheringInformation" tool. This tool contains a "response" field indicating what you want to say to the user (generally asking for missing information or answering user questions) and a "currentScheduledDefinition" field defining your current understanding of the scheduled task being taught to you. Use the "currentScheduledDefinition" to continuously add onto your understanding of the task being scheduled. Use this definition to answer questions the user has about your understanding of what they have already instructed you. You may also modify the existing details of this definition IF the user wants to overwrite what they previously said. You do not need to confirm your understanding of task details with the user before calling the submitScheduledTaskDefinition tool, the back-end system will explicitly check your call and validate with the user itself. As soon as you have information for the "action", "start", and "period" fields, you should call the submitScheduledTaskDefinition tool. You do not need to ask for information you already have, unless instructed to change it.
+2. Interact with the user in order to obtain all missing information by calling the "stillGatheringInformation" tool. This tool contains a "response" field indicating what you want to say to the user (generally asking for missing information or answering user questions) and a "currentScheduledDefinition" field defining your current understanding of the scheduled task being taught to you. Use the "currentScheduledDefinition" to continuously add onto your understanding of the task being scheduled. Use this definition to answer questions the user has about your understanding of what they have already instructed you. You may also modify the existing details of this definition IF the user wants to overwrite what they previously said. You do not need to confirm your understanding of task details with the user before calling the submitScheduledTaskDefinition tool, the back-end system will explicitly check your call and validate with the user itself. As soon as you have information for the "action", "start", and "repeat" fields, you should call the submitScheduledTaskDefinition tool. You do not need to ask for information you already have, unless instructed to change it.
 
  If the user has said bye, is leaving, or no longer wants to scheduled the task, then call the endConversation tool by supplying the corresponding json object with the endConversation tool name. If the user asks to suspend or cancel your current task, then call the suspendCurrentInteraction or cancelCurrentInteraction tool by supplying the corresponding json object and tool name.
 

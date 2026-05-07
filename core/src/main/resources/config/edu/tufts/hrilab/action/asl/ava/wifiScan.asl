@@ -51,6 +51,12 @@ import java.lang.Integer;
     act:generateWifiSummaryString();
 }
 
+() = reportWifiAtLocation(Symbol ?location) {
+    String !output;
+    !output = act:generateWifiAtLocationString(?location);
+    act:generateResponseFromString(!output);
+}
+
 () = getWifiAtLocationString(Symbol ?location) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
@@ -60,6 +66,22 @@ import java.lang.Integer;
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
+}
+
+() = reportWifiAtLocations(Predicate ?locations) {
+    List !locList;
+    Symbol !location;
+    String !output;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
+
+    !locList = op:invokeMethod(?locations, "getArgs");
+    foreach(!location : !locList) {
+        !output = act:generateWifiAtLocationString(!location);
+        op:invokeMethod(!sb,"append",!output);
+        op:invokeMethod(!sb,"append",".");
+    }
+    !output = op:invokeMethod(!sb,"toString");
+    act:generateResponseFromString(!output);
 }
 
 () = getWifiAtLocationsString(Predicate ?locations) {
@@ -82,6 +104,16 @@ import java.lang.Integer;
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
     }
+}
+
+() = reportWifiAtCurrentLocation() {
+    act:measureWifi();
+
+    Symbol !currentLocation;
+    String !output;
+    !currentLocation = act:getCurrentLocation();
+    !output = act:generateWifiAtLocationString(!location);
+    act:generateResponseFromString(!output);
 }
 
 () = getWifiAtCurrentLocationString() {

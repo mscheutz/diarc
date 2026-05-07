@@ -7,10 +7,6 @@
     "priority": 9999,
     "priorityTier": "URGENT"
   },
-  "offContextSubmission": {
-    "priority": 1,
-    "priorityTier": "URGENT"
-  },
   "focusedContextResponseSubmissionWrapper": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

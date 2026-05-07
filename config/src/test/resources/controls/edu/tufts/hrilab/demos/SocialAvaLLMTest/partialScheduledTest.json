@@ -1,0 +1,14 @@
+{
+  "testName" : "partialScheduledTest",
+  "testlets" : [ {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  } ]
+}

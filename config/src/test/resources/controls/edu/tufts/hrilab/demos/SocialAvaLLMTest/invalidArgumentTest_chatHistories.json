@@ -1,0 +1,45 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Go to the nurse's office",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-98b7d40c2806318e",
+        "type" : "function",
+        "function" : {
+          "name" : "getAllKnownLocations",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "I know the following locations: pavilion, cardiology checkin, reception, infectious disease, pharmacy, visitors center, floating elevators, piano, proger elevators, elevator, emergency, mother and infant unit, tv, garage stairs, atrium three elevators, rheumatology checkin, bieward elevators, biewend lab, dock",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "chatcmpl-tool-98b7d40c2806318e"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"response\":\"I do not have a location saved which sounds like a nurse\\u0027s office.\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

@@ -329,7 +329,7 @@ import java.lang.String;
 //  ?actor
 //  this:getCommand();
 //  this:getId();
-(Predicate ?resultPred) = runContextSpecificChat(Symbol ?user, Symbol ?agentTeam, java.lang.String ?contextId, java.lang.Long ?cid) {
+() = runContextSpecificChat(Symbol ?user, Symbol ?agentTeam, java.lang.String ?contextId, java.lang.Long ?cid) {
       onInterrupt : {
         cancel: act:cancelContextSpecificChat(!tracker,?user,?agentTeam,?cid);
         suspend: act:suspendContextSpecificChat(!tracker,?user,?agentTeam,?cid);
@@ -377,14 +377,14 @@ import java.lang.String;
 
     //  wait on lock in either case - should be released when moving on from specific context
     //  (goal canceled or validation complete)
-    ?resultPred = act:waitOnFocusedChat(?user,?agentTeam,?cid);
+    act:waitOnFocusedChat(?user,?agentTeam,?cid);
 
     //// If an issue occurred during focusDialogueChat
     //if (op:isNull(?resultPred)) {
     //    exit(FAIL,occurred(internalError));
     //}
 
-    op:log("info", "[runContextSpecificChat] out with result: ?resultPred");
+    op:log("info", "[runContextSpecificChat] out");
 }
 () = focusedContextResponseSubmissionWrapper(Symbol ?user, Symbol ?agentTeam, java.lang.Long ?cid) {
     Utterance !responseUtterance;
@@ -399,90 +399,6 @@ import java.lang.String;
     } else {
         act:handleParsedUtterance(!responseUtterance);
     }
-}
-
-// Validation of this goal itself will stand in as question inquiring about whether the user intended a goal
-//  submission outside of the context of the current focused dialogue interaction.
-// If this does not perform well, we can not validate this goal and just explicitly form the question here
-/**
-  * For "focused" dialogue contexts; action to allow the user to temporarily back out of the specific context into
-  * the base, standard "nlu" context to give one off instructions. Providing internal, standard functionality to
-  * support this without forcing the user to understand how to explicitly suspend and resume these types of goals in
-  * order to give other instructions.
-  *
-  * TODO: not sure how well the LLM actually handles this target. Needs more testing and development
-  *       (May get rid of this)
-  */
-() = offContextSubmission() {
-    Symbol !submitter;
-    java.lang.Long !cid;
-    String !contextId;
-    Predicate !output;
-    java.lang.Long !gid;
-    String !cmd;
-    java.lang.Long !timeout = 5000;
-
-    !submitter = this:getOriginalSubmitter();
-    !cid = this:getId();
-    !contextId = this:getCommand();
-
-    op:log("info","[offContextSubmission] in method");
-
-    //TODO: shouldn't be able to be canceled/suspended like other focused chats. How to do this?
-    //      Using noInterrupt wrapper functionally doesn't allow it to be canceled/suspended, but doesn't report any error on trying to do so.
-    //      Though suspend/resume/cancel directly shouldn't be an acceptable dialogue target in this state anyway
-    noInterrupt {
-        !output = act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
-
-        if (op:isNull(!output)) {
-            op:log("warn","[offContextSubmission] exception during call for runContextSpecificChat ***TODO HANDLE****");
-            return;
-        }
-
-        // Wait for submission to complete in any case (new submission has highest priority and/or status reporting of submission and/or dialogue of submission placement)
-        op:log("debug","[offContextSubmission] waiting on goal submission for !output");
-        !gid = tsc:waitForGoalSubmission(!output, !timeout);
-        op:log("debug","[offContextSubmission] submission result: !gid");
-
-        if (op:==(!gid,-1)) {
-            op:log("warn","[offContextSubmission] Could not find submitted goal for !output. ***TODO HANDLE****");
-            return;
-        }
-
-        // If goal is suspend or cancel, need to wait for it to fully complete (should this be the case for any SKIPPENDING goal?)
-        !cmd = op:getName(!output);
-        if (op:equals(!cmd,"cancelGoal") || op:equals(!cmd,"suspendGoal")) {
-            op:log("debug","[offContextSubmission] joining on goal !gid");
-            act:joinOnGoal(!gid);
-            op:log("debug","[offContextSubmission] joined on goal: !gid");
-        }
-    }
-
-    // Not sure what this was meant to achieve on review, test with it removed
-    //// TODO: Has to be a better way to do this
-    //edu.tufts.hrilab.fol.Predicate !suspendGoalPred;
-    //edu.tufts.hrilab.fol.Predicate !cancelGoalPred;
-    //// TODO: If this changes from "next" to explicitly the superseded, focused dialogue action, then that needs to
-    ////      retrieved explicitly here instead as well
-    //!gid = tsc:getNextGoalId(?actor);
-    //if (~op:==(!gid,-1)) {
-    //    op:log("info","[offContextSubmission] next gid !gid");
-    //    !suspendGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "suspendGoal(?actor,!gid)");
-    //    !cancelGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cancelGoal(?actor,!gid)");
-    //    !gid = tsc:getGoalId(!suspendGoalPred);
-    //    op:log("info","[offContextSubmission] !gid");
-    //    if (~op:==(!gid,-1)) {
-    //        !gid = tsc:getGoalId(!cancelGoalPred);
-    //        op:log("info","[offContextSubmission] !gid");
-    //    }
-    //    if (~op:==(!gid,-1)) {
-    //        op:log("debug","[offContextSubmission] waiting on !gid");
-    //        act:joinOnGoal(!gid);
-    //        op:log("debug","[offContextSubmission] waited on !gid");
-    //    }
-    //}
-
-    op:log("debug","[offContextSubmission] out");
 }
 
 () = scheduleTask() {
@@ -546,6 +462,7 @@ import java.lang.String;
     Predicate !actionPred;
     Predicate !actionSignature;
     Symbol !location;
+    Symbol !lastLocation;
     Symbol !action;
 
     op:log(info,"[submitTourDefinition] ?locationActionPairs");
@@ -562,8 +479,16 @@ import java.lang.String;
         !pair = op:get(!pairs,!index);
         !pairArgs = op:invokeMethod(!pair, "getArgs");
         !location = op:get(!pairArgs,0);
-        !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
-        act:submitGoal(!actionPred);
+        // ASL bug(?) with || not short circuiting requires duplicate blocks
+        if (op:isNull(!lastLocation))
+            !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+            !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+            act:submitGoal(!actionPred);
+        } elseif (~op:equalsValue(!location,!lastLocation)) {
+            !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+            !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+            act:submitGoal(!actionPred);
+        }
         !action = op:get(!pairArgs,1);
         act:submitGoal(!action);
     }

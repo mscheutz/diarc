@@ -1,0 +1,167 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "I want you to learn a new task sequence called the measurement patrol where you measure both the wifi signal and the temperature at all specified locations",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-93b02aabdd7528f6",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to learn a new task sequence called the measurement patrol where you measure both the wifi signal and the temperature at all specified locations\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-93b02aabdd7528f6\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"learnTaskSequence\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should learn a new task sequence?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nUse this interaction history to populate the \"currentTaskSequenceDefinition\" argument of your initial reply and then fill out the response accordingly",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[]},\"response\":\"What locations should I visit for the measurement patrol?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "the specified locations are reception, pavilion, and the elevators",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "stillGatheringInformation",
+          "arguments" : "{\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{}},{\"location\":\"pavilion:location\",\"action\":{}},{\"location\":\"elevator:location\",\"action\":{}}]},\"response\":\"Okay, I will measure both the wifi signal and the temperature at reception, pavilion, and the elevators. Is that all?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "that is the whole task",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-ad464e8c9083dbd8",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\": \"measurement patrol\", \"locationActionPairs\": [{\"location\": \"reception:location\", \"action\": {\"name\": \"measureTemperature\", \"arguments\": {}}}, {\"location\": \"reception:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureTemperature\", \"arguments\": {}}}, {\"location\": \"pavilion:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}, {\"location\": \"elevator:location\", \"action\": {\"name\": \"measureTemperature\", \"arguments\": {}}}, {\"location\": \"elevator:location\", \"action\": {\"name\": \"measureWifi\", \"arguments\": {}}}]}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should save a new task sequence under the name measurement patrol where I measure temperature and wifi at reception, pavilion, and elevators?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "forget how to perform the measurement patrol",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "chatcmpl-tool-960ee148a419d257",
+        "type" : "function",
+        "function" : {
+          "name" : "forgetTaughtAction",
+          "arguments" : "{\"actionPredicate\": \"{\\\"name\\\": \\\"measurement_patrol\\\", \\\"arguments\\\": {}}\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should forget how to perform the measurement patrol?\"}"
+        }
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}

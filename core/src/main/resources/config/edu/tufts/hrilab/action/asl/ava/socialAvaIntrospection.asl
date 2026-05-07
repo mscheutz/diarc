@@ -606,10 +606,10 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString(!output);
     }
 }
-() = getCurrentPendingScheduledGoalInformation(java.lang.Boolean ?offContextState) {
+() = getCurrentPendingScheduledGoalInformation() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    !output = tsc:getFullGoalsSummary(?actor,?offContextState);
+    !output = tsc:getFullGoalsSummary(?actor);
     String !contextId = this:getCommand();
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
@@ -657,4 +657,15 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:triggerWW();
     }
     //}
+}
+
+() = getExtendedConversationHistory(Symbol ?user, Symbol ?agentTeam) {
+    String !output;
+    Symbol !submitter = this:getOriginalSubmitter();
+    !output = tsc:getExtendedConversationHistoryString(?user, ?agentTeam);
+    String !contextId = this:getCommand();
+    !output = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
+    if (~op:invokeMethod(!output,"isEmpty")) {
+        act:generateResponseFromString(!output);
+    }
 }
