@@ -30,6 +30,8 @@ public class SocialAvaConfig extends DiarcConfiguration {
   private boolean persistKiosk = true;
   private String mediaDir = "ava";
   private boolean useDisplay = true;
+  private boolean useCartesia = false;
+  private String cartesiaVoiceId = "";
 
 
   @Override
@@ -47,6 +49,8 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("kiosk").desc("start the demo with kiosk mode enabled").build());
     options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
+    options.add(Option.builder("cartesia").desc("use Cartesia TTS instead of MaryTTS").build());
+    options.add(Option.builder("cartesiaVoiceId").hasArg().desc("Cartesia voice UUID; overrides CARTESIA_VOICE_ID env").build());
     return options;
   }
 
@@ -89,6 +93,12 @@ public class SocialAvaConfig extends DiarcConfiguration {
     if (cmdLine.hasOption("kiosk")) {
       initKiosk = true;
     }
+    if (cmdLine.hasOption("cartesia")) {
+      useCartesia = true;
+    }
+    if (cmdLine.hasOption("cartesiaVoiceId")) {
+      cartesiaVoiceId = cmdLine.getOptionValue("cartesiaVoiceId");
+    }
   }
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
@@ -130,13 +140,22 @@ public class SocialAvaConfig extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    String maryTTSArgs = " -female -volume 1.0 -showMixers";
-    if (!speakerId.isEmpty()) {
-      maryTTSArgs += " -matchMixer " + speakerId;
+    if (useCartesia) {
+      String cartesiaArgs = " -volume 1.0";
+      if (!speakerId.isEmpty()) {
+        cartesiaArgs += " -matchMixer " + speakerId;
+      }
+      if (!cartesiaVoiceId.isEmpty()) {
+        cartesiaArgs += " -voiceId " + cartesiaVoiceId;
+      }
+      createInstance(edu.tufts.hrilab.ava.tts.AvaCartesiaTTSComponent.class, cartesiaArgs);
+    } else {
+      String maryTTSArgs = " -female -volume 1.0 -showMixers";
+      if (!speakerId.isEmpty()) {
+        maryTTSArgs += " -matchMixer " + speakerId;
+      }
+      createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);
     }
-    createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
-    //createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
-    //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
 //    if (useMicrophone) {
