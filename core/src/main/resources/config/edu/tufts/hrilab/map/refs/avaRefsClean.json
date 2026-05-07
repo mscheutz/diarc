@@ -4,774 +4,180 @@
       "refId": "location_0:location",
       "variable": "VAR0:location",
       "properties": [
-        "dock(VAR0:location)"
+        "reception(VAR0:location)"
       ],
       "position": [
-        0.07898179082202997,
-        0.7537705030118459,
+        0.0,
+        -0.0,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.7333030959351478,
-        0.6799018822535554
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_1:location",
       "variable": "VAR0:location",
       "properties": [
-        "conference room(VAR0:location)"
+        "instrument supply(VAR0:location)"
       ],
       "position": [
-        -0.6164999736566574,
-        0.86794628822832,
+        2.0,
+        -1.5,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.3728343952112535,
-        0.9278979004973871
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_2:location",
       "variable": "VAR0:location",
       "properties": [
-        "matthias scheutz(VAR0:location)"
+        "chair 1(VAR0:location)"
       ],
       "position": [
-        -3.498825796430655,
-        0.7458529087448973,
+        4.0,
+        -3.0,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.44687188168963354,
-        0.8945979663263081
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_3:location",
       "variable": "VAR0:location",
       "properties": [
-        "milod kazerounian(VAR0:location)"
+        "chair 2(VAR0:location)"
       ],
       "position": [
-        -3.485460495230052,
-        0.6974248641519087,
+        6.0,
+        -4.5,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.9104703935837681,
-        0.4135742525924677
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_4:location",
       "variable": "VAR0:location",
       "properties": [
-        "jivko sinapov(VAR0:location)"
+        "chair 3(VAR0:location)"
       ],
       "position": [
-        -6.413792062050441,
-        0.6716463591679196,
+        8.0,
+        -6.0,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.9499999283200689,
-        0.31225011800136143
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 4(VAR0:location)"
+      ],
+      "position": [
+        10.0,
+        -7.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 5(VAR0:location)"
+      ],
+      "position": [
+        12.0,
+        -9.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_7:location",
       "variable": "VAR0:location",
       "properties": [
-        "saeed mehraban(VAR0:location)"
+        "faculty area(VAR0:location)"
       ],
       "position": [
-        -10.84768827682046,
-        0.466886483389425,
+        14.0,
+        -10.5,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.9198763415113933,
-        0.39220851128910317
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_8:location",
       "variable": "VAR0:location",
       "properties": [
-        "vladimir podolskii(VAR0:location)"
+        "exam room 1(VAR0:location)"
       ],
       "position": [
-        -14.27627830963274,
-        0.3516211095449209,
+        16.0,
+        -12.0,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.426061227123573,
-        0.9046943300043143
+        0.0,
+        1.0
       ]
     },
     {
       "refId": "location_9:location",
       "variable": "VAR0:location",
       "properties": [
-        "marty allen(VAR0:location)"
+        "exam room 2(VAR0:location)"
       ],
       "position": [
-        -17.42583204898237,
-        0.0792711696345479,
+        18.0,
+        -13.5,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.9502942655367734,
-        0.31135318994338956
-      ]
-    },
-    {
-      "refId": "location_10:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "norman ramsey(VAR0:location)"
-      ],
-      "position": [
-        -22.25056978181836,
-        -0.1468337587305566,
-        0.0
-      ],
-      "orientation": [
         0.0,
-        0.0,
-        -0.2905267098093428,
-        0.956866882532444
-      ]
-    },
-    {
-      "refId": "location_12:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "phd student offices(VAR0:location)"
-      ],
-      "position": [
-        -24.57674545827989,
-        -1.177366036962291,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.9271003956678837,
-        0.3748130952254117
-      ]
-    },
-    {
-      "refId": "location_13:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "karen edwards(VAR0:location)"
-      ],
-      "position": [
-        -25.05844367057577,
-        -0.3787175164366715,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9258648813000071,
-        0.3778547625415403
-      ]
-    },
-    {
-      "refId": "location_14:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "raja sambasivan(VAR0:location)"
-      ],
-      "position": [
-        -31.35031293951341,
-        -0.7334742819395991,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.4025075732481929,
-        0.9154166556698925
-      ]
-    },
-    {
-      "refId": "location_15:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "elaine short(VAR0:location)"
-      ],
-      "position": [
-        -31.30025497001886,
-        -0.7043637430573264,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.902144170866954,
-        0.43143469374955934
-      ]
-    },
-    {
-      "refId": "location_16:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "huddle room(VAR0:location)"
-      ],
-      "position": [
-        -35.77184663231426,
-        -0.7806396240577584,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9148900926239748,
-        0.4037030076906721
-      ]
-    },
-    {
-      "refId": "location_17:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "back elevator(VAR0:location)"
-      ],
-      "position": [
-        -39.38114243825854,
-        -1.190483094054521,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.32085249186048737,
-        0.9471291772862432
-      ]
-    },
-    {
-      "refId": "location_18:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "bathroom(VAR0:location)"
-      ],
-      "position": [
-        -43.77098932858588,
-        -6.346902501968182,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9685178026711698,
-        0.24894430282496702
-      ]
-    },
-    {
-      "refId": "location_19:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "stair b(VAR0:location)"
-      ],
-      "position": [
-        -50.39516799841634,
-        -3.70171880716859,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.34411484142036286,
-        0.9389275669157012
-      ]
-    },
-    {
-      "refId": "location_20:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "huddle room(VAR0:location)"
-      ],
-      "position": [
-        -52.36231820651296,
-        -4.627802515162346,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.2694910227230508,
-        0.963002901694322
-      ]
-    },
-    {
-      "refId": "location_21:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "phd student offices(VAR0:location)"
-      ],
-      "position": [
-        -52.80121740970054,
-        -7.164826304435102,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.4897778530211584,
-        0.8718472656893435
-      ]
-    },
-    {
-      "refId": "location_22:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "nat lab(VAR0:location)"
-      ],
-      "position": [
-        -53.5484863993394,
-        -8.975427062999952,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.4342493096995686,
-        0.9007927270051908
-      ]
-    },
-    {
-      "refId": "location_23:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "fahad dogar(VAR0:location)"
-      ],
-      "position": [
-        -52.8526535875661,
-        -10.5390302845465,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.800034987702589,
-        0.5999533468960052
-      ]
-    },
-    {
-      "refId": "location_24:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "megan monaghan(VAR0:location)"
-      ],
-      "position": [
-        -51.84453697530603,
-        -10.03192316332264,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.46321868235373875,
-        0.8862440139817397
-      ]
-    },
-    {
-      "refId": "location_25:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "diane souvaine(VAR0:location)"
-      ],
-      "position": [
-        -48.52077519358824,
-        -12.16145365330053,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.8414678287498937,
-        0.5403072211056776
-      ]
-    },
-    {
-      "refId": "location_26:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "noah medelsohn(VAR0:location)"
-      ],
-      "position": [
-        -45.90875320777164,
-        -12.16409319484215,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9710048835628435,
-        0.23905964966323517
-      ]
-    },
-    {
-      "refId": "location_27:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "megan monroe(VAR0:location)"
-      ],
-      "position": [
-        -45.73547229917965,
-        -13.17427315708713,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.8769543465132892,
-        0.4805736927167882
-      ]
-    },
-    {
-      "refId": "location_28:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "mark sheldon(VAR0:location)"
-      ],
-      "position": [
-        -45.78852544082789,
-        -13.05094268787409,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.1468916681876294,
-        0.9891525857101398
-      ]
-    },
-    {
-      "refId": "location_29:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "david lillethun(VAR0:location)"
-      ],
-      "position": [
-        -39.85889392144698,
-        -15.29027602899643,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.8921095242150229,
-        0.4518192080963862
-      ]
-    },
-    {
-      "refId": "location_30:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "phd student offices(VAR0:location)"
-      ],
-      "position": [
-        -39.21776063941311,
-        -14.32034653746495,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.988152338915292,
-        0.15347623625903095
-      ]
-    },
-    {
-      "refId": "location_31:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "richard townsend(VAR0:location)"
-      ],
-      "position": [
-        -39.88916932491309,
-        -15.29331842035317,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.1840610733140078,
-        0.9829148087654878
-      ]
-    },
-    {
-      "refId": "location_32:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "storage(VAR0:location)"
-      ],
-      "position": [
-        -37.95582735749333,
-        -14.41185282196521,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.23038013421038472,
-        0.9731007110064226
-      ]
-    },
-    {
-      "refId": "location_33:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "robotics lab(VAR0:location)"
-      ],
-      "position": [
-        -36.62059938714028,
-        -8.996732887193671,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.3684558836965976,
-        0.9296452343605917
-      ]
-    },
-    {
-      "refId": "location_34:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "kitchenette(VAR0:location)"
-      ],
-      "position": [
-        -24.6626571102415,
-        -13.40566139501393,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9864308386587706,
-        0.16417734479201027
-      ]
-    },
-    {
-      "refId": "location_35:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "mulip(VAR0:location)"
-      ],
-      "position": [
-        -22.46158360608819,
-        -11.69697668016676,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.8833155921088247,
-        0.46877880150177065
-      ]
-    },
-    {
-      "refId": "location_36:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "aabl(VAR0:location)"
-      ],
-      "position": [
-        -22.76288913549622,
-        -7.687355375733748,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.9502773205877566,
-        0.31140490358463213
-      ]
-    },
-    {
-      "refId": "location_37:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "cs admin office(VAR0:location)"
-      ],
-      "position": [
-        -23.4224082209224,
-        -16.24882976735469,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.1508357877130645,
-        0.9885588324146314
-      ]
-    },
-    {
-      "refId": "location_38:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "utility corridor(VAR0:location)"
-      ],
-      "position": [
-        -14.11519368942904,
-        -18.80694159850102,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.22954320604690803,
-        0.9732984724932566
-      ]
-    },
-    {
-      "refId": "location_39:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "stair a(VAR0:location)"
-      ],
-      "position": [
-        -7.915306353299754,
-        -23.43223611112758,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9753984968627009,
-        0.2204490243071714
-      ]
-    },
-    {
-      "refId": "location_40:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "elevator(VAR0:location)"
-      ],
-      "position": [
-        -9.129776363975854,
-        -26.83130937248619,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.9905460170319369,
-        0.13718085924124312
-      ]
-    },
-    {
-      "refId": "location_41:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "levy family seminar room(VAR0:location)"
-      ],
-      "position": [
-        -3.796273161209653,
-        -22.44318831876894,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.23763983223132298,
-        0.9713533394893274
-      ]
-    },
-    {
-      "refId": "location_42:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "phd student offices(VAR0:location)"
-      ],
-      "position": [
-        4.074014722994316,
-        -20.29605126437736,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9008306097910485,
-        0.43417071810923386
-      ]
-    },
-    {
-      "refId": "location_43:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "collaborative(VAR0:location)"
-      ],
-      "position": [
-        5.089770641763768,
-        -25.49032203760257,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.9210379468213878,
-        0.3894728495223284
-      ]
-    },
-    {
-      "refId": "location_44:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "hri lab(VAR0:location)"
-      ],
-      "position": [
-        0.1735607522989765,
-        0.09119421060779212,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.2894384616017751,
-        0.957196623973151
-      ]
-    },
-    {
-      "refId": "location_45:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "lab space(VAR0:location)"
-      ],
-      "position": [
-        -6.183486314224134,
-        -11.1146126616255,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.8640363310597091,
-        0.5034294574306084
+        1.0
       ]
     }
   ]

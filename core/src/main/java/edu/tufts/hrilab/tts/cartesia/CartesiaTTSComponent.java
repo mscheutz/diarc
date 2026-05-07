@@ -544,6 +544,18 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @TRADEService
   @Action
+  public void toggleVoiceOn() {
+    log.debug("[toggleVoiceOn] (no-op for Cartesia)");
+  }
+
+  @TRADEService
+  @Action
+  public void toggleVoiceOff() {
+    log.debug("[toggleVoiceOff] (no-op for Cartesia)");
+  }
+
+  @TRADEService
+  @Action
   public void setVoiceId(String id) {
     if (id != null && !id.isEmpty()) {
       voiceId = id;
