@@ -725,6 +725,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (outputUtterance.getType() == UtteranceType.QUESTION) {
         outputUtterance.setType(UtteranceType.INSTRUCT);
         outputUtterance.setNeedsValidation(false);
+      } else if (outputUtterance.getType() == UtteranceType.REPLY) {
+        outputUtterance.setType(UtteranceType.REPLY);
+        outputUtterance.setNeedsValidation(false);
       } else {
         if (outputUtterance.needsValidation()) {
           chatContext.chatState = ChatState.VALIDATION;
