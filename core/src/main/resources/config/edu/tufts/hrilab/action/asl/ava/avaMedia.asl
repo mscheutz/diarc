@@ -83,18 +83,18 @@ import java.util.Map;
 //}
 
 () = displayNamedImage(String ?imageName) {
-    act:displayNamedImageForDurationAtLocation(?imageName,current,-1);
+    act:displayNamedImageForDurationAtLocation(?imageName,-1,current);
 }
 
 () = displayNamedImageAtLocation(String ?imageName, Symbol ?location:location) {
-    act:displayNamedImageForDurationAtLocation(?imageName,?location,-1);
+    act:displayNamedImageForDurationAtLocation(?imageName,-1,?location);
 }
 
 () = displayNamedImageForDuration(String ?imageName, Symbol ?durationSymbol) {
-    act:displayNamedImageForDurationAtLocation(?imageName,current,?durationSymbol);
+    act:displayNamedImageForDurationAtLocation(?imageName,?durationSymbol,current);
 }
 
-() = displayNamedImageForDurationAtLocation(String ?imageName, Symbol ?location:location, Symbol ?durationSymbol) {
+() = displayNamedImageForDurationAtLocation(String ?imageName, Symbol ?durationSymbol, Symbol ?location:location) {
     Boolean !imageShown;
     String !locationName;
 
