@@ -3168,9 +3168,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "resetConversation":
         case "learnTaskSequence":
         case "scheduleTask":
-        case "explainHowToTeachATask":
-        case "explainWhatALearnedTaskIs":
-        case "explainWhatActionsCanBePerformedAlongALearnedTask":
+        case "getExplanationOfHowToTeachATask":
+        case "getExplanationOfWhatALearnedTaskIs":
+        case "getExplanationOfWhatActionsCanBePerformedAlongALearnedTask":
         case "getWifiAtLocationsString":
         case "getWifiAtCurrentLocationString":
         case "getTemperatureAtLocationsString":
@@ -3585,15 +3585,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     // General ITK
-    definition = new ToolDefinition("explainHowToTeachATask",
+    definition = new ToolDefinition("getExplanationOfHowToTeachATask",
             "Use this to get an explanation from the system on how a user can teach you new tasks, which you could relay to the user. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("explainWhatALearnedTaskIs",
+    definition = new ToolDefinition("getExplanationOfWhatALearnedTaskIs",
             "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("explainWhatActionsCanBePerformedAlongALearnedTask",
+    definition = new ToolDefinition("getExplanationOfWhatActionsCanBePerformedAlongALearnedTask",
             "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -3610,6 +3610,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     // "If not contained in this history, then you must tell the user you cannot remember this interaction"
+
+    definition = new ToolDefinition("getExtendedConversationHistory",
+            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
+            new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
 
     //// Removed ITK targets

@@ -259,15 +259,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "explainHowToTeachATask": {
+  "getExplanationOfHowToTeachATask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "explainWhatALearnedTaskIs": {
+  "getExplanationOfWhatALearnedTaskIs": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "explainWhatActionsCanBePerformedAlongALearnedTask": {
+  "getExplanationOfWhatActionsCanBePerformedAlongALearnedTask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
