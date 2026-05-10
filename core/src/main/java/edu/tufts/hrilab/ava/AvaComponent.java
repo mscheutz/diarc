@@ -1752,7 +1752,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             long pollStart = System.nanoTime();
             int polls = 0;
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(100);
+              Thread.sleep(20);
               polls++;
             }
             if (!listenForWW) {
@@ -1799,7 +1799,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           int asrPolls = 0;
           while (listenForWW && result.isEmpty()) {
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(100);
+              Thread.sleep(20);
               asrPolls++;
             }
             if (!listenForWW) {
