@@ -1749,8 +1749,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           //Wait for "ww detected" marker line; skip any stray stdout defensively.
           boolean wwDetected = false;
           while (listenForWW && !wwDetected) {
+            long pollStart = System.nanoTime();
+            int polls = 0;
             while (!reader.ready() && listenForWW) {
               Thread.sleep(100);
+              polls++;
             }
             if (!listenForWW) {
               break;
@@ -1762,6 +1765,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               break;
             }
             if (line.equals("ww detected")) {
+              long pollMs = (System.nanoTime() - pollStart) / 1_000_000;
+              log.info("[lat] ww_marker_received polls={} poll_wait_ms={}", polls, pollMs);
               wwDetected = true;
             } else {
               log.warn("[listenForWWandASR] unexpected line awaiting WW marker: {}", line);
@@ -1790,9 +1795,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           //// ASR ////
           //Wait for ASR result line with known prefix; skip any stray stdout defensively.
           log.info("waiting for ASR result");
+          long asrPollStart = System.nanoTime();
+          int asrPolls = 0;
           while (listenForWW && result.isEmpty()) {
             while (!reader.ready() && listenForWW) {
               Thread.sleep(100);
+              asrPolls++;
             }
             if (!listenForWW) {
               break;
@@ -1805,6 +1813,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             }
             if (line.startsWith("<full>") || line.startsWith("<novad>")
                 || line.startsWith("<unk>") || line.startsWith("<cutoff>")) {
+              long asrPollMs = (System.nanoTime() - asrPollStart) / 1_000_000;
+              log.info("[lat] asr_result_received prefix={} text_len={} polls={} poll_wait_ms={}",
+                      line.split(" ", 2)[0], line.length(), asrPolls, asrPollMs);
               // Preserve trailing newline so the existing equals/startsWith checks below still match.
               result = line + "\n";
             } else {
@@ -1890,6 +1901,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
           //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
           try {
+            log.info("[lat] dialogue_dispatch text=\"{}\"", result);
             TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
             log.info("Reported utterance \"" + result + "\"");
           } catch (TRADEException ex) {

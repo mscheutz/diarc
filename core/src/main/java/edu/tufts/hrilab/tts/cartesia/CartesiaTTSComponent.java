@@ -280,6 +280,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long tFirstByte = 0;
     long tFirstAudio = 0;
     long totalBytes = 0;
+    log.info("[lat] tts_request_send kind=cartesia text_len={}", text != null ? text.length() : 0);
     SourceDataLine line;
 
     synchronized (lineLock) {
@@ -392,11 +393,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     if (wait) line.drain();
 
     long tEnd = System.nanoTime();
-    log.info("[streamAndPlay] ttfb={}ms ttfa={}ms total={}ms bytes={}",
-            tFirstByte > 0 ? (tFirstByte - tRequest) / 1_000_000 : -1,
-            tFirstAudio > 0 ? (tFirstAudio - tRequest) / 1_000_000 : -1,
-            (tEnd - tRequest) / 1_000_000,
-            totalBytes);
+    long ttfbMs = tFirstByte > 0 ? (tFirstByte - tRequest) / 1_000_000 : -1;
+    long ttfaMs = tFirstAudio > 0 ? (tFirstAudio - tRequest) / 1_000_000 : -1;
+    long totalMs = (tEnd - tRequest) / 1_000_000;
+    log.info("[lat] tts_done kind=cartesia ttfb={}ms ttfa={}ms total={}ms bytes={} text_len={}",
+            ttfbMs, ttfaMs, totalMs, totalBytes, text != null ? text.length() : 0);
     speaking = false;
     return true;
   }
