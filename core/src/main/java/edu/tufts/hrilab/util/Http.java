@@ -37,6 +37,17 @@ public class Http {
         }
     }
 
+    public static class HTTPRequestResponseStream {
+        public BufferedReader responseStreamReader;
+        public int responseCode;
+
+
+        HTTPRequestResponseStream(BufferedReader responseStreamReader, int responseCode) {
+            this.responseStreamReader = responseStreamReader;
+            this.responseCode = responseCode;
+        }
+    }
+
     /**
      * Returns the JSON string response from an endpoint via GET.
      * @param endpointUrl URL, including path, to make request to
@@ -110,14 +121,7 @@ public class Http {
         return new HTTPRequestResponse(null, responseCode);
     }
 
-    /**
-     * Returns the JSON string response from an endpoint via POST.
-     * @param endpointUrl URL, including path, to make request to
-     * @param requestBody Body payload of request
-     * @param headers Headers for request in a map
-     * @return Response from the endpoint as JSON string
-     **/
-    public static HTTPRequestResponse sendPostRequest(String endpointUrl, Object requestBody, Map<String, String> headers) {
+    public static HTTPRequestResponseStream sendPostRequestStreaming(String endpointUrl, Object requestBody, Map<String, String> headers) {
         URL url;
         HttpURLConnection con;
         int responseCode;
@@ -175,16 +179,35 @@ public class Http {
         }
 
         if (is == null) {
-            return new HTTPRequestResponse(null, responseCode);
+            return new HTTPRequestResponseStream(null, responseCode);
         }
 
         try {
             in = new BufferedReader(is);
         } catch (Exception e) {
             log.error("[sendPostRequest] Error reading response", e);
-            return new HTTPRequestResponse(null, responseCode);
+            return new HTTPRequestResponseStream(null, responseCode);
         }
 
+        return new HTTPRequestResponseStream(in, responseCode);
+    }
+    /**
+     * Returns the JSON string response from an endpoint via POST.
+     * @param endpointUrl URL, including path, to make request to
+     * @param requestBody Body payload of request
+     * @param headers Headers for request in a map
+     * @return Response from the endpoint as JSON string
+     **/
+    public static HTTPRequestResponse sendPostRequest(String endpointUrl, Object requestBody, Map<String, String> headers) {
+        HTTPRequestResponseStream stream = sendPostRequestStreaming(endpointUrl, requestBody, headers);
+        if (stream == null) {
+            return null;
+        } else if (stream.responseStreamReader == null) {
+            return new HTTPRequestResponse(null, stream.responseCode);
+        }
+
+        BufferedReader in = stream.responseStreamReader;
+        int responseCode = stream.responseCode;
         String inputLine;
         StringBuffer response = new StringBuffer();
 

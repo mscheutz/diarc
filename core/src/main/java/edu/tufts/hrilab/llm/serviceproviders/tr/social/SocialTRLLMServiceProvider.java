@@ -1451,6 +1451,31 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
+  @TRADEService
+  public void streamingChunkHandler(OpenaiChatCompletionResponse lastChunk, OpenaiChatCompletionResponse currentResponse) {
+    log.info("[streamingChunkHandler] in method");
+  }
+
+  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools) {
+    TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class);
+    ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
+    Future<Completion> future = endpointCallExecutor.submit(() -> {
+      try {
+        return TRADE.getAvailableService(new TRADEServiceConstraints().name("streamingChatCompletion").argTypes(Chat.class, List.class, TRADEServiceInfo.class)).call(Completion.class, chat, tools, tsi);
+      } catch (TRADEException e) {
+        log.error("[callChatCompletionStreaming] Error performing chat completion", e);
+        return null;
+      }
+    });
+    try {
+      // What amount of time here?
+      return future.get(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      log.error("[callChatCompletionStreaming] exception or timeout waiting on endpoint completion request", e);
+      return null;
+    }
+  }
+
   /**
    * Method to discard the current chat context. Currently only used when validation questions expire (should be used
    * for general nonactivity timeout as well)

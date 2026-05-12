@@ -5,6 +5,9 @@ public class ToolCall {
   public String type;
   public ToolFunction function;
 
+  //Streaming chunk only?
+  public int index;
+
   @Override
   public String toString() {
     return function.name + "(" + function.arguments + ")";
