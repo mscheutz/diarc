@@ -53,11 +53,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private static final String API_BASE = "https://api.cartesia.ai";
   private static final String TTS_BYTES_PATH = "/tts/bytes";
   private static final String VOICES_PATH = "/voices/?limit=1";
-  private static final String CARTESIA_VERSION = "2024-11-13";
+  private static final String CARTESIA_VERSION = "2026-03-01";
   private static final int SAMPLE_RATE = 22050;
   private static final int BITS_PER_SAMPLE = 16;
   private static final int CHANNELS = 1;
-  private static final double PRIME_SECONDS = 0.10;
+  private static final double PRIME_SECONDS = 0.04;
 
   private String apiKey;
   private String voiceId = "3d808d23-cb09-4c39-8afd-528e209cba4f";

@@ -22,7 +22,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
   String model = "QuantTrio/Qwen3.5-9B-AWQ";
   //  String model = "Qwen/Qwen3-14B-AWQ";
   //  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
-  String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
+  // Default: direct to marvin vLLM via Tailscale (skips facade nginx hop, eliminates 504-under-contention failure mode).
+  // Override with -llmEndpoint <url> to route through facade (e.g., https://dashboard.thinkingrobots.ai/qwen).
+  String openaiEndpoint = "http://100.113.66.111:9000/v1/chat/completions";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   public String locationRefs = "refs/locations.json";
   public String speakerId = "";
@@ -61,6 +63,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
     options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());
     options.add(Option.builder("voiceClipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
+    options.add(Option.builder("llmEndpoint").hasArg().desc("override LLM endpoint URL (default: direct to marvin vLLM over Tailscale)").build());
     return options;
   }
 
@@ -111,6 +114,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("voiceVolume")) {
       voiceVolume = cmdLine.getOptionValue("voiceVolume");
+    }
+    if (cmdLine.hasOption("llmEndpoint")) {
+      openaiEndpoint = cmdLine.getOptionValue("llmEndpoint");
     }
     if (cmdLine.hasOption("voiceSpeed")) {
       voiceSpeed = cmdLine.getOptionValue("voiceSpeed");
