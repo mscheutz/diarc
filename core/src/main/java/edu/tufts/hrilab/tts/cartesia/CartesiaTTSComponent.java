@@ -65,6 +65,9 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private static final byte[] END_SENTINEL = new byte[0];
   private static final byte[] ERROR_SENTINEL = new byte[0];
   private static final long CHUNK_POLL_TIMEOUT_MS = 30000;
+  private static final int MIN_CHUNK_CHARS = 25;
+  private static final int FORCE_FLUSH_CHARS = 100;
+  private static final long DISPATCHER_POLL_TIMEOUT_MS = 50;
 
   private String apiKey;
   private String voiceId = "3d808d23-cb09-4c39-8afd-528e209cba4f";
@@ -97,6 +100,30 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     final CompletableFuture<Void> done = new CompletableFuture<>();
     StreamTarget(String contextId) { this.contextId = contextId; }
   }
+
+  public interface StreamingTextSource {
+    String pollFragment(long timeoutMs) throws InterruptedException;
+    boolean isComplete();
+  }
+
+  public static final class StreamingTextBuffer implements StreamingTextSource {
+    private final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
+    private volatile boolean producerDone = false;
+    public void push(String fragment) {
+      if (fragment != null && !fragment.isEmpty()) queue.offer(fragment);
+    }
+    public void complete() { producerDone = true; }
+    @Override
+    public String pollFragment(long timeoutMs) throws InterruptedException {
+      return queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+    }
+    @Override
+    public boolean isComplete() { return producerDone && queue.isEmpty(); }
+  }
+
+  private final Object streamingLock = new Object();
+  private StreamingTextBuffer activeBuffer;
+  private Future<Boolean> activeStreamingFuture;
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -385,6 +412,88 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     return result;
   }
 
+  public boolean sayStreamingText(StreamingTextSource source, boolean wait) {
+    if (source == null) {
+      log.warn("[sayStreamingText] null source");
+      return false;
+    }
+    if (apiKey == null || apiKey.isEmpty()) {
+      log.error("[sayStreamingText] no API key");
+      return false;
+    }
+    if (muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone").onLocalhost());
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayStreamingText] disableMicrophone failed", e);
+      }
+    }
+
+    Future<Boolean> future = executor.submit((Callable<Boolean>) () -> streamAndPlayStreaming(source, wait));
+
+    boolean result = true;
+    if (wait) {
+      try {
+        result = future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("[sayStreamingText] error waiting on future", e);
+        result = false;
+      }
+    }
+
+    if (muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone").onLocalhost());
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayStreamingText] enableMicrophone failed", e);
+      }
+    }
+    return result;
+  }
+
+  @TRADEService
+  @Action
+  public void pushStreamingSpeech(String fragment) {
+    synchronized (streamingLock) {
+      if (activeBuffer == null) {
+        activeBuffer = new StreamingTextBuffer();
+        final StreamingTextSource src = activeBuffer;
+        activeStreamingFuture = executor.submit((Callable<Boolean>) () -> streamAndPlayStreaming(src, true));
+      }
+      activeBuffer.push(fragment);
+    }
+  }
+
+  @TRADEService
+  @Action
+  public boolean endStreamingSpeech(boolean wait) {
+    StreamingTextBuffer buf;
+    Future<Boolean> fut;
+    synchronized (streamingLock) {
+      buf = activeBuffer;
+      fut = activeStreamingFuture;
+    }
+    if (buf != null) buf.complete();
+    boolean ok = true;
+    if (wait && fut != null) {
+      try {
+        ok = fut.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("[endStreamingSpeech] error waiting on future", e);
+        ok = false;
+      }
+    }
+    synchronized (streamingLock) {
+      if (activeBuffer == buf) {
+        activeBuffer = null;
+        activeStreamingFuture = null;
+      }
+    }
+    return ok;
+  }
+
   private boolean streamAndPlay(String text, boolean wait) {
     long tRequest = System.nanoTime();
     long tFirstByte = 0;
@@ -524,6 +633,270 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             ttfbMs, ttfaMs, totalMs, totalBytes, text != null ? text.length() : 0);
     speaking = false;
     return true;
+  }
+
+  private boolean streamAndPlayStreaming(StreamingTextSource source, boolean wait) {
+    long tStart = System.nanoTime();
+    long tFirstByte = 0;
+    long tFirstAudio = 0;
+    long totalBytes = 0;
+    long lastChunkArrivedAtNs = 0;
+    long maxGapMs = 0;
+    boolean underrun = false;
+
+    log.info("[lat] streamtts_begin");
+    SourceDataLine line;
+    synchronized (lineLock) {
+      if (audioLine == null) {
+        audioLine = openLine();
+      }
+      line = audioLine;
+    }
+    if (line == null) {
+      log.error("[streamAndPlayStreaming] no audio line available");
+      return false;
+    }
+
+    String contextId = UUID.randomUUID().toString();
+    StreamTarget target = new StreamTarget(contextId);
+    currentTarget = target;
+
+    WebSocket conn;
+    try {
+      conn = ensureConnected();
+    } catch (IOException e) {
+      log.error("[streamAndPlayStreaming] ws connect failed", e);
+      currentTarget = null;
+      return false;
+    }
+
+    final WebSocket dispConn = conn;
+    final int[] sendsRef = new int[]{0};
+    final long fTStart = tStart;
+    Thread dispatcher = new Thread(() -> dispatchLoop(source, dispConn, contextId, fTStart, sendsRef), "cartesia-stream-dispatch");
+    dispatcher.setDaemon(true);
+    dispatcher.start();
+
+    speaking = true;
+    line.start();
+    int frameSize = (BITS_PER_SAMPLE / 8) * CHANNELS;
+    byte[] tail = new byte[frameSize];
+    int tailLen = 0;
+    boolean started = false;
+    long primeBytes = (long) (SAMPLE_RATE * frameSize * PRIME_SECONDS);
+    ByteArrayOutputStream prime = new ByteArrayOutputStream(8192);
+    try {
+      while (true) {
+        byte[] chunk = target.chunks.poll(CHUNK_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (chunk == null) {
+          log.error("[streamAndPlayStreaming] WS timeout waiting for chunk after {}ms", CHUNK_POLL_TIMEOUT_MS);
+          break;
+        }
+        if (chunk == END_SENTINEL) break;
+        if (chunk == ERROR_SENTINEL) { log.error("[streamAndPlayStreaming] WS error sentinel"); break; }
+        int n = chunk.length;
+        if (n == 0) continue;
+        long nowNs = System.nanoTime();
+        if (tFirstByte == 0) tFirstByte = nowNs;
+        if (lastChunkArrivedAtNs != 0) {
+          long gapMs = (nowNs - lastChunkArrivedAtNs) / 1_000_000;
+          if (gapMs > maxGapMs) maxGapMs = gapMs;
+          if (started && !underrun) {
+            long elapsedSinceFirstAudioMs = (nowNs - tFirstAudio) / 1_000_000;
+            long bufferedAudioMs = totalBytes * 1000L / (SAMPLE_RATE * frameSize);
+            if (bufferedAudioMs + 30 < elapsedSinceFirstAudioMs) {
+              underrun = true;
+              log.warn("[lat] streamtts_underrun at={}ms audio_ms={} wall_ms={}",
+                      (nowNs - tStart) / 1_000_000, bufferedAudioMs, elapsedSinceFirstAudioMs);
+            }
+          }
+        }
+        lastChunkArrivedAtNs = nowNs;
+        totalBytes += n;
+        if (!started) {
+          prime.write(chunk, 0, n);
+          if (prime.size() >= primeBytes) {
+            byte[] head = prime.toByteArray();
+            int aligned = (head.length / frameSize) * frameSize;
+            int leftover = head.length - aligned;
+            if (volume > 1.0f && aligned > 0) applySoftGain(head, 0, aligned);
+            if (aligned > 0) line.write(head, 0, aligned);
+            if (leftover > 0) {
+              System.arraycopy(head, aligned, tail, 0, leftover);
+              tailLen = leftover;
+            }
+            tFirstAudio = System.nanoTime();
+            log.info("[lat] streamtts_first_audio elapsed={}ms", (tFirstAudio - tStart) / 1_000_000);
+            started = true;
+          }
+        } else {
+          int total = tailLen + n;
+          int aligned = (total / frameSize) * frameSize;
+          int newTailLen = total - aligned;
+          if (aligned > 0) {
+            if (tailLen == 0) {
+              if (volume > 1.0f) applySoftGain(chunk, 0, aligned);
+              line.write(chunk, 0, aligned);
+            } else {
+              byte[] merged = new byte[aligned];
+              System.arraycopy(tail, 0, merged, 0, tailLen);
+              System.arraycopy(chunk, 0, merged, tailLen, aligned - tailLen);
+              if (volume > 1.0f) applySoftGain(merged, 0, aligned);
+              line.write(merged, 0, aligned);
+            }
+          }
+          if (newTailLen > 0) {
+            int srcOff = (aligned >= tailLen) ? (aligned - tailLen) : 0;
+            int srcLen = newTailLen;
+            if (aligned < tailLen) {
+              System.arraycopy(tail, aligned, tail, 0, tailLen - aligned);
+              srcOff = 0;
+              srcLen = newTailLen - (tailLen - aligned);
+              System.arraycopy(chunk, 0, tail, tailLen - aligned, srcLen);
+            } else {
+              System.arraycopy(chunk, srcOff, tail, 0, srcLen);
+            }
+          }
+          tailLen = newTailLen;
+        }
+      }
+      if (!started && prime.size() > 0) {
+        byte[] head = prime.toByteArray();
+        int aligned = (head.length / frameSize) * frameSize;
+        if (volume > 1.0f && aligned > 0) applySoftGain(head, 0, aligned);
+        if (aligned > 0) line.write(head, 0, aligned);
+        tFirstAudio = System.nanoTime();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.warn("[streamAndPlayStreaming] interrupted while polling chunks");
+    } finally {
+      currentTarget = null;
+    }
+
+    try { dispatcher.join(2000); } catch (InterruptedException ie) { dispatcher.interrupt(); }
+    if (wait) line.drain();
+
+    long tEnd = System.nanoTime();
+    long ttfbMs = tFirstByte > 0 ? (tFirstByte - tStart) / 1_000_000 : -1;
+    long ttfaMs = tFirstAudio > 0 ? (tFirstAudio - tStart) / 1_000_000 : -1;
+    long totalMs = (tEnd - tStart) / 1_000_000;
+    log.info("[lat] streamtts_done ttfb={}ms ttfa={}ms total={}ms sends={} bytes={} max_gap={}ms underrun={}",
+            ttfbMs, ttfaMs, totalMs, sendsRef[0], totalBytes, maxGapMs, underrun);
+    speaking = false;
+    return true;
+  }
+
+  private void dispatchLoop(StreamingTextSource source, WebSocket conn, String contextId, long tStart, int[] sendsRef) {
+    StringBuilder buf = new StringBuilder();
+    boolean firstChunk = true;
+    try {
+      while (true) {
+        String fragment = source.pollFragment(DISPATCHER_POLL_TIMEOUT_MS);
+        if (fragment != null) buf.append(fragment);
+        while (true) {
+          int split = findSplitPoint(buf, firstChunk);
+          if (split <= 0) break;
+          String chunkText = buf.substring(0, split);
+          buf.delete(0, split);
+          String trimmed = chunkText.trim();
+          if (trimmed.isEmpty()) continue;
+          sendStreamingChunk(conn, contextId, trimmed, true);
+          sendsRef[0]++;
+          log.info("[lat] streamtts_send n={} chars={} elapsed={}ms continue=true",
+                  sendsRef[0], trimmed.length(), (System.nanoTime() - tStart) / 1_000_000);
+          firstChunk = false;
+        }
+        if (source.isComplete()) {
+          String remaining = buf.toString().trim();
+          sendStreamingChunk(conn, contextId, remaining, false);
+          sendsRef[0]++;
+          log.info("[lat] streamtts_send n={} chars={} elapsed={}ms continue=false (final)",
+                  sendsRef[0], remaining.length(), (System.nanoTime() - tStart) / 1_000_000);
+          return;
+        }
+      }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      log.warn("[dispatchLoop] interrupted");
+    } catch (Exception e) {
+      log.error("[dispatchLoop] error", e);
+    }
+  }
+
+  private void sendStreamingChunk(WebSocket conn, String contextId, String text, boolean keepContinue) {
+    String body = buildStreamingRequestBody(text, contextId, keepContinue);
+    try {
+      conn.sendText(body, true);
+    } catch (Exception e) {
+      log.error("[sendStreamingChunk] sendText failed", e);
+    }
+  }
+
+  private String buildStreamingRequestBody(String text, String contextId, boolean keepContinue) {
+    String safe = text == null ? "" : text;
+    String escaped = safe
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
+    String speedJson;
+    try {
+      double v = Double.parseDouble(speed);
+      speedJson = String.valueOf(v);
+    } catch (NumberFormatException e) {
+      speedJson = "\"" + speed + "\"";
+    }
+    return "{"
+            + "\"model_id\":\"" + model + "\","
+            + "\"transcript\":\"" + escaped + "\","
+            + "\"voice\":{\"mode\":\"id\",\"id\":\"" + voiceId + "\"},"
+            + "\"language\":\"" + language + "\","
+            + "\"speed\":" + speedJson + ","
+            + "\"context_id\":\"" + contextId + "\","
+            + "\"max_buffer_delay_ms\":0,"
+            + "\"continue\":" + keepContinue + ","
+            + "\"output_format\":{\"container\":\"raw\",\"encoding\":\"pcm_s16le\",\"sample_rate\":" + SAMPLE_RATE + "}"
+            + "}";
+  }
+
+  private static int findSplitPoint(CharSequence buf, boolean isFirst) {
+    int hardLimit = buf.length();
+    for (int i = 0; i < hardLimit; i++) {
+      char c = buf.charAt(i);
+      boolean hard = (c == '.' || c == '!' || c == '?');
+      boolean soft = (c == ',' || c == ';' || c == ':' || c == '—');
+      boolean atBoundary = (i + 1 < hardLimit && Character.isWhitespace(buf.charAt(i + 1)));
+      if (hard && atBoundary) {
+        if (c == '.' && (isAbbrevAt(buf, i) || isDecimalDot(buf, i))) continue;
+        if (isFirst || (i + 1) >= MIN_CHUNK_CHARS) return i + 1;
+      }
+      if (soft && atBoundary) {
+        if (isFirst || (i + 1) >= MIN_CHUNK_CHARS) return i + 1;
+      }
+      if ((i + 1) >= FORCE_FLUSH_CHARS && Character.isWhitespace(c)) return i + 1;
+    }
+    return -1;
+  }
+
+  private static boolean isAbbrevAt(CharSequence s, int dotIdx) {
+    int j = dotIdx - 1;
+    while (j >= 0 && Character.isLetter(s.charAt(j))) j--;
+    if (j == dotIdx - 1) return false;
+    String word = s.subSequence(j + 1, dotIdx).toString().toLowerCase();
+    switch (word) {
+      case "mr": case "mrs": case "ms": case "dr": case "st":
+      case "jr": case "sr": case "vs": case "etc":
+        return true;
+      default: return false;
+    }
+  }
+
+  private static boolean isDecimalDot(CharSequence s, int dotIdx) {
+    return dotIdx > 0 && dotIdx + 1 < s.length()
+            && Character.isDigit(s.charAt(dotIdx - 1))
+            && Character.isDigit(s.charAt(dotIdx + 1));
   }
 
   private void applySoftGain(byte[] pcm, int off, int len) {
