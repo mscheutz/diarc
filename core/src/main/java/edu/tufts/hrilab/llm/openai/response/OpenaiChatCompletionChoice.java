@@ -7,8 +7,9 @@ package edu.tufts.hrilab.llm.openai.response;
 import edu.tufts.hrilab.llm.Message;
 
 public class OpenaiChatCompletionChoice {
-	public Message message;
-	public int index;
-	public float logprobs;
-	public String finish_reason;
+	public Message message = null;
+	public int index = -1;
+	public float logprobs = -1;
+	public String finish_reason = null;
+	public Message delta = null; //streaming
 }

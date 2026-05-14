@@ -35,14 +35,17 @@ import edu.tufts.hrilab.action.goal.Goal;
 }
 
 () = escortFromLocationToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
+    edu.tufts.hrilab.fol.Predicate !waitForAckForm = "val(X)";
+
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
-    //TODO: make this toggleable through a setting/language
-//    async {
-        act:say("Hello ?escortee. Please come with me, I will show you to !locName."); // Please say Ready when you are ready to go");
-//    }
-//    act:waitForReadyAck();
+////    async {
+//        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+////    }
+////    act:waitForReadyAck();
+    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go", !waitForAckForm);
+    act:say("Okay, please follow me");
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");

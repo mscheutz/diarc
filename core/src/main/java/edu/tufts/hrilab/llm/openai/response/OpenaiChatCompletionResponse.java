@@ -5,12 +5,12 @@
 package edu.tufts.hrilab.llm.openai.response;
 
 public class OpenaiChatCompletionResponse {
-  public String id;
-  public long created;
-  public String object;
-  public String model;
-  public OpenaiChatCompletionChoice[] choices;
-  public OpenaiUsage usage;
+  public String id = null;
+  public long created = -1;
+  public String object = null;
+  public String model = null;
+  public OpenaiChatCompletionChoice[] choices = null;
+  public OpenaiUsage usage = null;
 
   public String toString () {
     if (choices.length > 0) {

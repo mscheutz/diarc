@@ -7,6 +7,7 @@ package edu.tufts.hrilab.llm;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.llm.azure.AzureClient;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.hf.HFClient;
@@ -430,6 +431,27 @@ public class LLMComponent extends DiarcComponent {
     int outTok = completion != null ? completion.outputTokens : -1;
     int nToolCalls = (completion != null && completion.toolCalls != null) ? completion.toolCalls.size() : 0;
     log.info("[lat] llm_call_done kind=chat_tools dur={}ms in_tok={} out_tok={} tool_calls={}", durMs, inTok, outTok, nToolCalls);
+    return completion;
+  }
+
+  @TRADEService
+  @Action
+  public Completion streamingChatCompletion(Chat chat, List<ToolDefinition> tools, TRADEServiceInfo chunkHandler) {
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      if (client instanceof OpenaiClient) {
+        completion = ((OpenaiClient)client).streamingChatCompletion(chat, tools, chunkHandler);
+      } else if(client instanceof HFClient && ((HFClient) client).service.equals("hf")) {
+        log.warn("[streamingChatCompletion] HFClient does not support streaming responses, calling standard service");
+        completion = ((HFClient)client).chatCompletion(chat, tools);
+      } else {
+        log.warn("[streamingChatCompletion] client does not support streaming responses or tool calls, calling standard service without tool definitions");
+        completion = client.chatCompletion(chat);
+      }
+      if (completion != null) {
+        break;
+      }
+    }
     return completion;
   }
 

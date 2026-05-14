@@ -5,7 +5,9 @@
 package edu.tufts.hrilab.util;
 
 import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -15,6 +17,9 @@ import java.io.IOException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -33,6 +38,17 @@ public class Http {
 
         HTTPRequestResponse(String responseString, int responseCode) {
             this.responseString = responseString;
+            this.responseCode = responseCode;
+        }
+    }
+
+    public static class HTTPRequestResponseStream {
+        public BufferedReader responseStreamReader;
+        public int responseCode;
+
+
+        HTTPRequestResponseStream(BufferedReader responseStreamReader, int responseCode) {
+            this.responseStreamReader = responseStreamReader;
             this.responseCode = responseCode;
         }
     }
@@ -110,6 +126,55 @@ public class Http {
         return new HTTPRequestResponse(null, responseCode);
     }
 
+    public static HTTPRequestResponseStream sendPostRequestStreaming(String endpointUrl, Object requestBody, Map<String, String> headers) {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request;
+        Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+        String requestBodyJson = gson.toJson(requestBody);
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(endpointUrl))
+                .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson));
+
+        for (Map.Entry<String,String> header : headers.entrySet()) {
+            builder.header(header.getKey(), header.getValue());
+        }
+        builder.header("Content-Type", "application/json");
+        request = builder.build();
+        log.debug("Request: " + requestBodyJson);
+
+        HttpResponse<InputStream> response;
+        // Send request and handle response as a stream
+        try {
+            response = client.send(request,
+                    HttpResponse.BodyHandlers.ofInputStream());
+        } catch (Exception e) {
+            log.error("[sendPostRequestStreaming] exception sending request", e);
+            return null;
+        }
+
+        if (response == null) {
+            log.error("[sendPostRequestStreaming] got null response");
+            return null;
+        }
+
+        int responseCode = response.statusCode();
+        InputStream inputStream = response.body();
+        InputStreamReader is = new InputStreamReader(inputStream);
+        BufferedReader in;
+
+        if (is == null) {
+            return new HTTPRequestResponseStream(null, responseCode);
+        }
+
+        try {
+            in = new BufferedReader(is);
+        } catch (Exception e) {
+            log.error("[sendPostRequest] Error reading response", e);
+            return new HTTPRequestResponseStream(null, responseCode);
+        }
+
+        return new HTTPRequestResponseStream(in, responseCode);
+    }
     /**
      * Returns the JSON string response from an endpoint via POST.
      * @param endpointUrl URL, including path, to make request to
@@ -118,73 +183,15 @@ public class Http {
      * @return Response from the endpoint as JSON string
      **/
     public static HTTPRequestResponse sendPostRequest(String endpointUrl, Object requestBody, Map<String, String> headers) {
-        URL url;
-        HttpURLConnection con;
-        int responseCode;
-        log.debug("POST " + endpointUrl);
-        try {
-            url = new URL(endpointUrl);
-            con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Content-Type", "application/json");
-        } catch (Exception e) {
-            log.error("[sendPostRequest] Error opening connection to " + endpointUrl, e);
+        HTTPRequestResponseStream stream = sendPostRequestStreaming(endpointUrl, requestBody, headers);
+        if (stream == null) {
             return null;
+        } else if (stream.responseStreamReader == null) {
+            return new HTTPRequestResponse(null, stream.responseCode);
         }
 
-        // Set headers if present
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                con.setRequestProperty(entry.getKey(), entry.getValue());
-            }
-        }
-
-        con.setDoOutput(true);
-
-        // Convert request body to JSON string
-        Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-        String requestBodyJson = gson.toJson(requestBody);
-        log.debug("Request: " + requestBodyJson);
-        // Send request body
-        DataOutputStream wr;
-        try {
-            wr = new DataOutputStream(con.getOutputStream());
-            wr.write(requestBodyJson.getBytes(StandardCharsets.UTF_8));
-            wr.flush();
-            wr.close();
-        } catch (Exception e) {
-            log.error("[sendPostRequest] Error writing output stream", e);
-            return null;
-        }
-
-        try {
-            responseCode = con.getResponseCode();
-        } catch (Exception e) {
-            log.error("[sendPostRequest] Error getting response code", e);
-            return null;
-        }
-
-        InputStreamReader is = null;
-        BufferedReader in = null;
-
-        try {
-            is = new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error("[sendPostRequest] Error reading input stream from connection", e);
-            is = new InputStreamReader(con.getErrorStream());
-        }
-
-        if (is == null) {
-            return new HTTPRequestResponse(null, responseCode);
-        }
-
-        try {
-            in = new BufferedReader(is);
-        } catch (Exception e) {
-            log.error("[sendPostRequest] Error reading response", e);
-            return new HTTPRequestResponse(null, responseCode);
-        }
-
+        BufferedReader in = stream.responseStreamReader;
+        int responseCode = stream.responseCode;
         String inputLine;
         StringBuffer response = new StringBuffer();
 

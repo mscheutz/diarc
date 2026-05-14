@@ -5,8 +5,10 @@
 package edu.tufts.hrilab.llm.openai;
 
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.llm.LLMClient;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
+import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 import edu.tufts.hrilab.llm.openai.request.*;
 import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.Chat;
@@ -15,6 +17,7 @@ import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.llm.VisionMessage;
 import edu.tufts.hrilab.util.Http;
 
+import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +114,9 @@ public class OpenaiClient implements LLMClient {
         model_parameters.put("top_p", 0.8);
         model_parameters.put("top_k", 20);
         model_parameters.put("presence_penalty", 1.5);
+        //HashMap<String,Object> chat_template_kwargs = new HashMap<>();
+        //chat_template_kwargs.put("enable_thinking", false);
+        //model_parameters.put("stream", true);
       }
     }
     model = modelStr;
@@ -235,7 +241,7 @@ public class OpenaiClient implements LLMClient {
    * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
    **/
   public Completion chatCompletion(List<Message> messages, String model) {
-    return chatCompletion(messages, model, new ArrayList<>());
+    return chatCompletion(messages, model, null);
   }
   public Completion chatCompletion(List<Message> messages, String model, List<ToolDefinition> tools) {
     OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, messages, tools);
@@ -330,5 +336,134 @@ public class OpenaiClient implements LLMClient {
     String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);
+  }
+
+  public Completion streamingChatCompletion(Chat chat, List<ToolDefinition> tools, TRADEServiceInfo chunkHandlerService) {
+    OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, chat.toPrompt(), tools);
+
+    if (canonical && apiKey == null) {
+      log.error("Cannot complete request without an API key for OpenAI.");
+      return null;
+    }
+    if (canonical && !chatCompletionModels.containsKey(requestBody.model)) {
+      log.error("Model " + model + " cannot be used with the OpenAI chat completion endpoint.");
+      return null;
+    }
+    /*tokenizer.setEncoding("openai", requestBody.model);
+    int tokens = 0;
+    for (Message message : requestBody.messages) {
+      tokens += tokenizer.count(message.content);
+    }
+    log.warn("Tokens in request: " + tokens);
+    if (tokens > maxTokens ) {
+      log.warn("prompt contains: " + tokens + " tokens. Max tokens: " + maxTokens + " for model: " + model);
+    }*/
+    Map<String, String> headers = new HashMap<>();
+    if (apiKey != null) {
+      headers.put("Authorization", "Bearer " + apiKey);
+    }
+    if (model_parameters != null) {
+      for (Map.Entry<String, Object> entry : model_parameters.entrySet()) {
+        try {
+          OpenaiChatRequestBody.class.getDeclaredField(entry.getKey()).set(requestBody, entry.getValue());
+        } catch (NoSuchFieldException e) {
+          log.error("[chatCompletion] Supplied model parameter  {} not present in OpenaiChatRequestBody class, please add it", entry.getKey(), e);
+        } catch (IllegalAccessException e) {
+          log.error("[chatCompletion] Please make the {} model parameter public", entry.getKey(), e);
+        }
+      }
+    }
+
+    try {
+      OpenaiChatRequestBody.class.getDeclaredField("stream").set(requestBody, true);
+    } catch (IllegalAccessException | NoSuchFieldException e) {
+      log.error("[chatCompletion] \"stream\" model parameter not present in OpenaiChatRequestBody class, please add it", e);
+    }
+
+    Gson gson = new Gson();
+    Http.HTTPRequestResponseStream httpRequestResponseStream = Http.sendPostRequestStreaming(chatCompletionEndpoint, requestBody, headers);
+    if (httpRequestResponseStream == null || httpRequestResponseStream.responseStreamReader == null) {
+      return null;
+    }
+
+    OpenaiChatCompletionResponse mergedResponse = new OpenaiChatCompletionResponse();
+    OpenaiChatCompletionChoice mergedChoice = new OpenaiChatCompletionChoice();
+    HashMap<Integer,ToolCall> mergedToolCalls = new HashMap<>();
+    BufferedReader responseReader = httpRequestResponseStream.responseStreamReader;
+    String responseLine;
+    try {
+      while ((responseLine = responseReader.readLine()) != null) {
+        log.info("[sendPostRequest] {}", responseLine);
+        if (!responseLine.isEmpty()) {
+          if (responseLine.startsWith("data: ")) {
+            responseLine = responseLine.substring(6);
+            if (responseLine.equals("[DONE]")) {
+              mergedChoice.message.tool_calls = mergedToolCalls.values().toArray(new ToolCall[0]);
+              break;
+            }
+            OpenaiChatCompletionResponse delta = gson.fromJson(responseLine, OpenaiChatCompletionResponse.class);
+            if (mergedResponse.id == null) {
+              mergedResponse.id = delta.id;
+              mergedResponse.object = "chat.completion";
+              mergedResponse.model = delta.model;
+              mergedResponse.usage = new OpenaiUsage();//delta.usage;
+              mergedResponse.choices = new OpenaiChatCompletionChoice[1];
+              mergedResponse.choices[0] = mergedChoice;
+            }
+            if (delta.choices.length > 0) {
+              OpenaiChatCompletionChoice deltaChoice = delta.choices[0];
+              if (mergedChoice.index == -1) {
+                mergedChoice.index = deltaChoice.index;
+                mergedChoice.message = deltaChoice.delta;
+              } else if (mergedChoice.index != deltaChoice.index) {
+                log.error("[streamingChatCompletion] got mismatched Choice response indices between reads");
+              } else {
+                Message deltaMessage = deltaChoice.delta;
+                if (deltaMessage != null) {
+                  if (deltaMessage.content != null) {
+                    mergedChoice.message.content += deltaMessage.content;
+                  }
+                  if (deltaMessage.tool_calls != null) {
+                    for (ToolCall tool_call_chunk : deltaMessage.tool_calls) {
+                      //if (mergedToolCalls.containsKey(tool_call_chunk.id)) {
+                      if (mergedToolCalls.containsKey(tool_call_chunk.index)) {
+                        //ToolCall mergedToolCall = mergedToolCalls.get(tool_call_chunk.id);
+                        ToolCall mergedToolCall = mergedToolCalls.get(tool_call_chunk.index);
+                        if (tool_call_chunk.id != null) {
+                          mergedToolCall.id = tool_call_chunk.id;
+                        }
+                        if (tool_call_chunk.function != null) {
+                          if (tool_call_chunk.function.name != null) {
+                            mergedToolCall.function.name = tool_call_chunk.function.name;
+                          }
+                          if (tool_call_chunk.function.arguments != null) {
+                          mergedToolCall.function.arguments += tool_call_chunk.function.arguments;
+                          }
+                        }
+                      } else {
+                        //mergedToolCalls.put(tool_call_chunk.id,tool_call_chunk);
+                        mergedToolCalls.put(tool_call_chunk.index,tool_call_chunk);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            chunkHandlerService.call(void.class, delta, mergedResponse);
+          } else {
+            log.error("[streamingChatCompletion] unexpected response format: {}", responseLine);
+          }
+        }
+      }
+      responseReader.close();
+    } catch (Exception e) {
+      log.error("[sendPostRequest] Error reading response to StringBuffer", e);
+      return null;
+    }
+    if (mergedResponse == null) {
+      return null;
+    } else {
+      return new Completion(mergedResponse);
+    }
   }
 }
