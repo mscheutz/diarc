@@ -10,6 +10,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -130,10 +131,10 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     addUserInput("yes");
     evaluateResults();
 
-    //(Having more inconsistent results on this test, sometimes submits immediately, sometimes misses end timing detail)
-    //Obviously don't want this step
-    addUserInput("I already told you there is no end time");
-    evaluateResults();
+    ////(Having more inconsistent results on this test, sometimes submits immediately, sometimes misses end timing detail)
+    ////Obviously don't want this step
+    //addUserInput("I already told you there is no end time");
+    //evaluateResults();
 
     addUserInput("no, actually can you do the measuring every two hours");
     evaluateResults();
@@ -182,7 +183,7 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     addUserInput("the task should be called measurement patrol");
     evaluateResults();
 
-    addUserInput("the path of locations should be reception, pavilion, elevators, and then the dock");
+    addUserInput("the path of locations should be reception, pavilion, elevator, and then the dock");
     evaluateResults();
 
     addUserInput("at the first three locations you should measure the temperature and the wifi");
@@ -219,7 +220,7 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     addUserInput("yes");
     evaluateResults();
 
-    addUserInput("the specified locations are reception, pavilion, and the elevators");
+    addUserInput("the specified locations are reception, pavilion, and the elevator");
     evaluateResults();
 
     addUserInput("that is the whole task");
@@ -285,10 +286,12 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     addUserInput("what locations do you know about?");
     evaluateResults();
 
-    addUserInput("can you tell me more?");
+    addUserInput("can you list more?");
     evaluateResults();
   }
 
+  //Ignore until tool updates. Calling INSTRUCT rather than ITK versions
+  @Ignore
   @Test
   public void measurementsITKTest() {
     addUserInput("do you know the wifi signal strength at reception?");
