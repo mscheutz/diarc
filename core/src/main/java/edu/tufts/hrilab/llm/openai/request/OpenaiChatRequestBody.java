@@ -43,6 +43,7 @@ public class OpenaiChatRequestBody {
   public OpenaiChatRequestBody (String m, List<Message> msgs, List<ToolDefinition> ts) {
     model = m;
     messages = msgs;
-    tools = ts;
+    // vllm 0.20+ rejects "tools": [] - must omit field entirely if no tools
+    tools = (ts == null || ts.isEmpty()) ? null : ts;
   }
 }

@@ -24,7 +24,8 @@ public class SocialAvaConfig extends DiarcConfiguration {
   //  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
   // Default: direct to marvin vLLM via Tailscale (skips facade nginx hop, eliminates 504-under-contention failure mode).
   // Override with -llmEndpoint <url> to route through facade (e.g., https://dashboard.thinkingrobots.ai/qwen).
-  String openaiEndpoint = "http://100.113.66.111:9000/v1/chat/completions";
+  // OpenaiClient.setEndpoint appends /v1/chat/completions - pass base URL only.
+  String openaiEndpoint = "http://100.113.66.111:9000";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   public String locationRefs = "refs/locations.json";
   public String speakerId = "";
