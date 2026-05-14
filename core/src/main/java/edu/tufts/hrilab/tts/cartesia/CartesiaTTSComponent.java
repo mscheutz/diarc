@@ -9,6 +9,9 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -31,33 +34,37 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
+import java.net.http.WebSocket;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class CartesiaTTSComponent extends DiarcComponent implements SpeechProductionInterface {
 
-  private static final String API_BASE = "https://api.cartesia.ai";
-  private static final String TTS_BYTES_PATH = "/tts/bytes";
-  private static final String VOICES_PATH = "/voices/?limit=1";
   private static final String CARTESIA_VERSION = "2026-03-01";
+  private static final String WS_URL = "wss://api.cartesia.ai/tts/websocket?cartesia_version=" + CARTESIA_VERSION;
   private static final int SAMPLE_RATE = 22050;
   private static final int BITS_PER_SAMPLE = 16;
   private static final int CHANNELS = 1;
   private static final double PRIME_SECONDS = 0.04;
+  private static final byte[] END_SENTINEL = new byte[0];
+  private static final byte[] ERROR_SENTINEL = new byte[0];
+  private static final long CHUNK_POLL_TIMEOUT_MS = 30000;
 
   private String apiKey;
   private String voiceId = "3d808d23-cb09-4c39-8afd-528e209cba4f";
@@ -78,6 +85,18 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private final Map<String, byte[]> clipCache = new ConcurrentHashMap<>();
 
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+  private final Object wsLock = new Object();
+  private volatile WebSocket ws;
+  private final CartesiaWsListener listener = new CartesiaWsListener();
+  private volatile StreamTarget currentTarget;
+
+  private static final class StreamTarget {
+    final String contextId;
+    final LinkedBlockingQueue<byte[]> chunks = new LinkedBlockingQueue<>();
+    final CompletableFuture<Void> done = new CompletableFuture<>();
+    StreamTarget(String contextId) { this.contextId = contextId; }
+  }
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -164,14 +183,16 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     }
 
     httpClient = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
     audioLine = openLine();
     warmAudioLine();
 
-    prewarmAsync();
+    executor.submit(() -> {
+      try { ensureConnected(); } catch (Exception e) { log.warn("[init] ws prewarm failed: {}", e.toString()); }
+    });
 
     log.info("[init] Cartesia TTS ready. voice={} model={} speed={} mixerID={}", voiceId, model, speed, mixerID);
   }
@@ -195,25 +216,114 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         audioLine = null;
       }
     }
+    synchronized (wsLock) {
+      if (ws != null) {
+        try { ws.sendClose(WebSocket.NORMAL_CLOSURE, "shutdown"); } catch (Exception ignored) {}
+        ws = null;
+      }
+    }
     executor.shutdownNow();
   }
 
-  private void prewarmAsync() {
-    HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(API_BASE + VOICES_PATH))
-            .header("X-API-Key", apiKey)
-            .header("Cartesia-Version", CARTESIA_VERSION)
-            .timeout(Duration.ofSeconds(10))
-            .GET()
-            .build();
-    httpClient.sendAsync(req, HttpResponse.BodyHandlers.discarding())
-            .whenComplete((resp, err) -> {
-              if (err != null) {
-                log.warn("[prewarm] {}", err.toString());
-              } else {
-                log.info("[prewarm] connection pool primed (HTTP {})", resp.statusCode());
-              }
-            });
+  private WebSocket ensureConnected() throws IOException {
+    synchronized (wsLock) {
+      if (ws != null && !ws.isInputClosed() && !ws.isOutputClosed()) {
+        return ws;
+      }
+      try {
+        WebSocket newWs = httpClient.newWebSocketBuilder()
+                .header("X-API-Key", apiKey)
+                .connectTimeout(Duration.ofSeconds(10))
+                .buildAsync(URI.create(WS_URL), listener)
+                .get(10, TimeUnit.SECONDS);
+        ws = newWs;
+        log.info("[cartesia-ws] connected");
+        return newWs;
+      } catch (Exception e) {
+        ws = null;
+        throw new IOException("WS connect failed: " + e, e);
+      }
+    }
+  }
+
+  private class CartesiaWsListener implements WebSocket.Listener {
+    private final StringBuilder buf = new StringBuilder();
+
+    @Override
+    public void onOpen(WebSocket webSocket) {
+      webSocket.request(Long.MAX_VALUE);
+    }
+
+    @Override
+    public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+      buf.append(data);
+      if (last) {
+        String msg = buf.toString();
+        buf.setLength(0);
+        handleMessage(msg);
+      }
+      return null;
+    }
+
+    @Override
+    public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+      log.info("[cartesia-ws] closed status={} reason={}", statusCode, reason);
+      synchronized (wsLock) { if (ws == webSocket) ws = null; }
+      StreamTarget t = currentTarget;
+      if (t != null) {
+        t.chunks.offer(ERROR_SENTINEL);
+        t.done.complete(null);
+      }
+      return null;
+    }
+
+    @Override
+    public void onError(WebSocket webSocket, Throwable error) {
+      log.error("[cartesia-ws] error: {}", error.toString());
+      synchronized (wsLock) { if (ws == webSocket) ws = null; }
+      StreamTarget t = currentTarget;
+      if (t != null) {
+        t.chunks.offer(ERROR_SENTINEL);
+        t.done.completeExceptionally(error);
+      }
+    }
+
+    private void handleMessage(String msg) {
+      StreamTarget t = currentTarget;
+      if (t == null) return;
+      try {
+        JsonObject obj = JsonParser.parseString(msg).getAsJsonObject();
+        JsonElement ctxEl = obj.get("context_id");
+        if (ctxEl != null && !ctxEl.isJsonNull() && !t.contextId.equals(ctxEl.getAsString())) {
+          return;
+        }
+        String type = obj.has("type") && !obj.get("type").isJsonNull() ? obj.get("type").getAsString() : "";
+        if ("chunk".equals(type)) {
+          JsonElement dataEl = obj.get("data");
+          if (dataEl != null && !dataEl.isJsonNull()) {
+            String b64 = dataEl.getAsString();
+            if (!b64.isEmpty()) {
+              byte[] pcm = Base64.getDecoder().decode(b64);
+              t.chunks.offer(pcm);
+            }
+          }
+          if (obj.has("done") && !obj.get("done").isJsonNull() && obj.get("done").getAsBoolean()) {
+            t.chunks.offer(END_SENTINEL);
+            t.done.complete(null);
+          }
+        } else if ("done".equals(type)) {
+          t.chunks.offer(END_SENTINEL);
+          t.done.complete(null);
+        } else if ("error".equals(type)) {
+          log.error("[cartesia-ws] error frame: {}", msg);
+          t.chunks.offer(ERROR_SENTINEL);
+          t.done.complete(null);
+        }
+      } catch (Exception e) {
+        log.warn("[cartesia-ws] handleMessage parse failed: {} msg-head={}", e.toString(),
+                msg.substring(0, Math.min(msg.length(), 200)));
+      }
+    }
   }
 
   @Override
@@ -294,26 +404,33 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       return false;
     }
 
-    HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(API_BASE + TTS_BYTES_PATH))
-            .header("Content-Type", "application/json")
-            .header("X-API-Key", apiKey)
-            .header("Cartesia-Version", CARTESIA_VERSION)
-            .timeout(Duration.ofSeconds(30))
-            .POST(HttpRequest.BodyPublishers.ofString(buildRequestBody(text)))
-            .build();
+    String contextId = UUID.randomUUID().toString();
+    StreamTarget target = new StreamTarget(contextId);
+    currentTarget = target;
 
-    HttpResponse<InputStream> resp;
+    WebSocket conn;
     try {
-      resp = httpClient.send(req, HttpResponse.BodyHandlers.ofInputStream());
-    } catch (IOException | InterruptedException e) {
-      log.error("[streamAndPlay] request failed", e);
+      conn = ensureConnected();
+    } catch (IOException e) {
+      log.error("[streamAndPlay] ws connect failed", e);
+      currentTarget = null;
       return false;
     }
-    if (resp.statusCode() != 200) {
-      String err = readStream(resp.body());
-      log.error("[streamAndPlay] HTTP {} from Cartesia: {}", resp.statusCode(), err);
-      return false;
+
+    String body = buildRequestBody(text, contextId);
+    try {
+      conn.sendText(body, true).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      log.warn("[streamAndPlay] sendText failed, resetting WS and retrying: {}", e.toString());
+      synchronized (wsLock) { ws = null; }
+      try {
+        conn = ensureConnected();
+        conn.sendText(body, true).get(5, TimeUnit.SECONDS);
+      } catch (Exception e2) {
+        log.error("[streamAndPlay] sendText retry failed", e2);
+        currentTarget = null;
+        return false;
+      }
     }
 
     speaking = true;
@@ -321,16 +438,21 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     int frameSize = (BITS_PER_SAMPLE / 8) * CHANNELS;
     byte[] tail = new byte[frameSize];
     int tailLen = 0;
-    try (InputStream in = resp.body()) {
-      byte[] chunk = new byte[4096];
-      int n;
-      boolean started = false;
-      long primeBytes = (long) (SAMPLE_RATE * frameSize * PRIME_SECONDS);
-      ByteArrayOutputStream prime = new ByteArrayOutputStream(8192);
-      while ((n = in.read(chunk)) > 0) {
-        if (tFirstByte == 0) {
-          tFirstByte = System.nanoTime();
+    boolean started = false;
+    long primeBytes = (long) (SAMPLE_RATE * frameSize * PRIME_SECONDS);
+    ByteArrayOutputStream prime = new ByteArrayOutputStream(8192);
+    try {
+      while (true) {
+        byte[] chunk = target.chunks.poll(CHUNK_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (chunk == null) {
+          log.error("[streamAndPlay] WS timeout waiting for chunk after {}ms", CHUNK_POLL_TIMEOUT_MS);
+          break;
         }
+        if (chunk == END_SENTINEL) break;
+        if (chunk == ERROR_SENTINEL) { log.error("[streamAndPlay] WS error sentinel"); break; }
+        int n = chunk.length;
+        if (n == 0) continue;
+        if (tFirstByte == 0) tFirstByte = System.nanoTime();
         totalBytes += n;
         if (!started) {
           prime.write(chunk, 0, n);
@@ -385,9 +507,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         if (aligned > 0) line.write(head, 0, aligned);
         tFirstAudio = System.nanoTime();
       }
-    } catch (IOException e) {
-      log.error("[streamAndPlay] error reading body", e);
-      return false;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.warn("[streamAndPlay] interrupted while polling chunks");
+    } finally {
+      currentTarget = null;
     }
 
     if (wait) line.drain();
@@ -436,7 +560,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     }
   }
 
-  private String buildRequestBody(String text) {
+  private String buildRequestBody(String text, String contextId) {
     String escaped = text
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
@@ -456,20 +580,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             + "\"voice\":{\"mode\":\"id\",\"id\":\"" + voiceId + "\"},"
             + "\"language\":\"" + language + "\","
             + "\"speed\":" + speedJson + ","
+            + "\"context_id\":\"" + contextId + "\","
+            + "\"max_buffer_delay_ms\":0,"
+            + "\"continue\":false,"
             + "\"output_format\":{\"container\":\"raw\",\"encoding\":\"pcm_s16le\",\"sample_rate\":" + SAMPLE_RATE + "}"
             + "}";
-  }
-
-  private String readStream(InputStream stream) {
-    if (stream == null) return "";
-    try (InputStream in = stream; ByteArrayOutputStream buf = new ByteArrayOutputStream()) {
-      byte[] chunk = new byte[1024];
-      int n;
-      while ((n = in.read(chunk)) > 0) buf.write(chunk, 0, n);
-      return buf.toString(StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      return "";
-    }
   }
 
   @Override
