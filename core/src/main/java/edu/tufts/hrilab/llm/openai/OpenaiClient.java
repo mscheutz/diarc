@@ -241,7 +241,7 @@ public class OpenaiClient implements LLMClient {
    * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
    **/
   public Completion chatCompletion(List<Message> messages, String model) {
-    return chatCompletion(messages, model, new ArrayList<>());
+    return chatCompletion(messages, model, null);
   }
   public Completion chatCompletion(List<Message> messages, String model, List<ToolDefinition> tools) {
     OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, messages, tools);
