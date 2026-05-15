@@ -4,6 +4,8 @@
 
 package edu.tufts.hrilab.llm.openai.response;
 
+import java.util.Arrays;
+
 public class OpenaiChatCompletionResponse {
   public String id = null;
   public long created = -1;
@@ -12,11 +14,15 @@ public class OpenaiChatCompletionResponse {
   public OpenaiChatCompletionChoice[] choices = null;
   public OpenaiUsage usage = null;
 
-  public String toString () {
-    if (choices.length > 0) {
-      return choices[0].message.content.toString();
-    } else {
-      return null;
-    }
+  @Override
+  public String toString() {
+    return "OpenaiChatCompletionResponse{" +
+            "id='" + id + '\'' +
+            ", created=" + created +
+            ", object='" + object + '\'' +
+            ", model='" + model + '\'' +
+            ", choices=" + Arrays.toString(choices) +
+            ", usage=" + usage +
+            '}';
   }
 }

@@ -12,4 +12,15 @@ public class OpenaiChatCompletionChoice {
 	public float logprobs = -1;
 	public String finish_reason = null;
 	public Message delta = null; //streaming
+
+	@Override
+	public String toString() {
+		return "OpenaiChatCompletionChoice{" +
+						"message=" + message +
+						", index=" + index +
+						", logprobs=" + logprobs +
+						", finish_reason='" + finish_reason + '\'' +
+						", delta=" + delta +
+						'}';
+	}
 }

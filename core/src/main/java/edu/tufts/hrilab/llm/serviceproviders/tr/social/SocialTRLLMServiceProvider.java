@@ -34,6 +34,7 @@ import edu.tufts.hrilab.llm.gson.tool.ToolParameter;
 import edu.tufts.hrilab.llm.gson.tool.ToolParameters;
 import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 import edu.tufts.hrilab.llm.gson.tool.response.ToolFunction;
+import edu.tufts.hrilab.llm.openai.Qwen3CoderToolParser;
 import edu.tufts.hrilab.llm.openai.ToolParameterHelper;
 import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -65,6 +67,7 @@ import java.util.stream.Collectors;
 // (Otherwise, expansive higher level TODO list currently in personal notes)
 public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
+  HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
   boolean useCondensedTools = false;
 
@@ -1253,6 +1256,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     log.info(llmResponse.getText());
     String responseString = llmResponse.getText().trim();
+    if (responseString.isEmpty()) {
+      responseString = llmResponse.reasoning.trim();
+    }
 
     //TODO: Still need this output format? Or should it just be direct?
     Pattern outputPattern = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
@@ -1571,6 +1577,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //// General Completion / ChatCollection Utilities ////
 
   private Completion callChatCompletion(Chat chat, List<ToolDefinition> tools) {
+    //TODO: make actually cofigurable or default to one impl
+    boolean streaming = true;
+    if (streaming) {
+      return callChatCompletionStreaming(chat, tools);
+    }
+
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {
       try {
@@ -1585,18 +1597,181 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         return null;
       }
     });
+    Completion response;
     try {
       // What amount of time here?
-      return future.get(10, TimeUnit.SECONDS);
+      response = future.get(10, TimeUnit.SECONDS);
     } catch (Exception e) {
       log.error("[callChatCompletion] exception or timeout waiting on endpoint completion request", e);
       return null;
     }
+
+    return parseContentForTools(response);
   }
+
+  private Completion parseContentForTools(Completion completion) {
+    String text = completion.text;
+    //TODO: why does NLG output get parsed as reasoning content?
+    if (text.isEmpty()) {
+      text = completion.reasoning;
+    }
+
+    String tool_call_start_token = "<tool_call>";
+    String tool_call_end_token = "</tool_call>";
+    String function_call_start_token = "function=";
+    String function_call_end_token = "</function>";
+    String parameter_call_start_token = "<parameter=>";
+    String parameter_call_end_token = "</parameter>";
+    if (!text.contains(tool_call_start_token)) {
+      return completion;
+    }
+
+    String tool_call_regex_string = "<tool_call>(.*?)</tool_call>";
+    Pattern tool_call_pattern = Pattern.compile(tool_call_regex_string, Pattern.DOTALL);
+    Matcher matcher = tool_call_pattern.matcher(text);
+    List<String> raw_tool_calls = new ArrayList<>();
+    //Gson gson = new Gson();
+    //List<HashMap<String,String>> call_maps = new ArrayList<>();
+    while (matcher.find()) {
+      String res = matcher.group(0).isEmpty() ? matcher.group(0) : matcher.group(1);
+      raw_tool_calls.add(res);
+      //call_maps.add(gson.fromJson(res,new TypeToken<HashMap<String,String>>(){}.getType()));
+      //call_maps.add(gson.fromJson(res,HashMap.class));
+    }
+
+    if (raw_tool_calls.isEmpty()) {
+      raw_tool_calls.add(text);
+    }
+
+    String tool_call_function_regex_string = "<function=(.*?)</function>|<function=(.*)$";
+    tool_call_pattern = Pattern.compile(tool_call_function_regex_string, Pattern.DOTALL);
+    matcher = tool_call_pattern.matcher(text);
+    List<String> raw_function_calls = new ArrayList<>();
+    while (matcher.find()) {
+      String res = matcher.group(0).isEmpty() ? matcher.group(0) : matcher.group(1);
+      raw_function_calls.add(res);
+    }
+
+    Gson gson = new Gson();
+    List<ToolCall> toolCalls = new ArrayList<>();
+    String tool_call_parameter_regex_string = "<parameter=(.*?)</parameter>|<parameter=(.*)$";
+    if (!raw_function_calls.isEmpty()) {
+      for (String raw_function_call : raw_function_calls) {
+        //parse_function_call
+        int end_index = raw_function_call.indexOf(">");
+        if (end_index == -1) {
+          continue;
+        }
+        String function_name = raw_function_call.substring(0,end_index);
+        String parameters = raw_function_call.substring(end_index+1);
+        HashMap<String,String> parameterMap = new HashMap<>();
+        tool_call_pattern = Pattern.compile(tool_call_parameter_regex_string, Pattern.DOTALL);
+        matcher = tool_call_pattern.matcher(parameters);
+        while (matcher.find()) {
+          String res = matcher.group(1);
+          int index = res.indexOf(">");
+          String param_name = res.substring(0,index);
+          String param_value = res.substring(index+1);
+          if (param_value.startsWith("\n")) {
+            param_value = param_value.substring(1);
+          }
+          if (param_value.endsWith("\n")) {
+            param_value = param_value.substring(0,param_value.length()-1);
+          }
+          parameterMap.put(param_name,param_value);
+        }
+        ToolCall toolCall = new ToolCall();
+        toolCall.function = new ToolFunction();
+        toolCall.function.name = function_name;
+        toolCall.function.arguments = gson.toJson(parameterMap);
+        toolCall.id = "call_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        toolCalls.add(toolCall);
+      }
+    }
+
+    completion.toolCalls = toolCalls;
+    completion.text = completion.text.substring(0,completion.text.indexOf(tool_call_start_token));
+
+    return completion;
+  }
+
+
 
   @TRADEService
   public void streamingChunkHandler(OpenaiChatCompletionResponse lastChunk, OpenaiChatCompletionResponse currentResponse) {
-    log.info("[streamingChunkHandler] in method");
+    log.trace("[streamingChunkHandler] in method");
+
+    log.trace("[last_chunk] {}", lastChunk);
+    log.trace("[currentResponse] {}", currentResponse);
+
+    if (currentResponse.choices == null || currentResponse.choices.length == 0) {
+      return;
+    }
+    String content = lastChunk.choices[0].delta.content;
+    if (content == null || content.isEmpty()) {
+      content = lastChunk.choices[0].delta.reasoning;
+    }
+    if (content == null || content.isEmpty()) {
+      return;
+    }
+
+    //TODO: cleanup parsers when complete
+    //TODO: can short circuit once seeing different function name
+    //TODO: separate between NLG and NLU
+
+    String id = currentResponse.id;
+    Qwen3CoderToolParser parser = streamingResults.get(id);
+    if (parser == null) {
+      parser = new Qwen3CoderToolParser();
+      parser.resetStream();
+      streamingResults.put(id, parser);
+    }
+
+    parser.feed(content);
+
+    //NLU
+    if (parser.currentFunctionName != null && parser.currentFunctionName.equals(textResponseTool.toolDefinition.function.name)) {
+      if (parser.currentParamName != null && parser.currentParamName.equals("response")) {
+        if (!parser.currentParamValueDelta.isEmpty()) {
+          log.info("[streamingChunkHandler] have partial response string: {}. Delta: {}",parser.currentParamValue, parser.currentParamValueDelta);
+          return;
+        }
+      }
+    }
+    if (parser.completedParam && parser.lastParamName.equals("response")) {
+      log.info("[streamingChunkHandler] Done parsing response");
+      return;
+    }
+
+    //TODO: Don't need to actually use the Qwen3CoderToolParser for NLG - go back and separate callbacks used
+    //NLG
+    String currentText = currentResponse.choices[0].message.content;
+    if (currentText.isEmpty()) {
+      currentText = currentResponse.choices[0].message.reasoning; //TODO: why starting as null
+    }
+    if (parser.nlgText.isEmpty()) {
+      String startToken = "{\"translation\":\"";
+      int translationStart = currentText.indexOf(startToken);
+      if (translationStart != -1) {
+        Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
+        if (m.matches()) {
+          log.info("[streamingChunkHandler] One shot NLG parse: {}", m.group(m.groupCount()));
+        } else {
+          parser.nlgText = currentText.substring(translationStart + startToken.length());
+          parser.nlgTextDelta = parser.nlgText;
+          log.info("[streamingChunkHandler] first NLG delta: {}", parser.nlgTextDelta);
+        }
+      }
+    } else {
+      Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
+      if (m.matches()) {
+        log.info("[streamingChunkHandler] Complete NLG parse: {}", m.group(m.groupCount()));
+      } else {
+        parser.nlgTextDelta = content;
+        parser.nlgText += parser.nlgTextDelta;
+        log.info("[streamingChunkHandler] (NLG) have partial response string: {}. Delta: {}",parser.nlgText, parser.nlgTextDelta);
+      }
+    }
   }
 
   private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools) {
@@ -1610,13 +1785,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         return null;
       }
     });
+    Completion response;
     try {
       // What amount of time here?
-      return future.get(10, TimeUnit.SECONDS);
+      response = future.get(10, TimeUnit.SECONDS);
     } catch (Exception e) {
       log.error("[callChatCompletionStreaming] exception or timeout waiting on endpoint completion request", e);
       return null;
     }
+
+    return parseContentForTools(response);
   }
 
   /**
@@ -3788,9 +3966,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExtendedConversationHistory",
-            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
-            new ArrayList());
+    //Prvent the LLM from just regurgitating the history directly
+    //definition = new ToolDefinition("getExtendedConversationHistory",
+    //        "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
+    //        new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     // "If not contained in this history, then you must tell the user you cannot remember this interaction"
 
