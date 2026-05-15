@@ -14,9 +14,12 @@ import java.util.Map;
   * All NLG requests eventually go through this method. There are various convenience
   * methods offered to make various parts of this process easier (e.g., generateResponse, askQuestion).
   */
-() = communicateUtterance(Utterance ?utterance) {
+() = communicateUtterance(Utterance ?utterance, java.lang.Boolean ?sayText=true) {
     String !text;
     Symbol !addressee;
+
+    // Temporary change to handle LLM-based streaming TTS setup - revert and figure out how to do properly
+    // (Also only works if only using LLM for NLG)
 
     // if utterance does not have words, call NLG actions to turn
     // semantics into words
@@ -25,15 +28,22 @@ import java.util.Map;
       op:log("debug", "submitting dialogue goal");
       ?utterance = act:applyPragmaticMeaning(?utterance);
       ?utterance = act:convertSemanticsToText(?utterance);
+
+      // update dialogue bookkeeping
+      op:log("debug", "updating dialogue history..");
+      act:updateDialogueHistory(?utterance);
+      op:log("debug", "done updating dialogue history");
+    } else {
+        // update dialogue bookkeeping
+        op:log("debug", "updating dialogue history..");
+        act:updateDialogueHistory(?utterance);
+        op:log("debug", "done updating dialogue history");
+
+        // get text from utterance, and say it
+        if (op:equalsValue(?sayText,true)) {
+            act:sayText(?utterance);
+        }
     }
-
-    // update dialogue bookkeeping
-    op:log("debug", "updating dialogue history..");
-    act:updateDialogueHistory(?utterance);
-    op:log("debug", "done updating dialogue history");
-
-    // get text from utterance, and say it
-    act:sayText(?utterance);
 }
 
 /**
@@ -228,6 +238,7 @@ import java.util.Map;
   Symbol !addressee;
   Integer !tracker = 0;
   String !questionString;
+  java.lang.Boolean !false = false;
 
   onInterrupt : {
     resume: act:askQuestionFromUtteranceOnResume(!tracker,?utterance);
@@ -248,7 +259,7 @@ import java.util.Map;
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
     noInterrupt {
       async {
-        act:communicateUtterance(?utterance);
+        act:communicateUtterance(?utterance,!false);
         //(Currently Ava specific implementation)
         //TODO: How to generally implement this? Specific only to interaction modalities which contain a wakeword
             // Q: How/where to configure what to do based on a specific addressee in a specific domain configuration?

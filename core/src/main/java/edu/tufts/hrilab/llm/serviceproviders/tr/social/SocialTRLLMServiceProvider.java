@@ -637,7 +637,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     //// Send created chat to LLM completion
-    Completion response = callChatCompletion(chat, tools);
+    Completion response = callChatCompletionStreaming(chat, tools);
 
      if (response == null) {
       log.error("[parseUtteranceLLMService] have null Completion response");
@@ -711,7 +711,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       errorResponseBuilder = new StringBuilder();
 
       // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
-      Completion retryResponse = callChatCompletion(chatContext.history, toolList);
+      Completion retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
 
       if (retryResponse == null) {
         handleErrorResponse(utterance, true, false);
@@ -822,16 +822,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       // Experimental text response tool stand-in (described above)
       if (toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
-        if (!outputUtterance.getSemantics().isPredicate() || ((Predicate)outputUtterance.getSemantics()).getArgs().size() < 2) {
-          // Is this case even possible anymore?? Don't think so. Think would have to be developer error, otherwise would
-          // have been caught in tool postprocessing.
-          log.error("[handleToolResponse] malformed text response tool call **Believe this must be due to Developer Error**");
-          errorResponseBuilder.append("- your " + textResponseTool.toolDefinition.function.name + " tool call needs to be properly formatted json including a response field");
-          return null;
-        }
-        llmResponse.text = ((Predicate)outputUtterance.getSemantics()).get(1).toString();
-        if(llmResponse.text.startsWith("\"") && llmResponse.text.endsWith("\"")) {
-          llmResponse.text = llmResponse.text.substring(1, llmResponse.text.length() - 1);
+        if (llmResponse.text.isEmpty()) {
+          if (!outputUtterance.getSemantics().isPredicate() || ((Predicate) outputUtterance.getSemantics()).getArgs().size() < 2) {
+            // Is this case even possible anymore?? Don't think so. Think would have to be developer error, otherwise would
+            // have been caught in tool postprocessing.
+            log.error("[handleToolResponse] malformed text response tool call **Believe this must be due to Developer Error**");
+            errorResponseBuilder.append("- your " + textResponseTool.toolDefinition.function.name + " tool call needs to be properly formatted json including a response field");
+            return null;
+          }
+          llmResponse.text = ((Predicate) outputUtterance.getSemantics()).get(1).toString();
+          if (llmResponse.text.startsWith("\"") && llmResponse.text.endsWith("\"")) {
+            llmResponse.text = llmResponse.text.substring(1, llmResponse.text.length() - 1);
+          }
         }
         return handleTextResponse(llmResponse,inputUtterance,chatContext, errorResponseBuilder);
       }
@@ -922,7 +924,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     // Updating response from dialogue history now - in case this parse result is not used
-    Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
+    //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
+    //Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
+    //Streaming
+    Predicate generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
     inputUtterance.setSemantics(generateResponsePred);
     inputUtterance.setType(UtteranceType.INSTRUCT);
     inputUtterance.setNeedsValidation(false);
@@ -1185,13 +1190,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /**
    * Main NLG method used by LLMNLGComponent
    * @param utterance Utterance with populated semantics to transform to words
-   * @param addRobotMessage Whether the generated text result should be added to the corresponding ChatContext as an
-   *                        assistant message. (i.e. currently true if occurring as part of a dialogue interaction between a user
-   *                        and robot, false if part of a system-LLM ITK message generation).
+   * @param streamingSayText - whether the response should be feed incrementally to TTS using a streaming Completion
    * @return The utterance with populated words, or null if no generation could be formed
    */
   @TRADEService
-  public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean addRobotMessage) {
+  public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean streamingSayText) {
     ////// Get existing chats
     //TODO: revisit ChatTemplates and PromptVars relationship with NLG side as opposed to NLU side to reduce inefficiency
     Symbol user = utterance.getAddressee().toUntyped();
@@ -1244,7 +1247,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     utterance.setSemantics(semantics);
     genChat.addUserMessage(utterance.toString());
     genChat.setSystem(chatTemplates.systemMessageTemplate.apply(promptVars));
-    Completion llmResponse = callChatCompletion(genChat, null);
+
+    Completion llmResponse;
+    if (streamingSayText) {
+      llmResponse = callChatCompletionStreaming(genChat, null);
+    } else {
+      llmResponse = callChatCompletion(genChat, null);
+    }
 
     if (llmResponse == null) {
       log.error("[convertSemanticsToTextLLMService] received null completion response");
@@ -1426,7 +1435,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }
             errorResponseBuilder = new StringBuilder();
             // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
-            Completion response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
+            Completion response = callChatCompletionStreaming(chat, contextSpecificTemplate.toolDefinitions);
 
             if (response == null) {
               log.error("[focusDialogueChat] received null Completion response");
@@ -1577,12 +1586,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //// General Completion / ChatCollection Utilities ////
 
   private Completion callChatCompletion(Chat chat, List<ToolDefinition> tools) {
-    //TODO: make actually cofigurable or default to one impl
-    boolean streaming = true;
-    if (streaming) {
-      return callChatCompletionStreaming(chat, tools);
-    }
-
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {
       try {
@@ -1610,6 +1613,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   private Completion parseContentForTools(Completion completion) {
+    if (completion == null) {
+      return completion;
+    }
+
     String text = completion.text;
     //TODO: why does NLG output get parsed as reasoning content?
     if (text.isEmpty()) {
@@ -1686,6 +1693,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         toolCall.function.name = function_name;
         toolCall.function.arguments = gson.toJson(parameterMap);
         toolCall.id = "call_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        toolCall.type = "function";
         toolCalls.add(toolCall);
       }
     }
@@ -1886,7 +1894,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
-      if (out.getSemantics() != null && out.getSemantics().getName().equals("generateResponseFromString") && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+      if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {
         log.error("[callChatCompletionForTextResponse] got unexpected output {}", out);
@@ -1940,7 +1948,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
-      if (out.getSemantics() != null && out.getSemantics().getName().equals("generateResponseFromString") && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+      if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {
         log.error("[callChatCompletionForTextResponse] got unexpected output {}", out);
@@ -2483,12 +2491,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             chatContext.lastToolCallName = "";
             if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
               if (semantics.getArgs().size() > 1) {
-                if (command.isEmpty() || semantics.get(1).getName().equals("generateResponseFromString")) {
+                if (command.isEmpty() || semantics.get(1).getName().equals("generateResponseFromString") || semantics.get(1).getName().equals("updateDialogueHistoryFromString")) {
                   command = semantics.get(1).getName();
                 }
               }
             }
-            if (!command.equals("generateResponseFromString")) {
+            if (!(command.equals("generateResponseFromString") || command.equals("updateDialogueHistoryFromString"))) {
               handleValidatedToolCall(command, utterance.getSpeaker(), utterance.getAddressee(), chatCollection);
             }
           }
@@ -3571,6 +3579,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getWifiAtCurrentLocationString":
         case "getTemperatureAtLocationsString":
         case "getTemperatureAtCurrentLocationString":
+        case "updateDialogueHistoryFromString":
+        case "getExtendedConversationHistory":
         //// Set of actions which should perhaps be "reduced ack"?
         //case "escortToLocation":
           return true;
@@ -3633,7 +3643,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("say",
-            "The robot says ?words. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. An example of instructing this could be \"say to everyone: welcome to the event!.\", which would map to {\"name\":\"say\", \"arguments\":{\"words\":\"\\\"welcome to the event!\\\"\"}}",
+            "The robot says ?words. Do not use this when you want to say something to the user. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. An example of instructing this could be \"say to everyone: welcome to the event!.\", which would map to {\"name\":\"say\", \"arguments\":{\"words\":\"\\\"welcome to the event!\\\"\"}}",
             List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("stopFollow",
@@ -4008,10 +4018,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     // "If not contained in this history, then you must tell the user you cannot remember this interaction"
 
-    definition = new ToolDefinition("getExtendedConversationHistory",
-            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
-            new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    //Prevent the LLM from just regurgitating the history directly
+//    definition = new ToolDefinition("getExtendedConversationHistory",
+//            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
+//            new ArrayList());
+//    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
 
     //// Removed ITK targets
