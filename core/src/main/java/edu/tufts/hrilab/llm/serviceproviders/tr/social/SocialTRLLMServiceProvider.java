@@ -1692,6 +1692,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         toolCall.function.name = function_name;
         toolCall.function.arguments = gson.toJson(parameterMap);
         toolCall.id = "call_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        toolCall.type = "function";
         toolCalls.add(toolCall);
       }
     }
