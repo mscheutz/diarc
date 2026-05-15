@@ -1681,6 +1681,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           parameterMap.put(param_name,param_value);
         }
         ToolCall toolCall = new ToolCall();
+        toolCall.type = "function";
         toolCall.function = new ToolFunction();
         toolCall.function.name = function_name;
         toolCall.function.arguments = gson.toJson(parameterMap);
@@ -1727,27 +1728,37 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       streamingResults.put(id, parser);
     }
 
-    parser.feed(content);
+    try {
+      parser.feed(content);
+    } catch (Exception e) {
+      log.error("[streamingChunkHandler] parser.feed threw; skipping this delta", e);
+      return;
+    }
 
     //NLU
     if (parser.currentFunctionName != null && parser.currentFunctionName.equals(textResponseTool.toolDefinition.function.name)) {
       if (parser.currentParamName != null && parser.currentParamName.equals("response")) {
         if (!parser.currentParamValueDelta.isEmpty()) {
           log.info("[streamingChunkHandler] have partial response string: {}. Delta: {}",parser.currentParamValue, parser.currentParamValueDelta);
+          ttsPush(parser.currentParamValueDelta);
           return;
         }
       }
     }
     if (parser.completedParam && parser.lastParamName.equals("response")) {
       log.info("[streamingChunkHandler] Done parsing response");
+      ttsEnd();
       return;
     }
 
     //TODO: Don't need to actually use the Qwen3CoderToolParser for NLG - go back and separate callbacks used
     //NLG
     String currentText = currentResponse.choices[0].message.content;
-    if (currentText.isEmpty()) {
+    if (currentText == null || currentText.isEmpty()) {
       currentText = currentResponse.choices[0].message.reasoning; //TODO: why starting as null
+    }
+    if (currentText == null) {
+      return;
     }
     if (parser.nlgText.isEmpty()) {
       String startToken = "{\"translation\":\"";
@@ -1756,21 +1767,45 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
         if (m.matches()) {
           log.info("[streamingChunkHandler] One shot NLG parse: {}", m.group(m.groupCount()));
+          ttsPush(m.group(m.groupCount()));
+          ttsEnd();
         } else {
           parser.nlgText = currentText.substring(translationStart + startToken.length());
           parser.nlgTextDelta = parser.nlgText;
           log.info("[streamingChunkHandler] first NLG delta: {}", parser.nlgTextDelta);
+          ttsPush(parser.nlgTextDelta);
         }
       }
     } else {
       Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
       if (m.matches()) {
         log.info("[streamingChunkHandler] Complete NLG parse: {}", m.group(m.groupCount()));
+        ttsEnd();
       } else {
         parser.nlgTextDelta = content;
         parser.nlgText += parser.nlgTextDelta;
         log.info("[streamingChunkHandler] (NLG) have partial response string: {}. Delta: {}",parser.nlgText, parser.nlgTextDelta);
+        ttsPush(parser.nlgTextDelta);
       }
+    }
+  }
+
+  private void ttsPush(String fragment) {
+    if (fragment == null || fragment.isEmpty()) return;
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class))
+              .call(void.class, fragment);
+    } catch (TRADEException e) {
+      log.warn("[streamingChunkHandler] pushStreamingSpeech failed", e);
+    }
+  }
+
+  private void ttsEnd() {
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(boolean.class))
+              .call(Boolean.class, false);
+    } catch (TRADEException e) {
+      log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
     }
   }
 

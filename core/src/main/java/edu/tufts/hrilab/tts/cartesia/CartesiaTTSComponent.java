@@ -124,6 +124,8 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private final Object streamingLock = new Object();
   private StreamingTextBuffer activeBuffer;
   private Future<Boolean> activeStreamingFuture;
+  private volatile long lastStreamCompletionNs = 0;
+  private static final long POST_STREAM_SAYTEXT_SUPPRESS_MS = 500;
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -378,10 +380,15 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       log.error("[sayText] no API key; cannot synthesize");
       return false;
     }
+    long sinceStreamMs = (System.nanoTime() - lastStreamCompletionNs) / 1_000_000;
+    if (sinceStreamMs < POST_STREAM_SAYTEXT_SUPPRESS_MS) {
+      log.info("[sayText] suppressing post-streaming duplicate (sinceStream={}ms text_len={})", sinceStreamMs, text.length());
+      return true;
+    }
 
     if (muteMics) {
       try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone").onLocalhost());
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone"));
         svc.call(void.class);
       } catch (TRADEException e) {
         log.warn("[sayText] disableMicrophone failed", e);
@@ -403,7 +410,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
     if (muteMics) {
       try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone").onLocalhost());
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
         svc.call(void.class);
       } catch (TRADEException e) {
         log.warn("[sayText] enableMicrophone failed", e);
@@ -423,7 +430,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     }
     if (muteMics) {
       try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone").onLocalhost());
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone"));
         svc.call(void.class);
       } catch (TRADEException e) {
         log.warn("[sayStreamingText] disableMicrophone failed", e);
@@ -444,7 +451,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
     if (muteMics) {
       try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone").onLocalhost());
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
         svc.call(void.class);
       } catch (TRADEException e) {
         log.warn("[sayStreamingText] enableMicrophone failed", e);
@@ -454,20 +461,31 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   }
 
   @TRADEService
-  @Action
   public void pushStreamingSpeech(String fragment) {
+    boolean startedNewSession = false;
     synchronized (streamingLock) {
       if (activeBuffer == null) {
         activeBuffer = new StreamingTextBuffer();
         final StreamingTextSource src = activeBuffer;
         activeStreamingFuture = executor.submit((Callable<Boolean>) () -> streamAndPlayStreaming(src, true));
+        startedNewSession = true;
+      } else if (activeBuffer.producerDone) {
+        log.warn("[pushStreamingSpeech] dropping fragment: producer already marked done");
+        return;
       }
       activeBuffer.push(fragment);
+    }
+    if (startedNewSession && muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone"));
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[pushStreamingSpeech] disableMicrophone failed", e);
+      }
     }
   }
 
   @TRADEService
-  @Action
   public boolean endStreamingSpeech(boolean wait) {
     StreamingTextBuffer buf;
     Future<Boolean> fut;
@@ -489,6 +507,14 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       if (activeBuffer == buf) {
         activeBuffer = null;
         activeStreamingFuture = null;
+      }
+    }
+    if (muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[endStreamingSpeech] enableMicrophone failed", e);
       }
     }
     return ok;
@@ -673,7 +699,8 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     final WebSocket dispConn = conn;
     final int[] sendsRef = new int[]{0};
     final long fTStart = tStart;
-    Thread dispatcher = new Thread(() -> dispatchLoop(source, dispConn, contextId, fTStart, sendsRef), "cartesia-stream-dispatch");
+    final StreamTarget dispTarget = target;
+    Thread dispatcher = new Thread(() -> dispatchLoop(source, dispConn, contextId, fTStart, sendsRef, dispTarget), "cartesia-stream-dispatch");
     dispatcher.setDaemon(true);
     dispatcher.start();
 
@@ -774,7 +801,17 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       currentTarget = null;
     }
 
-    try { dispatcher.join(2000); } catch (InterruptedException ie) { dispatcher.interrupt(); }
+    try {
+      dispatcher.join(2000);
+      if (dispatcher.isAlive()) {
+        log.warn("[streamAndPlayStreaming] dispatcher did not exit within 2s; interrupting");
+        dispatcher.interrupt();
+        dispatcher.join(500);
+      }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      dispatcher.interrupt();
+    }
     if (wait) line.drain();
 
     long tEnd = System.nanoTime();
@@ -783,15 +820,20 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long totalMs = (tEnd - tStart) / 1_000_000;
     log.info("[lat] streamtts_done ttfb={}ms ttfa={}ms total={}ms sends={} bytes={} max_gap={}ms underrun={}",
             ttfbMs, ttfaMs, totalMs, sendsRef[0], totalBytes, maxGapMs, underrun);
+    lastStreamCompletionNs = System.nanoTime();
     speaking = false;
     return true;
   }
 
-  private void dispatchLoop(StreamingTextSource source, WebSocket conn, String contextId, long tStart, int[] sendsRef) {
+  private void dispatchLoop(StreamingTextSource source, WebSocket conn, String contextId, long tStart, int[] sendsRef, StreamTarget target) {
     StringBuilder buf = new StringBuilder();
     boolean firstChunk = true;
     try {
       while (true) {
+        if (target.done.isDone()) {
+          log.warn("[dispatchLoop] audio target completed early (likely WS close/error); aborting dispatch");
+          return;
+        }
         String fragment = source.pollFragment(DISPATCHER_POLL_TIMEOUT_MS);
         if (fragment != null) buf.append(fragment);
         while (true) {
@@ -1043,22 +1085,4 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     log.debug("[toggleVoiceOff] (no-op for Cartesia)");
   }
 
-  @TRADEService
-  @Action
-  public void setVoiceId(String id) {
-    if (id != null && !id.isEmpty()) {
-      voiceId = id;
-      log.info("[setVoiceId] now using voice {}", voiceId);
-    }
-  }
-
-  @TRADEService
-  @Action
-  public void setCartesiaVolume(String v) {
-    try {
-      volume = Math.max(0f, Math.min(1f, Float.parseFloat(v)));
-    } catch (NumberFormatException e) {
-      log.error("[setCartesiaVolume] cannot parse {}", v, e);
-    }
-  }
 }
