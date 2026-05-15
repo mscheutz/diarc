@@ -32,7 +32,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public boolean useDisplay = true;
   public SimSpeechRecognitionComponent simSpeechRec;
   public SocialTRLLMServiceProvider serviceProvider;
-  public boolean llmOnly = false;
+  public boolean llmOnly = true;
 
 
   @Override
@@ -104,7 +104,12 @@ public class SocialAvaConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-    String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist -llm -sequence llm cache simple";
+    String nlgArgs;
+    if (llmOnly) {
+      nlgArgs = "-llm";
+    } else {
+      nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist -llm -sequence llm cache simple";
+    }
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 

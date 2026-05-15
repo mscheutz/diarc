@@ -498,3 +498,13 @@ import java.lang.String;
     !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
     act:generateResponse(!actionPred);
 }
+
+() = updateDialogueHistoryFromString(Symbol ?addressee, String ?words) {
+    op:log("debug", "[updateDialogueHistoryFromString] addressee: ?addressee words: ?words");
+
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", ?words);
+    act:updateDialogueHistory(!utterance);
+}

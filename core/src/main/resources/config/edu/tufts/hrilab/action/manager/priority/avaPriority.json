@@ -274,5 +274,9 @@
   "getExtendedConversationHistory": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "updateDialogueHistoryFromString": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }
