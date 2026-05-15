@@ -20,6 +20,7 @@ import edu.tufts.hrilab.llm.llama.response.*;
 
 public class Completion {
   public String text;
+  public String reasoning;
   public String id;
   public long created;
   public String service;
@@ -46,6 +47,10 @@ public class Completion {
       if (text == null) {
         text = "";
       }
+      reasoning = response.choices[0].message.reasoning;
+      if (reasoning == null) {
+        reasoning = "";
+      }
       if (response.choices[0].message.tool_calls != null) {
         toolCalls = List.of(response.choices[0].message.tool_calls);
       } else {
@@ -53,6 +58,7 @@ public class Completion {
       }
     } else {
       text = "";
+      reasoning = "";
       toolCalls = new ArrayList<>();
     }
     id = response.id;

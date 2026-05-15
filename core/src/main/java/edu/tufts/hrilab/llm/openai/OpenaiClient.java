@@ -114,6 +114,7 @@ public class OpenaiClient implements LLMClient {
         model_parameters.put("top_p", 0.8);
         model_parameters.put("top_k", 20);
         model_parameters.put("presence_penalty", 1.5);
+        model_parameters.put("tool_choice","none");
         //HashMap<String,Object> chat_template_kwargs = new HashMap<>();
         //chat_template_kwargs.put("enable_thinking", false);
         //model_parameters.put("stream", true);
@@ -393,7 +394,7 @@ public class OpenaiClient implements LLMClient {
     String responseLine;
     try {
       while ((responseLine = responseReader.readLine()) != null) {
-        log.info("[sendPostRequest] {}", responseLine);
+        log.debug("[sendPostRequest] {}", responseLine);
         if (!responseLine.isEmpty()) {
           if (responseLine.startsWith("data: ")) {
             responseLine = responseLine.substring(6);
@@ -422,6 +423,9 @@ public class OpenaiClient implements LLMClient {
                 if (deltaMessage != null) {
                   if (deltaMessage.content != null) {
                     mergedChoice.message.content += deltaMessage.content;
+                  }
+                  if (deltaMessage.reasoning != null) {
+                    mergedChoice.message.reasoning += deltaMessage.reasoning;
                   }
                   if (deltaMessage.tool_calls != null) {
                     for (ToolCall tool_call_chunk : deltaMessage.tool_calls) {
