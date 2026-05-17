@@ -631,8 +631,6 @@ public class Resolver {
         Symbol missing = missingOpt.get();
         log.debug("MISSING: " + missing);
 
-        Map<Symbol, Symbol> testBindings = new LinkedHashMap<>(bindings);
-        testBindings.put(ref, missing); // Note: this is the pattern from Scala: `bindings + (ref -> d)`
         final List<Symbol> distractorsCopy = new ArrayList<>(distractors);
         List<Symbol> elimDist = distractorsCopy.stream()
             .filter(d -> {
