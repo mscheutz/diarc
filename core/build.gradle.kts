@@ -1,6 +1,5 @@
 plugins {
   `java-library`
-  scala
   `maven-publish`
 }
 
@@ -38,13 +37,8 @@ sourceSets {
   main {
     java {
       exclude(listOf(
-              //scala
-              "edu/tufts/hrilab/slug/refResolution/**",
               "edu/tufts/hrilab/nao/NaoExtended*",
       ))
-    }
-    scala {
-      setSrcDirs(listOf("src/main/scala", "src/main/java/edu/tufts/hrilab/slug/refResolution"))
     }
   }
 
@@ -81,27 +75,12 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 tasks.compileJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
 tasks.compileTestJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
-  options.compilerArgs = listOf("-parameters")
-}
-
-tasks.compileScala {
-  scalaCompileOptions.additionalParameters.apply {
-    scalaCompileOptions.additionalParameters = scalaCompileOptions.additionalParameters.orEmpty() + "-target:jvm-1.8"
-  }
-  options.compilerArgs = listOf("-parameters")
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala/"))
-
-  dependsOn(listOf("processResources", "processTestResources"))
-}
-
-tasks.compileTestScala {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
+  options.sourcepath = files(listOf("src/main/java", "src/test/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -120,7 +99,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -190,14 +169,6 @@ dependencies {
   implementation("org.antlr:antlr4-runtime:4.13.1")
   implementation("com.github.pellierd:pddl4j:3.8.3")
 
-  //scala for rr
-  implementation("org.scala-lang:scala-compiler:2.12.4")
-  implementation("org.scala-lang:scala-library:2.12.4")
-  implementation("org.scala-lang:scala-reflect:2.12.4")
-  implementation("org.scalatest:scalatest_2.12:3.0.5")
-  implementation("org.scalacheck:scalacheck_2.12:1.14.0")
-  implementation("org.scalamock:scalamock-scalatest-support_2.12:3.6.0")
-  implementation("org.scalamock:scalamock-core_2.12:3.6.0")
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
   implementation("org.xerial:sqlite-jdbc:3.45.2.0")
