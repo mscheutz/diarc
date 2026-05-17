@@ -391,7 +391,8 @@ public class Growler {
       results.addAll(resolve_from_LTM(ltmNoPositTerms, ltmNoPositVars, hyp, false));
     }
     log.debug("initial results : {}", results);
-    // Note: keeping the Scala behavior - filter is called but result not reassigned (subtle bug preserved)
+    // Intentionally not reassigned: preserved from Scala where results.filter(...) result was also discarded (original bug)
+    //noinspection ResultOfMethodCallIgnored
     results.stream().filter(h -> h.likelihood() >= PROBABILITY_THRESHOLD).collect(Collectors.toList());
     if (results.isEmpty()) {
       results = new ArrayList<>(List.of(new Hypothesis(new HashMap<>(), 1.0)));
@@ -464,7 +465,8 @@ public class Growler {
 
     List<Hypothesis> resHyps = resolver.resolve(termsPP, vars, List.of(knownHyp), posit);
     log.debug("[resolve_from_LTM] before hypothesis construction: {}", resHyps);
-    // Note: Scala code creates new hyps but returns original resHyps (subtle behavior preserved)
+    // Intentionally not reassigned: preserved from Scala where resHyps.map(...) result was also discarded (original bug)
+    //noinspection ResultOfMethodCallIgnored
     resHyps.stream().map(h -> {
       Map<Variable, Symbol> merged = new HashMap<>(h.assignments());
       merged.putAll(indefBinds);

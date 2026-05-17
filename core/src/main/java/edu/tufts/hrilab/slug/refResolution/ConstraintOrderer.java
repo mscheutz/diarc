@@ -77,6 +77,7 @@ class ReverseSizeOrderer extends ConstraintOrderer {
 class RandomSizeOrderer extends ConstraintOrderer {
   @Override
   public boolean order(Property a, Property b) {
+    // Intentionally random: matches Scala's Random.nextBoolean() — not a consistent comparator by design
     return Math.random() < 0.5;
   }
 }
