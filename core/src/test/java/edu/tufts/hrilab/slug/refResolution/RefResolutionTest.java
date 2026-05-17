@@ -25,18 +25,18 @@ public class RefResolutionTest {
 
   @Test
   public void testEntityScoreConstructorAndAccessors() {
-    EntityScore es = new EntityScore(true, 0.5, 2, 1.0);
+    EntityScore es = new EntityScore(true, 3, 2, 1.0);
     assertTrue(es.inMainClause());
-    assertEquals(0.5, es.synProm(), 1e-9);
+    assertEquals(3, es.synProm());
     assertEquals(2, es.recency());
     assertEquals(1.0, es.bonus(), 1e-9);
   }
 
   @Test
   public void testEntityScoreDefaults() {
-    EntityScore es = new EntityScore(false, 0.0, 0, 0.0);
+    EntityScore es = new EntityScore(false, 0, 0, 0.0);
     assertFalse(es.inMainClause());
-    assertEquals(0.0, es.synProm(), 1e-9);
+    assertEquals(0, es.synProm());
     assertEquals(0, es.recency());
     assertEquals(0.0, es.bonus(), 1e-9);
   }
@@ -150,7 +150,7 @@ public class RefResolutionTest {
   @Test
   public void testWeightRelevance() {
     // All zeros -> should produce scaleRelevance(0)*4 = 0
-    EntityScore allZero = new EntityScore(false, 0.0, 0, 0.0);
+    EntityScore allZero = new EntityScore(false, 0, 0, 0.0);
     double w = Growler.weightRelevance(allZero);
     assertEquals(0.0, w, 1e-9);
   }
@@ -166,9 +166,9 @@ public class RefResolutionTest {
     RelevanceTheoreticCandidate rtc2 = new RelevanceTheoreticCandidate(ref2, 0.6);
 
     SingleVarCandidateList svcl1 = new SingleVarCandidateList(v1, new LinkedList<>(),
-        List.of(new RelevanceTheoreticCandidateWithProabability(rtc1, 0.9)));
+        new ArrayList<>(List.of(new RelevanceTheoreticCandidateWithProabability(rtc1, 0.9))));
     SingleVarCandidateList svcl2 = new SingleVarCandidateList(v2, new LinkedList<>(),
-        List.of(new RelevanceTheoreticCandidateWithProabability(rtc2, 0.7)));
+        new ArrayList<>(List.of(new RelevanceTheoreticCandidateWithProabability(rtc2, 0.7))));
 
     List<CrossMappingCandidateList> list1 = Growler.generateCrossMappingCandidateList(svcl1);
     List<CrossMappingCandidateList> list2 = Growler.generateCrossMappingCandidateList(svcl2);

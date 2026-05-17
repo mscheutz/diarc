@@ -819,7 +819,7 @@ public class Resolver {
   private void initializeHQ(List<Property> query,
       PriorityQueue<Map.Entry<Hypothesis, List<Property>>> hypothesisQueue) {
     if (query.isEmpty()) throw new RuntimeException("Couldn't get the head variable for empty query");
-    List<Variable> vars = query.get(0).predicateForm().getVars();
+    List<Variable> vars = query.get(0).predicateForm().getOrderedVars();
     if (vars.isEmpty()) throw new RuntimeException("Couldn't get the head variable for " + query.get(0));
     Variable firstVar = vars.get(0);
     try {
