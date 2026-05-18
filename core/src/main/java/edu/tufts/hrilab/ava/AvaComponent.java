@@ -144,6 +144,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private int mixerID = -1;
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
@@ -1637,10 +1638,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: Should this still trigger the WW ding?
-    //TODO: Also should this have a longer ASR timeout than if triggered by voice?
     log.info("[triggerWW] in method");
-    //shouldDing = false;
+    forcedWWInFlight.set(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -1776,10 +1775,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             break;
           }
 
-          try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
-          } catch (TRADEException e) {
-            log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+          if (!forcedWWInFlight.compareAndSet(true, false)) {
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           }
 
           log.info("[listenForWWandASR] WW detected, listening for ASR");

@@ -88,6 +88,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private int numMaps = 0;
@@ -506,9 +507,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: hook up to QA where desired
     log.info("[triggerWW] in method");
-    //shouldDing = false;
+    forcedWWInFlight.set(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -604,10 +604,12 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           log.info(s.toString());
 
-          try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
-          } catch (TRADEException e) {
-            log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+          if (!forcedWWInFlight.compareAndSet(true, false)) {
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           }
 
           //Display on screen that we are now listening using ASR

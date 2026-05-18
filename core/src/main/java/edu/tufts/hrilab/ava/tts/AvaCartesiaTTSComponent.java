@@ -67,10 +67,18 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
     pendingRearm.set(false);
   }
 
+  private static final long POST_DRAIN_REARM_DELAY_MS = 500;
+
   @Override
   protected void onStreamCompleted() {
     super.onStreamCompleted();
     if (pendingRearm.compareAndSet(true, false)) {
+      try {
+        Thread.sleep(POST_DRAIN_REARM_DELAY_MS);
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+        return;
+      }
       try {
         TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
       } catch (TRADEException e) {
