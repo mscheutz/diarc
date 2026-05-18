@@ -39,6 +39,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public String voiceVolume = "1.0";
   public String voiceSpeed = "normal";
   public String voiceClipVolume = "0.4";
+  public boolean muteMics = false;
   public SimSpeechRecognitionComponent simSpeechRec;
   public SocialTRLLMServiceProvider serviceProvider;
   public boolean llmOnly = true;
@@ -64,6 +65,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
     options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());
     options.add(Option.builder("voiceClipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
+    options.add(Option.builder("muteMics").desc("disable mics during TTS playback").build());
     options.add(Option.builder("llmEndpoint").hasArg().desc("override LLM endpoint URL (default: direct to marvin vLLM over Tailscale)").build());
     return options;
   }
@@ -125,6 +127,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     if (cmdLine.hasOption("voiceClipVolume")) {
       voiceClipVolume = cmdLine.getOptionValue("voiceClipVolume");
     }
+    if (cmdLine.hasOption("muteMics")) {
+      muteMics = true;
+    }
   }
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
@@ -183,6 +188,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
       }
       if (!cartesiaVoiceId.isEmpty()) {
         cartesiaArgs += " -voiceId " + cartesiaVoiceId;
+      }
+      if (muteMics) {
+        cartesiaArgs += " -muteMics";
       }
       createInstance(edu.tufts.hrilab.ava.tts.AvaCartesiaTTSComponent.class, cartesiaArgs);
     } else {

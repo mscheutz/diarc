@@ -1810,7 +1810,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private void ttsEnd() {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(boolean.class))
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(Boolean.class))
               .call(Boolean.class, false);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
