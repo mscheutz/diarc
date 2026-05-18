@@ -480,14 +480,20 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       }
       activeBuffer.push(fragment);
     }
-    if (startedNewSession && muteMics) {
-      try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone"));
-        svc.call(void.class);
-      } catch (TRADEException e) {
-        log.debug("[pushStreamingSpeech] disableMicrophone unavailable");
+    if (startedNewSession) {
+      onStreamStarted();
+      if (muteMics) {
+        try {
+          TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone"));
+          svc.call(void.class);
+        } catch (TRADEException e) {
+          log.debug("[pushStreamingSpeech] disableMicrophone unavailable");
+        }
       }
     }
+  }
+
+  protected void onStreamStarted() {
   }
 
   @TRADEService

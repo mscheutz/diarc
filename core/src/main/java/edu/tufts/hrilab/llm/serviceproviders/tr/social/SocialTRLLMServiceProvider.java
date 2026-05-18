@@ -1755,6 +1755,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     if (parser.completedParam && parser.lastParamName.equals("response")) {
       log.info("[streamingChunkHandler] Done parsing response");
+      armRearm();
       ttsEnd();
       return;
     }
@@ -1814,6 +1815,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
               .call(Boolean.class, false);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
+    }
+  }
+
+  private void armRearm() {
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("armPostStreamRearm")).call(void.class);
+    } catch (TRADEException e) {
+      log.debug("[streamingChunkHandler] armPostStreamRearm unavailable");
     }
   }
 
