@@ -43,4 +43,14 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
     return result;
   }
 
+  @Override
+  protected void onStreamCompleted() {
+    super.onStreamCompleted();
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
+    } catch (TRADEException e) {
+      log.debug("[onStreamCompleted] triggerWW unavailable");
+    }
+  }
+
 }

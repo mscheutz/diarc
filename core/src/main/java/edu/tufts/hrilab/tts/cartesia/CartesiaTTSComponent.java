@@ -515,14 +515,6 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         activeStreamingFuture = null;
       }
     }
-    if (muteMics) {
-      try {
-        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
-        svc.call(void.class);
-      } catch (TRADEException e) {
-        log.debug("[endStreamingSpeech] enableMicrophone unavailable");
-      }
-    }
     return ok;
   }
 
@@ -838,6 +830,14 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   }
 
   protected void onStreamCompleted() {
+    if (muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.debug("[onStreamCompleted] enableMicrophone unavailable");
+      }
+    }
   }
 
   private void dispatchLoop(StreamingTextSource source, WebSocket conn, String contextId, long tStart, int[] sendsRef, StreamTarget target) {
