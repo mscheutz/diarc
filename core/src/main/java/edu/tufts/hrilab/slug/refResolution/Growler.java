@@ -297,8 +297,9 @@ public class Growler {
           s.getTiers(), s.getTiers().stream().anyMatch(t -> !t.contains("LTM")));
     }
 
+    Set<Variable> finalVars_with_help_needed1 = vars_with_help_needed;
     while (singleVarCandSets.stream().anyMatch(s ->
-        vars_with_help_needed.contains(s.variable()) && s.getTiers().stream().anyMatch(t -> !t.contains("LTM")))) {
+        finalVars_with_help_needed1.contains(s.variable()) && s.getTiers().stream().anyMatch(t -> !t.contains("LTM")))) {
 
       for (SingleVarCandidateList svcs : singleVarCandSets) {
         if (vars_with_help_needed.contains(svcs.variable()) && svcs.getTiers().stream().anyMatch(t -> !t.contains("LTM"))) {

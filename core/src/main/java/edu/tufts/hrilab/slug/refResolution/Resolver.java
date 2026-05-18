@@ -61,7 +61,12 @@ public class Resolver {
           additionalConstraints.name("getKBName").argTypes());
       consultants = new ArrayList<>();
       for (TRADEServiceInfo c : services) {
-        String name = c.call(String.class);
+        String name = null;
+        try {
+          name = c.call(String.class);
+        } catch (TRADEException e) {
+          log.error("[updateConsultCache] exception calling getKBName", e);
+        }
         String[] groupArr = c.getGroups().toArray(new String[0]);
         TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
         consultants.add(new ConsultantInfo(name, c, tsc));
@@ -95,7 +100,12 @@ public class Resolver {
             || cGroups.stream().noneMatch(g -> g.startsWith("agent:"))
             || cGroups.stream().anyMatch(g -> untypedActors.contains(g) || typedActors.contains(g));
         if (include) {
-          String name = c.call(String.class);
+          String name = null;
+          try {
+            name = c.call(String.class);
+          } catch (TRADEException e) {
+            log.error("[updateConsultCache] exception calling getKBName", e);
+          }
           String[] groupArr = cGroups.toArray(new String[0]);
           TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
           consultants.add(new ConsultantInfo(name, c, tsc));
@@ -127,9 +137,14 @@ public class Resolver {
     if (matching.size() != 1) {
       log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one " + matching);
     }
-    return TRADE.getAvailableService(
-        matching.get(0).tsc.name("convertToType").argTypes(Symbol.class, Class.class))
-        .call(entityJavaType, ref, entityJavaType);
+    try {
+      return TRADE.getAvailableService(
+          matching.get(0).tsc.name("convertToType").argTypes(Symbol.class, Class.class))
+          .call(entityJavaType, ref, entityJavaType);
+    } catch (TRADEException e) {
+      log.error("[getEntityForReference] exception calling convertToType", e);
+      return null;
+    }
   }
 
   public boolean assertProperties(Symbol ref, List<Term> properties) {
@@ -318,7 +333,8 @@ public class Resolver {
     for (Property s : S) {
       ret += Pts(s, s.boundForm(t));
     }
-    t.forEach(v -> log.debug("Variable " + v + " Type " + v.getType() + " Properties " + S + " Score " + ret));
+    double retFinal = ret;
+    t.forEach(v -> log.debug("Variable " + v + " Type " + v.getType() + " Properties " + S + " Score " + retFinal));
     return ret;
   }
 
@@ -433,8 +449,13 @@ public class Resolver {
         .filter(c -> c.tsi.getGroups().containsAll(groups))
         .findFirst();
     if (!match.isPresent()) throw new RuntimeException("No consultant keyed with groups " + groups);
-    return TRADE.getAvailableService(
-        match.get().tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+    try {
+      return TRADE.getAvailableService(
+          match.get().tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+    } catch (TRADEException e) {
+      log.error("[getActivatedEntities] consultant: " + match.get().kbName, e);
+      return new HashMap<>();
+    }
   }
 
   private Optional<ConsultantInfo> getConsultant(Hypothesis h, Property p) {
