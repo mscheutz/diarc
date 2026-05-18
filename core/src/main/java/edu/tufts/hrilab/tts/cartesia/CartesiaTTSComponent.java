@@ -1041,24 +1041,23 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       log.warn("[playAudioClip] no decoded audio for {}", path);
       return;
     }
-    Future<?> f = executor.submit(() -> {
-      SourceDataLine line;
-      synchronized (lineLock) {
-        if (audioLine == null) {
-          audioLine = openLine();
+    executor.submit(() -> {
+      try {
+        SourceDataLine line;
+        synchronized (lineLock) {
+          if (audioLine == null) {
+            audioLine = openLine();
+          }
+          line = audioLine;
         }
-        line = audioLine;
+        if (line == null) return;
+        line.start();
+        line.write(pcm, 0, pcm.length);
+        line.drain();
+      } catch (Exception e) {
+        log.error("[playAudioClip] {} failed", path, e);
       }
-      if (line == null) return;
-      line.start();
-      line.write(pcm, 0, pcm.length);
-      line.drain();
     });
-    try {
-      f.get();
-    } catch (Exception e) {
-      log.error("[playAudioClip] {} failed", path, e);
-    }
   }
 
   private byte[] loadAndConvert(String path) {
