@@ -67,6 +67,7 @@ import java.util.stream.Collectors;
 // (Otherwise, expansive higher level TODO list currently in personal notes)
 public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
+  boolean streamResults = true;
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
   boolean useCondensedTools = false;
@@ -131,6 +132,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   Map<String,ChatTemplates> chatTemplates;
   //protected abstract List<ToolDefinition> getBaseNLUToolDefinitions();
   //protected abstract void addContextSpecificChatTemplates();
+  Map<String,Tool> universalFocusedToolset;
+  List<ToolDefinition> universalFocusedToolDefinitions;
 
   //// Revisit when making base/subclass distinction
   protected Prompt getNluSystemPrompt() {
@@ -295,29 +298,37 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  - Base LLM<->Diarc ITK targets - TODO: temporarily removed - should these be available or not? Only a specific subset?
     //  - relevant REPLY targets - TODO: temporarily removed, should these be allowed? Should there be a mechanism to define REPLY targets per focused context?
     //  - suspend/cancel interaction targets
-    List<Tool> universalFocusedTools = new ArrayList<>();
-    universalFocusedTools.add(focusedEndConversationTool);
+    universalFocusedToolset = new HashMap<>();
+    universalFocusedToolDefinitions = new ArrayList<>();
+    universalFocusedToolset.put("endConversation",focusedEndConversationTool);
     if (useCondensedTools) {
-      universalFocusedTools.add(new Tool(new ToolDefinition("suspendCurrentInteraction",
+      universalFocusedToolset.put("suspendCurrentInteraction",new Tool(new ToolDefinition("suspendCurrentInteraction",
               "Pause your current task, which can be later resumed.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedTools.add(new Tool(new ToolDefinition("cancelCurrentInteraction",
+      universalFocusedToolset.put("resumeCurrentInteraction",new Tool(new ToolDefinition("cancelCurrentInteraction",
               "Stop and fully discard your current task.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT));
-      universalFocusedTools.addAll(itkTools);
+      for (Tool itkTool : itkTools) {
+        universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
+      }
     } else {
-      universalFocusedTools.add(new Tool(new ToolDefinition("suspendCurrentInteraction",
+      universalFocusedToolset.put("suspendCurrentInteraction",new Tool(new ToolDefinition("suspendCurrentInteraction",
               "You pause your current task, which can be later resumed. An example of instructing this could be \"pause what you're doing.\"" +
                       "This may be instructed directly as shown in the example, or could be intended when the user wants to temporarily have a separate conversation on a different topic.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedTools.add(new Tool(new ToolDefinition("cancelCurrentInteraction",
+      universalFocusedToolset.put("resumeCurrentInteraction",new Tool(new ToolDefinition("cancelCurrentInteraction",
               "You stop and fully discard your current task. An example of instructing this could be \"stop what you're doing.\"",
               new ArrayList<>()),
               UtteranceType.INSTRUCT));
-      universalFocusedTools.addAll(itkTools);
+      for (Tool itkTool : itkTools) {
+        universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
+      }
+    }
+    for (Tool universalTool : universalFocusedToolset.values()) {
+      universalFocusedToolDefinitions.add(universalTool.toolDefinition);
     }
 
     // Validation tool set:
@@ -342,16 +353,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       )),
               UtteranceType.INSTRUCT
       ));
-      scheduleGoalTools.addAll(universalFocusedTools);
       Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition("stillGatheringInformation",
               "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
                       "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
                       "to gather missing information in order to define the scheduled task.",
-              List.of(new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
+              List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                      "What you want to say to the user", true),
+                      new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
                               "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
-                      ,
-                      new ToolParameterHelper("response", "string", new ArrayList<>(),
-                              "What you want to say to the user", true)
               )),
               UtteranceType.INSTRUCT);
       scheduleGoalTools.add(modifiedTextResponseTool1);
@@ -365,16 +374,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       )),
               UtteranceType.INSTRUCT
       ));
-      scheduleGoalTools.addAll(universalFocusedTools);
       Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition("stillGatheringInformation",
               "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
                       "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
                       "to gather missing information in order to define the scheduled task.",
-              List.of(new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
+              List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                      "What you want to say to the user", true),
+                      new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
                               "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
-                      ,
-                      new ToolParameterHelper("response", "string", new ArrayList<>(),
-                              "What you want to say to the user", true)
               )),
 //            List.of(new ToolParameterHelper("currentScheduledDefinition","object",new ArrayList<>(),
 //                            "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
@@ -406,14 +413,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       )),
               UtteranceType.INSTRUCT
       ));
-      learnTourTools.addAll(universalFocusedTools);
       Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
               "Reply briefly while gathering missing information.",
-              List.of(new ToolParameterHelper("currentTaskSequenceDefinition","object",new ArrayList<>(),
+              List.of(new ToolParameterHelper("response","string",new ArrayList<>(),
+                      "Short spoken reply", true),
+                      new ToolParameterHelper("currentTaskSequenceDefinition","object",new ArrayList<>(),
                               "Your current understanding of the steps of the task being taught to you, same format as locationActionPairs.", true)
-                      ,
-                      new ToolParameterHelper("response","string",new ArrayList<>(),
-                              "Short spoken reply", true)
               )),
               UtteranceType.INSTRUCT);
       learnTourTools.add(modifiedTextResponseTool2);
@@ -425,16 +430,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       )),
               UtteranceType.INSTRUCT
       ));
-      learnTourTools.addAll(universalFocusedTools);
       Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
               "You are still being taught new or modifying existing task steps by the user. You will respond to" +
                       "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
                       "to gather missing information in order to define the task sequence.",
-              List.of(new ToolParameterHelper("currentTaskSequenceDefinition","object",new ArrayList<>(),
+              List.of(new ToolParameterHelper("response","string",new ArrayList<>(),
+                      "What you want to say to the user", true),
+                      new ToolParameterHelper("currentTaskSequenceDefinition","object",new ArrayList<>(),
                               "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above.", true)
-                      ,
-                      new ToolParameterHelper("response","string",new ArrayList<>(),
-                              "What you want to say to the user", true)
               )),
 //            "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above.", true)
 ////                    ,
@@ -620,8 +623,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chat = chatContext.history;
       }
 
-      // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
-      if (!(chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION)) {
+      if (chatContext.chatType == ChatType.FOCUSED) {
+        tools.addAll(universalFocusedToolDefinitions);
+        // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+        if (chatContext.chatState == ChatState.VALIDATION) {
+          tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+        }
+      } else {
         // Add all matching system question response tools based off of expected reply semantics
         tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
       }
@@ -637,7 +645,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     //// Send created chat to LLM completion
-    Completion response = callChatCompletionStreaming(chat, tools);
+    Completion response;
+    if (streamResults) {
+      response = callChatCompletionStreaming(chat, tools);
+    } else {
+      response = callChatCompletion(chat, tools);
+    }
 
      if (response == null) {
       log.error("[parseUtteranceLLMService] have null Completion response");
@@ -711,7 +724,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       errorResponseBuilder = new StringBuilder();
 
       // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
-      Completion retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
+      Completion retryResponse;
+      if (streamResults) {
+        retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
+      } else {
+        retryResponse = callChatCompletion(chatContext.history, toolList);
+      }
 
       if (retryResponse == null) {
         handleErrorResponse(utterance, true, false);
@@ -773,6 +791,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     try {
       if (chatContext.chatType == ChatType.FOCUSED) {
         correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
+        if (correspondingTool == null) {
+          correspondingTool = universalFocusedToolset.get(functionCall.name);
+        }
       } else {
         correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
         if (correspondingTool == null) {
@@ -1249,7 +1270,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     genChat.setSystem(chatTemplates.systemMessageTemplate.apply(promptVars));
 
     Completion llmResponse;
-    if (streamingSayText) {
+    if (streamingSayText && streamResults) {
       llmResponse = callChatCompletionStreaming(genChat, null);
     } else {
       llmResponse = callChatCompletion(genChat, null);
@@ -1402,6 +1423,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             if (!argNames.isEmpty()) {
               templateArgumentName = argNames.iterator().next();
             }
+          } else {
+            focusedTextResponseTool = textResponseTool;
           }
           chat.addUserMessage("The previous conversation history leading up to this point is as follows:\n" + chatHistoryAsString + "\nLook for any relevant information from this conversation history to inform your initial response.");
           chat.setSystem(contextSpecificTemplate.systemMessageTemplate.apply(promptVars));
@@ -1435,7 +1458,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }
             errorResponseBuilder = new StringBuilder();
             // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
-            Completion response = callChatCompletionStreaming(chat, contextSpecificTemplate.toolDefinitions);
+            Completion response;
+            if (streamResults) {
+              // Currently not including universal focused tools here (i.e. suspend/cancel and itk targets). Is this in fact correct?
+              response = callChatCompletionStreaming(chat, contextSpecificTemplate.toolDefinitions);
+            } else {
+              response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
+            }
 
             if (response == null) {
               log.error("[focusDialogueChat] received null Completion response");
@@ -2506,10 +2535,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                 ToolFunction toolFunction = new ToolFunction();
                 toolFunction.name = this.textResponseTool.toolDefinition.function.name;
                 Map<String, Object> responseArguments = new LinkedTreeMap<>();
+                //TODO: this argument order needs to align with how it is defined on init - automatically enforce this
+                responseArguments.put("response", utterance.getWordsAsString());
                 if (!chatContext.lastTemplateName.isEmpty() && textResponseTool.toolDefinition.function.parameters.getProperties().containsKey(chatContext.lastTemplateName)) {
                   responseArguments.put(chatContext.lastTemplateName, chatContext.lastTemplateValue);
                 }
-                responseArguments.put("response", utterance.getWordsAsString());
                 toolFunction.arguments = new Gson().toJson(responseArguments);
                 toolCall.function = toolFunction;
                 chatContext.history.addRobotMessage("", List.of(toolCall));
