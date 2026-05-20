@@ -71,6 +71,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,6 +90,9 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
   private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
+  private final AtomicBoolean micMuted = new AtomicBoolean(false);
+  private final AtomicInteger micMuteCount = new AtomicInteger(0);
+  private final AtomicBoolean asrSessionTainted = new AtomicBoolean(false);
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private int numMaps = 0;
@@ -500,6 +504,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
+  public void disableMicrophone() {
+    int count = micMuteCount.incrementAndGet();
+    micMuted.set(true);
+    asrSessionTainted.set(true);
+    log.debug("[disableMicrophone] count={}; tainting any in-flight ASR session", count);
+  }
+
+  @TRADEService
+  public void enableMicrophone() {
+    int count = micMuteCount.decrementAndGet();
+    if (count <= 0) {
+      micMuteCount.set(0);
+      micMuted.set(false);
+    }
+    log.debug("[enableMicrophone] count={} muted={}", Math.max(0, count), micMuted.get());
+  }
+
+  @TRADEService
   @Action
   public void triggerWW() {
     if (ww_process_os == null) {
@@ -604,6 +626,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           log.info(s.toString());
 
+          asrSessionTainted.set(micMuted.get());
           if (!forcedWWInFlight.compareAndSet(true, false)) {
             try {
               TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
@@ -642,6 +665,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         boolean cutoff_result = false;
         //If ASR timed out, loop back to WW detection
         if (!result.isEmpty()) {
+          if (asrSessionTainted.compareAndSet(true, false)) {
+            log.info("[listenForWWAndASR] dropping ASR result captured while mic muted: {}", result.trim());
+            result = "";
+            continue;
+          }
           //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
           if (result.equals("<unk>\n") || result.equals("<novad>\n")) {
             if (result.equals("<unk>\n")) {

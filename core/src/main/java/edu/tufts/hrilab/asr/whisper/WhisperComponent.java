@@ -511,6 +511,7 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
     log.debug("[disableMicrophone] Disabling microphone");
     enabled = false;
   };
+
   @Override
   public void enableMicrophone () {
     log.debug("[enableMicrophone] Enabling microphone");

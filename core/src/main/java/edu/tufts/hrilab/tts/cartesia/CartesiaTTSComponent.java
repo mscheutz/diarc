@@ -1030,10 +1030,32 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @Override
   public boolean stopUtterance() {
+    // Signal any in-flight streaming session to terminate so the lambda exits
+    // its chunk-poll loop cleanly and fires onStreamCompleted (which handles
+    // enableMicrophone on the muted side).
+    StreamingTextBuffer buf;
+    synchronized (streamingLock) {
+      buf = activeBuffer;
+    }
+    if (buf != null) {
+      buf.complete();
+    }
     synchronized (lineLock) {
       if (audioLine != null) {
         audioLine.flush();
         audioLine.stop();
+      }
+    }
+    // Belt-and-suspenders: if onStreamCompleted does not run for some reason,
+    // the streaming-side disableMicrophone would never be unwound and the mic
+    // would stay muted indefinitely. enableMicrophone in AvaComponent clamps at
+    // zero so an extra call here is safe even when the normal path also fires.
+    if (muteMics) {
+      try {
+        TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
+        svc.call(void.class);
+      } catch (TRADEException e) {
+        log.debug("[stopUtterance] enableMicrophone unavailable");
       }
     }
     return true;
