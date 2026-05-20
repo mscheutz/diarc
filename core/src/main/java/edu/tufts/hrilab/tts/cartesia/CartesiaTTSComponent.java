@@ -125,16 +125,6 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private StreamingTextBuffer activeBuffer;
   private Future<Boolean> activeStreamingFuture;
 
-  private static String callerFrame() {
-    StackTraceElement[] st = new Throwable().getStackTrace();
-    for (int i = 1; i < Math.min(st.length, 6); i++) {
-      String cls = st[i].getClassName();
-      if (cls.endsWith("CartesiaTTSComponent") || cls.endsWith("AvaCartesiaTTSComponent")) continue;
-      return st[i].getClassName() + "." + st[i].getMethodName() + ":" + st[i].getLineNumber();
-    }
-    return "?";
-  }
-
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
@@ -388,7 +378,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       log.error("[sayText] no API key; cannot synthesize");
       return false;
     }
-    log.info("[sayText] enter text_len={} wait={} caller={}", text.length(), wait, callerFrame());
+    log.debug("[sayText] enter text_len={} wait={}", text.length(), wait);
 
     if (muteMics) {
       try {
@@ -466,7 +456,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @TRADEService
   public void pushStreamingSpeech(String fragment) {
-    log.info("[pushStreamingSpeech] enter frag_len={} caller={}", fragment == null ? 0 : fragment.length(), callerFrame());
+    log.debug("[pushStreamingSpeech] enter frag_len={}", fragment == null ? 0 : fragment.length());
     boolean startedNewSession = false;
     synchronized (streamingLock) {
       if (activeBuffer == null) {
@@ -498,7 +488,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @TRADEService
   public boolean endStreamingSpeech(boolean wait) {
-    log.info("[endStreamingSpeech] enter wait={} caller={}", wait, callerFrame());
+    log.debug("[endStreamingSpeech] enter wait={}", wait);
     StreamingTextBuffer buf;
     Future<Boolean> fut;
     synchronized (streamingLock) {
@@ -529,7 +519,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long tFirstByte = 0;
     long tFirstAudio = 0;
     long totalBytes = 0;
-    log.info("[lat] tts_request_send kind=cartesia text_len={}", text != null ? text.length() : 0);
+    log.debug("[lat] tts_request_send kind=cartesia text_len={}", text != null ? text.length() : 0);
     SourceDataLine line;
 
     synchronized (lineLock) {
@@ -659,7 +649,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long ttfbMs = tFirstByte > 0 ? (tFirstByte - tRequest) / 1_000_000 : -1;
     long ttfaMs = tFirstAudio > 0 ? (tFirstAudio - tRequest) / 1_000_000 : -1;
     long totalMs = (tEnd - tRequest) / 1_000_000;
-    log.info("[lat] tts_done kind=cartesia ttfb={}ms ttfa={}ms total={}ms bytes={} text_len={}",
+    log.debug("[lat] tts_done kind=cartesia ttfb={}ms ttfa={}ms total={}ms bytes={} text_len={}",
             ttfbMs, ttfaMs, totalMs, totalBytes, text != null ? text.length() : 0);
     speaking = false;
     return true;
@@ -674,7 +664,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long maxGapMs = 0;
     boolean underrun = false;
 
-    log.info("[lat] streamtts_begin");
+    log.debug("[lat] streamtts_begin");
     SourceDataLine line;
     synchronized (lineLock) {
       if (audioLine == null) {
@@ -757,7 +747,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
               tailLen = leftover;
             }
             tFirstAudio = System.nanoTime();
-            log.info("[lat] streamtts_first_audio elapsed={}ms", (tFirstAudio - tStart) / 1_000_000);
+            log.debug("[lat] streamtts_first_audio elapsed={}ms", (tFirstAudio - tStart) / 1_000_000);
             started = true;
           }
         } else {
@@ -822,7 +812,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     long ttfbMs = tFirstByte > 0 ? (tFirstByte - tStart) / 1_000_000 : -1;
     long ttfaMs = tFirstAudio > 0 ? (tFirstAudio - tStart) / 1_000_000 : -1;
     long totalMs = (tEnd - tStart) / 1_000_000;
-    log.info("[lat] streamtts_done ttfb={}ms ttfa={}ms total={}ms sends={} bytes={} max_gap={}ms underrun={}",
+    log.debug("[lat] streamtts_done ttfb={}ms ttfa={}ms total={}ms sends={} bytes={} max_gap={}ms underrun={}",
             ttfbMs, ttfaMs, totalMs, sendsRef[0], totalBytes, maxGapMs, underrun);
     synchronized (streamingLock) {
       if (activeBuffer == source) {
@@ -866,7 +856,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
           if (trimmed.isEmpty()) continue;
           sendStreamingChunk(conn, contextId, trimmed, true);
           sendsRef[0]++;
-          log.info("[lat] streamtts_send n={} chars={} elapsed={}ms continue=true",
+          log.debug("[lat] streamtts_send n={} chars={} elapsed={}ms continue=true",
                   sendsRef[0], trimmed.length(), (System.nanoTime() - tStart) / 1_000_000);
           firstChunk = false;
         }
@@ -874,7 +864,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
           String remaining = buf.toString().trim();
           sendStreamingChunk(conn, contextId, remaining, false);
           sendsRef[0]++;
-          log.info("[lat] streamtts_send n={} chars={} elapsed={}ms continue=false (final)",
+          log.debug("[lat] streamtts_send n={} chars={} elapsed={}ms continue=false (final)",
                   sendsRef[0], remaining.length(), (System.nanoTime() - tStart) / 1_000_000);
           return;
         }
@@ -918,6 +908,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             + "\"language\":\"" + language + "\","
             + "\"speed\":" + speedJson + ","
             + "\"context_id\":\"" + contextId + "\","
+            // TODO(pete): would max_buffer_delay_ms>0 reduce mid-stream gaps without adding TTFA?
             + "\"max_buffer_delay_ms\":0,"
             + "\"continue\":" + keepContinue + ","
             + "\"output_format\":{\"container\":\"raw\",\"encoding\":\"pcm_s16le\",\"sample_rate\":" + SAMPLE_RATE + "}"
@@ -1017,6 +1008,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
             + "\"language\":\"" + language + "\","
             + "\"speed\":" + speedJson + ","
             + "\"context_id\":\"" + contextId + "\","
+            // TODO(pete): would max_buffer_delay_ms>0 reduce mid-stream gaps without adding TTFA?
             + "\"max_buffer_delay_ms\":0,"
             + "\"continue\":false,"
             + "\"output_format\":{\"container\":\"raw\",\"encoding\":\"pcm_s16le\",\"sample_rate\":" + SAMPLE_RATE + "}"
@@ -1030,9 +1022,8 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @Override
   public boolean stopUtterance() {
-    // Signal any in-flight streaming session to terminate so the lambda exits
-    // its chunk-poll loop cleanly and fires onStreamCompleted (which handles
-    // enableMicrophone on the muted side).
+    // Signal any in-flight streaming session so the lambda exits cleanly via onStreamCompleted (which unwinds enableMicrophone).
+    // load-bearing -- without this the stream-thread sits on the buffer poll while we flush/stop the line, and onStreamCompleted never fires.
     StreamingTextBuffer buf;
     synchronized (streamingLock) {
       buf = activeBuffer;
@@ -1046,10 +1037,8 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         audioLine.stop();
       }
     }
-    // Belt-and-suspenders: if onStreamCompleted does not run for some reason,
-    // the streaming-side disableMicrophone would never be unwound and the mic
-    // would stay muted indefinitely. enableMicrophone in AvaComponent clamps at
-    // zero so an extra call here is safe even when the normal path also fires.
+    // Belt-and-suspenders: if onStreamCompleted is skipped, unwind enableMicrophone directly (AvaComponent clamps the refcount at 0, safe on double-enable).
+    // load-bearing -- without this a flush-mid-stream leaves micMuteCount > 0 indefinitely and every subsequent ASR result is dropped.
     if (muteMics) {
       try {
         TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
@@ -1063,7 +1052,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @TRADEService
   public void playAudioClip(String path) {
-    log.info("[playAudioClip] enter path={} caller={}", path, callerFrame());
+    log.debug("[playAudioClip] enter path={}", path);
     byte[] pcm = clipCache.computeIfAbsent(path, this::loadAndConvert);
     if (pcm == null || pcm.length == 0) {
       log.warn("[playAudioClip] no decoded audio for {}", path);

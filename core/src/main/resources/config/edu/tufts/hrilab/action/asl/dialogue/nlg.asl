@@ -267,14 +267,9 @@ import java.util.Map;
         //TODO: How to generally implement this? Specific only to interaction modalities which contain a wakeword
             // Q: How/where to configure what to do based on a specific addressee in a specific domain configuration?
         if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor")) {
-            // Arm post-drain WW rearm instead of triggering immediately. The streaming
-            // chunkHandler emits Ava's question concurrently with this async block; firing
-            // triggerWW here would race ahead of the audio and the mic-mute gate would drop
-            // the user's response. armPostStreamRearm sets a pending flag that
-            // onStreamCompleted consumes after line.drain returns. For paths where the
-            // question was already spoken synchronously via sayText before reaching here
-            // (e.g. askQuestionFromString nlg.asl:216), the streaming session that fires
-            // onStreamCompleted is the user's next reply, which is fine.
+            // armPostStreamRearm defers rearm to post-drain via streaming onStreamCompleted; firing triggerWW here races the streaming audio.
+            // load-bearing -- reverting to triggerWW() drops the user's reply (mic-mute gate captures Ava's own audio).
+            // TODO(pete): does the sync sayText path (askQuestionFromString) leave pendingRearm stale?
             act:armPostStreamRearm();
         }
       }

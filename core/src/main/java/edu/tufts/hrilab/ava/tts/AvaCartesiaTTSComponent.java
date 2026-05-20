@@ -23,13 +23,7 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
   @TRADEService
   @Action
   public void armPostStreamRearm() {
-    StackTraceElement[] st = new Throwable().getStackTrace();
-    StringBuilder caller = new StringBuilder();
-    for (int i = 1; i < Math.min(st.length, 6); i++) {
-      if (caller.length() > 0) caller.append(" <- ");
-      caller.append(st[i].getClassName()).append('.').append(st[i].getMethodName()).append(':').append(st[i].getLineNumber());
-    }
-    log.info("[armPostStreamRearm] set callers={}", caller.toString());
+    log.debug("[armPostStreamRearm] set");
     pendingRearm.set(true);
   }
 
@@ -52,19 +46,9 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
     } catch (TRADEException e) {
       log.debug("[sayText] unable to get lastResponseString from SocialLLMServiceProvider - should only occur if SocialLLM is disabled");
     }
-    // TODO: HACK -- duplicate-voicing suppression. After Eric's tool-param reorder (commit
-    // 35bfd740d, "Force response to come before templates"), the streaming chunkHandler emits
-    // the stillGatheringInformation.response field token-by-token to TTS. The legacy
-    // handleToolResponse -> sayText path then ALSO speaks the same content -> the response is
-    // voiced twice per turn. We detect the duplicate by matching utterance.words against
-    // chatContext.lastResponseString (set in SocialTRLLMServiceProvider.handleTextResponse for
-    // every LLM text response). String-equality is a proxy for "this content was streamed";
-    // the proper fix is in SocialTRLLMServiceProvider so handleToolResponse for the textResponseTool
-    // does not dispatch through sayText (or sets semantics that the dispatcher actually
-    // recognises as non-voicing). Until then, do NOT remove this gate: it is the only thing
-    // keeping Ava from saying every chitchat reply twice. Also do not move the triggerWW back
-    // inside this branch -- the streaming path's onStreamCompleted handles post-drain rearm,
-    // and a second triggerWW here would create a double rearm per turn.
+    // Duplicate-voicing gate: streaming chunkHandler emits stillGatheringInformation.response, then handleToolResponse re-dispatches the same text through sayText.
+    // load-bearing -- without this Ava speaks every chitchat reply twice. don't move triggerWW back into this branch either (streaming onStreamCompleted handles post-drain rearm).
+    // TODO(pete): should this gate live in SocialTRLLMServiceProvider.handleToolResponse instead?
     if (lastResponseString != null
             && utterance.getWordsAsString().equals(lastResponseString)
             && utterance.getType() == UtteranceType.REPLY) {

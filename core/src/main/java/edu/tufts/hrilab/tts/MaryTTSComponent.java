@@ -391,7 +391,7 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
 
   private boolean textToSpeech(String text, boolean wait) {
     long tRequest = System.nanoTime();
-    log.info("[lat] tts_request_send kind=mary text_len={}", text != null ? text.length() : 0);
+    log.debug("[lat] tts_request_send kind=mary text_len={}", text != null ? text.length() : 0);
     speaking = true;
     doc = db.newDocument();
     AtomicBoolean isDone = new AtomicBoolean(false);
@@ -420,7 +420,7 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
       long tSynthStart = System.nanoTime();
       request.process();
       long tSynthDone = System.nanoTime();
-      log.info("[lat] tts_synth_done kind=mary synth_ms={}", (tSynthDone - tSynthStart) / 1_000_000);
+      log.debug("[lat] tts_synth_done kind=mary synth_ms={}", (tSynthDone - tSynthStart) / 1_000_000);
       ais = request.getOutputData().getAudio();
 
       // either save the audio to .wav or output it as audio
@@ -469,13 +469,13 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
         playbackClip.loop(0);
         playbackClip.start();
         long tFirstAudio = System.nanoTime();
-        log.info("[lat] tts_first_audio kind=mary ttfa={}ms", (tFirstAudio - tRequest) / 1_000_000);
+        log.debug("[lat] tts_first_audio kind=mary ttfa={}ms", (tFirstAudio - tRequest) / 1_000_000);
 
         while (wait && !isDone.get()) {
           Util.Sleep(100);
         }
         long tDrainDone = System.nanoTime();
-        log.info("[lat] tts_done kind=mary total={}ms", (tDrainDone - tRequest) / 1_000_000);
+        log.debug("[lat] tts_done kind=mary total={}ms", (tDrainDone - tRequest) / 1_000_000);
         clipLock.lock();
         currentPlaybackClips.remove(playbackClip);
         clipLock.unlock();

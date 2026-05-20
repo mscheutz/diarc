@@ -143,6 +143,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           subscriber.call(void.class, event);
         } catch (Exception e) {
           log.error("Could not notify statistics subscriber: {}", subscriber, e);
+          // TODO(pete): is matching exception text the right subscriber-cleanup signal?
           if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || (e.getMessage() != null && e.getMessage().contains("tsi") && e.getMessage().contains("null"))) {
             toRemove.add(subscriber);
           }

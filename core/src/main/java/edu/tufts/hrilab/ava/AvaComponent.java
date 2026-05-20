@@ -401,6 +401,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           subscriber.call(void.class, event);
         } catch (Exception e) {
           log.error("Could not notify statistics subscriber: {}", subscriber, e);
+          // TODO(pete): is matching exception text the right subscriber-cleanup signal?
           if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || (e.getMessage() != null && e.getMessage().contains("tsi") && e.getMessage().contains("null"))) {
             toRemove.add(subscriber);
           }
@@ -974,7 +975,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
       double distToDock1 = currentPos.distance(dock1Pose.getLeft());
       double distToDock2 = currentPos.distance(dock2Pose.getLeft());
-      log.info("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
+      log.debug("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
       return distToDock1 <= distToDock2 ? "dock1" : "dock2";
     }
 
@@ -1787,7 +1788,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             }
             if (line.equals("ww detected")) {
               long pollMs = (System.nanoTime() - pollStart) / 1_000_000;
-              log.info("[lat] ww_marker_received polls={} poll_wait_ms={}", polls, pollMs);
+              log.debug("[lat] ww_marker_received polls={} poll_wait_ms={}", polls, pollMs);
               asrSessionTainted.set(micMuted.get());
               wwDetected = true;
             } else {
@@ -1838,7 +1839,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             if (line.startsWith("<full>") || line.startsWith("<novad>")
                 || line.startsWith("<unk>") || line.startsWith("<cutoff>")) {
               long asrPollMs = (System.nanoTime() - asrPollStart) / 1_000_000;
-              log.info("[lat] asr_result_received prefix={} text_len={} polls={} poll_wait_ms={}",
+              log.debug("[lat] asr_result_received prefix={} text_len={} polls={} poll_wait_ms={}",
                       line.split(" ", 2)[0], line.length(), asrPolls, asrPollMs);
               // Preserve trailing newline so the existing equals/startsWith checks below still match.
               result = line + "\n";
@@ -1930,7 +1931,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
           //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
           try {
-            log.info("[lat] dialogue_dispatch text=\"{}\"", result);
+            log.debug("[lat] dialogue_dispatch text=\"{}\"", result);
             TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
             log.info("Reported utterance \"" + result + "\"");
           } catch (TRADEException ex) {

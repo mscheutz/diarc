@@ -127,7 +127,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
   @Override
   public Utterance convertSemanticsToText(Utterance incoming) {
     long t0 = System.nanoTime();
-    log.info("[lat] nlg_entry");
+    log.debug("[lat] nlg_entry");
     log.debug("[convertSemanticsToText] hit with utterance: " + incoming);
 
     Future<Utterance> llmFuture = null;
@@ -162,7 +162,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             if (cachedOutput != null && !cachedOutput.getWordsAsString().isEmpty()) {
               log.debug("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
               log.debug("[convertSemanticsToText] Using cached NLG words: " + cachedOutput.getWordsAsString());
-              log.info("[lat] nlg_done dur={}ms path=cache", (System.nanoTime() - t0) / 1_000_000);
+              log.debug("[lat] nlg_done dur={}ms path=cache", (System.nanoTime() - t0) / 1_000_000);
               return cachedOutput;
             }
           }
@@ -181,7 +181,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
               if (useCache) {
                 cacheNLGOutput(output);
               }
-              log.info("[lat] nlg_done dur={}ms path=llm", (System.nanoTime() - t0) / 1_000_000);
+              log.debug("[lat] nlg_done dur={}ms path=llm", (System.nanoTime() - t0) / 1_000_000);
               return output;
             }
           }
@@ -199,7 +199,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
               if (useCache && cacheSimpleNLG) {
                 cacheNLGOutput(simpleNLGOutput);
               }
-              log.info("[lat] nlg_done dur={}ms path=simple", (System.nanoTime() - t0) / 1_000_000);
+              log.debug("[lat] nlg_done dur={}ms path=simple", (System.nanoTime() - t0) / 1_000_000);
               return simpleNLGOutput;
             }
           }
@@ -209,7 +209,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
       }
     }
 
-    log.info("[lat] nlg_done dur={}ms path=fallthrough", (System.nanoTime() - t0) / 1_000_000);
+    log.debug("[lat] nlg_done dur={}ms path=fallthrough", (System.nanoTime() - t0) / 1_000_000);
     return output;
   }
 

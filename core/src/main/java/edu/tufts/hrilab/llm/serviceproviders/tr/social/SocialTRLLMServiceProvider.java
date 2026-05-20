@@ -1765,6 +1765,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       streamingResults.put(id, parser);
     }
 
+    // TODO(pete): is silently dropping the delta the right posture if parser.feed throws?
     try {
       parser.feed(content);
     } catch (Exception e) {
