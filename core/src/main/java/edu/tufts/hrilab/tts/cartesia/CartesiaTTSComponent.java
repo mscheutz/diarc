@@ -831,12 +831,12 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       }
     }
     speaking = false;
-    onStreamCompleted();
+    onStreamCompleted(target.aborted);
     log.info("[streamAndPlayStreaming] exit aborted={}", target.aborted);
     return true;
   }
 
-  protected void onStreamCompleted() {
+  protected void onStreamCompleted(boolean aborted) {
     if (muteMics) {
       try {
         TRADEServiceInfo svc = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone"));
