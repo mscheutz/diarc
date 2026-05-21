@@ -1730,7 +1730,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     matcher = tool_call_pattern.matcher(text);
     List<String> raw_function_calls = new ArrayList<>();
     while (matcher.find()) {
-      String res = matcher.group(0).isEmpty() ? matcher.group(0) : matcher.group(1);
+      String res = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
       raw_function_calls.add(res);
     }
 
@@ -1757,7 +1757,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         tool_call_pattern = Pattern.compile(tool_call_parameter_regex_string, Pattern.DOTALL);
         matcher = tool_call_pattern.matcher(parameters);
         while (matcher.find()) {
-          String res = matcher.group(1);
+          String res = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
           int index = res.indexOf(">");
           String param_name = res.substring(0, index);
           String param_value = res.substring(index + 1);

@@ -29,6 +29,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.awt.geom.Point2D;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -105,7 +106,8 @@ public class AvaDisplayComponent extends DiarcComponent {
   private static final String USER_PREFIX = "user:";
 
   private JPanel listeningIndicatorPane;
-  private JLabel listeningIndicatorLabel;
+  private BufferedImage listeningIndicatorImage;
+  private BufferedImage listeningIndicatorComposite;
   private static final String LISTENING_INDICATOR_IMAGE = System.getProperty("user.home") + "/.diarc/ava/cramertransparent2.png";
   private static final double LISTENING_INDICATOR_HEIGHT_FRACTION = 0.6;
 
@@ -272,8 +274,8 @@ public class AvaDisplayComponent extends DiarcComponent {
     cardLayout = new CardLayout();
     cardPanel.setLayout(cardLayout);
 
-    JPanel imagePanel = new JPanel();
-    imagePanel.add(canvas);
+    JPanel imagePanel = new JPanel(new BorderLayout());
+    imagePanel.add(canvas, BorderLayout.CENTER);
     imagePanel.setPreferredSize(new Dimension((int) screenWidth, (int) screenHeight));
     imagePanel.setBackground(new Color(0, 0, 0));
 
@@ -327,31 +329,39 @@ public class AvaDisplayComponent extends DiarcComponent {
 
     cardPanel.add(mediaPlayerComponent);
 
-    listeningIndicatorPane = new JPanel(null);
-    listeningIndicatorPane.setOpaque(true);
-    listeningIndicatorPane.setBackground(Color.BLACK);
     try {
-      BufferedImage img = ImageIO.read(new File(LISTENING_INDICATOR_IMAGE));
-      if (img != null) {
-        int targetHeight = (int) (screenHeight * LISTENING_INDICATOR_HEIGHT_FRACTION);
-        int targetWidth = (int) (img.getWidth() * ((double) targetHeight / img.getHeight()));
-        Image scaled = img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
-        listeningIndicatorLabel = new JLabel(new ImageIcon(scaled));
-        listeningIndicatorLabel.setBounds(
-            (int) ((screenWidth - targetWidth) / 2),
-            (int) ((screenHeight - targetHeight) / 2),
-            targetWidth, targetHeight);
-        listeningIndicatorPane.add(listeningIndicatorLabel);
-        log.info("[initializeFrame] listening indicator loaded {}x{} scaled {}x{} bounds={}",
-            img.getWidth(), img.getHeight(), targetWidth, targetHeight, listeningIndicatorLabel.getBounds());
-      } else {
-        log.warn("[initializeFrame] listening indicator image returned null: {}", LISTENING_INDICATOR_IMAGE);
-      }
+      listeningIndicatorImage = ImageIO.read(new File(LISTENING_INDICATOR_IMAGE));
     } catch (IOException e) {
       log.warn("[initializeFrame] could not load listening indicator image {}: {}", LISTENING_INDICATOR_IMAGE, e.toString());
     }
+    if (listeningIndicatorImage == null) {
+      log.warn("[initializeFrame] listening indicator image unavailable: {}", LISTENING_INDICATOR_IMAGE);
+    }
+
+    // Custom paint: radial vignette behind the head plus a soft glow halo so the asset's
+    // hard alpha cutout edge blends into the background instead of reading as a bad mask.
+    listeningIndicatorPane = new JPanel() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        int pw = getWidth();
+        int ph = getHeight();
+        if (pw <= 0 || ph <= 0) {
+          return;
+        }
+        if (listeningIndicatorComposite == null
+            || listeningIndicatorComposite.getWidth() != pw
+            || listeningIndicatorComposite.getHeight() != ph) {
+          listeningIndicatorComposite = renderListeningIndicator(pw, ph);
+        }
+        g.drawImage(listeningIndicatorComposite, 0, 0, null);
+      }
+    };
+    listeningIndicatorPane.setOpaque(true);
     listeningIndicatorPane.setVisible(false);
     frame.setGlassPane(listeningIndicatorPane);
+    // pre-render so the first show is an instant blit, not a full re-render on the EDT
+    listeningIndicatorComposite = renderListeningIndicator((int) screenWidth, (int) screenHeight);
 
     if (isFullscreen) {
       frame.setUndecorated(true);
@@ -419,6 +429,37 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void startIdleImageCycle() {
     idleImageCycleRunning = true;
     continueIdleImageCycle();
+  }
+
+  private BufferedImage renderListeningIndicator(int pw, int ph) {
+    BufferedImage out = new BufferedImage(pw, ph, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g2 = out.createGraphics();
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+    Point2D ctr = new Point2D.Float(pw / 2f, ph / 2f);
+    g2.setPaint(new RadialGradientPaint(ctr, Math.max(pw, ph) * 0.75f,
+        new float[]{0f, 1f}, new Color[]{new Color(38, 40, 46), new Color(0, 0, 0)}));
+    g2.fillRect(0, 0, pw, ph);
+    if (listeningIndicatorImage != null) {
+      int th = (int) (ph * LISTENING_INDICATOR_HEIGHT_FRACTION);
+      int tw = (int) (listeningIndicatorImage.getWidth() * ((double) th / listeningIndicatorImage.getHeight()));
+      int x = (pw - tw) / 2;
+      int y = (ph - th) / 2;
+      g2.setPaint(new RadialGradientPaint(ctr, Math.max(tw, th) * 0.62f,
+          new float[]{0f, 1f}, new Color[]{new Color(150, 160, 190, 110), new Color(150, 160, 190, 0)}));
+      g2.fillRect(0, 0, pw, ph);
+      g2.drawImage(listeningIndicatorImage, x, y, tw, th, null);
+    }
+    g2.dispose();
+    return out;
+  }
+
+  // Lets ASL drive the listening indicator off (mirrors triggerWW's no-arg pattern;
+  // passing a boolean from ASL is the same type-coercion headache as displayText).
+  @TRADEService
+  @Action
+  public void hideListeningIndicator() {
+    setListeningIndicator(false);
   }
 
   @TRADEService
@@ -742,14 +783,12 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void displayText(String text) {
     log.debug("displayText(" + text + ")");
     unsetIdle();
-    canvas.setText(text, textTimeout);
   }
 
   @TRADEService
   public void displayText(String text, long timeout) {
     log.debug("displayText {} {}", text, timeout);
     unsetIdle();
-    canvas.setText(text, timeout);
   }
 
   /**

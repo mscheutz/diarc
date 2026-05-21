@@ -239,8 +239,26 @@ import java.lang.Boolean;
     edu.tufts.hrilab.action.ActionStatus !status;
     Predicate !becausePredicate;
     Predicate !failureReasonPredicate;
+    java.lang.String !stateName;
 
     if (op:equals(?addressee, ?actor)) {
+
+      // HACK (TODO: move this out of core dialogue). This couples core handleWant to the
+      // Ava-only listening indicator: drop the robot head when a real task action (not a
+      // generateResponse/updateDialogueHistory reply) is submitted, so the head goes away
+      // once we stop listening to go do something (e.g. "go to chair 1"). Guarded so non-Ava
+      // configs (yumi/spot/etc.) no-op. Proper fix: an Ava-side goal-submission listener
+      // (GoalManagerNotifier) that filters task vs dialogue goals instead of editing core ASL.
+      !stateName = op:getName(?state);
+      if (~op:equals(!stateName,"generateResponseFromString")) {
+        if (~op:equals(!stateName,"updateDialogueHistoryFromString")) {
+          try {
+            act:hideListeningIndicator();
+          } catch(!hideErr) {
+            op:log("debug", "[handleWant] hideListeningIndicator unavailable (non-Ava config)");
+          }
+        }
+      }
 
       try {
         //TODO: Empirically tune ack semantics

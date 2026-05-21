@@ -542,6 +542,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
     log.info("[triggerWW] in method");
     forcedWWInFlight.set(true);
+    updateListeningIndicator(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -650,6 +651,9 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             micMuteCount.set(0);
             micMuted.set(false);
             asrSessionTainted.set(false);
+            // Real wake-word brings up the listening indicator; forced/auto rearms keep it
+            // up via triggerWW, so it persists across the conversation instead of per turn.
+            updateListeningIndicator(true);
           }
 
           //Display on screen that we are now listening using ASR
@@ -660,7 +664,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           } else {
             shouldDing = true;
           }
-          updateListeningIndicator(true);
 
           //// ASR ////
           //Wait for ASR result:
@@ -675,7 +678,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           result = s.toString();
         }
-        updateListeningIndicator(false);
 
         //Parse ASR result - form: <prefix> <speech>
         //  <unk> == base failure case - ASR timed out before detecting any voice activity or was unable to transcribe anything
@@ -704,6 +706,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (result.equals("<novad>\n")) {
               displayText("<No voice input detected>", 5000);
             }
+            updateListeningIndicator(false);
             result = "";
             continue;
           } else if (result.startsWith("<cutoff> ")) {
@@ -744,6 +747,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (utterance.getType() == UtteranceType.UNKNOWN) {
               //TODO: How should this be phrased?
               displayText("<Input could not be understood and detected as potential background noise>", 10000);
+              updateListeningIndicator(false);
               result = "";
               continue;
             } else {

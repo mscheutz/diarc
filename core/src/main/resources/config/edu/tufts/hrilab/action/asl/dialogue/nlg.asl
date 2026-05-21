@@ -271,6 +271,9 @@ import java.util.Map;
             // load-bearing -- reverting to triggerWW() drops the user's reply (mic-mute gate captures Ava's own audio).
             // TODO(pete): does the sync sayText path (askQuestionFromString) leave pendingRearm stale?
             act:armPostStreamRearm();
+        } else {
+            // not auto-rearming this turn: drop the listening indicator to match (head follows the WW rearm decision).
+            act:hideListeningIndicator();
         }
       }
       !tracker = op:newObject("java.lang.Integer", 1);
