@@ -82,11 +82,7 @@ public class SimpleImageElement {
         image = null;
     }
 
-    public void paint(Graphics2D g) {
-        Rectangle bounds = g.getClipBounds();
-        int canvasWidth = bounds.width;
-        int canvasHeight = bounds.height;
-
+    public void paint(Graphics2D g, int canvasWidth, int canvasHeight) {
         if (image != null) {
             int imageWidth = image.getWidth(null);
             int imageHeight = image.getHeight(null);

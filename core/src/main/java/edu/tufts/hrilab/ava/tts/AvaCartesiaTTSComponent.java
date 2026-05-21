@@ -67,9 +67,12 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
   private static final long POST_DRAIN_REARM_DELAY_MS = 500;
 
   @Override
-  protected void onStreamCompleted() {
-    super.onStreamCompleted();
-    if (pendingRearm.compareAndSet(true, false)) {
+  protected void onStreamCompleted(boolean aborted) {
+    super.onStreamCompleted(aborted);
+    // On abort the user already barged in with the wake word, which opens its own listen and
+    // raises the indicator -- skip the post-drain rearm. The sleep would otherwise hold the
+    // shared single-thread executor and delay the interrupt ding queued right behind us.
+    if (pendingRearm.compareAndSet(true, false) && !aborted) {
       try {
         Thread.sleep(POST_DRAIN_REARM_DELAY_MS);
       } catch (InterruptedException ie) {

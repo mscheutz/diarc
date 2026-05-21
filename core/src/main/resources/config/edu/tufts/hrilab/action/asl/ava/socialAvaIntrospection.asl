@@ -629,6 +629,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponseFromString(!output);
     if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
         act:triggerWW();
+    } else {
+        act:hideListeningIndicator();
     }
     //}
 }
@@ -643,6 +645,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponseFromString(!output);
     if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
         act:triggerWW();
+    } else {
+        act:hideListeningIndicator();
     }
     //}
 }
@@ -657,6 +661,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponseFromString(!output);
     if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
         act:triggerWW();
+    } else {
+        act:hideListeningIndicator();
     }
     //}
 }

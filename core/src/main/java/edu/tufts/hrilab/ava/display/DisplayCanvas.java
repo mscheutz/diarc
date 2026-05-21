@@ -4,12 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import javax.swing.JPanel;
 import java.util.List;
 
 /**
  * Class representing the canvas object used to render image, text and other graphical elements for the display.
  */
-public class DisplayCanvas extends Canvas {
+public class DisplayCanvas extends JPanel {
   private final int w; // Width
   private final int h; // And height of the canvas
   private int screenPad = 20;
@@ -38,8 +39,10 @@ public class DisplayCanvas extends Canvas {
    * @param height Height of the display canvas.
    */
   public DisplayCanvas(int width, int height) {
+    setOpaque(true);
     setBackground(bg);
     setSize(width, height);
+    setPreferredSize(new Dimension(width, height));
     w = width;
     h = height;
     int fontSize = (int) ((float) height * .07222f);
@@ -170,14 +173,13 @@ public class DisplayCanvas extends Canvas {
    * @param g Graphics object from Canvas class
    */
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    Graphics2D g2d = (Graphics2D) g;
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    Graphics2D g2d = (Graphics2D) g.create();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2d.setColor(bg);
 
     if (!isIdle) {
-      simpleImageElement.paint(g2d);
+      simpleImageElement.paint(g2d, getWidth(), getHeight());
       List<DialogueMessage> messages = dialogueManager.getMessages();
       Rectangle baseTestFootPrint = simpleTextElement.paint(g2d, screenPad);
       if (baseTestFootPrint.height == 0) {
@@ -185,8 +187,6 @@ public class DisplayCanvas extends Canvas {
       } else {
         simpleTextElement.paintDialogue(g2d, messages, baseTestFootPrint.y - screenPad, screenPad, !dialogueManager.isUseChat());
       }
-    } else {
-      g2d.fillRect(0, 0, w, h);
     }
 
     g2d.dispose();

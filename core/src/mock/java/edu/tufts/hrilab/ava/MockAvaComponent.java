@@ -522,6 +522,16 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     log.debug("[enableMicrophone] count={} muted={}", Math.max(0, count), micMuted.get());
   }
 
+  private void updateListeningIndicator(boolean visible) {
+    log.info("[updateListeningIndicator] visible={}", visible);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
+              .call(void.class, visible);
+    } catch (TRADEException e) {
+      log.debug("[updateListeningIndicator] setListeningIndicator unavailable");
+    }
+  }
+
   @TRADEService
   @Action
   public void triggerWW() {
@@ -532,6 +542,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
     log.info("[triggerWW] in method");
     forcedWWInFlight.set(true);
+    updateListeningIndicator(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -634,6 +645,15 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             } catch (TRADEException e) {
               log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
             }
+            // User-WW interrupt: user is speaking to us right now. Flush mute /
+            // taint state so the in-flight cascade-mute brackets don't drop the
+            // user's actual interrupt utterance via asrSessionTainted.
+            micMuteCount.set(0);
+            micMuted.set(false);
+            asrSessionTainted.set(false);
+            // Real wake-word brings up the listening indicator; forced/auto rearms keep it
+            // up via triggerWW, so it persists across the conversation instead of per turn.
+            updateListeningIndicator(true);
           }
 
           //Display on screen that we are now listening using ASR
@@ -686,6 +706,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (result.equals("<novad>\n")) {
               displayText("<No voice input detected>", 5000);
             }
+            updateListeningIndicator(false);
             result = "";
             continue;
           } else if (result.startsWith("<cutoff> ")) {
@@ -726,6 +747,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (utterance.getType() == UtteranceType.UNKNOWN) {
               //TODO: How should this be phrased?
               displayText("<Input could not be understood and detected as potential background noise>", 10000);
+              updateListeningIndicator(false);
               result = "";
               continue;
             } else {
