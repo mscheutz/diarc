@@ -2833,7 +2833,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       } else {
         //// Handle General String (Symbol/Predicate)
         String stringValue = (String) parameterValue;
-        if (parentTool.function.name.equals(textResponseTool.toolDefinition.function.name) || parentTool.function.name.equals("say")) {
+        if (parentTool.function.name.equals(textResponseTool.toolDefinition.function.name) || parentTool.function.name.equals("sayLocally")) {
           if (!(stringValue.startsWith("\"") && stringValue.endsWith("\""))) {
             stringValue = "\"" + stringValue + "\"";
           }
@@ -3721,7 +3721,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "listSavedImages":
         case "reportIsVideoSaved":
         case "sayText":
-        case "say":
+        case "sayLocally":
         case "reportBatteryLevel":
         case "generateResponseFromString":
         case "getAllKnownLocations":
@@ -3807,8 +3807,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You follow the user. \n- Example instruction: \"follow me.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("say",
-            "The speaker on the robot will emit the supplied phrase. Do not use this when you want to say something to the user. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=say><parameter=words>\"welcome to the event!\"</parameter></function>",
+    definition = new ToolDefinition("sayLocally",
+            "The speaker on the robot will emit the supplied phrase. Do not use this when you want to say something to the user. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>",
             List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("stopFollow",
