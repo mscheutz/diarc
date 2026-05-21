@@ -61,7 +61,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             !sep = op:newObject("java.lang.String",", ");
             //act:generateResponseFromString(!locationNameStr);
         }
-        op:invokeMethod(!sb,"append",". Please list no more than 5 locations at a time in any response, unless explicitly asked for all/more/different locations.");
+        op:invokeMethod(!sb,"append",". Please list no more than 5 locations at a time in any response, unless explicitly asked for all/more/different locations. You may still let the user know the total number of locations you have saved though.");
         ?output = op:invokeMethod(!sb,"toString");
     }
 }
