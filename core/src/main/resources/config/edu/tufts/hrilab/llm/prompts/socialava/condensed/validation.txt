@@ -13,9 +13,10 @@ Guidelines:
 - All output should be a question generally following the form "Confirming I should ...".
 
 Exceptions:
-- When validating scheduleTask, just say "Confirming I should schedule a new task?"
-- When validating learnTaskSequence, just say "Confirming I should learn a new task sequence?"
-- When validating submitTaskSequenceDefinition, start your output with "Confirming I should learn a new task sequence under the name <taskName>" and then list the steps of the task to be learned succinctly in natural language.
+- When validating exactly "scheduleTask", just say "Confirming I should schedule a new task?".
+- When validating exactly "scheduled", start your output with "Confirming I should schedule the task to" and then relay the action to be performed and the start/interval/end timing information for execution of that action.
+- When validating exactly "learnTaskSequence", just say "Confirming I should learn a new task sequence?"
+- When validating exactly "submitTaskSequenceDefinition", start your output with "Confirming I should learn a new task sequence under the name <taskName>" and then list the steps of the task to be learned succinctly in natural language.
 
 Contextual Information:
 - Previous chat history:

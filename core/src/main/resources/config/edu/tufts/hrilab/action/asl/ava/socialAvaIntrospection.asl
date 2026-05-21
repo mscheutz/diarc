@@ -61,6 +61,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             !sep = op:newObject("java.lang.String",", ");
             //act:generateResponseFromString(!locationNameStr);
         }
+        op:invokeMethod(!sb,"append",". Please list no more than 5 locations at a time in any response, unless explicitly asked for all/more/different locations.");
         ?output = op:invokeMethod(!sb,"toString");
     }
 }
@@ -540,6 +541,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateActionStepsString(?action);
+    !output = op:newObject("java.lang.String","!output Summarize this description if relaying to the user.");
     String !contextId = this:getCommand();
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {

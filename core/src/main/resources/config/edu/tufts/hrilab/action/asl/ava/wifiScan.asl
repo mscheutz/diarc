@@ -5,7 +5,7 @@ import java.util.List;
 import java.lang.String;
 import java.lang.Integer;
 
-() = measureWifi() {
+() = measureWifiAtCurrentLocation() {
     Integer !rssi = 0;
     Variable !x;
 
@@ -68,7 +68,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportWifiAtLocations(Predicate ?locations) {
+() = reportWifiOfLocations(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -106,8 +106,8 @@ import java.lang.Integer;
     }
 }
 
-() = reportWifiAtCurrentLocation() {
-    act:measureWifi();
+() = reportWifiOfCurrentLocation() {
+    act:measureWifiAtCurrentLocation();
 
     Symbol !currentLocation;
     String !output;
@@ -117,7 +117,7 @@ import java.lang.Integer;
 }
 
 () = getWifiAtCurrentLocationString() {
-    act:measureWifi();
+    act:measureWifiAtCurrentLocation();
 
     Symbol !currentLocation;
     String !output;
