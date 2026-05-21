@@ -524,9 +524,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     List<String> locations = getLocations("self", true);
     List<String> videos = getVideoNames();
     List<String> images = getImageNames();
-    String locationList = " -- " + String.join(":location\n -- ", locations);
+    String locationList = " -- " + String.join("\n -- ", locations);
     if (!locationList.isEmpty()) {
-      locationList += ":location\n";
+      locationList += "\n";
     }
     String videoList = " -- " + String.join("\n -- ", videos);
     if (!videoList.isEmpty()) {
@@ -2502,6 +2502,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
         output += questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
         output += "\nThere should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
+      } else {
+        output += "<No questions have been asked by the back end system>";
       }
     } catch (TRADEException e) {
       log.error("[getCurrentQuestionsString] error getting last question for agent");
@@ -3807,8 +3809,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You follow the user. \n- Example instruction: \"follow me.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    //TODO: could also turn off validation for this? (only for local user?)
     definition = new ToolDefinition("sayLocally",
-            "The speaker on the robot will emit the supplied phrase. Do not use this when you want to say something to the user. This should be targeted when a user is explicitly instructing you to say something, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>",
+            "The speaker on the robot will emit the supplied phrase. Do not use this when you want to respond to the user. This should be targeted when a user is explicitly instructing you to say something out loud in person, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>",
             List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("stopFollow",
