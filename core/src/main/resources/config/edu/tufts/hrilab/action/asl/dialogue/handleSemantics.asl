@@ -263,7 +263,7 @@ import java.lang.Boolean;
       try {
         //TODO: Empirically tune ack semantics
         if (op:equals(?validated,false)) {
-            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
         } else {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
         }
@@ -494,13 +494,22 @@ import java.lang.Boolean;
         //  ^Eventually this logic will need to be extended to explicitly find the goal(s) occupying the required resources
         if (op:isEmpty(!currentGoals)) {
             if(~act:checkIgnoreTentativeAccept(?state)){
-                //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
-                ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
-                ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
-                ////  if not terminated and/or conditional timing based on the goal itself.
-                //async {
-                    act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-                //}
+                if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+                    act:generateResponseFromString(?speaker,"understood");
+                } else {
+                    // Filler response before actual tentative accept generation
+                    async {
+                        act:generateResponseFromString(?speaker,"understood");
+                    }
+
+                    //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
+                    ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
+                    ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
+                    ////  if not terminated and/or conditional timing based on the goal itself.
+                    //async {
+                        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+                    //}
+                }
             }
         } else {
             foreach (!goalPred : !currentGoals) {
@@ -510,21 +519,34 @@ import java.lang.Boolean;
                 }
             }
             //TODO: experiment with phrasing of these preds / format for LLM NLG in a smarter way relating to current conflicting task(s)
+            //TODO: short term change these to strings and figure out multilingual support later
             if (op:equals(!currentGoalActive,true)) {
-                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,IWillDoSoWhenFinishedWithMyHigherPriorityTasks)");
-                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willPerform(?state,whenFinishedWithHigherPriorityTasks)");
+                act:generateResponseFromString(?speaker,"I will do so when finished with my higher priority tasks");
+                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(IWillDoSoWhenFinishedWithMyHigherPriorityTasks)");
+                ////!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willPerform(?state,whenFinishedWithHigherPriorityTasks)");
             } else {
-                !goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,IAmCurrentlyWaitingOnASuspendedTaskButWillGetToThatWhenICan)");
+                act:generateResponseFromString(?speaker,"I am currently waiting on a suspended task but will get to that when I can");
+                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(IAmCurrentlyWaitingOnASuspendedTaskButWillGetToThatWhenICan)");
             }
-            //async {
-                act:generateResponse(?speaker,!goalSubmittedPred);
-            //}
+            ////async {
+            //    act:generateResponse(?speaker,!goalSubmittedPred);
+            ////}
         }
     } else {
         if(~act:checkIgnoreTentativeAccept(?state)){
-            //async {
-                act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-            //}
+            if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+                act:generateResponseFromString(?speaker,"understood");
+            } else {
+                // Filler response before actual tentative accept generation
+                async {
+                    act:generateResponseFromString("okay");
+                }
+
+                //async {
+                    act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+                //}
+            }
+
         }
     }
 

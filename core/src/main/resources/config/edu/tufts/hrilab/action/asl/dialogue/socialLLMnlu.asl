@@ -159,11 +159,14 @@ import java.lang.String;
     !speaker = op:invokeMethod(?unvalidatedUtterance, "getSpeaker");
 
     op:log("debug", "Validating utterance: ?unvalidatedUtterance");
-
     if (op:equals(?updateHistory,true)) {
         // Update dialogue history explicitly here so that it shows up in any UI element before the validation question is asked or answered
         act:updateDialogueHistory(?unvalidatedUtterance);
     }
+
+    // Filler response in between instruction parse and validation response generation
+    act:generateResponseFromString(!speaker,"sounds good");
+
     // (Social LLM) Measure current conversation history length in order to know whether validated inputs can be parsed
     !historyLength = tsc:getLLMConversationLength(!speaker,!addressee);
 
@@ -343,6 +346,10 @@ import java.lang.String;
     Predicate !submissionPredicate;
 
     op:log("info","[runContextSpecificChat] in method");
+
+    //GenerateResponse or sayText? Do we want this in the history?
+    //Filler response on context transfer
+    act:generateResponseFromString(?user,"Gathering all relevant information");
 
     // Have convoluted wrapper script to submit the initial side effect of instructing the "focus context" action as a
     //  separate goal in order for all possible interactions to work as intended: e.g. interruption methods, initial text
