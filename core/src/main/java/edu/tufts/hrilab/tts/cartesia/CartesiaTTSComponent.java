@@ -53,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CartesiaTTSComponent extends DiarcComponent implements SpeechProductionInterface {
 
@@ -98,6 +99,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     final String contextId;
     final LinkedBlockingQueue<byte[]> chunks = new LinkedBlockingQueue<>();
     final CompletableFuture<Void> done = new CompletableFuture<>();
+    volatile boolean aborted = false;
     StreamTarget(String contextId) { this.contextId = contextId; }
   }
 
@@ -109,6 +111,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   public static final class StreamingTextBuffer implements StreamingTextSource {
     private final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
     private volatile boolean producerDone = false;
+    final AtomicBoolean dropLogged = new AtomicBoolean(false);
     public void push(String fragment) {
       if (fragment != null && !fragment.isEmpty()) queue.offer(fragment);
     }
@@ -465,7 +468,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         activeStreamingFuture = executor.submit((Callable<Boolean>) () -> streamAndPlayStreaming(src, true));
         startedNewSession = true;
       } else if (activeBuffer.producerDone) {
-        log.warn("[pushStreamingSpeech] dropping fragment: producer already marked done");
+        if (activeBuffer.dropLogged.compareAndSet(false, true)) {
+          log.warn("[pushStreamingSpeech] dropping post-completion fragments (producer marked done); further drops at debug");
+        } else {
+          log.debug("[pushStreamingSpeech] dropping fragment: producer already marked done");
+        }
         return;
       }
       activeBuffer.push(fragment);
@@ -572,6 +579,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     ByteArrayOutputStream prime = new ByteArrayOutputStream(8192);
     try {
       while (true) {
+        if (target.aborted) break;
         byte[] chunk = target.chunks.poll(CHUNK_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (chunk == null) {
           log.error("[streamAndPlay] WS timeout waiting for chunk after {}ms", CHUNK_POLL_TIMEOUT_MS);
@@ -665,6 +673,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     boolean underrun = false;
 
     log.debug("[lat] streamtts_begin");
+    log.info("[streamAndPlayStreaming] enter");
     SourceDataLine line;
     synchronized (lineLock) {
       if (audioLine == null) {
@@ -708,6 +717,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     ByteArrayOutputStream prime = new ByteArrayOutputStream(8192);
     try {
       while (true) {
+        if (target.aborted) break;
         byte[] chunk = target.chunks.poll(CHUNK_POLL_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (chunk == null) {
           log.error("[streamAndPlayStreaming] WS timeout waiting for chunk after {}ms", CHUNK_POLL_TIMEOUT_MS);
@@ -822,6 +832,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
     }
     speaking = false;
     onStreamCompleted();
+    log.info("[streamAndPlayStreaming] exit aborted={}", target.aborted);
     return true;
   }
 
@@ -1022,14 +1033,25 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   @Override
   public boolean stopUtterance() {
-    // Signal any in-flight streaming session so the lambda exits cleanly via onStreamCompleted (which unwinds enableMicrophone).
-    // load-bearing -- without this the stream-thread sits on the buffer poll while we flush/stop the line, and onStreamCompleted never fires.
+    // Abort any in-flight streaming session: complete the text buffer, mark the playback
+    // target aborted, and push END_SENTINEL so the playback lambda breaks out of its chunk
+    // poll immediately and runs onStreamCompleted. This frees the shared single-thread
+    // executor for the interrupt ding queued right behind us.
+    // load-bearing -- without the abort the lambda drains the talked-over response to its
+    // natural END_SENTINEL (~1s) and the ding can't play until then.
     StreamingTextBuffer buf;
     synchronized (streamingLock) {
       buf = activeBuffer;
     }
     if (buf != null) {
       buf.complete();
+    }
+    StreamTarget t = currentTarget;
+    log.info("[stopUtterance] enter streamingActive={}", t != null);
+    if (t != null) {
+      t.aborted = true;
+      t.done.complete(null);
+      t.chunks.offer(END_SENTINEL);
     }
     synchronized (lineLock) {
       if (audioLine != null) {
@@ -1058,8 +1080,10 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       log.warn("[playAudioClip] no decoded audio for {}", path);
       return;
     }
+    final long tSubmit = System.nanoTime();
     executor.submit(() -> {
       try {
+        long tRun = System.nanoTime();
         SourceDataLine line;
         synchronized (lineLock) {
           if (audioLine == null) {
@@ -1071,6 +1095,8 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
         line.start();
         line.write(pcm, 0, pcm.length);
         line.drain();
+        log.info("[playAudioClip] {} queue_wait={}ms play={}ms", path,
+                (tRun - tSubmit) / 1_000_000, (System.nanoTime() - tRun) / 1_000_000);
       } catch (Exception e) {
         log.error("[playAudioClip] {} failed", path, e);
       }

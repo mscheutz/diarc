@@ -104,6 +104,11 @@ public class AvaDisplayComponent extends DiarcComponent {
   private static final String IDLE_PREFIX = "idle:";
   private static final String USER_PREFIX = "user:";
 
+  private JPanel listeningIndicatorPane;
+  private JLabel listeningIndicatorLabel;
+  private static final String LISTENING_INDICATOR_IMAGE = System.getProperty("user.home") + "/.diarc/ava/cramertransparent2.png";
+  private static final double LISTENING_INDICATOR_HEIGHT_FRACTION = 0.6;
+
   @Override
   protected void init() {
     refreshMedia();
@@ -322,6 +327,32 @@ public class AvaDisplayComponent extends DiarcComponent {
 
     cardPanel.add(mediaPlayerComponent);
 
+    listeningIndicatorPane = new JPanel(null);
+    listeningIndicatorPane.setOpaque(true);
+    listeningIndicatorPane.setBackground(Color.BLACK);
+    try {
+      BufferedImage img = ImageIO.read(new File(LISTENING_INDICATOR_IMAGE));
+      if (img != null) {
+        int targetHeight = (int) (screenHeight * LISTENING_INDICATOR_HEIGHT_FRACTION);
+        int targetWidth = (int) (img.getWidth() * ((double) targetHeight / img.getHeight()));
+        Image scaled = img.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+        listeningIndicatorLabel = new JLabel(new ImageIcon(scaled));
+        listeningIndicatorLabel.setBounds(
+            (int) ((screenWidth - targetWidth) / 2),
+            (int) ((screenHeight - targetHeight) / 2),
+            targetWidth, targetHeight);
+        listeningIndicatorPane.add(listeningIndicatorLabel);
+        log.info("[initializeFrame] listening indicator loaded {}x{} scaled {}x{} bounds={}",
+            img.getWidth(), img.getHeight(), targetWidth, targetHeight, listeningIndicatorLabel.getBounds());
+      } else {
+        log.warn("[initializeFrame] listening indicator image returned null: {}", LISTENING_INDICATOR_IMAGE);
+      }
+    } catch (IOException e) {
+      log.warn("[initializeFrame] could not load listening indicator image {}: {}", LISTENING_INDICATOR_IMAGE, e.toString());
+    }
+    listeningIndicatorPane.setVisible(false);
+    frame.setGlassPane(listeningIndicatorPane);
+
     if (isFullscreen) {
       frame.setUndecorated(true);
       frame.setResizable(false);
@@ -388,6 +419,19 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void startIdleImageCycle() {
     idleImageCycleRunning = true;
     continueIdleImageCycle();
+  }
+
+  @TRADEService
+  public void setListeningIndicator(boolean visible) {
+    if (listeningIndicatorPane == null) {
+      log.info("[setListeningIndicator] pane null, ignoring visible={}", visible);
+      return;
+    }
+    SwingUtilities.invokeLater(() -> {
+      listeningIndicatorPane.setVisible(visible);
+      log.info("[setListeningIndicator] applied visible={} showing={} bounds={}", visible,
+          listeningIndicatorPane.isVisible(), listeningIndicatorPane.getBounds());
+    });
   }
 
   /**

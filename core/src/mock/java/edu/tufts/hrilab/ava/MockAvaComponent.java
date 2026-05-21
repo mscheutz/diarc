@@ -522,6 +522,16 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     log.debug("[enableMicrophone] count={} muted={}", Math.max(0, count), micMuted.get());
   }
 
+  private void updateListeningIndicator(boolean visible) {
+    log.info("[updateListeningIndicator] visible={}", visible);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
+              .call(void.class, visible);
+    } catch (TRADEException e) {
+      log.debug("[updateListeningIndicator] setListeningIndicator unavailable");
+    }
+  }
+
   @TRADEService
   @Action
   public void triggerWW() {
@@ -634,6 +644,12 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             } catch (TRADEException e) {
               log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
             }
+            // User-WW interrupt: user is speaking to us right now. Flush mute /
+            // taint state so the in-flight cascade-mute brackets don't drop the
+            // user's actual interrupt utterance via asrSessionTainted.
+            micMuteCount.set(0);
+            micMuted.set(false);
+            asrSessionTainted.set(false);
           }
 
           //Display on screen that we are now listening using ASR
@@ -644,6 +660,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           } else {
             shouldDing = true;
           }
+          updateListeningIndicator(true);
 
           //// ASR ////
           //Wait for ASR result:
@@ -658,6 +675,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           result = s.toString();
         }
+        updateListeningIndicator(false);
 
         //Parse ASR result - form: <prefix> <speech>
         //  <unk> == base failure case - ASR timed out before detecting any voice activity or was unable to transcribe anything
