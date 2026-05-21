@@ -13,6 +13,7 @@ import edu.tufts.hrilab.gui.GuiAdapter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -46,6 +47,10 @@ public class AvaMediaAdapter extends GuiAdapter {
     switch (message.get("method").getAsString()) {
       case "refresh" -> onConnect();
       case "delete" -> deleteMedia((JsonArray) message.get("ids"));
+      case "setIdleImageSelection" -> {
+        if (message.has("ids")) setIdleImageSelection(message.get("ids").getAsJsonArray());
+      }
+      default -> { }
     }
   }
 
@@ -87,13 +92,30 @@ public class AvaMediaAdapter extends GuiAdapter {
       tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageNames").argTypes(Boolean.class));
       List<String> images = tsi.call(List.class, true);
       media.addAll(images);
+      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getUserIdleImageNames").argTypes());
+      List<String> idleSelection = tsi.call(List.class);
 
       JsonObject json = new JsonObject();
       json.add("media", toJson(media));
+      json.add("idleImageSelection", toJsonStringArray(idleSelection));
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {
       log.error("[updateMediaLibrary] exception calling Ava get media names services", e);
+    }
+  }
+
+  private void setIdleImageSelection(JsonArray ids) {
+    List<String> names = new ArrayList<>();
+    for (JsonElement id : ids) {
+      names.add(id.getAsString());
+    }
+    try {
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setUserIdleImageNames").argTypes(List.class));
+      tsi.call(void.class, names);
+      updateMediaLibrary();
+    } catch (TRADEException e) {
+      log.error("[setIdleImageSelection] error calling setUserIdleImageNames", e);
     }
   }
 
@@ -106,5 +128,13 @@ public class AvaMediaAdapter extends GuiAdapter {
       jsonArray.add(jsonObject);
     }
     return jsonArray;
+  }
+
+  private static JsonArray toJsonStringArray(List<String> strings) {
+    JsonArray arr = new JsonArray();
+    for (String s : strings) {
+      arr.add(s);
+    }
+    return arr;
   }
 }

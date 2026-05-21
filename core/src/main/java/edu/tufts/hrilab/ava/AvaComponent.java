@@ -9,6 +9,7 @@ import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
+import edu.tufts.hrilab.ava.stats.AvaStatisticsEvent;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.map.PathAction;
@@ -63,6 +64,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -119,6 +121,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private boolean stopped = false;
 
+  /** For statistics: dock state so we can emit UNDOCKED when leaving via goToLocation. */
+  private boolean wasDocked = false;
+  private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
+  private static final double STATS_DISTANCE_THRESHOLD_M = 0.05;
+
   /**
    * Flag to keep follow action loop alive.
    */
@@ -128,6 +135,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private final ScheduledExecutorService keepAliveExecutor = Executors.newScheduledThreadPool(1);
   private final ScheduledExecutorService stopGoingHomeExecutor = Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService dockingPositionCorrectionExecutor = Executors.newScheduledThreadPool(1);
 
   private final Lock chargingLock = new ReentrantLock();
   private final Condition chargingTerminatedCondition = chargingLock.newCondition();
@@ -137,6 +145,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
+  private final AtomicBoolean micMuted = new AtomicBoolean(false);
+  private final AtomicInteger micMuteCount = new AtomicInteger(0);
+  private final AtomicBoolean asrSessionTainted = new AtomicBoolean(false);
   private int mixerID = -1;
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
@@ -146,6 +158,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   // Original (unadjusted) dock poses for localization
   private Map<String, Pair<Point3d, Quat4d>> originalDockPoses = new HashMap<>();
+
+  private ArrayList<Point3d> rollingPositionData = new ArrayList<>();
+  private String prevDockStatus = "";
 
   public AvaComponent() {
     super();
@@ -289,8 +304,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("[init] error calling getMapReferences");
     }
 
+    // Single-dock (e.g. ava-hrilab): use actual dock name from map. Two-dock (e.g. tusdm): use dock1/dock2.
     String dockName = "";
-    String dock2Name = "";
+    String dock2Name = null;
     if (dockNames.size() > 1) {
       if (dockNames.contains("dock1") && dockNames.contains("dock2")) {
         dockName = "dock1";
@@ -298,23 +314,25 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       } else {
         log.error("[init] multiple docks, but not following naming convention! need a 'dock1' and a 'dock2'");
       }
-    } else {
+    } else if (!dockNames.isEmpty()) {
       dockName = dockNames.get(0);
     }
-
     for (Symbol refId : poseReferences.keySet()) {
       //abosultely shouldn't be blind indexing into the ref to get the name!!!!!!!
-      if (poseReferences.get(refId).properties.get(0).getName().equals(dockName)) {
+      String refName = poseReferences.get(refId).properties.get(0).getName();
+      if (refName.equals(dockName)) {
         dockLocation = refId;
       }
-      if (poseReferences.get(refId).properties.get(0).getName().equals(dock2Name)) {
+      if (dock2Name != null && refName.equals(dock2Name)) {
         altDockLocation = refId;
       }
+
     }
 
 
     keepAlive();
     stopGoingHomeOnTheHour();
+    monitorDockingStatus();
 
     // get notified when display services become available
     try {
@@ -326,7 +344,114 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 //    setZLift(0);
     getCameraHeightMax();
 
+    try {
+      wasDocked = isDocked();
+    } catch (Exception e) {
+      wasDocked = false;
+    }
+
     //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    switchDisplayToTRACS();
+  }
+
+  private void updateRollingPositionData() {
+    if (rollingPositionData.size() >= 30) {
+      rollingPositionData.remove(0);
+    }
+    rollingPositionData.add(getPosition());
+  }
+
+  @TRADEService
+  public void registerForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    if (statisticsSubscribers.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerForAvaStatisticsNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      statisticsSubscribers.add(callback);
+      // Push current dock state so CSV has a baseline (avoids 0 min off dock when robot started already undocked)
+      AvaStatisticsEvent.Kind kind = wasDocked ? AvaStatisticsEvent.Kind.DOCKED : AvaStatisticsEvent.Kind.UNDOCKED;
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(kind);
+      if (kind == AvaStatisticsEvent.Kind.UNDOCKED) {
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+      }
+      notifyStatisticsSubscribers(b.build());
+    }
+  }
+
+  @TRADEService
+  public void unregisterForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    statisticsSubscribers.remove(callback);
+  }
+
+  /** Returns current battery 0–100 for statistics, or null if unavailable. */
+  private Double getBatteryLevelForStats() {
+    try {
+      double level = getBatteryLevel();
+      return (level >= 0 && level <= 100) ? level : null;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private void notifyStatisticsSubscribers(AvaStatisticsEvent event) {
+    List<TRADEServiceInfo> toRemove = new ArrayList<>();
+    synchronized (statisticsSubscribers) {
+      for (TRADEServiceInfo subscriber : statisticsSubscribers) {
+        try {
+          subscriber.call(void.class, event);
+        } catch (Exception e) {
+          log.error("Could not notify statistics subscriber: {}", subscriber, e);
+          // TODO(pete): is matching exception text the right subscriber-cleanup signal?
+          if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || (e.getMessage() != null && e.getMessage().contains("tsi") && e.getMessage().contains("null"))) {
+            toRemove.add(subscriber);
+          }
+        }
+      }
+    }
+    for (TRADEServiceInfo s : toRemove) {
+      statisticsSubscribers.remove(s);
+    }
+  }
+
+  private void monitorDockingStatus() {
+    keepAliveExecutor.scheduleAtFixedRate(() -> {
+      updateRollingPositionData();
+      try {
+        if (api.hasSession()) {
+          RMSDockStatusResponse response = api.getDockStatus();
+          if (response != null) {
+            DockStatusResponse dockStatusResponse = response.response;
+            if (dockStatusResponse.state.equals("Docked") && !prevDockStatus.equals("Docked")) {
+              // Single-dock: just set primary. Two-dock: infer which dock from position history and localize.
+              if (altDockLocation == null || originalDockPoses.size() < 2) {
+                setAtPrimaryDock();
+              } else {
+                int countDock1 = 0;
+                for (Point3d pos : rollingPositionData) {
+                  if (getCloserDock(pos).equals("dock1")) {
+                    countDock1++;
+                  }
+                }
+                if (countDock1 > (0.6 * rollingPositionData.size())) {
+                  if (!getCloserDock().equals("dock1")) {
+                    log.warn("[monitorDockingStatus] forcing localization to dock1 based on position data history. Was docked either by hand or outside of TRACS");
+                    setAtPrimaryDock();
+                  }
+                } else {
+                  if (!getCloserDock().equals("dock2")) {
+                    log.warn("[monitorDockingStatus] forcing localization to dock2 based on position data history. Was docked either by hand or outside of TRACS");
+                    setAtSecondaryDock();
+                  }
+                }
+              }
+            }
+            prevDockStatus = dockStatusResponse.state;
+          }
+        }
+      } catch (Exception e) {
+        log.error("Exception while keeping Ava alive.", e);
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   @TRADEService
@@ -342,23 +467,32 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   private void setLocationTo(Symbol locationTerm) {
+    if (locationTerm == null) {
+      return;
+    }
     log.info("[setLocationTo] getting location reference for refid " + locationTerm);
     
-    Point3d position;
-    Quat4d orientation;
+    Point3d position = null;
+    Quat4d orientation = null;
     
-    // For dock locations, use original (unadjusted) positions for accurate localization
-    if (locationTerm.equals(dockLocation) && originalDockPoses.containsKey("dock1")) {
-      Pair<Point3d, Quat4d> originalPose = originalDockPoses.get("dock1");
-      position = originalPose.getLeft();
-      orientation = originalPose.getRight();
-      log.info("[setLocationTo] using original dock1 position for localization: " + position);
-    } else if (locationTerm.equals(altDockLocation) && originalDockPoses.containsKey("dock2")) {
+    // For dock locations, use original (unadjusted) positions for accurate localization.
+    // Single-dock: one key in originalDockPoses (any name). Two-dock: dock1/dock2.
+    if (locationTerm != null && locationTerm.equals(dockLocation) && !originalDockPoses.isEmpty()) {
+      String key = originalDockPoses.containsKey("dock1") ? "dock1" : originalDockPoses.keySet().iterator().next();
+      Pair<Point3d, Quat4d> originalPose = originalDockPoses.get(key);
+      if (originalPose != null) {
+        position = originalPose.getLeft();
+        orientation = originalPose.getRight();
+        log.info("[setLocationTo] using original {} position for localization: {}", key, position);
+      }
+    }
+    if (position == null && locationTerm != null && locationTerm.equals(altDockLocation) && originalDockPoses.containsKey("dock2")) {
       Pair<Point3d, Quat4d> originalPose = originalDockPoses.get("dock2");
       position = originalPose.getLeft();
       orientation = originalPose.getRight();
       log.info("[setLocationTo] using original dock2 position for localization: " + position);
-    } else {
+    }
+    if (position == null) {
       // For non-dock locations, use the map reference as before
       try {
         PoseReference poseReference = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
@@ -506,6 +640,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public Justification goToLocation(Symbol location, boolean wait) {
     log.debug("[goToLocation] Going to:{} Wait is {}", location.getName(), wait);
     currentMoveGoal.setGoToLocationGoal(location, wait);
+    if (wasDocked) {
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.UNDOCKED);
+      Double bat = getBatteryLevelForStats();
+      if (bat != null) b.batteryPct(bat);
+      notifyStatisticsSubscribers(b.build());
+      wasDocked = false;
+    }
 
     double padding = 1.0;
     boolean canOpenDoors = false;
@@ -594,6 +735,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     if (res != null && res.errorMessage != null) {
       log.error("Error going to location: " + res.errorMessage);
       polling = false;
+      long segmentStartTimeMs = System.currentTimeMillis();
+      AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+          .segmentStartTimestampMs(segmentStartTimeMs)
+          .cumulativeDistanceM(0)
+          .driveStatusEnd("API_ERROR");
+      Double bat = getBatteryLevelForStats();
+      if (bat != null) b.batteryPct(bat);
+      notifyStatisticsSubscribers(b.build());
       if (res.errorMessage.contains("Inaccessible map location")) {
         return new ConditionJustification(false, Factory.createPredicate("accessible", "location"));
       } else {
@@ -605,6 +754,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     DriveStatus ds = getDriveStatus();
     Pair<Point3d, Quat4d> currentPose = getPose();
     Point3d currentPosition = currentPose.getLeft();
+    Point3d lastPosition = new Point3d(currentPosition);
+    double segmentCumulativeM = 0;
+    long segmentStartTimeMs = System.currentTimeMillis();
     Quat4d currentOrientation = currentPose.getRight();
     double[] currentAngles = Convert.convertToEuler(currentOrientation);
     double currentTheta = currentAngles[Convert.YAW];
@@ -618,6 +770,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       currentOrientation = currentPose.getRight();
       currentAngles = Convert.convertToEuler(currentOrientation);
       currentTheta = currentAngles[Convert.YAW];
+      double delta = currentPosition.distance(lastPosition);
+      if (delta >= STATS_DISTANCE_THRESHOLD_M) {
+        segmentCumulativeM += delta;
+      }
+      lastPosition.set(currentPosition);
 
       // Every 3 seconds check the status
       if (statusDelay > 3) {
@@ -635,6 +792,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       ds = getDriveStatus();
       if (ds == DriveStatus.FAILED_DRIVE_WAYPOINT) {
         log.warn("[goToArbitrary] Failed to reach goal position: " + goalPosition + " theta: " + goalTheta);
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+            .segmentStartTimestampMs(segmentStartTimeMs)
+            .cumulativeDistanceM(segmentCumulativeM)
+            .driveStatusEnd("FAILED_DRIVE_WAYPOINT");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
         return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
       }
 
@@ -650,10 +814,25 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
 
       if (apiFailures >= 4) {
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+            .segmentStartTimestampMs(segmentStartTimeMs)
+            .cumulativeDistanceM(segmentCumulativeM)
+            .driveStatusEnd("API_FAILURE");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
         return new ConditionJustification(false, Factory.createPredicate("http_server", "connected"));
       }
     }
     polling = false;
+    String endStatus = stopped ? "STOPPED" : "COMPLETE";
+    AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+        .segmentStartTimestampMs(segmentStartTimeMs)
+        .cumulativeDistanceM(segmentCumulativeM)
+        .driveStatusEnd(endStatus);
+    Double bat = getBatteryLevelForStats();
+    if (bat != null) b.batteryPct(bat);
+    notifyStatisticsSubscribers(b.build());
 //    log.info("[goToArbitrary] Arrived at x: " + positionX + ", y: " + positionY + ", theta: " + goalTheta);
     return new ConditionJustification(true);
   }
@@ -774,24 +953,31 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     
     Point3d currentPos = getPosition();
-    
-    Pair<Point3d, Quat4d> dock1Pose = originalDockPoses.get("dock1");
-    Pair<Point3d, Quat4d> dock2Pose = originalDockPoses.get("dock2");
-    
-    if (dock1Pose == null) {
-      return "dock2";
-    }
-    if (dock2Pose == null) {
-      return "dock1";
-    }
-    
-    double distToDock1 = currentPos.distance(dock1Pose.getLeft());
-    double distToDock2 = currentPos.distance(dock2Pose.getLeft());
-    
-    log.info("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
-    
-    return distToDock1 <= distToDock2 ? "dock1" : "dock2";
+    return getCloserDock(currentPos);
   }
+
+    private String getCloserDock(Point3d currentPos) {
+      if (originalDockPoses.isEmpty()) {
+        log.warn("[getCloserDock] no dock poses available, defaulting to dock1");
+        return "dock1";
+      }
+      // Single-dock deployment: map has one dock (any name); return that key.
+      if (originalDockPoses.size() == 1) {
+        return originalDockPoses.keySet().iterator().next();
+      }
+      Pair<Point3d, Quat4d> dock1Pose = originalDockPoses.get("dock1");
+      Pair<Point3d, Quat4d> dock2Pose = originalDockPoses.get("dock2");
+      if (dock1Pose == null) {
+        return "dock2";
+      }
+      if (dock2Pose == null) {
+        return "dock1";
+      }
+      double distToDock1 = currentPos.distance(dock1Pose.getLeft());
+      double distToDock2 = currentPos.distance(dock2Pose.getLeft());
+      log.debug("[getCloserDock] distance to dock1: {}, distance to dock2: {}", distToDock1, distToDock2);
+      return distToDock1 <= distToDock2 ? "dock1" : "dock2";
+    }
 
   /**
    * Send the Ava robot to dock. Automatically determines which dock is closer
@@ -824,7 +1010,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     
     // Force localization to the correct dock to prevent snapping to wrong one
     localizeAtDock(targetDock);
-    
+    wasDocked = true;
+    notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.DOCKED).dockName(targetDock).build());
     log.debug("[goToDock] Ava has docked at {}", targetDock);
     return new ConditionJustification(true);
   }
@@ -871,7 +1058,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     
     // Force localization to the specified dock
     localizeAtDock(targetDock);
-    
+    wasDocked = true;
+    notifyStatisticsSubscribers(AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.DOCKED).dockName(targetDock).build());
     log.debug("[dock] Ava has docked at {}", targetDock);
     return new ConditionJustification(true);
   }
@@ -1448,6 +1636,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
+  public void disableMicrophone() {
+    int count = micMuteCount.incrementAndGet();
+    micMuted.set(true);
+    asrSessionTainted.set(true);
+    log.debug("[disableMicrophone] count={}; tainting any in-flight ASR session", count);
+  }
+
+  @TRADEService
+  public void enableMicrophone() {
+    int count = micMuteCount.decrementAndGet();
+    if (count <= 0) {
+      micMuteCount.set(0);
+      micMuted.set(false);
+    }
+    log.debug("[enableMicrophone] count={} muted={}", Math.max(0, count), micMuted.get());
+  }
+
+  @TRADEService
   @Action
   public void triggerWW() {
     if (ww_process_os == null) {
@@ -1455,10 +1661,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: Should this still trigger the WW ding?
-    //TODO: Also should this have a longer ASR timeout than if triggered by voice?
     log.info("[triggerWW] in method");
-    //shouldDing = false;
+    forcedWWInFlight.set(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -1535,7 +1739,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       processBuilder = new ProcessBuilder(
               home + "/.diarc/python/ww/venv/bin/python",
-              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+              "-u", home + "/.diarc/python/ww/run_ww_and_asr.py", "--diarc",
+              "--model_type", "0",
+              "--model_size", "small",
+              "--endpoint", "http://marvin:5000/");
     }
 
     // fasterwhisper small gpu
@@ -1564,8 +1771,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           //Wait for "ww detected" marker line; skip any stray stdout defensively.
           boolean wwDetected = false;
           while (listenForWW && !wwDetected) {
+            long pollStart = System.nanoTime();
+            int polls = 0;
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(100);
+              Thread.sleep(20);
+              polls++;
             }
             if (!listenForWW) {
               break;
@@ -1577,6 +1787,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               break;
             }
             if (line.equals("ww detected")) {
+              long pollMs = (System.nanoTime() - pollStart) / 1_000_000;
+              log.debug("[lat] ww_marker_received polls={} poll_wait_ms={}", polls, pollMs);
+              asrSessionTainted.set(micMuted.get());
               wwDetected = true;
             } else {
               log.warn("[listenForWWandASR] unexpected line awaiting WW marker: {}", line);
@@ -1586,10 +1799,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             break;
           }
 
-          try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
-          } catch (TRADEException e) {
-            log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+          if (!forcedWWInFlight.compareAndSet(true, false)) {
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           }
 
           log.info("[listenForWWandASR] WW detected, listening for ASR");
@@ -1605,9 +1820,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           //// ASR ////
           //Wait for ASR result line with known prefix; skip any stray stdout defensively.
           log.info("waiting for ASR result");
+          long asrPollStart = System.nanoTime();
+          int asrPolls = 0;
           while (listenForWW && result.isEmpty()) {
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(100);
+              Thread.sleep(20);
+              asrPolls++;
             }
             if (!listenForWW) {
               break;
@@ -1620,6 +1838,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             }
             if (line.startsWith("<full>") || line.startsWith("<novad>")
                 || line.startsWith("<unk>") || line.startsWith("<cutoff>")) {
+              long asrPollMs = (System.nanoTime() - asrPollStart) / 1_000_000;
+              log.debug("[lat] asr_result_received prefix={} text_len={} polls={} poll_wait_ms={}",
+                      line.split(" ", 2)[0], line.length(), asrPolls, asrPollMs);
               // Preserve trailing newline so the existing equals/startsWith checks below still match.
               result = line + "\n";
             } else {
@@ -1638,6 +1859,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         boolean cutoff_result = false;
         //If ASR timed out, loop back to WW detection
         if (!result.isEmpty()) {
+          if (asrSessionTainted.compareAndSet(true, false)) {
+            log.info("[listenForWWAndASR] dropping ASR result captured while mic muted: {}", result.trim());
+            result = "";
+            continue;
+          }
           //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
           if (result.equals("<unk>\n") || result.equals("<novad>\n")) {
             if (result.equals("<unk>\n")) {
@@ -1705,6 +1931,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
           //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
           try {
+            log.debug("[lat] dialogue_dispatch text=\"{}\"", result);
             TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
             log.info("Reported utterance \"" + result + "\"");
           } catch (TRADEException ex) {
@@ -1926,6 +2153,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     displayLock.lock();
     telepresenceCondition.signal();
     displayLock.unlock();
+    if (ciscoCodecAPI.getCurrentDisplayMode() != CiscoCodecAPI.DisplayMode.TRACS) {
+      //Switch back to TRACS (PC 2 on the Cisco codec)
+      boolean success = ciscoCodecAPI.switchToTRACS();
+      if (success) {
+        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+      } else {
+        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      }
+    }
   }
 
   @OnInterrupt(onCancelServiceCall = "switchDisplayToTRACS()", onSuspendServiceCall = "switchDisplayToTRACS()")

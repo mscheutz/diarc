@@ -6,6 +6,7 @@ package edu.tufts.hrilab.ava;
 
 import ai.thinkingrobots.trade.*;
 
+import edu.tufts.hrilab.ava.stats.AvaStatisticsEvent;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.execution.ExecutionType;
@@ -35,12 +36,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Class representing the display functionality on the screen of the Ava robot.
@@ -83,26 +89,34 @@ public class AvaDisplayComponent extends DiarcComponent {
   private int currentVideo = -1;
   private int videoVolume;
   private volatile boolean videoPlaying = false;
+  private volatile long videoPlaybackStartMs = 0;
   private volatile boolean userImageDisplayed = false;
   private List<String> idleImages = new ArrayList<>();
+  /** User-selected uploaded image names (from userImageDir) to include in idle cycle. Persisted in userIdleImages.json. */
+  private List<String> userSelectedIdleImageNames = new ArrayList<>();
+  /** Combined cycle list: "idle:filename" or "user:filename" for path resolution. */
+  private List<String> idleImageCycleList = new ArrayList<>();
   private List<String> userImages = new ArrayList<>();
   private int currentImage = -1;
   private int trLogoIndex = 0;
   private volatile boolean idleImageCycleRunning = true;
   private String currentlyDisplayedImagePath = "";
+  private static final String IDLE_PREFIX = "idle:";
+  private static final String USER_PREFIX = "user:";
 
   @Override
   protected void init() {
     refreshMedia();
     currentVideo = 0;
     currentImage = 0;
-    int index = 0;
-    for (String img : idleImages) {
-      if (img.contains("(1)")) {
-        trLogoIndex = index;
+    for (int i = 0; i < idleImageCycleList.size(); i++) {
+      String entry = idleImageCycleList.get(i);
+      String name = entry.startsWith(USER_PREFIX) ? entry.substring(USER_PREFIX.length()) : entry.substring(IDLE_PREFIX.length());
+      if (name.contains("(1)")) {
+        trLogoIndex = i;
         currentImage = trLogoIndex;
+        break;
       }
-      index++;
     }
     initializeFrame();
   }
@@ -115,6 +129,72 @@ public class AvaDisplayComponent extends DiarcComponent {
       idleImages = idleImages.stream().sorted().toList();
       userImages = getMediaFromDir(userImageDir, MediaTypes.IMAGE_EXTENSIONS);
       userImages = userImages.stream().sorted().toList();
+      loadUserIdleImageSelection();
+      buildIdleImageCycleList();
+    }
+  }
+
+  private Path getUserIdleImagesConfigPath() {
+    if (idleImageDir == null || idleImageDir.isEmpty()) {
+      return Paths.get(System.getProperty("user.home"), ".diarc", "ava", "userIdleImages.json");
+    }
+    Path parent = Paths.get(idleImageDir).getParent();
+    if (parent == null) {
+      return Paths.get(System.getProperty("user.home"), ".diarc", "ava", "userIdleImages.json");
+    }
+    return Paths.get(getMediaPath(parent.toString()), "userIdleImages.json");
+  }
+
+  private void loadUserIdleImageSelection() {
+    Path path = getUserIdleImagesConfigPath();
+    if (!Files.exists(path)) {
+      userSelectedIdleImageNames = new ArrayList<>();
+      return;
+    }
+    try {
+      String json = Files.readString(path, StandardCharsets.UTF_8);
+      Type type = new TypeToken<List<String>>() {}.getType();
+      List<String> loaded = new Gson().fromJson(json, type);
+      if (loaded != null) {
+        userSelectedIdleImageNames = new ArrayList<>(loaded);
+      } else {
+        userSelectedIdleImageNames = new ArrayList<>();
+      }
+    } catch (IOException e) {
+      log.warn("[loadUserIdleImageSelection] could not read {}: {}", path, e.getMessage());
+      userSelectedIdleImageNames = new ArrayList<>();
+    }
+    // Keep only names that exist in userImages and are images
+    userSelectedIdleImageNames = userSelectedIdleImageNames.stream()
+        .filter(name -> userImages.contains(name) && MediaTypes.isImage(name))
+        .sorted()
+        .collect(Collectors.toList());
+  }
+
+  private void saveUserIdleImageSelection() {
+    Path path = getUserIdleImagesConfigPath();
+    try {
+      String json = new Gson().toJson(userSelectedIdleImageNames);
+      Files.writeString(path, json, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      log.warn("[saveUserIdleImageSelection] could not write {}: {}", path, e.getMessage());
+    }
+  }
+
+  /** Builds the idle cycle list: if the user has any selected images, use only those; otherwise use built-in idle images. */
+  private void buildIdleImageCycleList() {
+    idleImageCycleList = new ArrayList<>();
+    if (!userSelectedIdleImageNames.isEmpty()) {
+      for (String name : userSelectedIdleImageNames) {
+        idleImageCycleList.add(USER_PREFIX + name);
+      }
+    } else {
+      for (String name : idleImages) {
+        idleImageCycleList.add(IDLE_PREFIX + name);
+      }
+    }
+    if (currentImage >= idleImageCycleList.size()) {
+      currentImage = idleImageCycleList.isEmpty() ? 0 : idleImageCycleList.size() - 1;
     }
   }
 
@@ -274,17 +354,22 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
 
   private void continueIdleImageCycle() {
+    if (idleImageCycleList.isEmpty()) {
+      return;
+    }
     if (!videoPlaying && !userImageDisplayed && idleImageCycleRunning) {
       try {
         SwingUtilities.invokeAndWait(() -> {
-                  displayIdleImage(idleImages.get(currentImage), -1);
+                  if (currentImage >= 0 && currentImage < idleImageCycleList.size()) {
+                    displayIdleImage(idleImageCycleList.get(currentImage), -1);
+                  }
                 }
         );
       } catch (InterruptedException | InvocationTargetException e) {
         log.error("error advancing idle image", e);
       }
 
-      if (currentImage >= (idleImages.size() - 1)) {
+      if (currentImage >= (idleImageCycleList.size() - 1)) {
         currentImage = 0;
       } else {
         currentImage++;
@@ -363,9 +448,20 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   }
 
+  /**
+   * Normalize a filename for matching: lowercase, collapse dashes/underscores/spaces
+   * so "RobotLedgerPage.png", "robot-ledger-page.png", "robot_ledger_page.png" all match.
+   */
+  private static String normalizeForMatch(String name) {
+    if (name == null) return "";
+    return name.toLowerCase().replaceAll("[-_\\s]+", "");
+  }
+
   private String getMatchingImageName(String name) {
+    String normalizedRequest = normalizeForMatch(name);
+    if (normalizedRequest.isEmpty()) return "";
     for (String image : userImages) {
-      if (image.equalsIgnoreCase(name)) {
+      if (normalizeForMatch(image).equals(normalizedRequest)) {
         return image;
       }
     }
@@ -394,7 +490,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       return false;
     }
 
-    displayUserImage(imageName, timeout, true);
+    displayUserImage(name, timeout, true);
 
     return true;
   }
@@ -413,6 +509,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     userImageDisplayed = true;
     displayImage(path, timeout, true, true, Color.WHITE);
     userImageDisplayed = false;
+    recordMediaPlayback("image", timeout * 1000L);
   }
 
   //TODO: smarter interaction with timeout on suspend/resume? Currently will reset timer
@@ -437,10 +534,18 @@ public class AvaDisplayComponent extends DiarcComponent {
     String path = getMediaPath(userImageDir) + File.separator + imageName;
     displayImage(path, timeout, blocking, true, Color.WHITE);
     userImageDisplayed = false;
+    recordMediaPlayback("image", timeout * 1000L);
     continueIdleImageCycle();
   }
-  private void displayIdleImage(String imageName, long timeout, boolean blocking) {
-    String path = getMediaPath(idleImageDir) + File.separator + imageName;
+  private void displayIdleImage(String cycleEntry, long timeout, boolean blocking) {
+    String path;
+    if (cycleEntry.startsWith(USER_PREFIX)) {
+      String imageName = cycleEntry.substring(USER_PREFIX.length());
+      path = getMediaPath(userImageDir) + File.separator + imageName;
+    } else {
+      String imageName = cycleEntry.startsWith(IDLE_PREFIX) ? cycleEntry.substring(IDLE_PREFIX.length()) : cycleEntry;
+      path = getMediaPath(idleImageDir) + File.separator + imageName;
+    }
     displayImage(path, timeout, blocking, false, Color.BLACK);
   }
 
@@ -521,6 +626,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     String path = getMediaPath(videoDir) + File.separator + videoName;
     mediaPlayerComponent.mediaPlayer().media().start(path);
+    videoPlaybackStartMs = System.currentTimeMillis();
     videoPlaying = true;
     log.info("[displayVideo] playing: " + path);
   }
@@ -532,8 +638,26 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   @TRADEService
   public void cancelVideoPlayback() {
+    if (videoPlaying && videoPlaybackStartMs > 0) {
+      long durationMs = System.currentTimeMillis() - videoPlaybackStartMs;
+      recordMediaPlayback("video", durationMs);
+    }
     mediaPlayerComponent.mediaPlayer().controls().stop();
     videoPlaying = false;
+  }
+
+  /** Records intentional media playback for statistics (excludes idle image rotation). */
+  private void recordMediaPlayback(String mediaType, long durationMs) {
+    if (durationMs <= 0) return;
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("recordAvaStatisticsEvent").argTypes(AvaStatisticsEvent.class))
+          .call(void.class, AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.MEDIA_PLAYBACK)
+              .mediaType(mediaType)
+              .durationMs(durationMs)
+              .build());
+    } catch (TRADEException e) {
+      log.debug("[recordMediaPlayback] Could not record event: {}", e.getMessage());
+    }
   }
 
   @TRADEService
@@ -645,7 +769,26 @@ public class AvaDisplayComponent extends DiarcComponent {
       return new ArrayList<>(userImages);
     } else {
       return new ArrayList<>(userImages.stream().map(v -> v.split("\\.", 2)[0]).toList());
-}
+    }
+  }
+
+  /** Returns the list of uploaded image names currently used as idle images. */
+  @TRADEService
+  public List<String> getUserIdleImageNames() {
+    return new ArrayList<>(userSelectedIdleImageNames);
+  }
+
+  /** Sets which uploaded images are used as idle images. Only image names that exist in userImages are stored. */
+  @TRADEService
+  public void setUserIdleImageNames(List<String> names) {
+    if (names == null) names = List.of();
+    userSelectedIdleImageNames = names.stream()
+        .filter(name -> userImages.contains(name) && MediaTypes.isImage(name))
+        .sorted()
+        .collect(Collectors.toList());
+    saveUserIdleImageSelection();
+    buildIdleImageCycleList();
+    continueIdleImageCycle();
   }
 
   @TRADEService
@@ -666,6 +809,9 @@ public class AvaDisplayComponent extends DiarcComponent {
       return false;
     }
     videoVolume = volume;
+    if (mediaPlayerComponent != null && videoPlaying) {
+      mediaPlayerComponent.mediaPlayer().audio().setVolume(videoVolume);
+    }
     return true;
   }
 

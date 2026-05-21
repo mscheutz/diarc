@@ -19,6 +19,7 @@ import edu.tufts.hrilab.ava.message.response.Obstacle;
 import edu.tufts.hrilab.ava.message.response.RMSListTagsResponse;
 import edu.tufts.hrilab.ava.message.response.RMSMapMetadataResponse;
 import edu.tufts.hrilab.ava.message.response.Tag;
+import edu.tufts.hrilab.ava.stats.AvaStatisticsEvent;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
@@ -58,15 +59,19 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -84,6 +89,10 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
+  private final AtomicBoolean micMuted = new AtomicBoolean(false);
+  private final AtomicInteger micMuteCount = new AtomicInteger(0);
+  private final AtomicBoolean asrSessionTainted = new AtomicBoolean(false);
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private int numMaps = 0;
@@ -94,6 +103,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -109,6 +119,40 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
     return options;
+  }
+
+  @TRADEService
+  public void registerForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    if (statisticsSubscribers.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerForAvaStatisticsNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      statisticsSubscribers.add(callback);
+    }
+  }
+
+  @TRADEService
+  public void unregisterForAvaStatisticsNotifications(TRADEServiceInfo callback) {
+    statisticsSubscribers.remove(callback);
+  }
+
+  private void notifyStatisticsSubscribers(AvaStatisticsEvent event) {
+    List<TRADEServiceInfo> toRemove = new ArrayList<>();
+    synchronized (statisticsSubscribers) {
+      for (TRADEServiceInfo subscriber : statisticsSubscribers) {
+        try {
+          subscriber.call(void.class, event);
+        } catch (Exception e) {
+          log.error("Could not notify statistics subscriber: {}", subscriber, e);
+          // TODO(pete): is matching exception text the right subscriber-cleanup signal?
+          if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || (e.getMessage() != null && e.getMessage().contains("tsi") && e.getMessage().contains("null"))) {
+            toRemove.add(subscriber);
+          }
+        }
+      }
+    }
+    for (TRADEServiceInfo s : toRemove) {
+      statisticsSubscribers.remove(s);
+    }
   }
 
   @Override
@@ -461,6 +505,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
+  public void disableMicrophone() {
+    int count = micMuteCount.incrementAndGet();
+    micMuted.set(true);
+    asrSessionTainted.set(true);
+    log.debug("[disableMicrophone] count={}; tainting any in-flight ASR session", count);
+  }
+
+  @TRADEService
+  public void enableMicrophone() {
+    int count = micMuteCount.decrementAndGet();
+    if (count <= 0) {
+      micMuteCount.set(0);
+      micMuted.set(false);
+    }
+    log.debug("[enableMicrophone] count={} muted={}", Math.max(0, count), micMuted.get());
+  }
+
+  @TRADEService
   @Action
   public void triggerWW() {
     if (ww_process_os == null) {
@@ -468,9 +530,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: hook up to QA where desired
     log.info("[triggerWW] in method");
-    //shouldDing = false;
+    forcedWWInFlight.set(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -524,8 +585,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     String home = System.getProperty("user.home");
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
-    // local moonshine base cpu
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc");
+    // ensemble: local moonshine for short, remote faster_whisper (marvin) for long
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--diarc", "--model_type", "0", "--model_size", "small", "--endpoint", "http://marvin:5000/");
 
     // local fasterwhisper small gpu
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
@@ -566,10 +627,13 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           log.info(s.toString());
 
-          try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
-          } catch (TRADEException e) {
-            log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+          asrSessionTainted.set(micMuted.get());
+          if (!forcedWWInFlight.compareAndSet(true, false)) {
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           }
 
           //Display on screen that we are now listening using ASR
@@ -602,6 +666,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         boolean cutoff_result = false;
         //If ASR timed out, loop back to WW detection
         if (!result.isEmpty()) {
+          if (asrSessionTainted.compareAndSet(true, false)) {
+            log.info("[listenForWWAndASR] dropping ASR result captured while mic muted: {}", result.trim());
+            result = "";
+            continue;
+          }
           //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
           if (result.equals("<unk>\n") || result.equals("<novad>\n")) {
             if (result.equals("<unk>\n")) {

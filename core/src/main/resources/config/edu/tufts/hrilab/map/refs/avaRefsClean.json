@@ -1,0 +1,184 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "reception(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "instrument supply(VAR0:location)"
+      ],
+      "position": [
+        2.0,
+        -1.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 1(VAR0:location)"
+      ],
+      "position": [
+        4.0,
+        -3.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 2(VAR0:location)"
+      ],
+      "position": [
+        6.0,
+        -4.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 3(VAR0:location)"
+      ],
+      "position": [
+        8.0,
+        -6.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 4(VAR0:location)"
+      ],
+      "position": [
+        10.0,
+        -7.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "chair 5(VAR0:location)"
+      ],
+      "position": [
+        12.0,
+        -9.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "faculty area(VAR0:location)"
+      ],
+      "position": [
+        14.0,
+        -10.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "exam room 1(VAR0:location)"
+      ],
+      "position": [
+        16.0,
+        -12.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "exam room 2(VAR0:location)"
+      ],
+      "position": [
+        18.0,
+        -13.5,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}

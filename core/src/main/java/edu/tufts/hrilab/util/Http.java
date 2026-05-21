@@ -135,8 +135,10 @@ public class Http {
                 .uri(URI.create(endpointUrl))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBodyJson));
 
-        for (Map.Entry<String,String> header : headers.entrySet()) {
-            builder.header(header.getKey(), header.getValue());
+        if (headers != null) {
+            for (Map.Entry<String,String> header : headers.entrySet()) {
+                builder.header(header.getKey(), header.getValue());
+            }
         }
         builder.header("Content-Type", "application/json");
         request = builder.build();

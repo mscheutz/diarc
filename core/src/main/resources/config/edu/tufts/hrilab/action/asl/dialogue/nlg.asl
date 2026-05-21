@@ -212,6 +212,9 @@ import java.util.Map;
   op:invokeMethod(!utterance, "setType", !type);
   op:invokeMethod(!utterance, "setWords", ?words);
 
+  // speak the question text before entering ask/wait loop (communicateUtterance with sayText=false from inside askQuestionFromUtterance won't speak with-words utterances post 5f8f6df24)
+  act:sayText(!utterance);
+
   // ask question and wait for response
   ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
 }
@@ -264,7 +267,10 @@ import java.util.Map;
         //TODO: How to generally implement this? Specific only to interaction modalities which contain a wakeword
             // Q: How/where to configure what to do based on a specific addressee in a specific domain configuration?
         if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor")) {
-            act:triggerWW();
+            // armPostStreamRearm defers rearm to post-drain via streaming onStreamCompleted; firing triggerWW here races the streaming audio.
+            // load-bearing -- reverting to triggerWW() drops the user's reply (mic-mute gate captures Ava's own audio).
+            // TODO(pete): does the sync sayText path (askQuestionFromString) leave pendingRearm stale?
+            act:armPostStreamRearm();
         }
       }
       !tracker = op:newObject("java.lang.Integer", 1);

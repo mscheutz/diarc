@@ -26,13 +26,19 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
    */
   @Override
   public Utterance parseUtterance(Utterance input) {
+    long t0 = System.nanoTime();
+    log.debug("[lat] parser_entry text=\"{}\"", input.getWordsAsString());
     log.info("parseUtterance: " + input.getWordsAsString());
 
     Utterance output;
     try {
       output = TRADE.getAvailableService(new TRADEServiceConstraints().name("parseUtteranceLLMService").argTypes(Utterance.class)).call(Utterance.class, input);
+      long durMs = (System.nanoTime() - t0) / 1_000_000;
+      log.debug("[lat] parser_done dur={}ms", durMs);
       return output;
     } catch (TRADEException ex) {
+      long durMs = (System.nanoTime() - t0) / 1_000_000;
+      log.debug("[lat] parser_done dur={}ms err=trade", durMs);
       log.error("Error calling parseUtteranceLLMService.", ex);
       return input;
     }

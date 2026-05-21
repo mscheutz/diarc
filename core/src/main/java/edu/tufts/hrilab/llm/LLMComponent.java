@@ -389,6 +389,8 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (Chat chat) {
+    long t0 = System.nanoTime();
+    log.debug("[lat] llm_call_start kind=chat");
     Completion completion = null;
     for (LLMClient client : clients) {
       completion = client.chatCompletion(chat);
@@ -396,6 +398,10 @@ public class LLMComponent extends DiarcComponent {
         break;
       }
     }
+    long durMs = (System.nanoTime() - t0) / 1_000_000;
+    int inTok = completion != null ? completion.inputTokens : -1;
+    int outTok = completion != null ? completion.outputTokens : -1;
+    log.debug("[lat] llm_call_done kind=chat dur={}ms in_tok={} out_tok={}", durMs, inTok, outTok);
     return completion;
   }
 
@@ -404,6 +410,9 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (Chat chat, List<ToolDefinition> tools) {
+    long t0 = System.nanoTime();
+    int nTools = tools != null ? tools.size() : 0;
+    log.debug("[lat] llm_call_start kind=chat_tools tools={}", nTools);
     Completion completion = null;
     for (LLMClient client : clients) {
       if (client instanceof OpenaiClient) {
@@ -417,6 +426,11 @@ public class LLMComponent extends DiarcComponent {
         break;
       }
     }
+    long durMs = (System.nanoTime() - t0) / 1_000_000;
+    int inTok = completion != null ? completion.inputTokens : -1;
+    int outTok = completion != null ? completion.outputTokens : -1;
+    int nToolCalls = (completion != null && completion.toolCalls != null) ? completion.toolCalls.size() : 0;
+    log.debug("[lat] llm_call_done kind=chat_tools dur={}ms in_tok={} out_tok={} tool_calls={}", durMs, inTok, outTok, nToolCalls);
     return completion;
   }
 

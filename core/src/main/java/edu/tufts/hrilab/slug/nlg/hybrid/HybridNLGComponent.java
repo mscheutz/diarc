@@ -126,6 +126,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
   @Override
   public Utterance convertSemanticsToText(Utterance incoming) {
+    long t0 = System.nanoTime();
+    log.debug("[lat] nlg_entry");
     log.debug("[convertSemanticsToText] hit with utterance: " + incoming);
 
     Future<Utterance> llmFuture = null;
@@ -160,6 +162,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             if (cachedOutput != null && !cachedOutput.getWordsAsString().isEmpty()) {
               log.debug("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
               log.debug("[convertSemanticsToText] Using cached NLG words: " + cachedOutput.getWordsAsString());
+              log.debug("[lat] nlg_done dur={}ms path=cache", (System.nanoTime() - t0) / 1_000_000);
               return cachedOutput;
             }
           }
@@ -178,6 +181,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
               if (useCache) {
                 cacheNLGOutput(output);
               }
+              log.debug("[lat] nlg_done dur={}ms path=llm", (System.nanoTime() - t0) / 1_000_000);
               return output;
             }
           }
@@ -195,6 +199,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
               if (useCache && cacheSimpleNLG) {
                 cacheNLGOutput(simpleNLGOutput);
               }
+              log.debug("[lat] nlg_done dur={}ms path=simple", (System.nanoTime() - t0) / 1_000_000);
               return simpleNLGOutput;
             }
           }
@@ -204,6 +209,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
       }
     }
 
+    log.debug("[lat] nlg_done dur={}ms path=fallthrough", (System.nanoTime() - t0) / 1_000_000);
     return output;
   }
 

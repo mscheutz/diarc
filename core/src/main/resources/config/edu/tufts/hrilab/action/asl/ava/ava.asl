@@ -205,8 +205,14 @@ import edu.tufts.hrilab.action.goal.Goal;
 
 //Indefinitely blocking, but interruptible version of goHomeAndCharge. Used for Kiosk action
 () = goHomeAndCharge() {
-    act:goHome();
-    act:blockToCharge();
+    java.lang.Boolean !docked = False;
+
+    !docked = act:isDocked();
+
+    if (op:equals(!docked, False)) {
+        act:goHome();
+        act:blockToCharge();
+    }
 }
 
 () = saveLocation(Symbol ?location) {

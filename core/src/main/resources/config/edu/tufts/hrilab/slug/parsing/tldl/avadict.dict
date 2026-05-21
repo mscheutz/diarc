@@ -402,6 +402,9 @@ the task is; VAL/VERBT; #x.taskPredicate($x)
 
 add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
 
+i want to discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+
 every; PP/LREF; #x.$x
 
 a.m.; VAL\NUM; #x.absoluteTime($x, am)

@@ -22,14 +22,24 @@ public class SocialAvaConfig extends DiarcConfiguration {
   String model = "QuantTrio/Qwen3.5-9B-AWQ";
   //  String model = "Qwen/Qwen3-14B-AWQ";
   //  String model = "meta-llama/Llama-3.1-8B-Instruct:scaleway";
-  String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
+  // Default: direct to marvin vLLM via Tailscale (skips facade nginx hop, eliminates 504-under-contention failure mode).
+  // Override with -llmEndpoint <url> to route through facade (e.g., https://dashboard.thinkingrobots.ai/qwen).
+  // OpenaiClient.setEndpoint appends /v1/chat/completions - pass base URL only.
+  String openaiEndpoint = "http://100.113.66.111:9000";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   public String locationRefs = "refs/locations.json";
-  public String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
+  public String speakerId = "";
+  public String videoAudioDevice = "";
   public boolean initKiosk = false;
   public boolean persistKiosk = true;
   public String mediaDir = "ava";
   public boolean useDisplay = true;
+  public boolean useCartesia = false;
+  public String cartesiaVoiceId = "";
+  public String voiceVolume = "1.0";
+  public String voiceSpeed = "normal";
+  public String voiceClipVolume = "0.4";
+  public boolean muteMics = false;
   public SimSpeechRecognitionComponent simSpeechRec;
   public SocialTRLLMServiceProvider serviceProvider;
   public boolean llmOnly = true;
@@ -46,9 +56,17 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
+    options.add(Option.builder("videoAudioDevice").hasArg().desc("ALSA device for video playback (empty = vlc/system default)").build());
     options.add(Option.builder("kiosk").desc("start the demo with kiosk mode enabled").build());
     options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
+    options.add(Option.builder("cartesia").desc("use Cartesia TTS instead of MaryTTS").build());
+    options.add(Option.builder("cartesiaVoiceId").hasArg().desc("Cartesia voice UUID; overrides CARTESIA_VOICE_ID env").build());
+    options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
+    options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());
+    options.add(Option.builder("voiceClipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
+    options.add(Option.builder("muteMics").desc("disable mics during TTS playback").build());
+    options.add(Option.builder("llmEndpoint").hasArg().desc("override LLM endpoint URL (default: direct to marvin vLLM over Tailscale)").build());
     return options;
   }
 
@@ -76,6 +94,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     if (cmdLine.hasOption("speakerId")) {
       speakerId = cmdLine.getOptionValue("speakerId");
     }
+    if (cmdLine.hasOption("videoAudioDevice")) {
+      videoAudioDevice = cmdLine.getOptionValue("videoAudioDevice");
+    }
     if (cmdLine.hasOption("mediaDir")) {
       mediaDir = cmdLine.getOptionValue("mediaDir");
     }
@@ -87,6 +108,27 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("kiosk")) {
       initKiosk = true;
+    }
+    if (cmdLine.hasOption("cartesia")) {
+      useCartesia = true;
+    }
+    if (cmdLine.hasOption("cartesiaVoiceId")) {
+      cartesiaVoiceId = cmdLine.getOptionValue("cartesiaVoiceId");
+    }
+    if (cmdLine.hasOption("voiceVolume")) {
+      voiceVolume = cmdLine.getOptionValue("voiceVolume");
+    }
+    if (cmdLine.hasOption("llmEndpoint")) {
+      openaiEndpoint = cmdLine.getOptionValue("llmEndpoint");
+    }
+    if (cmdLine.hasOption("voiceSpeed")) {
+      voiceSpeed = cmdLine.getOptionValue("voiceSpeed");
+    }
+    if (cmdLine.hasOption("voiceClipVolume")) {
+      voiceClipVolume = cmdLine.getOptionValue("voiceClipVolume");
+    }
+    if (cmdLine.hasOption("muteMics")) {
+      muteMics = true;
     }
   }
   public void runConfiguration() {
@@ -139,13 +181,25 @@ public class SocialAvaConfig extends DiarcConfiguration {
       simSpeechRec = createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    String maryTTSArgs = " -female -volume 1.0 -showMixers";
-    if (!speakerId.isEmpty()) {
-      maryTTSArgs += " -matchMixer " + speakerId;
+    if (useCartesia) {
+      String cartesiaArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
+      if (!speakerId.isEmpty()) {
+        cartesiaArgs += " -matchMixer " + speakerId;
+      }
+      if (!cartesiaVoiceId.isEmpty()) {
+        cartesiaArgs += " -voiceId " + cartesiaVoiceId;
+      }
+      if (muteMics) {
+        cartesiaArgs += " -muteMics";
+      }
+      createInstance(edu.tufts.hrilab.ava.tts.AvaCartesiaTTSComponent.class, cartesiaArgs);
+    } else {
+      String maryTTSArgs = " -female -volume 1.0 -showMixers";
+      if (!speakerId.isEmpty()) {
+        maryTTSArgs += " -matchMixer " + speakerId;
+      }
+      createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);
     }
-    createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
-    //createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
-    //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
 //    if (useMicrophone) {
@@ -167,7 +221,11 @@ public class SocialAvaConfig extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
+      String displayArgs = ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90";
+      if (!videoAudioDevice.isEmpty()) {
+        displayArgs += " -videoAudioDevice " + videoAudioDevice;
+      }
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, displayArgs);
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);

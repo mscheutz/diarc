@@ -445,6 +445,7 @@ public class OpenaiClient implements LLMClient {
                           }
                         }
                       } else {
+                        if (tool_call_chunk.type == null) tool_call_chunk.type = "function";
                         //mergedToolCalls.put(tool_call_chunk.id,tool_call_chunk);
                         mergedToolCalls.put(tool_call_chunk.index,tool_call_chunk);
                       }
