@@ -290,8 +290,6 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
-  //Ignore until tool updates. Calling INSTRUCT rather than ITK versions
-  @Ignore
   @Test
   public void measurementsITKTest() {
     addUserInput("do you know the wifi signal strength at reception?");

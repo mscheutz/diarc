@@ -5,7 +5,7 @@ import java.util.List;
 import java.lang.String;
 import java.lang.Integer;
 
-() = measureTemperature() {
+() = measureTemperatureAtCurrentLocation() {
     Integer !temp = 0;
     Variable !x;
 
@@ -17,7 +17,7 @@ import java.lang.Integer;
     Symbol !currentLocation;
     !currentLocation = act:getCurrentLocation();
     !temp = act:measureTemperatureDegrees();
-    op:log(info, "[measureTemperature] !currentLocation temp !temp");
+    op:log(info, "[measureTemperatureAtCurrentLocation] !currentLocation temp !temp");
 }
 
 () = measureTemperatureAt(Symbol ?location) {
@@ -67,7 +67,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportTemperatureAtLocations(Predicate ?locations) {
+() = reportTemperatureOfLocations(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -105,8 +105,8 @@ import java.lang.Integer;
     }
 }
 
-() = reportTemperatureAtCurrentLocation() {
-    act:measureTemperature();
+() = reportTemperatureOfCurrentLocation() {
+    act:measureTemperatureAtCurrentLocation();
 
     Symbol !currentLocation;
     String !output;
@@ -116,7 +116,7 @@ import java.lang.Integer;
 }
 
 () = getTemperatureAtCurrentLocationString() {
-    act:measureTemperature();
+    act:measureTemperatureAtCurrentLocation();
 
     Symbol !currentLocation;
     String !output;

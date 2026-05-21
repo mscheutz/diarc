@@ -453,6 +453,10 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:say(?literal);
 }
 
+() = sayLocally(String ?literal) {
+    act:say(?literal);
+}
+
 () = say(String ?literal) {
     //Symbol !listener = this:getOriginalSubmitter();
     Symbol !listener = local_user;
