@@ -4114,14 +4114,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "backup your current locations",
     //        "saveLocationsToFile()", 10);
     //toolDefinitions.add(definition);
-//    definition = new ToolDefinition("sit",
-//            "You lower your screen. \nExample Instruction: \"sit down.\"",
-//            new ArrayList());
-//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-//    definition = new ToolDefinition("stand",
-//            "You raise your screen. \nExample Instruction: \"stand up.\"",
-//            new ArrayList());
-//    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("sit",
+            "You lower your screen. \nExample Instruction: \"sit down.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("stand",
+            "You raise your screen. \nExample Instruction: \"stand up.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //definition = new ToolDefinition("deliver(?objectName, ?location:location)",
     //        "You deliver ?objectName to location ?location:location",
     //        "bring the mug to %exampleLocation",
