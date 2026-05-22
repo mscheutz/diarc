@@ -507,8 +507,9 @@ import java.lang.String;
 
     act:endActionLearning(!actionSignature);
 
-    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
-    act:generateResponse(!actionPred);
+    act:generateResponseFromString("I have learned how to perform ?actionName");
+    //!actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
+    //act:generateResponse(!actionPred);
 }
 
 () = updateDialogueHistoryFromString(Symbol ?addressee, String ?words) {
