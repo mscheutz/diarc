@@ -91,22 +91,23 @@ import java.lang.String;
 
     // for LLM parses -- get human validation
     if (op:invokeMethod(?utterance, "needsValidation")) {
+        if(~act:checkIgnoreValidation(!semantics)) {
+            // (Re)validate attempted parses until the user validates it or fully gives up
+            //   (On negative validation, extended dialogue recovery and further parsing attempts are performed internally)
+            !continueValidation = act:validateParse(?utterance,?updateHistory);
+            while (op:equals(!continueValidation,true)) {
+                !continueValidation = act:validateParse(?utterance,false);
+            }
 
-        // (Re)validate attempted parses until the user validates it or fully gives up
-        //   (On negative validation, extended dialogue recovery and further parsing attempts are performed internally)
-        !continueValidation = act:validateParse(?utterance,?updateHistory);
-        while (op:equals(!continueValidation,true)) {
-            !continueValidation = act:validateParse(?utterance,false);
-        }
-
-        // Exiting the validation loop without the utterance being validated signals failure, otherwise progress
-        //   through rest of NLU pipeline
-        !validated = op:invokeMethod(?utterance,"isValidated");
-        if (op:equals(!validated,false)) {
-            op:log("debug", "not validated: ?utterance");
-            return;
-        } else {
-            op:log("debug", "validated: ?utterance");
+            // Exiting the validation loop without the utterance being validated signals failure, otherwise progress
+            //   through rest of NLU pipeline
+            !validated = op:invokeMethod(?utterance,"isValidated");
+            if (op:equals(!validated,false)) {
+                op:log("debug", "not validated: ?utterance");
+                return;
+            } else {
+                op:log("debug", "validated: ?utterance");
+            }
         }
     }
 
@@ -153,6 +154,7 @@ import java.lang.String;
     Predicate !responseForm;
     java.lang.Boolean !validated;
     java.lang.Integer !historyLength;
+    java.lang.String !fillerString;
 
     ?revalidate = op:newObject("java.lang.Boolean", false);
     !addressee = op:invokeMethod(?unvalidatedUtterance, "getAddressee");
@@ -165,7 +167,8 @@ import java.lang.String;
     }
 
     // Filler response in between instruction parse and validation response generation
-    act:generateResponseFromString(!speaker,"sounds good");
+    !fillerString = tsc:getPreValidationFillerPhrase();
+    act:generateResponseFromString(!speaker,!fillerString);
 
     // (Social LLM) Measure current conversation history length in order to know whether validated inputs can be parsed
     !historyLength = tsc:getLLMConversationLength(!speaker,!addressee);
@@ -344,12 +347,14 @@ import java.lang.String;
     Symbol !focusedChatInitialResponseSemantics;
     String !semanticsName;
     Predicate !submissionPredicate;
+    String !fillerResponse;
 
     op:log("info","[runContextSpecificChat] in method");
 
     //GenerateResponse or sayText? Do we want this in the history?
     //Filler response on context transfer
-    act:generateResponseFromString(?user,"Gathering all relevant information");
+    !fillerResponse = tsc:getContextTransferFillerPhrase();
+    act:generateResponseFromString(?user,!fillerResponse);
 
     // Have convoluted wrapper script to submit the initial side effect of instructing the "focus context" action as a
     //  separate goal in order for all possible interactions to work as intended: e.g. interruption methods, initial text

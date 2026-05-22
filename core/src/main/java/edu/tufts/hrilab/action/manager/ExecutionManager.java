@@ -2826,6 +2826,26 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Call ignoreValidation if service is present in the system
+   */
+  @TRADEService
+  @Action
+  public boolean checkIgnoreValidation(Predicate goalPred) {
+    Collection<TRADEServiceInfo> tsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("ignoreValidation").argTypes(Predicate.class));
+
+    for (TRADEServiceInfo tsi : tsis) {
+      try {
+        if (tsi.call(Boolean.class, goalPred)) {
+          return true;
+        }
+      } catch (TRADEException e) {
+        log.error("[checkIgnoreValidation] error calling ignoreValidation", e);
+      }
+    }
+    return false;
+  }
+
+  /**
    * Add ActionListener to list to be notified of ActionInterpreter and StepExecution events
    *
    * @param al listener to be added

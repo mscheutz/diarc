@@ -448,6 +448,7 @@ import java.lang.Boolean;
     java.lang.String !currentStatus;
     java.lang.Boolean !currentGoalActive = true;
     Predicate !goalSubmittedPred;
+    java.lang.String !fillerResponse;
 
     conditions : {
       or : {
@@ -501,11 +502,13 @@ import java.lang.Boolean;
         if (op:isEmpty(!currentGoals)) {
             if(~act:checkIgnoreTentativeAccept(?state)){
                 if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-                    act:generateResponseFromString(?speaker,"understood");
+                    !fillerResponse = tsc:getValidatedAckFillerPhrase();
+                    act:generateResponseFromString(?speaker,!fillerResponse);
                 } else {
                     // Filler response before actual tentative accept generation
                     async {
-                        act:generateResponseFromString(?speaker,"understood");
+                        !fillerResponse = tsc:getValidatedAckFillerPhrase();
+                        act:generateResponseFromString(?speaker,!fillerResponse);
                     }
 
                     //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
@@ -541,7 +544,8 @@ import java.lang.Boolean;
     } else {
         if(~act:checkIgnoreTentativeAccept(?state)){
             if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-                act:generateResponseFromString(?speaker,"understood");
+                !fillerResponse = tsc:getValidatedAckFillerPhrase();
+                act:generateResponseFromString(?speaker,!fillerResponse);
             } else {
                 // Filler response before actual tentative accept generation
                 async {

@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -214,6 +215,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private int externalErrorCount = 0;
   private boolean restrictedMode = false;
+
+  private List<String> preValFillerSet;
+  private List<String> validatedAckFillerSet;
+  private List<String> contextTransferFillerSet;
 
   @Override
   public void init() {
@@ -492,6 +497,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     promptVars.put("%instructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
     //promptVars.put("%instructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, true)).collect(Collectors.joining("\n#\n")));
     promptVars.putAll(initPromptVars());
+
+    initPreValidationFillerPhrases();
+    initValidatedAckFillerPhrases();
+    initContextTransferFillerPhrases();
 
     trackDialogueHistory = true;
     trackLearnedActions = true;
@@ -931,9 +940,17 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         outputUtterance.setNeedsValidation(false);
       } else {
         if (outputUtterance.needsValidation()) {
-          chatContext.chatState = ChatState.VALIDATION;
-          chatContext.utteranceUpForValidation = outputUtterance; //copy?
-          chatContext.toolCallIdUpForValidation = toolCall.id;
+          boolean ignoreValidation = false;
+          try {
+            ignoreValidation = TRADE.getAvailableService(new TRADEServiceConstraints().name("checkIgnoreValidation").argTypes(Predicate.class)).call(boolean.class, outputUtterance.getSemantics());
+          } catch (TRADEException e) {
+            log.error("[handleToolResponse] unable to call checkIgnoreValidation", e);
+          }
+          if (!ignoreValidation) {
+            chatContext.chatState = ChatState.VALIDATION;
+            chatContext.utteranceUpForValidation = outputUtterance; //copy?
+            chatContext.toolCallIdUpForValidation = toolCall.id;
+          }
         } else {
           // noConfirmation case - deferred until dialogue history update in case of external parser hit
           //handleValidatedToolCall(outputUtterance, chatCollection);
@@ -954,6 +971,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder) {
     String responseString = llmResponse.getText().trim();
+    if (responseString.isEmpty()) {
+      responseString = llmResponse.reasoning.trim();
+    }
 
     if (responseString.contains("<tool_call>")) {
       //TODO: attempt to remove unmatched tags and process as a tool json string?
@@ -3702,6 +3722,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   @TRADEService
   @Action
+  public boolean ignoreValidation(Predicate goalPred){
+    if(goalPred != null) {
+      switch (goalPred.getName()) {
+        case "suspendSystemGoalsBlocking":
+        case "suspendGoal":
+        case "cancelSystemGoals":
+        case "cancelGoal":
+          return true;
+        default:
+          return false;
+      }
+    }
+    return false;
+  }
+
+  @TRADEService
+  @Action
   public boolean ignoreTentativeAccept(Predicate goalPred){
     log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
     if(goalPred != null) {
@@ -4846,5 +4883,57 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //replyTools.put(Factory.createPredicate("amount(X)"), new Tool(definition,UtteranceType.REPLY));
 
     return replyTools;
+  }
+
+  private void initPreValidationFillerPhrases() {
+    preValFillerSet = new ArrayList<>();
+    preValFillerSet.add("Okay.");
+    preValFillerSet.add("Alright.");
+    preValFillerSet.add("Gotcha.");
+    preValFillerSet.add("Noted.");
+    preValFillerSet.add("Got it.");
+    preValFillerSet.add("One second.");
+    preValFillerSet.add("Let me make sure I understood.");
+
+    //List<String> suffixSet = new ArrayList<>();
+    //suffixSet.add("");
+    //suffixSet.add("");
+    //suffixSet.add("");
+    //suffixSet.add("");
+    //suffixSet.add("processing");
+    //suffixSet.add("parsing");
+  }
+  private void initValidatedAckFillerPhrases() {
+    validatedAckFillerSet = new ArrayList<>();
+    validatedAckFillerSet.add("Understood.");
+    validatedAckFillerSet.add("Sounds good.");
+    validatedAckFillerSet.add("Will do.");
+    validatedAckFillerSet.add("Got it.");
+    validatedAckFillerSet.add("Confirmed.");
+    validatedAckFillerSet.add("Proceeding.");
+    validatedAckFillerSet.add("Submitted.");
+  }
+  private void initContextTransferFillerPhrases() {
+    contextTransferFillerSet = new ArrayList<>();
+    contextTransferFillerSet.add("Gathering any relevant details.");
+    contextTransferFillerSet.add("Processing your instruction.");
+    contextTransferFillerSet.add("Setting your task.");
+    contextTransferFillerSet.add("Just a second.");
+    contextTransferFillerSet.add("One moment please.");
+  }
+
+  @TRADEService
+  public String getPreValidationFillerPhrase() {
+    return preValFillerSet.get(new Random().nextInt(preValFillerSet.size()));
+  }
+
+  @TRADEService
+  public String getValidatedAckFillerPhrase() {
+    return validatedAckFillerSet.get(new Random().nextInt(validatedAckFillerSet.size()));
+  }
+
+  @TRADEService
+  public String getContextTransferFillerPhrase() {
+    return contextTransferFillerSet.get(new Random().nextInt(contextTransferFillerSet.size()));
   }
 }
