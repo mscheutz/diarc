@@ -1521,12 +1521,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             errorResponseBuilder = new StringBuilder();
             // Call chat completion again with updated prompt and collection state - return Utterance with updated semantics
             Completion response;
-            if (streamResults) {
-              // Currently not including universal focused tools here (i.e. suspend/cancel and itk targets). Is this in fact correct?
-              response = callChatCompletionStreaming(chat, contextSpecificTemplate.toolDefinitions);
-            } else {
+            //if (streamResults) {
+            //  // Currently not including universal focused tools here (i.e. suspend/cancel and itk targets). Is this in fact correct?
+            //  response = callChatCompletionStreaming(chat, contextSpecificTemplate.toolDefinitions);
+            //} else {
               response = callChatCompletion(chat, contextSpecificTemplate.toolDefinitions);
-            }
+            //}
 
             if (response == null) {
               log.error("[focusDialogueChat] received null Completion response");
