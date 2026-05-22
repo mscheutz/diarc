@@ -499,7 +499,8 @@ import java.lang.Boolean;
 
         // Do we want distinction of reporting when placing behind a suspended goal vs an active goal?
         //  ^Eventually this logic will need to be extended to explicitly find the goal(s) occupying the required resources
-        if (op:isEmpty(!currentGoals)) {
+        //TODO: placeholder change, need to compare priorities of goals to know how to respond
+        if (op:isEmpty(!currentGoals) || op:equalsValue(?priorityTier,URGENT)) {
             if(~act:checkIgnoreTentativeAccept(?state)){
                 if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
                     !fillerResponse = tsc:getValidatedAckFillerPhrase();
