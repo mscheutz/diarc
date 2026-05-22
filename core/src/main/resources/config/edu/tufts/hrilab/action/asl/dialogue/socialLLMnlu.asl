@@ -359,6 +359,7 @@ import java.lang.String;
     async {
         act:generateResponseFromString(?user,!fillerResponse);
     }
+    op:sleep(50);
 
     // Have convoluted wrapper script to submit the initial side effect of instructing the "focus context" action as a
     //  separate goal in order for all possible interactions to work as intended: e.g. interruption methods, initial text
