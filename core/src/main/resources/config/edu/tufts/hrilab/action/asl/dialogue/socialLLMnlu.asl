@@ -168,7 +168,9 @@ import java.lang.String;
 
     // Filler response in between instruction parse and validation response generation
     !fillerString = tsc:getPreValidationFillerPhrase();
-    act:generateResponseFromString(!speaker,!fillerString);
+    async {
+        act:generateResponseFromString(!speaker,!fillerString);
+    }
 
     // (Social LLM) Measure current conversation history length in order to know whether validated inputs can be parsed
     !historyLength = tsc:getLLMConversationLength(!speaker,!addressee);
@@ -354,7 +356,9 @@ import java.lang.String;
     //GenerateResponse or sayText? Do we want this in the history?
     //Filler response on context transfer
     !fillerResponse = tsc:getContextTransferFillerPhrase();
-    act:generateResponseFromString(?user,!fillerResponse);
+    async {
+        act:generateResponseFromString(?user,!fillerResponse);
+    }
 
     // Have convoluted wrapper script to submit the initial side effect of instructing the "focus context" action as a
     //  separate goal in order for all possible interactions to work as intended: e.g. interruption methods, initial text

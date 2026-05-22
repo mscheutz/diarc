@@ -503,12 +503,16 @@ import java.lang.Boolean;
             if(~act:checkIgnoreTentativeAccept(?state)){
                 if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
                     !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                    act:generateResponseFromString(?speaker,!fillerResponse);
+                    async {
+                        act:generateResponseFromString(?speaker,!fillerResponse);
+                    }
                 } else {
                     // Filler response before actual tentative accept generation
                     async {
                         !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                        act:generateResponseFromString(?speaker,!fillerResponse);
+                        async {
+                            act:generateResponseFromString(?speaker,!fillerResponse);
+                        }
                     }
 
                     //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
@@ -545,7 +549,9 @@ import java.lang.Boolean;
         if(~act:checkIgnoreTentativeAccept(?state)){
             if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
                 !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                act:generateResponseFromString(?speaker,!fillerResponse);
+                async {
+                    act:generateResponseFromString(?speaker,!fillerResponse);
+                }
             } else {
                 // Filler response before actual tentative accept generation
                 async {
