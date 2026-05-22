@@ -416,6 +416,12 @@ public class OpenaiClient implements LLMClient {
               if (mergedChoice.index == -1) {
                 mergedChoice.index = deltaChoice.index;
                 mergedChoice.message = deltaChoice.delta;
+                if (mergedChoice.message.content == null) {
+                  mergedChoice.message.content = "";
+                }
+                if (mergedChoice.message.reasoning == null) {
+                  mergedChoice.message.reasoning = "";
+                }
               } else if (mergedChoice.index != deltaChoice.index) {
                 log.error("[streamingChatCompletion] got mismatched Choice response indices between reads");
               } else {
