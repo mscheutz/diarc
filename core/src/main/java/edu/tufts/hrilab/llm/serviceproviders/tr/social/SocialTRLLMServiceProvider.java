@@ -806,6 +806,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * hard time calling tools rather than just saying it performed the underlying functionality.
    */
   public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
+    return handleToolResponse(llmResponse,inputUtterance,chatCollection,errorResponseBuilder,streamResults);
+  }
+  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean streaming) {
     if (llmResponse.toolCalls.size() > 1) {
       //TODO
       log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both. Only using first...");
@@ -896,7 +899,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             llmResponse.text = llmResponse.text.substring(1, llmResponse.text.length() - 1);
           }
         }
-        return handleTextResponse(llmResponse, inputUtterance, chatContext, errorResponseBuilder);
+        return handleTextResponse(llmResponse, inputUtterance, chatContext, errorResponseBuilder, streaming);
       }
 
       //// Universal postprocessing for accepted cases
@@ -970,6 +973,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * and return generateResponseFromString semantics with needsValidation set to false
    */
   public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder) {
+    return handleTextResponse(llmResponse,inputUtterance,chatContext,errorResponseBuilder,streamResults);
+  }
+  public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder, boolean streaming) {
     String responseString = llmResponse.getText().trim();
     if (responseString.isEmpty()) {
       responseString = llmResponse.reasoning.trim();
@@ -997,9 +1003,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
-    //Predicate generateResponsePred = Factory.createPredicate("generateResponseFromString",inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
-    //Streaming
-    Predicate generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
+    Predicate generateResponsePred;
+    if (streaming) {
+      generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
+    } else {
+      generateResponsePred = Factory.createPredicate("generateResponseFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
+    }
     inputUtterance.setSemantics(generateResponsePred);
     inputUtterance.setType(UtteranceType.INSTRUCT);
     inputUtterance.setNeedsValidation(false);
@@ -1540,11 +1549,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             if (response.toolCalls.isEmpty()) {
               // Text response, presumably querying for information towards new template target
               lastToolCall = null;
-              output = handleTextResponse(response, originalUtterance, collection.currentChat, errorResponseBuilder);
+              output = handleTextResponse(response, originalUtterance, collection.currentChat, errorResponseBuilder, false);
             } else {
               // Direct tool call on transfer
               lastToolCall = response.toolCalls.get(0);
-              output = handleToolResponse(response, originalUtterance, collection, errorResponseBuilder);
+              output = handleToolResponse(response, originalUtterance, collection, errorResponseBuilder, false);
               //(Old note - not sure if still valid) if this call returns the utterance unmodified, needs to be an error case
             }
 
@@ -4921,7 +4930,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     contextTransferFillerSet = new ArrayList<>();
     contextTransferFillerSet.add("Gathering any relevant details.");
     contextTransferFillerSet.add("Processing your instruction.");
-    contextTransferFillerSet.add("Setting your task.");
+    contextTransferFillerSet.add("Setting up your task.");
     contextTransferFillerSet.add("Just a second.");
     contextTransferFillerSet.add("One moment please.");
   }
