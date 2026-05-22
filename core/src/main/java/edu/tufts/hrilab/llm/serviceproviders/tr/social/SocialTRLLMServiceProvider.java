@@ -2586,6 +2586,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Add as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.add(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.put(signature.getName(), correspondingTool);
+      chatTemplates.get("nluextended").toolDefinitions.add(correspondingTool.toolDefinition);
+      chatTemplates.get("nluextended").tools.put(signature.getName(), correspondingTool);
     }
   }
 
@@ -2606,6 +2608,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Remove as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.remove(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.remove(name);
+      chatTemplates.get("nluextended").toolDefinitions.remove(correspondingTool.toolDefinition);
+      chatTemplates.get("nluextended").tools.remove(name);
     }
   }
 
