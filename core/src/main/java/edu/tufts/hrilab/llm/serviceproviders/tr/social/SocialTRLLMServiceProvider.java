@@ -3898,7 +3898,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             new ArrayList<>());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     exampleCallString = xml ?
-             "<function=measureWifiAtLocations><parameter=locations>[%exampleLocation,dock]</parameter></function>" :
+             "<function=measureWifiAtLocations><parameter=locations>[%exampleLocation,dock:location]</parameter></function>" :
     "{\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\",\"dock:location\"]}}";
     definition = new ToolDefinition("measureWifiAtLocations",
             "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"check the wifi at %exampleLocation and the dock\" \nExample Call: " + exampleCallString,
