@@ -900,6 +900,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
   private String buildStreamingRequestBody(String text, String contextId, boolean keepContinue) {
     String safe = text == null ? "" : text;
     String escaped = safe
+            .replace("_", " ")
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
@@ -1000,6 +1001,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   private String buildRequestBody(String text, String contextId) {
     String escaped = text
+            .replace("_", " ")
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
