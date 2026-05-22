@@ -46,10 +46,19 @@ public class AvaCartesiaTTSComponent extends CartesiaTTSComponent {
     } catch (TRADEException e) {
       log.debug("[sayText] unable to get lastResponseString from SocialLLMServiceProvider - should only occur if SocialLLM is disabled");
     }
+    boolean lastResponseStreamed = false;
+    try {
+      lastResponseStreamed = TRADE.getAvailableService(
+              new TRADEServiceConstraints().name("getLastResponseStreamed").argTypes(Symbol.class, Symbol.class))
+              .call(Boolean.class, utterance.getAddressee(), utterance.getSpeaker());
+    } catch (TRADEException e) {
+      log.debug("[sayText] unable to get lastResponseStreamed from SocialLLMServiceProvider");
+    }
     // Duplicate-voicing gate: streaming chunkHandler emits stillGatheringInformation.response, then handleToolResponse re-dispatches the same text through sayText.
     // load-bearing -- without this Ava speaks every chitchat reply twice. don't move triggerWW back into this branch either (streaming onStreamCompleted handles post-drain rearm).
     // TODO(pete): should this gate live in SocialTRLLMServiceProvider.handleToolResponse instead?
-    if (lastResponseString != null
+    if (lastResponseStreamed
+            && lastResponseString != null
             && utterance.getWordsAsString().equals(lastResponseString)
             && utterance.getType() == UtteranceType.REPLY) {
       log.info("[sayText] suppressing duplicate voicing (already streamed): text_len={}", utterance.getWordsAsString().length());

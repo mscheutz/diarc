@@ -70,6 +70,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   boolean streamResults = true;
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
+  private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+  private volatile String currentStreamingResponseId;
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
   boolean useCondensedTools = false;
 
@@ -996,6 +998,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // TODO: need more postprocessing cases here for various special characters?
 
     chatContext.lastResponseString = responseString;
+    chatContext.lastResponseStreamed = ttsStreamedIds.remove(llmResponse.getId());
 
     if (!(responseString.startsWith("\"") && responseString.endsWith("\""))) {
       responseString = "\"" + responseString + "\"";
@@ -1909,6 +1912,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //TODO: separate between NLG and NLU
 
     String id = currentResponse.id;
+    currentStreamingResponseId = id;
     Qwen3CoderToolParser parser = streamingResults.get(id);
     if (parser == null) {
       parser = new Qwen3CoderToolParser();
@@ -1982,6 +1986,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private void ttsPush(String fragment) {
     if (fragment == null || fragment.isEmpty()) return;
+    ttsStreamedIds.add(currentStreamingResponseId);
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class))
               .call(void.class, fragment);
@@ -3464,6 +3469,18 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     return "";
+  }
+
+  @TRADEService
+  public boolean getLastResponseStreamed(Symbol user, Symbol agentTeam) {
+    ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null) {
+        return chatContext.lastResponseStreamed;
+      }
+    }
+    return false;
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
