@@ -415,6 +415,7 @@ import java.lang.String;
         tsc:interruptWaitOnFocusedChat(?user,?agentTeam,?cid);
     } else {
         act:handleParsedUtterance(!responseUtterance);
+        act:triggerWW();
     }
 }
 
