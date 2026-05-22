@@ -4287,7 +4287,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //definition = new ToolDefinition("getExtendedConversationHistory",
     //        "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
     //        new ArrayList());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     // "If not contained in this history, then you must tell the user you cannot remember this interaction"
 
     //Prevent the LLM from just regurgitating the history directly
@@ -4312,10 +4312,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        new ArrayList());
     //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
     //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt
-    //definition = new ToolDefinition("getTaughtActions",
-    //        "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
-    //        new ArrayList());
-    //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+    definition = new ToolDefinition("getTaughtActions",
+            "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
+            new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     //definition = new ToolDefinition("getPredefinedActions",
     //        "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
     //        new ArrayList());
