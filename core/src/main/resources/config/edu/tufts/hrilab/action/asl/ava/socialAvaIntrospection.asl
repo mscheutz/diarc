@@ -120,37 +120,38 @@ import edu.tufts.hrilab.action.goal.Goal;
     Map !elem;
     List !bindings;
     Symbol !rssi;
-    java.lang.String !rssiStr;
-    java.lang.String !label;
+    Symbol !label;
+    java.lang.String !labelStr;
     java.lang.String !locName;
 
-    !locName = act:locationRefToName(?location);
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(?location,X)");
     !bindings = act:queryBelief(!queryPred);
     if (~op:isEmpty(!bindings)) {
         !elem = op:get(!bindings, 0);
         !rssi = op:get(!elem,!x);
-        !rssiStr = op:invokeMethod(!rssi, "toString");
-        !label = act:rssiQualityLabel(!rssi);
-        ?output = op:invokeStaticMethod("java.lang.String", "format", "wifi at %s was %s dBm, %s", !locName, !rssiStr, !label);
+        !labelStr = act:rssiQualityLabel(!rssi);
+        !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
+        ?output = act:generateOutputStringFromSemantics(wifiStrength(?location, !rssi, !label));
     } else {
+        !locName = act:locationRefToName(?location);
         ?output = op:invokeStaticMethod("java.lang.String", "format", "I have not measured wifi at %s", !locName);
     }
 }
 
 (String ?output) = generateWifiSummaryString() {
     Predicate !queryPred;
+    Predicate !reading;
+    Predicate !summaryPred;
     Variable !loc = "L";
     Variable !rssiVar = "R";
     Map !elem;
     List !bindings;
     Symbol !location;
     Symbol !rssi;
-    java.lang.String !locStr;
-    java.lang.String !rssiStr;
-    java.lang.String !label;
-    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
-    java.lang.String !sep = "";
+    Symbol !label;
+    java.lang.String !labelStr;
+    java.util.List !readings = op:newObject("java.util.ArrayList");
+    java.util.List !readingArgs;
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(L,R)");
     !bindings = act:queryBelief(!queryPred);
@@ -158,20 +159,19 @@ import edu.tufts.hrilab.action.goal.Goal;
         ?output = op:newObject("java.lang.String","I have not measured wifi anywhere");
     } else {
         foreach(!elem : !bindings) {
-            op:invokeMethod(!sb,"append",!sep);
             !location = op:get(!elem,!loc);
             !rssi = op:get(!elem,!rssiVar);
-            !locStr = act:locationRefToName(!location);
-            !rssiStr = op:invokeMethod(!rssi, "toString");
-            !label = act:rssiQualityLabel(!rssi);
-            op:invokeMethod(!sb,"append",!locStr);
-            op:invokeMethod(!sb,"append"," ");
-            op:invokeMethod(!sb,"append",!rssiStr);
-            op:invokeMethod(!sb,"append"," dBm ");
-            op:invokeMethod(!sb,"append",!label);
-            !sep = op:newObject("java.lang.String",", ");
+            !labelStr = act:rssiQualityLabel(!rssi);
+            !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
+            !readingArgs = op:newObject("java.util.ArrayList");
+            op:invokeMethod(!readingArgs, "add", !location);
+            op:invokeMethod(!readingArgs, "add", !rssi);
+            op:invokeMethod(!readingArgs, "add", !label);
+            !reading = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength", !readingArgs);
+            op:invokeMethod(!readings, "add", !reading);
         }
-        ?output = op:invokeMethod(!sb,"toString");
+        !summaryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiMeasurements", !readings);
+        ?output = act:generateOutputStringFromSemantics(!summaryPred);
     }
     act:generateResponseFromString(?output);
 }

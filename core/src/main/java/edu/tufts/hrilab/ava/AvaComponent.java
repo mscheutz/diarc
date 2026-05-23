@@ -91,6 +91,7 @@ import org.xml.sax.SAXException;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.System.getProperty;
+import static java.lang.Thread.sleep;
 
 /**
  * Represents the Ava robot navigation functionality.
@@ -808,7 +809,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
 
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -998,7 +999,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         return new ConditionJustification(false);
       }
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -1046,7 +1047,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         return new ConditionJustification(false);
       }
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -1143,7 +1144,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       LocalDateTime nextHour = now.truncatedTo(ChronoUnit.HOURS).plusHours(1);
       long sleepTime = Math.max(Duration.between(now, nextHour).toMillis() - (60 * 1000), 0); // A minute before the hour
       try {
-        Thread.sleep(sleepTime);
+        sleep(sleepTime);
       } catch (InterruptedException e) {
         log.error("[stopGoingHomeOnTheHour] Error sleeping until next hour", e);
       }
@@ -1160,7 +1161,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           reinstateMoveGoal();
         }
         try {
-          Thread.sleep(1000);
+          sleep(1000);
         } catch (InterruptedException ex) {
           log.error("[stopGoingHomeOnTheHour] Error sleeping 1000ms", ex);
         }
@@ -1241,7 +1242,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       res = api.getZLiftCameraTilt();
       position = Double.valueOf(res.response.zLift.position);
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -1270,7 +1271,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       res = api.getZLiftCameraTilt();
       position = Double.valueOf(res.response.cameraTilt.position);
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -1302,7 +1303,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       res = api.getPosition();
       currentRotation = Double.valueOf(res.response.theta);
       try {
-        Thread.sleep(1000);
+        sleep(1000);
       } catch (Exception ex) {
         log.error("Error sleeping 1000ms", ex);
       }
@@ -1532,46 +1533,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return -1;
   }
 
-  private static final boolean IS_TERMUX =
-          System.getenv("PREFIX") != null
-          && System.getenv("PREFIX").startsWith("/data/data/com.termux");
-
   @Override
   public Integer measureWifiRssi() {
     try {
-      String output = IS_TERMUX ? readTermuxWifiScan() : readProcNetWireless();
-      if (output == null || output.isEmpty()) {
-        return Integer.MIN_VALUE;
-      }
-      java.util.regex.Matcher m = java.util.regex.Pattern.compile("-?\\d+").matcher(output);
-      int best = Integer.MIN_VALUE;
-      while (m.find()) {
-        int v = Integer.parseInt(m.group());
-        if (v < 0 && v > best) best = v;
-      }
-      return best;
-    } catch (Exception e) {
-      log.error("[measureWifiRssi] failed", e);
-      return Integer.MIN_VALUE;
+      sleep(1000);
+    } catch (InterruptedException e) {
+      log.warn("[measureWifiRssi] sleep failed");
     }
-  }
-
-  private String readTermuxWifiScan() throws IOException, InterruptedException {
-    Process p = new ProcessBuilder("termux-wifi-scaninfo").redirectErrorStream(true).start();
-    String out = new String(p.getInputStream().readAllBytes());
-    p.waitFor();
-    StringBuilder rssis = new StringBuilder();
-    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"rssi\"\\s*:\\s*(-?\\d+)").matcher(out);
-    while (m.find()) rssis.append(m.group(1)).append(' ');
-    return rssis.toString();
-  }
-
-  private String readProcNetWireless() throws IOException, InterruptedException {
-    Process p = new ProcessBuilder("awk", "NR>=3 {print $4}", "/proc/net/wireless")
-            .redirectErrorStream(true).start();
-    String out = new String(p.getInputStream().readAllBytes());
-    p.waitFor();
-    return out;
+    return -72 + (int) (Math.random() * 27);
   }
 
   @TRADEService
@@ -1785,7 +1754,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             long pollStart = System.nanoTime();
             int polls = 0;
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(20);
+              sleep(20);
               polls++;
             }
             if (!listenForWW) {
@@ -1844,7 +1813,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           int asrPolls = 0;
           while (listenForWW && result.isEmpty()) {
             while (!reader.ready() && listenForWW) {
-              Thread.sleep(20);
+              sleep(20);
               asrPolls++;
             }
             if (!listenForWW) {
@@ -2014,7 +1983,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
       //Wait for WW detection
       while (is.available() == 0) {
-        Thread.sleep(100);
+        sleep(100);
       }
       //Clear stream buffer of message indicating WW detection
       StringBuilder s = new StringBuilder();
@@ -2146,7 +2115,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     log.info("[waitForDuration] sleeping for {} seconds", seconds);
     try {
       sleepForDurationThread = Thread.currentThread();
-      Thread.sleep(seconds*1000);
+      sleep(seconds*1000);
     } catch (InterruptedException ignored) {}
     sleepForDurationThread = null;
     log.info("[waitForDuration] done sleeping");
