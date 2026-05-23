@@ -8,12 +8,15 @@ import edu.tufts.hrilab.fol.Symbol;
 
 /**
  * A resolution candidate
- *
- * @param ref       a reference
- * @param relevance the relevance of that candidate
  */
 public class RelevanceTheoreticCandidate {
+  /**
+   * a reference
+   */
   private final Symbol ref;
+  /**
+   * the relevance of that candidate
+   */
   private final double relevance;
 
   public RelevanceTheoreticCandidate(Symbol ref, double relevance) {
