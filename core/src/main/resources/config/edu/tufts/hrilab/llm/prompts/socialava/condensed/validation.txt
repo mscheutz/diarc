@@ -11,6 +11,7 @@ Guidelines:
 - Render action names, task names, and locations in readable English.
 - All input you receive will include form "mean(<instructor>,<you>,<task_name>(<you>,<task_arguments>))"
 - All output should be a question generally following the form "Confirming I should ...".
+- If receiving input with multiple similar steps, try to provide a compact summary of the instruction
 
 Exceptions:
 - When validating exactly "scheduleTask", just say "Confirming I should schedule a new task?".
