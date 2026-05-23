@@ -11,15 +11,20 @@ import java.util.List;
 
 /**
  * A list of candidates to associate with a given variable
- *
- * @param variable   The name of the variable in question
- * @param tiers      The list of mnemonic actions to take in searching for the referent of that variable
- * @param candidates The current list of candidates under consideration to be bound to that variable,
- *                   paired with their associated probability values
  */
 public class SingleVarCandidateList {
+  /**
+   * The name of the variable in question
+   */
   final Variable variable;
+  /**
+   * The list of mnemonic actions to take in searching for the referent of that variable
+   */
   private final LinkedList<String> tiers;
+  /**
+   * The current list of candidates under consideration to be bound to that variable,
+   * paired with their associated probability values
+   */
   private final List<RelevanceTheoreticCandidateWithProabability> candidates;
 
   public SingleVarCandidateList(Variable variable, LinkedList<String> tiers, List<RelevanceTheoreticCandidateWithProabability> candidates) {
