@@ -474,7 +474,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  actions for general interaction to populate corresponding toolsets effectively
     ToolDefinition definition = new ToolDefinition("reportWifiOfLocations",
             "You report the wifi signal strength you had previously measured at each of the supplied locations in the list. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition,UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportWifiOfCurrentLocation",
             "You report the the wifi signal strength of your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
@@ -482,7 +482,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition,UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportTemperatureOfLocations",
             "You report the temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition,UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportTemperatureOfCurrentLocation",
             "You report the the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
@@ -3108,7 +3108,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //TODO: what general fuzzy matching do we want here? Or is the responsibility on doing so in whatever inner action
       //  and providing the simplest variation here?
       if (!possible_values.contains(argString)) {
-        errorMessage.append("- Your tool call contained an invalid value for a ").append(inner ? "inner " : "").append("\"").append(argName).append("\" argument. Please correct any spelling, punctuation, or capitalization mistakes to exactly match a value in the possible_values set if possible. If an obvious similar possible values exists, you may update your call with that value. Otherwise, if no obvious candidates exist, work with the user to specify a valid value as a replacement. Supplied value: ").append(argString).append(", possible values: ").append(possible_values).append(". Do not list out all possible values if responding to the user, unless they ask for that information. If this argument is not required, you may remove it.\n");
+        errorMessage.append("- Your tool call contained an invalid value for a ").append(inner ? "inner " : "").append("\"").append(argName).append("\" argument. Please correct any spelling, punctuation, or capitalization mistakes to exactly match a value in the possible_values set if possible. If an obvious similar possible values exists, you may update your call with that value. Otherwise, if no obvious candidates exist, work with the user to specify a valid value as a replacement. Supplied value: ").append(argString).append(", possible values: ").append(possible_values).append(". Do not list out all possible values if responding to the user, unless they ask for that information. Do not include :<type> in your explanation of these values to the user. If this argument is not required, you may remove it.\n");
         return null;
       }
 
@@ -3280,7 +3280,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             try {
               refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
               if (refs.get(arg).size() == 1) {
-                transformedArg = Factory.createSymbol(refs.get(arg).get(0).getName(), refs.get(arg).get(0).get(0).getType());
+                transformedArg = Factory.createSymbol(refs.get(arg).get(0).getName());//, refs.get(arg).get(0).get(0).getType());
               }
             } catch (TRADEException e) {
               log.warn("[generateREG] {}", arg, e);
@@ -3848,11 +3848,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     } else {
       argumentsString = toolFunction.parameters.getProperties().isEmpty() ? "None" : "\n" +
               toolFunction.parameters.getProperties().entrySet().stream().map(entry ->
-                      entry.getKey() + " (" + (required.contains(entry.getKey()) ? "necessary" : "optional") + ")" + ", type="+entry.getValue().getType()+"): "
+                      " - " + entry.getKey() + " (" + (required.contains(entry.getKey()) ? "necessary" : "optional") + ")" + ", (type="+entry.getValue().getType()+"): "
                               + entry.getValue().getDescription()).collect(Collectors.joining("\n"));
     }
-    return toolFunction.name + "(" + String.join(",",toolFunction.parameters.getProperties().keySet()) + ")" +
-            "\nExplanation: " + toolFunction.description +
+    return "\nName: " + toolFunction.name + //"(" + String.join(",",toolFunction.parameters.getProperties().keySet()) + ")" +
+            "\nDescription: " + toolFunction.description +
             "\nParameters:" + argumentsString;
   }
 
@@ -3871,7 +3871,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}.";
     definition = new ToolDefinition("goToLocation",
             "You go to the supplied destination location.\n- Example instruction: \"please navigate to %exampleLocation\" \n- Example Call: " + exampleCallString,
-            List.of(new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to go to. Accepted values are only those found in the Location List", true))
+            List.of(new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to go to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true))
     );
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("follow",
@@ -3896,7 +3896,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("escortToLocation",
             "You lead someone from your current location to a different one. \nExample Instruction: \"bring Owen to %exampleLocation.\" \nExample Call: " + exampleCallString,
             List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
-                    new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to escort to. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to escort to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     exampleCallString = xml ?
@@ -3932,12 +3932,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     "{\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\",\"dock:location\"]}}";
     definition = new ToolDefinition("measureWifiAtLocations",
             "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"check the wifi at %exampleLocation and the dock\" \nExample Call: " + exampleCallString,
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
             "You drive to each of the supplied locations in order, measure wifi at each one, then drive to reportLocation and summarize the findings. Use this when the user asks to measure and report wifi at the same time.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List", true),
-                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
+                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
     // Hard to accurately target, biased to prefer measure rather than report
@@ -3973,12 +3973,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     "{\"name\":\"measureTemperatureAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\"]}}";
     definition = new ToolDefinition("measureTemperatureAtLocations",
             "You drive to each of the supplied locations in order and measure temperature in degrees Fahrenheit at each one. Use this when a user asks you to survey or check temperature at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"take the temperature at %exampleLocation\" \nExample Call: " + exampleCallString,
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureTemperatureAtLocationsAndReportAt",
             "You drive to each of the supplied locations in order, measure temperature at each one, then drive to reportLocation and summarize te findings. Use this when the user wants to take and report temperature at the samge time",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List", true),
-                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
+                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("cancelSystemGoals",
             "You stop and fully discard your current task. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
@@ -4053,7 +4053,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("playNextVideoAtLocation",
             "You begin playback of the next video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the next video at %exampleLocation\".",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List", true)
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("playSpecificVideo",
@@ -4064,7 +4064,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("playSpecificVideoAtLocation",
             "You begin playback of a specific video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the %exampleVideo at the %exampleLocation\".",
             List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The specific video to play. Accepted values are only those found in the Video List", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //TODO: Test that postprocessing of all forms of this action works correctly
@@ -4086,7 +4086,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("displayNamedImageAtLocation",
             "You display an image from your saved collection on your built-in display at a specified location indefinitely.",
             List.of(new ToolParameterHelper("imageName", "string", new ArrayList<>(), "The image to display. Accepted values are only those found in the Image List", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("displayNamedImageForDuration",
@@ -4099,7 +4099,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You display an image from your saved collection on your built-in display at a specified location for a certain duration.",
             List.of(new ToolParameterHelper("imageName", "string", new ArrayList<>(), "The image to display. Accepted values are only those found in the Image List", true),
                     new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     exampleCallString = xml ?
@@ -4244,11 +4244,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtLocationsString",
             "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List.", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtLocationsString",
             "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List.", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtCurrentLocationString",
             "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
@@ -4424,7 +4424,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     definition = new ToolDefinition("goToLocation",
             "Navigate to a saved location",
-            List.of(new ToolParameterHelper("destination", "string", new ArrayList<>(), "The saved destination location. Accepted values are only those found in the Location List", true))
+            List.of(new ToolParameterHelper("destination", "string", new ArrayList<>(), "The saved destination location. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true))
     );
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 //    definition = new ToolDefinition("dock",
@@ -4447,14 +4447,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("escortToLocation",
             "Escort someone from where you are now to a saved location.",
             List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
-                    new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to escort to.  Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("destination", "string", new ArrayList<>(), "The destination location to escort to.  Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("escortFromLocationToLocation",
             "Escort someone between two saved locations.",
             List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
-                    new ToolParameterHelper("start", "location", new ArrayList(), "The start location to escort from. Accepted values are only those found in the Location List.", true),
-                    new ToolParameterHelper("destination", "location", new ArrayList(), "The destination location to escort to. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("start", "location", new ArrayList(), "The start location to escort from. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true),
+                    new ToolParameterHelper("destination", "location", new ArrayList(), "The destination location to escort to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("saveLocation",
@@ -4489,12 +4489,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureWifiAtLocations",
             "Visit and measure the wifi signal strength at a set of locations.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
             "Visit and measure the wifi signal strength at a set of locations. Then report a brief summary at a specific location.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to measure at. Accepted values are only those found in the Location List", true),
-                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "Where to report the results. Accepted values are only those found in the Location List.", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to measure at. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
+                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "Where to report the results. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureTemperatureAtCurrentLocation",
             "Measure the temperature at your current location",
@@ -4502,12 +4502,12 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureTemperatureAtLocations",
             "Visit and measure the temperature at a set of locations.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("measureTemperatureAtLocationsAndReportAt",
             "Visit and measure the temperature at a set of locations. Then report a brief summary at a specific location.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to measure at. Accepted values are only those found in the Location List", true),
-                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "Where to report the results. Accepted values are only those found in the Location List.", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to measure at. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
+                    new ToolParameterHelper("reportLocation", "string", new ArrayList<>(), "Where to report the results. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //definition = new ToolDefinition("scheduleTask",
     //        "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: \"I want to schedule a goal.\"",
@@ -4598,7 +4598,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("playNextVideoAtLocation",
             "Play an unspecified video on your built-in screen display at a specified location.",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "Saved location to play the video at. Accepted values are only those found in the Location List", true)
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "Saved location to play the video at. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("playSpecificVideo",
@@ -4609,7 +4609,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("playSpecificVideoAtLocation",
             "Play a specific video on your built-in screen display at a specified location.",
             List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video to play. Accepted values are only those found in the Video List", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "Saved location to play the video at. Accepted values are only those found in the Location List.", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "Saved location to play the video at. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     //TODO: Test that postprocessing of all forms of this action works correctly
@@ -4632,7 +4632,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     definition = new ToolDefinition("displayNamedImageAtLocation",
             "Display a specified image on your built-in display at a specified location indefinitely.",
             List.of(new ToolParameterHelper("imageName", "string", new ArrayList<>(), "The image to display. Accepted values are only those found in the Image List", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("displayNamedImageForDuration",
@@ -4645,7 +4645,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Display a specified image from your saved collection on your built-in display at a specified location for a certain duration.",
             List.of(new ToolParameterHelper("imageName", "string", new ArrayList<>(), "The image to display. Accepted values are only those found in the Image List", true),
                     new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true),
-                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List", true)
+                    new ToolParameterHelper("location", "string", new ArrayList<>(), "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
             ));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("urgentPriority",
@@ -4675,19 +4675,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     definition = new ToolDefinition("reportWifiAtLocation",
             "Report a previously measured wifi measurement of a saved location.",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportWifiOfLocations",
             "Report previously measured wifi measurements of a set of saved location.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportTemperatureAtLocation",
             "Report previously measured temperature of a saved location.",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportTemperatureOfLocations",
             "Report previously measured temperatures of a set of saved locations",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("reportWifiOfCurrentLocation",
             "Report the the wifi signal strength at your current location",
@@ -4763,19 +4763,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtLocationString",
             "Get any previously measured wifi signal strength for a specific location from the back-end ",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtLocationsString",
             "Get any previously measured wifi signal strength for a set of locations from the back-end.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to get measured wifi signal for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to get measured wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtLocationString",
             "Get any previously measured temperature for a specific location from the back-end.",
-            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The saved location being queried about. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getTemperatureAtLocationsString",
             "Get any previously measured temperature for a set of locations from the back-end.",
-            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List", true)));
+            List.of(new ToolParameterHelper("locations", "array", new ArrayList<>(), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     definition = new ToolDefinition("getWifiAtCurrentLocationString",
             "Get the wifi signal strength for your current location from the back-end.",
