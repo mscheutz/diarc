@@ -138,7 +138,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-(String ?output) = generateWifiSummaryString() {
+(String ?output) = generateWifiSummaryString(Symbol ?reportLocation) {
     Predicate !queryPred;
     Predicate !reading;
     Predicate !summaryPred;
@@ -155,11 +155,9 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(L,R)");
     !bindings = act:queryBelief(!queryPred);
-    if (op:isEmpty(!bindings)) {
-        ?output = op:newObject("java.lang.String","I have not measured wifi anywhere");
-    } else {
-        foreach(!elem : !bindings) {
-            !location = op:get(!elem,!loc);
+    foreach(!elem : !bindings) {
+        !location = op:get(!elem,!loc);
+        if (~op:equals(!location, ?reportLocation)) {
             !rssi = op:get(!elem,!rssiVar);
             !labelStr = act:rssiQualityLabel(!rssi);
             !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
@@ -170,6 +168,10 @@ import edu.tufts.hrilab.action.goal.Goal;
             !reading = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength", !readingArgs);
             op:invokeMethod(!readings, "add", !reading);
         }
+    }
+    if (op:isEmpty(!readings)) {
+        ?output = op:newObject("java.lang.String","I have not measured wifi anywhere");
+    } else {
         !summaryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiMeasurements", !readings);
         ?output = act:generateOutputStringFromSemantics(!summaryPred);
     }

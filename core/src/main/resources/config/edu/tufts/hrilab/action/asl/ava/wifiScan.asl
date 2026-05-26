@@ -48,7 +48,7 @@ import java.lang.Integer;
 () = measureWifiAtLocationsAndReportAt(Predicate ?locations, Symbol ?reportLocation) {
     act:measureWifiAtLocations(?locations);
     act:goToLocation(?reportLocation);
-    act:generateWifiSummaryString();
+    act:generateWifiSummaryString(?reportLocation);
 }
 
 () = reportWifiAtLocation(Symbol ?location) {
