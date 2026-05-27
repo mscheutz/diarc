@@ -8,7 +8,7 @@ Contextual Information:
 - Image List
 %imageList
 - Action List
-%instructList
+%taskInstructList
 
 Goal:
 - Build a complete task sequence definition and call submitTaskSequenceDefinition when it is complete.

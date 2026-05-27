@@ -8,7 +8,7 @@ Contextual Information:
 - Image List
 %imageList
 - Action List
-%instructList
+%scheduleInstructList
 
 Goal:
 - Build a complete scheduled task definition and call submitScheduledTaskDefinition when it is complete.

@@ -151,13 +151,13 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
   public void oneShotTourTeachingTest() {
     tester.setTimeoutDuration(20, TimeUnit.SECONDS);
 
-    addUserInput("Learn a new task called measurement patrol made up of four steps. Start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock");
+    addUserInput("Learn a new task called measurement patrol made up of four steps. Step 1 is to start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure both the wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock");
     evaluateResults();
 
     addUserInput("yes");
     evaluateResults();
 
-    addUserInput("yes");
+    addUserInput("I have told you all the information you need, please save it");
     evaluateResults();
 
     addUserInput("What are the steps of the measurement patrol I taught you?");
@@ -286,7 +286,7 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     addUserInput("what locations do you know about?");
     evaluateResults();
 
-    addUserInput("can you list more?");
+    addUserInput("list them all out");
     evaluateResults();
   }
 

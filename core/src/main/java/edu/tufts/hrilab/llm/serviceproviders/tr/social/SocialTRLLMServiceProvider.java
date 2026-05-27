@@ -496,8 +496,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //instructTools.remove("measureWifiAtLocationsAndReportAt");
     //instructTools.remove("measureTemperatureAtLocations");
     //instructTools.remove("measureTemperatureAtLocationsAndReportAt");
-    promptVars.put("%instructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
-    //promptVars.put("%instructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, true)).collect(Collectors.joining("\n#\n")));
+    promptVars.put("%scheduleInstructList", instructTools.stream().map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
+    promptVars.put("%taskInstructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
+    promptVars.put("%instructList", instructTools.stream().map(t -> toolToDescString(t, true)).collect(Collectors.joining("\n#\n")));
     promptVars.putAll(initPromptVars());
 
     initPreValidationFillerPhrases();
@@ -1782,7 +1783,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
         }
         String parameters = raw_function_call.substring(end_index + 1);
-        HashMap<String, Object> parameterMap = new HashMap<>();
+        HashMap<String, Object> parameterMap = new LinkedHashMap<>();
         tool_call_pattern = Pattern.compile(tool_call_parameter_regex_string, Pattern.DOTALL);
         matcher = tool_call_pattern.matcher(parameters);
         while (matcher.find()) {
@@ -1801,6 +1802,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             ToolParameter matchingParam = matchingTool.function.parameters.getProperties().get(param_name);
             if (matchingParam != null) {
               String type = matchingParam.getType();
+              if (type.equals("array")) {
+                //TODO: Try to address this through prompting/examples or transfer to only using nested XML and not
+                // internal JSON. Model seems to add excess close bracket incorrectly in this case specifically.
+                String stripped = param_value;
+                int numStripped = 0;
+                while (numStripped < 2 && stripped.startsWith("[") && !stripped.endsWith("]")) {
+                  stripped = stripped.substring(0, stripped.length() - 1);
+                  numStripped += 1;
+                }
+                if (numStripped < 2) {
+                  param_value = stripped;
+                }
+              }
               converted_value = convertParamStringValue(param_value,type);
             }
           }
@@ -2597,6 +2611,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Add to "instructable actions" list for focused contexts
       promptVars.put("%instructNLGList", promptVars.get("%instructNLGList") + String.format("\n%s\n#", nlgString));
       promptVars.put("%instructList", promptVars.get("%instructList") + String.format("\n%s\n#", nluString));
+      promptVars.put("%scheduleInstructList", promptVars.get("%scheduleInstructList") + String.format("\n%s\n#", nluString));
+      promptVars.put("%taskInstructList", promptVars.get("%taskInstructList") + String.format("\n%s\n#", nluString));
       // Add as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.add(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.put(signature.getName(), correspondingTool);
@@ -2619,6 +2635,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //Remove from "instructable actions list" for focused contexts
       promptVars.put("%instructNLGList", promptVars.get("%instructNLGList").replace(String.format("\n%s\n#", nlgString), ""));
       promptVars.put("%instructList", promptVars.get("%instructList").replace(String.format("\n%s\n#", nluString), ""));
+      promptVars.put("%scheduleInstructList", promptVars.get("%scheduleInstructList").replace(String.format("\n%s\n#", nluString), ""));
+      promptVars.put("%taskInstructList", promptVars.get("%taskInstructList").replace(String.format("\n%s\n#", nluString), ""));
       // Remove as tool target in base context
       chatTemplates.get("nlu").toolDefinitions.remove(correspondingTool.toolDefinition);
       chatTemplates.get("nlu").tools.remove(name);
@@ -3963,7 +3981,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     exampleCallString = xml ?
              "<function=measureTemperatureAtCurrentLocation></function>" :
-            "{\"name\":\"measureTemperature\", \"arguments\":{}}";
+            "{\"name\":\"measureTemperatureAtCurrentLocation\", \"arguments\":{}}";
     definition = new ToolDefinition("measureTemperatureAtCurrentLocation",
             "You measure the temperature in degrees Fahrenheit at your current location when this task is performed. Use this when a user asks you to check temperature without any additional specification. \nExample Instruction: \"check the temperature\" \nExample Call: " + exampleCallString,
             new ArrayList<>());
