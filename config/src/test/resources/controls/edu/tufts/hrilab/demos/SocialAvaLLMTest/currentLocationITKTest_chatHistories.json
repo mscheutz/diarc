@@ -6,76 +6,88 @@
       "role" : "user",
       "content" : "where are you right now?",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-813f9735de34a322",
+        "id" : "call_ee40d3a55b7a4a4da7207476",
         "type" : "function",
         "function" : {
           "name" : "getCurrentLocationString",
           "arguments" : "{}"
-        }
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "tool",
-      "content" : "I am currently at an unknown location.",
+      "content" : "I don't know where I am right now.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"response\":\"I am currently at an unknown location.\"}"
-        }
+          "arguments" : "{\"response\":\"I don\\u0027t know where I am right now.\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "could you get to reception",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-a5e5df0b30c9305f",
+        "id" : "call_0b7dc62deecb4831a5544259",
         "type" : "function",
         "function" : {
           "name" : "goToLocation",
-          "arguments" : "{\"destination\": \"reception:location\"}"
-        }
+          "arguments" : "{\"destination\":\"reception:location\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "validatingToolSubmission",
-          "arguments" : "{\"response\":\"Confirming I should go to the reception location?\"}"
-        }
+          "arguments" : "{\"response\":\"Confirming I should go to reception.\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "please go there",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     } ]
@@ -86,38 +98,44 @@
       "role" : "user",
       "content" : "where are you now?",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-a77e9eeef085b35c",
+        "id" : "call_6a3f5050dba84c369fb11846",
         "type" : "function",
         "function" : {
           "name" : "getCurrentLocationString",
           "arguments" : "{}"
-        }
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "tool",
-      "content" : "I am at reception.",
+      "content" : "I am at the reception.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
-      "tool_call_id" : "chatcmpl-tool-a77e9eeef085b35c"
+      "tool_call_id" : "call_6a3f5050dba84c369fb11846"
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"response\":\"I am at reception.\"}"
-        }
+          "arguments" : "{\"response\":\"I am currently at the reception.\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     } ]

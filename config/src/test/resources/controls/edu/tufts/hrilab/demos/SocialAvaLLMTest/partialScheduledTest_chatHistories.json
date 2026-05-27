@@ -6,38 +6,44 @@
       "role" : "user",
       "content" : "I want to schedule the task to play the test video",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-9cc95c17fb3a6d07",
+        "id" : "call_69860872c8bf42df90b30e44",
         "type" : "function",
         "function" : {
           "name" : "scheduleTask",
           "arguments" : "{}"
-        }
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "validatingToolSubmission",
-          "arguments" : "{\"response\":\"Confirming you want to schedule a new task?\"}"
-        }
+          "arguments" : "{\"response\":\"Confirming I should schedule a new task?\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "yes",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     } ]
@@ -46,79 +52,113 @@
     "systemPrompt" : null,
     "chatHistory" : [ {
       "role" : "user",
-      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want to schedule the task to play the test video\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-9cc95c17fb3a6d07\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming you want to schedule a new task?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nExtract relevant information from this conversation history to populate corresponding details of the \"currentScheduledDefinition\" argument of your initial stillGatheringInformation reply. Then generate the response accordingly",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want to schedule the task to play the test video\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_69860872c8bf42df90b30e44\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}}},\"response\":\"When do you want it to first occur?\"}"
-        }
+          "arguments" : "{\"response\":\"I understand you want to schedule playing the test video. When would you like this task to start?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}}}}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "It should occur in 3 hours",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\"},\"response\":\"Do you want it to occur more than once?\"}"
-        }
+          "arguments" : "{\"response\":\"Should this task repeat, or should it only happen once?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"\",\"end\":\"\"}}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "It should not repeat",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"repeat(nonrepeating)\"},\"response\":\"Do you want to specify when it should stop?\"}"
-        }
+          "arguments" : "{\"response\":\"Should I set an end time for this task, or leave it nonrepeating?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"nonrepeating\",\"end\":\"\"}}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "yes",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_6f648e6edd9c4777a9bf6837",
+        "type" : "function",
+        "function" : {
+          "name" : "submitScheduledTaskDefinition",
+          "arguments" : "{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"nonrepeating\",\"end\":\"nonrepeating\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"repeat(nonrepeating)\"},\"response\":\"When would you like it to stop?\"}"
-        }
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should schedule the task to play the test video.mp4 starting in 3 hours, with no repetition and no end time.\"}"
+        },
+        "index" : 0
       } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"scheduleTask\" and will need to call your target tool call again if they try answering your question affirmatively.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
       "tool_call_id" : null
     } ]
   } ]

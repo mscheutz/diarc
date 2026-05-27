@@ -6,38 +6,44 @@
       "role" : "user",
       "content" : "I want you to measure the temperature at reception every hour starting now indefinitely",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-b55ecf6110e264a9",
+        "id" : "call_74fb804eae754c0ba8214e30",
         "type" : "function",
         "function" : {
           "name" : "scheduleTask",
           "arguments" : "{}"
-        }
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "validatingToolSubmission",
-          "arguments" : "{\"response\":\"Confirming you want to schedule a new task?\"}"
-        }
+          "arguments" : "{\"response\":\"Confirming I should schedule a new task?\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "yes",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     } ]
@@ -46,116 +52,149 @@
     "systemPrompt" : null,
     "chatHistory" : [ {
       "role" : "user",
-      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to measure the temperature at reception every hour starting now indefinitely\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"chatcmpl-tool-b55ecf6110e264a9\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming you want to schedule a new task?\\\"}\"\n      }\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nExtract relevant information from this conversation history to populate corresponding details of the \"currentScheduledDefinition\" argument of your initial stillGatheringInformation reply. Then generate the response accordingly",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to measure the temperature at reception every hour starting now indefinitely\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_74fb804eae754c0ba8214e30\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "",
+        "id" : "call_7a0cbc86714b45299f336487",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(immediately)\",\"repeat\":\"repeat(1,HOURS)\"},\"response\":\"Do you want it to continue indefinitely or have an end time?\"}"
-        }
+          "arguments" : "{\"response\":\"I understand you want to measure the temperature at reception every hour starting now indefinitely. I have all the information needed to schedule this task. Would you like me to proceed?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(60,MINUTES)\",\"end\":\"end(indefinitely)\"}}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
-      "role" : "user",
-      "content" : "I already told you there is no end time",
+      "role" : "tool",
+      "content" : "Your most recent tool call with id call_7a0cbc86714b45299f336487 was rejected by the system. Please address the following reasons why and make an updated tool call. Solve these issues on your own where possible. If you must ask the user for missing or clarifying information, let them know why:\n- It looks like your current definition of the target to be submitted is fully filled out. If this seems to be the case, try submitting the target submission tool call directly insteadof responding to the user.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-ae81728a79fb2564",
+        "id" : "call_52770793df12492db12d355b",
         "type" : "function",
         "function" : {
           "name" : "submitScheduledTaskDefinition",
-          "arguments" : "{\"action\": \"{\\\"name\\\": \\\"measureTemperatureAtLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\"]}}\", \"start\": \"start(immediately)\", \"repeat\": \"repeat(1,HOURS)\", \"end\": \"end(indefinitely)\"}"
-        }
+          "arguments" : "{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(60,MINUTES)\",\"end\":\"end(indefinitely)\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "validatingToolSubmission",
-          "arguments" : "{\"response\":\"Confirming I should measure the temperature at reception every hour starting now indefinitely?\"}"
-        }
+          "arguments" : "{\"response\":\"Gotcha.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should schedule the task to measure temperature at reception, starting now and repeating every 60 minutes?\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "no, actually can you do the measuring every two hours",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "tool",
-      "content" : "The user has just informed you that your previous interpretation of their command which resulted in your tool call with id chatcmpl-tool-ae81728a79fb2564 represented by scheduled(measureTemperatureAtLocations(ava,and(reception)),period(1,HOURS)) was not what they intended to instruct. Use the last user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention, then you may update your definition with the new information and attempt another updated tool submission call. 2. Otherwise, please continue with your original task to resolve the misunderstanding. In this case, only ask the user how or what to correct in one short sentence.",
+      "content" : "The user has just informed you that your previous interpretation of their command which resulted in your tool call with id call_52770793df12492db12d355b represented by scheduled(measureTemperatureAtLocations(ava,and(reception)),start(0,SECONDS),period(60,MINUTES)) was not what they intended to instruct. Use the last user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying their original intention or adding additional information, then you may update your definition with the new information and attempt another updated tool submission call. 2. Otherwise, please continue with your original task to resolve the misunderstanding.",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "stillGatheringInformation",
-          "arguments" : "{\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(immediately)\",\"repeat\":\"repeat(2,HOURS)\"},\"response\":\"Should I measure the temperature at reception every two hours starting now indefinitely?\"}"
-        }
+          "arguments" : "{\"response\":\"Got it. I\\u0027ll update the schedule to measure temperature at reception every two hours instead of every hour. Is that correct?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(120,MINUTES)\",\"end\":\"end(indefinitely)\"}}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "that sounds good",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
-        "id" : "chatcmpl-tool-afb4adebfe56e3e1",
+        "id" : "call_abede46c112d4bd791ec5bfb",
         "type" : "function",
         "function" : {
           "name" : "submitScheduledTaskDefinition",
-          "arguments" : "{\"action\": \"{\\\"name\\\": \\\"measureTemperatureAtLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\"]}}\", \"start\": \"start(immediately)\", \"repeat\": \"repeat(2,HOURS)\", \"end\": \"end(indefinitely)\"}"
-        }
+          "arguments" : "{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(120,MINUTES)\",\"end\":\"end(indefinitely)\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "assistant",
       "content" : "",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : [ {
         "id" : "",
         "type" : "function",
         "function" : {
           "name" : "validatingToolSubmission",
-          "arguments" : "{\"response\":\"Confirming I should measure the temperature at reception every two hours?\"}"
-        }
+          "arguments" : "{\"response\":\"Confirming I should schedule the task to measure temperature at reception, starting now and repeating every 120 minutes?\"}"
+        },
+        "index" : 0
       } ],
       "tool_call_id" : null
     }, {
       "role" : "user",
       "content" : "yes",
       "function_call" : null,
+      "reasoning" : null,
       "tool_calls" : null,
       "tool_call_id" : null
     } ]
