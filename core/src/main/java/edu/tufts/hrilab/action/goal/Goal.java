@@ -69,41 +69,41 @@ public class Goal {
    * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
    * used when using the GoalManager submitGoal method.
    *
-   * @param goalState
+   * @param goalPredicate
    */
-  public Goal(Predicate goalState) {
+  public Goal(Predicate goalPredicate) {
     info = new GoalInfo(idGenerator.getNext());
 
     // check persistent first bc other goal predicate forms could be nested inside
-    if (goalState.getName().equals("persistent")) {             // persistent goal
-      if (goalState.size() != 2) {  // illegal structure
-        log.error("[Goal] illegal predicate structure: " + goalState);
+    if (goalPredicate.getName().equals("persistent")) {             // persistent goal
+      if (goalPredicate.size() != 1) {  // illegal structure
+        log.error("[Goal] illegal predicate structure: " + goalPredicate);
         return;
       }
-      goalState = (Predicate) goalState.get(1);
+      goalPredicate = (Predicate) goalPredicate.get(0);
       info.persistent = true;
     }
 
     // handle special goal predicate forms
-    switch (goalState.getName()) {
+    switch (goalPredicate.getName()) {
       case "sti":
       case "did":
-        log.error("Goal form is no longer supported: " + goalState);
+        log.error("Goal form is no longer supported: " + goalPredicate);
         break;
       case "obs":
       case "observe":
         observable = Observable.TRUE;
         // fall through
       case "goal":
-        info.unboundGoal = goalState.get(1);
+        info.unboundGoal = goalPredicate.get(1);
         break;
       default: // default case is an explicit action to execute
         info.isAction = true;
-        info.unboundGoal = goalState;
+        info.unboundGoal = goalPredicate;
     }
 
     // actor is always first arg
-    info.actor = goalState.get(0);
+    info.actor = goalPredicate.get(0);
   }
 
   /**
@@ -129,8 +129,8 @@ public class Goal {
    * have an observation goal without the OBS(actor, state) predicate form. This is almost
    * always the case for observations from conditions and effects checks.
    *
-   * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
-   * @param goalState  the goal predicate
+   * @param actor      the actor doing the observing
+   * @param goalState  the goal state
    * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
    */
   public Goal(Symbol actor, Symbol goalState, Observable observable) {
@@ -174,12 +174,51 @@ public class Goal {
   }
 
   /**
-   * Get the goal predicate. This can contain free variables, and it can also become bound
+   * Check if this goal predicate matches the given goal predicate.
+   * @param goalPredicate
+   * @return
+   */
+  public boolean matches(Predicate goalPredicate) {
+    return getGoalPredicate().instanceOf(goalPredicate);
+  }
+
+  /**
+   * Get the full goal predicate. This is the predicate that was used to create this goal.
+   * Examples: goal(self,state) --> goal(self,state)
+   *           action1(self,args) --> action1(self,args)
+   *           obs(self,state) --> obs(self,state)
+   *
+   * If the original goal predicate was unbound, this will return the unbound version.
+   * @return
+   */
+  public Predicate getGoalPredicate() {
+    Symbol goalPredicate = this.info.unboundGoal;
+
+    if (isObservation()) {
+      goalPredicate = Factory.createPredicate("obs", this.info.actor, this.info.unboundGoal);
+    } else if (!isAction()) {
+      goalPredicate = Factory.createPredicate("goal", this.info.actor, this.info.unboundGoal);
+    }
+
+    if (isPersistent()) {
+      goalPredicate = Factory.createPredicate("persistent", goalPredicate);
+    }
+
+    return (Predicate) goalPredicate;
+  }
+
+  /**
+   * Get the goal state predicate. This is the state to be achieved, or the action to be executed.
+   * Examples: goa(self,state) --> state
+   *          action1(self,args) --> action1(self,args)
+   *          obs(self,state) --> state
+   *
+   * This can contain free variables, and it can also become bound
    * depending on where in the goal execution process this method is called.
    *
    * @return
    */
-  public Predicate getPredicate() {
+  public Predicate getGoalStatePredicate() {
     if (info.goal == null) {
       // if bindPredicate has not been called yet
       if (info.unboundGoal.isPredicate()) {
@@ -347,7 +386,7 @@ public class Goal {
    */
   public void setStatus(GoalStatus status) {
     if (this.info.status.isTerminated()) {
-      log.error("Goal already has terminal status. Goal: {} Status: {}", getPredicate(), status);
+      log.error("Goal already has terminal status. Goal: {} Status: {}", getGoalPredicate(), status);
     } else {
       this.info.status = status;
 
@@ -498,11 +537,7 @@ public class Goal {
 
   @Override
   public String toString() {
-    if (info.goal == null) {
-      return info.unboundGoal.toString();
-    } else {
-      return info.goal.toString();
-    }
+    return getGoalPredicate().toString();
   }
 
   public void setMetric(Predicate metric) {

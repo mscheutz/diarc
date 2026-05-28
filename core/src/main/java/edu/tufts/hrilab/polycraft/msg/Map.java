@@ -4,18 +4,13 @@
 
 package edu.tufts.hrilab.polycraft.msg;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.polycraft.util.SymbolResolver;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -58,6 +53,11 @@ public class Map extends Msg {
 
       //Parsing
       String blockName = SymbolResolver.toGridItem(block.name, block.variant); // name of block: variant_name (e.g. oak_log)
+
+      // ignore entities (only needed in NGW) -- entities are contained in separate message
+      if (blockName.startsWith("entity")) {
+        continue;
+      }
 
       // variant -- create subtype
       if (block.variant != null) {
