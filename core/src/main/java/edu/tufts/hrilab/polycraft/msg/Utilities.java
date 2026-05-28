@@ -8,10 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.belief.provers.prolog.Prolog;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.polycraft.util.SymbolResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +107,7 @@ public class Utilities {
    */
   static public boolean queryBeliefSupport(Predicate query) {
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, query);
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, query);
     } catch (TRADEException e) {
       log.error("Error querying belief for: " + query, e);
     }

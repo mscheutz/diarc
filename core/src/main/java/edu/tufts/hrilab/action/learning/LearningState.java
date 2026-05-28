@@ -478,7 +478,7 @@ public class LearningState {
    * @param g goal to generate event spec for
    */
   public void createEventSpec(Goal g){
-    Predicate goalPred= g.getPredicate();
+    Predicate goalPred = g.getGoalStatePredicate();
     Symbol actor = g.getActor();
 
     // TODO:  handle handle appropriate types of events

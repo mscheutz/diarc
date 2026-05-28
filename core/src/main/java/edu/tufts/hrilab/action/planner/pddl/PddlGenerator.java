@@ -74,7 +74,7 @@ public class PddlGenerator {
    * @param goal
    */
   private void generateGoal(Goal goal) {
-    Set<Predicate> goalPreds = Utils.expand(goal.getPredicate());
+    Set<Predicate> goalPreds = Utils.expand(goal.getGoalStatePredicate());
     if (goal.getMetric() != null ) {
       builder.addMetric(goal.getMetric());
     }

@@ -56,11 +56,11 @@ public class HardCodedTestComparator extends DiarcTestComparator {
       if (goal != null) {
         joinOnGoalAlternate[0] = "joinOnGoal";
         if (goal.isAction()) {
-          joinOnGoalAlternate[1] = goal.getPredicate();
+          joinOnGoalAlternate[1] = goal.getGoalStatePredicate();
         } else if (goal.isObservation()) {
-          joinOnGoalAlternate[1] = Factory.createPredicate(("obs"), goal.getActor(), goal.getPredicate());
+          joinOnGoalAlternate[1] = Factory.createPredicate(("obs"), goal.getActor(), goal.getGoalStatePredicate());
         } else {
-          joinOnGoalAlternate[1] = Factory.createPredicate(("goal"), goal.getActor(), goal.getPredicate());
+          joinOnGoalAlternate[1] = Factory.createPredicate(("goal"), goal.getActor(), goal.getGoalStatePredicate());
         }
         joinOnGoalAlternate[2] = nextOutput[2]; // goal status
       }

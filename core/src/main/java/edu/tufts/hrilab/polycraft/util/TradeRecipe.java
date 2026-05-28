@@ -20,6 +20,7 @@ import edu.tufts.hrilab.belief.common.MemoryLevel;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.polycraft.actions.Interact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,23 +90,24 @@ public class TradeRecipe {
               .setCommand("log")
               .addInputArg("\"info\"").addInputArg("\">> " + actionName + "\"")
               .build());
-      newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("trade", actorID, tradeRecipe.toString()), true));
+      newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("trade", actorID, tradeRecipe.toString()), false));
 
       // Querying existing trades from belief to detect novelty
       try {
         Predicate tradeToUse = Factory.createPredicate(tradeRecipe.toString());
-        boolean tradePresent = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, tradeToUse);
+        boolean tradePresent = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, tradeToUse);
         if (!tradePresent) {
           // report novelty
           Set<Predicate> tradeToUseSet = new HashSet<>();
           tradeToUseSet.add(tradeToUse);
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, tradeToUseSet);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties").argTypes(Set.class)).call(Object.class, tradeToUseSet);
 
           // add new trade recipe to belief
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, tradeToUse, MemoryLevel.UNIVERSAL);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class))
+                  .call(Object.class, tradeToUse, MemoryLevel.UNIVERSAL);
         }
       } catch (TRADEException e) {
-        log.error("[Interact exception] Error querying trade.");
+        log.error("[Interact exception] Error querying trade.", e);
       }
 
       newActionBuilder.build(true);
