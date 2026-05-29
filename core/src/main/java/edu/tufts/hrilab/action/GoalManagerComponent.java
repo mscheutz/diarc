@@ -934,6 +934,28 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Get a predicate description of the steps that would be taken to complete the specified goal.
+   *
+   * @param goalPredicate goal predicate
+   * @return predicate of the form: steps(step1, step2, ...) or null
+   */
+  @TRADEService
+  public Predicate getActionSteps(Predicate goalPredicate) {
+
+    // pick action, and get event specs from selected action
+    ActionSelector actionSelector = ActionSelector.getInstance();
+    Goal goal = new Goal(goalPredicate);
+    ParameterizedAction parameterizedAction = actionSelector.selectActionForGoal(goal, initialConstraints, em.getStateMachine());
+
+    // do null check for action
+    Predicate actionSteps = null;
+    if (parameterizedAction != null) {
+      actionSteps = parameterizedAction.getStepsInPredicateForm();
+    }
+    return actionSteps;
+  }
+
+  /**
    * Utility method mainly used for testing.
    *
    * @param predicate

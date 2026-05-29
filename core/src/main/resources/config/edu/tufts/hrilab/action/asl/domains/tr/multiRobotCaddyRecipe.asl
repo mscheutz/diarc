@@ -532,7 +532,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
 () = describeYourPlan() {
 
-    Symbol !plannedActionFull;
+    Predicate !plannedActionFull;
     Predicate !actionDescription;
 
     !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", ?actor);

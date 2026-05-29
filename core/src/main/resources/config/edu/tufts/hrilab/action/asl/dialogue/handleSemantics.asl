@@ -145,7 +145,7 @@ import java.lang.Integer;
 
       // query belief for results
       !beliefs = act:queryBelief(!knowsQuery);
-      op:log("debug", "Queried for ?query; result: !beliefs");
+      op:log("debug", "Queried for !knowsQuery; result: !beliefs");
 
       if (op:invokeMethod(!beliefs, "isEmpty")) {
         !queryVariables = op:invokeMethod(?query, "getVars");

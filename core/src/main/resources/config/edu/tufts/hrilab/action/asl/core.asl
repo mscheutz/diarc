@@ -123,29 +123,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !min = op:createSymbol("!minInt");
 }
 
-(Predicate ?ret) = getActDesc["get step by step of action description and assert it to belief "](Predicate ?goalPred) {
-    Goal !goal;
-    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
-    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
-    Predicate !actionDescription;
+(Predicate ?actionDescription) = getActDesc["get step by step of action description and assert it to belief "](Predicate ?goalPred) {
     Predicate !oldDescription;
-    edu.tufts.hrilab.action.ActionConstraints !ac;
-    edu.tufts.hrilab.action.state.StateMachine !sm;
-    edu.tufts.hrilab.action.db.ActionDBEntry !actionDBEntry;
-    java.util.List !eventSpecs;
-    Predicate !stepPredicate;
-    Variable !tmpVar;
-    Predicate !tmpPred;
-    java.util.List !actDescArgs;
-    java.util.List !oldDescArgs;
-    java.lang.Double !prob;
-    java.lang.String !probstr;
-    Symbol !probsym;
+    Predicate !stepsPredicate;
     Predicate !failCond;
 
-
     effects : {
-      success : knows(?actor, actionDescription(?goalPred,!stepPredicate));
+      success : knows(?actor, actionDescription(?goalPred,!stepsPredicate));
     }
 
     op:log("debug", "start get action description");
@@ -153,44 +137,27 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     // construct and retract a generic predicate from belief to clear previous entries
     !oldDescription = op:createPredicate("knows(?actor,actionDescription(?goalPred,Y))");
     act:retractBelief(!oldDescription);
+    !oldDescription = op:createPredicate("actionDescription(?goalPred,X)");
+    act:retractBelief(!oldDescription);
 
-    // get StateMachine for use in action selection
-    !sm = tsc:getStateMachine();
+    // get new action description in predicate form
+    !stepsPredicate = tsc:getActionSteps(?goalPred);
 
-    // pick action, and get event specs from selected action
-    !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPred);
-    !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
-    !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
-    !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
-
-    // do null check for action
-    if (op:isNull(!parameterizedAction)) {
+    // do null check for action steps
+    if (op:isNull(!stepsPredicate)) {
         !failCond = op:createPredicate("not(know(?actor,how(?goalPred)))");
         exit(FAIL, !failCond);
     }
 
-    // construct final predicate to assert to belief
-    !actDescArgs = op:newObject("java.util.ArrayList");
-    !oldDescArgs = op:newObject("java.util.ArrayList");
+    ?actionDescription = op:createPredicate("actionDescription(?goalPred,!stepsPredicate)");
+    act:assertBelief(?actionDescription);
 
-    // construct and retract a generic predicate from belief to clear previous entries
-    !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
-    op:invokeMethod(!oldDescArgs, "add", ?goalPred);
-    op:invokeMethod(!oldDescArgs, "add", !tmpVar);
-    !oldDescription = op:createPredicate("actionDescription", !oldDescArgs);
-    act:retractBelief(!oldDescription);
-
-    // build and assert final predicate to belief
-    !stepPredicate = op:invokeMethod(!parameterizedAction, "getStepsInPredicateForm");
-    op:invokeMethod(!actDescArgs, "add", ?goalPred);
-    op:invokeMethod(!actDescArgs, "add", !stepPredicate);
-    !actionDescription = op:createPredicate("actionDescription", !actDescArgs);
-    ?ret = op:createPredicate("actionDescription", !actDescArgs);
-
-    act:assertBelief(!actionDescription);
-
+    // TODO: how to handle probabilityOf stuff? perhaps make new getActionProbability() action instead of piggy-backing off of getActDesc
     // retract a generic predicate from belief to clear previous entries
-    !oldDescription = op:createPredicate("probabilityOf", !oldDescArgs);
+//    Predicate !tmpPred;
+//    java.lang.Double !prob;
+//    java.lang.String !probstr;
+    !oldDescription = op:createPredicate("probabilityOf(?goalPred,X)");
     act:retractBelief(!oldDescription);
 
     // get success probability and add it to belief
