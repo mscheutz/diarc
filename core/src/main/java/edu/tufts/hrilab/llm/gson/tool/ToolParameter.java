@@ -6,13 +6,19 @@ import java.util.List;
 
 public class ToolParameter {
   String type;
-  @SerializedName("enum")
-  String[] possible_values;
+  //@SerializedName("enum")
+  //String[] possible_values;
   String description;
 
+  //TODO: Should ideally be externally configurable whether this is included in the exposed tool definition per-entry
+  //  or not. Want to still hold this information for postprocessing, but want to advertise constraints separately.
+  transient String[] possible_values;
+  @SerializedName("enum")
+  String[] dummy = new String[0];
+
   //ServiceProvider only <- split json and java reps?
-  boolean processAsTool = false;
-  String toolChatTemplateContextId = "";
+  transient boolean processAsTool = false;
+  transient String toolChatTemplateContextId = "";
 
   public ToolParameter(String type, List<String> possible_values, String description) {
     this.type = type;
