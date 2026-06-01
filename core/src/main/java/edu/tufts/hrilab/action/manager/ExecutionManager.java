@@ -1115,7 +1115,14 @@ public class ExecutionManager implements GoalListener {
   }
   public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
     Goal goal = getGoal(gid);
-    if (goal == null || goal.getStatus().isTerminated()) {
+
+    if (startStatus == null && goal.getStatus().isTerminated()) {
+      //TODO: think a lot of functionality using this was written assuming returning null could mean the goal terminated
+      //  already. But if a start status is explicitly supplied, it should always be done by checking for a terminal
+      //  status instead. Make sure nothing breaks as a result of this change.
+      return null;
+    }
+    if (goal == null ) {//|| goal.getStatus().isTerminated()) {
       return null;
     }
 

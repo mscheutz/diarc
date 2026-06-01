@@ -116,6 +116,55 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 }
 
+() = cancelSystemGoalsWrapper() {
+    java.util.List !goalIds;
+    java.lang.Long !goalId;
+    java.util.List !systemGoalPredicates;
+    java.lang.Integer !numGoals;
+    java.lang.Boolean !success = false;
+    Predicate !pred;
+    java.util.Map !bindings;
+    java.util.List !bindingArgs;
+    Variable !x = "X";
+    Predicate !response;
+    Predicate !freezeGoal;
+    Justification !failureConditions;
+    GoalStatus !status;
+    java.lang.Long !timeout = 0;
+
+    //cancel system goal for agent
+    !goalIds = tsc:cancelSystemGoals(?actor);
+    op:log("debug","[cancelSystemGoalsBlocking] canceled goalIds: !goalIds");
+    if (op:isNull(!goalIds)) {
+        //Returning null means multiple disjoint children have goals
+        exit(FAIL,not(know(?actor,whichGoalToCancel)));
+    } elseif (op:isEmpty(!goalIds)) {
+        //No valid goal to cancel was found (whether already canceled or none exist)
+        exit(FAIL,not(found(activeGoalToCancel)));
+    } else {
+        //Should never return more than one goalId in the queue case.
+        //Wait for goal to be canceled
+        !goalId = op:get(!goalIds,0);
+        !status = tsc:getGoalStatus(!goalId);
+        op:log("debug","[cancelSystemGoalsBlocking] have initial status for goal to cancel: !status");
+        !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+        op:log("debug","[cancelSystemGoalsBlocking] have status update for canceled goal: !status");
+        //Need to write this way because we can't short circuit ||, throws exception when comparing null
+        if (~op:isNull(!status)) {
+            if (op:equalsValue(!status,CANCELED)) {
+                !success = op:newObject("java.lang.Boolean", "true");
+            }
+        }
+
+        if (op:equalsValue(!success,false)) {
+            //Goal meant to be canceled has already terminated.
+            !systemGoalPredicates = tsc:getSystemGoals(?actor);
+            op:log("debug","[cancelSystemGoalsBlocking] Cancel failed, current goals now: !systemGoalPredicates");
+            exit(FAIL,alreadyComplete(taskToCancel));
+        }
+    }
+}
+
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
     java.util.List !goalPreds;
     java.lang.Integer !resultsSize=0;

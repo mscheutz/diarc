@@ -278,5 +278,25 @@
   "updateDialogueHistoryFromString": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "stopTalking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentAndQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

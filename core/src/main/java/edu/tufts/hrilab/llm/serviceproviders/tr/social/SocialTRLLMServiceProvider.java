@@ -311,7 +311,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
               "Pause your current task, which can be later resumed.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedToolset.put("resumeCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
+      universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
               "Stop and fully discard your current task.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT));
@@ -322,11 +322,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition("suspendCurrentInteraction",
               "You pause your current task, which can be later resumed. " +
                       "This may be instructed directly as shown in the example, or could be intended when the user wants to temporarily have a separate conversation on a different topic.\n" +
-                      "Example Instruction: \"pause what you're doing.\"",
+                      "Example Instruction: \"pause what you're doing.\", \"Suspend current task\"",
               new ArrayList<>()),
               UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedToolset.put("resumeCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
-              "You stop and fully discard your current task. \nExample Instruction: \"stop what you're doing.\"",
+      universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
+              "You stop and fully discard your current task. \nExample Instruction: \"stop what you're doing.\", \"cancel current task\"",
               new ArrayList<>()),
               UtteranceType.INSTRUCT));
       for (Tool itkTool : itkTools) {
@@ -604,7 +604,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       case "mean" ->
               predDefinition = "\nname: mean(X,Y)\ndescription: Represents a question asking X if they meant to instruct or specify Y.";
       case "attempting" ->
-              predDefinition = "\nname: attempting(X,Y)\ndescription: You are about to engage in the task defined by Y";
+              predDefinition = "\nname: attempting(X,Y)\ndescription: Report that you are actively engaging in the task defined by Y";
       case "and" ->
               predDefinition = "\nname: and(X,Y,...)\ndescription: Conjunctive form signalling desired translation consists of translating X and Y and ...";
       case "taskPredicate" ->
@@ -977,29 +977,29 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Temporary special wrappers - revisit if ever reintroducing "offContext" functionality
       if (chatContext.chatType != ChatType.BASE) {
         if (toolName.equals("endConversation") || toolName.equals("cancelCurrentInteraction")) {
-          //outputUtterance.setSemantics(Factory.createPredicate("cancelSystemGoals", inputUtterance.getAddressee()));
-          toolName = "cancelSystemGoals";
+          outputUtterance.setSemantics(Factory.createPredicate("cancelCurrentTask", inputUtterance.getAddressee()));
+          //toolName = "cancelCurrentTask";
         } else if (toolName.equals("suspendCurrentInteraction")) {
-          //outputUtterance.setSemantics(Factory.createPredicate("suspendSystemGoalsBlocking", inputUtterance.getAddressee()));
-          toolName = "suspendSystemGoalsBlocking";
+          outputUtterance.setSemantics(Factory.createPredicate("suspendCurrentTask", inputUtterance.getAddressee()));
+          //toolName = "suspendCurrentTask";
         }
       }
-      if (toolName.equals("cancelSystemGoals") || toolName.equals("suspendSystemGoalsBlocking")) {
-        List<Long> gids = null;
-        try {
-          gids = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSystemGoalsIds").argTypes(Symbol.class)).call(List.class, inputUtterance.getAddressee());
-        } catch (TRADEException e) {
-          log.error("[handleToolResponse] exception getting current system goal ID for agentTeam: {}", inputUtterance.getAddressee(), e);
-        }
-        if (gids != null && !gids.isEmpty()) {
-          Long gid = gids.get(0);
-          if (toolName.equals("suspendSystemGoalsBlocking")) {
-            outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-          } else {
-            outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-          }
-        }
-      }
+      //if (toolName.equals("suspendCurrentTask") || toolName.equals("cancelCurrentTask")) {
+      //  List<Long> gids = null;
+      //  try {
+      //    gids = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSystemGoalsIds").argTypes(Symbol.class)).call(List.class, inputUtterance.getAddressee());
+      //  } catch (TRADEException e) {
+      //    log.error("[handleToolResponse] exception getting current system goal ID for agentTeam: {}", inputUtterance.getAddressee(), e);
+      //  }
+      //  if (gids != null && !gids.isEmpty()) {
+      //    Long gid = gids.get(0);
+      //    if (toolName.equals("suspendCurrentTask")) {
+      //      outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+      //    } else {
+      //      outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
+      //    }
+      //  }
+      //}
 
       // Proceed to validation if not architecture ITK call
       if (outputUtterance.getType() == UtteranceType.QUESTION) {
@@ -3837,10 +3837,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public boolean ignoreValidation(Predicate goalPred){
     if(goalPred != null) {
       switch (goalPred.getName()) {
-        case "suspendSystemGoalsBlocking":
+        case "suspendCurrentTask":
         case "suspendGoal":
-        case "cancelSystemGoals":
+        case "cancelCurrentTask":
         case "cancelGoal":
+        case "cancelAllCurrentAndQueuedTasks":
+        case "cancelAllQueuedTasks":
+        case "stopTalking":
           return true;
         default:
           return false;
@@ -3901,6 +3904,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "getTemperatureAtCurrentLocationString":
         case "updateDialogueHistoryFromString":
         case "getExtendedConversationHistory":
+        case "stopTalking":
         //// Set of actions which should perhaps be "reduced ack"?
         //case "escortToLocation":
           return true;
@@ -4063,20 +4067,35 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
                     new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("cancelSystemGoals",
+    definition = new ToolDefinition("cancelCurrentTask",
             "You stop and fully discard your current task. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("suspendSystemGoalsBlocking",
+    definition = new ToolDefinition("cancelAllQueuedTasks",
+            "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+            "You cancel all currently assigned goals. This includes the current active goal and all pending goals which have yet to begin execution. \nExample Instruction: \"cancel all tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    exampleCallString = xml ?
+            "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>" :
+            "{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
+    definition = new ToolDefinition("cancelTaskInQueueByIndex",
+            "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
+            List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("cancelAllScheduledGoals",
+            "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("suspendCurrentTask",
             "You pause your current task, which can be later resumed. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     definition = new ToolDefinition("resumeSystemGoals",
             "You resume the currently paused task. \nExample Instruction: \"resume previous task.\"",
-            new ArrayList());
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("cancelAllScheduledGoals",
-            "You cancel all currently scheduled goals which have yet to begin execution. \nExample Instruction: \"cancel all scheduled tasks.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -4192,14 +4211,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to %exampleLocation right now.\" \nExample Call: " + exampleCallString,
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    exampleCallString = xml ?
-             "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>" :
-    "{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
-    definition = new ToolDefinition("cancelTaskInQueueByIndex",
-            "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
-            List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
-    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
+    definition = new ToolDefinition("stopTalking",
+            "You stop talking and do not verbally respond. \nExample Instruction: \"shut up.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
     definition = new ToolDefinition("scheduleTask",
             "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
@@ -4600,11 +4616,11 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 //            "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. \nExample Instruction: \"I want to change the timing of an action.\"",
 //            new ArrayList());
 //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("cancelSystemGoals",
+    definition = new ToolDefinition("cancelCurrentTask",
             "Stop and fully discard your current task",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("suspendSystemGoalsBlocking",
+    definition = new ToolDefinition("suspendCurrentTask",
             "Pause your current task, which can be later resumed",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -4796,6 +4812,33 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
     //        new ArrayList());
     //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+
+    //Would need to be condensed
+    definition = new ToolDefinition("cancelAllQueuedTasks",
+            "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+            "You cancel all currently assigned goals. This includes the current active goal and all pending goals which have yet to begin execution. \nExample Instruction: \"cancel all tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    String exampleCallString =
+            //xml ?
+            "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>"; //:
+            //"{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
+    definition = new ToolDefinition("cancelTaskInQueueByIndex",
+            "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
+            List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("cancelAllScheduledGoals",
+            "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+    definition = new ToolDefinition("stopTalking",
+            "You stop talking and do not verbally respond. \nExample Instruction: \"shut up.\"",
+            new ArrayList());
+    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
     return instructTools;
   }
