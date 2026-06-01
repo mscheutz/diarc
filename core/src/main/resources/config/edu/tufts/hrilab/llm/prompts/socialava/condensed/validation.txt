@@ -22,6 +22,8 @@ Exceptions:
 Contextual Information:
 - Previous chat history:
     %chatHistoryAsString
+- Relevant Definitions Found in Backend Output:
+    %NLGSemanticDefinitions
 
 Output format:
 {"translation":"<natural English translation>"}

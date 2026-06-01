@@ -543,6 +543,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (parsing) {
       //promptVars.put("%worldState", getWorldStateString(agent));
       promptVars.put("%questionList", getCurrentQuestionsString(agent));
+    } else {
+      StringBuilder sb = new StringBuilder();
+      populateSemanticDefinitionsString(utterance.getSemantics(), sb);
+      if (sb.isEmpty()) {
+        promptVars.put("NLGSemanticDefinitions","<none found>");
+      } else {
+        promptVars.put("NLGSemanticDefinitions",sb.toString());
+      }
     }
 
     ChatCollection chatCollection = getChatCollection(user, agent);
@@ -583,6 +591,58 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     promptVars.put("%addressee", agent.getName());
+  }
+
+  private void populateSemanticDefinitionsString(Symbol semantics, StringBuilder sb) {
+    if (semantics == null || !semantics.isPredicate()) {
+      return;
+    }
+
+    Predicate pred = (Predicate)semantics;
+    String predDefinition = "";
+    switch (pred.getName()) {
+      case "mean" ->
+              predDefinition = "\nname: mean(X,Y)\ndescription: Represents a question asking X if they meant to instruct or specify Y.";
+      case "attempting" ->
+              predDefinition = "\nname: attempting(X,Y)\ndescription: You are about to engage in the task defined by Y";
+      case "and" ->
+              predDefinition = "\nname: and(X,Y,...)\ndescription: Conjunctive form signalling desired translation consists of translating X and Y and ...";
+      case "taskPredicate" ->
+              predDefinition = "\nname: taskPredicate(X)\ndescription: Specification of a task specified by X";
+      case "timingOf" ->
+              predDefinition = "\nname: timingOf(X)\ndescription: Specification of the type of timing detail X. interval references the amount of time between occurrence and execution references the time of a specific occurrence";
+      case "abort" ->
+              predDefinition = "\nname: abort(question)\ndescription: Conveyed intent to decline answering an asked question";
+      case "taskName" ->
+              predDefinition = "\nname: taskName(X)\ndescription: The name of a task to be learned, X";
+      case "not" ->
+              predDefinition = "\nname: not(X)\ndescription: Negation of the fact X";
+      case "ack" ->
+              predDefinition = "\nname: ack(X)\ndescription: Signals X should be conveyed in the form of an acknowledgement";
+      case "error" ->
+              predDefinition = "\nname: error(X)\ndescription: Signals X should be conveyed in the form of a failure message";
+      case "kioskGoal" ->
+        predDefinition = "\nname: kioskGoal(X,Y)\ndescription: Specification of a 'kiosk goal' (a goal which occurs automatically after a period of inactivity) configuration. X is a task to be performed after Y seconds of inactivity";
+      default -> {
+        Tool correspondingTool = chatTemplates.get("nlu").tools.get(pred.getName());
+        if (correspondingTool == null) {
+          correspondingTool = chatTemplates.get("nluextended").tools.get(pred.getName());
+        }
+        if (correspondingTool != null) {
+          predDefinition = toolToDescString(correspondingTool, false);
+        }
+      }
+    }
+
+    if (!predDefinition.isEmpty()) {
+      sb.append(predDefinition).append("\n##");
+    }
+
+    if (pred.hasArgs()) {
+      for (Symbol arg : pred.getArgs()) {
+        populateSemanticDefinitionsString(arg, sb);
+      }
+    }
   }
 
   /// ////////////////////////////////
