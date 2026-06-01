@@ -155,7 +155,10 @@ import java.lang.String;
     java.lang.Boolean !validated;
     java.lang.Integer !historyLength;
     java.lang.String !fillerString;
+    //updateHistory negation is kind of a improper placeholder for knowing if we are revalidating or not for now
+    java.lang.Boolean !revalidating;
 
+    !revalidating = op:newObject("java.lang.Boolean", true);
     ?revalidate = op:newObject("java.lang.Boolean", false);
     !addressee = op:invokeMethod(?unvalidatedUtterance, "getAddressee");
     !speaker = op:invokeMethod(?unvalidatedUtterance, "getSpeaker");
@@ -164,10 +167,11 @@ import java.lang.String;
     if (op:equals(?updateHistory,true)) {
         // Update dialogue history explicitly here so that it shows up in any UI element before the validation question is asked or answered
         act:updateDialogueHistory(?unvalidatedUtterance);
+        !revalidating = op:newObject("java.lang.Boolean", false);
     }
 
     // Filler response in between instruction parse and validation response generation
-    !fillerString = tsc:getPreValidationFillerPhrase();
+    !fillerString = tsc:getPreValidationFillerPhrase(?unvalidatedUtterance, !revalidating);
     async {
         act:generateResponseFromString(!speaker,!fillerString);
     }
@@ -246,6 +250,11 @@ import java.lang.String;
             act:cacheLLMParse(?unvalidatedUtterance);
         }
     } elseif (op:equalsValue(!response, no())) {
+        // Filler response in between negative validation answer and followup disambiguation question
+        !fillerString = tsc:getNegativeValFillerPhrase();
+        async {
+            act:generateResponseFromString(!speaker,!fillerString);
+        }
         //TODO: This is an instance of overwriting an utterance's parse and running it back through the pipeline after it has already been processed once - is this okay?
         // Utterance not validated - want to engage in an extended dialogue to attempt to rectify misunderstanding
         //  Call Chat completion again including the users negative validation response
@@ -355,7 +364,7 @@ import java.lang.String;
 
     //GenerateResponse or sayText? Do we want this in the history?
     //Filler response on context transfer
-    !fillerResponse = tsc:getContextTransferFillerPhrase();
+    !fillerResponse = tsc:getContextTransferFillerPhrase(?contextId,?cid,?user,?agentTeam);
     async {
         act:generateResponseFromString(?user,!fillerResponse);
     }
@@ -513,6 +522,8 @@ import java.lang.String;
 
     act:endActionLearning(!actionSignature);
 
+    // TODO: if this instruction doesn't require validation, then we want the long-form response. (Otherwise we have already
+    //  listed each step in the validation question)
     act:generateResponseFromString("I have learned how to perform ?actionName");
     //!actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
     //act:generateResponse(!actionPred);

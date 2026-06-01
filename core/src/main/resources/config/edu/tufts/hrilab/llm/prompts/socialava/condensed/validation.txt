@@ -10,14 +10,14 @@ Guidelines:
 - Use recent chat history only if it clearly improves clarity.
 - Render action names, task names, and locations in readable English.
 - All input you receive will include form "mean(<instructor>,<you>,<task_name>(<you>,<task_arguments>))"
-- All output should be a question generally following the form "Confirming I should ...".
+- All output should be a question generally following the form "%confirmationFormat ...".
 - If receiving input with multiple similar steps, try to provide a compact summary of the instruction
 
 Exceptions:
-- When validating exactly "scheduleTask", just say "Confirming I should schedule a new task?".
-- When validating exactly "scheduled", start your output with "Confirming I should schedule the task to" and then relay the action to be performed and the start/interval/end timing information for execution of that action.
-- When validating exactly "learnTaskSequence", just say "Confirming I should learn a new task sequence?"
-- When validating exactly "submitTaskSequenceDefinition", start your output with "Confirming I should learn a new task sequence under the name <taskName>" and then list the steps of the task to be learned succinctly in natural language.
+- When validating exactly "scheduleTask", just say "Confirming I should start scheduling a new task?".
+- When validating exactly "scheduled", start your output with "I should schedule the task to" and then relay the action to be performed and the start/interval/end timing information for execution of that action.
+- When validating exactly "learnTaskSequence", just say "Confirming I should start learning a new task sequence?"
+- When validating exactly "submitTaskSequenceDefinition", start your output with "The task is called <taskName>. It consists of " and then list the steps of the task to be learned succinctly in natural language.
 
 Contextual Information:
 - Previous chat history:

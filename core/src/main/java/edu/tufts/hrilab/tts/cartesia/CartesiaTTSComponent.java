@@ -377,6 +377,7 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       log.debug("[sayText] empty input");
       return false;
     }
+    log.info("[sayText] {}", text);
     if (apiKey == null || apiKey.isEmpty()) {
       log.error("[sayText] no API key; cannot synthesize");
       return false;

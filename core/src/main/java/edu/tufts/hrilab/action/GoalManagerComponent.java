@@ -1042,6 +1042,18 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.getSystemGoalsIds(agentTeam);
   }
 
+  /**
+   * Determine whether the existing goal has higher priority than the supplied priorityTier and priority values
+   *  (This method is used speculatively before goal submission to know how to format tentativeAccept responses, it
+   *    is assumed that the goal associated with priorityTier/priority will have a higher goalId and therefore lose ties)
+   * @param goalId - id of the existing goal being compared
+   * @param priorityTier - priorityTier of the speculative goal being compared to
+   * @param priority - priority of the speculative goal being compared to
+   */
+  @TRADEService
+  public boolean hasGreaterPriority(long goalId, PriorityTier priorityTier, long priority) {
+    return em.hasGreaterPriority(goalId,priorityTier,priority);
+  }
 
   /**
    * Get a list of predicates of all pending goals

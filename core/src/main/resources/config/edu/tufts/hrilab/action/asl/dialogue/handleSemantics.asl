@@ -443,9 +443,10 @@ import java.lang.Boolean;
     java.lang.Boolean !waitingForResponse;
     Predicate !responsePredicate;
     java.lang.Long !priority;
-    java.util.List !currentGoals;
-    Predicate !goalPred;
+    java.util.List !currentGoalIds;
+    java.lang.Long !currentGoalId;
     java.lang.String !currentStatus;
+    java.lang.Boolean !goalPlacedInQueue = false;
     java.lang.Boolean !currentGoalActive = true;
     Predicate !goalSubmittedPred;
     java.lang.String !fillerResponse;
@@ -470,105 +471,50 @@ import java.lang.Boolean;
       //obligation infer : not(isForbidden(?state));
     }
 
-    // Pre-submission checks
-    if (~op:equalsValue(?priorityTier,SKIPPENDING)) {
-        // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
-        //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
-        //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
-        if (~op:equalsValue(?priorityTier,URGENT)) {
-            // Q: The motivation behind using SKIPPENDING (i.e. lack of resource conflict) to be the conditional here was to still
-            //  allow the user to do things like ask the system for relevant information to inform question answers, modify task
-            //  execution, or supply information to the system. Should there be a different check made?
-            //      handleITK and handleWantBel go through separate pipelines, so maybe this is an accurate check.
-            //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
-            //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
-            if (tsc:isAgentWaitingForResponse(?actor)) {
-                //act:generateResponseFromString(?speaker, "Please answer my question before sending further instructions");
-                act:generateResponse(?speaker, please(before(youSendFurtherInstruction,answer(myQuestion))));
-                return;
-            }
+    //TODO: this should be per speaker/agent pair or conversation group
+    if (~op:equalsValue(?priorityTier,SKIPPENDING) && ~op:equalsValue(?priorityTier,URGENT) && tsc:isAgentWaitingForResponse(?actor)) {
+        act:generateResponseFromString(?speaker, "Please answer my previous question before sending further instructions");
+        //TODO: state unanswered question proactively here?
+        return;
+    }
+
+    //// Pre-submission checks
+    // Compare goal priorities
+    !priority = act:getPriorityForGoal(?state);
+    !currentGoalIds = tsc:getSystemGoalsIds(?actor);
+    foreach (!currentGoalId : !currentGoalIds) {
+        if (tsc:hasGreaterPriority(!currentGoalId, ?priorityTier, !priority)) {
+            !goalPlacedInQueue = op:newObject("java.lang.Boolean", true);
         }
+    }
 
-        //// Tentative Accept, 3 cases:
-        //      1. Report attempting to achieve goal
-        //      2. Report goal has been put in the pending queue
-        //      3. Report goal has failed on submission
-        //TODO: Make this explicitly a queueEM only change
-        // Report to the user that the goal is waiting as PENDING until unblocked by relevant resources being freed
-        !currentGoals = act:getSystemGoalsPredicates(?actor);
-
-        // Do we want distinction of reporting when placing behind a suspended goal vs an active goal?
-        //  ^Eventually this logic will need to be extended to explicitly find the goal(s) occupying the required resources
-        //TODO: placeholder change, need to compare priorities of goals to know how to respond
-        if (op:isEmpty(!currentGoals) || op:equalsValue(?priorityTier,URGENT)) {
-            if(~act:checkIgnoreTentativeAccept(?state)){
-                if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-                    !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                    async {
-                        act:generateResponseFromString(?speaker,!fillerResponse);
-                    }
-                } else {
-                    // Filler response before actual tentative accept generation
-                    async {
-                        !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                        async {
-                            act:generateResponseFromString(?speaker,!fillerResponse);
-                        }
-                    }
-
-                    //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
-                    ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
-                    ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
-                    ////  if not terminated and/or conditional timing based on the goal itself.
-                    //async {
-                        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-                    //}
-                }
-            }
-        } else {
-            foreach (!goalPred : !currentGoals) {
-                !currentStatus = op:getName(!goalPred);
-                if (op:equals("suspended",!currentStatus)) {
-                    !currentGoalActive = op:newObject("java.lang.Boolean", false);
-                }
-            }
-            //TODO: experiment with phrasing of these preds / format for LLM NLG in a smarter way relating to current conflicting task(s)
-            //TODO: short term change these to strings and figure out multilingual support later
-            if (op:equals(!currentGoalActive,true)) {
-                act:generateResponseFromString(?speaker,"I will do so when finished with my higher priority tasks");
-                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(IWillDoSoWhenFinishedWithMyHigherPriorityTasks)");
-                ////!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,willPerform(?state,whenFinishedWithHigherPriorityTasks)");
-            } else {
-                act:generateResponseFromString(?speaker,"I am currently waiting on a suspended task but will get to that when I can");
-                //!goalSubmittedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(IAmCurrentlyWaitingOnASuspendedTaskButWillGetToThatWhenICan)");
-            }
-            ////async {
-            //    act:generateResponse(?speaker,!goalSubmittedPred);
-            ////}
+    //nRespond differently based on whether it is executed immediately or placed in the queue
+    if (op:equals(!goalPlacedInQueue,true)) {
+        !fillerResponse = tsc:getTentativeAcceptFiller(?state,false);
+        async {
+            act:generateResponseFromString(?speaker,!fillerResponse);
         }
     } else {
-        if(~act:checkIgnoreTentativeAccept(?state)){
-            if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-                !fillerResponse = tsc:getValidatedAckFillerPhrase();
-                async {
-                    act:generateResponseFromString(?speaker,!fillerResponse);
-                }
-            } else {
-                // Filler response before actual tentative accept generation
-                async {
-                    act:generateResponseFromString("okay");
-                }
+        if(~act:checkIgnoreTentativeAccept(?state)) {
+            !fillerResponse = tsc:getTentativeAcceptFiller(?state,true);
+            async {
+                act:generateResponseFromString(?speaker,!fillerResponse);
+            }
 
+            // (Practically) If had already been validated, then don't need to restate the action being performed
+            if (~op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+                //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
+                ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
+                ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
+                ////  if not terminated and/or conditional timing based on the goal itself.
                 //async {
                     act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
                 //}
             }
-
         }
     }
 
     //// Submit goal
-    !priority = act:getPriorityForGoal(?state);
     !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
     op:log("debug", "waiting to get into state: ?state goalId: !goalID");
     !goalStatus = act:joinOnGoal(!goalID);

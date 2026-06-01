@@ -218,10 +218,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private int externalErrorCount = 0;
   private boolean restrictedMode = false;
 
-  private List<String> preValFillerSet;
-  private List<String> validatedAckFillerSet;
-  private List<String> contextTransferFillerSet;
-
   @Override
   public void init() {
     super.init();
@@ -296,18 +292,16 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  - INSTRUCT targets
     //  - LLM<->Diarc ITK targets
     //  - (done dynamically at call-time) relevant REPLY targets
-    //  - TODO: have base context history time out after T time with no interaction)
     List<Tool> baseNLUTools = new ArrayList<>(instructTools);
     baseNLUTools.addAll(itkTools);
     baseNLUTools.add(defaultGoalInfoTool);
     baseNLUTools.add(textResponseTool);
-    //baseNLUTools.add(textResponseTool);
     chatTemplates.put("nlu", new ChatTemplates(getNluSystemPrompt(), baseNLUTools));
 
     // Universal "focused" tool set:
     //  - Template specific targets (gathered at call-time based on entry corresponding to root action name - should be added by subclass)
-    //  - Base LLM<->Diarc ITK targets - TODO: temporarily removed - should these be available or not? Only a specific subset?
-    //  - relevant REPLY targets - TODO: temporarily removed, should these be allowed? Should there be a mechanism to define REPLY targets per focused context?
+    //  - Base LLM<->Diarc ITK targets
+    //  - relevant REPLY targets - TODO: temporarily removed aside from during validation, should these be allowed? Should there be a mechanism to define REPLY targets per focused context?
     //  - suspend/cancel interaction targets
     universalFocusedToolset = new HashMap<>();
     universalFocusedToolDefinitions = new ArrayList<>();
@@ -394,16 +388,9 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                       new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
                               "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
               )),
-//            List.of(new ToolParameterHelper("currentScheduledDefinition","object",new ArrayList<>(),
-//                            "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
-////                    ,
-////                    new ToolParameterHelper("response","string",new ArrayList<>(),
-////                            "What you want to say to the user", true)
-//            )),
               UtteranceType.INSTRUCT);
       scheduleGoalTools.add(modifiedTextResponseTool1);
     }
-    //scheduleGoalTools.add(textResponseTool);
     if (useCondensedPrompts) {
       chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/condensed/scheduleGoal"), scheduleGoalTools));
     } else {
@@ -449,11 +436,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
                       new ToolParameterHelper("currentTaskSequenceDefinition", "object", new ArrayList<>(),
                               "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above. Generate this argument after your response.", true)
               )),
-//            "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above.", true)
-////                    ,
-////                    new ToolParameterHelper("response","string",new ArrayList<>(),
-////                    "What you want to say to the user", true)
-//                    )),
               UtteranceType.INSTRUCT);
       learnTourTools.add(modifiedTextResponseTool2);
     }
@@ -500,10 +482,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     promptVars.put("%taskInstructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
     promptVars.put("%instructList", instructTools.stream().map(t -> toolToDescString(t, true)).collect(Collectors.joining("\n#\n")));
     promptVars.putAll(initPromptVars());
-
-    initPreValidationFillerPhrases();
-    initValidatedAckFillerPhrases();
-    initContextTransferFillerPhrases();
 
     trackDialogueHistory = true;
     trackLearnedActions = true;
@@ -565,16 +543,42 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (parsing) {
       //promptVars.put("%worldState", getWorldStateString(agent));
       promptVars.put("%questionList", getCurrentQuestionsString(agent));
-      ChatCollection chatCollection = getChatCollection(user, agent);
-      if (chatCollection != null) {
-        ChatContext chatContext = chatCollection.currentChat;
-        if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
+    }
+
+    ChatCollection chatCollection = getChatCollection(user, agent);
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
+        if (parsing) {
           //TODO: include tool information, not parsed semantics
           Map<Variable, Symbol> varMap = new HashMap<>();
           for (Term t : chatContext.utteranceUpForValidation.getSupplementalSemantics()) {
             varMap.put((Variable) t.get(0), Factory.createSymbol(t.getName(), t.getType()));
           }
           promptVars.put("%toolUpForValidationDescription", replaceVarsWithDescriptors((Predicate) chatContext.utteranceUpForValidation.getSemantics(), varMap).toString());
+        } else {
+          // Sample validation question format - potentially based on previous filler phrase
+          String format;
+          if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("scheduled")) {
+            format = "I should";
+          } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition")) {
+            format = "The task is";
+          } else {
+            //INSTRUCT
+            int option = new Random().nextInt(6);
+            switch (option) {
+              case 0 -> format = "Would you like me to";
+              case 1 -> format = "Should I";
+              case 2 -> format = "Did you mean for me to";
+              case 3 -> format = "Did I hear correctly that";
+              case 4 -> format = "Are you saying I should";
+              case 5 -> format = "Confirming I should";
+              default -> format = "Confirming I should";
+            }
+            //REPLY
+            //  Did you mean, was it, did I hear correctly
+          }
+          promptVars.put("%confirmationFormat", format);
         }
       }
     }
@@ -4933,55 +4937,142 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return replyTools;
   }
 
-  private void initPreValidationFillerPhrases() {
-    preValFillerSet = new ArrayList<>();
-    preValFillerSet.add("Okay.");
-    preValFillerSet.add("Alright.");
-    preValFillerSet.add("Gotcha.");
-    preValFillerSet.add("Noted.");
-    preValFillerSet.add("Got it.");
-    preValFillerSet.add("One second.");
-    preValFillerSet.add("Let me make sure I understood.");
-
-    //List<String> suffixSet = new ArrayList<>();
-    //suffixSet.add("");
-    //suffixSet.add("");
-    //suffixSet.add("");
-    //suffixSet.add("");
-    //suffixSet.add("processing");
-    //suffixSet.add("parsing");
-  }
-  private void initValidatedAckFillerPhrases() {
-    validatedAckFillerSet = new ArrayList<>();
-    validatedAckFillerSet.add("Understood.");
-    validatedAckFillerSet.add("Sounds good.");
-    validatedAckFillerSet.add("Will do.");
-    validatedAckFillerSet.add("Got it.");
-    validatedAckFillerSet.add("Confirmed.");
-    validatedAckFillerSet.add("Proceeding.");
-    validatedAckFillerSet.add("Submitted.");
-  }
-  private void initContextTransferFillerPhrases() {
-    contextTransferFillerSet = new ArrayList<>();
-    contextTransferFillerSet.add("Gathering any relevant details.");
-    contextTransferFillerSet.add("Processing your instruction.");
-    contextTransferFillerSet.add("Setting up your task.");
-    contextTransferFillerSet.add("Just a second.");
-    contextTransferFillerSet.add("One moment please.");
+  //// Generated system response prefix filler/overall format sampling during known conversation states for more natural
+  ///   conversation flow and quicker apparent start of speech
+  @TRADEService
+  public String getPreValidationFillerPhrase(Utterance unvalidatedUtterance, boolean revalidating) {
+    Symbol semantics = unvalidatedUtterance.getSemantics();
+    if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("scheduled")) {
+      int option = new Random().nextInt(2);
+      return switch (option) {
+        case 0 -> "Let me make sure I understand";
+        case 1 -> "To be sure I understood correctly";
+        default -> "Okay.";
+      };
+    } else if (revalidating) {
+      int option = new Random().nextInt(8);
+      return switch (option) {
+        case 0 -> "Updating";
+        case 1 -> "Reconsidering";
+        case 2 -> "Reevaluating";
+        case 3 -> "Reassessing";
+        case 4 -> "Correcting";
+        case 5 -> "Reanalyzing";
+        case 6 -> "Rethinking";
+        case 7 -> "Revisiting";
+        default -> "Okay.";
+      };
+    } else {
+      int option = new Random().nextInt(6);
+      return switch (option) {
+        case 0 -> "Okay.";
+        case 1 -> "Alright.";
+        case 2 -> "Copy.";
+        case 3 -> "Heard.";
+        case 4 -> "Gotcha.";
+        case 5 -> "Processing.";
+        default -> "Okay.";
+      };
+    }
   }
 
   @TRADEService
-  public String getPreValidationFillerPhrase() {
-    return preValFillerSet.get(new Random().nextInt(preValFillerSet.size()));
+  public String getNegativeValFillerPhrase() {
+    int option = new Random().nextInt(4);
+    return switch (option) {
+      case 0 -> "My mistake.";
+      case 1 -> "Sorry about that.";
+      case 2 -> "Oh, okay.";
+      case 3 -> "Apologies.";
+      default -> "Okay";
+    };
+  }
+
+  //TODO: can specialize responses based on contextId
+  @TRADEService
+  public String getContextTransferFillerPhrase(String contextId, long cid, Symbol user, Symbol agent) {
+    //based on input/history length choose between "gathering relevant information ..." type response and simple "okay" type
+    boolean additionalInformationHeuristic = false;
+    ChatCollection chatCollection = getChatCollection(user, agent);
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.pendingFocusedChats.get(contextId);
+      if (chatContext != null) {
+        int numMessages = chatContext.history.messages.size();
+        if (numMessages > 3) {
+          int numWordsInLastMessage = chatContext.history.messages.get(chatContext.history.messages.size() - 4).content.length();
+          if (numMessages > 6 || numWordsInLastMessage > 15) {
+            additionalInformationHeuristic = true;
+          }
+        }
+      }
+    }
+    if (additionalInformationHeuristic) {
+      int option = new Random().nextInt(4);
+      return switch (option) {
+        case 0 -> "Gathering all relevant details.";
+        case 1 -> "Processing your instruction.";
+        case 2 -> "Setting up your task.";
+        case 3 -> "Initializing your task.";
+        default -> "Okay";
+      };
+    } else {
+      int option = new Random().nextInt(2);
+      return switch (option) {
+        case 0 -> "Just a second.";
+        case 1 -> "One moment please.";
+        default -> "Okay";
+      };
+    }
   }
 
   @TRADEService
-  public String getValidatedAckFillerPhrase() {
-    return validatedAckFillerSet.get(new Random().nextInt(validatedAckFillerSet.size()));
-  }
-
-  @TRADEService
-  public String getContextTransferFillerPhrase() {
-    return contextTransferFillerSet.get(new Random().nextInt(contextTransferFillerSet.size()));
+  public String getTentativeAcceptFiller(Predicate state, boolean executingImmediately) {
+    if (executingImmediately) {
+      String name = state.getName();
+      ////If movement:
+      switch (name) {
+        case "goToLocation":
+        case "escortFromToLocation":
+        case "measureWifiAtLocations":
+        case "measureWifiAtLocationsAndReportAt":
+        case "measureTemperatureAtLocations":
+        case "measureTemperatureAtLocationsAndReportAt":
+        case "playNextVideoAtLocation":
+        case "playSpecificVideoAtLocation":
+        case "displayNamedImageAtLocation":
+        case "displayNamedImageForDurationAtLocation":
+          int option = new Random().nextInt(4);
+          return switch (option) {
+            case 0 -> "On my way.";
+            case 1 -> "Moving.";
+            case 2 -> "Heading there.";
+            case 3 -> "Leaving now.";
+            default -> "Okay";
+          };
+      }
+      int option = new Random().nextInt(10);
+      return switch (option) {
+        case 0 -> "Understood.";
+        case 1 -> "Noted.";
+        case 2 -> "Sounds good.";
+        case 3 -> "Will do.";
+        case 4 -> "Got it.";
+        case 5 -> "Confirmed.";
+        case 6 -> "Proceeding.";
+        case 7 -> "Submitted.";
+        case 8 -> "Acknowledged.";
+        case 9 -> "Accepted.";
+        default -> "Okay";
+      };
+    } else {
+      int option = new Random().nextInt(4);
+      return switch (option) {
+        case 0 -> "Will do that when I'm done with my current tasks.";
+        case 1 -> "Scheduling after my other tasks.";
+        case 2 -> "Adding to my list of tasks.";
+        case 3 -> "I have other assigned tasks, but I'll get to that when I can.";
+        default -> "Okay";
+      };
+    }
   }
 }

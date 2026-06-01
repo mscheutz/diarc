@@ -60,19 +60,7 @@ public class ExecutionManager implements GoalListener {
    * Comparison method determining the order goals get placed into the pendingGoals queue.
    */
   protected GoalComparator goalComparator = (g1, g2) -> {
-    //1st Decider: priority tier
-    int val = g1.getPriorityTier().compareTo(g2.getPriorityTier());
-
-    //2nd Decider: priority value
-    if (val == 0) {
-      val = Long.compare(g1.getPriority(), g2.getPriority());
-    }
-
-    //3rd Decider: Older goal (lower id) is greater
-    if (val == 0) {
-      val = Long.compare(g2.getId(), g1.getId());
-    }
-    return val;
+    return compareGoal(g1.getPriorityTier(), g1.getPriority(), g1.getId(), g2.getPriorityTier(), g2.getPriority(), g2.getId());
   };
 
   private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
@@ -2274,6 +2262,38 @@ public class ExecutionManager implements GoalListener {
       return -1;
     }
   }
+
+  /**
+   * Comparison method determining the order goals get placed into the pendingGoals queue.
+   */
+  private int compareGoal(PriorityTier pt1, long p1, long gid1, PriorityTier pt2, long p2, long gid2) {
+    //1st Decider: priority tier
+    int val = pt1.compareTo(pt2);
+
+    //2nd Decider: priority value
+    if (val == 0) {
+      val = Long.compare(p1, p2);
+    }
+
+    //3rd Decider: Older goal (lower id) is greater
+    if (val == 0) {
+      val = Long.compare(gid2, gid1);
+    }
+    return val;
+  }
+
+  /**
+   * Compare the priority of the supplied goal against the supplied priority/priorityTier values
+   */
+  public boolean hasGreaterPriority(long goalId, PriorityTier priorityTier, long priority) {
+    Goal g = getGoal(goalId);
+    if (g == null) {
+      return true;
+    }
+
+    return compareGoal(g.getPriorityTier(), g.getPriority(), g.getId(), priorityTier, priority, g.getId()+1) > 0;
+  }
+
 
   /**
    * Query the ActionStatus of the action (i.e., root context for this goal) being executed
