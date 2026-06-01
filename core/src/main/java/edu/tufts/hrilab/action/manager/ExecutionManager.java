@@ -1472,15 +1472,41 @@ public class ExecutionManager implements GoalListener {
     return goalPreds;
   }
 
+  public List<Goal> getSystemGoals() {
+    return getSystemGoals(rootAgent);
+  }
+
+  public List<Goal> getSystemGoals(Symbol actor) {
+    return getSystemGoalsHelper(actor.toUntyped(), new ArrayList<>());
+  }
+
+  private List<Goal> getSystemGoalsHelper(Symbol actor, List<Goal> goals) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      return goals;
+    }
+
+    goals.addAll(agentTeam.getActiveGoals());
+
+    for (Symbol member : agentTeam.getMemberNames()) {
+      goals.addAll(getSystemGoals(member));
+    }
+
+    return goals;
+  }
+
+  @Deprecated
   public List<Predicate> getSystemGoalsPredicates() {
     return getSystemGoalsPredicates(rootAgent);
   }
 
+  @Deprecated
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
     return getSystemGoalsPredicatesHelper(actor.toUntyped(), new ArrayList<>());
   }
 
+  @Deprecated
   private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
@@ -1498,22 +1524,22 @@ public class ExecutionManager implements GoalListener {
     return goalPreds;
   }
 
-  public Predicate getNextGoalPredicate() {
+  public Goal getNextGoal() {
     log.trace("[getNextGoalPredicate] in method");
     synchronized (pendingGoalsLock) {
       log.trace("[getNextGoalPredicate] have pendingGoalsLock");
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       if (pendingGoalIterator.hasNext()) {
         log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
-        return pendingGoalIterator.next().getGoal().getGoalPredicate();
+        return pendingGoalIterator.next().getGoal();
       } else {
         log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
-        return Factory.createPredicate("none()");
+        return null;
       }
     }
   }
 
-  public Predicate getNextGoalPredicate(Symbol agent) {
+  public Goal getNextGoal(Symbol agent) {
     log.trace("[getNextGoalPredicate] {}", agent);
     agent = agent.toUntyped();
     synchronized (pendingGoalsLock) {
@@ -1523,12 +1549,12 @@ public class ExecutionManager implements GoalListener {
         PendingGoal pg = pendingGoalIterator.next();
         if (agent.equals(pg.getGoal().getActor().toUntyped())) {
           log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
-          return pg.getGoal().getGoalStatePredicate();
+          return pg.getGoal();
         }
       }
     }
     log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
-    return Factory.createPredicate("none()");
+    return null;
   }
 
   /**
@@ -2135,12 +2161,9 @@ public class ExecutionManager implements GoalListener {
 
   /**
    * Get main state machine.
-   * NOTE: the @TRADEService should be removed once there's a cleaner way to get a plan for a goal
-   *       without submitting a goal for execution. This is used in asl in a few places.
    *
    * @return
    */
-  @TRADEService
   public StateMachine getStateMachine() {
     return sm;
   }

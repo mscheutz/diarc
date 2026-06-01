@@ -12,10 +12,7 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.*;
-import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.goal.GoalInfo;
-import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.goal.*;
 import edu.tufts.hrilab.action.gui.GoalManagerAdapter;
 import edu.tufts.hrilab.action.gui.GoalViewerAdapter;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -785,7 +782,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   @Action
   public Predicate getNextGoal() {
-    return em.getNextGoalPredicate();
+    return em.getNextGoal().getGoalPredicate();
   }
 
   /**
@@ -794,25 +791,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   @Action
   public Predicate getNextGoal(Symbol agent) {
-    return em.getNextGoalPredicate(agent);
-  }
-
-  /**
-   * Get the goal ID for a goal predicate. Checks current and
-   * past goals. If no goal is found, -1 is returned.
-   * NOTE: Depending on the ExecutionManager subclass, more than one match may exist and one will be returned at random.
-   *
-   * @param goal
-   * @return
-   */
-  @TRADEService
-  public Long getGoalId(Predicate goal) {
-    List<Long> goalIds = getGoalIds(goal);
-    if (goalIds == null || goalIds.size() == 0) {
-      return -1L;
-    } else {
-      return goalIds.get(0);
-    }
+    return em.getNextGoal(agent).getGoalPredicate();
   }
 
   /**
@@ -954,6 +933,103 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     return actionSteps;
   }
+
+  public Predicate getActionContextSteps(Symbol actor, Predicate locationPredicate) {
+
+    // get goal
+    List<Goal> currentGoals = getCurrentGoals(actor);
+
+    Goal goal = new Goal(goalPredicate);
+
+    // get
+
+
+    // get Goal instance from goalPredicate
+    !numLocArgs = op:invokeMethod(?location, "size");
+    if (op:==(!numLocArgs, 2)) {
+      !goalPredicate = op:invokeMethod(?location, "get", 1);
+    } else {
+      !goalPredicate = op:createPredicate("goal(mostRecent)");
+    }
+
+    // if asking about sub-goal (e.g., nod part of dance goal) then we will need to get current goal
+    // instead of goal specified in the goalPredicate-->
+    // TODO: this assumes that an agent only has a single top-level goal
+    try {
+      !goals = act:getGoal(!goalPredicate);
+      !goal = op:get(!goals,0);
+    } catch(FAIL) {
+      !goalPredicate = op:createPredicate("goal(mostRecent)");
+      !goals = act:getGoal(!goalPredicate);
+      !goal = op:get(!goals,0);
+    }
+
+    // get ContextDescription from goal's action interpreter based on ?location
+    !contextDescription = op:invokeMethod(!goal, "getContextDescription", ?location);
+
+    // check if goal was found
+    if (op:isNull(!contextDescription)) {
+      op:log("debug", "[getContextDescription] no matching context description found.");
+      !failCond = op:createPredicate("not(propertyOf(action,found))");
+      exit(FAIL, !failCond);
+    }
+
+    // get relevant predicate descriptions (will be asserted to belief via the "knows" post-conds)
+    !steps = op:invokeMethod(!contextDescription, "getStepsInPredicateForm");
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////// START: NEW API ///////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
+  private List<Goal> getGoalsHelper(GoalFilter filter) {
+    List<Goal> goals = new ArrayList<>();
+    switch (filter) {
+      case ACTIVE -> goals.addAll(em.getActiveGoals());
+      case CURRENT -> {
+        goals.addAll(em.getActiveGoals());
+        goals.addAll(em.getPendingGoals());
+      }
+      case PENDING -> goals.addAll(em.getPendingGoals());
+      case NEXT -> goals.add(em.getNextGoal());
+      case PAST -> goals.addAll(em.getPastGoals());
+      case SYSTEM -> goals.addAll(em.getSystemGoals());
+      case ALL -> {
+        goals.addAll(em.getActiveGoals());
+        goals.addAll(em.getPendingGoals());
+        goals.addAll(em.getPastGoals());
+      }
+    }
+
+    return goals;
+  }
+
+  public Predicate getGoalPredicate(Long goalId) {
+    return em.getGoal(goalId).getGoalPredicate();
+  };
+
+  public List<Predicate> getGoalPredicates(Symbol actor, GoalFilter filter) {
+    List<Goal> goals = getGoalsHelper(filter);
+    List<Predicate> goalPredicates = new ArrayList<>();
+    goals.stream()
+            .filter(goal -> goal.getActor().equals(actor)) // TODO: how to handle type info?
+            .forEach(goal -> goalPredicates.add(goal.getGoalPredicate()));
+    return goalPredicates;
+  };
+  public List<Predicate> getGoalPredicates(Predicate goalPredicate, GoalFilter filter) {};
+
+  public GoalInfo getGoalInfo(Long goalId) {};
+  public List<GoalInfo> getGoalInfos(Symbol actor, GoalFilter filter) {};
+  public List<GoalInfo> getGoalInfos(Predicate goalPredicate, GoalFilter filter) {};
+
+  public List<Long> getGoalIds(Symbol actor, GoalFilter filter) {};
+  public List<Long> getGoalIds(Predicate goalPredicate, GoalFilter filter) {};
+
+  // possible goal return types: GoalInfo, GoalId, GoalPredicate
+  // possible input info: actor, goalPredicate, goalId AND executionStatus
+
+  /////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////// END: NEW API/////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
 
   /**
    * Utility method mainly used for testing.

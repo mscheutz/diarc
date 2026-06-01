@@ -660,9 +660,9 @@ public class QueueExecutionManagerTest {
     systemList.add(Factory.createPredicate("ACTIVE",goalPred));
     assertEquals(em.getSystemGoalsPredicates(Factory.createSymbol("self:agent")), systemList);
 
-    assertSame(em.getNextGoalPredicate(), goalPred3);
-    assertSame(em.getNextGoalPredicate(Factory.createSymbol("team1:agent")), goalPred5);
-    assertEquals(em.getNextGoalPredicate(Factory.createSymbol("agent1:agent")), Factory.createPredicate("none()"));
+    assertSame(em.getNextGoal().getGoalPredicate(), goalPred3);
+    assertSame(em.getNextGoal(Factory.createSymbol("team1:agent")).getGoalPredicate(), goalPred5);
+    assertEquals(em.getNextGoal(Factory.createSymbol("agent1:agent")).getGoalPredicate(), Factory.createPredicate("none()"));
 
     cancelAllGoals();
   }
