@@ -670,7 +670,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     synchronized (currentChatCollections) {
       chatCollection = getChatCollection(user, agentTeam);
       if (chatCollection == null) {
-        chatCollection = new ChatCollection(new Chat());
+        chatCollection = new ChatCollection(new Chat(user.getName(), agentTeam.getName()));
         currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
       }
     }
@@ -696,7 +696,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // existing state
       chatContext = chatCollection.currentChat;
       if (chatContext == null) {
-        chat = new Chat();
+        chat = new Chat(user.getName(), agentTeam.getName());
         chatContext = new ChatContext(chat);
         chatCollection.currentChat = chatContext;
       }
@@ -721,7 +721,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
         // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
         //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
-        chat = new Chat();
+        chat = new Chat(user.getName(), agentTeam.getName());
         promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
         chatContext.history.addUserMessage(utterance.getWordsAsString());
       } else {
@@ -973,6 +973,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // TODO: Reevaluate if these are in fact conventions we want to universally accept / how we want to do these things
       String toolName = outputUtterance.getSemantics().getName();
       chatContext.lastToolCallName = toolName;
+      chatContext.identicalResponses = 0;
 
       // Temporary special wrappers - revisit if ever reintroducing "offContext" functionality
       if (chatContext.chatType != ChatType.BASE) {
@@ -1062,6 +1063,51 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     // TODO: need more postprocessing cases here for various special characters?
 
+    // TODO: should common phrases like "yes", "no", "and then what", etc. be explicitly excluded? - The LLM doesn't seem to (at least currently) really do this unless stuck though
+    // Detect consecutive text responses and attempt to break out if finding too many
+    if (chatContext.lastResponseString != null && chatContext.lastResponseString.equals(responseString)) {
+      chatContext.identicalResponses += 1;
+      //TODO: This does not interact with streaming responses well. Would have to interrupt sayText or be an explicit
+      //  extra turn afterwards. Cannot just modify and send out response here.
+      if (chatContext.identicalResponses == 2) {
+        log.warn("[handleTextResponse] detected multiple consecutive identical responses, clearing history of those responses and trying again");
+        // 3rd identical response - modify recent history to try to pull out of loop. Keep last input message and respond
+        //  again based off that.
+        //  (If streaming, then need to signal the purpose of this extra response turn or at least outwardly relate the responses)
+        List<Message> history = chatContext.history.messages;
+        int responsesFound = 0;
+        // Remove messages until all duplicate responses found
+        for (int i = history.size()-2; i >= 0; i--) {
+          Message m = history.remove(i);
+          if (m.tool_calls != null && m.tool_calls.length > 0) {
+            ToolFunction tf = m.tool_calls[0].function;
+            if (tf.name.equals(textResponseTool.toolDefinition.function.name) && tf.arguments.contains(responseString)) {
+              responsesFound += 1;
+              if (responsesFound == 2) {
+                break;
+              }
+            }
+          }
+        }
+        // Remove any lingering user messages
+        for (int i = history.size()-2; i >= 0; i--) {
+          if (history.get(i).role.equals("assistant")) {
+            break;
+          }
+          history.remove(i);
+        }
+        // Last user input should still be present, submit for a new (hopefully different) generated response
+        return parseUtteranceLLMService(inputUtterance, true);
+      } else if (chatContext.identicalResponses > 3) {
+        log.warn("[handleTextResponse] Still envountering identical responses, clearing history fully and informing user");
+        // 4th identical response - inform user and more drastically reset context
+        chatContext.history = new Chat(chatContext.history.userName, chatContext.history.robotName);
+        responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
+        chatContext.identicalResponses = 0;
+      }
+    } else {
+      chatContext.identicalResponses = 0;
+    }
     chatContext.lastResponseString = responseString;
     chatContext.lastResponseStreamed = ttsStreamedIds.remove(llmResponse.getId());
 
@@ -1164,7 +1210,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Remove potential excess system NLG for unrelated goals before storing this chat
       ChatContext copy = new ChatContext(chatContext);
       for (int i = copy.history.messages.size() - 1; i > 0; i--) {
-        if (copy.history.messages.get(i).role.equals(copy.history.userName)) {
+        if (copy.history.messages.get(i).role.equals("user")) {
           break;
         }
         copy.history.messages.remove(i);
@@ -1399,7 +1445,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Supplying history in the system prompt itself as to not confuse the LLM - need to supply history for context, but
     //    the NLU history would contradict the stated task in this system prompt.
     // Create a new chat as to not destroy history
-    Chat genChat = new Chat();
+    Chat genChat = new Chat(user.getName(), agentTeam.getName());
     utterance = new Utterance.Builder(utterance).build();
     if (semantics.isPredicate()) {
       semantics = replaceReferencesInSemantics((Predicate) semantics);
@@ -1968,7 +2014,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
 
   @TRADEService
-  public void streamingChunkHandler(OpenaiChatCompletionResponse lastChunk, OpenaiChatCompletionResponse currentResponse) {
+  public void streamingChunkHandler(OpenaiChatCompletionResponse lastChunk, OpenaiChatCompletionResponse currentResponse, Chat currentChat) {
     log.trace("[streamingChunkHandler] in method");
 
     log.trace("[last_chunk] {}", lastChunk);
@@ -2011,7 +2057,20 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (parser.currentParamName != null && parser.currentParamName.equals("response")) {
         if (!parser.currentParamValueDelta.isEmpty()) {
           log.info("[streamingChunkHandler] have partial response string: {}. Delta: {}",parser.currentParamValue, parser.currentParamValueDelta);
-          ttsPush(parser.currentParamValueDelta);
+          //TODO: See code block in handleTextResponse - Need to store in buffer and prevent TTS until knowing the response
+          //       is safe to use
+          //String user = currentChat.userName;
+          //String agentTeam = currentChat.robotName;
+          //ChatContext chatContext = null;
+          //ChatCollection collection = getChatCollection(Factory.createSymbol(user), Factory.createSymbol(agentTeam));
+          //if (collection != null) {
+          //  chatContext = collection.currentChat;
+          //}
+          //if (chatContext != null && chatContext.identicalResponses > 1 && chatContext.lastResponseString.startsWith(currentBufferedDelta)) {
+          //    log.info("[streamingChunkHandler] detecting start of repeated response, waiting to push results to TTS until cleared");
+          //} else {
+            ttsPush(parser.currentParamValueDelta);
+          //}
           return;
         }
       }
@@ -2091,7 +2150,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools) {
-    TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class);
+    TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class, Chat.class);
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {
       try {
@@ -2124,7 +2183,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (chatCollection != null) {
         if (chatCollection.currentChat != null && chatCollection.currentChat.chatState == ChatState.VALIDATION) {
           log.warn("[endChatContext] called during validation, not currently equipped to cancel validation question and clean up side effects. Just clearing history...");
-          chatCollection.currentChat.history = new Chat();
+          chatCollection.currentChat.history = new Chat(user.getName(), agentTeam.getName());
         } else {
           chatCollection.releaseLocks();
           // This method is only currently called during error cases - make sure all relevant error messages make it

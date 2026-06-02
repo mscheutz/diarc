@@ -460,7 +460,7 @@ public class OpenaiClient implements LLMClient {
                 }
               }
             }
-            chunkHandlerService.call(void.class, delta, mergedResponse);
+            chunkHandlerService.call(void.class, delta, mergedResponse, chat);
           } else {
             log.error("[streamingChatCompletion] unexpected response format: {}", responseLine);
           }

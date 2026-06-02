@@ -32,6 +32,10 @@ public class ChatContext {
   protected boolean lastResponseStreamed = false;
   protected String lastTemplateName = "";
   protected Object lastTemplateValue = "";
+  // TODO: extend to higher level concept of detecting reasoning loops
+  // Quick failure recovery feature: Keeping track of consecutive identical text responses in order to manipulate history
+  //  to prevent getting stuck in a long context where the LLM begins replying with the same content.
+  int identicalResponses = 0;
 
   /**
    * "Focused Context" only details
