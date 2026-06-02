@@ -364,11 +364,11 @@
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_5:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmToCarryPosition",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
     }, {
       "serviceName" : "openGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "Can I please have physobj_4:physobj", "true" ]
@@ -382,31 +382,31 @@
       "serviceArgs" : [ "val(X)", "-1", "{X=ready}" ]
     }, {
       "serviceName" : "closeGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverBody",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody","justification(true)" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_1:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverTable",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overTable","justification(true)" ]
     }, {
       "serviceName" : "openGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverBody",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody", "justification(true)" ]
     }, {
       "serviceName" : "closeGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_7:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "stowArm",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "stow", "justification(true)" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_6:movebaselocation", "justification(true)" ]

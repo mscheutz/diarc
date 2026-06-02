@@ -1,5 +1,9 @@
 package edu.tufts.hrilab.spot;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -7,16 +11,74 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
+import edu.tufts.hrilab.spot.consultant.SpotLocationConsultant;
+import edu.tufts.hrilab.util.resource.Resources;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   MockMoveBaseComponent moveBase = createInstance(MockMoveBaseComponent.class, "", false);
+
+  private String mapDescriptor = "location";
+  private String refsConfigFile;
+  private String refsConfigDir = "config/edu/tufts/hrilab/spot";
+  private SpotLocationConsultant consultant;
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("mapDescriptor").hasArg().argName("file").desc("map name for location types and consultant kbName").build());
+    options.add(Option.builder("refs").longOpt("references").hasArg().argName("file").desc("load pre-defined object references and their properties").build());
+    options.addAll(super.additionalUsageInfo());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    super.parseArgs(cmdLine);
+    if (cmdLine.hasOption("mapDescriptor")) {
+      mapDescriptor = cmdLine.getOptionValue("mapDescriptor");
+    }
+    if (cmdLine.hasOption("refs")) {
+      refsConfigFile = cmdLine.getOptionValue("refs");
+    }
+  }
+
+  @Override
+  protected void init() {
+    consultant = new SpotLocationConsultant(mapDescriptor);
+    try {
+      Collection<String> consultantGroups = this.getMyGroups();
+      consultantGroups.add(consultant.getKBName());
+      TRADE.registerAllServices(consultant,consultantGroups);
+    } catch (TRADEException e) {
+      log.error("exception registering spot mission location consultant ",e);
+    }
+    if (refsConfigFile != null && !refsConfigFile.isEmpty()) {
+      String filename = Resources.createFilepath(refsConfigDir, refsConfigFile);
+      consultant.loadReferencesFromFile(filename);
+    }
+  }
+
+  /**
+   * Added for MultiRobotCaddyDemoTest. Consider adding this to MoveBaseInterface or removing from test.
+   * @param location
+   * @return
+   */
+  @TRADEService
+  @Action
+  public Justification initLocation(Symbol location) {
+    return new ConditionJustification(true);
+  }
 
   @Override
   public Justification claim() {

@@ -218,6 +218,7 @@ public class StepExecution {
           }
           break;
         case VERIFYING_EFFECTS:
+          log.info("Verifying effects {} ...", context);
           log.trace("Verifying effects {} ...", context.getSignatureInPredicateForm());
           // TODO: this is potentially problematic -- shouldn't all children need to finish before effects are verified
           verification = context.verifyEffects();
