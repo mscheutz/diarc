@@ -1063,17 +1063,31 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     // TODO: need more postprocessing cases here for various special characters?
 
+    //// Handle simplest case of reasoning loops - consecutive identical responses (practically seen to be able to get stuck in)
     // TODO: should common phrases like "yes", "no", "and then what", etc. be explicitly excluded? - The LLM doesn't seem to (at least currently) really do this unless stuck though
     // Detect consecutive text responses and attempt to break out if finding too many
+    //TODO: This does not interact with streaming responses well. Would have to interrupt sayText or be an explicit
+    //  extra turn afterwards. Cannot just modify and send out response here.
     if (chatContext.lastResponseString != null && chatContext.lastResponseString.equals(responseString)) {
       chatContext.identicalResponses += 1;
-      //TODO: This does not interact with streaming responses well. Would have to interrupt sayText or be an explicit
-      //  extra turn afterwards. Cannot just modify and send out response here.
-      if (chatContext.identicalResponses == 2) {
+      if (chatContext.chatType == ChatType.FOCUSED && chatContext.identicalResponses >= 2) {
+        log.warn("[handleTextResponse] (FOCUSED) Encountering consecutive identical responses - retaining template but clearing history and informing the user");
+        // Focused contexts - retain current template, clear history, and reprompt with custom message based on template state
+        //  (Could also try less drastic clearing of history first like for base context, but I'm worried that it will
+        //    result in a different phrasing of a response while still not breaking out of the same reasoning loop)
+        chatContext.history.messages.clear();
+        if (!chatContext.lastTemplateName.isEmpty() && chatContext.lastTemplateValue != null) {
+          chatContext.history.addMessage("user",""); //Safe? Seems to be okay
+          chatContext.history.addMessage("tool", "You have already had an extended conversation with the user, but got confused and needed to clear some history. The progress of your previous conversation which you were able to retain is" + chatContext.lastTemplateName + ": " + chatContext.lastTemplateValue + ". Please respond to the user by saying \"Sorry, I got confused and had to clear some of my history.\", then let the user know what you remember based on the current definition you retained (in natural language), and finally continue with your task as instructed.");
+          responseString = callChatCompletionForTextResponse(Factory.createSymbol(chatContext.history.userName), Factory.createSymbol(chatContext.history.robotName), chatContext.cid);
+        } else {
+          responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
+        }
+        chatContext.identicalResponses = 0;
+      } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses == 2) {
         log.warn("[handleTextResponse] detected multiple consecutive identical responses, clearing history of those responses and trying again");
-        // 3rd identical response - modify recent history to try to pull out of loop. Keep last input message and respond
-        //  again based off that.
-        //  (If streaming, then need to signal the purpose of this extra response turn or at least outwardly relate the responses)
+        // 3rd identical response - modify recent history to try to pull out of loop. Keep last input message and respond again based off that.
+        //  (TODO: If streaming, then need to signal the purpose of this extra response turn or at least outwardly relate the responses - or wait to start responding on TTS side if n-1 identical responses already encountered and start of response matches so far)
         List<Message> history = chatContext.history.messages;
         int responsesFound = 0;
         // Remove messages until all duplicate responses found
@@ -1098,10 +1112,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
         // Last user input should still be present, submit for a new (hopefully different) generated response
         return parseUtteranceLLMService(inputUtterance, true);
-      } else if (chatContext.identicalResponses > 3) {
-        log.warn("[handleTextResponse] Still envountering identical responses, clearing history fully and informing user");
+      } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses > 2) {
+        log.warn("[handleTextResponse] Still encountering identical responses, clearing history fully and informing user");
         // 4th identical response - inform user and more drastically reset context
-        chatContext.history = new Chat(chatContext.history.userName, chatContext.history.robotName);
+        chatContext.history.messages.clear();
         responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
         chatContext.identicalResponses = 0;
       }
@@ -2225,7 +2239,8 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
-      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
+      ToolDefinition td = collection.currentChat.chatType == ChatType.FOCUSED ? chatTemplates.get(collection.currentChat.contextID).tools.get(textResponseTool.toolDefinition.function.name).toolDefinition : textResponseTool.toolDefinition;
+      Utterance out = runCompletionRetryLoop(null, List.of(td), dummy, collection, new StringBuilder());
       if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {
@@ -3900,8 +3915,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "suspendGoal":
         case "cancelCurrentTask":
         case "cancelGoal":
-        case "cancelAllCurrentAndQueuedTasks":
-        case "cancelAllQueuedTasks":
         case "stopTalking":
           return true;
         default:
