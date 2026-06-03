@@ -38,7 +38,7 @@ Output:{"translation":"Go home to charge until 50 percent battery"}
 Input:goToLocation(ava,reception:location)
 Output:{"translation":"Go to reception."}
 #
-Input:follow(ava)
+Input:followUser(ava)
 Output:{"translation":"Follow the nearest user"}
 #
 Input:sit(ava)

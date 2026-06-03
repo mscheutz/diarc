@@ -177,7 +177,7 @@ Output:{"translation":"Okay, I am discarding that instruction. Let me know how I
 Input:REPLY(ava,%user,ack(okay,attempting(ava,goToLocation(ava,reception:location))),{})
 Output:{"translation":"Going to reception."}
 #
-Input:REPLY(ava,%user,ack(okay,attempting(ava,follow(ava))),{})
+Input:REPLY(ava,%user,ack(okay,attempting(ava,followUser(ava))),{})
 Output:{"translation":"Okay, following."}
 #
 Input:REPLY(ava,%user,ack(okay,attempting(ava,sit(ava))),{})

@@ -81,7 +81,7 @@ An example of a conversation with the appropriate tone and brevity of generated 
 {"role":"user","content":"yes"}
 <end example 4 previous history>
 
-{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid13","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"follow","arguments":{}},"start":"start(immediately)","repeat":"repeat(45,MINUTES)","end":"end(indefinitely)"}}}]}
+{"role":"assistant","content":"","tool_calls":[{"id":"chatcmpl-tool-exampleid13","type":"function","function":{"name":"submitScheduledTaskDefinition","arguments":{"action":{"name":"followUser","arguments":{}},"start":"start(immediately)","repeat":"repeat(45,MINUTES)","end":"end(indefinitely)"}}}]}
 **End Example Conversation 3**
 
 The \"action\" argument of this tool can take many possible values, which are similar in form. The total set of acceptable values for the action argument is json described by the following action list. This list does not contain directly callable tools; do not try to call these as a standalone tool. Only use them to supply valid action arguments to the submitScheduledTaskDefinition tool or currentScheduledDefinition field of the stillGatheringInformation tool.

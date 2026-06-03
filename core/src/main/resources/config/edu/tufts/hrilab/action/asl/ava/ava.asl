@@ -53,6 +53,11 @@ import edu.tufts.hrilab.action.goal.Goal;
     //act:goToLocation(?escorteeLoc);
 }
 
+() = followUser() {
+    act:generateResponseFromString("Following you until you tell me to stop");
+    act:follow();
+}
+
 /**
  * TODO;daniel; This doesn't check if the object is in the robot's possession
  * Example command: "Take this object to the lobby"

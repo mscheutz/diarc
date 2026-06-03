@@ -104,6 +104,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
   private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
+  private boolean shouldFollow = false;
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -250,13 +251,27 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   public Justification stopFollow() {
-    return new ConditionJustification(true);
+    if (shouldFollow) {
+      shouldFollow = false;
+      return new ConditionJustification(true);
+    } else {
+      return new ConditionJustification(false, Factory.createPredicate("following()"));
+    }
   }
 
   @Override
   public Justification follow() {
-    return new ConditionJustification(true);
-  }
+    shouldFollow = true;
+    while (shouldFollow) {
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        log.error("[follow] interrupted", e);
+      }
+    }
+
+    log.debug("[follow] has been stopped.");
+    return new ConditionJustification(true);  }
 
   @Override
   public Justification endSession() {

@@ -73,7 +73,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
-  boolean useCondensedTools = false;
+  boolean useCondensedTools = false; //Condensed Tools have not been maintained. Would need to be updated before use
 
   /**
    * Maintained set of ChatCollections, split by user/AgentTeam pair
@@ -2621,6 +2621,10 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   private void saveContextHistory(Symbol user, Symbol agentTeam, ChatContext chatContext) {
+    if (chatContext == null || chatContext.history == null || chatContext.history.messages.isEmpty()) {
+      return;
+    }
+
     List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agentTeam.toUntyped()));
     if (extendedHistory == null) {
       extendedHistory = new ArrayList<>();
@@ -2642,36 +2646,44 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public String getExtendedConversationHistoryString(Symbol user, Symbol agentTeam) {
     List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agentTeam.toUntyped()));
 
-    StringBuilder extendedHistoryString = new StringBuilder("The extended interaction history between you and this user is copied below:\n#\n");
+    //Prevent the LLM from just regurgitating the history directly
+    // "If not contained in this history, then you must tell the user you cannot remember this interaction"
+    StringBuilder extendedHistoryString = new StringBuilder("-Extended History:\n##\n");
 
     if (extendedHistory == null) {
-      extendedHistoryString.append("<There are no stored past histories found>\n\n");
+      extendedHistoryString.append("<You do not remember any past histories with this user>\n##\n");
     } else {
       // What should cap size be? Should we allow iteratively longer history retrieval?
       int numHistories = Math.min(extendedHistory.size(), 5);
       for (int i=0; i<numHistories;i++) {
         ChatContext cc = extendedHistory.get(i);
-        extendedHistoryString.append("Past conversation context # ").append(i).append(":\n");
-        extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n\n");
+        if (cc != null) {
+          extendedHistoryString.append("-- Past Conversation History Number ").append(i).append(":\n#");
+          extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n##\n");
+        }
       }
       ChatCollection collection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
       if (collection != null && !collection.suspendedChats.isEmpty()) {
-        extendedHistoryString.append("You also have some interrupted conversations which you may still eventually return to and complete. They are as follows:\n");
+        extendedHistoryString.append("\n- You also have some interrupted conversations which you may still eventually return to and complete. They are as follows:\n##\n");
         List<ChatContext> suspendedContexts = collection.suspendedChats;
         for (int i=0; i<suspendedContexts.size();i++) {
           ChatContext cc = suspendedContexts.get(i);
-          extendedHistoryString.append("Suspended conversation context # ").append(i).append(":\n");
-          extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n\n");
+          if (cc != null) {
+            extendedHistoryString.append("Suspended Conversation History Number ").append(i).append(":\n#");
+            extendedHistoryString.append(getChatHistoryAsString(cc.history)).append("\n#\n");
+          }
         }
       }
     }
 
-    extendedHistoryString.append("\n#\nPlease use this information in order to help fulfill the user's request, whether it is to answer " +
+    extendedHistoryString.append("\n##\n-Response Guideline: " +
+            "-- Please use this information in order to inform your future responses to the user, whether it is to answer " +
             "a question directly about what you have discussed in the past or to simply understand something from the past" +
-            "that the user is referring to. Do not relay this information back to the user unless they have directly asked about it, in" +
-            "which case you may summarize relevant conversations. If the user has asked about something which you cannot find" +
-            "in either these histories or your current one, you must tell the user that you are sorry and cannot remember" +
-            "what they are referring to.");
+            "that the user is referring to.\n" +
+            "-- Do not relay this information back to the user unless they have directly asked about it, in" +
+            "which case you may summarize relevant conversations in natural language.\n" +
+            "-- If the user has referenced something which you cannot find in any of these histories or your current one, you must tell the user that you are sorry and cannot remember what they are referring to.\n" +
+            "-- If none of this information is relevant, you may ignore it.");
     return extendedHistoryString.toString();
   }
 
@@ -3533,19 +3545,19 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private String generateErrorResponse(boolean internal, int errorCount, boolean predicate) {
     if (internal) {
       if (errorCount == 1) {
-        return "Sorry, an internal error occurred during your request. Please try again.";
+        return "\"Sorry, an internal error occurred during your request. Please try again.\"";
       } else if (errorCount == 2) {
-        return "Sorry, an internal error occurred during your request again. Please try one more time.";
+        return "\"Sorry, an internal error occurred during your request again. Please try one more time.\"";
       } else {
-        return "Sorry, an internal error occurred during your request. I have reset my state, please try starting over.";
+        return "\"Sorry, an internal error occurred during your request. I have reset my state, please try starting over.\"";
       }
     } else {
       if (errorCount == 1) {
-        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryAgain)" : "Sorry, I did not have connection during your request. Please try again.";
+        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryAgain)" : "\"Sorry, I did not have connection during your request. Please try again.\"";
       } else if (errorCount == 2) {
-        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryOneMoreTime)" : "Sorry, I did not have connection during your request again. Please try one more time.";
+        return predicate ? "and(sorryIDidNotHaveConnectionDuringYourRequest,pleaseTryOneMoreTime)" : "\"Sorry, I did not have connection during your request again. Please try one more time.\"";
       } else {
-        return predicate ? "and(sorryIAmUnableToConnectToNecessaryServices,pleaseReconnectOrReachOutToSupport)" : "Sorry, I am unable to connect to necessary services. Please check your internet connection or reach out to support.";
+        return predicate ? "and(sorryIAmUnableToConnectToNecessaryServices,pleaseReconnectOrReachOutToSupport)" : "\"Sorry, I am unable to connect to necessary services. Please check your internet connection or reach out to support.\"";
       }
     }
   }
@@ -3777,7 +3789,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
           }
         }
-      } else if (command.equals("getExtendedConversationHistory")) {
+      } else if (command.equals("checkPastInteractionHistoryForMissingInformation")) {
         Predicate semantics = (Predicate) utterance.getSemantics();
         List<Symbol> args = semantics.getArgs();
         args.add(utterance.getSpeaker());
@@ -3967,15 +3979,17 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         case "resetConversation":
         case "learnTaskSequence":
         case "scheduleTask":
-        case "getExplanationOfHowToTeachATask":
-        case "getExplanationOfWhatALearnedTaskIs":
-        case "getExplanationOfWhatActionsCanBePerformedAlongALearnedTask":
+        case "getInformationAroundTeachingNewActions":
+        case "getInformationAroundHowToTeachATask":
+        case "getInformationAroundWhatALearnedTaskIs":
+        case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
+        case "getInformationAroundTeachingLocationsAndNavigation":
         case "getWifiAtLocationsString":
         case "getWifiAtCurrentLocationString":
         case "getTemperatureAtLocationsString":
         case "getTemperatureAtCurrentLocationString":
         case "updateDialogueHistoryFromString":
-        case "getExtendedConversationHistory":
+        case "checkPastInteractionHistoryForMissingInformation":
         case "stopTalking":
         //// Set of actions which should perhaps be "reduced ack"?
         //case "escortToLocation":
@@ -4033,7 +4047,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             List.of(new ToolParameterHelper("destination", "string", locationNames, "The destination location to go to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true))
     );
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("follow",
+    definition = new ToolDefinition("followUser",
             "You follow the user. \n- Example instruction: \"follow me.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -4431,18 +4445,23 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     // General ITK
-    definition = new ToolDefinition("getExplanationOfHowToTeachATask",
-            "Use this to get an explanation from the system on how a user can teach you new tasks, which you could relay to the user. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
+    definition = new ToolDefinition("getInformationAroundTeachingNewActions",
+            "Use this to get information from the system about how a user can start teaching you new tasks, the process of teaching a new task, and what actions can be taught as part of a new task. This information could be used to answer questions from the user. An example of when this may be useful to call is when a user asks things like \"how do I teach you a new task\", \"what information do I need to teach a new task\", \"how do I instruct something I've taught you\", or \"what can I tell you to do while teaching a new task\".",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExplanationOfWhatALearnedTaskIs",
-            "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
-            new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExplanationOfWhatActionsCanBePerformedAlongALearnedTask",
-            "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
-            new ArrayList<>());
-    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+
+    //definition = new ToolDefinition("getInformationAroundHowToTeachATask",
+    //        "Use this to get an explanation from the system on how a user can teach you new tasks, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
+    //        new ArrayList<>());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    //definition = new ToolDefinition("getInformationAroundWhatALearnedTaskIs",
+    //        "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
+    //        new ArrayList<>());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    //definition = new ToolDefinition("getInformationAroundWhatActionsCanBePerformedAlongALearnedTask",
+    //        "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
+    //        new ArrayList<>());
+    //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
     String exampleCallString = xml ?
              "<function=getActionSteps><parameter=action>escort</parameter></function>" :
     "{\"name\":\"getActionSteps\", \"arguments\":{\"action\":\"escort\"}}";
@@ -4454,15 +4473,17 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    //Prvent the LLM from just regurgitating the history directly
-    //definition = new ToolDefinition("getExtendedConversationHistory",
-    //        "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
-    //        new ArrayList());
-    //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    // "If not contained in this history, then you must tell the user you cannot remember this interaction"
+    definition = new ToolDefinition("getInformationAroundTeachingLocationsAndNavigation",
+            "Use this to get information from the system around the concepts of saved locations, navigating between them, and how to save new ones. The provided information may be helpful to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"Can I teach you how to go to X\".",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+    definition = new ToolDefinition("checkPastInteractionHistoryForMissingInformation",
+            "Use this when you believe you are missing important context necessary to understand user input. For example, when the user explicitly references a past conversation or says something implying common ground you have no memory of.",
+            new ArrayList());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     //Prevent the LLM from just regurgitating the history directly
-//    definition = new ToolDefinition("getExtendedConversationHistory",
+//    definition = new ToolDefinition("checkPastInteractionHistoryForMissingInformation",
 //            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
 //            new ArrayList());
 //    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -4603,7 +4624,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
 //            List.of(new ToolParameterHelper("destination", "string", locationNames, "The name of the dock tag", true))
 //    );
 //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("follow",
+    definition = new ToolDefinition("followUser",
             "Follow the user",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -4985,15 +5006,15 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
     // General ITK
-    definition = new ToolDefinition("getExplanationOfHowToTeachATask",
+    definition = new ToolDefinition("getInformationAroundHowToTeachATask",
             "Get an explanation from the back-end on how a user can teach you new tasks, which you could relay to the user.",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExplanationOfWhatALearnedTaskIs",
+    definition = new ToolDefinition("getInformationAroundWhatALearnedTaskIs",
             "Get an explanation from the back-end on what a taught task consists of, which you could use to answer questions from the user.",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExplanationOfWhatActionsCanBePerformedAlongALearnedTask",
+    definition = new ToolDefinition("getInformationAroundWhatActionsCanBePerformedAlongALearnedTask",
             "Get an explanation from the back-end on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user.",
             new ArrayList<>());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -5005,7 +5026,7 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "Get the current configuration of kiosk mode from the back-end, including whether it is enabled, the currently configured kiosk timeout, and the kiosk action.",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-    definition = new ToolDefinition("getExtendedConversationHistory",
+    definition = new ToolDefinition("checkPastInteractionHistoryForMissingInformation",
             "Get any extended conversation history between you and the user from the back-end.",
             new ArrayList());
     itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -5033,6 +5054,13 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //        "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
     //        new ArrayList());
     //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
+
+
+    definition = new ToolDefinition("getInformationAroundTeachingLocationsAndNavigation",
+            "Use this to get information from the system around the concepts of saved locations, navigating between them, and how to save new ones. The provided information may be helpful to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"Can I teach you how to go to X\".",
+            new ArrayList<>());
+    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+
     return itkTools;
   }
 

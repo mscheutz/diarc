@@ -374,6 +374,126 @@ public class SocialAvaLLMTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
+  //Response/targeting still inconsistent, but generally can relatively intuitively lead to a state where the robot ends
+  //  up following the user with the understanding to show wherever the new location is.
+  @Test
+  public void navigationITKTargetTest() {
+    addUserInput("Can I teach you how to go to the front door?");
+    evaluateResults();
+
+    addUserInput("okay, come with me then");
+    evaluateResults();
+
+    addUserInput("nevermind");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("Can I show you where my office is?");
+    evaluateResults();
+
+    addUserInput("okay, come with me then");
+    evaluateResults();
+
+    addUserInput("nevermind");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("How do I teach you a new location?");
+    evaluateResults();
+
+    addUserInput("okay, come with me then, I'll show you to the back room");
+    evaluateResults();
+
+    addUserInput("nevermind");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("Can you go to the basement?");
+    evaluateResults();
+
+    addUserInput("Can I show you how to get there?");
+    evaluateResults();
+
+    addUserInput("nevermind");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+  }
+
+  // Can target extended history tool call pretty well when explicitly referencing a past conversation or discussion, but
+  //  still do not target it just when the user says something that doesn't really make sense without additional context.
+  // TODO: how to bridge that gap?
+  @Test
+  public void pastHistoryITKTargetTest() {
+    addUserInput("alright, we're here now");
+    evaluateResults();
+
+    addUserInput("We already talked about that");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("What did we talk about earlier?");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("Now can you start with phase 2?");
+    evaluateResults();
+
+    addUserInput("Do you not remember what we discussed?");
+    evaluateResults();
+  }
+
+  @Test
+  public void pastHistoryITKUsageTest() {
+    addUserInput("Whenever I say apple, I want you to respond by saying orange");
+    evaluateResults();
+
+    addUserInput("Do you think can remember that for me");
+    evaluateResults();
+
+    addUserInput("reset");
+    evaluateResults();
+
+    addUserInput("Based on our previous conversation, I'm going to say apple");
+    evaluateResults();
+  }
+
+  @Test
+  public void pastHistoryAndNavigationITKTest() {
+    addUserInput("Can you go to the basement please");
+    evaluateResults();
+
+    addUserInput("Oh okay, can I teach you how to go there?");
+    evaluateResults();
+
+    addUserInput("Alright come with me");
+    evaluateResults();
+
+    addUserInput("Yes");
+    evaluateResults();
+
+    addUserInput("Alright, I've lead you to the basement");
+    evaluateResults();
+
+    // Ideally we can get more natural phrasing here to work
+    addUserInput("You told me earlier that you'd tell me what to do now");
+    evaluateResults();
+
+    addUserInput("Yeah, save it as basement");
+    evaluateResults();
+  }
+
   //@Test
   //public void Test() {
   //  addUserInput("");

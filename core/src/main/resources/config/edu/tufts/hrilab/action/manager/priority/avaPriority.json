@@ -259,19 +259,23 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getExplanationOfHowToTeachATask": {
+  "getInformationAroundHowToTeachATask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getExplanationOfWhatALearnedTaskIs": {
+  "getInformationAroundWhatALearnedTaskIs": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getExplanationOfWhatActionsCanBePerformedAlongALearnedTask": {
+  "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getExtendedConversationHistory": {
+  "getInformationAroundTeachingNewActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "checkPastInteractionHistoryForMissingInformation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -296,6 +300,14 @@
     "priorityTier": "SKIPPENDING"
   },
   "suspendCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "saveLocation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getInformationAroundTeachingLocationsAndNavigation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }
