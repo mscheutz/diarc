@@ -36,6 +36,7 @@ Optional fields:
   <detector type="cluster2d" trackers="kcf,cmt" config="cluster/cluster2d.xml"/>
 <!--  <detector type="dnn" trackers="kcf, cmt" config="yolov5/tmpYolov5.json"/>-->
   <detector type="dnn" trackers="kcf, cmt" config="yolov5/yolov5.json"/>
+  <detector type="dnn" trackers="kcf, cmt" config="door/door.json"/>
 <!--    <detector type="dnn" trackers="kcf,cmt" config="yolov3/yolov3.json"/>-->
   <detector type="elevatordoordetector" trackers="kcf, cmt" config="elevatordoordetector/elevatordoordetector.json"/>
 <!--  <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>-->

@@ -5,6 +5,8 @@ import traceback
 
 from bosdyn.api.geometry_pb2 import Vec2
 from bosdyn.api.robot_state_pb2 import ManipulatorState
+from bosdyn.api.spot import door_pb2
+from bosdyn.api.spot.door_pb2 import DoorCommand
 from bosdyn.client.robot_command import RobotCommandBuilder
 
 from google.protobuf.wrappers_pb2 import DoubleValue
@@ -109,6 +111,62 @@ class SpotTRADEWrapper:
 
     def _get_transforms_snapshot(self):
         return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
+
+    def openDoor(self):
+        """
+        Sends a command to open a door using the Spot robot's arm and Boston Dynamics Spot SDK.
+        :return: A tuple (success, message)
+        """
+        robot = self.spot._robot
+
+        # Using the raycast intersection point and the
+        vision_tform_raycast = frame_helpers.get_a_tform_b(snapshot, frame_helpers.VISION_FRAME_NAME,
+                                                           frame_helpers.RAYCAST_FRAME_NAME)
+        vision_tform_sensor = request_manager.vision_tform_sensor
+        raycast_point_wrt_vision = vision_tform_raycast.get_translation()
+        ray_from_camera_to_object = raycast_point_wrt_vision - vision_tform_sensor.get_translation()
+        ray_from_camera_to_object_norm = np.sqrt(np.sum(ray_from_camera_to_object ** 2))
+        ray_from_camera_normalized = ray_from_camera_to_object / ray_from_camera_to_object_norm
+
+        auto_cmd = door_pb2.DoorCommand.AutoGraspCommand()
+        auto_cmd.frame_name = frame_helpers.VISION_FRAME_NAME
+        search_dist_meters = 0.25
+        search_ray = search_dist_meters * ray_from_camera_normalized
+        search_ray_start_in_frame = raycast_point_wrt_vision - search_ray
+        auto_cmd.search_ray_start_in_frame.CopyFrom(
+            geometry_pb2.Vec3(x=search_ray_start_in_frame[0], y=search_ray_start_in_frame[1],
+                              z=search_ray_start_in_frame[2]))
+
+        search_ray_end_in_frame = raycast_point_wrt_vision + search_ray
+        auto_cmd.search_ray_end_in_frame.CopyFrom(
+            geometry_pb2.Vec3(x=search_ray_end_in_frame[0], y=search_ray_end_in_frame[1],
+                              z=search_ray_end_in_frame[2]))
+
+        auto_cmd.hinge_side = request_manager.hinge_side
+        auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
+
+        door_command = door_pb2.DoorCommand.Request(auto_grasp_command=auto_cmd)
+        request = door_pb2.OpenDoorCommandRequest(door_command=door_command)
+
+        # Command the robot to open the door.
+        door_client = robot.ensure_client(DoorClient.default_service_name)
+        response = door_client.open_door(request)
+
+        feedback_request = door_pb2.OpenDoorFeedbackRequest()
+        feedback_request.door_command_id = response.door_command_id
+
+        timeout_sec = 60.0
+        end_time = time.time() + timeout_sec
+        while time.time() < end_time:
+            feedback_response = door_client.open_door_feedback(feedback_request)
+            if (feedback_response.status
+                    != basic_command_pb2.RobotCommandFeedbackStatus.STATUS_PROCESSING):
+                raise Exception('Door command reported status ')
+            if (feedback_response.feedback.status == door_pb2.DoorCommand.Feedback.STATUS_COMPLETED):
+                robot.logger.info('Opened door.')
+                return
+            time.sleep(0.5)
+        raise Exception('Door command timed out. Try repositioning the robot.')
 
     ###################### moveTo overloaded method handling
 
