@@ -36,6 +36,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public boolean useDisplay = true;
   public boolean useCartesia = false;
   public String cartesiaVoiceId = "";
+  public boolean useLocalTTS = false;
+  public String localVoice = "";
+  public String ttsEndpoint = "";
   public String voiceVolume = "1.0";
   public String voiceSpeed = "normal";
   public String voiceClipVolume = "0.4";
@@ -62,6 +65,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
     options.add(Option.builder("cartesia").desc("use Cartesia TTS instead of MaryTTS").build());
     options.add(Option.builder("cartesiaVoiceId").hasArg().desc("Cartesia voice UUID; overrides CARTESIA_VOICE_ID env").build());
+    options.add(Option.builder("localtts").desc("use local self-hosted streaming TTS (Kokoro sidecar) instead of MaryTTS").build());
+    options.add(Option.builder("localVoice").hasArg().desc("local TTS voice name (default am_onyx)").build());
+    options.add(Option.builder("ttsEndpoint").hasArg().desc("local TTS sidecar base URL (default http://127.0.0.1:5002)").build());
     options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
     options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());
     options.add(Option.builder("voiceClipVolume").hasArg().desc("ding/cue clip volume 0.0-1.0 (default 0.4)").build());
@@ -114,6 +120,15 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("cartesiaVoiceId")) {
       cartesiaVoiceId = cmdLine.getOptionValue("cartesiaVoiceId");
+    }
+    if (cmdLine.hasOption("localtts")) {
+      useLocalTTS = true;
+    }
+    if (cmdLine.hasOption("localVoice")) {
+      localVoice = cmdLine.getOptionValue("localVoice");
+    }
+    if (cmdLine.hasOption("ttsEndpoint")) {
+      ttsEndpoint = cmdLine.getOptionValue("ttsEndpoint");
     }
     if (cmdLine.hasOption("voiceVolume")) {
       voiceVolume = cmdLine.getOptionValue("voiceVolume");
@@ -181,7 +196,22 @@ public class SocialAvaConfig extends DiarcConfiguration {
       simSpeechRec = createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    if (useCartesia) {
+    if (useLocalTTS) {
+      String localArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
+      if (!speakerId.isEmpty()) {
+        localArgs += " -matchMixer " + speakerId;
+      }
+      if (!localVoice.isEmpty()) {
+        localArgs += " -voiceId " + localVoice;
+      }
+      if (!ttsEndpoint.isEmpty()) {
+        localArgs += " -ttsEndpoint " + ttsEndpoint;
+      }
+      if (muteMics) {
+        localArgs += " -muteMics";
+      }
+      createInstance(edu.tufts.hrilab.ava.tts.AvaLocalTTSComponent.class, localArgs);
+    } else if (useCartesia) {
       String cartesiaArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
       if (!speakerId.isEmpty()) {
         cartesiaArgs += " -matchMixer " + speakerId;
