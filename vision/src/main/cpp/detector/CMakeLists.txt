@@ -65,7 +65,6 @@ endif (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 if (OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 			ButtonDetector.cpp
-			ElevatorDoorDetector.cpp
 			PersonDetector.cpp
 		)
 

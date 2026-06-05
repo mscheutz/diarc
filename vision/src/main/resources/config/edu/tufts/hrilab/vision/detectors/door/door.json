@@ -4,19 +4,31 @@
     "arity": 1
   },
   "config": {
-    "model": "doors",
+    "model": "best",
     "type" : "onnx",
+    "yolo_version" : 8,
     "backend": "CPU",
     "input_size": 640,
-    "conf_thresh": 0.3,
-    "score_thresh": 0.3,
+    "conf_thresh": 0.5,
     "nms_thresh": 0.4,
-    "classes" : 1
+    "classes" : 4
   },
   "predicates": [
     {
       "name": "door",
       "classID": 0
+    },
+    {
+      "name": "handle",
+      "classID": 1
+    },
+    {
+      "name": "cabinet door",
+      "classID": 2
+    },
+    {
+      "name": "refrigerator door",
+      "classID": 3
     }
   ]
 }

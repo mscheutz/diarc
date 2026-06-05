@@ -16,6 +16,7 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 # Detectors
 #log4j.logger.diarc.detector.BarCodeDetector=DEBUG, file1
 #log4j.logger.diarc.detector.BlobDetector=INFO, file1
+#log4j.logger.diarc.detector.ButtonDetector=DEBUG, file1
 #log4j.logger.diarc.detector.ColorBasedDetector=DEBUG, file1
 #log4j.logger.diarc.detector.ClusterDetectorAdvanced=DEBUG, file1
 #log4j.logger.diarc.detector.ClusterDetector2D=DEBUG, file1
@@ -24,7 +25,7 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 #log4j.logger.diarc.detector.FastSamDetector=DEBUG
 #log4j.logger.diarc.detector.HoughDetector=TRACE, file1
 #log4j.logger.diarc.detector.hough.GHT=DEBUG, file1
-#log4j.logger.diarc.detector.NeuralDetector=TRACE
+#log4j.logger.diarc.detector.NeuralDetector=DEBUG, file1
 #log4j.logger.diarc.detector.OpPoseDetector=DEBUG, file1
 #log4j.logger.diarc.detector.OwlV2Detector=DEBUG, file1
 #log4j.logger.diarc.detector.SiftDetector=DEBUG, file1

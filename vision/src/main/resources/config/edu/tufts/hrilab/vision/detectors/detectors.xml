@@ -34,11 +34,13 @@ Optional fields:
   <detector type="cluster" trackers="kcf,cmt" depends="plane" config="cluster/cluster.xml" required="depth"/>
   <detector type="cluster_advanced" trackers="kcf,cmt" config="cluster/cluster_advanced.xml" required="depth,v4r_v0"/>
   <detector type="cluster2d" trackers="kcf,cmt" config="cluster/cluster2d.xml"/>
-<!--  <detector type="dnn" trackers="kcf, cmt" config="yolov5/tmpYolov5.json"/>-->
-  <detector type="dnn" trackers="kcf, cmt" config="yolov5/yolov5.json"/>
-  <detector type="dnn" trackers="kcf, cmt" config="door/door.json"/>
-<!--    <detector type="dnn" trackers="kcf,cmt" config="yolov3/yolov3.json"/>-->
-  <detector type="elevatordoordetector" trackers="kcf, cmt" config="elevatordoordetector/elevatordoordetector.json"/>
+  <detector type="dnn" trackers="kcf, cmt">
+<!--    <config>yolov3/yolov3.json</config>-->
+<!--    <config>yolov5/yolov5.json</config>-->
+    <config>yolov8/yolov8.json</config>
+    <config>door/door.json</config>
+    <config>elevatordoordetector/elevatordoordetector.json</config>
+  </detector>
 <!--  <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>-->
   <detector type="haar" trackers="tapnet" config="haar/haars.xml"/>
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>

@@ -39,6 +39,7 @@ protected:
   double score_thresh=0.1;
   double nms_thresh=0.4;
   long inputSize;
+  int yolo_version;
   std::vector<cv::String> out_layer_names;
   std::unordered_map<std::string, int> classToId;
   std::unordered_map<int, std::string> idToClass;

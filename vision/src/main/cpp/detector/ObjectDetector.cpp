@@ -31,7 +31,6 @@
 #ifdef OPENCV_DNN
 #include "NeuralDetector.hpp"
 #include "ButtonDetector.hpp"
-#include "ElevatorDoorDetector.hpp"
 #include "PersonDetector.hpp"
 #endif //OPENCV_DNN
 
@@ -136,13 +135,6 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return ButtonDetector::Ptr(new ButtonDetector(processorId, imgWidth, imgHeight));
 #else
     LOG4CXX_ERROR(factoryLogger, "ButtonDetector not available. This require OpenCV DNN module 4.5+.");
-#endif
-    case ELEVATORDOORDETECTOR:
-
-#if defined(OPENCV_DNN)
-      return ElevatorDoorDetector::Ptr(new ElevatorDoorDetector(processorId, imgWidth, imgHeight));
-#else
-    LOG4CXX_ERROR(factoryLogger, "ElevatorDoorDetector not available. This require OpenCV DNN module 4.5+.");
 #endif
     case PERSONDETECTOR:
 
