@@ -245,8 +245,11 @@ dock; VERBI; dock
 doc; VERBI; dock
 
 % flex actions
-analyze joint; C; callPolicy(?ADDRESSEE, analyze_joint)
-open the door; C; callPolicy(?ADDRESSEE, open_door)
+%analyze joint; C; callPolicy(?ADDRESSEE, analyze_joint)
+%open the door; C; callPolicy(?ADDRESSEE, open_door)
+
+% spot action
+open; VERBT; openDoor
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE
@@ -307,6 +310,8 @@ got it; VAL; holding(it)
 object; THING
 bottle; THING
 cup; THING
+door; THING
+doorhandle; THING
 apple; THING
 handle; THING
 rod; THING

@@ -3,10 +3,12 @@ import time
 import argparse
 import traceback
 
+import bosdyn.client.image
 from bosdyn.api.geometry_pb2 import Vec2
 from bosdyn.api.robot_state_pb2 import ManipulatorState
 from bosdyn.api.spot import door_pb2
 from bosdyn.api.spot.door_pb2 import DoorCommand
+from bosdyn.client.door import DoorClient
 from bosdyn.client.robot_command import RobotCommandBuilder
 
 from google.protobuf.wrappers_pb2 import DoubleValue
@@ -112,37 +114,52 @@ class SpotTRADEWrapper:
     def _get_transforms_snapshot(self):
         return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
 
-    def openDoor(self):
+    def openDoor(self, refId: Symbol):
         """
         Sends a command to open a door using the Spot robot's arm and Boston Dynamics Spot SDK.
         :return: A tuple (success, message)
         """
         robot = self.spot._robot
 
-        # Using the raycast intersection point and the
-        vision_tform_raycast = frame_helpers.get_a_tform_b(snapshot, frame_helpers.VISION_FRAME_NAME,
-                                                           frame_helpers.RAYCAST_FRAME_NAME)
-        vision_tform_sensor = request_manager.vision_tform_sensor
-        raycast_point_wrt_vision = vision_tform_raycast.get_translation()
-        ray_from_camera_to_object = raycast_point_wrt_vision - vision_tform_sensor.get_translation()
-        ray_from_camera_to_object_norm = np.sqrt(np.sum(ray_from_camera_to_object ** 2))
-        ray_from_camera_normalized = ray_from_camera_to_object / ray_from_camera_to_object_norm
+        calc_ray_from_pixel = True
+        if calc_ray_from_pixel:
 
+            # Option 2: convert pixel location to ray through object
+            image_response = self.spot.spot_images.get_hand_rgb_image()
+            (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
+            logging.info(f"Door handle at pixel: {x_pix}, {y_pix}")
+            (end_x, end_y, end_z) = bosdyn.client.image.pixel_to_camera_space(image_response.source, x_pix, y_pix, 1.0)
+            start = Point3d(0, 0, 0)
+            end = Point3d(end_x, end_y, end_z)
+
+            ref_frame = frame_helpers.VISION_FRAME_NAME
+        else:
+            # Option 1: use ray to specify object to grasp -- requires 3D camera data
+            ret = self.trade.call_trade("getEntityForReference", [], refId,
+                                        JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+
+            mo.transformToBase()
+            start = Point3d(0, 0, 0)
+            mo.getBaseTransform().transform(start)
+
+            end = Point3d(start.x, start.y, start.z)
+            direction = mo.getDirection()
+            # direction.scale(4.0) # TODO: is this needed here?
+            end.add(direction)
+
+            ref_frame = self._reference_frame
+
+        # populate AutoGrasp command
         auto_cmd = door_pb2.DoorCommand.AutoGraspCommand()
-        auto_cmd.frame_name = frame_helpers.VISION_FRAME_NAME
-        search_dist_meters = 0.25
-        search_ray = search_dist_meters * ray_from_camera_normalized
-        search_ray_start_in_frame = raycast_point_wrt_vision - search_ray
+        auto_cmd.frame_name = ref_frame
         auto_cmd.search_ray_start_in_frame.CopyFrom(
-            geometry_pb2.Vec3(x=search_ray_start_in_frame[0], y=search_ray_start_in_frame[1],
-                              z=search_ray_start_in_frame[2]))
+            geometry_pb2.Vec3(x=start[0], y=start[1], z=start[2]))
 
-        search_ray_end_in_frame = raycast_point_wrt_vision + search_ray
         auto_cmd.search_ray_end_in_frame.CopyFrom(
-            geometry_pb2.Vec3(x=search_ray_end_in_frame[0], y=search_ray_end_in_frame[1],
-                              z=search_ray_end_in_frame[2]))
+            geometry_pb2.Vec3(x=end[0], y=end[1], z=end[2]))
 
-        auto_cmd.hinge_side = request_manager.hinge_side
+        auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_UNKNOWN
         auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
 
         door_command = door_pb2.DoorCommand.Request(auto_grasp_command=auto_cmd)

@@ -136,6 +136,11 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
+  public Justification openDoor(Symbol refId) {
+    return new ConditionJustification(true);
+  }
+
+  @Override
   public Justification moveTo(String groupName, Point3d point, Quat4d orientation) {
     return new ConditionJustification(true);
   }

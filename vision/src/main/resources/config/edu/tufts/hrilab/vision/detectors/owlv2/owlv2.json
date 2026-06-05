@@ -5,6 +5,12 @@
   },
   "predicates": [
     {
+      "name": "door"
+    },
+    {
+      "name": "doorhandle"
+    },
+    {
       "name": "handle"
     },
     {

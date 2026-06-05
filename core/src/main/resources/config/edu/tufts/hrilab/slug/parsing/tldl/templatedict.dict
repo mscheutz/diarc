@@ -814,7 +814,4 @@ undock ; VERBI ; undock
 dock ; VERBI ; dock
 use the dock ; VERBI ; dock
 leave the dock ; VERBI ; undock
-open the door ; VERBI ; openDoor
-leave the room ; VERBI ; openDoor
-enter the room ; VERBI ; openDoor
 % the rest of the spot stuff should be covered by movebase
