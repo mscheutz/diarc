@@ -18,7 +18,7 @@ class Owlv2:
             outputs = self.model(**inputs)
 
         target_sizes = torch.tensor([image_rgb.shape[:2]], device=self.device)  # (h, w)
-        results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes)[0]
+        results = self.processor.image_processor.post_process_object_detection(outputs, target_sizes=target_sizes)[0]
 
         boxes = results["boxes"].detach().cpu().numpy()  # (x1,y1,x2,y2)
         scores = results["scores"].detach().cpu().numpy()

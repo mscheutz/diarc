@@ -12,6 +12,7 @@ public class SpotMapBuilder extends DiarcConfiguration {
 
   @Override
   public void runConfiguration() {
+//    String spotConfigFile = "/home/evan/Documents/spot/spot_psi.yaml";
     String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
 //    String tradeHubContainer = "127.0.0.1@10001";
     String tradeHubContainer = "192.168.0.46@10001";

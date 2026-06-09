@@ -33,7 +33,7 @@ public class SpotConfig extends DiarcConfiguration {
   boolean useMockSpot = false;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
-  boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
+  boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
 
   boolean writeSpeechToFile = true;
   String speechFile = System.getProperty("user.home") + "/Desktop/dialogues/dialogue_history_" + Instant.now().toString() + ".txt";
@@ -70,10 +70,9 @@ public class SpotConfig extends DiarcConfiguration {
     if (useMockSpot) {
       createInstance(MockSpotComponent.class);
     } else {
-//    String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
-//    String spotConfigFile = /home/evan/Documents/spot/spot_psi.yaml";
+//      String spotConfigFile = "/home/evan/Documents/spot/spot_psi.yaml";
       String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
-//    String tradeHubContainer = "127.0.0.1@10001";
+//      String tradeHubContainer = "127.0.0.1@10001";
       String tradeHubContainer = "192.168.0.46@10001";
       createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
               + " -hubContainer " + tradeHubContainer

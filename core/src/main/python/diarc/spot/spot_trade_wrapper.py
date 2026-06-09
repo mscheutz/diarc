@@ -114,6 +114,8 @@ class SpotTRADEWrapper:
     def _get_transforms_snapshot(self):
         return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
 
+    @handle_return
+    @JOverride
     def openDoor(self, refId: Symbol):
         """
         Sends a command to open a door using the Spot robot's arm and Boston Dynamics Spot SDK.
@@ -176,14 +178,14 @@ class SpotTRADEWrapper:
         end_time = time.time() + timeout_sec
         while time.time() < end_time:
             feedback_response = door_client.open_door_feedback(feedback_request)
-            if (feedback_response.status
-                    != basic_command_pb2.RobotCommandFeedbackStatus.STATUS_PROCESSING):
-                raise Exception('Door command reported status ')
+            if (feedback_response.status != basic_command_pb2.RobotCommandFeedbackStatus.STATUS_PROCESSING):
+                return (False, "open door error")
             if (feedback_response.feedback.status == door_pb2.DoorCommand.Feedback.STATUS_COMPLETED):
                 robot.logger.info('Opened door.')
-                return
+                return (True, "opened door")
             time.sleep(0.5)
-        raise Exception('Door command timed out. Try repositioning the robot.')
+
+        return (False, "open door timed out")
 
     ###################### moveTo overloaded method handling
 
