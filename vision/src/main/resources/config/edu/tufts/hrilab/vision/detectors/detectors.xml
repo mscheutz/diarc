@@ -38,7 +38,8 @@ Optional fields:
 <!--    <config>yolov3/yolov3.json</config>-->
 <!--    <config>yolov5/yolov5.json</config>-->
     <config>yolov8/yolov8.json</config>
-    <config>door/door.json</config>
+<!--    <config>door/door.json</config>-->
+    <config>door/yolov3-door.json</config>
     <config>elevatordoordetector/elevatordoordetector.json</config>
   </detector>
 <!--  <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>-->

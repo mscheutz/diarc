@@ -85,12 +85,7 @@ void NeuralDetector::initModel(const std::string &model_path, const std::string 
   if (type == "darknet") {
 #if defined(OPENCV_DNN) || defined(OPENCV3_DNN)
     fs::path dn_model_abs = fs::canonical(model_path + ".weights");
-
-    fs::path dn_config_file(configFile);
-    fs::path dn_config_fn(dn_model_abs.filename().stem().string() + ".cfg");
-    fs::path dn_config_dir(dn_config_file.parent_path().string());
-    fs::path dn_config = dn_config_dir / dn_config_fn;
-    fs::path dn_config_abs = fs::canonical(dn_config);
+    fs::path dn_config_abs = fs::canonical(model_path + ".cfg");
 
     LOG4CXX_INFO(logger, boost::format("Using darknet config: %s") % dn_config_abs.string());
     LOG4CXX_INFO(logger, boost::format("Loading darknet model: %s") % dn_model_abs.string());

@@ -28,6 +28,9 @@ SET(YOLO3_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/
 SET(YOLO5_MODEL_PATH "${MODEL_DIR}yolov5/yolov5m.onnx")
 SET(YOLO5_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolov5/yolov5m.onnx")
 
+SET(YOLO8_MODEL_PATH "${MODEL_DIR}yolov8/yolov8n.onnx")
+SET(YOLO8_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolov8/yolov8n.onnx")
+
 SET(BUTTONDETECTOR_MODEL_PATH "${MODEL_DIR}/buttondetector/buttonModelS320.onnx")
 SET(BUTTONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/buttondetector/buttonModelS320.onnx")
 
@@ -36,6 +39,11 @@ SET(PERSONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/m
 
 SET(ELEVATORDOORDETECTOR_MODEL_PATH "${MODEL_DIR}/elevatordoordetector/elevatordoordetectorS320.onnx")
 SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/elevatordoordetector/elevatordoordetectorS320.onnx")
+
+SET(DOOR_YOLO3_MODEL_PATH "${MODEL_DIR}door/yolov3-door.weights")
+SET(DOOR_YOLO3_CFG_PATH "${MODEL_DIR}door/yolov3-door.cfg")
+SET(DOOR_YOLO3_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/door/yolov3-door.weights")
+SET(DOOR_YOLO3_CFG_URL "https://github.com/hrilabtufts/vision_models/raw/main/door/yolov3-door.weights")
 
 # optional sources
 
@@ -59,7 +67,12 @@ if (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 	if (NOT EXISTS "${YOLO5_MODEL_PATH}")
 		message("Downloading YOLOv5 model ${YOLO5_MODEL_URL}")
 		file(DOWNLOAD "${YOLO5_MODEL_URL}" "${YOLO5_MODEL_PATH}")
-	endif(NOT EXISTS "${YOLO5_MODEL_PATH}")
+    endif(NOT EXISTS "${YOLO5_MODEL_PATH}")
+
+    if (NOT EXISTS "${YOLO8_MODEL_PATH}")
+        message("Downloading YOLOv5 model ${YOLO8_MODEL_URL}")
+        file(DOWNLOAD "${YOLO8_MODEL_URL}" "${YOLO8_MODEL_PATH}")
+    endif(NOT EXISTS "${YOLO8_MODEL_PATH}")
 endif (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 
 if (OpenCV_dnn_FOUND)
@@ -81,7 +94,13 @@ if (OpenCV_dnn_FOUND)
 	if (NOT EXISTS "${ELEVATORDOORDETECTOR_MODEL_PATH}")
 		message("Downloading YOLOv5 Elevator Door Detector model ${ELEVATORDOORDETECTOR_MODEL_URL}")
 		file(DOWNLOAD "${ELEVATORDOORDETECTOR_MODEL_URL}" "${ELEVATORDOORDETECTOR_MODEL_PATH}")
-	endif(NOT EXISTS "${ELEVATORDOORDETECTOR_MODEL_PATH}")
+    endif(NOT EXISTS "${ELEVATORDOORDETECTOR_MODEL_PATH}")
+
+    if (NOT EXISTS "${DOOR_YOLO3_MODEL_PATH}")
+        message("Downloading YOLOv3 Door Detector model ${DOOR_YOLO3_MODEL_URL}")
+        file(DOWNLOAD "${DOOR_YOLO3_MODEL_URL}" "${DOOR_YOLO3_MODEL_PATH}")
+        file(DOWNLOAD "${DOOR_YOLO3_CFG_URL}" "${DOOR_YOLO3_CFG_PATH}")
+    endif(NOT EXISTS "${DOOR_YOLO3_MODEL_PATH}")
 
 endif(OpenCV_dnn_FOUND)
 
