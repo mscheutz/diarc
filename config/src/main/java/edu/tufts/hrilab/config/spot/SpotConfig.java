@@ -18,9 +18,11 @@ import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.MockSpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
+import edu.tufts.hrilab.teleop.TeleopGui;
 import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -70,8 +72,8 @@ public class SpotConfig extends DiarcConfiguration {
     if (useMockSpot) {
       createInstance(MockSpotComponent.class);
     } else {
-//      String spotConfigFile = "/home/evan/Documents/spot/spot_psi.yaml";
-      String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
+      String spotConfigFile = "/home/evan/Documents/spot/spot_psi.yaml";
+//      String spotConfigFile = "/home/evan/Documents/spot/spot_phi.yaml";
 //      String tradeHubContainer = "127.0.0.1@10001";
       String tradeHubContainer = "192.168.0.46@10001";
       createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
@@ -104,6 +106,8 @@ public class SpotConfig extends DiarcConfiguration {
     );
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee self -config spotVisionDesc.simspeech");
+
+    SwingUtilities.invokeLater(() -> new TeleopGui().start(new TeleopGui.TRADEVelocityPublisher()));
 
     /////////////////////////////////////////////
     // write speech input and output to file

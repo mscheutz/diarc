@@ -43,7 +43,7 @@ SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models
 SET(DOOR_YOLO3_MODEL_PATH "${MODEL_DIR}door/yolov3-door.weights")
 SET(DOOR_YOLO3_CFG_PATH "${MODEL_DIR}door/yolov3-door.cfg")
 SET(DOOR_YOLO3_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/door/yolov3-door.weights")
-SET(DOOR_YOLO3_CFG_URL "https://github.com/hrilabtufts/vision_models/raw/main/door/yolov3-door.weights")
+SET(DOOR_YOLO3_CFG_URL "https://github.com/hrilabtufts/vision_models/raw/main/door/yolov3-door.cfg")
 
 # optional sources
 

@@ -121,71 +121,113 @@ class SpotTRADEWrapper:
         Sends a command to open a door using the Spot robot's arm and Boston Dynamics Spot SDK.
         :return: A tuple (success, message)
         """
-        robot = self.spot._robot
+        try:
+            robot = self.spot._robot
 
-        calc_ray_from_pixel = True
-        if calc_ray_from_pixel:
+            calc_ray_from_pixel = False
+            if calc_ray_from_pixel:
 
-            # Option 2: convert pixel location to ray through object
-            image_response = self.spot.spot_images.get_hand_rgb_image()
-            (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
-            logging.info(f"Door handle at pixel: {x_pix}, {y_pix}")
-            (end_x, end_y, end_z) = bosdyn.client.image.pixel_to_camera_space(image_response.source, x_pix, y_pix, 1.0)
-            start = Point3d(0, 0, 0)
-            end = Point3d(end_x, end_y, end_z)
+                # Option 2: convert pixel location to ray through object
+                image_response = self.spot.spot_images.get_hand_rgb_image()
+                (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
+                logging.info(f"Door handle at pixel: {x_pix}, {y_pix}")
+                (end_x, end_y, end_z) = bosdyn.client.image.pixel_to_camera_space(image_response.source, x_pix, y_pix, 4.0)
 
-            ref_frame = frame_helpers.VISION_FRAME_NAME
-        else:
-            # Option 1: use ray to specify object to grasp -- requires 3D camera data
-            ret = self.trade.call_trade("getEntityForReference", [], refId,
-                                        JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-            mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+                # Transform ray from camera frame to VISION frame
+                vision_T_cam = get_a_tform_b(image_response.shot.transforms_snapshot, frame_helpers.VISION_FRAME_NAME, image_response.shot.frame_name_image_sensor)
+                ref_frame = frame_helpers.VISION_FRAME_NAME
 
-            mo.transformToBase()
-            start = Point3d(0, 0, 0)
-            mo.getBaseTransform().transform(start)
+                # 2. Define your ray in Frame B (Origin & Direction Vector)
+                ray_origin_b =  geometry_pb2.Vec3(x=0, y=0, z=0)
+                ray_dir_b =  geometry_pb2.Vec3(x=end_x, y=end_y, z=end_z)
 
-            end = Point3d(start.x, start.y, start.z)
-            direction = mo.getDirection()
-            # direction.scale(4.0) # TODO: is this needed here?
-            end.add(direction)
+                # 3. Transform the Origin
+                # Origins undergo the full SE(3) transformation (Rotation + Translation)
+                start = vision_T_cam.transform_vec3(ray_origin_b)
 
-            ref_frame = self._reference_frame
+                # 4. Transform the Direction
+                # Directions are just vectors and should only be rotated, not translated
+                end = vision_T_cam.transform_vec3(ray_dir_b)
+            else:
+                # Option 1: use ray to specify object to grasp -- requires 3D camera data
+                ret = self.trade.call_trade("getEntityForReference", [], refId,
+                                            JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+                mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
 
-        # populate AutoGrasp command
-        auto_cmd = door_pb2.DoorCommand.AutoGraspCommand()
-        auto_cmd.frame_name = ref_frame
-        auto_cmd.search_ray_start_in_frame.CopyFrom(
-            geometry_pb2.Vec3(x=start[0], y=start[1], z=start[2]))
+                mo.transformToBase()
+                camera_pt3d = Point3d(0, 0, 0)
+                mo.getBaseTransform().transform(camera_pt3d)
+                object_pt3d = mo.getLocation()
 
-        auto_cmd.search_ray_end_in_frame.CopyFrom(
-            geometry_pb2.Vec3(x=end[0], y=end[1], z=end[2]))
 
-        auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_UNKNOWN
-        auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
+                ref_frame = frame_helpers.VISION_FRAME_NAME
 
-        door_command = door_pb2.DoorCommand.Request(auto_grasp_command=auto_cmd)
-        request = door_pb2.OpenDoorCommandRequest(door_command=door_command)
+                # Transform ray from camera frame to VISION frame
+                vision_T_gpe = get_a_tform_b(self._get_transforms_snapshot(), frame_helpers.VISION_FRAME_NAME, frame_helpers.GROUND_PLANE_FRAME_NAME)
 
-        # Command the robot to open the door.
-        door_client = robot.ensure_client(DoorClient.default_service_name)
-        response = door_client.open_door(request)
+                # 2. Define your ray in GPE frame
+                # ray_origin_gpe =  geometry_pb2.Vec3(x=float(start_pt3d.x), y=float(start_pt3d.y), z=float(start_pt3d.z))
+                # ray_dir_gpe =  geometry_pb2.Vec3(x=float(start_pt3d.x+direction.x), y=float(start_pt3d.y+direction.y), z=float(start_pt3d.z+direction.z))
+                camera_gpe =  geometry_pb2.Vec3(x=float(camera_pt3d.x), y=float(camera_pt3d.y), z=float(camera_pt3d.z))
+                obj_gpe =  geometry_pb2.Vec3(x=float(object_pt3d.x), y=float(object_pt3d.y), z=float(object_pt3d.z))
+                logging.info(f"Door handle loc (GPE): {obj_gpe.x}, {obj_gpe.y}, {obj_gpe.z}")
+                logging.info(f"Camera loc (GPE): {camera_gpe.x}, {camera_gpe.y}, {camera_gpe.z}")
 
-        feedback_request = door_pb2.OpenDoorFeedbackRequest()
-        feedback_request.door_command_id = response.door_command_id
+                # Transform to vision frame
+                camera_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(camera_gpe))
+                obj_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(obj_gpe))
+                logging.info(f"Door handle loc (VISION): {obj_vis.x}, {obj_vis.y}, {obj_vis.z}")
+                logging.info(f"Camera loc (VISION): {camera_vis.x}, {camera_vis.y}, {camera_vis.z}")
 
-        timeout_sec = 60.0
-        end_time = time.time() + timeout_sec
-        while time.time() < end_time:
-            feedback_response = door_client.open_door_feedback(feedback_request)
-            if (feedback_response.status != basic_command_pb2.RobotCommandFeedbackStatus.STATUS_PROCESSING):
-                return (False, "open door error")
-            if (feedback_response.feedback.status == door_pb2.DoorCommand.Feedback.STATUS_COMPLETED):
-                robot.logger.info('Opened door.')
-                return (True, "opened door")
-            time.sleep(0.5)
+                ray_vis = obj_vis - camera_vis
+                ray_vis_normalized = ray_vis / ray_vis.length()
+                search_dist_meters = 0.25
+                search_ray = search_dist_meters * ray_vis_normalized
+                start = obj_vis - search_ray
+                end = obj_vis + search_ray
+                start = start.to_proto()
+                end = end.to_proto()
 
-        return (False, "open door timed out")
+
+            # populate AutoGrasp command
+            auto_cmd = door_pb2.DoorCommand.AutoGraspCommand()
+            auto_cmd.frame_name = ref_frame
+            auto_cmd.search_ray_start_in_frame.CopyFrom(start)
+            auto_cmd.search_ray_end_in_frame.CopyFrom(end)
+
+            # TODO: calculate hinge_side and swing_direction
+            auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_RIGHT
+            #auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_LEFT
+            # auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
+            # auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_INSWING
+            auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_OUTSWING
+
+            door_command = door_pb2.DoorCommand.Request(auto_grasp_command=auto_cmd)
+            request = door_pb2.OpenDoorCommandRequest(door_command=door_command)
+
+            # Command the robot to open the door.
+            door_client = robot.ensure_client(DoorClient.default_service_name)
+            response = door_client.open_door(request)
+
+            feedback_request = door_pb2.OpenDoorFeedbackRequest()
+            feedback_request.door_command_id = response.door_command_id
+
+            timeout_sec = 60.0
+            end_time = time.time() + timeout_sec
+            while time.time() < end_time:
+                feedback_response = door_client.open_door_feedback(feedback_request)
+                if (feedback_response.status != basic_command_pb2.RobotCommandFeedbackStatus.STATUS_PROCESSING):
+                    return (False, "open door error")
+                if (feedback_response.feedback.status == door_pb2.DoorCommand.Feedback.STATUS_COMPLETED):
+                    robot.logger.info('Opened door.')
+                    return (True, "opened door")
+                time.sleep(0.5)
+
+            return (False, "open door timed out")
+
+        except Exception as e:
+            logging.error(f"Error calling openDoor: {traceback.format_exc()}")
+            return False, ""
 
     ###################### moveTo overloaded method handling
 
