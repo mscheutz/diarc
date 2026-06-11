@@ -1,8 +1,6 @@
 package edu.tufts.hrilab.spot;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -13,6 +11,7 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.spot.consultant.SpotLocationConsultant;
 import edu.tufts.hrilab.util.resource.Resources;
+import edu.tufts.hrilab.vision.stm.MemoryObject;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
@@ -136,7 +135,17 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
-  public Justification openDoor(Symbol refId) {
+  public Justification openDoor(Symbol doorRef, Symbol handleRef) {
+    MemoryObject doorMO = null;
+    MemoryObject handleMO = null;
+    try {
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
+      doorMO = tsi.call(MemoryObject.class, doorRef, MemoryObject.class);
+      handleMO = tsi.call(MemoryObject.class, handleRef, MemoryObject.class);
+    } catch (TRADEException e) {
+      log.error("[moveTo] exception getting memory object from reference, returning null", e);
+    }
+
     return new ConditionJustification(true);
   }
 

@@ -249,7 +249,7 @@ doc; VERBI; dock
 %open the door; C; callPolicy(?ADDRESSEE, open_door)
 
 % spot action
-open; VERBT; openDoor
+open; VERBT; open
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE

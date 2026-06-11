@@ -359,11 +359,9 @@ public class AvailableDetectors {
 
       //only single instances of these allowed
       //TODO: add this info to config file
-      if (dType == DetectorType.CLUSTER_ADVANCED
-              || dType == DetectorType.CLUSTER) {
+      if (dType == DetectorType.CLUSTER_ADVANCED || dType == DetectorType.CLUSTER || dType == DetectorType.OWLV2) {
         singleInstance = true;
       }
-      log.info("");
 
       //get list of instantiated detectors of requested type
       DefaultComboBoxModel detectorList = instantiatedDetectors.get(dType);

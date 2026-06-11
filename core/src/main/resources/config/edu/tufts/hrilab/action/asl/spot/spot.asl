@@ -1,3 +1,6 @@
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Predicate;
+
 () = dock() {
    op:log("info", "Attempting to dock...");
    try {
@@ -7,8 +10,8 @@
    }
 }
 
-() = move["?actor moves ?direction"](edu.tufts.hrilab.fol.Symbol ?direction) {
-    edu.tufts.hrilab.fol.Predicate !failCond;
+() = move["?actor moves ?direction"](Symbol ?direction) {
+    Predicate !failCond;
 
     try {
       if (op:equalsValue(?direction, straight) || op:equalsValue(?direction, forward)) {
@@ -29,8 +32,8 @@
     }
 }
 
-() = turn(edu.tufts.hrilab.fol.Symbol ?direction, edu.tufts.hrilab.fol.Symbol ?theta = infinite) {
-    edu.tufts.hrilab.fol.Predicate !failCond;
+() = turn(Symbol ?direction, Symbol ?theta = infinite) {
+    Predicate !failCond;
     java.lang.Float !degToRad = 0.01745; // pi/180
     java.lang.Float !rads;
     java.lang.Float !radPerSec = 0.3;
@@ -66,4 +69,14 @@
       op:log("debug", "[turn(?actor, ?direction)] in finally block");
       act:stop();
     }
+}
+
+() = open(Symbol ?doorRef) {
+    // search for handle
+    Symbol !handleRef;
+    Predicate !props = op:createPredicate("and(handle(X:physobj))");
+    !handleRef = act:positReference(!props);
+
+    // call primitive openDoor
+    act:openDoor(?doorRef, !handleRef);
 }

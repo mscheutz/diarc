@@ -3,18 +3,15 @@ import time
 import argparse
 import traceback
 
-import bosdyn.client.image
 from bosdyn.api.geometry_pb2 import Vec2
 from bosdyn.api.robot_state_pb2 import ManipulatorState
 from bosdyn.api.spot import door_pb2
-from bosdyn.api.spot.door_pb2 import DoorCommand
 from bosdyn.client.door import DoorClient
 from bosdyn.client.robot_command import RobotCommandBuilder
 
 from google.protobuf.wrappers_pb2 import DoubleValue
 
-from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
-from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
+from bosdyn.client.frame_helpers import GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
     ODOM_FRAME_NAME
 from bosdyn.api import manipulation_api_pb2, geometry_pb2, basic_command_pb2, arm_command_pb2, robot_command_pb2, \
     trajectory_pb2, synchronized_command_pb2
@@ -116,96 +113,86 @@ class SpotTRADEWrapper:
 
     @handle_return
     @JOverride
-    def openDoor(self, refId: Symbol):
+    def openDoor(self, doorRef: Symbol, handleRef: Symbol):
         """
         Sends a command to open a door using the Spot robot's arm and Boston Dynamics Spot SDK.
         :return: A tuple (success, message)
         """
         try:
-            robot = self.spot._robot
+            # get door MO
+            door_ret = self.trade.call_trade("getEntityForReference", [], doorRef, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            door_mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(door_ret)
 
-            calc_ray_from_pixel = False
-            if calc_ray_from_pixel:
+            # get handle MO
+            handle_ret = self.trade.call_trade("getEntityForReference", [], handleRef, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            handle_mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(handle_ret)
 
-                # Option 2: convert pixel location to ray through object
-                image_response = self.spot.spot_images.get_hand_rgb_image()
-                (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
-                logging.info(f"Door handle at pixel: {x_pix}, {y_pix}")
-                (end_x, end_y, end_z) = bosdyn.client.image.pixel_to_camera_space(image_response.source, x_pix, y_pix, 4.0)
+            # sanity check -- i.e., handle is inside door
+            door_bb = door_mo.getBoundingBox()
+            handle_bb = handle_mo.getBoundingBox()
+            handle_bb_center_x = handle_bb.x + handle_bb.width/2
+            handle_bb_center_y = handle_bb.y + handle_bb.height/2
+            if door_bb.x > handle_bb_center_x or door_bb.x + door_bb.width < handle_bb_center_x or door_bb.y > handle_bb_center_y or door_bb.y + door_bb.height < handle_bb_center_y:
+                logging.warning("Door handle is NOT inside door.")
+                return (False, "Door handle is NOT inside door.")
 
-                # Transform ray from camera frame to VISION frame
-                vision_T_cam = get_a_tform_b(image_response.shot.transforms_snapshot, frame_helpers.VISION_FRAME_NAME, image_response.shot.frame_name_image_sensor)
-                ref_frame = frame_helpers.VISION_FRAME_NAME
+            # get handle info from MO for constructing search ray through handle
+            handle_mo.transformToBase()
+            camera_pt3d = Point3d(0, 0, 0)
+            handle_mo.getBaseTransform().transform(camera_pt3d)
+            handle_pt3d = handle_mo.getLocation()
 
-                # 2. Define your ray in Frame B (Origin & Direction Vector)
-                ray_origin_b =  geometry_pb2.Vec3(x=0, y=0, z=0)
-                ray_dir_b =  geometry_pb2.Vec3(x=end_x, y=end_y, z=end_z)
+            # Transform ray from camera frame to VISION frame
+            target_ref_frame = frame_helpers.VISION_FRAME_NAME
+            vision_T_gpe = get_a_tform_b(self._get_transforms_snapshot(), target_ref_frame, frame_helpers.GROUND_PLANE_FRAME_NAME)
 
-                # 3. Transform the Origin
-                # Origins undergo the full SE(3) transformation (Rotation + Translation)
-                start = vision_T_cam.transform_vec3(ray_origin_b)
+            # define camera location and handle object location in GPE frame
+            camera_gpe =  geometry_pb2.Vec3(x=float(camera_pt3d.x), y=float(camera_pt3d.y), z=float(camera_pt3d.z))
+            handle_gpe =  geometry_pb2.Vec3(x=float(handle_pt3d.x), y=float(handle_pt3d.y), z=float(handle_pt3d.z))
+            logging.info(f"Door handle loc (GPE): {handle_gpe.x}, {handle_gpe.y}, {handle_gpe.z}")
+            logging.info(f"Camera loc (GPE): {camera_gpe.x}, {camera_gpe.y}, {camera_gpe.z}")
 
-                # 4. Transform the Direction
-                # Directions are just vectors and should only be rotated, not translated
-                end = vision_T_cam.transform_vec3(ray_dir_b)
-            else:
-                # Option 1: use ray to specify object to grasp -- requires 3D camera data
-                ret = self.trade.call_trade("getEntityForReference", [], refId,
-                                            JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-                mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+            # Transform to vision frame
+            camera_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(camera_gpe))
+            handle_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(handle_gpe))
+            logging.info(f"Door handle loc (VISION): {handle_vis.x}, {handle_vis.y}, {handle_vis.z}")
+            logging.info(f"Camera loc (VISION): {camera_vis.x}, {camera_vis.y}, {camera_vis.z}")
 
-                mo.transformToBase()
-                camera_pt3d = Point3d(0, 0, 0)
-                mo.getBaseTransform().transform(camera_pt3d)
-                object_pt3d = mo.getLocation()
-
-
-                ref_frame = frame_helpers.VISION_FRAME_NAME
-
-                # Transform ray from camera frame to VISION frame
-                vision_T_gpe = get_a_tform_b(self._get_transforms_snapshot(), frame_helpers.VISION_FRAME_NAME, frame_helpers.GROUND_PLANE_FRAME_NAME)
-
-                # 2. Define your ray in GPE frame
-                # ray_origin_gpe =  geometry_pb2.Vec3(x=float(start_pt3d.x), y=float(start_pt3d.y), z=float(start_pt3d.z))
-                # ray_dir_gpe =  geometry_pb2.Vec3(x=float(start_pt3d.x+direction.x), y=float(start_pt3d.y+direction.y), z=float(start_pt3d.z+direction.z))
-                camera_gpe =  geometry_pb2.Vec3(x=float(camera_pt3d.x), y=float(camera_pt3d.y), z=float(camera_pt3d.z))
-                obj_gpe =  geometry_pb2.Vec3(x=float(object_pt3d.x), y=float(object_pt3d.y), z=float(object_pt3d.z))
-                logging.info(f"Door handle loc (GPE): {obj_gpe.x}, {obj_gpe.y}, {obj_gpe.z}")
-                logging.info(f"Camera loc (GPE): {camera_gpe.x}, {camera_gpe.y}, {camera_gpe.z}")
-
-                # Transform to vision frame
-                camera_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(camera_gpe))
-                obj_vis = math_helpers.Vec3.from_proto(vision_T_gpe.transform_vec3(obj_gpe))
-                logging.info(f"Door handle loc (VISION): {obj_vis.x}, {obj_vis.y}, {obj_vis.z}")
-                logging.info(f"Camera loc (VISION): {camera_vis.x}, {camera_vis.y}, {camera_vis.z}")
-
-                ray_vis = obj_vis - camera_vis
-                ray_vis_normalized = ray_vis / ray_vis.length()
-                search_dist_meters = 0.25
-                search_ray = search_dist_meters * ray_vis_normalized
-                start = obj_vis - search_ray
-                end = obj_vis + search_ray
-                start = start.to_proto()
-                end = end.to_proto()
-
+            # calculate start and end ray
+            ray_vis = handle_vis - camera_vis
+            ray_vis_normalized = ray_vis / ray_vis.length()
+            search_dist_meters = 0.25
+            search_ray = search_dist_meters * ray_vis_normalized
+            start = handle_vis - search_ray
+            end = handle_vis + search_ray
+            start = start.to_proto()
+            end = end.to_proto()
 
             # populate AutoGrasp command
             auto_cmd = door_pb2.DoorCommand.AutoGraspCommand()
-            auto_cmd.frame_name = ref_frame
+            auto_cmd.frame_name = target_ref_frame
             auto_cmd.search_ray_start_in_frame.CopyFrom(start)
             auto_cmd.search_ray_end_in_frame.CopyFrom(end)
 
-            # TODO: calculate hinge_side and swing_direction
-            auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_RIGHT
-            #auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_LEFT
-            # auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
+            # calculate hinge_side (using door and handle bounding box centers)
+            if (door_bb.x + door_bb.width/2) < (handle_bb.x + handle_bb.width/2):
+                logging.info("Door hinge is on the left side.")
+                auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_LEFT
+            else:
+                logging.info("Door hinge is on the right side.")
+                auto_cmd.hinge_side = door_pb2.DoorCommand.HINGE_SIDE_RIGHT
+
+            # TODO: calculate swing_direction
+            logging.info("Using unknown door swing direction.")
+            auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_UNKNOWN
             # auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_INSWING
-            auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_OUTSWING
+            # auto_cmd.swing_direction = door_pb2.DoorCommand.SWING_DIRECTION_OUTSWING
 
             door_command = door_pb2.DoorCommand.Request(auto_grasp_command=auto_cmd)
             request = door_pb2.OpenDoorCommandRequest(door_command=door_command)
 
             # Command the robot to open the door.
+            robot = self.spot._robot
             door_client = robot.ensure_client(DoorClient.default_service_name)
             response = door_client.open_door(request)
 
