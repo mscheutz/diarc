@@ -25,7 +25,7 @@ public class SpotComponent extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("hubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
+    options.add(Option.builder("hub").longOpt("tradeHubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
     options.add(Option.builder("spotConfigFile").hasArg().argName("file").desc("Path to yaml spot config").build());
     options.add(Option.builder("spotMap").hasArg().argName("file").desc("Path to map file").build());
     options.add(Option.builder("refs").hasArg().argName("file").desc("Path to location refs file").build());

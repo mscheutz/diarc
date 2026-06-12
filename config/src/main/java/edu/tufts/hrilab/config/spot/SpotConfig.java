@@ -77,7 +77,7 @@ public class SpotConfig extends DiarcConfiguration {
 //      String tradeHubContainer = "127.0.0.1@10001";
       String tradeHubContainer = "192.168.0.46@10001";
       createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
-              + " -hubContainer " + tradeHubContainer
+              + " -hub " + tradeHubContainer
               + " -spotMap " + "/home/evan/.diarc/spot/spot_map"
               + " -refs " + "/spot/spot_map_refs.json");
     }
