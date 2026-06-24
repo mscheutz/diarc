@@ -31,7 +31,7 @@ public class SpotSceneGenerator extends SceneGenerator {
             Factory.createPredicate("bottle", x),
             Factory.createPredicate("cup", x),
             Factory.createPredicate("handle", x),
-            Factory.createPredicate("rod", x),
+            Factory.createPredicate("human", x),
             Factory.createPredicate("button", x),
             Factory.createPredicate("unknown", x),
             Factory.createPredicate("unknown", x),
@@ -47,7 +47,8 @@ public class SpotSceneGenerator extends SceneGenerator {
     scene0.addDetectionResult(getObject("apple"));
     scene0.addDetectionResult(getObject("bottle"));
     scene0.addDetectionResult(getObject("handle"));
-    scene0.addDetectionResult(getObject("rod"));
+    scene0.addDetectionResult(getObject("human"));
+    scene0.addDetectionResult(getObject("cup"));
     scene0.addDetectionResult(getObject("button"));
     scene0.addDetectionResult(getUnknownObject());
     sceneCollection.addScene(scene0);
