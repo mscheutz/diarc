@@ -69,7 +69,7 @@ import java.util.List;
 
 () = invalidateReference["todo: (pete) document"](Symbol ?refId:physobj){
     Predicate !toRetract;
-    act:removeReference(?refId);
+    act:removeCognexReference(?refId);
     !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "itemOn(?refId, X)");
     act:retractBelief(!toRetract);
     !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "itemAt(?refId, X)");

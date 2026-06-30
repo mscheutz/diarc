@@ -4,7 +4,9 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import ai.thinkingrobots.trade.TRADE;
 import edu.tufts.hrilab.action.GoalManagerComponent;
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
@@ -14,6 +16,11 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TwoNaoDemo extends DiarcConfiguration {
   /**
@@ -26,14 +33,42 @@ public class TwoNaoDemo extends DiarcConfiguration {
   public boolean mockNao = true;
   public boolean useSphinx = false;
 
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("mockNao").hasArg().argName("bool").desc("Use mock nao components.").build());
+    options.add(Option.builder("simSpeechGui").hasArg().argName("bool").desc("Use sim speech input gui.").build());
+    options.add(Option.builder("useSphinx").hasArg().argName("bool").desc("Use sphinx component for speech recognition").build());
+    options.add(Option.builder("singleComponentPerContainer").desc("Set each component to launch in separate TRADE container.").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("mockNao")) {
+      mockNao = Boolean.parseBoolean(cmdLine.getOptionValue("mockNao"));
+    }
+    if (cmdLine.hasOption("simSpeechGui")) {
+      simSpeech = Boolean.parseBoolean(cmdLine.getOptionValue("simSpeechGui"));
+    }
+    if (cmdLine.hasOption("useSphinx")) {
+      useSphinx = Boolean.parseBoolean(cmdLine.getOptionValue("useSphinx"));
+    }
+    if (cmdLine.hasOption("singleComponentPerContainer")) {
+      this.setSingleComponentPerContainer(true);
+    }
+  }
+
   // start the configuration
   @Override
   public void runConfiguration() {
 
+    TRADE.shutdownTRADE();
+
     if (simSpeech) {
-      createInstance(SimSpeechRecognitionComponent.class,
+      DiarcComponent.createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster");
-      createInstance(SimSpeechRecognitionComponent.class,
+      DiarcComponent.createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster");
     }
 

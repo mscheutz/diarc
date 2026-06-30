@@ -48,6 +48,8 @@ public class GoalInfo implements Serializable {
    * onto an existing action, where no top-level task planning is needed.
    */
   public boolean isAction = false;
+
+  public boolean isObservation = false;
   /**
    * Optional metric for task planning.
    */
@@ -75,6 +77,7 @@ public class GoalInfo implements Serializable {
     this.status = other.status;
     this.actor = other.actor;
     this.isAction = other.isAction;
+    this.isObservation = other.isObservation;
     this.metric = other.metric;
     this.persistent = other.persistent;
     this.priority = other.priority;

@@ -165,12 +165,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (!tldlUpdateAddressee) {
         tldlArgs += " -noUpdateAddressee";
       }
-      tldlParser = createInstance(TLDLParserComponent.class, tldlArgs, false);
+      tldlParser = createInstance(TLDLParserComponent.class, false, tldlArgs);
     }
 
     // init PatternMatchingParser
     if (usePMP) {
-      patternMatchingParser = createInstance(PatternMatchingParser.class, "", false);
+      patternMatchingParser = createInstance(PatternMatchingParser.class, false);
     }
 
     // init CachedParserComponent
@@ -187,7 +187,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (cachePersist) {
         cacheArgs += " -persist";
       }
-      cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
+      cacheParser = createInstance(CachedParserComponent.class, false, cacheArgs);
     }
     unknownListener = Factory.createSymbol("unknown");
   }

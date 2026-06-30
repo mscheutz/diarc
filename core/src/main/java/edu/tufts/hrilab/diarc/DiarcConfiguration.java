@@ -11,11 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 
 abstract public class DiarcConfiguration {
   /**
@@ -29,6 +32,12 @@ abstract public class DiarcConfiguration {
 
   protected List<DiarcComponent> diarcComponents = new ArrayList<>();
 
+  private boolean singleComponentPerContainer = false;
+
+  public void setSingleComponentPerContainer(boolean singleComponentPerContainer) {
+    this.singleComponentPerContainer = singleComponentPerContainer;
+  }
+
   /**
    * Command line options.
    */
@@ -39,6 +48,22 @@ abstract public class DiarcConfiguration {
   public DiarcConfiguration() {
     log = LoggerFactory.getLogger(this.getClass());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownConfiguration()));
+  }
+
+  public DiarcConfiguration(String... args) {
+    log = LoggerFactory.getLogger(this.getClass());
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownConfiguration()));
+
+    if (args.length > 0) {
+      collectAdditionalUsageInfo();
+
+      // put input args into the expected form for component arg parsing
+      StringJoiner joiner = new StringJoiner(" ");
+      Arrays.stream(args).forEach(arg -> joiner.add(arg.trim()));
+      String[] cliArgs = joiner.toString().split(" ");
+
+      parseDiarcArgs(cliArgs);
+    }
   }
 
   public void shutdownConfiguration() {
@@ -114,19 +139,17 @@ abstract public class DiarcConfiguration {
     // parse sub-class(es)
     parseArgs(cmd);
   }
-
-  /**
-   * Convenience method when no additional component args are needed. Automatically register with TRADE.
-   *
-   * @param clazz class to be instantiated (must extend DiarcComponent)
-   * @param <T>
-   * @return
-   */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz) {
-    T component = DiarcComponent.createInstance(clazz, "", true);
-    diarcComponents.add(component);
-    return component;
-  }
+//
+//  /**
+//   * Convenience method when no additional component args are needed. Automatically register with TRADE.
+//   *
+//   * @param clazz class to be instantiated (must extend DiarcComponent)
+//   * @param <T>
+//   * @return
+//   */
+//  public final <T extends DiarcComponent> T createInstance(Class<T> clazz) {
+//    return createInstance(clazz, true);
+//  }
 
   /**
    * Convenience method to automatically register with TRADE.
@@ -136,39 +159,76 @@ abstract public class DiarcConfiguration {
    * @param <T>
    * @return
    */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args) {
-    T component = DiarcComponent.createInstance(clazz, args, true);
-    diarcComponents.add(component);
-    return component;
+  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String... args) {
+    return createInstance(clazz, true, args);
   }
 
   /**
-   * Convenience method to pass all args as a single String, and automatically registers with TRADE.
-   *
-   * @param clazz class to be instantiated (must extend DiarcComponent)
-   * @param args  command line arguments
-   * @param <T>
-   * @return
-   */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), true);
-    diarcComponents.add(component);
-    return component;
-  }
-
-  /**
-   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
+   * Create a new DiarcComponent instance, and optionally registers with TRADE.
    *
    * @param clazz             class to be instantiated (must extend DiarcComponent)
-   * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
+   * @param args              command line arguments
    * @param <T>
    * @return
    */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), registerWithTrade);
-    diarcComponents.add(component);
-    return component;
+  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
+    if (singleComponentPerContainer) {
+      if (!registerWithTrade) {
+        log.warn("All components in a single container must be registered with TRADE. Ignoring registration request for: " + clazz.getName() + " with args: " + Arrays.toString(args) + " and starting in a new container.");
+      }
+      return createInstanceInNewContainer(clazz, args);
+    } else {
+      T component = DiarcComponent.createInstance(clazz, registerWithTrade, args);
+      diarcComponents.add(component);
+      return component;
+    }
+  }
+
+  private <T extends DiarcComponent> T createInstanceInNewContainer(Class<T> clazz, String... args) {
+    // path to the current Java runtime executable
+    String javaHome = System.getProperty("java.home");
+    String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+
+    // current classpath to ensure the sub-process can find the target class
+    String classpath = System.getProperty("java.class.path");
+
+    // command arguments list
+    List<String> command = new ArrayList<>();
+    command.add(javaBin);
+    command.add("-cp");
+    command.add(classpath);
+
+    // set system properties
+    command.add("-Dlogback.configurationFile=" + System.getProperty("logback.configurationFile"));
+    command.add("-Dlogging.config=" + System.getProperty("logging.config"));
+    command.add("-DtradeLogging.config.path=" + System.getProperty("tradeLogging.config.path"));
+    command.add("-Dtrade.properties.path=" + System.getProperty("trade.properties.path"));
+    command.add("-Ddiarc.planner.ff=" + System.getProperty("diarc.planner.ff"));
+    command.add("-Djava.library.path=" + System.getProperty("java.library.path"));
+
+    command.add("-Dcomponent=" + clazz.getName());
+    command.add(clazz.getName());
+
+    if (args != null) {
+      StringJoiner joiner = new StringJoiner(" ");
+      Arrays.stream(args).forEach(arg -> joiner.add(arg.trim()));
+      command.add(joiner.toString());
+    }
+
+    // 4. Build and start the process
+    ProcessBuilder builder = new ProcessBuilder(command);
+
+    // Redirect streams so you can see the sub-process output in the main console
+    builder.inheritIO();
+
+    try {
+      Process process = builder.start();
+    } catch (IOException e) {
+      log.error("Error starting new container: {}", clazz.getName(), e);
+    }
+
+    return null;
   }
 
   /**

@@ -4,8 +4,10 @@
 
 package edu.tufts.hrilab.cognex.consultant;
 
-public interface CognexResult {
+import java.io.Serializable;
 
-    public String toString();
+public interface CognexResult extends Serializable {
+
+    String toString();
 
 }

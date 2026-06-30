@@ -20,11 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -239,12 +235,12 @@ abstract public class DiarcComponent {
    * with TRADE.
    *
    * @param clazz             class to be instantiated (must extend DiarcComponent)
-   * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
+   * @param args              command line arguments
    * @param <T>
    * @return
    */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade) {
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
     // find clazz default constructor
     Constructor<T> clazzConstructor;
     try {
@@ -264,9 +260,14 @@ abstract public class DiarcComponent {
       return null;
     }
 
+    // put input args into the expected form for component arg parsing
+    StringJoiner joiner = new StringJoiner(" ");
+    Arrays.stream(args).forEach(arg -> joiner.add(arg.trim()));
+    String[] cliArgs = joiner.toString().split(" ");
+
     // call initialization methods
     instance.collectAdditionalUsageInfo();
-    instance.parseDiarcArgs(args);
+    instance.parseDiarcArgs(cliArgs);
     instance.init();
 
     // optionally register with TRADE
@@ -296,34 +297,34 @@ abstract public class DiarcComponent {
    * @param <T>
    * @return
    */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args) {
-    return createInstance(clazz, args, true);
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String... args) {
+    return createInstance(clazz, true, args);
   }
 
-  /**
-   * Convenience method to pass all args as a single String, and automatically registers with TRADE.
-   *
-   * @param clazz class to be instantiated (must extend DiarcComponent)
-   * @param args  command line arguments
-   * @param <T>
-   * @return
-   */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
-    return createInstance(clazz, args.split(" "), true);
-  }
+//  /**
+//   * Convenience method to pass all args as a single String, and automatically registers with TRADE.
+//   *
+//   * @param clazz class to be instantiated (must extend DiarcComponent)
+//   * @param args  command line arguments
+//   * @param <T>
+//   * @return
+//   */
+//  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
+//    return createInstance(clazz, args.split(" "), true);
+//  }
 
-  /**
-   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
-   *
-   * @param clazz             class to be instantiated (must extend DiarcComponent)
-   * @param args              command line arguments
-   * @param registerWithTrade true/false whether to register with TRADE
-   * @param <T>
-   * @return
-   */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade) {
-    return createInstance(clazz, args.split(" "), registerWithTrade);
-  }
+//  /**
+//   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
+//   *
+//   * @param clazz             class to be instantiated (must extend DiarcComponent)
+//   * @param args              command line arguments
+//   * @param registerWithTrade true/false whether to register with TRADE
+//   * @param <T>
+//   * @return
+//   */
+//  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
+//    return createInstance(clazz, args.split(" "), registerWithTrade);
+//  }
 
   /**
    * Main method to allow starting of a single DIARC component from the command line.

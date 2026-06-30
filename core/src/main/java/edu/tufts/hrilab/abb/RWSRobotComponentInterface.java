@@ -109,5 +109,5 @@ public interface RWSRobotComponentInterface {
 
   @TRADEService
   @Action
-  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results);
+  CognexResult getMatchingResult(Symbol refId, List<CognexResult> results);
 }

@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.fol.Factory;
 
 import java.util.ArrayList;
@@ -52,15 +53,15 @@ public class HardCodedTestComparator extends DiarcTestComparator {
     Object[] joinOnGoalAlternate = new Object[3];
     if (nextOutput[0].equals("joinOnGoal")) {
       long goalId = (long) nextOutput[1];
-      Goal goal = getGoal(goalId);
+      GoalInfo goal = getGoalInfo(goalId);
       if (goal != null) {
         joinOnGoalAlternate[0] = "joinOnGoal";
-        if (goal.isAction()) {
-          joinOnGoalAlternate[1] = goal.getGoalStatePredicate();
-        } else if (goal.isObservation()) {
-          joinOnGoalAlternate[1] = Factory.createPredicate(("obs"), goal.getActor(), goal.getGoalStatePredicate());
+        if (goal.isAction) {
+          joinOnGoalAlternate[1] = goal.goal;
+        } else if (goal.isObservation) {
+          joinOnGoalAlternate[1] = Factory.createPredicate(("obs"), goal.actor, goal.goal);
         } else {
-          joinOnGoalAlternate[1] = Factory.createPredicate(("goal"), goal.getActor(), goal.getGoalStatePredicate());
+          joinOnGoalAlternate[1] = Factory.createPredicate(("goal"), goal.actor, goal.goal);
         }
         joinOnGoalAlternate[2] = nextOutput[2]; // goal status
       }
@@ -104,14 +105,14 @@ public class HardCodedTestComparator extends DiarcTestComparator {
    * @param goalId
    * @return
    */
-  private Goal getGoal(long goalId) {
-    Goal goal = null;
+  private GoalInfo getGoalInfo(long goalId) {
+    GoalInfo goalInfo = null;
     try {
-      goal = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoal").argTypes(Long.class)).call(Goal.class, goalId);
+      goalInfo = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalInfo").argTypes(Long.class)).call(GoalInfo.class, goalId);
     } catch (TRADEException e) {
-      log.error("Error trying to get Goal for goalId: " + goalId, e);
+      log.error("Error trying to get goalInfo for goalId: " + goalId, e);
     }
-    return goal;
+    return goalInfo;
   }
 
   @Override

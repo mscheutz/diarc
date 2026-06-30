@@ -11,6 +11,7 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.test.framework.compare.GenerativeTestComparator;
 import edu.tufts.hrilab.test.framework.gson.ServiceCallInstance;
 import edu.tufts.hrilab.test.framework.tester.GenerativeDiarcConfigTester;
+import edu.tufts.hrilab.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.After;
@@ -19,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -139,11 +141,16 @@ public class GenerativeDiarcIntegrationTest {
   protected void addServiceToObserve(String serviceName, Class<?>... serviceArgsClasses) {
     try {
       TRADEServiceInfo wrapperTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("addObservedOutput").argTypes(Object[].class));
-      Collection<TRADEServiceInfo> tsisToWrap = TRADE.getAvailableServices(new TRADEServiceConstraints().name(serviceName).argTypes(serviceArgsClasses));
-      if(tsisToWrap.isEmpty()){
-        log.warn("[addServiceToObserve] no matching TSIs found for "+serviceName+" "+serviceArgsClasses);
+      Collection<TRADEServiceInfo> tsisToWrap = null;
+      int counter = 0;
+      while ((tsisToWrap == null || tsisToWrap.isEmpty()) && counter++ < 5) {
+        tsisToWrap = TRADE.getAvailableServices(new TRADEServiceConstraints().name(serviceName).argTypes(serviceArgsClasses));
+        Util.Sleep(1000);
       }
-      for(TRADEServiceInfo tsiToWrap: tsisToWrap) {
+      if (tsisToWrap.isEmpty()) {
+        log.error("[addServiceToObserve] no matching TSIs found for "+serviceName+" "+serviceArgsClasses);
+      }
+      for (TRADEServiceInfo tsiToWrap: tsisToWrap) {
         TRADE.afterService(wrapperTSI, tsiToWrap);
       }
     } catch (TRADEException e) {

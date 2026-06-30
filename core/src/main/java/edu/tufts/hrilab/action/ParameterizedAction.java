@@ -14,6 +14,7 @@ import edu.tufts.hrilab.fol.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.AndJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 
-public class ParameterizedAction {
+public class ParameterizedAction implements Serializable {
 
   private static final Logger log = LoggerFactory.getLogger(ParameterizedAction.class);
 

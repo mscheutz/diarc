@@ -11,6 +11,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
+import edu.tufts.hrilab.util.Util;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,7 +29,10 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
   public void initializeDiarc() {
     // instantiate DIARC configuration (in mock)
     diarcConfig = new MockTwoNaoDemo();
+    diarcConfig.setSingleComponentPerContainer(true);
     diarcConfig.runConfiguration();
+
+    Util.Sleep(2000);
 
     speechInputTrusted = diarcConfig.trustedSpeechRec;
     speechInputUntrusted = diarcConfig.untrustedSpeechRec;

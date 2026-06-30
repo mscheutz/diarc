@@ -229,8 +229,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   //todo: should this actually be an action? additional sanity checks? should we route this through somewhere else? RR?
   @TRADEService
   @Action
-  public CognexReference removeReference(Symbol refId) {
-    return super.removeReference(refId);
+  public void removeCognexReference(Symbol refId) {
+    removeReference(refId);
   }
 
   /**
@@ -286,8 +286,9 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
-    log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
+  public void bindCognexResult(Symbol refId, CognexResult result, int indexIntoCognexResult) {
+    log.debug("Binding: " + refId + " to cognex result index: " + indexIntoCognexResult);
+    CognexReference ref = getCognexReferenceForID(refId);
     ref.setResult(result);
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("updateFOC")).call(void.class, ref.refId);
@@ -306,6 +307,12 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Action
   public CognexJob getCognexJobForCognexReference(CognexReference ref) {
     return ref.cognexJob;
+  }
+
+  @TRADEService
+  @Action
+  public CognexJob getCognexJobForCognexReference(Symbol refId) {
+    return getCognexJobForCognexReference(getCognexReferenceForID(refId));
   }
 
   @TRADEService

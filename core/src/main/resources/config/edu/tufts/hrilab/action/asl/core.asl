@@ -2,8 +2,9 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.GoalFilter;
+import java.lang.Long;
 
 () = checkCapableOf["checks if post condition is capable of bing reached by ?actor"](Predicate ?goal) {
     Term !toAssert;
@@ -70,7 +71,8 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "start get current goals");
 
     // get current goals for ?actor
-    !allGoals = act:getCurrentGoals();
+    GoalFilter !goalEnum = CURRENT;
+    !allGoals = tsc:getActorGoalPredicates(!goalEnum);
 
     // remove handling nlp goal and getting currgoals from the goal list
     !filteredGoals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
@@ -140,7 +142,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !oldDescription = op:createPredicate("actionDescription(?goalPred,X)");
     act:retractBelief(!oldDescription);
 
-    // get new action description in predicate form
+    // get action steps in predicate form
     !stepsPredicate = tsc:getActionSteps(?goalPred);
 
     // do null check for action steps
@@ -170,59 +172,28 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "end get action description");
 }
 
-() = getContextDescription["get description for step of (specified by location) currently executing goal "](Predicate ?location) {
-    int !numLocArgs;
-    Predicate !goalPredicate;
-    java.util.List !goals;
-    Goal !goal;
-    edu.tufts.hrilab.action.description.ContextDescription !contextDescription;
-    java.util.List !contextPredicates;
-    Predicate !oldDescription;
-    Predicate !failCond;
-    Predicate !steps;
+() = getContextDescription["get description for step of (specified by location) currently executing goal "](Predicate ?goalPredicate, Predicate ?locationPredicate) {
 
     effects : {
-      success : knows(?actor,contextDescription(?location,!steps));
+      success : knows(?actor,contextDescription(?goalPredicate,?locationPredicate,!steps));
     }
 
     op:log("debug", "start get context description");
 
     // construct and retract a generic predicate from belief to clear previous entries
-    !oldDescription = op:createPredicate("knows(A,contextDescription(X,Y))");
+    Predicate !oldDescription = op:createPredicate("knows(A,contextDescription(X,Y,Z))");
     act:retractBelief(!oldDescription);
 
-    // get Goal instance from goalPredicate
-    !numLocArgs = op:invokeMethod(?location, "size");
-    if (op:==(!numLocArgs, 2)) {
-      !goalPredicate = op:invokeMethod(?location, "get", 1);
-    } else {
-      !goalPredicate = op:createPredicate("goal(mostRecent)");
-    }
-
-    // if asking about sub-goal (e.g., nod part of dance goal) then we will need to get current goal
-    // instead of goal specified in the goalPredicate-->
-    // TODO: this assumes that an agent only has a single top-level goal
-    try {
-      !goals = act:getGoal(!goalPredicate);
-      !goal = op:get(!goals,0);
-    } catch(FAIL) {
-      !goalPredicate = op:createPredicate("goal(mostRecent)");
-      !goals = act:getGoal(!goalPredicate);
-      !goal = op:get(!goals,0);
-    }
-
-    // get ContextDescription from goal's action interpreter based on ?location
-    !contextDescription = op:invokeMethod(!goal, "getContextDescription", ?location);
+    // get relevant predicate descriptions (will be asserted to belief via the "knows" post-conds)
+    Predicate !steps = tsc:getActionContextSteps(?goalPredicate, ?locationPredicate);
 
     // check if goal was found
-    if (op:isNull(!contextDescription)) {
+    Predicate !failCond;
+    if (op:isNull(!steps)) {
         op:log("debug", "[getContextDescription] no matching context description found.");
         !failCond = op:createPredicate("not(propertyOf(action,found))");
         exit(FAIL, !failCond);
     }
-
-    // get relevant predicate descriptions (will be asserted to belief via the "knows" post-conds)
-    !steps = op:invokeMethod(!contextDescription, "getStepsInPredicateForm");
 
     op:log("debug", "end get context description");
 }
@@ -316,15 +287,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 () = cancelGoal(Predicate ?goalPredicate = goal(mostRecent)) {
-    java.util.List !goals;
-    Goal !goal;
+    java.util.List !goalIds;
     java.lang.Long !goalId;
 
-    !goals = act:getGoal(?goalPredicate);
-    if (~op:isEmpty(!goals)) {
-        !goal = op:get(!goals,0);
-        op:log("debug", "[cancelGoal] canceling goal: !goal.");
-        !goalId =  op:invokeMethod(!goal, "getId");
+    !goalIds = act:getGoalIds(?goalPredicate);
+    if (~op:isEmpty(!goalIds)) {
+        !goalId = op:get(!goalIds,0);
+        op:log("debug", "[cancelGoal] canceling goal: !goalId.");
         act:cancelGoal(!goalId);
     } else {
         op:log("warn", "[cancelGoal] No goal found for predicate: ?goalPredicate.");
@@ -332,15 +301,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 () = suspendGoal(Predicate ?goalPredicate = goal(mostRecent)) {
-    java.util.List !goals;
-    Goal !goal;
+    java.util.List !goalIds;
     java.lang.Long !goalId;
 
-    !goals = act:getGoal(?goalPredicate);
-    if (~op:isEmpty(!goals)) {
-        !goal = op:get(!goals,0);
-        op:log("debug", "[suspendGoal] suspending goal: !goal.");
-        !goalId =  op:invokeMethod(!goal, "getId");
+    !goalIds = act:getGoalIds(?goalPredicate);
+    if (~op:isEmpty(!goalIds)) {
+        !goalId = op:get(!goalIds,0);
+        op:log("debug", "[suspendGoal] suspending goal: !goalId.");
         act:suspendGoal(!goalId);
     } else {
          op:log("warn", "[suspendGoal] No goal found for predicate: ?goalPredicate.");
@@ -348,25 +315,23 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 () = resumeGoal(Predicate ?goalPredicate = goal(mostRecent)) {
-    java.util.List !goals;
-    Goal !goal;
+    java.util.List !goalIds;
     java.lang.Long !goalId;
 
-    !goals = act:getGoal(?goalPredicate);
-    if (~op:isEmpty(!goals)) {
-        !goal = op:get(!goals,0);
+    !goalIds = act:getGoalIds(?goalPredicate);
+    if (~op:isEmpty(!goalIds)) {
+        !goalId = op:get(!goalIds,0);
         op:log("debug", "[resumeGoal] resuming goal: !goal.");
-        !goalId =  op:invokeMethod(!goal, "getId");
         act:resumeGoal(!goalId);
     } else {
           op:log("warn", "[resumeGoal] No goal found for predicate: ?goalPredicate.");
       }
 }
 
-(java.util.List ?goals) = getGoal(Predicate ?goalPredicate = goal(mostRecent)) {
+(java.util.List ?goalIds) = getGoalIds(Predicate ?goalPredicate = goal(mostRecent)) {
     Predicate !mostRecentGoalPred;
-    Goal !queryGoal;
-    Goal !goal;
+    Long !goalId;
+    GoalFilter !filterEnum = CURRENT;
 
     !mostRecentGoalPred = op:createPredicate("goal(mostRecent)");
     if (op:equals(?goalPredicate, !mostRecentGoalPred)) {
@@ -375,23 +340,23 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       //          BEFORE goal submission. Change back if changing that (in achieveState in handleSemantics.asl)
       //      Additional issue is that if the sayText immediately terminates, whether because it fails or isn't
       //      implemented in a mock setup, then this index will be incorrect
-        ?goals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-        !goal = act:getCurrentGoal(?actor, 1);
-        if (~op:isNull(!goal)) {
-            op:add(?goals,!goal);
+        ?goalIds = op:newArrayList("java.lang.Long");
+        !goalId = tsc:getCurrentGoalId(?actor, 1);
+        if (op:ge(!goalId,0)) {
+            op:add(?goalIds,!goalId);
         }
     } else {
       // find matching goal
-      ?goals = act:getCurrentGoals(?goalPredicate);
+      ?goalIds = tsc:getGoalIds(?goalPredicate, !filterEnum);
     }
 
     // check if goal was found
-    if (op:isEmpty(?goals)) {
-      op:log("debug", "[getGoal] no matching current goal found.");
+    if (op:isEmpty(?goalIds)) {
+      op:log("debug", "[getGoalIds] no matching current goal found.");
       exit(FAIL, not(propertyOf(goal,found)));
     }
 
-    op:log("debug", "[getGoal] have goals: ?goals.");
+    op:log("debug", "[getGoalIds] have goals: ?goalIds.");
 }
 
 () = estimatePerformanceMeasures(edu.tufts.hrilab.fol.Predicate ?goalPred, edu.tufts.hrilab.fol.Symbol ?temporal, edu.tufts.hrilab.fol.Predicate ?assessmentModification = "if(none())") {

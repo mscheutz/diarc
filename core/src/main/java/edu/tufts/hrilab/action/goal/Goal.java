@@ -93,6 +93,7 @@ public class Goal {
       case "obs":
       case "observe":
         observable = Observable.TRUE;
+        info.isObservation = true;
         // fall through
       case "goal":
         info.unboundGoal = goalPredicate.get(1);

@@ -662,7 +662,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
   @Override
   synchronized public BeliefComponent createClone() {
     String dbName = "-disk sim_num_" + nextSQLNumber.getAndIncrement() + ".db";
-    BeliefComponent newBeliefComponent = DiarcComponent.createInstance(this.getClass(), dbName, false);
+    BeliefComponent newBeliefComponent = DiarcComponent.createInstance(this.getClass(), false, dbName);
 
     // populate new component's prover
     if (!newBeliefComponent.notificationProver.setTheory(this.notificationProver.getTheory())) {

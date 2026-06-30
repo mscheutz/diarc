@@ -354,11 +354,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       actionStatuses: {FAIL_POSTCONDITIONS}
     }
 
-    edu.tufts.hrilab.action.ActionConstraints !ac;
-    edu.tufts.hrilab.action.state.StateMachine !sm;
-    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
-    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
-
     Predicate !plannedActionFull;
     Predicate !goalPred;
     edu.tufts.hrilab.action.goal.Goal !goal;
@@ -369,14 +364,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Symbol !planningActor;
 
     // use self:agent as planning actor so all diarc agents can be used in planning -- is this necessary?
-    !planningActor = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "self", "agent");
+    !planningActor = op:createSymbol("self", "agent");
 
-    !bradAsHumanActor = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(brad, human)");
-    !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", !planningActor);
+    !bradAsHumanActor = op:createPredicate("object(brad, human)");
+    !plannedActionFull = op:createPredicate("planned", !planningActor);
 
     Predicate !goalState;
-    !goalState = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", ?failureReasons);
-    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal", !planningActor, !goalState);
+    !goalState = op:createPredicate("and", ?failureReasons);
+    !goalPred = op:createPredicate("goal", !planningActor, !goalState);
 
     Predicate !actionDescription;
 
@@ -407,16 +402,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !executionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "execution(!planningActor)");
     !reportFailurePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "failed", !executionPred, !becausePred);
 
-    //get the plan with goal ?goalPred
-    !sm = tsc:getStateMachine();
-    !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
-    !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
+    //get the plan with goal !goalPred
+    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction = tsc:selectActionForGoal(!goalPred);
 
-    if (op:isNull(!actionSelector)) {
-        op:log(error, "[generateRecoveryPlanAndAssess] action selector is null!");
-    }
-    !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", !goalPred);
-    !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
     //check if there was a valid plan using diarc agents. otherwise add "brad" as an actor to the domain and resubmit, then remove brad from the domain
     if (~op:isNull(!parameterizedAction)) {
         op:log(debug, "[generateRecoveryPlanAndAssess] successfully got planned parameterizedAction for !goalPred for self");
@@ -471,9 +459,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         op:log(debug, "[generateRecoveryPlanAndAssess] failed to get valid plan for self, re-generating plan with brad added to domain");
         act:assertBelief(!bradAsHumanActor);
 
-        !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", "fetch:fetch");
+        !plannedActionFull = op:createPredicate("planned", "fetch:fetch");
 
-        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+        !parameterizedAction = tsc:selectActionForGoal(!goalPred);
 
         act:retractBelief(!bradAsHumanActor);
         if (op:isNull(!parameterizedAction)) {
