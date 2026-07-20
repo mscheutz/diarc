@@ -8,12 +8,15 @@ import edu.tufts.hrilab.fol.Variable;
 
 /**
  * A candidate binding between a variable and a candidate
- *
- * @param variable  the name of the variable
- * @param candidate the candidate to be bound to that variable
  */
 public class RelevanceTheoreticBinding {
+  /**
+   * the name of the variable
+   */
   private final Variable variable;
+  /**
+   * the candidate to be bound to that variable
+   */
   private final RelevanceTheoreticCandidate candidate;
 
   public RelevanceTheoreticBinding(Variable variable, RelevanceTheoreticCandidate candidate) {
