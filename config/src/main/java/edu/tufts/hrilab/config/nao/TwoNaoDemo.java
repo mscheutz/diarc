@@ -4,9 +4,7 @@
 
 package edu.tufts.hrilab.config.nao;
 
-import ai.thinkingrobots.trade.TRADE;
 import edu.tufts.hrilab.action.GoalManagerComponent;
-import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
@@ -39,7 +37,6 @@ public class TwoNaoDemo extends DiarcConfiguration {
     options.add(Option.builder("mockNao").hasArg().argName("bool").desc("Use mock nao components.").build());
     options.add(Option.builder("simSpeechGui").hasArg().argName("bool").desc("Use sim speech input gui.").build());
     options.add(Option.builder("useSphinx").hasArg().argName("bool").desc("Use sphinx component for speech recognition").build());
-    options.add(Option.builder("singleComponentPerContainer").desc("Set each component to launch in separate TRADE container.").build());
     return options;
   }
 
@@ -54,21 +51,16 @@ public class TwoNaoDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("useSphinx")) {
       useSphinx = Boolean.parseBoolean(cmdLine.getOptionValue("useSphinx"));
     }
-    if (cmdLine.hasOption("singleComponentPerContainer")) {
-      this.setSingleComponentPerContainer(true);
-    }
   }
 
   // start the configuration
   @Override
   public void runConfiguration() {
 
-    TRADE.shutdownTRADE();
-
     if (simSpeech) {
-      DiarcComponent.createInstance(SimSpeechRecognitionComponent.class,
+      createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster");
-      DiarcComponent.createInstance(SimSpeechRecognitionComponent.class,
+      createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster");
     }
 

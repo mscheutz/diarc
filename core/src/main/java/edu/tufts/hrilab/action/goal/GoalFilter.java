@@ -1,5 +1,9 @@
 package edu.tufts.hrilab.action.goal;
 
+/**
+ * Enum to define different Goal categories. This is mainly used to filter the GoalManager's goals
+ * during goal queries.
+ */
 public enum GoalFilter {
   ACTIVE, // being executed
   CURRENT, // active and pending

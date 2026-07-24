@@ -301,31 +301,6 @@ abstract public class DiarcComponent {
     return createInstance(clazz, true, args);
   }
 
-//  /**
-//   * Convenience method to pass all args as a single String, and automatically registers with TRADE.
-//   *
-//   * @param clazz class to be instantiated (must extend DiarcComponent)
-//   * @param args  command line arguments
-//   * @param <T>
-//   * @return
-//   */
-//  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
-//    return createInstance(clazz, args.split(" "), true);
-//  }
-
-//  /**
-//   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
-//   *
-//   * @param clazz             class to be instantiated (must extend DiarcComponent)
-//   * @param args              command line arguments
-//   * @param registerWithTrade true/false whether to register with TRADE
-//   * @param <T>
-//   * @return
-//   */
-//  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
-//    return createInstance(clazz, args.split(" "), registerWithTrade);
-//  }
-
   /**
    * Main method to allow starting of a single DIARC component from the command line.
    *

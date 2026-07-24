@@ -35,7 +35,8 @@ abstract public class DiarcConfiguration {
   private boolean singleComponentPerContainer = false;
 
   public void setSingleComponentPerContainer(boolean singleComponentPerContainer) {
-    this.singleComponentPerContainer = singleComponentPerContainer;
+    log.warn("singleComponentPerContainer is currently disabled.");
+    //this.singleComponentPerContainer = singleComponentPerContainer;
   }
 
   /**
@@ -51,8 +52,7 @@ abstract public class DiarcConfiguration {
   }
 
   public DiarcConfiguration(String... args) {
-    log = LoggerFactory.getLogger(this.getClass());
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownConfiguration()));
+    this();
 
     if (args.length > 0) {
       collectAdditionalUsageInfo();
@@ -139,17 +139,6 @@ abstract public class DiarcConfiguration {
     // parse sub-class(es)
     parseArgs(cmd);
   }
-//
-//  /**
-//   * Convenience method when no additional component args are needed. Automatically register with TRADE.
-//   *
-//   * @param clazz class to be instantiated (must extend DiarcComponent)
-//   * @param <T>
-//   * @return
-//   */
-//  public final <T extends DiarcComponent> T createInstance(Class<T> clazz) {
-//    return createInstance(clazz, true);
-//  }
 
   /**
    * Convenience method to automatically register with TRADE.

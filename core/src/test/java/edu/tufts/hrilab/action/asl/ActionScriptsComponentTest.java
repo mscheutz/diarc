@@ -350,15 +350,6 @@ public class ActionScriptsComponentTest {
     executeAndCheckGoal(Factory.createPredicate("aslThisTest(self:agent)"), GoalStatus.SUCCEEDED);
   }
 
-//  @Test
-//  public void testNewGM_API() {
-//    String filename = aslPath + "core.asl";
-//    Database.getInstance().loadDatabaseFromFile(filename);
-//
-//    // create goal and execute
-//    executeAndCheckGoal(Factory.createPredicate("getGoal(self, dance(self))"), GoalStatus.SUCCEEDED);
-//  }
-
   /**
    * Helper method to submit a goal, wait for it to finish, and then check the status.
    * @param goalPredicate

@@ -72,7 +72,7 @@ import java.lang.Long;
 
     // get current goals for ?actor
     GoalFilter !goalEnum = CURRENT;
-    !allGoals = tsc:getActorGoalPredicates(!goalEnum);
+    !allGoals = tsc:getGoalPredicatesForActor(!goalEnum);
 
     // remove handling nlp goal and getting currgoals from the goal list
     !filteredGoals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");

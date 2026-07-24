@@ -48,7 +48,9 @@ public class GoalInfo implements Serializable {
    * onto an existing action, where no top-level task planning is needed.
    */
   public boolean isAction = false;
-
+  /**
+   * If this goal is an observation (i.e., results in calling a DIARC observer).
+   */
   public boolean isObservation = false;
   /**
    * Optional metric for task planning.
