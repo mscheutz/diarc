@@ -252,25 +252,4 @@ public class QueueExecutionManager extends ExecutionManager {
 
     return goalPreds;
   }
-
-
-  //Issue is this would include all dialogue goals and other goals which skipped the queue
-  //Would need to track separately if we just wanted top level 'system' goals. They are technically still tracked here
-  //  until a new active goal starts for each agent though
-  //@TRADEService
-  //@Action
-  //public Predicate getLastGoal() {
-  //  Goal lastGoal = null;
-  //  for (Goal g: getPastGoals()) {
-  //    if (lastGoal == null || g.getEndTime() > lastGoal.getEndTime()) {
-  //      lastGoal = g;
-  //    }
-  //  }
-  //  if (lastGoal == null) {
-  //    //TODO: what to return here?
-  //    return Factory.createPredicate("none()");
-  //  } else {
-  //    return lastGoal.getPredicate();
-  //  }
-  //}
 }

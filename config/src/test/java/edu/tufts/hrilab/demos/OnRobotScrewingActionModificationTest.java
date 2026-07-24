@@ -12,6 +12,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Before;
@@ -67,6 +68,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     speechInputBrad.setText(input);
   }
 
+  @Ignore // must be ignored until TR mtracs jar is updated (getMatchingResult method)
   @Test
   public void screwingActionModificationTestOrdered() {
 

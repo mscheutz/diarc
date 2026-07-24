@@ -662,13 +662,13 @@ public class QueueExecutionManagerTest {
 
     assertSame(em.getNextGoal().getGoalPredicate(), goalPred3);
     assertSame(em.getNextGoal(Factory.createSymbol("team1:agent")).getGoalPredicate(), goalPred5);
-    assertEquals(em.getNextGoal(Factory.createSymbol("agent1:agent")).getGoalPredicate(), Factory.createPredicate("none()"));
+    assertNull(em.getNextGoal(Factory.createSymbol("agent1:agent")));
 
     cancelAllGoals();
   }
 
   @Test
-  public void testcancelSystemGoals() {
+  public void testCancelSystemGoals() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent");
     Goal freezeGoal1 = submitGoalAndWait(goalPred);
     goalPred = Factory.createPredicate("freeze", "agent2:agent");
@@ -695,7 +695,7 @@ public class QueueExecutionManagerTest {
   }
 
   @Test
-  public void testSuspendresumeSystemGoals() {
+  public void testSuspendResumeSystemGoals() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent");
     Goal freezeGoal1 = submitGoalAndWait(goalPred);
     goalPred = Factory.createPredicate("freeze", "agent2:agent");
