@@ -2,20 +2,25 @@ import logging
 import time
 import argparse
 import traceback
+import os
 
 from bosdyn.api.geometry_pb2 import Vec2
+from bosdyn.api.manipulation_api_pb2 import ManipulationApiFeedbackRequest
 from bosdyn.api.robot_state_pb2 import ManipulatorState
 from bosdyn.api.spot import door_pb2
+from bosdyn.api.spot import robot_command_pb2 as spot_command_pb2
 from bosdyn.client.door import DoorClient
 from bosdyn.client.robot_command import RobotCommandBuilder
 
-from google.protobuf.wrappers_pb2 import DoubleValue
+from google.protobuf.wrappers_pb2 import DoubleValue, FloatValue
 
-from bosdyn.client.frame_helpers import GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
+from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2, map_pb2
+from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
     ODOM_FRAME_NAME
 from bosdyn.api import manipulation_api_pb2, geometry_pb2, basic_command_pb2, arm_command_pb2, robot_command_pb2, \
     trajectory_pb2, synchronized_command_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
+from bosdyn.client.map_processing import MapModifiedError
 from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
 from bosdyn.util import seconds_to_duration
@@ -111,6 +116,14 @@ class SpotTRADEWrapper:
     def _get_transforms_snapshot(self):
         return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
 
+    def _get_mo_from_ref(self, refId: Symbol):
+        ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+        if (ret is None):
+            return None
+        mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+        return mo
+
+
     @handle_return
     @JOverride
     def openDoor(self, doorRef: Symbol, handleRef: Symbol):
@@ -119,13 +132,22 @@ class SpotTRADEWrapper:
         :return: A tuple (success, message)
         """
         try:
-            # get door MO
-            door_ret = self.trade.call_trade("getEntityForReference", [], doorRef, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-            door_mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(door_ret)
+            # get door and handle MOs
+            door_mo = self._get_mo_from_ref(doorRef)
+            handle_mo = self._get_mo_from_ref(handleRef)
 
-            # get handle MO
-            handle_ret = self.trade.call_trade("getEntityForReference", [], handleRef, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-            handle_mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(handle_ret)
+            counter = 0
+            while (door_mo is None or handle_mo is None) and counter < 10:
+                time.sleep(1)
+                door_mo = self._get_mo_from_ref(doorRef)
+                handle_mo = self._get_mo_from_ref(handleRef)
+                counter += 1
+
+            if door_mo is None:
+                return False, "Door not detected"
+
+            if handle_mo is None:
+                return False, "Handle not detected"
 
             # sanity check -- i.e., handle is inside door
             door_bb = door_mo.getBoundingBox()
@@ -615,46 +637,81 @@ class SpotTRADEWrapper:
     @JOverride
     def approachLocation(self, refId):
 
-        # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
-        walk_to_object_in_image = True
-        if walk_to_object_in_image:
-            # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
-            image_response = self.spot.spot_images.get_hand_rgb_image()
-            (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
-            walk = manipulation_api_pb2.WalkToObjectInImage(
-                pixel_xy=Vec2(x=x_pix, y=y_pix),
-                transforms_snapshot_for_camera=image_response.shot.transforms_snapshot,
-                frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
-                camera_model=image_response.source.pinhole,
-            )
-        else:
-            # use ray to specify object to grasp -- requires 3D camera data
-            ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-            mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+        try:
+            logging.info(f"ApproachLocation command using the pixel values")
+            # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
+            walk_to_object_in_image = True
+            if walk_to_object_in_image:
+                # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
+                image_response = self.spot.spot_images.get_hand_rgb_image()
+                (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
+                walk = manipulation_api_pb2.WalkToObjectInImage(
+                    pixel_xy=Vec2(x=x_pix, y=y_pix),
+                    transforms_snapshot_for_camera=image_response.shot.transforms_snapshot,
+                    frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
+                    camera_model=image_response.source.pinhole,
+                    offset_distance = FloatValue(value=1.25)
+                )
+            else:
+                logging.info(f"ApproachLocation command using the ray-based native SDK")
+                # use ray to specify object to grasp -- requires 3D camera data
+                ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+                mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
 
-            mo.transformToBase()
-            start = Point3d(0, 0, 0)
-            mo.getBaseTransform().transform(start)
+                mo.transformToBase()
+                start = Point3d(0, 0, 0)
+                mo.getBaseTransform().transform(start)
 
-            end = Point3d(start.x, start.y, start.z)
-            direction = mo.getDirection()
-            direction.scale(4.0)
-            end.add(direction)
-            walk = manipulation_api_pb2.WalkToObjectRayInWorld(
-                ray_start_rt_frame=geometry_pb2.Vec3(x=start.x, y=start.y, z=start.z),
-                ray_end_rt_frame=geometry_pb2.Vec3(x=end.x, y=end.y, z=end.z),
-                frame_name=self._reference_frame,
-            )
+                end = Point3d(start.x, start.y, start.z)
+                direction = mo.getDirection()
+                direction.scale(4.0)
+                end.add(direction)
+                walk = manipulation_api_pb2.WalkToObjectRayInWorld(
+                    ray_start_rt_frame=geometry_pb2.Vec3(x=start.x, y=start.y, z=start.z),
+                    ray_end_rt_frame=geometry_pb2.Vec3(x=end.x, y=end.y, z=end.z),
+                    frame_name=self._reference_frame,
+                    offset_distance = FloatValue(value=1.25)
+                )
 
-        # Build the proto
-        if walk_to_object_in_image:
-            walk_request = manipulation_api_pb2.ManipulationApiRequest(
-                walk_to_object_in_image=walk)
-        else:
-            walk_request = manipulation_api_pb2.ManipulationApiRequest(
-                walk_to_object_ray_in_world=walk)
 
-        return self.spot.manipulation_command(walk_request)[:1]
+            # Build the proto
+            if walk_to_object_in_image:
+                walk_request = manipulation_api_pb2.ManipulationApiRequest(
+                    walk_to_object_in_image=walk)
+            else:
+                walk_request = manipulation_api_pb2.ManipulationApiRequest(
+                    walk_to_object_ray_in_world=walk)
+
+            # (success, msg, cmd_id) = self.spot.manipulation_command(walk_request)
+            #
+            # # TODO: is using spot_arm correct here?
+            # self.spot.spot_arm.block_until_manipulation_completes(self.spot._manipulation_api_client, cmd_id)
+            # logging.info(f"ApproachLocation command results: {success}, {msg} {cmd_id}")
+            # return success, msg, cmd_id
+
+            logging.info("Submitting walk request to robot...")
+            manip_client = self.spot._manipulation_api_client
+            response = manip_client.manipulation_api_command(walk_request)
+
+            # Check feedback to verify the robot walks to the handle. The service will also return a
+            # FrameTreeSnapshot that contain a walkto_raycast_intersection point.
+            command_id = response.manipulation_cmd_id
+            feedback_request = ManipulationApiFeedbackRequest(manipulation_cmd_id=command_id)
+            timeout_sec = 15.0
+            end_time = time.time() + timeout_sec
+            while time.time() < end_time:
+                response = manip_client.manipulation_api_feedback_command(feedback_request)
+                assert response.manipulation_cmd_id == command_id, 'Got feedback for wrong command.'
+                if (response.current_state == manipulation_api_pb2.MANIP_STATE_DONE):
+                    logging.info("walk request finished")
+                    return True, ""
+
+            logging.info("walk request timed out.")
+            return False, "walk request timed out."
+
+        except Exception as e:
+            logging.error(f"Error calling approachLocation: {traceback.format_exc()}")
+            return False, ""
 
     @JOverride
     def goToStartPose(self, safe):
@@ -718,7 +775,10 @@ class SpotTRADEWrapper:
     @JOverride
     def stop(self):
         try:
-            return self.spot.stop()
+            logging.info(f"stop called")
+            result = self.spot.stop()
+            logging.info(f"stop result: {result}")
+            return result
         except Exception as e:
             logging.error(f"Error calling stop: {traceback.format_exc()}")
             return False, ""
@@ -915,6 +975,15 @@ class SpotTRADEWrapper:
             if self._mapping:
                 logging.info("Already mapping")
                 return
+            # clear the robot's graph first so recording starts a fresh map. otherwise start_recording
+            # appends to whatever graph is loaded on the robot (the map uploaded at startup), merging the
+            # new session into the old one. /tmp/spot_append skips the clear to extend the loaded map.
+            if os.path.exists("/tmp/spot_append"):
+                logging.info("append mode (/tmp/spot_append present): extending loaded graph, not clearing")
+            else:
+                ok, msg = self.spot.spot_graph_nav.clear_graph()
+                if not ok:
+                    logging.warning(f"clear_graph before recording failed: {msg}")
             self._recording_client = self.spot._robot.ensure_client(GraphNavRecordingServiceClient.default_service_name)
             self._recording_client.start_recording()
             self._mapping = True
@@ -963,7 +1032,69 @@ class SpotTRADEWrapper:
 
             self._mapping = False
 
+            # close loops + optimize anchoring on the server before downloading so the extracted map
+            # carries the loop-closure edges (adds edges / refines poses only; waypoint ids unchanged).
+            # right after stop_recording the recording service is still settling the graph, so
+            # process_topology can transiently raise MapModifiedError ("modified by another client") --
+            # settle and retry. isolated so a closure failure still saves the recorded map.
+            for attempt in range(5):
+                try:
+                    time.sleep(1)
+                    ok, msg = self.spot.spot_graph_nav.navigation_close_loops(True, True)
+                    if not ok:
+                        logging.warning(f"Loop closure incomplete: {msg}")
+                    ok, msg = self.spot.spot_graph_nav.optmize_anchoring()
+                    if not ok:
+                        logging.warning(f"Anchoring optimization incomplete: {msg}")
+                    break
+                except MapModifiedError:
+                    logging.warning(f"Map still settling after stop_recording (attempt {attempt + 1}/5), retrying...")
+                except Exception:
+                    logging.error(f"Loop closure/anchoring failed; saving recorded map without it: {traceback.format_exc()}")
+                    break
+            else:
+                logging.error("Loop closure kept hitting MapModifiedError after retries; saving recorded map without it")
+
             self.spot.spot_graph_nav.download_navigation_graph("/tmp/spot_map")
+
+            # DEMO-ONLY (use only when there are no cliffs in mapped space):
+            # loop-closure edges are never physically walked, so
+            # GraphNav treats that ground as obstacles and steps tentatively (reads badly on camera).
+            # On those edges only, override the ground-caution mobility (cliff/missing-data/negative-
+            # obstacle off, decisive trot, flat ground); positive obstacle avoidance is left ON.
+
+            # WARNING: setting this to true is potentially unsafe!!!
+            confident_shortcuts = False
+            if confident_shortcuts:
+                try:
+                    trot = spot_command_pb2.LocomotionHint.Value("HINT_AUTO_TROT")
+                    g = map_pb2.Graph()
+                    g.ParseFromString(open("/tmp/spot_map/graph", "rb").read())
+                    confident = 0
+                    for edge in g.edges:
+                        if edge.annotations.edge_source not in (2, 3):  # SMALL_/FIDUCIAL_LOOP_CLOSURE
+                            continue
+                        a = edge.annotations
+                        a.flat_ground.value = True
+                        mp = a.mobility_params
+                        mp.locomotion_hint = trot
+                        mp.allow_degraded_perception = True
+                        mp.disable_missing_data_cliffs = True
+                        mp.disable_nearmap_cliff_avoidance = True
+                        mp.obstacle_params.disable_vision_negative_obstacles = True
+                        mp.terrain_params.ground_mu_hint.value = 0.8
+                        a.override_mobility_params.paths.extend([
+                            "locomotion_hint", "allow_degraded_perception",
+                            "disable_missing_data_cliffs", "disable_nearmap_cliff_avoidance",
+                            "obstacle_params.disable_vision_negative_obstacles",
+                            "terrain_params.ground_mu_hint",
+                        ])
+                        confident += 1
+                    open("/tmp/spot_map/graph", "wb").write(g.SerializeToString())
+                    logging.info(f"confident-shortcuts: annotated {confident} loop-closure edge(s)")
+                except Exception:
+                    logging.error(f"confident-shortcuts failed (uploading map as-is): {traceback.format_exc()}")
+
             self.spot.spot_graph_nav.upload_graph("/tmp/spot_map")
             spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
 
@@ -996,7 +1127,7 @@ class SpotTRADEWrapper:
     @JOverride
     def setTV(self, tv):
         try:
-            logging.info(f"Setting TV({tv})")
+            logging.debug(f"Setting TV({tv})")
             return self._setVelsLocal(tv, 0.0, 0.0)
         except Exception as e:
             logging.error(f"Error calling setTV({tv}): {traceback.format_exc()}")
@@ -1005,7 +1136,7 @@ class SpotTRADEWrapper:
     @JOverride
     def setRV(self, rv):
         try:
-            logging.info(f"Setting RV({rv})")
+            logging.debug(f"Setting RV({rv})")
             return self._setVelsLocal(0.0, 0.0, rv)
         except Exception as e:
             logging.error(f"Error calling setRV vel({rv}): {traceback.format_exc()}")
@@ -1013,7 +1144,7 @@ class SpotTRADEWrapper:
 
     @JOverride
     def setVels(self, *args):
-        logging.info(f"setVels dispatch method called")
+        logging.debug(f"setVels dispatch method called")
         # always use the wild card args when implementing a dispatch
 
         try:
