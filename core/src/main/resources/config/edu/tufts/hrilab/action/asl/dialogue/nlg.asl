@@ -32,12 +32,14 @@ import java.util.Map;
       // update dialogue bookkeeping
       op:log("debug", "updating dialogue history..");
       act:updateDialogueHistory(?utterance);
-      op:log("debug", "done updating dialogue history");
+      !text = op:invokeMethod(?utterance,"getWordsAsString");
+      op:log("debug", "done updating dialogue history with: !text");
     } else {
         // update dialogue bookkeeping
         op:log("debug", "updating dialogue history..");
         act:updateDialogueHistory(?utterance);
-        op:log("debug", "done updating dialogue history");
+        !text = op:invokeMethod(?utterance,"getWordsAsString");
+        op:log("debug", "done updating dialogue history with: !text");
 
         // get text from utterance, and say it
         if (op:equalsValue(?sayText,true)) {

@@ -12,6 +12,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.nlg.cache.CachedNLGComponent;
 import edu.tufts.hrilab.slug.nlg.llm.LLMNLGComponent;
+import edu.tufts.hrilab.slug.nlg.templated.TemplatedNLG;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -31,6 +32,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
   private NLGInterface simpleNLG;
   private boolean useCache = false;
   private CachedNLGComponent cacheNLG;
+  private boolean useTemplatedNLG = false;
+  private TemplatedNLG templatedNLG;
 
   private String cacheName = null;
   private String[] cacheLoads = null;
@@ -53,6 +56,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheSimpleNLG").desc("Cache SimpleNLG responses").build());
+    options.add(Option.builder("templated").argName("boolean").desc("Use the TemplatedNLG generator").build());
     options.add(Option.builder("sequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
     return options;
   }
@@ -86,10 +90,14 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
       cacheSimpleNLG = true;
       log.debug("Cache SimpleNLG results");
     }
+    if (cmdLine.hasOption("templated")) {
+      useTemplatedNLG = true;
+      log.debug("Using TemplatedNLG");
+    }
     if (cmdLine.hasOption("sequence")) {
       sequence = cmdLine.getOptionValues("sequence");
     } else {
-      sequence = new String[]{"cache", "llm", "simple"};
+      sequence = new String[]{"cache", "llm", "templated", "simple"};
     }
     log.info("Using sequence: {}", Arrays.toString(sequence));
   }
@@ -122,6 +130,11 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
       }
       cacheNLG = createInstance(CachedNLGComponent.class, cacheArgs, false);
     }
+
+    //init TemplatedNLGComponent
+    if (useTemplatedNLG) {
+      templatedNLG = TemplatedNLG.defaults();
+    }
   }
 
   @Override
@@ -133,6 +146,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
     Future<Utterance> llmFuture = null;
     Future<Utterance> simpleNLGFuture = null;
     Future<Utterance> cachedFuture = null;
+    Future<Utterance> templatedFuture = null;
 
     if (useLLM) {
       llmFuture = executor.submit(() -> llmGenerator.convertSemanticsToText(new Utterance.Builder(incoming).build()));
@@ -143,11 +157,15 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
     if (useCache) {
       cachedFuture = executor.submit(() -> cacheNLG.convertSemanticsToText(new Utterance.Builder(incoming).build()));
     }
+    if (useTemplatedNLG) {
+      templatedFuture = executor.submit(() -> templatedNLG.convertSemanticsToText(new Utterance.Builder(incoming).build()));
+    }
 
     Utterance output = null;
     Utterance cachedOutput = null;
     Utterance simpleNLGOutput = null;
     Utterance llmOutput = null;
+    Utterance templatedOutput = null;
 
     for (int i = 0; i < sequence.length; i++) {
       switch (sequence[i]) {
@@ -202,6 +220,21 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
               log.debug("[lat] nlg_done dur={}ms path=simple", (System.nanoTime() - t0) / 1_000_000);
               return simpleNLGOutput;
             }
+          }
+          break;
+        case "templated":
+          if (templatedFuture != null) {
+            try {
+              templatedOutput = templatedFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+              log.error("[convertSemanticsToText] Error getting templated results.", e);
+            }
+          }
+
+          if (templatedOutput != null && !templatedOutput.getWordsAsString().isEmpty()) {
+            log.debug("[convertSemanticsToText] Using templated response");
+            log.debug("[lat] nlg_done dur={}ms path=templated", (System.nanoTime() - t0) / 1_000_000);
+            return templatedOutput;
           }
           break;
         default:
