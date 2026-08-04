@@ -66,9 +66,9 @@ import java.lang.Boolean;
     }
 
     act:suspendWaitForResponse(option(X),?actor,false);
-    !bindings = act:askQuestionFromString("What information would you like to know about? Say the option number.", option(X));
+    !bindings = act:askQuestionFromString("What information would you like to know about? Say the option number.", option(X), 1, 300);
     act:resumeWaitForResponse(option(X),?actor);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !response = op:get(!bindings,!x);
@@ -87,15 +87,15 @@ import java.lang.Boolean;
     !responseForm = op:createPredicate("date(X)");
     op:add(!responseFormList,!responseForm);
 
-    !bindings = act:askQuestionFromString("When is the start of the analysis period?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("When is the start of the analysis period?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !response = op:get(!bindings,!x);
     !startDateStr = op:getName(!response);
 
-    !bindings = act:askQuestionFromString("When is the end of the analysis period?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("When is the end of the analysis period?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !response = op:get(!bindings,!x);
