@@ -4097,44 +4097,44 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("spot stow arm",
-                "INSTRUCT(eric,self,stow(self),{})",
+                "INSTRUCT(eric,self,goToPose(self,stow),{})",
                 "eric",
                 "self"
         ));
 
         assertTrue(testUtterance("unstow arm",
-                "INSTRUCT(eric,self,unstow(self),{})",
+                "INSTRUCT(eric,self,goToPose(self,unstow),{})",
                 "eric",
                 "self"
         ));
 
         assertTrue(testUtterance("carry mode",
-                "INSTRUCT(eric,self,carry(self),{})",
+                "INSTRUCT(eric,self,goToPose(self,carry),{})",
                 "eric",
                 "self"
         ));
 
         assertTrue(testUtterance("close gripper",
-                "INSTRUCT(eric,self,closeGripper(self),{})",
+                "INSTRUCT(eric,self,closeGripper(self,arm),{})",
                 "eric",
                 "self"
         ));
 
         assertTrue(testUtterance("open gripper",
-                "INSTRUCT(eric,self,openGripper(self),{})",
+                "INSTRUCT(eric,self,openGripper(self,arm),{})",
                 "eric",
                 "self"
         ));
 
         //Not sure which of these forms we want or if any of this should be exposed
         assertTrue(testUtterance("go to the dock",
-                "INSTRUCT(eric,self,goto(self,VAR0:location),{dock(VAR0:location),DEFINITE(VAR0:location)})",
+                "INSTRUCT(eric,self,goToLocation(self,VAR0:location),{dock(VAR0:location),DEFINITE(VAR0:location)})",
                 "eric",
                 "self"
         ));
 
         assertTrue(testUtterance("pick up the bottle",
-                "INSTRUCT(eric,self,pickup(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(eric,self,pickUp(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "eric",
                 "self"
         ));
@@ -4146,7 +4146,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("put down the bottle",
-                "INSTRUCT(eric,self,putdown(self),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(eric,self,putdown(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "eric",
                 "self"
         ));

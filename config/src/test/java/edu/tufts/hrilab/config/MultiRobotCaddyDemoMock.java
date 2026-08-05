@@ -51,6 +51,7 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 
         createInstance(SimSpeechProductionComponent.class, "");
         createInstance(MockSpotComponent.class, "-mapDescriptor spotlocation -refs spotLocationRefs.json -groups agent:spot:spot ");
+        createInstance(MockVisionComponent.class, "-groups agent:spot:spot -refsKbName spotphysobj -sceneClass edu.tufts.hrilab.vision.scene.config.MultiRobotCaddySpotSceneGenerator");
         createInstance(MockTemiV3Component.class, "-mapDescriptor temilocation -groups agent:temi:temi");
 
         String goalManagerArgs = "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "

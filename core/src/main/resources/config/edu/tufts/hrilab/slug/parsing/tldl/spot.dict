@@ -34,8 +34,9 @@ could; (AGENT/C) \ AGENT ; #x.$x
 would; (AGENT/C) \ AGENT ; #x.$
 might; (AGENT/C) \ AGENT ; #x.$x
 
-%please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
-please; (AGENT/C) \ AGENT, C\C ; AGENT\AGENT, #x. $x
+
+please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
+%please; (AGENT/C) \ AGENT, C\C ; AGENT\AGENT, #x. $x
 
 the; REF/RN ; #x.$x ; DEFINITE
 the; LREF/LN ; #x.$x ; DEFINITE

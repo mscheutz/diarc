@@ -72,7 +72,7 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("getTypeId", Symbol.class);
         addServiceToObserve("getTokenIds", Symbol.class);
         addServiceToObserve("releaseObject", String.class, Symbol.class, Float.class);
-        addServiceToObserve("detectAndOpenDoor");
+        addServiceToObserve("openDoor", Symbol.class, Symbol.class);
         addServiceToObserve("initLocation", Symbol.class);
 
         PerformanceMeasures.setSeed(randomNumberSeed);

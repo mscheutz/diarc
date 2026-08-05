@@ -280,9 +280,8 @@ repositories {
     name = "Thinking Robots TRADE mvn host"
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
-  maven { // hrilab archive
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+  maven {
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }

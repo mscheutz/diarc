@@ -346,7 +346,20 @@ import java.util.List;
     op:log(info, "[opendoor] ?actor moving out of the doorway to ?destinationLocation in ?destinationRoom");
 }
 
+() = detectAndOpenDoor() {
+    // search for handle
+    Symbol !doorRef;
+    Predicate !doorProps = op:createPredicate("and(door(X:spotphysobj))");
+    !doorRef = act:positReference(!doorProps);
 
+    // search for handle
+    Symbol !handleRef;
+    Predicate !handleProps = op:createPredicate("and(handle(X:spotphysobj))");
+    !handleRef = act:positReference(!handleProps);
+
+    // call primitive openDoor
+    act:openDoor(!doorRef, !handleRef);
+}
 
 
 () = perceiveobjectatlocation[""](Symbol ?actor:fetch, Symbol ?objectRef:physobj, Symbol ?location:location, Symbol ?area:area, Symbol ?propertyType:property){

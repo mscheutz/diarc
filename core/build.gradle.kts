@@ -28,9 +28,8 @@ repositories {
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven {
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
