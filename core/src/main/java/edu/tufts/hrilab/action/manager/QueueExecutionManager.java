@@ -109,7 +109,7 @@ public class QueueExecutionManager extends ExecutionManager {
         //If the goal skips the queue, it holds no resources
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
           //Exception to the rule - action learning itself takes only the learning lock
-          if (goal.getPredicate().getName().equals("learnAction")) {
+          if (goal.getGoalStatePredicate().getName().equals("learnAction")) {
             resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
           }
           //If it is a learning goal, takes just the agent-wide lock.
@@ -240,7 +240,7 @@ public class QueueExecutionManager extends ExecutionManager {
   private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     Goal g = agentGoals.get(actor);
     if (g != null && !g.getStatus().isTerminated()) {
-      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getGoalStatePredicate()));
     }
 
     AgentTeam agentTeam  = agentTeams.get(actor);

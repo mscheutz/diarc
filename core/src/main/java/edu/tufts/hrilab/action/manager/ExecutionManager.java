@@ -469,7 +469,7 @@ public class ExecutionManager implements GoalListener {
 
       for (Symbol agent : getDescendants(goal.getActor())) {
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          if (goal.getPredicate().getName().equals("learnAction")) {
+          if (goal.getGoalStatePredicate().getName().equals("learnAction")) {
             resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
           }
         }
@@ -967,7 +967,7 @@ public class ExecutionManager implements GoalListener {
     root = (executionType == ExecutionType.ACT) ? rootContext : rootContext.createSimulationRoot(stateMachine, executionType);
 
     // Check that goal itself does not violate root constrains
-    Justification constraintCheck = root.getConstraints().verifyConstraints(goal.getPredicate(), stateMachine);
+    Justification constraintCheck = root.getConstraints().verifyConstraints(goal.getGoalStatePredicate(), stateMachine);
 
     if (constraintCheck.getValue()) {
       // Instantiate new action interpreter in charge of executing this goal.
@@ -1245,7 +1245,7 @@ public class ExecutionManager implements GoalListener {
    * @param goal
    */
   private void cancelActiveGoal(Goal goal) {
-    log.debug("[cancelActiveGoal] goal: {}", goal.getPredicate());
+    log.debug("[cancelActiveGoal] goal: {}", goal.getGoalPredicate());
     goal.cancel();
 
     // if goal doesn't have an AI, remove it from goals list and add to pastGoals
@@ -1290,7 +1290,7 @@ public class ExecutionManager implements GoalListener {
    * @return true if the goal was found, otherwise false
    */
   private boolean suspendActiveGoal(Goal goal) {
-    log.trace("[suspendActiveGoal] " + goal.getPredicate());
+    log.trace("[suspendActiveGoal] " + goal.getGoalPredicate());
     if (goal == null) {
       log.warn("[suspendActiveGoal] goal is null.");
       return false;
@@ -1446,7 +1446,7 @@ public class ExecutionManager implements GoalListener {
       Set<Goal> goalsToCancel = new HashSet<>();
       for (Symbol agentTeam : agentTeams.keySet()) {
         for (Goal g : agentTeams.get(agentTeam).getActiveGoals()) {
-          if (!g.getPredicate().getName().equals("listen")) {
+          if (!g.getGoalStatePredicate().getName().equals("listen")) {
             goalsToCancel.add(g);
           }
         }
@@ -1465,7 +1465,7 @@ public class ExecutionManager implements GoalListener {
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pendingGoal = pendingGoalIterator.next();
-        goalPreds.add(pendingGoal.getGoal().getPredicate());
+        goalPreds.add(pendingGoal.getGoal().getGoalStatePredicate());
       }
     }
     log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
@@ -1488,7 +1488,7 @@ public class ExecutionManager implements GoalListener {
     }
 
     for (Goal g : agentTeam.getActiveGoals()) {
-      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getGoalPredicate()));
     }
 
     for (Symbol member : agentTeam.getMemberNames()) {
@@ -1505,7 +1505,7 @@ public class ExecutionManager implements GoalListener {
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       if (pendingGoalIterator.hasNext()) {
         log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
-        return pendingGoalIterator.next().getGoal().getPredicate();
+        return pendingGoalIterator.next().getGoal().getGoalPredicate();
       } else {
         log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
         return Factory.createPredicate("none()");
@@ -1523,7 +1523,7 @@ public class ExecutionManager implements GoalListener {
         PendingGoal pg = pendingGoalIterator.next();
         if (agent.equals(pg.getGoal().getActor().toUntyped())) {
           log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
-          return pg.getGoal().getPredicate();
+          return pg.getGoal().getGoalStatePredicate();
         }
       }
     }
@@ -1654,9 +1654,9 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  protected List<Goal> getActiveGoals(Goal queryGoal) {
-    log.debug("[getActiveGoals] {}", queryGoal);
-    return getGoalHelper(getActiveGoals(), queryGoal);
+  protected List<Goal> getActiveGoals(Predicate goalPredicate) {
+    log.debug("[getActiveGoals] {}", goalPredicate);
+    return getGoalHelper(getActiveGoals(), goalPredicate);
   }
 
   /**
@@ -1664,9 +1664,9 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getPastGoals(Goal queryGoal) {
-    log.debug("[getPastGoals] {}", queryGoal);
-    return getGoalHelper(getPastGoals(), queryGoal);
+  public List<Goal> getPastGoals(Predicate goalPredicate) {
+    log.debug("[getPastGoals] {}", goalPredicate);
+    return getGoalHelper(getPastGoals(), goalPredicate);
   }
 
   /**
@@ -1674,9 +1674,9 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getCurrentGoals(Goal queryGoal) {
-    log.debug("[getCurrentGoals] {}", queryGoal);
-    return getGoalHelper(getCurrentGoals(), queryGoal);
+  public List<Goal> getCurrentGoals(Predicate goalPredicate) {
+    log.debug("[getCurrentGoals] {}", goalPredicate);
+    return getGoalHelper(getCurrentGoals(), goalPredicate);
   }
 
   /**
@@ -1684,17 +1684,17 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getAllGoals(Goal queryGoal) {
-    log.debug("[getAllGoals] {}", queryGoal);
+  public List<Goal> getAllGoals(Predicate goalPredicate) {
+    log.debug("[getAllGoals] {}", goalPredicate);
     synchronized (pendingGoalsLock) {
-      log.trace("[getAllGoals] {} have pendingGoalsLock", queryGoal);
+      log.trace("[getAllGoals] {} have pendingGoalsLock", goalPredicate);
       synchronized (pastGoals) {
-        log.trace("[getAllGoals] {} have pastGoalsLock", queryGoal);
+        log.trace("[getAllGoals] {} have pastGoalsLock", goalPredicate);
         synchronized (goalsLock) {
-          log.trace("[getAllGoals] {} have goalsLock", queryGoal);
-          List<Goal> goals = getCurrentGoals(queryGoal);
-          goals.addAll(getPastGoals(queryGoal));
-          log.trace("[getCurrentGoals] {} releasing all locks", queryGoal);
+          log.trace("[getAllGoals] {} have goalsLock", goalPredicate);
+          List<Goal> goals = getCurrentGoals(goalPredicate);
+          goals.addAll(getPastGoals(goalPredicate));
+          log.trace("[getCurrentGoals] {} releasing all locks", goalPredicate);
           return goals;
         }
       }
@@ -1779,11 +1779,11 @@ public class ExecutionManager implements GoalListener {
     return returnGoal;
   }
 
-  private List<Goal> getGoalHelper(List<Goal> goalCollection, Goal queryGoal) {
-    log.trace("[getGoalHelper] {}. {}", goalCollection, queryGoal);
+  private List<Goal> getGoalHelper(List<Goal> goalCollection, Predicate goalPredicate) {
+    log.trace("[getGoalHelper] {}. goal: {}", goalCollection, goalPredicate);
     List<Goal> matchingGoals = new ArrayList<>();
     for (Goal currGoal : goalCollection) {
-      if (currGoal.getActor().equals(queryGoal.getActor()) && currGoal.getPredicate().instanceOf(queryGoal.getPredicate())) {
+      if (currGoal.matches(goalPredicate)) {
         matchingGoals.add(currGoal);
       }
     }

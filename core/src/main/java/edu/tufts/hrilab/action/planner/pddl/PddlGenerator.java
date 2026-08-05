@@ -74,7 +74,7 @@ public class PddlGenerator {
    * @param goal
    */
   private void generateGoal(Goal goal) {
-    Set<Predicate> goalPreds = Utils.expand(goal.getPredicate());
+    Set<Predicate> goalPreds = Utils.expand(goal.getGoalStatePredicate());
     if (goal.getMetric() != null) {
       builder.addMetric(goal.getMetric());
     }
@@ -244,8 +244,6 @@ public class PddlGenerator {
    * Check all consultants and add relevant knowledge to the PDDL builder.
    */
   private void scrapeConsultants(Symbol actor) {
-
-
     //brad: for every new Resolver get list of consultants(as TSI+ kbName) and property cache (call get properties handled on everything)
 
     //If an agent is busy, remove it from available agents

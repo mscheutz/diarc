@@ -88,6 +88,8 @@ public abstract class Planner {
     String plan = plan(domain, problem);
     if (plan == null) {
       log.error("Can't plan.");
+      log.info("domain file: " + domain.getAbsolutePath());
+      log.info("problem file: " + problem.getAbsolutePath());
       return null;
     } else {
       log.info("PLAN = " + plan);
@@ -134,7 +136,7 @@ public abstract class Planner {
         newAction.addEventSpec(new EventSpec(actionWithActor, true));
       }
     }
-    newAction.setDescription(goal.getPredicate().toString());
+    newAction.setDescription(goal.getGoalStatePredicate().toString());
     ActionDBEntry newADB = newAction.build(true); //todo: this sticks a new planned action on top of the old one every time. should we be replacing it?
 
     return new ParameterizedAction(newADB, goal);

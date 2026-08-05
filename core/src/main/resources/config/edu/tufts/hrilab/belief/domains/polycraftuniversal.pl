@@ -79,6 +79,13 @@ subtype(thief, agent).
 subtype(oak_plank, plank).
 subtype(oak_log, log).
 
+%% define diarc agent
+diarcAgent(self).
+memberOf(X,X).
+memberOf(self, self).
+team(self).
+object(self, agent).
+
 %%PREDICATES
 
 %%High level planning

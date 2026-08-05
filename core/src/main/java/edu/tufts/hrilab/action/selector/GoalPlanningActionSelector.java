@@ -39,7 +39,7 @@ public class GoalPlanningActionSelector extends ActionSelector {
   public ParameterizedAction selectActionForGoal(Goal goal, ActionConstraints constraints, StateMachine stateMachine) {
     log.debug("Selecting action for goal: " + goal);
 
-    if (goal.isObservation() || goal.isAction() || "handled".equals(goal.getPredicate().getName()) || "handleSemantics".equals(goal.getPredicate().getName()) || "knows".equals(goal.getPredicate().getName())) {
+    if (goal.isObservation() || goal.isAction() || "handled".equals(goal.getGoalStatePredicate().getName()) || "handleSemantics".equals(goal.getGoalStatePredicate().getName()) || "knows".equals(goal.getGoalStatePredicate().getName())) {
       // If goal is specifying a particular action or observation action, look up action using utilitarian action selector,
       // and then attach planned action to reach pre-conditions (if any)
 

@@ -7,7 +7,6 @@ import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.listener.ActionListener;
-import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.lock.ActionResourceLock;
 
 import edu.tufts.hrilab.action.priority.PriorityCalculator;
@@ -193,7 +192,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       stepExecution = new StepExecution(rootStep, callStack);
     } else {
       goal.setFailureStatus(GoalStatus.FAILED, rootStep.getJustification());
-      log.info("Action for goal {} failed with GoalStatus: {}", goal.getPredicate(), goal.getStatus());
+      log.info("Action for goal {} failed with GoalStatus: {}", goal.getGoalPredicate(), goal.getStatus());
     }
   }
 
@@ -448,13 +447,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         if (this.isValid() && !isRunning) {
           // (Try to) Start goal execution with this interpreter
           if (goal.setAsStarted()) {
-            log.debug("Started Action Interpreter for goal: {}. Context id: {}", goal.getPredicate(), rootStep.getId());
+            log.debug("Started Action Interpreter for goal: {}. Context id: {}", goal.getGoalPredicate(), rootStep.getId());
           } else {
-            log.error("Could not start Action Interpreter (goal refused to start): {}", goal.getPredicate());
+            log.error("Could not start Action Interpreter (goal refused to start): {}", goal.getGoalPredicate());
             return rootStep.getStatus();
           }
         } else {
-          log.error("Could not start Action Interpreter (not valid or already running): {}", goal.getPredicate());
+          log.error("Could not start Action Interpreter (not valid or already running): {}", goal.getGoalPredicate());
           return rootStep.getStatus();
         }
 
@@ -558,7 +557,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     try {
       if (currentStep == null) {
-        log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
+        log.warn("[suspend] AI for goal has already terminated: {}", goal.getGoalPredicate());
       } else if (currentStep.isTerminated()) {
         // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
         suspended.set(true);
@@ -624,7 +623,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         if (suspended.get()) {
           this.goal.setStatus(GoalStatus.CANCELED);
         } else {
-          log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
+          log.warn("[cancel] goal has already terminated: {}", goal.getGoalPredicate());
         }
       } else if (currentStep.isTerminated()) {
         // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
@@ -655,7 +654,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    */
   private void halt() {
     if (!shouldUpdate.get()) {
-      log.error("[halt] halt has already been called: {}", goal.getPredicate());
+      log.error("[halt] halt has already been called: {}", goal.getGoalPredicate());
       return;
     }
 
@@ -673,12 +672,12 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       for (Long contextId : asyncFutures.keySet()) {
         Future<ActionStatus> currFuture = asyncFutures.get(contextId);
         if (!currFuture.isDone()) {
-          log.warn("[halt] waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+          log.warn("[halt] waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getGoalPredicate(), contextId);
           try {
             currFuture.get();
-            log.warn("[halt] asynchronous context finished. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+            log.warn("[halt] asynchronous context finished. Goal: {} Context id: {}", goal.getGoalPredicate(), contextId);
           } catch (InterruptedException | ExecutionException e) {
-            log.error("[halt] exception waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+            log.error("[halt] exception waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getGoalPredicate(), contextId);
           }
         }
       }
@@ -700,10 +699,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     if (goal.getStatus().isFailure()) {
       log.info("[halt] goal terminated: {} GoalStatus: {} {}: {}."
-              , goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
+              , goal.getGoalPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
     } else if (log.isDebugEnabled()) {
       log.debug("[halt] goal terminated: {} GoalStatus: {} {}: {}."
-              , goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
+              , goal.getGoalPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
     }
   }
 

@@ -69,7 +69,7 @@ public class Interact extends Active {
 
   @Override
   public String getCommand() {
-    return "INTERACT " + this.entityID; //Interact Trader_ID
+    return "INTERACT_" + this.entityID; //Interact Trader_ID
   }
 
   @Override
