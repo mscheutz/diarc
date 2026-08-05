@@ -115,6 +115,7 @@ artifacts {
 dependencies {
   configurations.getByName("mockImplementation")(project(":core"))
   api(project(":core"))
+  api(project(":core","mockJar"))
   if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     api("rosjava_core:rosjava:0.0.0")
     api("rosjava_core:rosjava_bootstrap:0.0.0")
@@ -175,10 +176,6 @@ addRosSource("pr2", listOf(
     "edu/tufts/hrilab/diarcros/pr2/*",
     "edu/tufts/hrilab/manipulator/pr2/*",
 ), listOf("moveit"))
-
-addRosSource("spot", listOf(
-    "edu/tufts/hrilab/spot/*",
-), listOf("movebase"))
 
 addRosSource("tower", listOf(
     "edu/tufts/hrilab/tower/*",

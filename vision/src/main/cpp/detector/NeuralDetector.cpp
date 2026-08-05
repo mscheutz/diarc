@@ -11,18 +11,25 @@
 #include "stm/util/StmUtilities.hpp"
 #include <experimental/filesystem>
 #include <fstream>
+#include <opencv2/core/utils/logger.hpp>
 
 namespace fs = std::experimental::filesystem;
 using namespace diarc::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
+  LOG4CXX_INFO(logger, boost::format("Loading config file: %s") % configFile.c_str());
   //get directory
   fs::path homedir(getenv("HOME"));
   fs::path diarc(".diarc");
   fs::path vision("vision");
   fs::path detectors("detectors");
-  fs::path p(configFile);
-  fs::path dir = homedir / diarc / vision / detectors / p.stem();
+
+  unsigned found = configFile.find_last_of("/\\");
+  std::string path = configFile.substr(0, found);
+  found = path.find_last_of("/\\");
+  fs::path p(path.substr(found+1, path.length()));
+
+  fs::path dir = homedir / diarc / vision / detectors / p;
   std::string backEnd;
   std::string type;
   uint64_t totalClasses;
@@ -52,6 +59,7 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
   Json::Value config = root["config"];
   fs::path model_file(config["model"].asString());
   fs::path model_path = dir / model_file;
+  yolo_version = config["yolo_version"].asInt64();
   inputSize = config["input_size"].asInt64();
   backEnd = config["backend"].asString();
   confidence_thresh = config["conf_thresh"].asDouble();
@@ -68,7 +76,7 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 NeuralDetector::NeuralDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "NeuralDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.NeuralDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.NeuralDetector");
 }
 
 NeuralDetector::~NeuralDetector() {}
@@ -77,12 +85,7 @@ void NeuralDetector::initModel(const std::string &model_path, const std::string 
   if (type == "darknet") {
 #if defined(OPENCV_DNN) || defined(OPENCV3_DNN)
     fs::path dn_model_abs = fs::canonical(model_path + ".weights");
-
-    fs::path dn_config_file(configFile);
-    fs::path dn_config_fn(dn_model_abs.filename().stem().string() + ".cfg");
-    fs::path dn_config_dir(dn_config_file.parent_path().string());
-    fs::path dn_config = dn_config_dir / dn_config_fn;
-    fs::path dn_config_abs = fs::canonical(dn_config);
+    fs::path dn_config_abs = fs::canonical(model_path + ".cfg");
 
     LOG4CXX_INFO(logger, boost::format("Using darknet config: %s") % dn_config_abs.string());
     LOG4CXX_INFO(logger, boost::format("Loading darknet model: %s") % dn_model_abs.string());
@@ -94,6 +97,8 @@ void NeuralDetector::initModel(const std::string &model_path, const std::string 
 #if defined(OPENCV_DNN)
     fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
     LOG4CXX_INFO(logger, boost::format("Loading ONNX model: %s") % onnx_model_abs.string());
+
+    // cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_VERBOSE);
     net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
 #else
     LOG4CXX_ERROR(logger, "Cannot load ONNX model with this OpenCV version. Must be 4.5+");
@@ -152,12 +157,12 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
   cv::Mat currFrame = prepFrame(img);
 
   // forward pass
-  std::vector<cv::Mat> detections;
+  std::vector<cv::Mat> outputs;
   cv::dnn::blobFromImage(currFrame, blob, 1./255., cv::Size(inputSize, inputSize), cv::Scalar(), true, false, CV_32F);
   net.setInput(blob);
   static std::vector<std::string> outLayers = net.getUnconnectedOutLayersNames(); 
   static std::string outLayerType = net.getLayer(outLayers[0])->type;
-  net.forward(detections, outLayers);
+  net.forward(outputs, outLayers);
 
   LOG4CXX_DEBUG(logger, boost::format("Output layer type: %s") % outLayerType);
   if (outLayerType == "DetectionOutput") {
@@ -165,12 +170,12 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
     // detections and an every detection is a vector of values
     // [batchId, classId, confidence, left, top, right, bottom]]
     
-    for (size_t k = 0; k < detections.size(); k++) {
+    for (size_t k = 0; k < outputs.size(); k++) {
 
-      float* data = (float*) detections[k].data;
+      float* data = (float*) outputs[k].data;
       uint64_t found = 0;
       uint64_t total = 0;
-      for (int i = 0; i < detections[k].total(); i+=7) {
+      for (int i = 0; i < outputs[k].total(); i+=7) {
         float confidence = data[i + 2];
         total++;
         //LOG4CXX_INFO(logger, "looping through detections"); // never gets here
@@ -213,13 +218,13 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
       LOG4CXX_INFO(logger, boost::format("Found: %d / %d") % found % total);
     }
   } else if (outLayerType == "Region") {
-    for (size_t i = 0; i < detections.size(); i++) {
+    for (size_t i = 0; i < outputs.size(); i++) {
       // Network produces output blob with a shape NxC where N is a number of
       // detected objects and C is a number of classes + 4 where the first 4
       // numbers are [center_x, center_y, width, height]
-      float* data = (float*)detections[i].data;
-      for (int j = 0; j < detections[i].rows; j++, data += detections[i].cols) {
-        cv::Mat scores = detections[i].row(j).colRange(5, detections[i].cols);
+      float* data = (float*)outputs[i].data;
+      for (int j = 0; j < outputs[i].rows; j++, data += outputs[i].cols) {
+        cv::Mat scores = outputs[i].row(j).colRange(5, outputs[i].cols);
         cv::Point classIdPoint;
         double confidence;
 
@@ -242,21 +247,25 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
       }
     }
   } else if (outLayerType == "Identity" || outLayerType == "Concat") {
-    int net_height = detections[0].size[1];
-    int net_width = classNames.size() + 5;
-    int net_out_width = detections[0].size[2];
-    float *data = (float *) detections[0].data;
-    float x_factor = img.cols / 640.0;
-    float y_factor = img.rows / 640.0;
-    LOG4CXX_DEBUG(logger, boost::format("Net width: %d. Net output width: %d.") % net_width % net_out_width);
-    for (int i = 0; i < net_height; ++i) {
-      float confidence = data[4];
-      if (confidence >= confidence_thresh) {
-        cv::Mat scores(1, classNames.size(), CV_32FC1, data + 5);
+    if (yolo_version >= 8) {
+      cv::Mat output = outputs[0];
+      int rows = output.size[2];      // 8400 proposals
+      int dimensions = output.size[1]; // 4 box coordinates + num classes
+
+      LOG4CXX_DEBUG(logger, boost::format("Output dimensions: [1 %d %d]") % output.size[1] % output.size[2]);
+
+      // Reshape to (8400, N+4) to make it easier to iterate row by row
+      output = output.reshape(1, dimensions);
+      cv::transpose(output, output);
+      float *data = (float *)output.data;
+
+      float x_factor = img.cols / 640.0;
+      float y_factor = img.rows / 640.0;
+      for (int i = 0; i < rows; ++i) {
+        cv::Mat scores(1, classNames.size(), CV_32F, data + 4);
         cv::Point classIdPoint;
         double max_class_score;
         minMaxLoc(scores, 0, &max_class_score, 0, &classIdPoint);
-        max_class_score = max_class_score * confidence;
         if (max_class_score > confidence_thresh) {
           float x = data[0];
           float y = data[1];
@@ -269,17 +278,54 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
           std::string class_id = idToClass[classIdPoint.x];
           cv::Rect rect(left, top, width, height);
 
-          LOG4CXX_DEBUG(logger, boost::format("Box num: %d. Confidence: %f. ClassId: %d.") % i % confidence % classIdPoint.x);
+          LOG4CXX_DEBUG(logger, boost::format("Box num: %d. Confidence: %f. ClassId: %d.") % i % max_class_score % classIdPoint.x);
 
           boxes.push_back(rect);
-          confidences.push_back(confidence);
+          confidences.push_back(max_class_score);
           class_ids.push_back(classIdPoint.x);
         }
+
+        data += dimensions;
       }
-      data += net_width;
+    } else {
+      int net_height = outputs[0].size[1];
+      int net_width = classNames.size() + 5;
+      int net_out_width = outputs[0].size[2];
+      float *data = (float *) outputs[0].data;
+      float x_factor = img.cols / 640.0;
+      float y_factor = img.rows / 640.0;
+      LOG4CXX_DEBUG(logger, boost::format("Net width: %d. Net output width: %d.") % net_width % net_out_width);
+      for (int i = 0; i < net_height; ++i) {
+        float confidence = data[4];
+        if (confidence >= confidence_thresh) {
+          cv::Mat scores(1, classNames.size(), CV_32FC1, data + 5);
+          cv::Point classIdPoint;
+          double max_class_score;
+          minMaxLoc(scores, 0, &max_class_score, 0, &classIdPoint);
+          max_class_score = max_class_score * confidence;
+          if (max_class_score > confidence_thresh) {
+            float x = data[0];
+            float y = data[1];
+            float w = data[2];
+            float h = data[3];
+            int left = int((x - 0.5 * w) * x_factor);
+            int top = int((y - 0.5 * h) * y_factor);
+            int width = int(w * x_factor);
+            int height = int(h * y_factor);
+            std::string class_id = idToClass[classIdPoint.x];
+            cv::Rect rect(left, top, width, height);
+
+            LOG4CXX_DEBUG(logger, boost::format("Box num: %d. Confidence: %f. ClassId: %d.") % i % confidence % classIdPoint.x);
+
+            boxes.push_back(rect);
+            confidences.push_back(confidence);
+            class_ids.push_back(classIdPoint.x);
+          }
+        }
+        data += net_width;
+      }
     }
   }
-
 
   // // Non-maximum suppression
   std::vector<int> indices;
@@ -386,9 +432,10 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
                   new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), notification->captureData,
                                    detected_object.rect));
           if (useAllResults) {
-            // add "class_label(VAR)" instead of "all(VAR)"
+            // add "class_label(VAR)" and "all(VAR)"
             newObj->addValidationResult(detected_object.confidence, PredicateHelper(
                     detected_object.name + "(" + descriptor_iter->first.getArg(0) + ")"));
+            newObj->addValidationResult(detected_object.confidence, descriptor_iter->first);
           } else {
             // add "class_label(VAR)"
             newObj->addValidationResult(detected_object.confidence, descriptor_iter->first);

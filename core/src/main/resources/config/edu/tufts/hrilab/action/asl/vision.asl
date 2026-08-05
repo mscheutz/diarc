@@ -43,8 +43,8 @@ import edu.tufts.hrilab.fol.Predicate;
 
   if (op:isVariable(!x)) {
     // look for "any" objects
-    !anySearch = op:createPredicate("all(X)");
-    act:startVisualSearch(!anySearch);
+//    !anySearch = op:createPredicate("all(X)");
+//    act:startVisualSearch(!anySearch);
 
     // look for "unknown" objects
     !anySearch = op:createPredicate("unknown(X)");
@@ -54,6 +54,11 @@ import edu.tufts.hrilab.fol.Predicate;
     !groups = op:newArrayList("java.lang.String");
     op:add(!groups, "physobj");
     !visionRefsMap = tsc:getActivatedEntities(!groups);
+    if (op:isEmpty(!visionRefsMap)) {
+      op:log("info", "No detected objects. Looking again...");
+      op:sleep(5000);
+      !visionRefsMap = tsc:getActivatedEntities(!groups);
+    }
 
     // use refs to create binding results (e.g., see(self, physobj_2), see(self, physobj_3))
     !refsSet = op:invokeMethod(!visionRefsMap, "keySet");
@@ -106,6 +111,14 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     ?tokenIds = act:lookForObject(?objectRef);
+
+    // retry visual search one time
+    if (op:isEmpty(?tokenIds)) {
+      op:log("warn", "No objects found. Retrying visual search.");
+      act:stopVisualSearch(?objectRef);
+      ?tokenIds = act:lookForObject(?objectRef);
+    }
+
     if (op:isEmpty(?tokenIds)) {
       op:log("warn", "No objects found. Exiting.");
       !failCond = op:createPredicate("not(see(?actor, ?objectRef))");

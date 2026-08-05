@@ -148,7 +148,6 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
 ImageProcessor::ImageProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : VisionProcess(processorId, imgWidth, imgHeight),
 is_stereo(isStereo) {
-  ignoreOlderNotifications = true;
 
   logger = log4cxx::Logger::getLogger("diarc.imgproc.ImageProcessor");
 }

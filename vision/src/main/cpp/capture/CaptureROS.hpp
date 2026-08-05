@@ -73,6 +73,7 @@ namespace diarc {
       bool convertToMeters_;
       bool convertToRGB_;
       bool performDepthRegistration_;
+      cv::Mat depth_to_color_T_; // translation part of [R|T] matrix defining transform from depth to color
       std::string rosNamespace_;
 
       sensor_msgs::Image::ConstPtr image_msg_;

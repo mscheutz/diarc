@@ -135,13 +135,17 @@ import edu.tufts.hrilab.fol.Predicate;
       success infer : touching(?actor,?objectRef);
     }
 
-    act:look(down);
-    act:findObject(?objectRef);
-    act:openGripper(?arm);
-    act:moveTo(?arm, ?objectRef);
-    act:graspObject(?arm, ?objectRef, !closePosition);
-    act:stopAllSearches();
-    op:log(debug, "[graspObject] successfully grasped ?objectRef");
+    // act:look(down);
+
+    try {
+      act:findObject(?objectRef);
+      act:openGripper(?arm);
+      act:moveTo(?arm, ?objectRef);
+      act:graspObject(?arm, ?objectRef, !closePosition);
+      op:log(debug, "[graspObject] successfully grasped ?objectRef");
+    } finally {
+      act:stopVisualSearch(?objectRef);
+    }
 }
 
 /**

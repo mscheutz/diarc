@@ -54,7 +54,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
   /**
    * Max times to explore the same failure with no progress before giving up.
    */
-  private int maxRepeatedExplorations = 5;
+  private int maxRepeatedExplorations = 2;
 
   public ExplorationGoalRecovery() {
     super();

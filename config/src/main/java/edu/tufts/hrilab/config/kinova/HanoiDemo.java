@@ -15,7 +15,7 @@ public class HanoiDemo extends DiarcConfiguration {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    String file = "hanoi.DIARC_env"; // Specify the python file you want to run, according to its package path
+    String file = "diarc.hanoi.DIARC_env"; // Specify the python file you want to run, according to its package path
     PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
     wrapper.start(); // Start the wrapper
   }

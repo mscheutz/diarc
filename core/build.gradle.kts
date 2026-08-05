@@ -27,9 +27,8 @@ repositories {
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven {
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
@@ -90,7 +89,6 @@ tasks.named<Test>("test") {
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
-  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
@@ -192,7 +190,6 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
-  implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -223,8 +220,10 @@ dependencies {
   implementation("com.aldebaran:qimessaging:2.1.0.19-linux64")
 
   //ros2
-  api("io.github.pinorobotics:jros2services:4.0");
-  api("io.github.pinorobotics:jros2tf2:2.0")
+  api("io.github.pinorobotics:jros2services:6.0");
+  api("io.github.lambdaprime:jros2client:9.0")
+  api("io.github.pinorobotics:jros2actionlib:4.0");
+  api("io.github.pinorobotics:jros2tf2:3.0")
 
 
   //gui

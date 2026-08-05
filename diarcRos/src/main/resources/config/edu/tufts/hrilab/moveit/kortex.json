@@ -7,7 +7,7 @@
   "maxNodeCheckCount": 10,
   "armReach": 0.7,
   "graspApproachOffset": 0.265,
-  "graspContactOffset": 0.165,
+  "graspContactOffset": 0.13,
   "speedFactor": 1.0,
   "accelFactor": 1.0,
   "allowDisableCollisionAvoidance": true,
@@ -15,10 +15,10 @@
     "position_x": 0.0,
     "position_y": 0,
     "position_z": 0.0,
-    "quaternion_x": 0,
-    "quaternion_y": 0,
-    "quaternion_z": 0,
-    "quaternion_w": 1
+    "quaternion_x": -0.5,
+    "quaternion_y": -0.5,
+    "quaternion_z": -0.5,
+    "quaternion_w": 0.5
   },
   "defaultGroupName": "arm",
   "groups": [

@@ -52,9 +52,7 @@ public class PythonWrapper {
    * Starts the python process. Some important side effects:
    * - Passes in the "--classpath" arg to python. As a result, Python modules that use argparse will need to use parse_known_args
    * - Starts a shutdown hook to end the python process when the JVM is shut down
-
    */
-  // Todo: Add python arguments as args to this func
   public void start(String... pythonArgs) {
     Thread processThread = new Thread(() -> {
       try {

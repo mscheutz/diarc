@@ -342,6 +342,12 @@ public class PR2BaseComponent extends DiarcComponent implements PR2BaseInterface
     return isSafe;
   }
 
+  @Override
+  public boolean setVels(double vel_x, double vel_y, double vel_rot) {
+    log.warn("Ignoring vel_y.");
+    return this.setVels(vel_x, vel_rot);
+  }
+
   // ================ Position Methods ==========================
 
   @Override

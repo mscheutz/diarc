@@ -26,7 +26,7 @@ Fields (required unless noted otherwise):
 
 
 <processor type="color" arity="1">
-    <predicate name="block" supertype="true"/>
+<!--    <predicate name="block" supertype="true"/>-->
     <predicate name="red">
         <colorspace>HSV</colorspace>
         <start>141 50 45</start>

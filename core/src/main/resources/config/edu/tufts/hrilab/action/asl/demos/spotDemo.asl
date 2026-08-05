@@ -7,47 +7,23 @@ import java.lang.Boolean;
 import java.util.List;
 
 
-/////////// Recovery Policies /////////
-////todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
-() = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-  Symbol !defaultLocation = location_0:location;
-
-  recovery: {
-    failedActions: {init(self:agent)}
-    actionStatuses: {FAIL_RETURNVALUE}
-  }
-
-    act:setInitialLocation(!defaultLocation);
-//  act:setLocationWithFiducial(!defaultLocation;
-  op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
-}
-
-() = failedGrasp(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-  Symbol !defaultLocation = location_0:location;
-
-  recovery: {
-//    failedActions: {pickUpObject(self:agent, X:physobj)}
-    failureReasons: {failedGrasp(X)}
-//    actionStatuses: {FAIL}
-  }
-
-//    act:setInitialLocation(!defaultLocation);
-//  act:setLocationWithFiducial(!defaultLocation);
-  op:log(warn, "[failedGrasp] trying grasp again");
-  act:stopAllSearches();
-}
-
-
 //////// Core behaviors //////////
 
 () = init(Symbol ?location = location_0:location) {
+    op:log(debug, "[init] setting up spot");
+    act:undock();
+    //act:localizeWithFiducial();
+    act:localizeWithReference(?location);
+    act:goToLocation(?location);
+    act:dock();
+}
 
-    act:initFacts();
-
-    act:claim();
-    act:powerOn();
-
-    op:log(debug, "[init] set up spot");
+() = shutDown() {
+    act:openGripper(arm);
+    act:goToPose(stow);
+    act:closeGripper(arm);
+    act:goToLocation(location_0:location);
+    act:dock();
 }
 
 () = initFacts() {
@@ -79,66 +55,13 @@ import java.util.List;
       success : not(at(?actor, X));
       success : at(?actor, ?location);
     }
-    Boolean !result = act:hasBeenLocalized();
 
-    if (op:equals(!result, true)) {
-        op:log(debug, "[localize] no need to localize again");
-    } elseif (op:equals(?useFiducial, true)) {
-        op:log(debug, "[localize] localizing to: ?location");
-//        act:localize();
-      act:setLocationWithFiducial(?location);
+    op:log(debug, "[localize] localizing to: ?location");
+    if (op:equals(?useFiducial, true)) {
+      act:localizeWithFiducial();
     } else {
-      act:setInitialLocation(?location);
+      act:localizeWithReference(?location);
     }
-}
-
-() = map() {
-    Symbol !location;
-    Integer !numLocations;
-//    java.util.Map !bindings;
-
-    act:getNavGraphPointsAndPopulateConsultant();
-    !numLocations = tsc:getNumberOfKnownLocations();
-    op:log(debug, "[map] number of known locations is !numLocations");
-
-
-    for (!i=0; !i lt !numLocations; !i ++) {
-        !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
-        act:goToLocationUnsafe(!location);
-        act:bindLocationToCurrentPose(!location);
-        op:log(debug, "[map] mapped !location");
-    }
-    //tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/room.json");
-    act:localize();
-}
-
-() = wander() {
-    Symbol !location;
-    Integer !numLocations;
-    !numLocations = tsc:getNumberOfKnownLocations();
-    for (!i=0; !i lt !numLocations; !i ++) {
-        !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
-        act:goToLocation(!location);
-        op:log(debug, "[wander] at location !location");
-    }
-    op:log(info, "[wander] done with tour. at location !location");
-}
-
-() = shutDown() {
-    java.lang.Integer !dockId = 521;
-
-    act:openGripper();
-    act:stow();
-    act:closeGripper();
-    act:dock(!dockId);
-}
-
-() = dock() {
-   try {
-     act:dock(521);
-   } catch () {
-     act:dock(522);
-   }
 }
 
 () = stow() {
@@ -146,30 +69,7 @@ import java.util.List;
         success : not(perceptionpose(?actor));
     }
 
-    tsc:stow();
-}
-
-() = openGripper() {
-//    Predicate !queryPred;
-//    Symbol !object;
-//    Predicate !toRetract;
-//    Predicate !free = free(?actor);
-//
-//    //todo: this shouldn't need to be done this way. should be handled in effects, etc
-//    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, X)");
-//    !object = act:getBinding(!queryPred);
-//    if (~op:equalsValue(!object, none)) {
-//        !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, !object");
-//        op:log(debug, "[openGripper] found that holding(?actor, !object), retracting since we're opening gripper");
-//        act:retractBelief(!toRetract);
-//        act:assertBelief(!free);
-//    }
-    tsc:openGripper();
-}
-
-() = test() {
-    act:map();
-    act:wander();
+    tsc:goToPose(stow);
 }
 
 () = perceiveEntity(Symbol ?object:physobj) {
@@ -183,30 +83,35 @@ import java.util.List;
 }
 
 () = pickUp(Symbol ?object:physobj) {
-//    act:command(arm_carry);
-    act:detectionPose();
-    tsc:openGripper();
+    act:grab(?object);
+//    act:gotocarrypose();
+}
+
+() = grab(Symbol ?object:physobj) {
+    //act:goToPose(detection);
+    act:openGripper(arm);
     act:startVisualSearch(?object);
     try {
       act:findObject(?object);
       //act:pauseCapture();
-      act:pickUpObject(?object);
+      op:log("info", "[grab] calling grabObject...");
+      act:grabObject(?object);
+      op:log("info", "[grab] grabObject returned");
     } catch() {
-      op:log("info", "[pickUp] IN CATCH BLOCK");
+      op:log("info", "[grab] IN CATCH BLOCK");
       exit(FAIL);
     } finally {
-      op:log("info", "[pickUp] IN FINALLY BLOCK");
+      op:log("info", "[grab] IN FINALLY BLOCK");
 //      act:resumeCapture();
       act:stopVisualSearch(?object);
     }
-    act:gotocarrypose();
 }
 
 () = putDown() {
-    act:goToPutDownPose();
-    tsc:openGripper();
+    act:goToPose(putDown);
+    act:openGripper(arm);
     act:gotocarrypose();
-    act:closeGripper();
+    act:closeGripper(arm);
     act:stow();
 }
 
@@ -220,14 +125,15 @@ import java.util.List;
         success : perceptionpose(?actor);
     }
 
-    act:detectionPose();
+    act:goToPose(detection);
 }
 
 () = gotocarrypose() {
     effects : {
         success : not(perceptionpose(?actor));
     }
-    act:command(arm_carry);
+
+    act:goToPose(carry);
 }
 
 () = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
@@ -249,13 +155,13 @@ import java.util.List;
 
     op:log(info, "Delivering ?type ?object to ?at.");
     act:gotocarrypose();
-//    act:goToPutDownPose();
+//    act:goToPose(putDown);
     act:askQuestionFromString(pete, "Let me know when you're holding the object.", holding(X));
     op:log(info, "Finishing handoff");
-    act:openGripper();
+    act:openGripper(arm);
     op:sleep(500);
-    act:closeGripper();
-    act:command(arm_stow);
+    tsc:closeGripper();
+    tsc:goToPose(stow);
 }
 
 () = moveto(Symbol ?from:location, Symbol ?to:location) {
@@ -326,10 +232,4 @@ import java.util.List;
 
 () = runDemo() {
     act:deliver(physobj_1:physobj,location_1:location);
-}
-
-() = goToPutDownPose() {
-//    String !pose = "1.1 0 0.35 -0.7071 0 0 0.7071";
-    String !pose = "1.1 0 0.4 -0.7071 0 0 0.7071";
-    act:goToArmPose(!pose, "body");
 }

@@ -58,6 +58,7 @@
 
 () = finallyTest4() {
     try {
+      op:log("info", "Try body");
     } finally {
       exit(FAIL); // this should execute --> action fails
     }

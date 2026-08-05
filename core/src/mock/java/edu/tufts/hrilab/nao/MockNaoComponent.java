@@ -3,6 +3,8 @@
  */
 package edu.tufts.hrilab.nao;
 
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
@@ -230,6 +232,12 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   @Override
+  public boolean setVels(double vel_x, double vel_y, double vel_rot) {
+    log.warn("Ignoring vel_y.");
+    return this.setVels(vel_x, vel_rot);
+  }
+
+  @Override
   public boolean setRV(double rv) {
     log.info("setRV: ({}) {}", getMyGroups(), rv);
     return setVels(0.0, rv);
@@ -266,11 +274,12 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   @Override
-  public void stop() {
+  public Justification stop() {
     log.info("stop ({})", getMyGroups());
     curTV = 0.0;
     curRV = 0.0;
     isMoving = false;
+    return new ConditionJustification(true);
   }
 
   @Override

@@ -102,7 +102,7 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
       }
     } else {
       try {
-        altResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(AlternateResponse.class, inputString);
+        altResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(Utterance.class)).call(AlternateResponse.class, inputString);
         response = altResponse.response;
         if (altResponse.addressee != null) {
           addressee = altResponse.addressee;

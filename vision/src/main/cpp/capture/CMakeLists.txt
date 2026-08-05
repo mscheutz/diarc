@@ -25,6 +25,19 @@ IF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_
 	)
 ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
 
+# Spot robot capture
+if(bosdyn_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureSpot.cpp
+	)
+endif(bosdyn_FOUND)
+
+# no easy way to check for boston dynamics python sdk, so just check for pybind11
+if(pybind11_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureSpotPython.cpp
+	)
+endif(pybind11_FOUND)
 
 # Intel RealSense capture
 if(REALSENSE_FOUND)
@@ -116,6 +129,10 @@ if(GSTREAMER_FOUND AND GLIB_FOUND)
 			${GLIB_LIBRARIES} ${GLIB_GOBJECT_LIBRARIES}
 			${GSTREAMER_LIBRARIES} ${GSTREAMER_APP_LIBRARIES})
 endif(GSTREAMER_FOUND AND GLIB_FOUND)
+if(bosdyn_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_client)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_api)
+endif(bosdyn_FOUND)
 
 # build java wrappers via swig
 ADD_SUBDIRECTORY(swig)

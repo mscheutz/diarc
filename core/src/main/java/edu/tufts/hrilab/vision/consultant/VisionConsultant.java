@@ -130,7 +130,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   public boolean assertProperties(Symbol refId, List<Term> properties) {
     log.debug("[assertProperties] refId: " + refId + " properties: " + properties);
 
-    if(!refId.hasType()) {
+    if (!refId.hasType()) {
       refId = Factory.createSymbol(refId.getName(), refId.getName().split("_")[0]);
     }
     Reference ref = getReference(refId);
@@ -203,96 +203,70 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   @Override
   public Long getTypeId(Symbol objectRef) {
     log.debug("[getTypeId] objectRef: " + objectRef);
-    if(!objectRef.isTerm() && !objectRef.hasType()) {
+
+    // add semantic type to objectRef, if none exists
+    if (!objectRef.hasType()) {
       objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
     }
-    // if objectRef is actually a reference resolution id
-    if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = getReference(objectRef);
-      if (visionRef == null) {
-        log.error("[getTypeId] vision has not created object ref: " + objectRef);
-        return -1L;
-      } else {
 
-        // if typeId hasn't been created for object ref, try to create one (by instantiating a new search for its properties)
-        if (visionRef.typeId == -1L || !visionComponent.getAvailableTypeIds().contains(visionRef.typeId)) {
-          Long typeId = visionComponent.getTypeId(visionRef.properties);
-
-          // FIXME
-          if (typeId != -1L) {
-            visionRef.typeId = typeId;
-            if (visionTypes.containsKey(visionRef.typeId)) {
-              visionTypes.get(typeId).add(visionRef);
-            } else {
-              Set<VisionReference> refs = new HashSet<>();
-              refs.add(visionRef);
-              visionTypes.put(typeId, refs);
-            }
-          } else {
-            log.debug("[getTypeId] (objectRef) couldn't create search.");
-          }
-        }
-
-        return visionRef.typeId;
-      }
+    VisionReference visionRef = getReference(objectRef);
+    if (visionRef == null) {
+      log.error("[getTypeId] vision has not created object ref: " + objectRef);
+      return -1L;
     } else {
-      // otherwise it's a descriptor
-      List<Symbol> descriptors = new ArrayList<>();
-      descriptors.add(objectRef);
-      return visionComponent.getTypeId(descriptors);
+
+      // if typeId hasn't been created for object ref, try to create one (by instantiating a new search for its properties)
+      if (visionRef.typeId == -1L || !visionComponent.getAvailableTypeIds().contains(visionRef.typeId)) {
+        Long typeId = visionComponent.getTypeId(visionRef.properties);
+
+        // FIXME
+        if (typeId != -1L) {
+          visionRef.typeId = typeId;
+          if (visionTypes.containsKey(visionRef.typeId)) {
+            visionTypes.get(typeId).add(visionRef);
+          } else {
+            Set<VisionReference> refs = new HashSet<>();
+            refs.add(visionRef);
+            visionTypes.put(typeId, refs);
+          }
+        } else {
+          log.debug("[getTypeId] (objectRef) couldn't create search.");
+        }
+      }
+
+      return visionRef.typeId;
     }
   }
 
   @Override
   public List<MemoryObject> getTokens(Symbol objectRef) {
     log.debug("[getTokens] objectRef: " + objectRef);
-    // if objectRef is actually a reference resolution id
-    if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = getReference(objectRef);
-      // With object permanance changes, tokenId list for any objectRef should be of length 1
-      // In this case we don't want to check to add the tokenId to the visionRef, because it
-      //   should always already be there
-      // Create and return new MO list just to match current interface using symbol
-      // EAK: this relies on some other mechanism to update visionRefs with native MO results
-//      List<MemoryObject> tokens = new ArrayList();
-//      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId);
-//        if (token != null) {
-//          tokens.add(token);
-//        }
-//      }
-      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId);
-      for (MemoryObject token : tokens) {
-        if (!visionRef.tokenIds.contains(token.getTokenId())) {
-          visionRef.tokenIds.add(token.getTokenId());
-        }
+    VisionReference visionRef = getReference(objectRef);
+    Long typeId = getTypeId(objectRef);
+    List<MemoryObject> tokens = visionComponent.getTokens(typeId);
+    for (MemoryObject token : tokens) {
+      if (!visionRef.tokenIds.contains(token.getTokenId())) {
+        visionRef.tokenIds.add(token.getTokenId());
       }
-      log.debug("got tokens");
-      return tokens;
-    } else {
-      // otherwise it's a descriptor
-      List<Symbol> descriptors = new ArrayList();
-      descriptors.add(objectRef);
-      return visionComponent.getTokens(descriptors);
     }
+    log.debug("got tokens");
+    return tokens;
   }
 
   @Override
   public List<Long> getTokenIds(Symbol objectRef) {
     log.debug("[getTokenIds] objectRef: " + objectRef);
-    // if objectRef is actually a reference resolution id
-    if (!objectRef.isTerm() && !objectRef.isPredicate() && objectRef.getName().startsWith(kbName)) {
 
-      if(!objectRef.hasType()) {
-        objectRef = Factory.createSymbol(objectRef.getName() + ":" + this.kbName);
-      }
+    if (!objectRef.hasType()) {
+      objectRef = Factory.createSymbol(objectRef.getName() + ":" + this.kbName);
+    }
 
-      VisionReference visionRef = getReference(objectRef);
-      // With object permanance changes, tokenId list for any objectRef should be of length 1
-      // In this case we don't want to check to add the tokenId to the visionRef, because it
-      //   should always already be there
-      // Create and return new MO list just to match current interface using symbol
-      // EAK: this relies on some other mechanism to update visionRefs with native MO results
+    VisionReference visionRef = getReference(objectRef);
+    // With object permanance changes, tokenId list for any objectRef should be of length 1
+    // In this case we don't want to check to add the tokenId to the visionRef, because it
+    //   should always already be there
+    // Create and return new MO list just to match current interface using symbol
+    // EAK: this relies on some other mechanism to update visionRefs with native MO results
 //      List<Long> tokenIds = new ArrayList();
 //      for (Long tokenId : visionRef.tokenIds) {
 //        MemoryObject token = visionComponent.getToken(tokenId);
@@ -300,20 +274,14 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
 //          tokenIds.add(tokenId);
 //        }
 //      }
-      // TODO: EAK: this is inconsistent with how getTokens works, and should work the same way
-      List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId);
-      for (Long tokenId : tokenIds) {
-        if (!visionRef.tokenIds.contains(tokenId)) {
-          visionRef.tokenIds.add(tokenId);
-        }
+    // TODO: EAK: this is inconsistent with how getTokens works, and should work the same way
+    List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId);
+    for (Long tokenId : tokenIds) {
+      if (!visionRef.tokenIds.contains(tokenId)) {
+        visionRef.tokenIds.add(tokenId);
       }
-      return tokenIds;
-    } else {
-      // otherwise it's a descriptor
-      List<Symbol> descriptors = new ArrayList();
-      descriptors.add(objectRef);
-      return visionComponent.getTokenIds(descriptors);
     }
+    return tokenIds;
   }
 
   /**

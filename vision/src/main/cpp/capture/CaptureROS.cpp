@@ -45,6 +45,15 @@ namespace diarc {
       convertToRGB_ = pt.get<bool>("capture.convertToRGB", false);
       performDepthRegistration_ = pt.get<bool>("capture.depthRegistration", false);
       rosNamespace_ = pt.get<std::string>("capture.namespace", "diarc_vision_cap");
+      std::string depth_to_color_T = pt.get<std::string>("capture.depthToColorT", "");
+
+      if (depth_to_color_T != "") {
+        std::istringstream iss(depth_to_color_T);
+        float x, y, z;
+        if (iss >> x >> y >> z) {
+          depth_to_color_T_ = (cv::Mat_<float>(3, 1) << x, y, z);
+        }
+      }
 
       //initialize ROS
       LOG4CXX_DEBUG(logger, "Initializing ROS.");
@@ -229,7 +238,6 @@ namespace diarc {
 
           // get depth frame and resize
           cv_depth_ptr = cv_bridge::toCvShare(depth_msg_, sensor_msgs::image_encodings::TYPE_32FC1);
-          //cv::Mat tmpDepthFrame(imgHeight, imgWidth, CV_32FC1);
           cv::resize(cv_depth_ptr->image, depthFrame, depthFrame.size(), 0, 0, CV_INTER_NN);
 
           if (convertToMeters_) {
@@ -249,6 +257,7 @@ namespace diarc {
                     R.at<float>(2,0), R.at<float>(2,1), R.at<float>(2,2), T.at<float>(2),
                     0.0, 0.0, 0.0, 1.0);
 
+            LOG4CXX_DEBUG(logger, "performDepthRegistration - transform: " << transform);
             cv::rgbd::registerDepth(cameras->getCameraParameters(0)->M,
                                     cameras->getCameraParameters(1)->M,
                                     cameras->getCameraParameters(1)->D,
@@ -259,7 +268,13 @@ namespace diarc {
           }
 
           // create point cloud from color and depth frames
-          diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+          if (performDepthRegistration_) {
+            // use color camera matrix bc depth has already been aligned with color frame
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 1);
+          } else {
+            // use depth camera matrix
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 0);
+          }
 
         } catch (cv_bridge::Exception &e) {
           LOG4CXX_ERROR(logger, boost::format("cv_bridge exception: %s") % e.what());
@@ -319,8 +334,25 @@ namespace diarc {
       camParams->intrinsicSet = true;
       cameras->setCameraParameters(0, camParams);
 
+      // set extrinsic camera parameters between depth and color frame
+      StereoCameraParameters::Ptr stereoParams(new StereoCameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
+      if (depth_to_color_T_.empty()) {
+        stereoParams->T.at<float>(0) = msg->P.at(3); // T_x
+        stereoParams->T.at<float>(1) = msg->P.at(7); // T_y
+        stereoParams->T.at<float>(2) = msg->P.at(11); // T_z
+      } else {
+        stereoParams->T.at<float>(0) = depth_to_color_T_.at<float>(0); // T_x
+        stereoParams->T.at<float>(1) = depth_to_color_T_.at<float>(1);  // T_y
+        stereoParams->T.at<float>(2) = depth_to_color_T_.at<float>(2);  // T_z
+      }
+      stereoParams->set = true;
+      cameras->setStereoParameters(0, stereoParams);
+
       LOG4CXX_DEBUG(logger, boost::format("depthInfoCallback - cam_info: [%dx%d], [fx,fy,cx,cy][%d,%d,%d,%d]") %
                             msg->width % msg->height % msg->K.at(0) % msg->K.at(4) % msg->K.at(2) % msg->K.at(5));
+
+      LOG4CXX_DEBUG(logger, boost::format("depthInfoCallback - cam_info extrinsic: [Tx,Ty,Tz][%d,%d,%d]") %
+                            msg->P.at(3) % msg->P.at(7) % msg->P.at(11));
     }
 
     void CaptureROS::captureCallback_MONO(const sensor_msgs::Image::ConstPtr &msg) {

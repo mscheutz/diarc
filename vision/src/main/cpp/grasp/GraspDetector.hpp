@@ -18,9 +18,12 @@
 #include "AgileGrasp.hpp"
 #endif
 
+#ifdef USE_GPD
+#include "GpdGrasp.hpp"
+#endif
+
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/format.hpp>
 #include <log4cxx/logger.h>
 
 namespace diarc {
@@ -31,17 +34,17 @@ namespace diarc {
       typedef boost::shared_ptr<GraspDetector> Ptr;
       typedef boost::shared_ptr<const GraspDetector> ConstPtr;
 
-      static GraspDetector::Ptr getInstance();
+      static Ptr getInstance();
       ~GraspDetector();
 
-      void loadConfig(const std::string& configFile);
-      std::vector<diarc::grasp::Grasp> calculateGraspOptions(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
+      void initialize(const std::string& configFile);
+      std::vector<Grasp> calculateGraspOptions(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
 
     protected:
       GraspDetector();
 
       static boost::mutex instance_mutex;
-      static GraspDetector::Ptr instance;
+      static Ptr instance;
       log4cxx::LoggerPtr logger;
 
     private:
@@ -49,6 +52,9 @@ namespace diarc {
       SmallObjectGrasp::Ptr smallObjectGrasp;
 #ifdef USE_AGILEGRASP
       AgileGrasp::Ptr agileGrasp;
+#endif
+#ifdef USE_GPD
+      GpdGrasp::Ptr gpdGrasp;
 #endif
     };
   }

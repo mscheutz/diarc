@@ -300,6 +300,11 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
     return new ConditionJustification(true);
   }
 
+  @Override
+  public Justification stop() {
+    return new ConditionJustification(true);
+  }
+
   private void simExecTime() {
     if (shouldSimExecTime) {
       try {
