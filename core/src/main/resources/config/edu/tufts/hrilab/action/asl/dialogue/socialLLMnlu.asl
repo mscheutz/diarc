@@ -543,23 +543,4 @@ import java.lang.String;
     op:log("info","[stopTalking] in method");
 }
 
-() = suspendCurrentTask() {
-    act:suspendSystemGoalsBlocking();
-    act:generateResponseFromString("Suspended");
-}
-
-() = cancelCurrentTask() {
-    act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Canceled");
-}
-
-() = cancelAllQueuedTasks() {
-    act:cancelAllPendingGoals();
-    act:generateResponseFromString("Canceled");
-}
-
-() = cancelAllCurrentAndQueuedTasks() {
-    act:cancelAllPendingGoals();
-    act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Canceled");
 }
