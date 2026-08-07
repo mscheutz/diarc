@@ -1010,18 +1010,14 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
         outputUtterance.setType(UtteranceType.REPLY);
         outputUtterance.setNeedsValidation(false);
       } else {
-        if (outputUtterance.needsValidation()) {
-          boolean ignoreValidation = false;
-          try {
-            ignoreValidation = TRADE.getAvailableService(new TRADEServiceConstraints().name("checkIgnoreValidation").argTypes(Predicate.class)).call(boolean.class, outputUtterance.getSemantics());
-          } catch (TRADEException e) {
-            log.error("[handleToolResponse] unable to call checkIgnoreValidation", e);
-          }
-          if (!ignoreValidation) {
-            chatContext.chatState = ChatState.VALIDATION;
-            chatContext.utteranceUpForValidation = outputUtterance; //copy?
-            chatContext.toolCallIdUpForValidation = toolCall.id;
-          }
+        boolean ignoreVal = false;
+        try {
+          ignoreVal = TRADE.getAvailableService(new TRADEServiceConstraints().name("ignoreValidation").argTypes(Predicate.class)).call(Boolean.class, outputUtterance.getSemantics());
+        } catch (TRADEException ignored){};
+        if (outputUtterance.needsValidation() && !ignoreVal) {
+          chatContext.chatState = ChatState.VALIDATION;
+          chatContext.utteranceUpForValidation = outputUtterance; //copy?
+          chatContext.toolCallIdUpForValidation = toolCall.id;
         } else {
           // noConfirmation case - deferred until dialogue history update in case of external parser hit
           //handleValidatedToolCall(outputUtterance, chatCollection);
@@ -3916,89 +3912,6 @@ public class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     log.warn("[getServiceForAgent] could not find service {} for agent {}", serviceName, agentName);
     return null;
-  }
-
-  @TRADEService
-  @Action
-  public boolean ignoreValidation(Predicate goalPred){
-    if(goalPred != null) {
-      switch (goalPred.getName()) {
-        case "suspendCurrentTask":
-        case "suspendGoal":
-        case "cancelCurrentTask":
-        case "cancelGoal":
-        case "stopTalking":
-          return true;
-        default:
-          return false;
-      }
-    }
-    return false;
-  }
-
-  @TRADEService
-  @Action
-  public boolean ignoreTentativeAccept(Predicate goalPred){
-    log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
-    if(goalPred != null) {
-      switch (goalPred.getName()) {
-        case "describeScheduledGoals":
-        case "describeCurrentLocation":
-        case "describePendingGoals":
-        case "describeAllKnownLocations":
-        case "repeatLastQuestion":
-        case "describeCurrentGoal":
-        case "reportTaughtActions":
-        case "reportInstructableActions":
-        case "describeActionSteps":
-        case "reportIfCanPerform":
-        case "reportKioskSettings":
-        case "listSavedVideos":
-        case "reportVideoVolume":
-        case "listSavedImages":
-        case "reportIsVideoSaved":
-        case "sayText":
-        case "sayLocally":
-        case "reportBatteryLevel":
-        case "generateResponseFromString":
-        case "getAllKnownLocations":
-        case "getBatteryLevelString":
-        case "getCurrentLocationString":
-        case "getTaughtActions":
-        case "getIfCanPerform":
-        case "getPredefinedActions":
-        case "getActionSteps":
-        case "getKioskSettings":
-        case "getVideoVolume":
-        case "getIsVideoSaved":
-        case "getSavedVideos":
-        case "getSavedImages":
-        case "getWifiAtLocationString":
-        case "getTemperatureAtLocationString":
-        case "getCurrentPendingScheduledGoalInformation":
-        case "resetConversation":
-        case "learnTaskSequence":
-        case "scheduleTask":
-        case "getInformationAroundTeachingNewActions":
-        case "getInformationAroundHowToTeachATask":
-        case "getInformationAroundWhatALearnedTaskIs":
-        case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
-        case "getInformationAroundTeachingLocationsAndNavigation":
-        case "getWifiAtLocationsString":
-        case "getWifiAtCurrentLocationString":
-        case "getTemperatureAtLocationsString":
-        case "getTemperatureAtCurrentLocationString":
-        case "updateDialogueHistoryFromString":
-        case "checkPastInteractionHistoryForMissingInformation":
-        case "stopTalking":
-        //// Set of actions which should perhaps be "reduced ack"?
-        //case "escortToLocation":
-          return true;
-        default:
-          return false;
-      }
-    }
-    return false;
   }
 
 

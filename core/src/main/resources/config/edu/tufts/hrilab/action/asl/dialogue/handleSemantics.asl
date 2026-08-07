@@ -495,10 +495,10 @@ import java.lang.Boolean;
             act:generateResponseFromString(?speaker,!fillerResponse);
         }
     } else {
-        if(~act:checkIgnoreTentativeAccept(?state)) {
             !fillerResponse = tsc:getTentativeAcceptFiller(?state,true);
             async {
                 act:generateResponseFromString(?speaker,!fillerResponse);
+        if(~tsc:ignoreTentativeAccept(?state)) {
             }
 
             // (Practically) If had already been validated, then don't need to restate the action being performed

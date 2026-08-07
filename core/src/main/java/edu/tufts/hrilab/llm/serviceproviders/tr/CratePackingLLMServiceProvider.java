@@ -403,48 +403,6 @@ public class CratePackingLLMServiceProvider extends TRLLMServiceProvider {
     return descriptorString;
   }
 
-  @TRADEService
-  @Action
-  public boolean ignoreTentativeAccept(Predicate goalPred){
-    log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
-    if(goalPred != null) {
-      switch (goalPred.getName()) {
-        case "reportAllPackingParameters":
-        case "reportFullyPackedCrateConfiguration":
-        case "reportMaxNumberOfPackedItemsPerLayer":
-        case "reportMaxNumberOfPackedLayers":
-        case "reportMaxNumberOfPackedItems":
-        case "reportCurrentPackedCrateConfiguration":
-        case "reportCurrentNumberOfLayersToPack":
-        case "reportConfiguredNumberOfItemsToPack":
-        case "reportCrateDimensions":
-        case "reportCrateHeight":
-        case "reportCrateWidth":
-        case "reportCrateLength":
-        case "reportPackedItemDimensions":
-        case "reportPackedItemHeight":
-        case "reportPackedItemWidth":
-        case "reportPackedItemLength":
-        case "setNumberOfItemsToPackPerCrate":
-        case "reportNumberOfItemsInCrate":
-        case "reportUnsetPackingParameters":
-        case "repeatLastQuestion":
-        case "describeCurrentGoal":
-        case "reportTaughtActions":
-        case "reportInstructableActions":
-        case "describeActionSteps":
-        case "reportIfCanPerform":
-        case "reportKioskSettings":
-        case "sayText":
-        case "say":
-          return true;
-        default:
-          return false;
-      }
-    }
-    return false;
-  }
-
   //TODO: Able to move at least some of this to the base class?
   @TRADEService
   public List<String> getInstructableActions() {

@@ -557,10 +557,6 @@ public interface TemiV3Interface {
     @TRADEService
     String getCheckInHeaderMessage();
 
-    //TODO: Until we figure out where to put all of this demo-specific functionality, need to have these to have temi configs work generally
-    @TRADEService
-    boolean ignoreTentativeAccept(Predicate goalPred);
-
     @TRADEService
     boolean skipsQueue(String funcName);
 }

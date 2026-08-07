@@ -988,67 +988,6 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
         log.debug("[updateFirebaseDoc] "+goalInfo);
     }
 
-
-    @TRADEService
-    @Action
-    public boolean ignoreTentativeAccept(Predicate goalPred){
-        log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
-        if(goalPred != null) {
-            switch (goalPred.getName()) {
-                case "sayText":
-                case "generateResponse":
-                case "generateResponseFromString":
-                case "setVolume":
-                case "sendMap":
-                case "sendLogs":
-                case "requestPermissions":
-                case "restartApp":
-                case "disableButtons":
-                case "enableButtons":
-                case "showTopBar":
-                case "enableObstacleNotifications":
-                case "disableObstacleNotifications":
-                case "enablePrivacyMode":
-                case "disablePrivacyMode":
-                case "enableVoiceAck":
-                case "disableVoiceAck":
-                case "setEscortWaitAttempts":
-                case "setEscortWaitDuration":
-                case "setBatteryAbortLevel":
-                case "setBatteryWarnLevel":
-                case "setBatteryChargedLevel":
-                case "chargeTemi":
-                case "displayFace":
-                case "enableKidsMode":
-                case "disableKidsMode":
-                case "sendPositionUpdate":
-                case "stopListening":
-                case "endFreezeTemi":
-                case "enableKioskMode":
-                case "disableKioskMode":
-                case "setKioskTimeout":
-                case "setKioskLocation":
-                case "setDisplayAppointmentsSince":
-                case "setAllowAppointmentsSince":
-                case "setLateAppointmentMessage":
-                case "setDisplayAppointmentsUntil":
-                case "setAllowAppointmentsUntil":
-                case "setEarlyAppointmentMessage":
-                case "setSuccessfulCheckInMessage":
-                case "setBirthdayMessageRange":
-                case "setBirthdayMessage":
-                case "setAppointmentLoadErrorMessage":
-                case "setAppointmentListEmptyMessage":
-                case "setCheckInHeaderMessage":
-                case "setStorageArea":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        return false;
-    }
-
     @TRADEService
     public boolean skipsQueue(String funcName) {
         switch (funcName) {

@@ -546,41 +546,6 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
         return null;
     }
 
-    @TRADEService
-    @Action
-    public boolean ignoreTentativeAccept(Predicate goalPred){
-        log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
-        if(goalPred != null) {
-            switch (goalPred.getName()) {
-                case "describeScheduledGoals":
-                case "discussRobotPerformance":
-                case "describeCurrentLocation":
-                case "describePendingGoals":
-                case "describeAllKnownLocations":
-                case "describeAllKnownPatrolPaths":
-                case "describeAllLocationsOnPatrolPath":
-                case "repeatLastQuestion":
-                case "describeCurrentGoal":
-                case "reportTaughtActions":
-                case "reportInstructableActions":
-                case "describeActionSteps":
-                case "reportIfCanPerform":
-                case "reportKioskSettings":
-                case "listSavedVideos":
-                case "reportVideoVolume":
-                case "listSavedImages":
-                case "reportIsVideoSaved":
-                case "sayText":
-                case "say":
-                case "reportBatteryLevel":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        return false;
-    }
-
     //TODO: Able to move at least some of this to the base class?
     @TRADEService
     public List<String> getInstructableActions() {
