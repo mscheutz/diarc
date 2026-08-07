@@ -10,7 +10,6 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.*;
 
 import java.io.File;
@@ -26,7 +25,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import ai.thinkingrobots.trade.*;
 
-public class TLDLParserComponent extends DiarcComponent implements NLUInterface {
+public class TLDLParserComponent extends DiarcComponent {
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
   /**

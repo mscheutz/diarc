@@ -4,14 +4,15 @@
 
 package edu.tufts.hrilab.slug.parsing.llm;
 
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 
-public class LLMParserComponent extends DiarcComponent implements NLUInterface {
+public class LLMParserComponent extends DiarcComponent {
 
   public LLMParserComponent() {
     super();
@@ -24,8 +25,9 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
    * @param input The input Utterance to parse.
    * @return The parsed Utterance with updated semantic information.
    */
-  @Override
   public Utterance parseUtterance(Utterance input) {
+  @TRADEService
+  @Action
     long t0 = System.nanoTime();
     log.debug("[lat] parser_entry text=\"{}\"", input.getWordsAsString());
     log.info("parseUtterance: " + input.getWordsAsString());

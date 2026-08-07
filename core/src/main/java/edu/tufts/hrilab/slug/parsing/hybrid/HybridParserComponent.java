@@ -14,7 +14,6 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
@@ -35,14 +34,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.HashMap;
 
-public class HybridParserComponent extends DiarcComponent implements NLUInterface {
+public class HybridParserComponent extends DiarcComponent {
 
   private boolean useLLM = false;
-  private NLUInterface llmParser;
+  private LLMParserComponent llmParser;
   private boolean useTLDL = false;
-  private NLUInterface tldlParser;
+  private TLDLParserComponent tldlParser;
   private boolean usePMP = false;
-  private NLUInterface patternMatchingParser;
+  private PatternMatchingParser patternMatchingParser;
   private boolean useCache = false;
   private CachedParserComponent cacheParser;
 
