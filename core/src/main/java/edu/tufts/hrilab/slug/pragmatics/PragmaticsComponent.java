@@ -261,9 +261,6 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
     }
     if (!utterance.getBindings().isEmpty()) {
       semantics = replaceVarsInSemantics(semantics, utterance.getBindings().get(0));
-      //for (Variable var : utterance.getBindings().get(0).keySet()) {
-      //  semantics = Factory.createPredicate(semantics.toString().replace(utterance.getBindings().get(0).get(var).toString(), var.toString()));
-      //}
     }
     utterance.setSemantics(semantics);
     utterance.setIndirectSemantics(indirectMeaning);

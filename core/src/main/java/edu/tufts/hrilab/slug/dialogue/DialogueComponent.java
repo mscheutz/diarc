@@ -18,6 +18,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.dialogue.gui.DialogueGui;
 import edu.tufts.hrilab.util.IdGenerator;
 import org.apache.commons.cli.CommandLine;
@@ -159,6 +160,16 @@ public class DialogueComponent extends DiarcComponent {
         question.endWaitForResponse();
       }
     }
+  }
+
+  @TRADEService
+  @Action
+  public void updateDialogueHistoryFromString(Symbol speaker, Symbol addressee, String words) {
+    log.debug("[updateDialogueHistoryFromString] addressee: {} words: {}", addressee, words);
+    Utterance utterance = Utterance.createOutputUtterance(speaker, addressee);
+    utterance.setType(UtteranceType.REPLY);
+    utterance.setWords(words);
+    updateDialogueHistory(utterance);
   }
 
   @TRADEService

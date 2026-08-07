@@ -106,6 +106,18 @@ public final class Utterance implements Serializable {
     return newUtterance;
   }
 
+  // Addressees the robot is physically co-present with: their replies are spoken aloud. Replies to
+  // any other addressee (webapp, remote/text channels) are delivered via dialogue history only.
+  public static final Set<String> LOCAL_ADDRESSEES = Set.of("temi", "local_user", "local_visitor", "operator");
+
+  public static boolean isLocalAddressee(Symbol addressee) {
+    return addressee != null && LOCAL_ADDRESSEES.contains(addressee.getName());
+  }
+
+  public static boolean isLocalAddressee(String addresseeName) {
+    return addresseeName != null && LOCAL_ADDRESSEES.contains(addresseeName);
+  }
+
   /**
    * Use Builder instead of constructor.
    */
