@@ -6,6 +6,8 @@ package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.goal.GoalInfo;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
@@ -353,6 +355,49 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
     switchDisplayToTRACS();
+  }
+
+  @Override
+  protected void postRegistrationInit() {
+    try {
+      TRADE.registerNotificationNowOrWhenJoined(this,
+                                                new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class),
+                                                "onGoalManagerRegistrationAvailable");
+    } catch (TRADEException e) {
+      log.error("[postRegistrationInit] Error registering for goal manager availability.", e);
+    }
+  }
+
+  /**
+   * Called by TRADE when registerGoalManagerNotification becomes available (now or when joined).
+   * Registers our callback for GOAL_STATUS_CHANGE notifications.
+   */
+  @TRADEService
+  public void onGoalManagerRegistrationAvailable(TRADEServiceInfo registerService) throws TRADEException {
+    TRADEServiceInfo myHandler = getMyService("hideListeningIndicatorGoalListener", GoalInfo.class);
+    registerService.call(void.class, myHandler, NotificationType.GOAL_STATUS_CHANGE);
+    log.info("[onGoalManagerRegistrationAvailable] Registered for goal status notifications.");
+  }
+
+  // Ava-only listening indicator: drop the robot head when a real terminal task action is
+  // submitted (e.g. "go to chair 1"), so the head goes away once we stop listening to go
+  // do something. Keep it up for replies and for focused-context entries that start an
+  // interactive instruction dialogue (scheduleTask, learnTaskSequence) -- the robot is
+  // still asking the user for info there.
+  @TRADEService
+  public void hideListeningIndicatorGoalListener(GoalInfo info) throws TRADEException {
+    switch (info.goal.getName()) {
+      case "generateResponseFromString":
+      case "updateDialogueHistoryFromString":
+      case "scheduleTask":
+      case "learnTaskSequence":
+        return;
+    }
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("hideListeningIndicator")).call(void.class);
+    } catch (TRADEException e) {
+      log.error("[hideListeningIndicatorGoalListener] unable to call hideListeningIndicator", e);
+    }
   }
 
   private void updateRollingPositionData() {

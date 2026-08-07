@@ -243,29 +243,6 @@ import java.lang.Boolean;
     java.util.Set !keepHeadPreds;
 
     if (op:equals(?addressee, ?actor)) {
-
-      // HACK (TODO: move this out of core dialogue). This couples core handleWant to the
-      // Ava-only listening indicator: drop the robot head when a real terminal task action is
-      // submitted (e.g. "go to chair 1"), so the head goes away once we stop listening to go
-      // do something. Keep it up for replies and for focused-context entries that start an
-      // interactive instruction dialogue (scheduleTask, learnTaskSequence) -- the robot is
-      // still asking the user for info there. Guarded so non-Ava configs (yumi/spot/etc.)
-      // no-op. Proper fix: an Ava-side goal-submission listener (GoalManagerNotifier) that
-      // filters terminal task goals from dialogue/instruction goals instead of editing core ASL.
-      !keepHeadPreds = op:newHashSet("java.lang.String");
-      op:invokeMethod(!keepHeadPreds, "add", "generateResponseFromString");
-      op:invokeMethod(!keepHeadPreds, "add", "updateDialogueHistoryFromString");
-      op:invokeMethod(!keepHeadPreds, "add", "scheduleTask");
-      op:invokeMethod(!keepHeadPreds, "add", "learnTaskSequence");
-      !stateName = op:getName(?state);
-      if (~op:invokeMethod(!keepHeadPreds, "contains", !stateName)) {
-        try {
-          act:hideListeningIndicator();
-        } catch(!hideErr) {
-          op:log("debug", "[handleWant] hideListeningIndicator unavailable (non-Ava config)");
-        }
-      }
-
       try {
         //TODO: Empirically tune ack semantics
         if (op:equals(?validated,false)) {
