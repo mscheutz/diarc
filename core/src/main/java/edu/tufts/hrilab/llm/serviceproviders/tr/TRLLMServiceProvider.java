@@ -295,8 +295,8 @@ public abstract class TRLLMServiceProvider extends BasicLLMServiceProvider {
       if (processedArguments == null) {
         return failure.build();
       }
-      output.setSemantics(Factory.createPredicate(semantics.getName(), processedArguments));
-      output.setNeedsValidation(true);
+      Predicate outputSemantics = Factory.createPredicate(semantics.getName(), processedArguments);
+      output.setSemantics(outputSemantics);
 
       // Perform any domain specific postprocessing
       Utterance result = correctCommonNLUMistakes(output.build());

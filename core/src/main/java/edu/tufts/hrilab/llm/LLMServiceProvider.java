@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 //                                   4. Private back-door interactions with the architecture to supply additional information or guidance
 public abstract class LLMServiceProvider extends DiarcComponent {
 
+  protected String language = "English";
+
   //////////////// Abstract Methods Start ////////////////
 
   @TRADEService
@@ -145,10 +147,10 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     return response;
   }
 
-  // Currently overriding in Social Service Provider - should have unified notion when mergdd
+  // Currently overriding in Social Service Provider - should have unified notion when merged
   @TRADEService
-  public int getLLMConversationLength(Symbol speaker, Symbol agentTeam) {
-    return 0;
+  public int getLLMConversationLength(Symbol user, Symbol agentTeam) {
+    return 1;
   }
 
   //////////////// Dialogue History Tracking ////////////////

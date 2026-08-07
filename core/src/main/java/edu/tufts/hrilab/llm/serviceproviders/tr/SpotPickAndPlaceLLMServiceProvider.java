@@ -184,8 +184,6 @@ public class SpotPickAndPlaceLLMServiceProvider extends TRLLMServiceProvider {
             output.addTierAssignment(vars.get(i), tier);
         }
 
-        output.setNeedsValidation(true);
-
         return output.build();
     }
 
