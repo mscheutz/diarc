@@ -5,8 +5,8 @@
 package edu.tufts.hrilab.slug.nlg.cache;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
@@ -15,7 +15,7 @@ import org.apache.commons.cli.Option;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CachedNLGComponent extends DiarcComponent implements NLGInterface {
+public class CachedNLGComponent extends DiarcComponent {
     private String name = null;
     private String[] loadPaths = null;
     private boolean persist = false;
@@ -53,7 +53,8 @@ public class CachedNLGComponent extends DiarcComponent implements NLGInterface {
         database = new CacheDatabase(name, loadPaths, persist, true);
     }
 
-    @Override
+    @TRADEService
+    @Action
     public Utterance convertSemanticsToText(Utterance incoming) {
         return database.get(incoming,language);
     }

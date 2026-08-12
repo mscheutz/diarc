@@ -6,7 +6,6 @@ import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.llm.*;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.NLG;
@@ -21,7 +20,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
+public class PickAndPlaceLLM extends DiarcComponent {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
     NLG nlg = new NLG();
     Prompt nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
@@ -162,8 +161,8 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
 
         return parserResponse;
     }
-
-    @Override
+    @TRADEService
+    @Action
     public Utterance convertSemanticsToText(Utterance u) {
         return convertSemanticsToText(u,false);
     }

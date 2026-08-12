@@ -7,7 +7,6 @@ package edu.tufts.hrilab.slug.nlg.hybrid;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.nlg.cache.CachedNLGComponent;
@@ -24,12 +23,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
+public class HybridNLGComponent extends DiarcComponent {
 
   private boolean useLLM = false;
-  private NLGInterface llmGenerator;
+  private LLMNLGComponent llmGenerator;
   private boolean useSimpleNLG = false;
-  private NLGInterface simpleNLG;
+  private SimpleNLGComponent simpleNLG;
   private boolean useCache = false;
   private CachedNLGComponent cacheNLG;
   private boolean useTemplatedNLG = false;
@@ -137,7 +136,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
     }
   }
 
-  @Override
+  @TRADEService
+  @Action
   public Utterance convertSemanticsToText(Utterance incoming) {
     long t0 = System.nanoTime();
     log.debug("[lat] nlg_entry");
