@@ -13,6 +13,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
 import java.util.*;
 
+// Deprecated - attempted to be updated in line with social language/front-end configuration changes but not tested
 public abstract class BasicLLMServiceProvider extends LLMServiceProvider {
 
   /**
@@ -42,7 +43,7 @@ public abstract class BasicLLMServiceProvider extends LLMServiceProvider {
    */
   protected abstract Utterance parseNLGCompletionResponse(Utterance outgoingUtterance, Completion llmResponse);
 
-  public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
+  public boolean inExtendedParseLoop(Symbol user, Symbol agentTeam) {
     return false;
   }
 
@@ -54,6 +55,17 @@ public abstract class BasicLLMServiceProvider extends LLMServiceProvider {
   @TRADEService
   public Utterance convertSemanticsToTextLLMService(Utterance u) {
     return llmChatCompletionHelper(u, false);
+  }
+
+  @Override
+  public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean streamingGeneration) {
+    log.debug("[parseUtteranceLLMService] BasicLLMServiceProvider subclasses inherently don't support streaming TTS of multi-turn parse response because they do not occur, calling non-streaming");
+    return convertSemanticsToTextLLMService(utterance);
+  }
+  @Override
+  public Utterance parseUtteranceLLMService(Utterance utterance, boolean streamingGeneration) {
+    log.warn("[parseUtteranceLLMService] BasicLLMServiceProvider subclasses are not currently integrated with streaming NLG and TTS, please update your config to disable streamingTTS or implement in your subclass and override this method");
+    return parseUtteranceLLMService(utterance);
   }
 
   protected Utterance llmChatCompletionHelper(Utterance utterance, boolean parsing) {

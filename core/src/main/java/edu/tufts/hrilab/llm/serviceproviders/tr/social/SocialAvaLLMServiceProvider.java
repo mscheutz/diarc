@@ -260,7 +260,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    // Modify semantics based on domain specific postprocessing
    // Return - Error String to add onto baseToolResponse to be sent when hanlding this uetterance as an error.
    //          Empty String if no issues found
-   private String correctCommonNLUMistakes(Utterance utterance) {
+   protected String correctCommonNLUMistakes(Utterance utterance) {
       Symbol actor = utterance.getAddressee();
       try {
          String command = utterance.getSemantics().getName();
@@ -1052,7 +1052,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //String exampleCallString = xml ?
       //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>" :
       //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
-      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>" :
+      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>";
       definition = new ToolDefinition("taskPredicate",
                                       "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to %exampleLocation\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("toolCall","string",new ArrayList<>(),"This argument should be replaced by definition of another tool call and populated arguments from the previous examples",true, true, "nlu")));

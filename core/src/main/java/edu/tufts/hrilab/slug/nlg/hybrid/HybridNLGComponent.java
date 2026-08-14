@@ -56,7 +56,7 @@ public class HybridNLGComponent extends DiarcComponent {
     options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheSimpleNLG").desc("Cache SimpleNLG responses").build());
     options.add(Option.builder("templated").argName("boolean").desc("Use the TemplatedNLG generator").build());
-    options.add(Option.builder("sequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
+    options.add(Option.builder("sequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, templated, simple, llm)").build());
     return options;
   }
 
@@ -96,7 +96,7 @@ public class HybridNLGComponent extends DiarcComponent {
     if (cmdLine.hasOption("sequence")) {
       sequence = cmdLine.getOptionValues("sequence");
     } else {
-      sequence = new String[]{"cache", "llm", "templated", "simple"};
+      sequence = new String[]{"cache", "templated", "simple", "llm"};
     }
     log.info("Using sequence: {}", Arrays.toString(sequence));
   }
@@ -136,9 +136,43 @@ public class HybridNLGComponent extends DiarcComponent {
     }
   }
 
+  // TODO: This new API currently assumes streaming TTS and filler phrases are only associated with the LLMParser (if a social subclass), could be generalized
+  //    to any component(s) if that functionality is implemented. Also could generally change details about what components are triggered/checked synchronously vs async.
+  // General convertSemanticsToText target - Either not tied to any produced speech output, or no streaming TTS and filler phrases are being utilized.
   @TRADEService
   @Action
   public Utterance convertSemanticsToText(Utterance incoming) {
+    return convertSemanticsToText(incoming, false, false);
+  }
+
+  // TODO: Depending on desired implementation, this method can trigger the LLM component to start running asynchronously or just only run the non-llm components first. (Or make that behavior configurable)
+  //  (The callStreaming argument is only actually necessary if the LLM request is made asynchronously from this method rather than synchronously from getLLMNLGResult)
+  // Call convertSemanticsToText for any valid non-LLM output. This should be used when the result is tied to speech output and streaming TTS or filler utterances are associated.
+  //  Need to run for non-llm result first to know if streaming TTS or filler phrases should be produced.
+  @TRADEService
+  public Utterance convertSemanticsToTextForNonLLMResult(Utterance incoming, boolean callStreaming) {
+    return convertSemanticsToText(incoming, true, callStreaming);
+  }
+
+  // Associated with convertSemanticsToTextForNonLLMResult - Get Trailing LLM result after checking non-llm success
+  @TRADEService
+  public Utterance getLLMNLGResult(Utterance incoming, boolean callStreaming) {
+    log.debug("[getLLMNLGResult] in method");
+
+    // If starting the LLM asynchronously
+    //*TODO: Would need to store futures and index on utteranceID to retrieve here(and probably move unblock/cancelTTSOutputForUID to this component and adjust/rename)
+
+    // If only running the LLM synchronously
+    Utterance output = llmGenerator.convertSemanticsToText(new Utterance.Builder(incoming).build(), callStreaming);
+
+    if (output != null && useCache && !output.getWordsAsString().isEmpty()) {
+      cacheNLGOutput(output);
+    }
+    return output;
+  }
+
+
+  private Utterance convertSemanticsToText(Utterance incoming, boolean returnNonLLM, boolean callStreamingMethod) {
     long t0 = System.nanoTime();
     log.debug("[lat] nlg_entry");
     log.debug("[convertSemanticsToText] hit with utterance: " + incoming);
@@ -148,8 +182,11 @@ public class HybridNLGComponent extends DiarcComponent {
     Future<Utterance> cachedFuture = null;
     Future<Utterance> templatedFuture = null;
 
-    if (useLLM) {
-      llmFuture = executor.submit(() -> llmGenerator.convertSemanticsToText(new Utterance.Builder(incoming).build()));
+    // If LLM spawned async
+    //if (useLLM) {
+    // If LLM synchronously only after other components fail
+    if (useLLM && !returnNonLLM) {
+      llmFuture = executor.submit(() -> llmGenerator.convertSemanticsToText(new Utterance.Builder(incoming).build(), callStreamingMethod));
     }
     if (useSimpleNLG) {
       simpleNLGFuture = executor.submit(() -> simpleNLG.convertSemanticsToText(new Utterance.Builder(incoming).build()));
@@ -186,7 +223,7 @@ public class HybridNLGComponent extends DiarcComponent {
           }
           break;
         case "llm":
-          if (llmFuture != null) {
+          if (!returnNonLLM && llmFuture != null) {
             try {
               llmOutput = llmFuture.get();
             } catch (InterruptedException | ExecutionException e) {

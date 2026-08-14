@@ -1,8 +1,14 @@
 package edu.tufts.hrilab.slug.nlg.templated;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -11,7 +17,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-public final class TemplatedNLG {
+public final class TemplatedNLG extends DiarcComponent {
+    final protected Logger log = LoggerFactory.getLogger(this.getClass());
+
     private final EntityResolver entities;
     private final RealizationOptions options;
     private final Map<String, Function<Call, String>> lexicalizers = new LinkedHashMap<>();
@@ -282,6 +290,15 @@ public final class TemplatedNLG {
         if (modifier != null) return modifier;
         Function<Call, String> lexicalizer = lexicalizers.get(c.name());
         if (lexicalizer != null) return adaptForm(lexicalizer.apply(c), form);
+        boolean usingLLMNLG = false;
+        try {
+            usingLLMNLG = TRADE.getAvailableService(new TRADEServiceConstraints().name("usingLLM")).call(Boolean.class);
+        } catch (TRADEException e) {
+            log.error("[TemplatedNLG] could not call usingLLM service, is the FrontEndConfigurationComponent present in the system?", e);
+        }
+        if (usingLLMNLG) {
+            return null;
+        }
         return adaptForm(fallback(c), form);
     }
 

@@ -84,6 +84,12 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     }
 
     @Override
+    public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean streamingGeneration) {
+        log.warn("[parseUtteranceLLMService] UnitySpaceStationLLMServiceProvider does not implement streaming generation, please update your config to disable streamingTTS");
+        return convertSemanticsToTextLLMService(utterance);
+    }
+
+    @Override
     public Utterance convertSemanticsToTextLLMService(Utterance utterance) {
         //TODO: when looking back at lab branch, set this up correctly if exists (assuming stylizeUnitySpeak is filling in for this some way)
         log.warn("NLG for UnitySpaceStation not set up through LLMServiceProvider");
@@ -91,8 +97,14 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     }
 
     @Override
-    public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
+    public boolean inExtendedParseLoop(Symbol user, Symbol agentTeam) {
         return false;
+    }
+
+    @Override
+    public Utterance parseUtteranceLLMService(Utterance utterance, boolean streamingGeneration) {
+        log.warn("[parseUtteranceLLMService] UnitySpaceStationLLMServiceProvider does not implement streaming generation, please update your config to disable streamingTTS");
+        return parseUtteranceLLMService(utterance);
     }
 
     @Override

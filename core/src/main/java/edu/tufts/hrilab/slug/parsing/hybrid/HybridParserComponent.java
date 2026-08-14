@@ -11,7 +11,6 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -23,7 +22,6 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.fol.util.Utilities;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -180,6 +178,41 @@ public class HybridParserComponent extends DiarcComponent {
     unknownListener = Factory.createSymbol("unknown");
   }
 
+  // TODO: This new API currently assumes streaming TTS and filler phrases are only associated with the LLMParser/ServiceProvider (if a social subclass), could be generalized
+  //    to any component(s) if that functionality is implemented. Also could generally change details about what components are triggered/checked synchronously vs async.
+  // Just calling parseUtterance generally, no associated filler/llm streaming response. Prevent streaming output.
+  @TRADEService
+  @Action
+  public Utterance parseUtterance(Utterance incoming) {
+    return parseUtterance(incoming, false, false);
+  }
+
+  // TODO: Depending on desired implementation, this method can trigger the LLM component to start running asynchronously or just only run the non-llm components first. (Or make that behavior configurable)
+  //  (The callStreaming argument is only actually necessary if the LLM request is made asynchronously from this method rather than synchronously from getLLMParseResult)
+  // Call parseUtterance for any valid non-LLM output. This should be used when the result is possibly tied to speech output and streaming TTS or filler utterances are associated.
+  //  Need to run for non-llm result first to know if streaming TTS or filler phrases should be produced.
+  @TRADEService
+  public Utterance parseUtteranceForNonLLMResult(Utterance incoming, boolean callStreaming) {
+    return parseUtterance(incoming, true, callStreaming);
+  }
+
+  // Associated with parseUtteranceForNonLLMResult - Get Trailing LLM result after checking non-llm success
+  @TRADEService
+  public Utterance getLLMParseResult(Utterance incoming, boolean callStreaming) {
+    log.debug("[getLLMParseResult] in method");
+
+    // If starting the LLM asynchronously
+    //*TODO: Would need to store futures and index on utteranceID to retrieve here(and probably move unblock/cancelTTSOutputForUID to this component and rename)
+
+    // If only running the LLM synchronously
+    Utterance output = llmParser.parseUtterance(new Utterance.Builder(incoming).build(), callStreaming);
+
+    if (output != null && cacheLLM && !output.getWordsAsString().isEmpty()) {
+      cacheParse(output);
+    }
+    return output;
+  }
+
   /**
    * Parses the incoming Utterance by delegating to multiple parsers asynchronously and returning the result.
    * Checks the cache first and returns if semantics are present.
@@ -189,53 +222,43 @@ public class HybridParserComponent extends DiarcComponent {
    * @param incoming The incoming Utterance to parse.
    * @return The parsed Utterance.
    */
-  @Override
-  public Utterance parseUtterance(Utterance incoming) {
+  private Utterance parseUtterance(Utterance incoming, boolean returnNonLLM, boolean callStreamingMethod) {
     Future<Utterance> llmFuture = null;
     Future<Utterance> tldlFuture = null;
     Future<Utterance> cachedFuture = null;
     Future<Utterance> pmpFuture = null;
 
-    //TODO: Where should this actually live? Need to push some notion of LLM presence and state explicitly up to a core
-    //  component of the pipeline if we are saying that LLM extended interactions, once began, only perform subsequent
-    //  parses using the LLM.
     String[] parseSequence = sequence;
-    boolean inExtendedInteraction = false;
+    boolean inExtendedParseLoop = false;
 
-    if (useLLM) {
+    // If LLM spawned async
+    //if (useLLM) {
+    // If LLM synchronously only after other components fail
+    if (useLLM && !returnNonLLM) {
       try {
-         inExtendedInteraction = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedInteraction").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
+         inExtendedParseLoop = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedParseLoop").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
       } catch (TRADEException ex) {
-        log.error("Error calling inExtendedInteraction service", ex);
+        log.error("Error calling inExtendedParseLoop service", ex);
       }
-      // If in an extended "Social" LLM interaction, then shift the LLM to the top of the sequence. All parses are now
-      //  likely dependent on the current context in some way, which is not currently handled well by any other parser type
-      if (inExtendedInteraction) {
-        parseSequence = new String[sequence.length];
-        parseSequence[0] = "llm";
-        int offset = 1;
-        for (int i=0;i+offset<sequence.length;i++) {
-          if (sequence[i].equals("llm")) {
-            offset = 0;
-            continue;
-          }
-          parseSequence[i+offset] = sequence[i];
-        }
-      }
+
       Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
       if (confirmation) {
         llmInputUtterance.setNeedsValidation(true);
       }
-      llmFuture = executor.submit(() -> llmParser.parseUtterance(llmInputUtterance));
+      llmFuture = executor.submit(() -> llmParser.parseUtterance(llmInputUtterance, callStreamingMethod));
     }
-    if (useTLDL && !inExtendedInteraction) {
-      tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
-    }
-    if (useCache && !inExtendedInteraction) {
-      cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
-    }
-    if (usePMP && !inExtendedInteraction) {
-      pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
+
+    // If in an extended Social LLM parse loop, temporarily ignore other parsers
+    if (!inExtendedParseLoop) {
+      if (useTLDL) {
+        tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
+      if (useCache) {
+        cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
+      if (usePMP) {
+        pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
     }
 
     //Utterance output = incoming;
@@ -288,7 +311,7 @@ public class HybridParserComponent extends DiarcComponent {
             if (tldlOutput != null && tldlOutput.getSemantics() != null) {
               preserveAddressee(tldlOutput);
               if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
-                if (useCache && cacheTldl && !inExtendedInteraction) {
+                if (useCache && cacheTldl) {
                   cacheParse(tldlOutput);
                 }
                 output = applyAddressee(incoming, tldlOutput);
@@ -304,7 +327,7 @@ public class HybridParserComponent extends DiarcComponent {
           }
           break;
         case "llm":
-          if (llmFuture != null) {
+          if (llmFuture != null && !returnNonLLM) {
             try {
               llmOutput = llmFuture.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -316,7 +339,8 @@ public class HybridParserComponent extends DiarcComponent {
                 log.debug("[parseUtterance] Using llm parser response");
                 preserveAddressee(llmOutput);
                 output = llmOutput;
-                if (!inExtendedInteraction && !confirmation && useCache && cacheLLM) {
+                //TODO: inExtendedParseLoop may be incorrect to use here - may have to revert to explicitly checking Chat context message length again
+                if (!inExtendedParseLoop && !confirmation && useCache && cacheLLM) {
                   cacheParse(output);
                 }
                 // Same as above comment - in a crunch, redo
@@ -493,6 +517,4 @@ public class HybridParserComponent extends DiarcComponent {
   public boolean getHybridParserRestrictedMode() {
     return restrictedMode;
   }
-
-
 }

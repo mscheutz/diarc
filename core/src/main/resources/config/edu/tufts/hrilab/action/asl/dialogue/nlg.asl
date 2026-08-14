@@ -14,37 +14,97 @@ import java.util.Map;
   * All NLG requests eventually go through this method. There are various convenience
   * methods offered to make various parts of this process easier (e.g., generateResponse, askQuestion).
   */
-() = communicateUtterance(Utterance ?utterance, java.lang.Boolean ?sayText=true) {
+  //TODO: can likely change filler phrase API to make it more clear, revisit
+() = communicateUtterance(Utterance ?utterance, Integer ?fillerPhraseCase = 0) {
     String !text;
     Symbol !addressee;
+    java.lang.Long !uttID;
+    java.lang.Boolean !streamingTTS;
+    java.lang.Boolean !isLocal;
+    java.lang.Boolean !performSayText = true;
+    Predicate !semantics;
+    String !fillerString;
 
-    // Temporary change to handle LLM-based streaming TTS setup - revert and figure out how to do properly
-    // (Also only works if only using LLM for NLG)
+    // If addressee is not local, do not need to locally sayText. Just update the dialogue history / chat displays.
+    // Similarly, if streaming TTS occurs disjointly, we will not manually retrigger a sayText upon completion of the generation (done below).
+    !addressee = op:invokeMethod(?utterance, "getAddressee");
+    !isLocal = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "isLocalAddressee", !addressee);
+    !performSayText = op:newObject("java.lang.Boolean", !isLocal);
 
-    // if utterance does not have words, call NLG actions to turn
-    // semantics into words
+    // if utterance does not have words, call NLG actions to turn semantics into words
     if (~op:invokeMethod(?utterance, "hasWords")) {
-      // utterance has semantics that needs to be converted to words
-      op:log("debug", "submitting dialogue goal");
-      ?utterance = act:applyPragmaticMeaning(?utterance);
-      ?utterance = act:convertSemanticsToText(?utterance);
+        // Perform prag
+        ?utterance = act:applyPragmaticMeaning(?utterance);
 
-      // update dialogue bookkeeping
-      op:log("debug", "updating dialogue history..");
-      act:updateDialogueHistory(?utterance);
-      !text = op:invokeMethod(?utterance,"getWordsAsString");
-      op:log("debug", "done updating dialogue history with: !text");
-    } else {
-        // update dialogue bookkeeping
-        op:log("debug", "updating dialogue history..");
-        act:updateDialogueHistory(?utterance);
-        !text = op:invokeMethod(?utterance,"getWordsAsString");
-        op:log("debug", "done updating dialogue history with: !text");
+        // Convert semantics to text
+        if (tsc:usingLLM()) {
+          // Using LLM, disjointly check for valid results from other NLG components and the LLM NLG component. Based on outcome and rest of system configuration,
+          //  conditionally generate filler phrases and allow for streaming TTS of LLM results.
+          !uttID = op:invokeMethod(!utterance,"getUid");
+          !streamingTTS = tsc:usingStreamingTTS(!addressee);
 
-        // get text from utterance, and say it
-        if (op:equalsValue(?sayText,true)) {
-            act:sayText(?utterance);
+          // Trigger HybridNLGComponent subcomponents and grab non-llm result first
+          ?utterance = tsc:convertSemanticsToTextForNonLLMResult(?utterance, !streamingTTS);
+
+          // Check non-llm component success
+          if (op:isNull(?utterance)) {
+            // Failure, using LLM result. Generate filler utterance and unblock streamingTTS
+
+            // TODO: just sample filler phrase in any case and pass into this method directly to keep code cleaner? (though tradeoff would be generating filler even if not reaching the LLM case)
+            // Filler Utterance generation
+            if (~op:eq(?fillerPhraseCase,0)) {
+              if (op:eq(?fillerPhraseCase,1)) {
+                // TentativeAccept filler
+                !semantics = op:invokeMethod(?utterance, "getSemantics");
+                !fillerResponse = tsc:sampleTentativeAcceptPhrase(!semantics);
+              } elseif (op:eq(?fillerPhraseCase,2)) {
+                // Validation Q filler
+                !fillerResponse = tsc:samplePreValidationFillerPhrase(?utterance,false);
+              } elseif (op:eq(?fillerPhraseCase,3)) {
+                // Validation Q filler - 2nd+ attempt at parse
+                !fillerResponse = tsc:samplePreValidationFillerPhrase(?utterance,true);
+              }
+              async {
+                  act:generateResponseFromString(?speaker,!fillerResponse);
+              }
+            }
+
+            // Grab LLM output, unblock streamingTTS and prevent manual sayText trigger if using
+            if (op:equals(!streamingTTS,true)) {
+              tsc:unbufferStreamingTTSOutputForUID(!uttID);
+              !performSayText = op:newObject("java.lang.Boolean", "false");
+            }
+            ?utterance = tsc:getLLMNLGResult(?utterance);
+          } else {
+            // Success, cancel/clear streaming TTS for this utterance and manually sayText below
+            tsc:cancelStreamingTTSOutputForUID(!uttID);
+          }
+        } else {
+          // No LLM, no filler, no streaming TTS -> parse utterance, update dialogue history, and manually sayText
+          ?utterance = tsc:parseUtterance(?utterance);
         }
+    }
+
+    op:log("debug", "updating dialogue history..");
+    act:updateDialogueHistory(?utterance);
+    !text = op:invokeMethod(?utterance,"getWordsAsString");
+    op:log("debug", "done updating dialogue history with: !text");
+    if (op:equals(!performSayText,true)) {
+      act:sayText(?utterance);
+    }
+
+    // TODO: in what cases do we want to trigger the WW, only after e.g. questions, LLM text responses during multi-turn parses, itk output, ... or always? (current impl means always)
+    if (tsc:usingWWBasedASR(!addressee)) {
+      //TODO: revisit this in line with back-end StreamingTTS / WW changes. Ideally just keep to triggerWW call here.
+      if (op:equals(!streamingTTS,true)) {
+        act:armPostStreamRearm();
+      } else {
+        act:triggerWW();
+      }
+      // TODO: Should listening indicator be tied to WW internally, or placed explicitly here?
+      if (tsc:usingListeningIndicator(!addressee)) {
+        act:hideListeningIndicator();
+      }
     }
 }
 
@@ -235,7 +295,7 @@ import java.util.Map;
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  **/
-(Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration) {
+(Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration, Integer ?fillerPhraseCase=0) {
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
   ?answerBindings = op:setNull();
   Long !count = 0;
@@ -249,12 +309,6 @@ import java.util.Map;
     resume: act:askQuestionFromUtteranceOnResume(!tracker,?utterance);
   }
 
-  //Preemptively converting semantics in order to index question asking effectively
-  if (~op:invokeMethod(?utterance, "hasWords")) {
-    ?utterance = act:applyPragmaticMeaning(?utterance);
-    ?utterance = act:convertSemanticsToText(?utterance);
-  }
-
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
   !addressee = op:invokeMethod(?utterance, "getAddressee");
   while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
@@ -264,19 +318,9 @@ import java.util.Map;
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
     noInterrupt {
       async {
-        act:communicateUtterance(?utterance,!false);
-        //(Currently Ava specific implementation)
-        //TODO: How to generally implement this? Specific only to interaction modalities which contain a wakeword
-            // Q: How/where to configure what to do based on a specific addressee in a specific domain configuration?
-        if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor")) {
-            // armPostStreamRearm defers rearm to post-drain via streaming onStreamCompleted; firing triggerWW here races the streaming audio.
-            // load-bearing -- reverting to triggerWW() drops the user's reply (mic-mute gate captures Ava's own audio).
-            // TODO(pete): does the sync sayText path (askQuestionFromString) leave pendingRearm stale?
-            act:armPostStreamRearm();
-        } else {
-            // not auto-rearming this turn: drop the listening indicator to match (head follows the WW rearm decision).
-            act:hideListeningIndicator();
-        }
+        // TODO: Removed (previously Ava specific) WW/StreamingTTS interactions from this block. Revisit and make sure changes in communicateUtterance comply
+        //  with desired behaviore here appropriately
+        act:communicateUtterance(?utterance, ?fillerPhraseCase);
       }
       !tracker = op:newObject("java.lang.Integer", 1);
     }

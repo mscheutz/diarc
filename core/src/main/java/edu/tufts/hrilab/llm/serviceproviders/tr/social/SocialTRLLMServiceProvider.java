@@ -38,12 +38,9 @@ import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.dialogue.Question;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,7 +61,6 @@ import java.util.stream.Collectors;
 public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
   boolean useCondensedTools = false; //Condensed Tools have not been maintained. Would need to be updated before use
-  boolean streamResults = false;
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
@@ -113,6 +109,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   protected abstract List<Tool> generateITKTools();
   protected abstract Map<String,Tool> generateReplyTools();
   protected abstract Map<String,ChatTemplates> generateFocusedContextChatTemplates();
+
+  protected abstract String correctCommonNLUMistakes(Utterance utterance);
 
   /**
    * Collection of system prompts and Tool sets utilized in this domain. Ths set of prompts which must be defined are
@@ -182,21 +180,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private int externalErrorCount = 0;
   private boolean restrictedMode = false;
-
-  @Override
-  protected List<Option> additionalUsageInfo() {
-    List<Option> options = new ArrayList<>();
-    options.add(Option.builder("streaming").desc("Stream text response results directly to TTS component as they are being generated").build());
-    return options;
-  }
-
-  @Override
-  protected void parseArgs(CommandLine cmdLine)
-  {
-    if (cmdLine.hasOption("streaming")) {
-      streamResults = true;
-    }
-  }
 
   @Override
   public void init() {
@@ -466,7 +449,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /// / NLU methods and utilities ////
   /// ////////////////////////////////
   public Utterance parseUtteranceLLMService(Utterance utterance) {
-    return parseUtteranceLLMService(utterance, false);
+    return parseUtteranceLLMService(utterance, false, false);
+  }
+
+  public Utterance parseUtteranceLLMService(Utterance utterance, boolean useStreaming) {
+    return parseUtteranceLLMService(utterance, useStreaming, false);
   }
 
   /**
@@ -477,7 +464,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    *                         Chat history with the same utterance more than once)
    * @return The utterance with populated semantics, or null if no valid parse is found
    */
-  public Utterance parseUtteranceLLMService(Utterance utterance, boolean reattemptedParse) {
+  public Utterance parseUtteranceLLMService(Utterance utterance, boolean useStreaming, boolean reattemptedParse) {
     //// Get existing chat collections or create new if none exists
     ChatCollection chatCollection;
     ChatContext chatContext;
@@ -570,7 +557,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     //// Send created chat to LLM completion
     Completion response;
-    if (streamResults) {
+    if (useStreaming) {
       response = callChatCompletionStreaming(chat, tools);
     } else {
       response = callChatCompletion(chat, tools);
@@ -603,27 +590,27 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (response.toolCalls.isEmpty()) {
         // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
         //    Add robot message to chat and return generateResponse semantics with no validation required
-        output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder);
+        output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder, useStreaming);
       } else {
         if (chatContext.chatState == ChatState.VALIDATION) {
           // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
           //  to terminate and/or transfer between base and focused contexts in this case)
-          output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder);
+          output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
         } else {
           // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
-          output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder);
+          output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
         }
       }
 
       if (output == null) {
-        output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder);
+        output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming);
       }
       return output;
     }
   }
 
   //TODO: revisit - only add calls to this if in synchronized block and understand what you're doing
-  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
+  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
     Symbol user = utterance.getAddressee().toUntyped();
     Symbol agentTeam = utterance.getSpeaker().toUntyped();
     ChatContext chatContext = chatCollection.currentChat;
@@ -649,7 +636,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
       Completion retryResponse;
-      if (streamResults) {
+      if (useStreaming) {
         retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
       } else {
         retryResponse = callChatCompletion(chatContext.history, toolList);
@@ -663,10 +650,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (retryResponse.toolCalls.isEmpty()) {
           lastToolCall = null;
           resetErrorCount(true, utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
-          output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder);
+          output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder, useStreaming);
         } else {
           lastToolCall = retryResponse.toolCalls.get(0);
-          output = handleToolResponse(retryResponse, utterance, chatCollection, errorResponseBuilder);
+          output = handleToolResponse(retryResponse, utterance, chatCollection, errorResponseBuilder, useStreaming);
         }
         if (output != null) {
           return output;
@@ -689,10 +676,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * handleTextResponse above with promising initial success. Allowing the LLM to target text responses or tool calls was giving it a
    * hard time calling tools rather than just saying it performed the underlying functionality.
    */
-  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
-    return handleToolResponse(llmResponse,inputUtterance,chatCollection,errorResponseBuilder,streamResults);
-  }
-  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean streaming) {
+  //public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
+  //  return handleToolResponse(llmResponse,inputUtterance,chatCollection,errorResponseBuilder,false);
+  //}
+  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
     if (llmResponse.toolCalls.size() > 1) {
       //TODO
       log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both. Only using first...");
@@ -783,7 +770,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             llmResponse.text = llmResponse.text.substring(1, llmResponse.text.length() - 1);
           }
         }
-        return handleTextResponse(llmResponse, inputUtterance, chatContext, errorResponseBuilder, streaming);
+        return handleTextResponse(llmResponse, inputUtterance, chatContext, errorResponseBuilder, useStreaming);
       }
 
       //// Universal postprocessing for accepted cases
@@ -853,9 +840,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Method for handling Completion responses containing Text responses. Add directly as assistant message to history
    * and return generateResponseFromString semantics with needsValidation set to false
    */
-  public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder) {
-    return handleTextResponse(llmResponse,inputUtterance,chatContext,errorResponseBuilder,streamResults);
-  }
+  //public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder) {
+  //  return handleTextResponse(llmResponse,inputUtterance,chatContext,errorResponseBuilder,streamResults);
+  //}
   public Utterance handleTextResponse(Completion llmResponse, Utterance inputUtterance, ChatContext chatContext, StringBuilder errorResponseBuilder, boolean streaming) {
     String responseString = llmResponse.getText().trim();
     if (responseString.isEmpty()) {
@@ -963,7 +950,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * <p>
    * TODO: currently not validating validation responses - change if problematic
    */
-  public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
+  public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
     if (llmResponse.toolCalls.size() > 1) {
       log.warn("[handleValidationResponse] Multiple tool calls returned -> TODO handle both. Currently only using first...");
     }
@@ -980,7 +967,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Experimental text response tool stand-in (described above)
     if (toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
-      return handleToolResponse(llmResponse, inputUtterance, chatCollection, errorResponseBuilder);
+      return handleToolResponse(llmResponse, inputUtterance, chatCollection, errorResponseBuilder, useStreaming);
     }
 
     // Handle expected validation question yes/no response semantics
@@ -1095,7 +1082,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Method for HybridParser/NLG components to prevent use of other parser/NLG components once entering an
    * extended interaction
    */
-  public boolean inExtendedInteraction(Symbol user, Symbol agentTeam) {
+  public boolean inExtendedParseLoop(Symbol user, Symbol agentTeam) {
     if (restrictedMode) {
       return false;
     }
@@ -1106,7 +1093,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (collection != null) {
       ChatContext chatContext = collection.currentChat;
       if (chatContext != null) {
-        return chatContext.containsLLMParse || chatContext.chatType != ChatType.BASE; // exclude error responses?
+        return (chatContext.containsLLMParse || chatContext.chatType != ChatType.BASE) && chatContext.chatState != ChatState.VALIDATION; // exclude error responses?
       }
     }
     return false;
@@ -1143,7 +1130,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * or a text response for the user.
    */
   @TRADEService
-  public boolean reattemptParse(Utterance utterance) {
+  public boolean reattemptParse(Utterance utterance, boolean streamingTTS) {
     ChatCollection chatCollection;
     ChatContext currentContext;
     synchronized (currentChatCollections) {
@@ -1182,7 +1169,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Call completion with user response and tool message
     Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
     tempUtterance.setNeedsValidation(true);
-    tempUtterance = parseUtteranceLLMService(tempUtterance, true);
+    tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
 
     if (tempUtterance.getSemantics() == null) {
       log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
@@ -1215,8 +1202,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /// ////////////////////////////////
   /// / NLG methods and utilities ////
   /// ////////////////////////////////
+  @TRADEService
   public Utterance convertSemanticsToTextLLMService(Utterance utterance) {
-    return convertSemanticsToTextLLMService(utterance, true);
+    return convertSemanticsToTextLLMService(utterance, false);
   }
 
   /**
@@ -1282,7 +1270,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     genChat.setSystem(chatTemplates.systemMessageTemplate.apply(promptVars));
 
     Completion llmResponse;
-    if (streamingSayText && streamResults) {
+    if (streamingSayText) {
       llmResponse = callChatCompletionStreaming(genChat, null);
     } else {
       llmResponse = callChatCompletion(genChat, null);
@@ -1946,6 +1934,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
+  //TODO: in StreamingTTSComponent, have output be buffered by default and add methods unbufferStreamingTTSOutputForUID and cancelStreamingTTSOutputForUID
   private void ttsPush(String fragment) {
     if (fragment == null || fragment.isEmpty()) return;
     ttsStreamedIds.add(currentStreamingResponseId);
@@ -1956,7 +1945,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       log.warn("[streamingChunkHandler] pushStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
         log.error("[streamingChunkHandler] TTS component doesn't exist or contain appropraite services for streaming setup, setting streamResults to false");
-        streamResults = false;
       }
     }
   }
@@ -1969,7 +1957,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
         log.error("[streamingChunkHandler] TTS component doesn't exist or contain appropraite services for streaming setup, setting streamResults to false");
-        streamResults = false;
       }
     }
   }
@@ -2059,7 +2046,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       ToolDefinition td = collection.currentChat.chatType == ChatType.FOCUSED ? chatTemplates.get(collection.currentChat.contextID).tools.get(textResponseTool.toolDefinition.function.name).toolDefinition : textResponseTool.toolDefinition;
-      Utterance out = runCompletionRetryLoop(null, List.of(td), dummy, collection, new StringBuilder());
+      Utterance out = runCompletionRetryLoop(null, List.of(td), dummy, collection, new StringBuilder(), false);
       if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {
@@ -2113,7 +2100,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
-      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder());
+      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
       if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {

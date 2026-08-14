@@ -6,7 +6,7 @@ import java.lang.Integer;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import java.lang.Boolean;
 
-() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType, Boolean ?validated=false) {
+() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType) {
     // ?semanticType: either direct or indirect   not sure if this is the best variable name
 
     Term !currSemantics;
@@ -56,7 +56,7 @@ import java.lang.Boolean;
         //      Ideally we could move this logic into an action selector, so we can
         //      remove the if else and have it  just be the one state spec
         if (op:invokeMethod(!matchingQuestions,"isEmpty")) {
-          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType, ?validated);
+          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
         } else {
             op:log("debug", "have matching questions, !matchingQuestions");
             !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions, ?speaker);
@@ -76,28 +76,28 @@ import java.lang.Boolean;
     }
 }
 
-() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType, Boolean ?validated=false) {
+() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType) {
     Predicate !response;
 
     effects : {
-      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType);
     }
 
     !response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(sorry,?errorSemantics)");
     act:generateResponse(?speaker, !response, ?semanticType);
 }
 
-() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType, Boolean ?validated) {
+() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType) {
     effects : {
-      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType);
     }
 }
 
-() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType, Boolean ?validated) {
+() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType) {
     Predicate !greetingResponse;
 
     effects : {
-      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType);
     }
 
     op:log("debug", "handleGreeting: ?actor ?speaker ?addressee ?greeting");
@@ -108,11 +108,11 @@ import java.lang.Boolean;
     }
 }
 
-() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType, Boolean ?validated) {
+() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType) {
     Predicate !state;
 
     effects : {
-      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType);
     }
 
     try {
@@ -128,7 +128,7 @@ import java.lang.Boolean;
     }
 }
 
-() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType, Boolean ?validated) {
+() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType) {
     Predicate !defaultResponse;
     java.util.List !beliefs;
     java.lang.Boolean !retVal;
@@ -138,7 +138,7 @@ import java.lang.Boolean;
     Symbol !queryActor;
 
     effects : {
-      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType);
     }
 
     if (op:equals(?addressee, ?actor)) {
@@ -211,26 +211,26 @@ import java.lang.Boolean;
     }
 }
 
-() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Boolean ?validated) {
+() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType);
     }
 
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = act:getPriorityTierForGoal(?state);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
 }
 
-() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType, Boolean ?validated) {
+() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType,?validated);
+      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType);
     }
 
     java.lang.String !priorityString = op:getName(?priorityTierSymbol);
     PriorityTier !priorityTier = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.PriorityTier", "fromString", !priorityString);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
 }
 
-() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED, Boolean ?validated = false) {
+() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
     Predicate !defaultResponse;
     Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
@@ -244,11 +244,11 @@ import java.lang.Boolean;
 
     if (op:equals(?addressee, ?actor)) {
       try {
-        //TODO: Empirically tune ack semantics
-        if (op:equals(?validated,false)) {
-            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
-        } else {
+
+        if (op:invokeMethod(?utterance,"isValidated")) {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
+        } else {
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
         }
         !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
         act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType, ?priorityTier);
@@ -278,7 +278,7 @@ import java.lang.Boolean;
     }
 }
 
-() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType, Boolean ?validated) {
+() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType) {
     Predicate !defaultResponse;
     Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
@@ -290,41 +290,15 @@ import java.lang.Boolean;
     Predicate !recoveryPred;
 
     effects : {
-      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType,?validated);
+      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType);
     }
 
     try {
-      //TODO: Empirically tune ack semantics
-      if (op:equals(?validated,false)) {
-          !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
-      } else {
+      if (op:invokeMethod(?utterance,"isValidated")) {
           !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
+      } else {
+          !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
       }
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
-      act:achieveState(?speaker, ?recovery, !defaultTentativeResponse, !defaultResponse, indirect);
-    } catch(FAIL_PRECONDITONS, !failureConditions) {
-      op:log("debug", "catching recovery before the new state is handled");
-      !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "willnot(?state,!becausePredicate)");
-      act:generateResponse(?speaker, !failureEffects, direct);
-      op:log("debug", "exiting itkL");
-      return;
-    } catch(!failureConditions) {
-      op:log("debug", "catching recovery before the new state is handled");
-      !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(?state,!becausePredicate)");
-      act:generateResponse(?speaker, !failureEffects, direct);
-      op:log("debug", "exiting itkL");
-      return;
-    }
-
-    try {
-      //TODO: Empirically tune ack semantics
-        if (op:equals(?validated,false)) {
-            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
-        } else {
-            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
-        }
       !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
       act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType);
     } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
@@ -426,7 +400,8 @@ import java.lang.Boolean;
     java.lang.Boolean !goalPlacedInQueue = false;
     java.lang.Boolean !currentGoalActive = true;
     Predicate !goalSubmittedPred;
-    java.lang.String !fillerResponse;
+    edu.tufts.hrilab.slug.common.Utterance !utterance;
+    edu.tufts.hrilab.slug.common.UtteranceType !type;
 
     conditions : {
       or : {
@@ -455,39 +430,55 @@ import java.lang.Boolean;
         return;
     }
 
-    //// Pre-submission checks
-    // Compare goal priorities
-    !priority = act:getPriorityForGoal(?state);
-    !currentGoalIds = tsc:getSystemGoalsIds(?actor);
-    foreach (!currentGoalId : !currentGoalIds) {
-        if (tsc:hasGreaterPriority(!currentGoalId, ?priorityTier, !priority)) {
-            !goalPlacedInQueue = op:newObject("java.lang.Boolean", true);
-        }
+    //// Pre-submission checks / Acknowledgement
+    if (tsc:usingQueueEM()) {
+      // Compare goal priorities
+      !priority = act:getPriorityForGoal(?state);
+      !currentGoalIds = tsc:getSystemGoalsIds(?actor);
+      foreach (!currentGoalId : !currentGoalIds) {
+          if (tsc:hasGreaterPriority(!currentGoalId, ?priorityTier, !priority)) {
+              !goalPlacedInQueue = op:newObject("java.lang.Boolean", true);
+          }
+      }
     }
 
-    //nRespond differently based on whether it is executed immediately or placed in the queue
+    // Respond differently based on whether it is executed immediately or placed in the queue
     if (op:equals(!goalPlacedInQueue,true)) {
-        !fillerResponse = tsc:getTentativeAcceptFiller(?state,false);
+        // Goal placed in the queue, notify the user of the fact
+        !ackString = tsc:sampleGoalPlacedInQueueAcknowledgement(?state);
         async {
-            act:generateResponseFromString(?speaker,!fillerResponse);
+            act:generateResponseFromString(?speaker,!ackString);
         }
     } else {
-            !fillerResponse = tsc:getTentativeAcceptFiller(?state,true);
+        // Goal executing immediately, respond based on domain-specific ignoreTentativeAccept configuration and if validation for this utterance already occurred
+        //    (If validation already/just occurred, we don't need to be as descriptive)
+        if(~tsc:ignoreTentativeAccept(?state)) {
+          if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+            // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood
+            !fillerResponse = tsc:sampleTentativeAcceptPhrase(?state);
             async {
                 act:generateResponseFromString(?speaker,!fillerResponse);
-        if(~tsc:ignoreTentativeAccept(?state)) {
             }
-
-            // (Practically) If had already been validated, then don't need to restate the action being performed
-            if (~op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-                //// Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
-                ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
-                ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
-                ////  if not terminated and/or conditional timing based on the goal itself.
-                //async {
-                    act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-                //}
-            }
+          } else {
+            // Validation did not occur, giving descriptive acknowledgement restating the understood parse
+            //// TODO: Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
+            ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
+            ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
+            ////  if not terminated and/or conditional timing based on the goal itself.
+            //async {
+              if (tsc:useTentativeAcceptFiller()) {
+                // CommunicateUtterance with specific filler phrase case (can change this API)
+                !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?speaker);
+                !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+                op:invokeMethod(!utterance, "setType", !type);
+                op:invokeMethod(!utterance, "setSemantics", ?tentativeAcceptSemantics);
+                act:communicateUtterance(!utterance, 1);
+              } else {
+                // General communicateUtterance call
+                act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+              }
+            //}
+          }
         }
     }
 

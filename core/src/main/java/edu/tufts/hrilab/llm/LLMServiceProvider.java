@@ -48,10 +48,16 @@ public abstract class LLMServiceProvider extends DiarcComponent {
   public abstract Utterance parseUtteranceLLMService(Utterance utterance);
 
   @TRADEService
+  public abstract Utterance parseUtteranceLLMService(Utterance utterance, boolean streamingGeneration);
+
+  @TRADEService
   public abstract Utterance convertSemanticsToTextLLMService(Utterance u);
 
   @TRADEService
-  public abstract boolean inExtendedInteraction(Symbol user, Symbol agentTeam);
+  public abstract Utterance convertSemanticsToTextLLMService(Utterance u, boolean streamingGeneration);
+
+  @TRADEService
+  public abstract boolean inExtendedParseLoop(Symbol user, Symbol agentTeam);
 
   //////////////// Abstract Methods End ////////////////
 

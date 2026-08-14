@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.slug.parsing.cache;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -58,7 +59,8 @@ public class CachedParserComponent extends DiarcComponent {
    * @param incoming The incoming Utterance to parse.
    * @return The parsed Utterance with updated semantics and bindings if found in the database; otherwise, returns the incoming Utterance unchanged.
    */
-  @Override
+  @TRADEService
+  @Action
   public Utterance parseUtterance(Utterance incoming) {
     Utterance outgoing = database.get(incoming,language);
     if (outgoing != null) {

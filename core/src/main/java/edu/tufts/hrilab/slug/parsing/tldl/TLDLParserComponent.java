@@ -243,7 +243,8 @@ public class TLDLParserComponent extends DiarcComponent {
     return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
   }
 
-  @Override
+  @TRADEService
+  @Action
   public Utterance parseUtterance(Utterance input) {
     Utterance output = parseUtteranceHelper(input);
     // use addressee history when there's no parse so the correct address generates the failure explanation

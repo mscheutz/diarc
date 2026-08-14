@@ -21,12 +21,18 @@ public class LLMNLGComponent extends DiarcComponent {
     @TRADEService
     @Action
     public Utterance convertSemanticsToText(Utterance input) {
+        return convertSemanticsToText(input, false);
+    }
+
+    @TRADEService
+    @Action
+    public Utterance convertSemanticsToText(Utterance input, boolean callStreaming) {
         Utterance output;
 
         log.info("convertSemanticsToText: " + input.getWordsAsString());
 
         try {
-            output = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToTextLLMService").argTypes(Utterance.class)).call(Utterance.class, input);
+            output = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToTextLLMService").argTypes(Utterance.class, Boolean.class)).call(Utterance.class, input, callStreaming);
         } catch (TRADEException ex) {
             log.error("Error calling convertSemanticsToTextLLMService.", ex);
             output = input;

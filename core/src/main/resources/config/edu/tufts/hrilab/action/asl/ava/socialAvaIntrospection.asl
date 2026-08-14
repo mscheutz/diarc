@@ -20,7 +20,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     //!utterance = act:applyPragmaticMeaning(!utterance);
     //!utterance = act:convertSemanticsToText(!utterance);
     op:log("info","!utterance !false");
-    !utterance = tsc:convertSemanticsToTextLLMService(!utterance, !false);
+    !utterance = tsc:convertSemanticsToText(!utterance);
 
     ?output = op:invokeMethod(!utterance,"getWordsAsString");
 }
