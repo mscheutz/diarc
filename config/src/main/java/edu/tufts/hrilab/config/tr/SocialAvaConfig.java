@@ -1,6 +1,8 @@
 package edu.tufts.hrilab.config.tr;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent;
+import edu.tufts.hrilab.llm.serviceproviders.tr.social.SocialAvaLLMServiceProvider;
 import edu.tufts.hrilab.llm.serviceproviders.tr.social.SocialTRLLMServiceProvider;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import org.apache.commons.cli.CommandLine;
@@ -45,7 +47,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public boolean muteMics = false;
   public SimSpeechRecognitionComponent simSpeechRec;
   public SocialTRLLMServiceProvider serviceProvider;
-  public boolean llmOnly = true;
+  public boolean llmOnly = false;
 
 
   @Override
@@ -155,7 +157,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     } else {
       // Added LLM before TLDL in sequence because some TLDL ITK targets (and just in general targets) are problematic/out of date
       //  TODO: ^at least want this for testing. If we want direct ITK versions still available for deployment can swap back
-      parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache llm tldl";
+      parserArgs = "-patternMatching -tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache pattern tldl llm";
     }
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.domains.AvaHybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
@@ -165,10 +167,11 @@ public class SocialAvaConfig extends DiarcConfiguration {
     if (llmOnly) {
       nlgArgs = "-llm";
     } else {
-      nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist -llm -sequence llm cache simple";
+      nlgArgs = "-templated -cache -cacheName ava-reverse -cachePersist -llm -sequence cache templated llm";
     }
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    createInstance(FrontEndConfigurationComponent.class);
 
 //    if (useLLMNLG || useLLMParser) {
 //      //createInstance(SocialAvaLLMServiceProvider.class,"");
@@ -274,7 +277,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       kioskArgs += " -kioskSettingsFile ava.ser";
     }
 
-    serviceProvider = createInstance(SocialTRLLMServiceProvider.class,"");
+    serviceProvider = createInstance(SocialAvaLLMServiceProvider.class, "");
     String llmComponentArgs = String.format("-service %s hf -model %s Qwen/Qwen3.5-9B -temperature 0.5 0.5 -endpoint %s", service, model, openaiEndpoint);
     //HF only
     //String llmComponentArgs = String.format("-service hf -model Qwen/Qwen3-14B -temperature 0.7", service, model);
