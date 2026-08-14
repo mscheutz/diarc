@@ -2939,30 +2939,31 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     toolDefinitionMap.values().removeIf(Objects::isNull);
 
-    //TODO: remove this block and extend framework to allow for arbitrary definition of specific json object forms without necessarily being tool calls
-    if (argumentName.equals("locationActionPairs")) {
-      String locationVal = (String)toolDefinitionMap.get("location");
-      Object actionVal = toolDefinitionMap.get("action");
-      Symbol locationSymbol = null;
-      Symbol actionSymbol = null;
-      if (locationVal == null) {
-        log.warn("[processArgument] locationActionPair does not have location field present");
-        errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"location\" field. Each locationPair needs a \"location\" field.\n");
-      } else {
-        locationSymbol = processSymbolArgument(argumentName, locationVal, getLocations("self",true),errorMessage,varMap,builder,false,unpopulatedArgSafe);
-      }
-      if (actionVal == null) {
-        log.warn("[processArgument] locationActionPair does not have action field present");
-        errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"action\" field. Each locationPair needs an \"action\" field.\n");
-      } else {
-        actionSymbol = processToolArgument("inner location action pair's action", actionVal, argumentDefinition, parentTool,actor, builder,varMap,errorMessage,unpopulatedArgSafe);
-      }
-      if (actionSymbol == null || locationSymbol == null) {
-        return null;
-      } else {
-       return Factory.createPredicate("and",locationSymbol,actionSymbol);
-      }
-    }
+    //TODO: move to domain specific processing
+    ////TODO: remove this block and extend framework to allow for arbitrary definition of specific json object forms without necessarily being tool calls
+    //if (argumentName.equals("locationActionPairs")) {
+    //  String locationVal = (String)toolDefinitionMap.get("location");
+    //  Object actionVal = toolDefinitionMap.get("action");
+    //  Symbol locationSymbol = null;
+    //  Symbol actionSymbol = null;
+    //  if (locationVal == null) {
+    //    log.warn("[processArgument] locationActionPair does not have location field present");
+    //    errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"location\" field. Each locationPair needs a \"location\" field.\n");
+    //  } else {
+    //    locationSymbol = processSymbolArgument(argumentName, locationVal, getLocations("self",true),errorMessage,varMap,builder,false,unpopulatedArgSafe);
+    //  }
+    //  if (actionVal == null) {
+    //    log.warn("[processArgument] locationActionPair does not have action field present");
+    //    errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"action\" field. Each locationPair needs an \"action\" field.\n");
+    //  } else {
+    //    actionSymbol = processToolArgument("inner location action pair's action", actionVal, argumentDefinition, parentTool,actor, builder,varMap,errorMessage,unpopulatedArgSafe);
+    //  }
+    //  if (actionSymbol == null || locationSymbol == null) {
+    //    return null;
+    //  } else {
+    //   return Factory.createPredicate("and",locationSymbol,actionSymbol);
+    //  }
+    //}
 
     String toolName = (String)toolDefinitionMap.get("name");
     Object innerArguments = toolDefinitionMap.get("arguments");
