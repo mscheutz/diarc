@@ -1152,6 +1152,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return false;
     }
 
+    //// Wait for relevant side effects from dialogue history and question answer callbacks to occur
+    //currentContext.waitOnValidationResponseSideEffects();
+
     Symbol semantics = utterance.getSemantics().clone();
     if (semantics.isPredicate() && utterance.getSupplementalSemantics() != null) {
       ////Note: if including tool calls in the history, this message needs to include matching tool_call_id
@@ -2656,6 +2659,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
           // If negative validation response, don't release inputLock until reattemptParse completes
           if ((semantics.getName().equals("val") || semantics.getName().equals("validated"))) {
+            //// Synchronize history update before question answer response callback side effects (new because external parsers can handle validation responses now)
+            //chatContext.signalValidationResponseHistoryUpdate();
             chatContext.history.addUserMessage(utterance.getWordsAsString());
             if (semantics.get(0).getName().equals("no")) {
               return;
@@ -2763,10 +2768,22 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
 
+    //// Synchronize between necessary dialogue history side effects and potential reattemptParse call
+    ChatContext chatContext;
+    //synchronized (currentChatCollections) {
+    //  ChatCollection chatCollection = getChatCollection(user, agentTeam);
+    //  if (chatCollection != null) {
+    //    chatContext = chatCollection.currentChat;
+    //    if (chatContext != null) {
+    //      chatContext.signalValidationQuestionAnswered();
+    //    }
+    //  }
+    //}
+
     synchronized (currentChatCollections) {
       ChatCollection chatCollection = getChatCollection(user, agentTeam);
       if (chatCollection != null) {
-        ChatContext chatContext = chatCollection.currentChat;
+        chatContext = chatCollection.currentChat;
         if (chatContext != null) {
           if (chatContext.chatState != ChatState.VALIDATION) {
             log.warn("[questionAskingCallback] receiving validation question answered notification but context not in validation state");

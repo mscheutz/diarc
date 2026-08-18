@@ -44,6 +44,12 @@ public class ChatContext {
   //  result before clearing state
   Semaphore contextLock = new Semaphore(0);
   Semaphore postprocessingLock = new Semaphore(0);
+  //// Similar locks for validation/reattemptParse synchronization because we now need to listen in dialogue history and
+  ////  question answer callbacks rather than in internal methods due to the added possibility of external parsers handling
+  ////  validation question responses
+  //Semaphore validationDialogueHistoryLock = new Semaphore(0);
+  //Semaphore validationQuestionResponseLock = new Semaphore(0);
+
   // ID of the related ActionContext for a "focused" dialogue action - used as a unique identifier to target the correct ChatContext
   long cid = -1;
   // Time the "focused" context action was instructed - Held to measure the time elapsed between instruction and start
@@ -149,4 +155,28 @@ public class ChatContext {
   public Chat getHistory() {
     return new Chat(history);
   }
+
+  //// EW: I believe we currently don't even need any of this because updateDialogueHistory, waitForResponse and all
+  //// associated callbacks are called synchronously in the nlu pipeline?
+  //// If this is ever changes though to occur asynchronously at any stage, would need something like this
+  //public void signalValidationResponseHistoryUpdate() {
+  //  validationDialogueHistoryLock.drainPermits();
+  //  validationDialogueHistoryLock.release();
+  //}
+  //public void signalValidationQuestionAnswered() {
+  //  try {
+  //    validationDialogueHistoryLock.acquire();
+  //  } catch (InterruptedException e) {
+  //    log.error("[signalValidationQuestionAnswered] could not acquire lock");
+  //  }
+  //  validationQuestionResponseLock.drainPermits();
+  //  validationQuestionResponseLock.release();
+  //}
+  //public void waitOnValidationResponseSideEffects() {
+  //  try {
+  //    validationQuestionResponseLock.acquire();
+  //  } catch (InterruptedException e) {
+  //    log.error("[waitOnValidationResponseSideEffects] could not acquire lock");
+  //  }
+  //}
 }
