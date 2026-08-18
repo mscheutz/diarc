@@ -1,8 +1,4 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
-// Generated from /home/evan/code/diarc/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -471,6 +467,16 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitOnResume(ASLParser.OnResumeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#resumeResetSpec}.
+	 * @param ctx the parse tree
+	 */
+	void enterResumeResetSpec(ASLParser.ResumeResetSpecContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#resumeResetSpec}.
+	 * @param ctx the parse tree
+	 */
+	void exitResumeResetSpec(ASLParser.ResumeResetSpecContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#interruptSpec}.
 	 * @param ctx the parse tree

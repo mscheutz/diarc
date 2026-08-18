@@ -12,6 +12,8 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.simspeech.gui.ChatAdapter;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 
@@ -25,7 +27,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ListenerComponent extends DiarcComponent {
+public class ListenerComponent extends DiarcComponent implements GuiProvider {
 
   private Queue<Utterance> inputSpeechQ = new ArrayDeque();
 
@@ -99,5 +101,18 @@ public class ListenerComponent extends DiarcComponent {
   @Override
   protected void shutdownComponent() {
     interruptWaitingForUtterance();
+  }
+
+  //==========================================================================
+  // Implement methods | GuiProvider
+  //==========================================================================
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            ChatAdapter.class.getName()
+    };
   }
 }

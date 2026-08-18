@@ -42,6 +42,8 @@ public:
   ClusterDetector(const long long& processorId, const int imgWidth, const int imgHeight);
   ~ClusterDetector();
 
+  virtual void loadConfig(const std::string& config);
+
   //! override because this detector never wants capture notifications (uses plane notifications)
   virtual void registerForCaptureNotification();
   
@@ -57,6 +59,7 @@ private:
   void haveNewTablePlane(PlaneNotification::ConstPtr planeNotification);
   void haveNewSaliencyMap(SaliencyNotification::ConstPtr saliencyNotification);
   void sortPointcloud();
+  float calculateMaxDistanceFromPlane(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, ExtractedPlane::ConstPtr& plane, const pcl::PointIndices& cluster);
   diarc::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<pcl::PointIndices>& clusters,
         CaptureData::ConstPtr captureData);
   void display(diarc::stm::MemoryObject::VecPtr newClusterObjects);

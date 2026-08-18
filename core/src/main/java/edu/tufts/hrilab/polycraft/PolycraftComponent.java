@@ -85,6 +85,15 @@ public class PolycraftComponent extends DiarcComponent {
 
   private String characterize = "";
 
+  // TRADE Service handles
+  private TRADEServiceInfo queryBeliefTSI;
+  private TRADEServiceInfo queryBeliefMemLvlTSI;
+  private TRADEServiceInfo querySupportTSI;
+  private TRADEServiceInfo querySupportMemLvlTSI;
+  private TRADEServiceInfo assertBeliefTSI;
+  private TRADEServiceInfo assertBeliefMemLvlTSI;
+  private TRADEServiceInfo assertBeliefsMemLvlTSI;
+
   public PolycraftComponent() {
     super();
   }
@@ -156,6 +165,18 @@ public class PolycraftComponent extends DiarcComponent {
    */
   @TRADEService
   public Set<Term> initializeBeliefs() {
+    try {
+      queryBeliefTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class));
+      queryBeliefMemLvlTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class, MemoryLevel.class));
+      querySupportTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class));
+      querySupportMemLvlTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class, MemoryLevel.class));
+      assertBeliefTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class));
+      assertBeliefMemLvlTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class));
+      assertBeliefsMemLvlTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class, MemoryLevel.class));
+    } catch (TRADEException e) {
+      throw new RuntimeException(e);
+    }
+
     // reset local game state
     isGameOver = false;
     game.reset();
@@ -181,8 +202,9 @@ public class PolycraftComponent extends DiarcComponent {
     // reset beliefs
     try {
       // clears WORKING and EPISODIC memory
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("clear")).call(Object.class, MemoryLevel.WORKING);
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("clear")).call(Object.class, MemoryLevel.EPISODIC);
+      TRADEServiceInfo clearTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("clear").argTypes(MemoryLevel.class));
+      clearTSI.call(Object.class, MemoryLevel.WORKING);
+      clearTSI.call(Object.class, MemoryLevel.EPISODIC);
     } catch (TRADEException e) {
       log.error("Cannot reset beliefs.", e);
     }
@@ -215,7 +237,7 @@ public class PolycraftComponent extends DiarcComponent {
 
     // update belief with game state
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, gameState, MemoryLevel.EPISODIC);
+      assertBeliefsMemLvlTSI.call(Object.class, gameState, MemoryLevel.EPISODIC);
     } catch (TRADEException e) {
       log.error("Error calling assertBeliefs.", e);
     }
@@ -224,37 +246,37 @@ public class PolycraftComponent extends DiarcComponent {
     Set<Predicate> initPreds = new HashSet<>();
     try {
       Predicate objPred = Factory.createPredicate("constant", "X", "Y");
-      List<Map<Variable, Symbol>> objects = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, objPred);
+      List<Map<Variable, Symbol>> objects = queryBeliefTSI.call(List.class, objPred);
       for (Map<Variable, Symbol> m : objects) {
         Symbol s = m.get(new Variable("X"));
 
         // only want objects that are physobj type
         Predicate physobjPred = Factory.createPredicate("type", s.getName(), "physobj");
-        if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, physobjPred, MemoryLevel.EPISODIC)) {
+        if (querySupportMemLvlTSI.call(boolean.class, physobjPred, MemoryLevel.EPISODIC)) {
           // if condition to check whether the predicated below exists or not. X
-          if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("fluent_equals(inventory(self," + s + "), X)"), MemoryLevel.EPISODIC)) {
+          if (!querySupportMemLvlTSI.call(boolean.class, Factory.createPredicate("fluent_equals(inventory(self," + s + "), X)"), MemoryLevel.EPISODIC)) {
             initPreds.add(Factory.createPredicate("fluent_equals(inventory(self," + s + "), 0)"));
           }
-          if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("fluent_equals(world(" + s + "), X)"), MemoryLevel.EPISODIC)) {
+          if (!querySupportMemLvlTSI.call(boolean.class, Factory.createPredicate("fluent_equals(world(" + s + "), X)"), MemoryLevel.EPISODIC)) {
             initPreds.add(Factory.createPredicate("fluent_equals(world(" + s + "), 0)"));
           }
         }
       }
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, initPreds, MemoryLevel.EPISODIC);
+      assertBeliefsMemLvlTSI.call(Object.class, initPreds, MemoryLevel.EPISODIC);
     } catch (TRADEException e) {
       log.error("Cannot initialize beliefs.", e);
     }
 
     if (hints) {
       try {
-        if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("novelty(X,Y)"))) {
+        if (!querySupportTSI.call(boolean.class, Factory.createPredicate("novelty(X,Y)"))) {
           SenseHint senseHint = new SenseHint();
           game.perform(senseHint);
           if (senseHint.getSuccess()) {
             Set<Predicate> hints = senseHint.getAssertions();
             if (!hints.isEmpty()) {
               reportNovelty(0, "Hint revealed novelty");
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, hints, MemoryLevel.EPISODIC);
+              assertBeliefsMemLvlTSI.call(Object.class, hints, MemoryLevel.EPISODIC);
             }
           }
         }
@@ -279,7 +301,7 @@ public class PolycraftComponent extends DiarcComponent {
     // update belief with game state
     try {
       Set<Predicate> gameStateWithoutAir = senseAll.getLocationAssertions(false);
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, gameStateWithoutAir, MemoryLevel.EPISODIC);
+      assertBeliefsMemLvlTSI.call(Object.class, gameStateWithoutAir, MemoryLevel.EPISODIC);
     } catch (TRADEException e) {
       log.error("Error calling assertBeliefs.", e);
     }
@@ -289,7 +311,7 @@ public class PolycraftComponent extends DiarcComponent {
     if (clearOldMap) {
       try {
         // reset to empty map
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("resetMap")).call(Object.class);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("resetMap").argTypes()).call(Object.class);
       } catch (TRADEException e) {
         log.error("Cannot reset map.", e);
       }
@@ -314,7 +336,8 @@ public class PolycraftComponent extends DiarcComponent {
 
     // after processing all map info, pass it to the PathPlannerComponent
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("updateMap")).call(Object.class, atPredicate, atBindings);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("updateMap").argTypes(Term.class, List.class))
+              .call(Object.class, atPredicate, atBindings);
     } catch (TRADEException e) {
       log.error("Error calling updateMap.", e);
     }
@@ -334,7 +357,7 @@ public class PolycraftComponent extends DiarcComponent {
     // get beliefs
     List<Term> beliefState;
     try {
-      beliefState = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFacts")).call(List.class);
+      beliefState = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFacts").argTypes()).call(List.class);
     } catch (TRADEException e) {
       log.error("Error calling getFacts while checking for novelties during initialization.", e);
       return novelties;
@@ -351,7 +374,7 @@ public class PolycraftComponent extends DiarcComponent {
         if (bState.toString().contains("container") || bState.toString().contains("totalcost")) {
           // TODO: this is hacky -- generalize this
           try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, fluent, MemoryLevel.EPISODIC);
+            assertBeliefMemLvlTSI.call(Object.class, fluent, MemoryLevel.EPISODIC);
           } catch (TRADEException e) {
             log.error("Error asserting expected container fluents while checking for novelties during initialization.", e);
           }
@@ -400,7 +423,7 @@ public class PolycraftComponent extends DiarcComponent {
             continue;
           }
           try {
-            if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("type", gameState.getArgs()))) {
+            if (querySupportTSI.call(boolean.class, Factory.createPredicate("type", gameState.getArgs()))) {
               // even though subtype isn't explicitly in belief, it's true through the type hierarchy
               continue;
             }
@@ -415,7 +438,8 @@ public class PolycraftComponent extends DiarcComponent {
         } else if (gameStateName.equals("fluent_equals") && gameState.get(0).getName().startsWith("cost_")) {
           try {
             Predicate oldstate = new Predicate("fluent_equals", gameState.get(0), Factory.createVariable("X"));
-            List<Map<Variable, Symbol>> believed = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, oldstate);
+            List<Map<Variable, Symbol>> believed = queryBeliefTSI
+                    .call(List.class, oldstate);
             if (!believed.isEmpty()) {
               if (!believed.get(0).isEmpty()) {
                 log.debug("Oldstate: " + oldstate);
@@ -438,7 +462,7 @@ public class PolycraftComponent extends DiarcComponent {
       Variable levelVar = Factory.createVariable("X");
       Predicate noveltyQuery = Factory.createPredicate("novelty", novelty, levelVar);
       try {
-        if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(Boolean.class, noveltyQuery)) {
+        if (querySupportTSI.call(Boolean.class, noveltyQuery)) {
           noveltyItr.remove();
         }
       } catch (TRADEException e) {
@@ -470,7 +494,8 @@ public class PolycraftComponent extends DiarcComponent {
     // get all inventory beliefs
     List<Map<Variable, Symbol>> beliefInventory;
     try {
-      beliefInventory =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, inventoryQuery);
+      beliefInventory =queryBeliefTSI
+              .call(List.class, inventoryQuery);
     } catch (TRADEException e) {
       log.error("Error calling getFacts while checking for inventory novelties.", e);
       return new ArrayList<>();
@@ -500,7 +525,7 @@ public class PolycraftComponent extends DiarcComponent {
         } else {
           // polycraft does not return state information for zero inventory items
           if (Double.parseDouble(beliefAmount.getName()) > 0) {
-            log.warn("No game state results for inventoryQuery: " + beliefInventoryForItem.get(itemVar));
+            log.warn("No game state results for inventory query: " + beliefInventoryForItem.get(itemVar));
           }
           continue;
         }
@@ -550,7 +575,7 @@ public class PolycraftComponent extends DiarcComponent {
 
       List<Map<Variable, Symbol>> observedBindings;
       for (Term location : locations) {
-        beliefBindings =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, location);
+        beliefBindings = queryBeliefTSI.call(List.class, location);
         observedBindings = gameState.queryBelief(location);
         if (!observedBindings.isEmpty() || !beliefBindings.isEmpty()) {
           Set<Term> beliefs = location.copyWithNewBindings(beliefBindings);
@@ -574,7 +599,7 @@ public class PolycraftComponent extends DiarcComponent {
                 Symbol lx = belief.get(1);
                 Symbol ly = belief.get(2);
                 Predicate novelLocQuery = Factory.createPredicate("at", new Variable("N"), lx, ly);
-                List<Map<Variable, Symbol>> novelBindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, novelLocQuery);
+                List<Map<Variable, Symbol>> novelBindings = queryBeliefTSI.call(List.class, novelLocQuery);
                 for (Map<Variable, Symbol> b : novelBindings) {
                   Symbol novelID = b.get(new Variable("N"));
                   if (novelID.toString().startsWith("novelitem")) {
@@ -588,7 +613,7 @@ public class PolycraftComponent extends DiarcComponent {
 
                 // if at() discrepancy is for actor (has unique id) -- add actual location of actor
                 try {
-                  if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("type(" + actor + ",agent)"))) {
+                  if (querySupportTSI.call(boolean.class, Factory.createPredicate("type(" + actor + ",agent)"))) {
                     Predicate actorLocQuery = Factory.createPredicate("at(" + actor + ",X,Y)");
                     List<Map<Variable, Symbol>> actorLocResults = gameState.queryBelief(actorLocQuery);
                     if (actorLocResults.size() == 1) {
@@ -624,9 +649,9 @@ public class PolycraftComponent extends DiarcComponent {
               // if at() discrepancy is for actor -- remove where we thought actor was
               String actor = observation.get(0).getName();
               try {
-                if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("type(" + actor + ",agent)"))) {
+                if (querySupportTSI.call(boolean.class, Factory.createPredicate("type(" + actor + ",agent)"))) {
                   Predicate prevActorLocQuery = Factory.createPredicate("at(" + actor + ",X,Y)");
-                  List<Map<Variable, Symbol>> prevActorLocResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, prevActorLocQuery);
+                  List<Map<Variable, Symbol>> prevActorLocResults = queryBeliefTSI.call(List.class, prevActorLocQuery);
                   if (prevActorLocResults.size() == 1) {
                     Predicate prevActorLoc = prevActorLocQuery.copyWithNewBindings(prevActorLocResults.get(0));
                     dicrepancyBindings = new HashMap<>();
@@ -682,7 +707,7 @@ public class PolycraftComponent extends DiarcComponent {
       }
 
       for (Predicate c : constants) {
-        boolean b = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, c);
+        boolean b = querySupportTSI.call(boolean.class, c);
         if (!b) {
           Map<Variable, Symbol> dicrepancyBindings = new HashMap<>();
           dicrepancyBindings.put(beliefStateVar, Factory.createPredicate("not", c));
@@ -699,7 +724,7 @@ public class PolycraftComponent extends DiarcComponent {
       }
 
       for (Predicate c : subtypes) {
-        boolean b = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, new Predicate("type",c.getArgs()));
+        boolean b = querySupportTSI.call(boolean.class, new Predicate("type",c.getArgs()));
         if (!b) {
           Map<Variable, Symbol> dicrepancyBindings = new HashMap<>();
           dicrepancyBindings.put(beliefStateVar, Factory.createPredicate("not", c));
@@ -815,7 +840,7 @@ public class PolycraftComponent extends DiarcComponent {
         // check if novelty has already been reported (at any level)
         Variable levelVar = Factory.createVariable("X");
         Predicate noveltyQuery = Factory.createPredicate("novelty", novelty, levelVar);
-        boolean noveltyReported = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(Boolean.class, noveltyQuery);
+        boolean noveltyReported = querySupportTSI.call(Boolean.class, noveltyQuery);
 
         if (!noveltyReported) {
           // get novelty level info and report the novelty to polycraft
@@ -825,7 +850,7 @@ public class PolycraftComponent extends DiarcComponent {
           // add reported novelty to belief
           Predicate noveltyAssertion = Factory.createPredicate("novelty", novelty, Factory.createSymbol(levelInfo.getLeft().toString()));
           log.warn("Reported novelty: " + noveltyAssertion);
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, noveltyAssertion, MemoryLevel.UNIVERSAL);
+          assertBeliefMemLvlTSI.call(Object.class, noveltyAssertion, MemoryLevel.UNIVERSAL);
         }
       } catch (TRADEException e) {
         log.error("Error reporting novelty: " + novelty, e);
@@ -859,7 +884,7 @@ public class PolycraftComponent extends DiarcComponent {
       Symbol obj = novelty.get(0);
       Predicate p = Factory.createPredicate("fluent_equals(world("+obj.toString()+"),0)");
       try {
-        boolean b = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class,p);
+        boolean b = querySupportTSI.call(boolean.class,p);
         log.info(p + " is " + b);
         if (b){
           characterize("Event");
@@ -1058,6 +1083,7 @@ public class PolycraftComponent extends DiarcComponent {
 
     Active action = new Craft(arguments);
     game.perform(action);
+    log.info("Crafting {} returned.", arguments);
 
     if (!action.getSuccess()) {
       log.error("[craft] failed with message: " + action.getFailMessage());
@@ -1275,7 +1301,7 @@ public class PolycraftComponent extends DiarcComponent {
     } else {
       // query belief
       try {
-        inFrontBindings =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, inFrontPred);
+        inFrontBindings = queryBeliefTSI.call(List.class, inFrontPred);
       } catch (TRADEException e) {
         log.error("Error querying belief for location predicate: " + inFrontPred, e);
         inFrontBindings = new ArrayList<>();
@@ -1323,7 +1349,7 @@ public class PolycraftComponent extends DiarcComponent {
         } else {
           // query belief
           try {
-            twoInFrontBindings =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, twoInFrontPred);
+            twoInFrontBindings = queryBeliefTSI.call(List.class, twoInFrontPred);
           } catch (TRADEException e) {
             log.error("Error querying belief for location predicate: " + twoInFrontPred, e);
             twoInFrontBindings = new ArrayList<>();
@@ -1348,7 +1374,7 @@ public class PolycraftComponent extends DiarcComponent {
         } else {
           facingObjPred = inFrontPred.copyWithNewBindings(inFrontBindings.get(0));
         }
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, facingObjPred, MemoryLevel.EPISODIC);
+        assertBeliefMemLvlTSI.call(Object.class, facingObjPred, MemoryLevel.EPISODIC);
       } catch (TRADEException e) {
         log.error("Error updating belief with observed state.", e);
       }
@@ -1372,7 +1398,7 @@ public class PolycraftComponent extends DiarcComponent {
         if (state.getName().equals("holding")) {
           Predicate queryPred = Factory.createPredicate("holding(X,Y)");
           List<Map<Variable, Symbol>> gameStateResults = gameState.queryBelief(queryPred);
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, queryPred.copyWithNewBindings(gameStateResults), MemoryLevel.EPISODIC);
+          assertBeliefsMemLvlTSI.call(Object.class, queryPred.copyWithNewBindings(gameStateResults), MemoryLevel.EPISODIC);
         }
       } catch (TRADEException e) {
         log.error("Error updating belief with observed state.", e);
@@ -1436,7 +1462,7 @@ public class PolycraftComponent extends DiarcComponent {
     if (lastAction != null && lastAction.getSuccess()) {
       Double stepcost = lastAction.getStepCost();
       String command = lastAction.getCommand();
-      log.debug("stepcost = " + stepcost + ". command = " + command);
+      log.info("stepcost = " + stepcost + ". command = " + command);
 
       Map<Variable, Symbol> bindings = new HashMap<>();
 
@@ -1710,7 +1736,7 @@ public class PolycraftComponent extends DiarcComponent {
               //set actor to type of other actor
               Predicate p = Factory.createPredicate("subtype", j.agent_type.reported_type + "_" + key, believedType);
               try {
-                TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, p, MemoryLevel.UNIVERSAL);
+                assertBeliefMemLvlTSI.call(Object.class, p, MemoryLevel.UNIVERSAL);
               } catch (TRADEException e) {
                 log.error("Unable to assert subtype predicate", e);
               }
@@ -1736,7 +1762,7 @@ public class PolycraftComponent extends DiarcComponent {
               Predicate novelAction = Factory.createPredicate(fillAction(abd, parameter, false));
               log.debug("Asserting " + novelAction.toString());
               try {
-                TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, Factory.createPredicate("toExplore", novelAction, novelAction), MemoryLevel.UNIVERSAL);
+                assertBeliefMemLvlTSI.call(Object.class, Factory.createPredicate("toExplore", novelAction, novelAction), MemoryLevel.UNIVERSAL);
               } catch (TRADEException e) {
                 log.error("Unable to assert exploration predicate", e);
               }
@@ -1761,7 +1787,7 @@ public class PolycraftComponent extends DiarcComponent {
                 Predicate novelAction = Factory.createPredicate(fillAction(abd, parameter, false));
                 log.debug("Asserting " + novelAction.toString());
                 try {
-                  TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, Factory.createPredicate("toExplore", novelAction, novelAction), MemoryLevel.UNIVERSAL);
+                  assertBeliefMemLvlTSI.call(Object.class, Factory.createPredicate("toExplore", novelAction, novelAction), MemoryLevel.UNIVERSAL);
                 } catch (TRADEException e) {
                   log.error("Unable to assert exploration predicate", e);
                 }
@@ -1792,9 +1818,9 @@ public class PolycraftComponent extends DiarcComponent {
           }
         } else {
           try {
-            if (!arg.isEmpty() && TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("type", arg, b.getSemanticType()), MemoryLevel.EPISODIC)) {
+            if (!arg.isEmpty() && querySupportMemLvlTSI.call(boolean.class, Factory.createPredicate("type", arg, b.getSemanticType()), MemoryLevel.EPISODIC)) {
               Term query = Factory.createPredicate("typeobject", "X", arg);
-              List<Map<Variable, Symbol>> results = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query, MemoryLevel.EPISODIC);
+              List<Map<Variable, Symbol>> results = queryBeliefMemLvlTSI.call(List.class, query, MemoryLevel.EPISODIC);
               if (!results.isEmpty()) {
                 //found grounded objects of the type we're looking for
                 for (Map<Variable, Symbol> map : results) {
@@ -1806,7 +1832,7 @@ public class PolycraftComponent extends DiarcComponent {
               }
             } else {
               Term query = Factory.createPredicate("typeobject", "X", b.getSemanticType());
-              List<Map<Variable, Symbol>> results = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query, MemoryLevel.EPISODIC);
+              List<Map<Variable, Symbol>> results = queryBeliefMemLvlTSI.call(List.class, query, MemoryLevel.EPISODIC);
               if (!results.isEmpty()) {
                 //find an object that matches the semantic type of the argument variable
                 for (Map<Variable, Symbol> map : results) {
@@ -1838,7 +1864,7 @@ public class PolycraftComponent extends DiarcComponent {
                   bindings.putAll(results.get(0));
                 }
               } else {*/
-          results =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query, MemoryLevel.EPISODIC);
+          results = queryBeliefMemLvlTSI.call(List.class, query, MemoryLevel.EPISODIC);
           if (results.size() == 1) {
             for (Map<Variable, Symbol> m : results) {
               boolean typealigned = true;
@@ -1847,7 +1873,7 @@ public class PolycraftComponent extends DiarcComponent {
                 //the variable from our results does not have a type. check the type of that variable in the query instead
                 if (!v.getType().isEmpty()) {
                   query = Factory.createPredicate("type", m.get(new Variable(v.getName())), new Symbol(v.getType()));
-                  if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, query, MemoryLevel.EPISODIC)) {
+                  if (!querySupportMemLvlTSI.call(boolean.class, query, MemoryLevel.EPISODIC)) {
                     typealigned = false;
                     break;
                   }
@@ -1921,14 +1947,14 @@ public class PolycraftComponent extends DiarcComponent {
         Term atquery = new Term("at", obj, x, y);
         //List<Map<Variable, Symbol>> results = observeState(atquery);
         try {
-          List<Map<Variable, Symbol>> results = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, atquery);
+          List<Map<Variable, Symbol>> results = queryBeliefTSI.call(List.class, atquery);
           if (results.size() == 1 && !results.get(0).get(obj).toString().startsWith("novelitem")) {
             //if an object exists at the location and has not yet been marked as a novel item
             Symbol s = new Symbol("novelitem");
             int n = 0;
             //find a unique ID for novelitem that hasn't been used
-            while (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("subtype", s, results.get(0).get(obj)))) {
-              if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("subtype", s, new Variable("X")))) {
+            while (!querySupportTSI.call(boolean.class, Factory.createPredicate("subtype", s, results.get(0).get(obj)))) {
+              if (!querySupportTSI.call(boolean.class, Factory.createPredicate("subtype", s, new Variable("X")))) {
                 //if there's no novelitem with this ID, we'll use it here
                 beliefs.add(new Term("subtype", s, results.get(0).get(obj)));
                 beliefs.add(new Term("constant", s, s));
@@ -1949,7 +1975,7 @@ public class PolycraftComponent extends DiarcComponent {
       }
     }
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, beliefs, MemoryLevel.EPISODIC);
+      assertBeliefsMemLvlTSI.call(Object.class, beliefs, MemoryLevel.EPISODIC);
     } catch (TRADEException e) {
       log.error("Error calling asserBeliefs:", e);
     }

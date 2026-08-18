@@ -12,6 +12,7 @@ import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.planner.pddl.PddlGenerator;
 import edu.tufts.hrilab.action.state.StateMachine;
+import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+
 
 public abstract class Planner {
   protected final Logger log;
@@ -49,7 +51,7 @@ public abstract class Planner {
    */
   public void registerWithTRADE() {
     try {
-      TRADE.registerAllServices(this,new ArrayList<>());
+      TRADE.registerAllServices(this, new ArrayList<>());
     } catch (TRADEException e) {
       log.error("Error registering Planner with TRADE.", e);
     }
@@ -86,6 +88,8 @@ public abstract class Planner {
     String plan = plan(domain, problem);
     if (plan == null) {
       log.error("Can't plan.");
+      log.info("domain file: " + domain.getAbsolutePath());
+      log.info("problem file: " + problem.getAbsolutePath());
       return null;
     } else {
       log.info("PLAN = " + plan);
@@ -113,23 +117,26 @@ public abstract class Planner {
     // Convert plan into a list of string actions
     ActionDBEntry.Builder newAction = new ActionDBEntry.Builder("planned");
 
-    if(plan.isEmpty()){
+    if (plan.isEmpty()) {
       log.warn("goal state is already true, plan doesn't do anything");
     } else {
       String[] sActions = plan.split("\n"); //Actions in string form
       for (String sAction : sActions) {
         // Convert pddl output into something understandable by Action Interpreter
         String cleaned_action = parsePDDLFormat(sAction);
+        if (cleaned_action.isEmpty()) {
+          continue;
+        }
         cleaned_action = convertToAslAction(cleaned_action);
         Predicate actionWithActor = Factory.createPredicate(cleaned_action);
 
         // apply semantic types
         actionWithActor = createTypedPredicate(actionWithActor, objectTypeMap);
 
-        newAction.addEventSpec(new EventSpec(actionWithActor));
+        newAction.addEventSpec(new EventSpec(actionWithActor, true));
       }
     }
-    newAction.setDescription(goal.getPredicate().toString());
+    newAction.setDescription(goal.getGoalStatePredicate().toString());
     ActionDBEntry newADB = newAction.build(true); //todo: this sticks a new planned action on top of the old one every time. should we be replacing it?
 
     return new ParameterizedAction(newADB, goal);
@@ -168,6 +175,10 @@ public abstract class Planner {
     eInt = a.indexOf(")");
     String[] actionArray = a.substring(sInt, eInt).trim().split(" "); //Action in string array form
     String sName = actionArray[0]; //name of the action
+    if (Utilities.isNumeric(sName)) {
+      log.debug("Skipping plan cost (not an action).");
+      return "";
+    }
 
     StringJoiner sj = new StringJoiner(", ", sName + "(", ")");
     for (int i = 1; i < actionArray.length; i++) {
@@ -200,7 +211,7 @@ public abstract class Planner {
     List<Symbol> typedArgs = new ArrayList<>();
     for (Symbol arg : untypedPredicate.getArgs()) {
       if (objectTypeMap.containsKey(arg.getName())) {
-        Symbol typedButNotSanitized=objectTypeMap.get(arg.getName());
+        Symbol typedButNotSanitized = objectTypeMap.get(arg.getName());
         typedArgs.add(Factory.createSymbol(deSanitize(typedButNotSanitized.getName()), typedButNotSanitized.getType()));
       } else {
         log.warn("Unknown object. Using untyped: " + arg);

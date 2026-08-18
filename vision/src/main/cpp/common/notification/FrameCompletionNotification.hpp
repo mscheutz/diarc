@@ -12,17 +12,17 @@
 #ifndef FRAMECOMPLETIONNOTIFICATION_HPP
 #define	FRAMECOMPLETIONNOTIFICATION_HPP
 
-#include "common/notification/VisionNotification.hpp"
+#include "common/notification/Notification.hpp"
 
-class FrameCompletionNotification : public VisionNotification {
+class FrameCompletionNotification : public Notification {
 public:
   typedef boost::shared_ptr<FrameCompletionNotification> Ptr;
   typedef boost::shared_ptr<const FrameCompletionNotification> ConstPtr;
 
-  FrameCompletionNotification(const VisionProcessConstPtr& notifier_,
+  FrameCompletionNotification(const long long& processorId_,
                               const long long& typeId_,
                               const unsigned long long& frameNumber_)
-  : VisionNotification(notifier_, FRAME_COMPLETION, typeId_, frameNumber_) {
+  : Notification(FRAME_COMPLETION, processorId_, typeId_, frameNumber_) {
   }
 };
 

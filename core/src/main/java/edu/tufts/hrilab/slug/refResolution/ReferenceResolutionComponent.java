@@ -19,8 +19,6 @@ import java.util.stream.Collectors;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-
 import static java.util.stream.Collectors.toMap;
 
 import ai.thinkingrobots.trade.*;
@@ -119,7 +117,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 //    resolver.registerWithTRADE(); // registering here causes deadlock in some trade configurations (e.g., 3 containers across 2 machines)
     //TODO:brad: I don't think we always want to do this, but we need to for the multi robot case
     resolver.updateConsultCache(utterance.getAddressee());
-    Growler growler = new Growler(resolver, gh, JavaConverters.mapAsScalaMap(relevanceMap));
+    Growler growler = new Growler(resolver, gh, relevanceMap);
 
     //this check is here so that only free vars that actually exist in the semantics are resolved,
     //sort of a temporary work around for cases like the Nao's where we don't actually want to do RR
@@ -180,7 +178,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       }
 
       //create a list of all possible bindings given the hypotheses we have
-      Hypothesis def = new Hypothesis(new scala.collection.immutable.HashMap<>(), 1.0);
+      Hypothesis def = new Hypothesis(new HashMap<>(), 1.0);
       List<Hypothesis> finalHyp = new ArrayList<>();
       generatePermutations(bindingHypotheses, finalHyp, 0, def);
       bind(utterance, finalHyp);
@@ -256,7 +254,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
     } else {
       for (Hypothesis h : hypotheses) {
         //fixme
-        Map<Variable, Symbol> filtered = JavaConverters.mapAsJavaMap(h.assignments()).entrySet().stream()
+        Map<Variable, Symbol> filtered = h.assignments().entrySet().stream()
             .filter(a -> !a.getValue().getName().contains("?")).collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
         u.addBinding(filtered);
       }
@@ -462,7 +460,12 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       List<Symbol> usages = allRefs.get(ref);
       int sum = 0;
       for (Symbol useage : usages) {
-        sum += Integer.valueOf(useage.getName().split("_")[1]);
+        try {
+            sum += Integer.valueOf(useage.getName().split("_")[1]);
+        } catch (NumberFormatException e) {
+            log.warn("Using ref that doesn't follow consultant numbering convention.");
+            sum += 0;
+        }
       }
 
       //not really sure why we need to do this, but preserving previous functionality, for now...
@@ -478,7 +481,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       log.debug("Building parse report!");
       Map<Variable, List<Symbol>> allRefs = new HashMap<>();
       for (Hypothesis h : hyps) {
-        for (Map.Entry<Variable, Symbol> assignment : JavaConverters.mapAsJavaMap(h.assignments()).entrySet()) {
+        for (Map.Entry<Variable, Symbol> assignment : h.assignments().entrySet()) {
           if (allRefs.containsKey(assignment.getKey())) {
             allRefs.get(assignment.getKey()).add(assignment.getValue());
           } else {

@@ -7,10 +7,13 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral() // main maven archive
-    maven { // hrilab archive
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
+  maven {
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
@@ -22,6 +25,7 @@ tasks.named<Test>("test") {
 
   val visionDir = layout.projectDirectory;
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
   systemProperty("java.library.path", visionDir.toString() + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
 }
 
@@ -153,4 +157,5 @@ dependencies {
 
   testImplementation("junit:junit:4.13.1")
 
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }

@@ -41,24 +41,22 @@ Example:
   <predicate name="blue">
       <config filename="colors/blue.txt"/>
   </predicate>
-  <predicate name="green">
-      <config filename="colors/green.txt"/>
-  </predicate>
   <predicate name="orange">
       <config filename="colors/orange.txt"/>
   </predicate>
   <predicate name="gray">
       <config filename="colors/gray.txt"/>
   </predicate>
-<!--
-  <predicate name="handle">
-      <config filename="colors/handle.txt"/>
-  </predicate>
-  <predicate name="blade">
-      <config filename="colors/blade.txt"/>
-  </predicate>
--->
-  <predicate name="hand">
-      <config filename="colors/hand.txt"/>
-  </predicate>
+<!--  <predicate name="handle">-->
+<!--      <config filename="colors/handle.txt"/>-->
+<!--  </predicate>-->
+<!--    <predicate name="rod">-->
+<!--        <config filename="colors/rod.txt"/>-->
+<!--    </predicate>-->
+<!--  <predicate name="button">-->
+<!--      <config filename="colors/rod.txt"/>-->
+<!--  </predicate>-->
+<!--  <predicate name="hand">-->
+<!--      <config filename="colors/hand.txt"/>-->
+<!--  </predicate>-->
 </processor>

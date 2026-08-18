@@ -17,6 +17,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.interfaces.ArmInterface;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import org.apache.commons.cli.Option;
@@ -31,14 +32,14 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class MockArmComponent extends DiarcComponent implements MockArmInterface {
+public class MockArmComponent extends DiarcComponent implements ArmInterface {
 
     //TODO:brad: do we actually need this?
     private Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
 
     PoseConsultant consultant;
 
-    private long sleepDuration;
+    protected long sleepDuration;
     @Override
     protected void init() {
         sleepDuration = 3000;
@@ -259,41 +260,9 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean startPouring(double ang) {
-        log.info("Start Pouring, angle: " + ang);
-        Util.Sleep(sleepDuration);
-
-        return true;
+    public Justification stop() {
+        return new ConditionJustification(true);
     }
-
-    @Override
-    public boolean startPouring(Symbol obj) {
-        log.info("Start Pouring, object: " + obj);
-        Util.Sleep(sleepDuration);
-
-        return true;
-    }
-
-    @Override
-    public boolean stopPouring(Symbol obj) {
-        log.info("Stop Pouring: " + obj);
-        return true;
-    }
-
-    @Override
-    public boolean stopPouring() {
-        log.info("Stop Pouring");
-        return true;
-    }
-
-    @Override
-    public boolean moveAbove(Symbol s, Symbol s2) {
-        log.info("Moving " + s + " above " + s2);
-        Util.Sleep(sleepDuration);
-
-        return true;
-    }
-
 
     @Override
     protected List<Option> additionalUsageInfo() {

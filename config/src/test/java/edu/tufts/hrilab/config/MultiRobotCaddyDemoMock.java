@@ -15,7 +15,6 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.MockSpotComponent;
-import edu.tufts.hrilab.spot.MockSpotNavGraphComponent;
 import edu.tufts.hrilab.temi.MockTemiV3Component;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 import org.slf4j.Logger;
@@ -51,8 +50,8 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch ");
 
         createInstance(SimSpeechProductionComponent.class, "");
-        createInstance(MockSpotNavGraphComponent.class, "-mapDescriptor spotlocation -refs spotLocationRefs.json -groups agent:spot:spot ");
-        createInstance(MockSpotComponent.class, "-groups agent:spot:spot");
+        createInstance(MockSpotComponent.class, "-mapDescriptor spotlocation -refs spotLocationRefs.json -groups agent:spot:spot ");
+        createInstance(MockVisionComponent.class, "-groups agent:spot:spot -refsKbName spotphysobj -sceneClass edu.tufts.hrilab.vision.scene.config.MultiRobotCaddySpotSceneGenerator");
         createInstance(MockTemiV3Component.class, "-mapDescriptor temilocation -groups agent:temi:temi");
 
         String goalManagerArgs = "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
@@ -92,11 +91,6 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 //            simRecArgs += "-nogui";
 //        }
 
-    }
-
-    public static void main(String[] args){
-        MultiRobotCaddyDemoMock demoConfig = new MultiRobotCaddyDemoMock();
-        demoConfig.runConfiguration();
     }
 
 }

@@ -43,7 +43,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * All References hashed refId.
    */
-  private Map<Symbol, T> references;
+  protected Map<Symbol, T> references;
   /**
    * Knowledge base name.
    */
@@ -245,7 +245,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   }
 
   /**
-   * A convenience method for creating references from with a DIARC component housing a Consultant instance.
+   * A convenience method for creating references from within a DIARC component housing a Consultant instance.
    *
    * @param var        Variable associated with new reference (only important if properties contain more than one Variable)
    * @param properties semantic properties of reference
@@ -390,7 +390,6 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    * @param refId unique reference ID
    * @return Reference of type T
    */
-  @TRADEService
   public final T getReference(Symbol refId) {
     if (refId.hasType()) {
       return references.get(refId);

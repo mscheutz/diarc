@@ -62,6 +62,17 @@ public abstract class ActionSelector {
     return instance;
   }
 
+  public static void destroyInstance() {
+    instanceLock.lock();
+    try {
+      if (instance != null) {
+        instance = null;
+      }
+    } finally {
+      instanceLock.unlock();
+    }
+  }
+
   /**
    * Helper method to convert string form of ActionSelector type (e.g., classpath) into a
    * Class object and set the ActionSelector type.
@@ -115,13 +126,13 @@ public abstract class ActionSelector {
 
     List<ActionDBEntry> dbLookUp = new ArrayList<>();
     if (goal.isObservation()) {
-      dbLookUp.addAll(Database.getObserverDB().getObservers(goal.getActor(), goal.getPredicate()));
+      dbLookUp.addAll(Database.getObserverDB().getObservers(goal.getActor(), goal.getGoalStatePredicate()));
     } else if (goal.isAction()) {
       // add all actions based on matching action signature
-      dbLookUp.addAll(Database.getActionDB().getActionsBySignature(goal.getPredicate()));
+      dbLookUp.addAll(Database.getActionDB().getActionsBySignature(goal.getGoalStatePredicate()));
     } else {
       // add all actions based on matching post-condition
-      dbLookUp.addAll(Database.getActionDB().getActionsByEffect(goal.getActor(), goal.getPredicate()));
+      dbLookUp.addAll(Database.getActionDB().getActionsByEffect(goal.getActor(), goal.getGoalStatePredicate()));
     }
 
     // build the ParameterizedActions, and

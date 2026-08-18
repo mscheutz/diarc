@@ -28,6 +28,11 @@ public class FailureInformation {
    * @return
    */
   public boolean isApplicable(PolicyConstraints constraints) {
+    // if PolicyConstraints has no set requirements (i.e., always applicable)
+    if (constraints.isEmpty()) {
+      return true;
+    }
+
     return (getNumberOfConstraintMatches(constraints) > 0);
   }
 

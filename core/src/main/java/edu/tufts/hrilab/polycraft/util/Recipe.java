@@ -87,7 +87,7 @@ public class Recipe {
         newActionBuilder.addRole(new ActionBinding.Builder("!y", edu.tufts.hrilab.fol.Symbol.class).setIsLocal(true).build());
 
         // add action step (and logging step)
-        newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("craft", recipe)));
+        newActionBuilder.addEventSpec(new EventSpec(Factory.createPredicate("craft", recipe), true));
         newActionBuilder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.OPERATOR)
                 .setCommand("log")
                 .addInputArg("\"info\"").addInputArg("\">> crafted sensed_" + target + "\"")

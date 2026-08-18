@@ -17,28 +17,28 @@ NOTE:
 
 <searchTypes>
   <flags incrementalImgProc="false" incrementalDetector="false" serialProcessing="false" singleIteration="false"/>
-  <searchType descriptor="handle">
-    <predicate>
-      orange(Y)
-    </predicate>
-    <predicate>
-      knife(X)
-    </predicate>
-    <predicate>
-      partOf(Y,X)
-    </predicate>
-  </searchType>
-  <searchType descriptor="blade">
-    <predicate>
-      gray(Y)
-    </predicate>
-    <predicate>
-      knife(X)
-    </predicate>
-    <predicate>
-      partOf(Y,X)
-    </predicate>
-  </searchType>
+<!--  <searchType descriptor="handle">-->
+<!--    <predicate>-->
+<!--      orange(Y)-->
+<!--    </predicate>-->
+<!--    <predicate>-->
+<!--      knife(X)-->
+<!--    </predicate>-->
+<!--    <predicate>-->
+<!--      partOf(Y,X)-->
+<!--    </predicate>-->
+<!--  </searchType>-->
+<!--  <searchType descriptor="blade">-->
+<!--    <predicate>-->
+<!--      gray(Y)-->
+<!--    </predicate>-->
+<!--    <predicate>-->
+<!--      knife(X)-->
+<!--    </predicate>-->
+<!--    <predicate>-->
+<!--      partOf(Y,X)-->
+<!--    </predicate>-->
+<!--  </searchType>-->
 
   <!--<searchType descriptor="medkit_test">-->
     <!--<predicate>-->

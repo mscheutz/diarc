@@ -7,6 +7,7 @@ package edu.tufts.hrilab.vision.tracker;
 import edu.tufts.hrilab.vision.Vision;
 import edu.tufts.hrilab.vision.imgproc.ImageProcessor;
 import edu.tufts.hrilab.vision.detector.swig.NativeDetector.DetectorType;
+import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker.TrackerType;
 import edu.tufts.hrilab.vision.visionproc.VisionProcess;
@@ -37,11 +38,15 @@ public class Tracker extends VisionProcess<TrackerType, TrackerDetail, NativeTra
   @Override
   protected void perform() {
     final String trackerName = this.toString();
-    System.out.println("starting new " + trackerName + " tracker task.");
+    log.debug("starting new " + trackerName + " tracker task.");
 
     //start image processing dependecies
     for (ImageProcessor dependency : dependencies.values()) {
       dependency.start(this);
+    }
+
+    for (SearchManager searchDependency : searchDependencies.values()) {
+      searchDependency.start(this);
     }
 
     long looptime = 0;

@@ -180,7 +180,7 @@ public class OperatorCheck {
       if (service.serviceParameterNames.length > 1) {
         observationResults = service.call(List.class, actor, equalsQuery);
       } else {
-        observationResults = service.call(List.class,service, equalsQuery);
+        observationResults = service.call(List.class, equalsQuery);
       }
     } catch (TRADEException e) {
       log.error("Error calling Observer service while trying to observe: " + equalsQuery);

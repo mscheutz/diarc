@@ -14,16 +14,7 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -159,8 +150,10 @@ public class TRADEServicePanel extends JPanel {
 
     try {
       //use buffering
-      OutputStream file = new FileOutputStream("tmp/" + testComponentClass.getName());
-      OutputStream buffer = new BufferedOutputStream(file);
+      File tmpFile = new File("/tmp/" + testComponentClass.getName());
+      tmpFile.createNewFile(); // if file already exists will do nothing
+      FileOutputStream fileostream = new FileOutputStream(tmpFile, false);
+      OutputStream buffer = new BufferedOutputStream(fileostream);
       ObjectOutput output = new ObjectOutputStream(buffer);
       try {
         output.writeObject(inputs);
@@ -175,7 +168,7 @@ public class TRADEServicePanel extends JPanel {
   private void load_menuItmActionPerformed(java.awt.event.ActionEvent evt) {
     try {
       //use buffering
-      InputStream file = new FileInputStream("tmp/" + testComponentClass.getName());
+      InputStream file = new FileInputStream("/tmp/" + testComponentClass.getName());
       InputStream buffer = new BufferedInputStream(file);
       ObjectInput input = new ObjectInputStream(buffer);
       try {
@@ -237,7 +230,7 @@ public class TRADEServicePanel extends JPanel {
             JLabel methodParamLabel = new JLabel(methodParamToString(methodParamType));
             methodsPanel.add(methodParamLabel, c);
 
-            methodParamTxtField = new JTextField(75);
+            methodParamTxtField = new JTextField(25);
             methodLabel.setSize(100, methodLabel.getSize().height);
             //methodLabel.setFont(new Font("Dialog", Font.BOLD, 14));
             c.gridx += 1;

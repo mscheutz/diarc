@@ -14,14 +14,15 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
+#include <pcl/common/distances.h>
 #include <math.h>
 
 using namespace diarc::grasp;
 
-SmallObjectGrasp::SmallObjectGrasp()
+SmallObjectGrasp::SmallObjectGrasp(const std::string &config)
     : size_thresh(0.07),
       gripper_depth(0.07) {
-  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.SmallObjectGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.grasp.SmallObjectGrasp");
 }
 
 SmallObjectGrasp::~SmallObjectGrasp() {
@@ -153,7 +154,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::Po
   if (bb_width < size_thresh) {
     // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
     if (bb_length / 2 > gripper_depth) {
-      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).")
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).");
     }
 
     // rotate z-y_angle so y-axis is aligned along minor axis of 2D BB (i.e., gripper is grasping along short edge)
@@ -173,7 +174,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::Po
   if (bb_length < size_thresh) {
     // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
     if (bb_width / 2 > gripper_depth) {
-      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).")
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).");
     }
 
     // rotate z90 so y-axis is aligned along major axis of 2D BB (i.e., gripper is grasping along long edge)

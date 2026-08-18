@@ -23,12 +23,12 @@ sceneIsChanging(false) {
 }
 
 void ChangeDetector::notifySceneChange(CaptureData::ConstPtr captureData) {
-  Notification::Ptr n(new SceneChangeNotification(shared_from_this(), captureData->frameNumber, captureData, true));
+  Notification::Ptr n(new SceneChangeNotification(this->getProcessorId(), captureData->frameNumber, captureData, true));
   sendNotifications(n);
 }
 
 void ChangeDetector::notifySceneStatic(CaptureData::ConstPtr captureData) {
-  Notification::Ptr n(new SceneChangeNotification(shared_from_this(), captureData->frameNumber, captureData, false));
+  Notification::Ptr n(new SceneChangeNotification(this->getProcessorId(), captureData->frameNumber, captureData, false));
   sendNotifications(n);
 }
 

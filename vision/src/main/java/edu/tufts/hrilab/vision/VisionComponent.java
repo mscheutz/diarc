@@ -3,42 +3,41 @@
  */
 package edu.tufts.hrilab.vision;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.fol.util.PragUtil;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.util.Convert;
+import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.consultant.RealVisionConsultant;
 import edu.tufts.hrilab.vision.consultant.VisionReference;
-import edu.tufts.hrilab.vision.stm.*;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.vision.reflection.TaskPerformanceInformation;
+import edu.tufts.hrilab.vision.stm.MemoryObject;
+import edu.tufts.hrilab.vision.stm.SearchManager;
+import edu.tufts.hrilab.vision.stm.ShortTermMemoryInterface;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
-
-import java.awt.Dimension;
-import javax.vecmath.Matrix4d;
-
-import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.vision.webgui.VisionAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
+import java.awt.*;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Queue;
+import java.util.*;
 
 /**
  * DIARC Vision component.
  */
-public class VisionComponent extends DiarcComponent implements VisionInterface {
+public class VisionComponent extends DiarcComponent implements VisionInterface, GuiProvider {
 
   private boolean runSandbox = false;
   private boolean printVisionStats = false;
@@ -48,7 +47,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   private List<String> runMemObjTypes = new ArrayList();
 
   // vision configuration filename and path info
-  
+
   /**
    * Default path to vision resources (configs).
    */
@@ -72,6 +71,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   private double rotX = -Math.PI / 4.0;    //rotation of vision coordinates around x-axis (using vision coordinate system)
   private double transHeight = 1.5;    //distance of vision sensor from ground (meters)
   private String cameraCoordinateFrame = "Camera";
+  private String baseFrame = "base_link";
 
   // flags for making TRADE service calls
   private boolean useCoordinateFrames = false;
@@ -250,15 +250,19 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       TRADEServiceConstraints additionalConstraints = this.getMyGroupConstraints();
       try {
         // TODO: replace this with a notify call
-        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform").argTypes(String.class));
+        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform").argTypes(String.class, String.class));
         if (!shouldLogTransformMsg) {
           shouldLogTransformMsg = true;
           log.warn("getTransform service is now available.");
         }
         try {
-          Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, cameraCoordinateFrame);
+          Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, baseFrame, cameraCoordinateFrame);
           if (tmpTransform != null) {
             currVisionTransform = tmpTransform;
+            //Quat4d rot = new Quat4d();
+            //currVisionTransform.get(rot);
+            //Point3d euler = Convert.convertToEuler(rot);
+            //log.info("Vision transform height: {} rot: {}", currVisionTransform.m23, Math.toDegrees(euler.x+(Math.PI/2.0)));
           } else {
             log.warn("getTransform returned null, not updating vision transform.");
           }
@@ -373,8 +377,9 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
     options.add(Option.builder("rotX").hasArg().argName("x").desc("degrees to rotate vision coordinates around x-axis (neg to \"look down\", default: -45)").build());
     options.add(Option.builder("height").hasArg().argName("x").desc("distance of vision coordinates above ground (meters)").build());
     options.add(Option.builder("cameraFrame").hasArg().argName("frame").desc("set name of camera coordinate frame and use CoordinateFramesComponent for coord transform").build());
+    options.add(Option.builder("baseFrame").hasArg().argName("frame").desc("set name of base coordinate frame (default: base_link)").build());
     options.add(Option.builder("publishPointCloud").hasArgs().argName("groups").optionalArg(true).desc("send point cloud data to another componen to be published to ROS").build());
-    options.add(Option.builder("belief").hasArgs().argName("groups").optionalArg(true).desc("egister for notifications from com.belief.BeliefComponent").build());
+    options.add(Option.builder("belief").hasArgs().argName("groups").optionalArg(true).desc("register for notifications from BeliefComponent").build());
     options.add(Option.builder("i").longOpt("introspection").desc("turn on vision introspection").build());
     options.add(Option.builder("sandbox").desc("run testing sandbox method").build());
     options.add(Option.builder("show").hasArgs().argName("types").desc("display window of memory object type").build());
@@ -389,6 +394,9 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
     if (cmdLine.hasOption("cameraFrame")) {
       useCoordinateFrames = true;
       cameraCoordinateFrame = cmdLine.getOptionValue("cameraFrame");
+    }
+    if (cmdLine.hasOption("baseFrame")) {
+      baseFrame = cmdLine.getOptionValue("baseFrame");
     }
     if (cmdLine.hasOption("publishPointCloud")) {
       publishPointCloud = true;
@@ -570,9 +578,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public Long getTypeId(Symbol objectRef) {
-    log.debug("[getTypeId] objectRef: " + objectRef);
-    return Vision.consultant.getTypeId(objectRef);
+  public Long getTypeId(Symbol descriptor) {
+    log.debug("[getTypeId] descriptor: " + descriptor);
+
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTypeId(descriptor);
+    } else {
+      return getTypeId(List.of(descriptor));
+    }
   }
 
   @Override
@@ -644,17 +657,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       }
 
       //wait till at least one detection and one tracking iteration has finished
-      //TODO: change this to use wait/notify instead of sleep
-      log.debug(String.format("getTokenIds (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-      while (!searchType.hasIterationCompleted()) {
-        isRunning = searchType.isRunning();
-        log.trace(String.format("getTokenIds (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-        try {
-          Thread.sleep(5);
-        } catch (InterruptedException e) {
-        }
-
-      }
+      searchType.waitForIterationToComplete();
       log.debug(String.format("getTokenIds (by typeId). Done waiting for results! isRunning: %b. id: %d", isRunning, typeId));
 
       //finally, get results
@@ -674,8 +677,26 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
+  public List<Long> getTokenIds(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokenIds(descriptor);
+    } else {
+      return getTokenIds(List.of(descriptor));
+    }
+  }
+
+  @Override
   public List<MemoryObject> getTokens() {
     log.trace("[getTokens] called.");
+
+    // wait for all current searches to finish at least one iteration
+    for (Long typeId : getAvailableTypeIds()) {
+      log.info("[getTokens] waiting for search to complete itereation. typeId: {}", typeId);
+      SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
+      searchType.waitForIterationToComplete();
+    }
+
     return ShortTermMemoryInterface.getTokens();
   }
 
@@ -691,18 +712,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       }
 
       //wait till at least one tracking iteration has finished
-      //TODO: change this to use wait/notify instead of sleep
-      boolean isRunning = searchType.isRunning();
-      log.debug(String.format("getTokens (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-      while (!searchType.hasIterationCompleted()) {
-        isRunning = searchType.isRunning();
-        log.trace(String.format("getTokens (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-        try {
-          Thread.sleep(5);
-        } catch (InterruptedException e) {
-        }
-      }
-      log.debug(String.format("getTokens (by typeId). Done waiting for results! isRunning: %b. id: %d", isRunning, typeId));
+      searchType.waitForIterationToComplete();
 
       //finally, get results
       log.debug("getTokensByTypeId fetching results: " + typeId);
@@ -718,6 +728,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
     log.trace(String.format("getTokens (by descriptors): %s", descriptors));
     long typeId = getTypeId(descriptors);
     return getTokens(typeId);
+  }
+
+  @Override
+  public List<MemoryObject> getTokens(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokens(descriptor);
+    } else {
+      return getTokens(List.of(descriptor));
+    }
   }
 
   @Override
@@ -905,14 +925,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
     }
 
     boolean somethingLearned = false;
-
-    // iterate through sets of bindings
-    for (Map<Variable, Symbol> binding : bindings) {
-      // get the bindings from the bindings list
-      Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
-      Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
-      if (nameLearned != null) {
-        somethingLearned = true;
+    if (bindings.isEmpty()) {
+      Vision.availableLearners.learn(learningTerm);
+    } else {
+      // iterate through sets of bindings
+      for (Map<Variable, Symbol> binding : bindings) {
+        // get the bindings from the bindings list
+        Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
+        Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
+        if (nameLearned != null) {
+          somethingLearned = true;
+        }
       }
     }
 
@@ -1095,5 +1118,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       log.info("object " + objRef + " is NOT at " + predicate.getArgs().get(1));
     }
     return returnVal;
+  }
+
+  /**
+   * {@inheritDoc}
+   * @return {@inheritDoc}
+   */
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            VisionAdapter.class.getName()
+    };
   }
 }

@@ -13,6 +13,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
+import edu.tufts.hrilab.action.listener.DatabaseListener;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -491,10 +492,11 @@ public class Database {
 
   private static void addEffect(edu.tufts.hrilab.action.annotations.Effect annotation, ActionDBEntry.Builder builder) {
     List<String> observables = Arrays.asList(annotation.observable());
+    List<String> infer = Arrays.asList(annotation.infer());
 
     for (String e : annotation.effect()) {
       Predicate pred = Factory.createPredicate(e);
-      Observable obs = Observable.get(observables.contains(e), false);
+      Observable obs = Observable.get(observables.contains(e), infer.contains(e));
       builder.addEffect(new Effect(pred, annotation.type(), obs));
     }
   }

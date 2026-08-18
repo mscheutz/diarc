@@ -69,40 +69,46 @@ public class RobotiqGripper_2f_85 extends GenericManipulator {
       log.debug("Gripper moving...");
       gripper.waitForResult(3000l, TimeUnit.MILLISECONDS);
       log.debug("Gripper done.");
-      result = gripper.getResult();
-      if (result == null) {
-        gripper.cancelAllGoals();
-        log.warn("Gripper timeout");
-        return false;
-      }
-      reached_goal = result.getReachedGoal();
-      last_pos = result.getPosition();
-      pos_diff = Math.abs(position - last_pos);
-      pos_change = 1.0;
-      while (pos_diff > pos_diff_thresh && pos_change > pos_change_thresh) {
-        gripper.sendGoal(command_goal);
-        gripper.waitForResult(3000l, TimeUnit.MILLISECONDS);
-        result = gripper.getResult();
-        if (result == null) {
-          gripper.cancelAllGoals();
-          log.warn("Gripper timeout");
-          return false;
-        }
-        reached_goal = result.getReachedGoal();
-        pos_change = Math.abs(last_pos - result.getPosition());
-        last_pos = result.getPosition();
-        pos_diff = Math.abs(position - last_pos);
-        log.trace(String.format("move gripper info pos: %f. pos_diff: %f. reached goal: %b. stalled: %b.", last_pos, pos_diff, reached_goal, result.getStalled()));
-      }
-      state = gripper.getState();
-      log.debug(String.format("gripper goal state: %s.", state.getState().toString()));
 
-      // TODO: FIXME: this doesn't work properly: return (state.getState() == SimpleClientGoalState.StateEnum.SUCCEEDED);
-      if (result != null && Math.abs(position - result.getPosition()) < pos_diff_thresh) {
-        return true;
-      } else {
-        return false;
-      }
+      // TODO: get actual gripper position from the joint_state (e.g., /my_gen3/joint_states) topic
+      //       and uncomment manual position checks below
+      log.warn("Getting gripper feedback from ROS is broken, so returning success regardless of actual result.");
+      return true;
+
+//      result = gripper.getResult();
+//      if (result == null) {
+//        gripper.cancelAllGoals();
+//        log.warn("Gripper timeout");
+//        return false;
+//      }
+//      reached_goal = result.getReachedGoal();
+//      last_pos = result.getPosition();
+//      pos_diff = Math.abs(position - last_pos);
+//      pos_change = 1.0;
+//      while (pos_diff > pos_diff_thresh && pos_change > pos_change_thresh) {
+//        gripper.sendGoal(command_goal);
+//        gripper.waitForResult(3000l, TimeUnit.MILLISECONDS);
+//        result = gripper.getResult();
+//        if (result == null) {
+//          gripper.cancelAllGoals();
+//          log.warn("Gripper timeout");
+//          return false;
+//        }
+//        reached_goal = result.getReachedGoal();
+//        pos_change = Math.abs(last_pos - result.getPosition());
+//        last_pos = result.getPosition();
+//        pos_diff = Math.abs(position - last_pos);
+//        log.trace(String.format("move gripper info pos: %f. pos_diff: %f. reached goal: %b. stalled: %b.", last_pos, pos_diff, reached_goal, result.getStalled()));
+//      }
+//      state = gripper.getState();
+//      log.debug(String.format("gripper goal state: %s.", state.getState().toString()));
+//
+//      // TODO: FIXME: this doesn't work properly: return (state.getState() == SimpleClientGoalState.StateEnum.SUCCEEDED);
+//      if (result != null && Math.abs(position - result.getPosition()) < pos_diff_thresh) {
+//        return true;
+//      } else {
+//        return false;
+//      }
     } catch (RosException | InterruptedException e) {
       log.error("Error trying to move gripper.", e);
       return false;

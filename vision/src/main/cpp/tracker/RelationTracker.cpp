@@ -53,47 +53,31 @@ void RelationTracker::haveTrackedMemoryObject(diarc::stm::MemoryObject::Ptr trac
   haveNewMemoryObject(trackedObject);
 }
 
-int RelationTracker::mergeObject(MemoryObject::Ptr newObject) {
+MemoryObject::Ptr RelationTracker::mergeObject(MemoryObject::Ptr newObject) {
   LOG4CXX_DEBUG(logger, "[mergeObject] method entered.");
 
-  DescriptorsByTypeConstPtr types = getTypes();
-  DescriptorsByType::const_iterator types_itr;
-  MemoryObjects_HashedById_Set trackedObjectsByType;
-  MemoryObjects_HashedById_Set::const_iterator trackedObjectsByType_itr;
   long long typeId;
-  bool alreadyTracked = false;
-  for (types_itr = types->begin(); types_itr != types->end(); ++types_itr) {
+  DescriptorsByTypeConstPtr types = getTypes();
+  for (DescriptorsByType::const_iterator types_itr = types->begin(); types_itr != types->end(); ++types_itr) {
     typeId = types_itr->first;
-    trackedObjectsByType = trackedObjects->getByTypeId(typeId);
 
     // iterate through all existing tracked objects of moTypeId and try to "match"
     // with newly detected objects and update all existing MemoryObjects of moTypeId
-    for (trackedObjectsByType_itr = trackedObjectsByType.begin();
-         trackedObjectsByType_itr != trackedObjectsByType.end(); ++trackedObjectsByType_itr) {
+    for (const auto& trackedObject : trackedObjects->getByTypeId(typeId)) {
 
       // try to match with newly detected MemoryObject
-      if ((*trackedObjectsByType_itr).get() == newObject.get()) {
-        alreadyTracked = true;
-        break;
+      if (trackedObject.get() == newObject.get()) {
+        // no need to update relation confidences if already being tracked, relation detector already did that
+        return trackedObject;
       }
     }
-
-    if (alreadyTracked) {
-      // break from outer loop
-      break;
-    }
   }
 
-  if (alreadyTracked) {
-    // no need to update relation confidences if already being tracked, relation detector already did that
-    return 0;
-  } else {
-    // add newObject to trackedObjects (by typeId only)
-    LOG4CXX_DEBUG(logger, boost::format("Adding spatial relation typeId: %lld. tokenId: %lld.")
-                          % typeId % newObject->getId());
-    trackedObjects->add(newObject, typeId);
-    return 1;
-  }
+  // add newObject to trackedObjects (by typeId only)
+  LOG4CXX_DEBUG(logger, boost::format("Adding spatial relation typeId: %lld. tokenId: %lld.")
+                % typeId % newObject->getId());
+  trackedObjects->add(newObject, typeId);
+  return newObject;
 }
 
 void RelationTracker::removeLowConfidenceObjects() {
@@ -173,7 +157,7 @@ void RelationTracker::removeLowConfidenceObjects() {
           for (sceneGraphNodes_itr = sceneGraphNodes.begin();
                sceneGraphNodes_itr != sceneGraphNodes.end(); ++sceneGraphNodes_itr) {
             LOG4CXX_DEBUG(logger, boost::format("Removing all spatial relation of type: %s. typeId: %lld. tokenId: %lld.")
-                                  % descriptors_itr->getName() % (*sceneGraphNodes_itr)->getTypeId());
+                                  % descriptors_itr->getName() % (*sceneGraphNodes_itr)->getTypeId() % (*sceneGraphNodes_itr)->getId());
             (*sceneGraphNodes_itr)->removeRelations(descriptors_itr->getName());
           }
         }

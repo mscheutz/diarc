@@ -22,9 +22,11 @@ Optional:
 <capture>
 	<camMode>PCD</camMode>
 	<pcdFilename>/dev/shm/fetch_screws_scene.pcd</pcdFilename>
+<!--	<rgbFilename>/dev/shm/fetch_screws_scene.jpg</rgbFilename>-->
 	<imageWidth>320</imageWidth>
 	<imageHeight>240</imageHeight>
 	<hasStereo>false</hasStereo>
 	<hasDepth>true</hasDepth>
+	<convertToMeters>false</convertToMeters>
 	<publishCloudToRos>false</publishCloudToRos>
 </capture>

@@ -75,8 +75,4 @@ public class FetchPerformanceAssessmentDemoMock extends DiarcConfiguration {
     gm = createInstance(GoalManagerComponent.class, gmArgs);
   }
 
-  public static void main(String[] args) {
-    FetchPerformanceAssessmentDemoMock demoConfig = new FetchPerformanceAssessmentDemoMock();
-    demoConfig.runConfiguration();
-  }
 }

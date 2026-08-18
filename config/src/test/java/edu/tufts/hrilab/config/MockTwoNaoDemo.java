@@ -55,8 +55,4 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
             "-goal listen(self)");
   }
 
-  public static void main(String[] args) {
-    MockTwoNaoDemo demoConfig = new MockTwoNaoDemo();
-    demoConfig.runConfiguration();
-  }
 }

@@ -17,6 +17,28 @@ IF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUN
 		CaptureROS.cpp
 	)
 ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
+
+# ROS2 capture
+IF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureROS2.cpp
+	)
+ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+
+# Spot robot capture
+if(bosdyn_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureSpot.cpp
+	)
+endif(bosdyn_FOUND)
+
+# no easy way to check for boston dynamics python sdk, so just check for pybind11
+if(pybind11_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureSpotPython.cpp
+	)
+endif(pybind11_FOUND)
+
 # Intel RealSense capture
 if(REALSENSE_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -29,7 +51,6 @@ if(OPENNI_FOUND)
 	SET(SOURCES ${SOURCES}
 		openni/OpenniDevice.cpp
 		CaptureOpenni.cpp
-		CaptureOpenniPlus.cpp
 	)
 endif(OPENNI_FOUND)
 if(OPENNI2_FOUND)
@@ -67,8 +88,33 @@ IF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUN
 	                      ${tf_LIBRARIES}
 	                      ${pcl_ros_LIBRARIES})
 ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
+
+IF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+#	message("rclcpp_LIBRARIES:${rclcpp_LIBRARIES}")
+#	message("sensor_msgs_LIBRARIES:${sensor_msgs_LIBRARIES}")
+#	message("stereo_msgs_LIBRARIES:${stereo_msgs_LIBRARIES}")
+#	message("image_transport_LIBRARIES:${image_transport_LIBRARIES}")
+#	message("cv_bridge_LIBRARIES:${cv_bridge_LIBRARIES}")
+#	message("tf2_LIBRARIES:${tf2_LIBRARIES}")
+#	message("pcl_conversions_LIBRARIES:${pcl_conversions_LIBRARIES}")
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${roscpp_LIBRARIES}
+		${rclcpp_LIBRARIES}
+		${sensor_msgs_LIBRARIES}
+		${stereo_msgs_LIBRARIES}
+		${image_transport_LIBRARIES}
+		${cv_bridge_LIBRARIES}
+		${tf2_LIBRARIES}
+		${pcl_conversions_LIBRARIES}
+        "/opt/ros/humble/lib/libimage_transport.so"
+        "/opt/ros/humble/lib/libcv_bridge.so")
+ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${LOG4CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} display common calibration point_clouds)
+
+if (pybind11_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pyvis)
+endif (pybind11_FOUND)
 if(OPENNI_FOUND)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME}  ${OPENNI_LIBRARY})
 endif(OPENNI_FOUND)
@@ -83,6 +129,10 @@ if(GSTREAMER_FOUND AND GLIB_FOUND)
 			${GLIB_LIBRARIES} ${GLIB_GOBJECT_LIBRARIES}
 			${GSTREAMER_LIBRARIES} ${GSTREAMER_APP_LIBRARIES})
 endif(GSTREAMER_FOUND AND GLIB_FOUND)
+if(bosdyn_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_client)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_api)
+endif(bosdyn_FOUND)
 
 # build java wrappers via swig
 ADD_SUBDIRECTORY(swig)

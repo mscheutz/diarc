@@ -364,6 +364,9 @@ public class Term extends Symbol implements Cloneable, Serializable {
   @Override
   public boolean equals(Object o) {
     // needs to be the same class to be equal
+    if (o == null) {
+      return false;
+    }
     if (!getClass().equals(o.getClass())) {
       return false;
     }
@@ -430,6 +433,13 @@ public class Term extends Symbol implements Cloneable, Serializable {
     }
     sb.append(")");
     return sb.toString();
+  }
+
+  @Override
+  public Term toUntyped() {
+    List<Symbol> untypedArgs = new ArrayList<>();
+    args.forEach(arg -> untypedArgs.add(arg.toUntyped()));
+    return new Term(name, untypedArgs);
   }
 
   @Override

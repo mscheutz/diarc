@@ -27,7 +27,8 @@ public:
   
   enum LearnerType {
     DEFINITION,
-    INSTANCE
+    INSTANCE,
+    MODEL
   };
   
   /**

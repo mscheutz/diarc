@@ -20,6 +20,10 @@ repositories {
   maven {
     url = uri("https://clojars.org/repo") //This is needed for diarcros - but technically should come from the closure plugin. todo: Apply closure plugin instead?
   }
+  maven {
+      name = "Thinking Robots TRADE mvn host"
+      url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
   maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -111,6 +115,7 @@ artifacts {
 dependencies {
   configurations.getByName("mockImplementation")(project(":core"))
   api(project(":core"))
+  api(project(":core","mockJar"))
   if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     api("rosjava_core:rosjava:0.0.0")
     api("rosjava_core:rosjava_bootstrap:0.0.0")
@@ -145,6 +150,7 @@ addRosSource("map", listOf(
 
 addRosSource("movebase", listOf(
     "edu/tufts/hrilab/movebase/**",
+    "edu/tufts/hrilab/diarcros/movebase/**",
 ), listOf("map"))
 
 addRosSource("kortex", listOf(
@@ -170,10 +176,6 @@ addRosSource("pr2", listOf(
     "edu/tufts/hrilab/diarcros/pr2/*",
     "edu/tufts/hrilab/manipulator/pr2/*",
 ), listOf("moveit"))
-
-addRosSource("spot", listOf(
-    "edu/tufts/hrilab/spot/*",
-), listOf("movebase"))
 
 addRosSource("tower", listOf(
     "edu/tufts/hrilab/tower/*",

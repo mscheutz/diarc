@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class OperatorContext extends DatabaseEntryContext<OperatorDBEntry> {
 
@@ -75,7 +74,18 @@ public class OperatorContext extends DatabaseEntryContext<OperatorDBEntry> {
       }
 
       if (getDBE().isVarArgs()) {
-        argBindings.add(varArgBindings.toArray(new Object[varArgBindings.size()]));
+        // populate vararg array of target type (e.g., String[] not Object[]). Casting from Object[] to String[] will fail
+        Class<?> varArgType = getDBE().getImplementation().getParameterTypes()[getDBE().getImplementation().getParameterTypes().length-1]; // e.g., String[]
+        Class<?> varArgComponentType = varArgType.componentType(); // e.g., String
+        Object varArgArray = Array.newInstance(varArgComponentType, varArgBindings.size()); // e.g., Equivalent to: Object varArgArray = new String[size];
+
+        // add vararg values
+        for (int i = 0; i < varArgBindings.size(); ++i) {
+          Array.set(varArgArray, i, varArgBindings.get(i));
+        }
+
+        // add vararg array to input args
+        argBindings.add(varArgArray);
       }
 
       Method op = getDBE().getImplementation();

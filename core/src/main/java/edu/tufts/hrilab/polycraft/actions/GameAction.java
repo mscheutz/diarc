@@ -61,13 +61,15 @@ public abstract class GameAction {
 
   protected final void setGameOver(boolean goalAchieved) {
     log.info("Game Over in received Polycraft message.");
-    TRADE.getAvailableServices(new TRADEServiceConstraints().name("setGameOver").argTypes(Boolean.class)).forEach(x -> {
+    new Thread(() -> {
+      TRADE.getAvailableServices(new TRADEServiceConstraints().name("setGameOver").argTypes(Boolean.class)).forEach(x -> {
       try {
         x.call(void.class,goalAchieved);
       } catch (TRADEException e) {
         log.error("[setGameOver] Error attempting to set game over.", e);
       }
     });
+    }).start();
   }
 
 }

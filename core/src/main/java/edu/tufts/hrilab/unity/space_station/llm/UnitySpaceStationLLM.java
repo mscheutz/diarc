@@ -159,14 +159,15 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   }
 
   @TRADEService
-  public AlternateResponse spaceStationLLMParser (String utterance) {
+  public AlternateResponse spaceStationLLMParser (Utterance utterance) {
+    String utteranceWords = utterance.getWordsAsString();
     Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
     String jsonString = "";
     LlamaSpaceStationResponse lssRes = null;
 
-    chat.addUserMessage(utterance);
+    chat.addUserMessage(utteranceWords);
 
     try {
       oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);

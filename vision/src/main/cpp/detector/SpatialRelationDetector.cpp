@@ -54,7 +54,7 @@ void SpatialRelationDetector::handleFrameCompletionNotification(FrameCompletionN
     LOG4CXX_TRACE(logger, "[handleFrameCompletionNotification] sending notification.");
     long long typeId = getTypes()->begin()->first;
     FrameCompletionNotification::Ptr new_fcn(
-            new FrameCompletionNotification(shared_from_this(), notification->frameNumber, typeId));
+            new FrameCompletionNotification(this->getProcessorId(), typeId, notification->frameNumber));
     sendNotifications(new_fcn);
   } else {
     LOG4CXX_TRACE(logger,

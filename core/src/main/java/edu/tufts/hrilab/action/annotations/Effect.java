@@ -40,4 +40,5 @@ public @interface Effect {
   String[] effect();
   EffectType type();
   String[] observable() default {};
+  String[] infer() default {};
 }

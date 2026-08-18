@@ -22,11 +22,11 @@ public:
   typedef boost::shared_ptr<PlaneNotification> Ptr;
   typedef boost::shared_ptr<const PlaneNotification> ConstPtr;
 
-  PlaneNotification(const VisionProcessConstPtr& notifier_,
+  PlaneNotification(const long long& processorId_,
                     const unsigned long long& frameNumber_,
                     const CaptureData::ConstPtr& captureData_,
                     const ExtractedPlane::ConstPtr& plane_)
-          : ImageProcessorNotification(notifier_, PLANE, frameNumber_, captureData_),
+          : ImageProcessorNotification(PLANE, processorId_, frameNumber_, captureData_),
             plane(plane_) {
   }
 

@@ -34,20 +34,18 @@ protected:
   virtual void initModel(const std::string& model_path, const std::string& backEnd, const std::string &type, const std::string &configFile);
   virtual void setBackendAndTarget();
 
-  // semantic parent type for this detector's descriptors (isA hierarchy)
-  std::string parentType;
-
   cv::dnn::Net net;
   double confidence_thresh=0.1;
   double score_thresh=0.1;
   double nms_thresh=0.4;
   long inputSize;
+  int yolo_version;
   std::vector<cv::String> out_layer_names;
   std::unordered_map<std::string, int> classToId;
   std::unordered_map<int, std::string> idToClass;
   std::vector<std::string> classNames;
   void fillClassNames(int totalClasses);
-  cv::Mat prepFrame(cv::Mat img);
+  cv::Mat prepFrame(const cv::Mat& img);
   size_t vectorProduct(std::vector<int64_t> vector);
   std::vector<cv::Point> getTLandBR(std::vector<float>::iterator it);
   std::vector<std::string> namesBackend = {
