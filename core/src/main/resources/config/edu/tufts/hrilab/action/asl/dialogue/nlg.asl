@@ -19,7 +19,7 @@ import java.util.Map;
     String !text;
     Symbol !addressee;
     java.lang.Long !uttID;
-    java.lang.Boolean !streamingTTS;
+    java.lang.Boolean !streamingTTS = false;
     java.lang.Boolean !isLocal;
     java.lang.Boolean !performSayText = true;
     Predicate !semantics;
