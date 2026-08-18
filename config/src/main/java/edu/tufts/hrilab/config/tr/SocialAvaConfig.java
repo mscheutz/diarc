@@ -293,6 +293,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
                     "core.asl " +
                     "manipulation.asl " +
                     "dialogue/nlg.asl " +
+                    "dialogue/nlu.asl " +
                     "dialogue/socialLLMnlu.asl " +
                     "dialogue/handleSemantics.asl " +
                     "vision.asl " +

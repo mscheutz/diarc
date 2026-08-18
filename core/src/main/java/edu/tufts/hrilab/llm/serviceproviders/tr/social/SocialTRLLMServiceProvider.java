@@ -527,7 +527,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
         chat = new Chat(user.getName(), agentTeam.getName());
         promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
-        chatContext.history.addUserMessage(utterance.getWordsAsString());
+        //chatContext.history.addUserMessage(utterance.getWordsAsString());
       } else {
         systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
         tools = new ArrayList<>(chatTemplates.toolDefinitions);
@@ -977,23 +977,25 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
 
-      // If positively validated, terminate associated context and submit instruction
-      if (argument.equals("yes")) {
-        handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
-      } else {
-        chatContext.lastToolCallName = "";
-        // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
-        //  side effects will be triggered from reattemptParse / the NLU asl pipeline
-        chatContext.chatState = ChatState.PARSE;
-      }
+      // Logic moved to question answer callback
+      //// If positively validated, terminate associated context and submit instruction
+      //if (argument.equals("yes")) {
+      //  handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
+      //} else {
+      //  chatContext.lastToolCallName = "";
+      //  // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
+      //  //  side effects will be triggered from reattemptParse / the NLU asl pipeline
+      //  chatContext.chatState = ChatState.PARSE;
+      //}
     } else if (toolCall.function.name.equals("abort")) {
       // User declined to answer the validation question - terminate context entirely and refocus base parse state
       output.setSemantics(Factory.createPredicate("abort(question)"));
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
-      chatCollection.currentChat.signalCompletion();
-      saveContextHistory(inputUtterance.getSpeaker(), inputUtterance.getAddressee(), chatCollection.currentChat);
-      chatCollection.currentChat = null;
+      // Logic moved to question answer callback
+      //chatCollection.currentChat.signalCompletion();
+      //saveContextHistory(inputUtterance.getSpeaker(), inputUtterance.getAddressee(), chatCollection.currentChat);
+      //chatCollection.currentChat = null;
     }
     return output.build();
   }
@@ -1202,7 +1204,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /// ////////////////////////////////
   /// / NLG methods and utilities ////
   /// ////////////////////////////////
-  @TRADEService
+  @Override
   public Utterance convertSemanticsToTextLLMService(Utterance utterance) {
     return convertSemanticsToTextLLMService(utterance, false);
   }
@@ -1214,7 +1216,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * @param streamingSayText - whether the response should be feed incrementally to TTS using a streaming Completion
    * @return The utterance with populated words, or null if no generation could be formed
    */
-  @TRADEService
+  @Override
   public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean streamingSayText) {
     ////// Get existing chats
     //TODO: revisit ChatTemplates and PromptVars relationship with NLG side as opposed to NLU side to reduce inefficiency
@@ -2653,8 +2655,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
 
           // If negative validation response, don't release inputLock until reattemptParse completes
-          if ((semantics.getName().equals("val") || semantics.getName().equals("validated")) && semantics.get(0).getName().equals("no")) {
-            return;
+          if ((semantics.getName().equals("val") || semantics.getName().equals("validated"))) {
+            chatContext.history.addUserMessage(utterance.getWordsAsString());
+            if (semantics.get(0).getName().equals("no")) {
+              return;
+            }
           }
 
           // Perform necessary side effects to current chat. 2 cases handled collectively here:
@@ -2758,24 +2763,53 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
 
-    if (!question.wasAnswered()) {
-      // If validation question expired but chat context is still in validation state, we know the validation question expired.
-      //  So update chat state accordingly.
-      synchronized (currentChatCollections) {
-        ChatCollection chatCollection = getChatCollection(user, agentTeam);
-        if (chatCollection != null) {
-          ChatContext chatContext = chatCollection.currentChat;
-          if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
+    synchronized (currentChatCollections) {
+      ChatCollection chatCollection = getChatCollection(user, agentTeam);
+      if (chatCollection != null) {
+        ChatContext chatContext = chatCollection.currentChat;
+        if (chatContext != null) {
+          if (chatContext.chatState != ChatState.VALIDATION) {
+            log.warn("[questionAskingCallback] receiving validation question answered notification but context not in validation state");
+            return;
+          }
+          if (!question.wasAnswered()) {
+            // If validation question expired but chat context is still in validation state, we know the validation question expired.
+            //  So update chat state accordingly.
             chatCollection.signalInputProcessed();
             if (chatContext.chatType == ChatType.FOCUSED) {
               chatContext.chatState = ChatState.PARSE;
-              chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \""+chatContext.contextID+"\" and will need to call your target tool call again if they try answering your question affirmatively.",chatContext.toolCallIdUpForValidation);
+              chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"" + chatContext.contextID + "\" and will need to call your target tool call again if they try answering your question affirmatively.", chatContext.toolCallIdUpForValidation);
               chatContext.toolCallIdUpForValidation = "";
               chatContext.utteranceUpForValidation = null;
             } else {
               //TODO: add message indicating timeout occurred?
               saveContextHistory(user, agentTeam, chatCollection.currentChat);
               chatCollection.currentChat = null;
+            }
+          } else {
+            // TODO: block reattemptParse call until this (and dialogue history update) happens
+            // (This logic was moved from handleValidatedToolCall to here to support external parsers parsing validation question responses)
+            // Validation question was explicitly answered, update chat state accordingly
+            Map<Variable, Symbol> bindings = question.getAnswerBindings();
+            if (bindings != null) {
+              //chatContext.history.addUserMessage(question.getWordsAsString());
+              Symbol answer = bindings.get(Factory.createVariable("X"));
+              if (answer != null) {
+                if (answer.getName().equals("yes")) {
+                  // If positively validated, terminate associated context and submit instruction
+                  handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
+                } else if (answer.getName().equals("no")) {
+                  chatContext.lastToolCallName = "";
+                  // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
+                  //  side effects will be triggered from reattemptParse / the NLU asl pipeline
+                  chatContext.chatState = ChatState.PARSE;
+                }
+              } else {
+                // User explicitly declined to answer the validation question - terminate context entirely and refocus base parse state
+                chatCollection.currentChat.signalCompletion();
+                saveContextHistory(user, agentTeam, chatCollection.currentChat);
+                chatCollection.currentChat = null;
+              }
             }
           }
         }

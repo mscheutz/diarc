@@ -61,6 +61,9 @@ public final class TemplatedNLG extends DiarcComponent {
 
         if (semantics != null) {
             String output = generate(semantics.toString());
+            if (output == null) {
+                return null;
+            }
             utterance.setWords(output);
         }
         return utterance;
@@ -73,7 +76,9 @@ public final class TemplatedNLG extends DiarcComponent {
     public String generate(Term term) {
         variationKey = term.renderSource();
         if (term instanceof Call c && c.name().equals("mean")) return realizeValidation(c);
-        return English.capitalize(realize(term, Form.CLAUSE)) + punctuation(term);
+        String realization = realize(term, Form.CLAUSE);
+        if (realization == null) return null;
+        return English.capitalize(realization) + punctuation(term);
     }
 
     private String realizeValidation(Call mean) {
@@ -85,31 +90,42 @@ public final class TemplatedNLG extends DiarcComponent {
                 case "startMission" -> realizeMission(c);
                 case "submitTaskSequenceDefinition" -> realizeTaskDefinition(c);
                 case "scheduled" -> realizeScheduledValidation(c);
-                default -> choose("generic-confirm", "Confirming you want me to ", "Just to confirm, you want me to ", "Making sure you want me to ") + realize(c, Form.INFINITIVE);
+                default -> {
+                    String realization = realize(c, Form.INFINITIVE);
+                    if (realization == null) {
+                        yield null;
+                    } else {
+                        yield choose("generic-confirm", "Confirming you want me to ", "Just to confirm, you want me to ", "Making sure you want me to ") + realization;
+                    }
+                }
             };
         } else {
             text = "Confirming you meant " + entities.resolve(content);
         }
-        return ensureQuestion(text);
+        return text == null ? null : ensureQuestion(text);
     }
 
     private String realizeMission(Call mission) {
         requireArity(mission, 2);
         List<Term> actions = English.flattenAnd(mission.args().get(1));
         List<String> realized = new ArrayList<>();
+        String realization;
 
         for (int i = 0; i < actions.size(); i++) {
             Term current = actions.get(i);
             if (i + 1 < actions.size() && isMatchingNavigationPair(current, actions.get(i + 1))) {
-                realized.add(realize(actions.get(i + 1), Form.GERUND));
+                realization = realize(actions.get(i + 1), Form.GERUND);
+                if (realization == null) return realization;
+                realized.add(realization);
                 i++;
             } else {
-                String phrase = realize(current, Form.GERUND);
+                realization = realize(current, Form.GERUND);
+                if (realization == null) return realization;
                 if (i == actions.size() - 1 && current instanceof Call c &&
                         (c.name().equals("goToLocationWrapper") || c.name().equals("goToLocation"))) {
-                    phrase = phrase.replaceFirst("^going to ", "returning to ");
+                    realization = realization.replaceFirst("^going to ", "returning to ");
                 }
-                realized.add(phrase);
+                realized.add(realization);
             }
         }
         realized = aggregateRepeatedRoomSearches(realized);
@@ -163,12 +179,18 @@ public final class TemplatedNLG extends DiarcComponent {
         String description;
         if (allSameAction) {
             String action = realize(parsed.get(0).action(), Form.INFINITIVE);
+            if (action == null) return null;
             List<String> locations = parsed.stream().map(LocationAction::location).toList();
             description = injectLocations(action, locations);
         } else {
-            description = English.join(parsed.stream()
-                    .map(p -> realize(p.action(), Form.INFINITIVE) + " at " + p.location())
-                    .toList());
+            List<String> steps = parsed.stream()
+                    .map(p -> {
+                        String realization = realize(p.action(), Form.INFINITIVE);
+                        return  realization == null ? null : realization + " at " + p.location();
+                    })
+                    .toList();
+            if (steps.contains(null)) return null;
+            description = English.join(steps);
         }
         return choose("task-definition-frame",
                 "Let me make sure I understood. You want to save a new task sequence definition called ",
@@ -226,6 +248,7 @@ public final class TemplatedNLG extends DiarcComponent {
     private String realizeScheduledValidation(Call scheduled) {
         if (scheduled.args().size() < 2) throw new IllegalArgumentException("scheduled requires a task and timing");
         String task = realize(scheduled.args().get(0), Form.INFINITIVE);
+        if (task == null) return null;
         List<String> timing = new ArrayList<>();
         boolean hasPeriod = false;
         boolean hasEnd = false;
@@ -323,6 +346,7 @@ public final class TemplatedNLG extends DiarcComponent {
 
     private String realizeAnd(Call c, Form form) {
         List<String> parts = English.flattenAnd(c).stream().map(t -> realize(t, form)).toList();
+        if (parts.contains(null)) return null;
         if (form == Form.CLAUSE && parts.size() == 2) {
             return parts.get(0) + ", and " + lowerInitial(parts.get(1));
         }
@@ -345,6 +369,7 @@ public final class TemplatedNLG extends DiarcComponent {
             if (call.name().equals("know") && call.args().size() >= 2) return negateClause(realizeKnow(call));
         }
         String positive = realize(inner, Form.CLAUSE);
+        if (positive == null) return null;
         if (positive.startsWith("I am ")) return "I am not " + positive.substring(5);
         if (positive.startsWith("I can ")) return "I cannot " + positive.substring(6);
         return form == Form.CLAUSE ? "it is not the case that " + lowerInitial(positive) : "not " + positive;
@@ -354,6 +379,7 @@ public final class TemplatedNLG extends DiarcComponent {
         requireArity(c, 2);
         // The actor is perspective metadata. The error content carries the message.
         String content = realize(c.args().get(1), Form.CLAUSE);
+        if (content == null) return null;
         if (content.startsWith("it is not the case that ")) return content.substring("it is not the case that ".length());
         return content;
     }
@@ -361,23 +387,28 @@ public final class TemplatedNLG extends DiarcComponent {
     private String realizeCannot(Call c) {
         requireArity(c, 2);
         String goal = realize(c.args().get(0), Form.INFINITIVE);
+        if (goal == null) return null;
         String reason = c.args().get(1) instanceof Call b && b.name().equals("because")
                 ? realizeBecause(b) : realize(c.args().get(1), Form.CLAUSE);
+        if (reason == null) return null;
         return "I cannot " + goal + " because " + stripBecause(reason);
     }
 
     private String realizeBecause(Call c) {
         requireArity(c, 1);
-        return "because " + lowerInitial(realize(c.args().get(0), Form.CLAUSE));
+        String realization = realize(c.args().get(0), Form.CLAUSE);
+        return realization == null ? realization : "because " + lowerInitial(realization);
     }
 
     private String realizeAcknowledgement(Call c) {
         requireArity(c, 1);
         Term content = c.args().get(0);
         if (content instanceof Call a && a.name().equals("attempting")) {
-            return "Okay, " + lowerInitial(realizeAttempting(a, Form.CLAUSE)).replaceFirst("^I am attempting to ", "I will attempt to ");
+            String realization = realizeAttempting(a, Form.CLAUSE);
+            return realization == null ? null : "Okay, " + lowerInitial(realization).replaceFirst("^I am attempting to ", "I will attempt to ");
         }
-        return "Okay, " + lowerInitial(realize(content, Form.CLAUSE));
+        String realization = realize(content, Form.CLAUSE);
+        return realization == null ? null : "Okay, " + lowerInitial(realization);
     }
 
     private String realizeGreeting(Call c) {
@@ -389,6 +420,7 @@ public final class TemplatedNLG extends DiarcComponent {
     private String realizeAttempting(Call c, Form form) {
         requireArity(c, 2);
         String action = realize(c.args().get(1), Form.INFINITIVE);
+        if (action == null) return null;
         String phrase = "attempt to " + action;
         if (form == Form.GERUND) return "attempting to " + action;
         return "I am " + phrase.replaceFirst("^attempt ", "attempting ");
@@ -403,24 +435,32 @@ public final class TemplatedNLG extends DiarcComponent {
     private String realizeKnow(Call c) {
         if (c.args().size() < 2) throw new IllegalArgumentException("know requires actor and content");
         Term content = c.args().get(1);
-        if (content instanceof Call h && h.name().equals("howTo")) return "I know " + realizeHowTo(h);
-        return "I know " + lowerInitial(realize(content, Form.CLAUSE));
+        String realization;
+        if (content instanceof Call h && h.name().equals("howTo")) {
+            realization = realizeHowTo(h);
+            return realization == null ? null : "I know " + realization;
+        }
+        realization = realize(content, Form.CLAUSE);
+        return realization == null ? null : "I know " + lowerInitial(realization);
     }
 
     private String realizeHowTo(Call c) {
         requireArity(c, 1);
-        return "how to " + realize(c.args().get(0), Form.INFINITIVE);
+        String realization = realize(c.args().get(0), Form.INFINITIVE);
+        return realization == null ? null : "how to " + realization;
     }
 
     private String realizeUrgent(Call c, Form form) {
         requireArity(c, 1);
         String action = realize(c.args().get(0), Form.INFINITIVE);
+        if (action == null) return null;
         if (form == Form.GERUND) return adaptForm(action, Form.GERUND) + " immediately";
         if (action.startsWith("go to ")) return "I am going to " + action.substring(6) + " immediately";
         return "I am going to " + action + " immediately";
     }
 
     private String negateClause(String clause) {
+        if (clause == null) return null;
         if (clause.startsWith("I know ")) return "I do not know " + clause.substring(7);
         if (clause.startsWith("I am ")) return "I am not " + clause.substring(5);
         return "I do not " + lowerInitial(clause);

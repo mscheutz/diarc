@@ -38,28 +38,29 @@ import java.lang.String;
   */
 () = handleSpeechInput(Utterance ?utterance) {
     op:log("debug", "handleSpeechInput for utterance: ?utterance");
-    java.lang.Long !uttID = op:invokeMethod(!utterance,"getUid");
+    java.lang.Long !uttID = op:invokeMethod(?utterance,"getUid");
     Symbol !addressee = op:invokeMethod(?utterance, "getAddressee");
     java.lang.Boolean !streamingTTS = tsc:usingStreamingTTS(!addressee);
+    Utterance !parsedUtterance;
 
     if (tsc:usingLLM()) {
-      ?utterance = tsc:parseUtteranceForNonLLMResult(?utterance, !streamingTTS);
-      if (op:isNull(?utterance)) {
+      !parsedUtterance = tsc:parseUtteranceForNonLLMResult(?utterance, !streamingTTS);
+      if (op:isNull(!parsedUtterance)) {
         if (op:equals(!streamingTTS,true)) {
-          tsc:unbufferStreamingTTSOutputForUID(?utterance);
+          tsc:unbufferStreamingTTSOutputForUID(!parsedUtterance);
         }
-        ?utterance = tsc:getLLMParseResult(!uttID, !streamingTTS);
+        !parsedUtterance = tsc:getLLMParseResult(?utterance, !streamingTTS);
       } else {
         if (op:equals(!streamingTTS,true)) {
           tsc:cancelStreamingTTSOutputForUID(!uttID);
         }
       }
     } else {
-      ?utterance = tsc:parseUtterance(?utterance);
+      !parsedUtterance = tsc:parseUtterance(?utterance);
     }
-    op:log("debug", "parser results: ?utterance");
+    op:log("debug", "parser results: !parsedUtterance");
 
-    act:handleParsedUtterance(?utterance);
+    act:handleParsedUtterance(!parsedUtterance);
 }
 
 () = handleParsedUtterance(Utterance ?utterance) {
@@ -80,7 +81,7 @@ import java.lang.String;
       return;
     }
     // no successful parse, specific error semantics returned from HybridParser
-    java.lang.String !semanticsName = !semanticsName = op:getName(!semantics);
+    java.lang.String !semanticsName = op:getName(!semantics);
     if (op:equals(!semanticsName,"error")) {
         act:updateDialogueHistory(?utterance);
         !speaker = op:invokeMethod(?utterance, "getSpeaker");
@@ -100,7 +101,7 @@ import java.lang.String;
 
         // Update dialogue history explicitly here so that it shows up in any UI element before the validation question is asked or answered (otherwise existing
         //    pipeline would wait until the utterance is fully parsed and validated)
-        act:updateDialogueHistory(?unvalidatedUtterance);
+        act:updateDialogueHistory(?utterance);
 
         // (Re)validate attempted parses until the user validates it or fully gives up
         !continueValidation = act:validateParse(?utterance,true);
@@ -163,6 +164,7 @@ import java.lang.String;
     java.lang.Integer !historyLength = 1;
     java.lang.Integer !fillerCase = 2;
     java.lang.Boolean !streaming;
+    java.lang.String !fillerString;
 
     // Pre LLM validation question generation filler modified based on being 1st vs 2nd+ parse attempt for this particular instruction
     if (op:equals(?firstParse,false)) {
@@ -177,7 +179,7 @@ import java.lang.String;
     // (Social LLM) Measure current conversation history length in order to know whether validated inputs can be cached safely. (Multi-turn parses cannot
     //  be safely cached, first turn parses can be)
     if (tsc:supportExtendedParses()) {
-        !historyLength = tsc:getConversationLength(!speaker,!addressee);
+        !historyLength = tsc:getLLMConversationLength(!speaker,!addressee);
     }
 
     //// Ask Validation Question ////
@@ -255,7 +257,7 @@ import java.lang.String;
             //  to be rewritten if other components can handle this)
 
             // Filler response in between negative validation answer and followup disambiguation question
-            if (tsc:useReattemptParseFiller(!addressee)) {
+            if (tsc:useReattemptParseFiller()) {
                 !fillerString = tsc:sampleReattemptParseFillerPhrase();
                 async {
                     act:generateResponseFromString(!speaker,!fillerString);
@@ -267,10 +269,12 @@ import java.lang.String;
             //  Call Chat completion again including the users negative validation response. Cases based on return value:
             //      Tool call response (new direct parse made using additional information from validation response) -> set ?revalidate to true and continue outer loop calling this function
             //      Text response (enter extended recovery dialogue interaction to figure out what is wrong) -> set ?revalidate false, Utterance.isValidated true, and generateResponse semantics
-            !streaming = tsc:usingStreamingTTS();
+            !streaming = tsc:usingStreamingTTS(!addressee);
             ?revalidate = tsc:reattemptParse(?unvalidatedUtterance, !streaming);
             //TODO: double check this, believe we need to immediately unbuffer if going with intended back-end impl (or should change API to not need to do this)
-            tsc:unbufferStreamingTTSOutputForUID(?unvalidatedUtterance);
+            if (op:equals(!streaming,true)) {
+              tsc:unbufferStreamingTTSOutputForUID(?unvalidatedUtterance);
+            }
             ?unvalidatedUtterance = act:resolveReferences(?unvalidatedUtterance);
             return;
         } else {
@@ -295,6 +299,7 @@ import java.lang.String;
     Predicate !indirectSemantics;
     Predicate !suppSemantics;
     java.lang.Integer !indirectSemanticsSize;
+    java.lang.Boolean !validated = op:invokeMethod(?utterance,"isValidated");
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
@@ -309,7 +314,7 @@ import java.lang.String;
 
     // handle direct semantics
     // has the form "semantics(boundOption1, boundOption2, ...)"
-    act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct);
+    act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct, !validated);
 
     // handle indirect semantics
     // has the form "indirectSemantics(semantics(boundOption1, boundOption2, ...), semantics(...),...)"
@@ -319,6 +324,6 @@ import java.lang.String;
     Predicate !currIndirectSemantics;
     for (!i=0; !i lt !indirectSemanticsSize; !i ++) {
       !currIndirectSemantics = op:invokeMethod(!indirectSemantics, "get", !i);
-      act:handleSemantics(!speaker, !addressee, !currIndirectSemantics, !suppSemantics, indirect);
+      act:handleSemantics(!speaker, !addressee, !currIndirectSemantics, !suppSemantics, indirect, !validated);
     }
 }

@@ -11,6 +11,7 @@ import org.apache.commons.cli.Option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Class which holds intended configuration of the front end of the system and exposes TRADE services for the rest of the system to branch logic based on what
@@ -34,6 +35,10 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    private boolean usingLLM = true;
    private String language = "English";
 
+   // Addressees the robot is physically co-present with: their replies are spoken aloud. Replies to
+   // any other addressee (webapp, remote/text channels) are delivered via dialogue history only.
+   public final Set<String> LOCAL_ADDRESSEES = Set.of("temi", "local_user", "local_visitor", "operator", "ava");
+
    @Override
    protected List<Option> additionalUsageInfo() {
       //TODO
@@ -50,48 +55,59 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       //TODO: check configuration
    }
 
+   @TRADEService
+   public boolean isLocalAddressee(Symbol addressee) {
+      return addressee != null && LOCAL_ADDRESSEES.contains(addressee.getName());
+   }
+
+   @TRADEService
+   public boolean isLocalAddressee(String addresseeName) {
+      return addresseeName != null && LOCAL_ADDRESSEES.contains(addresseeName);
+   }
+
    //TODO: Does technically every method here need to take in agentTeam as an argument?
    @TRADEService
-   boolean usingStreamingTTS(Symbol agentTeam) {
-      return useStreamingTTS && Utterance.isLocalAddressee(agentTeam);
+   public boolean usingStreamingTTS(Symbol agentTeam) {
+      return useStreamingTTS && isLocalAddressee(agentTeam);
    }
    @TRADEService
-   boolean usingWWBasedASR(Symbol agentTeam) {
-      return useWWBasedASR && Utterance.isLocalAddressee(agentTeam);
+   public boolean usingWWBasedASR(Symbol agentTeam) {
+      return useWWBasedASR && isLocalAddressee(agentTeam);
    }
    @TRADEService
-   boolean usingListeningIndicator(Symbol agentTeam) {
-      return useListeningIndicator && Utterance.isLocalAddressee(agentTeam);
+   public boolean usingListeningIndicator(Symbol agentTeam) {
+      return useListeningIndicator && isLocalAddressee(agentTeam);
    }
 
    //Don't think we need these 3 if having usingLLM (unless we want filler presence to be configurable)
    @TRADEService
-   boolean useTentativeAcceptFiller() {
+   public boolean useTentativeAcceptFiller() {
       return useTentativeAcceptFiller;
    }
    @TRADEService
-   boolean usePreValidationFiller() {
+   public boolean usePreValidationFiller() {
       return usePreValidationFiller;
    }
    @TRADEService
-   boolean useReattemptParseFiller() {
+   public boolean useReattemptParseFiller() {
       return useReattemptParseFiller;
    }
 
    @TRADEService
-   boolean usingLLM() {
+   public boolean usingLLM() {
       return usingLLM;
    }
+   //TODO: remove supportExtendedParses and just replace with usingSocialLLM for now?
    @TRADEService
-   boolean supportExtendedParses() {
+   public boolean supportExtendedParses() {
       return supportExtendedParses;
    }
    @TRADEService
-   boolean usingValidation() {
+   public boolean usingValidation() {
       return useConfirmation;
    }
    @TRADEService
-   boolean usingQueueEM() {
+   public boolean usingQueueEM() {
       return usingQueueEM;
    }
 

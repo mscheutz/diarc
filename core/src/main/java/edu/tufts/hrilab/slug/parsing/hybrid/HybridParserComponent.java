@@ -184,7 +184,8 @@ public class HybridParserComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Utterance parseUtterance(Utterance incoming) {
-    return parseUtterance(incoming, false, false);
+    Utterance output = parseUtterance(incoming, false, false);
+    return output == null ? incoming : output;
   }
 
   // TODO: Depending on desired implementation, this method can trigger the LLM component to start running asynchronously or just only run the non-llm components first. (Or make that behavior configurable)
@@ -205,9 +206,13 @@ public class HybridParserComponent extends DiarcComponent {
     //*TODO: Would need to store futures and index on utteranceID to retrieve here(and probably move unblock/cancelTTSOutputForUID to this component and rename)
 
     // If only running the LLM synchronously
-    Utterance output = llmParser.parseUtterance(new Utterance.Builder(incoming).build(), callStreaming);
+    Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
+    if (confirmation) {
+      llmInputUtterance.setNeedsValidation(true);
+    }
+    Utterance output = llmParser.parseUtterance(llmInputUtterance, callStreaming);
 
-    if (output != null && cacheLLM && !output.getWordsAsString().isEmpty()) {
+    if (!confirmation && output != null && cacheLLM && !output.getWordsAsString().isEmpty()) {
       cacheParse(output);
     }
     return output;
@@ -234,18 +239,20 @@ public class HybridParserComponent extends DiarcComponent {
     // If LLM spawned async
     //if (useLLM) {
     // If LLM synchronously only after other components fail
-    if (useLLM && !returnNonLLM) {
+    if (useLLM) {
       try {
          inExtendedParseLoop = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedParseLoop").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
       } catch (TRADEException ex) {
         log.error("Error calling inExtendedParseLoop service", ex);
       }
 
-      Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
-      if (confirmation) {
-        llmInputUtterance.setNeedsValidation(true);
+      if (!returnNonLLM) {
+        Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
+        if (confirmation) {
+          llmInputUtterance.setNeedsValidation(true);
+        }
+        llmFuture = executor.submit(() -> llmParser.parseUtterance(llmInputUtterance, callStreamingMethod));
       }
-      llmFuture = executor.submit(() -> llmParser.parseUtterance(llmInputUtterance, callStreamingMethod));
     }
 
     // If in an extended Social LLM parse loop, temporarily ignore other parsers
@@ -280,7 +287,7 @@ public class HybridParserComponent extends DiarcComponent {
 
             if (cachedOutput != null && cachedOutput.getSemantics() != null) {
               output = applyAddressee(incoming, cachedOutput);
-              log.debug("[parseUtterance] Using cached parser response: {}", output);
+              log.info("[parseUtterance] Using cached parser response: {}", output);
               return output;
             }
           }
@@ -295,7 +302,7 @@ public class HybridParserComponent extends DiarcComponent {
 
             //TODO:brad: what should this return in the no match case?
             if (pmpOutput != null && pmpOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
+              log.info("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
               return pmpOutput;
             }
           }
@@ -315,10 +322,10 @@ public class HybridParserComponent extends DiarcComponent {
                   cacheParse(tldlOutput);
                 }
                 output = applyAddressee(incoming, tldlOutput);
-                log.debug("[parseUtterance] Using tldl parser response: {}", output);
+                log.info("[parseUtterance] Using tldl parser response: {}", output);
                 return output;
               } else {
-                if (output == null) {
+                if (output == null && !useLLM) {
                   //Use TLDL UNKNOWN parse in case LLM parse fails
                   output = tldlOutput;
                 }
@@ -336,7 +343,7 @@ public class HybridParserComponent extends DiarcComponent {
 
             if (llmOutput != null && llmOutput.getSemantics() != null) {
               if (llmOutput.getType() != UtteranceType.UNKNOWN) {
-                log.debug("[parseUtterance] Using llm parser response");
+                log.info("[parseUtterance] Using llm parser response");
                 preserveAddressee(llmOutput);
                 output = llmOutput;
                 //TODO: inExtendedParseLoop may be incorrect to use here - may have to revert to explicitly checking Chat context message length again
@@ -367,7 +374,7 @@ public class HybridParserComponent extends DiarcComponent {
       }
     }
     if (output == null) {
-      output = incoming;
+      return null;
     }
     return applyAddressee(incoming, output);
   }

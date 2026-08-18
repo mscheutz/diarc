@@ -6,7 +6,7 @@ import java.lang.Integer;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import java.lang.Boolean;
 
-() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType) {
+() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType, Boolean ?validated) {
     // ?semanticType: either direct or indirect   not sure if this is the best variable name
 
     Term !currSemantics;
@@ -56,7 +56,7 @@ import java.lang.Boolean;
         //      Ideally we could move this logic into an action selector, so we can
         //      remove the if else and have it  just be the one state spec
         if (op:invokeMethod(!matchingQuestions,"isEmpty")) {
-          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
+          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType, ?validated);
         } else {
             op:log("debug", "have matching questions, !matchingQuestions");
             !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions, ?speaker);
@@ -76,28 +76,28 @@ import java.lang.Boolean;
     }
 }
 
-() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType) {
+() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType, Boolean ?validated=false) {
     Predicate !response;
 
     effects : {
-      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType);
+      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType,?validated);
     }
 
     !response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(sorry,?errorSemantics)");
     act:generateResponse(?speaker, !response, ?semanticType);
 }
 
-() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType) {
+() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType);
+      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType,?validated);
     }
 }
 
-() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType) {
+() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !greetingResponse;
 
     effects : {
-      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType);
+      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType,?validated);
     }
 
     op:log("debug", "handleGreeting: ?actor ?speaker ?addressee ?greeting");
@@ -108,11 +108,11 @@ import java.lang.Boolean;
     }
 }
 
-() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType) {
+() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !state;
 
     effects : {
-      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType);
+      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType,?validated);
     }
 
     try {
@@ -128,7 +128,7 @@ import java.lang.Boolean;
     }
 }
 
-() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType) {
+() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !defaultResponse;
     java.util.List !beliefs;
     java.lang.Boolean !retVal;
@@ -138,7 +138,7 @@ import java.lang.Boolean;
     Symbol !queryActor;
 
     effects : {
-      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType);
+      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType,?validated);
     }
 
     if (op:equals(?addressee, ?actor)) {
@@ -211,26 +211,26 @@ import java.lang.Boolean;
     }
 }
 
-() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {
+() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType);
+      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType,?validated);
     }
 
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = act:getPriorityTierForGoal(?state);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
 }
 
-() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType) {
+() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType);
+      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType,?validated);
     }
 
     java.lang.String !priorityString = op:getName(?priorityTierSymbol);
     PriorityTier !priorityTier = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.PriorityTier", "fromString", !priorityString);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
 }
 
-() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
+() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED, Boolean ?validated = false) {
     Predicate !defaultResponse;
     Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
@@ -244,8 +244,7 @@ import java.lang.Boolean;
 
     if (op:equals(?addressee, ?actor)) {
       try {
-
-        if (op:invokeMethod(?utterance,"isValidated")) {
+        if (op:equals(?validated,true)) {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
         } else {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
@@ -278,7 +277,7 @@ import java.lang.Boolean;
     }
 }
 
-() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType) {
+() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !defaultResponse;
     Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
@@ -290,11 +289,11 @@ import java.lang.Boolean;
     Predicate !recoveryPred;
 
     effects : {
-      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType);
+      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType,?validated);
     }
 
     try {
-      if (op:invokeMethod(?utterance,"isValidated")) {
+      if (op:equals(?validated,true)) {
           !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
       } else {
           !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
@@ -402,6 +401,7 @@ import java.lang.Boolean;
     Predicate !goalSubmittedPred;
     edu.tufts.hrilab.slug.common.Utterance !utterance;
     edu.tufts.hrilab.slug.common.UtteranceType !type;
+    java.lang.String !ackString;
 
     conditions : {
       or : {
@@ -455,9 +455,9 @@ import java.lang.Boolean;
         if(~tsc:ignoreTentativeAccept(?state)) {
           if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
             // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood
-            !fillerResponse = tsc:sampleTentativeAcceptPhrase(?state);
+            !ackString = tsc:sampleTentativeAcceptPhrase(?state);
             async {
-                act:generateResponseFromString(?speaker,!fillerResponse);
+                act:generateResponseFromString(?speaker,!ackString);
             }
           } else {
             // Validation did not occur, giving descriptive acknowledgement restating the understood parse

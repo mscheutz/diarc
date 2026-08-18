@@ -249,7 +249,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   // still asking the user for info there.
   @TRADEService
   public void hideListeningIndicatorGoalListener(GoalInfo info) throws TRADEException {
-    switch (info.goal.getName()) {
+    String goalname = info.goal == null ? info.unboundGoal.getName() : info.goal.getName();
+    switch (goalname) {
       case "generateResponseFromString":
       case "updateDialogueHistoryFromString":
       case "scheduleTask":

@@ -215,7 +215,7 @@ public class HybridNLGComponent extends DiarcComponent {
             }
 
             if (cachedOutput != null && !cachedOutput.getWordsAsString().isEmpty()) {
-              log.debug("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
+              log.info("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
               log.debug("[convertSemanticsToText] Using cached NLG words: " + cachedOutput.getWordsAsString());
               log.debug("[lat] nlg_done dur={}ms path=cache", (System.nanoTime() - t0) / 1_000_000);
               return cachedOutput;
@@ -231,7 +231,7 @@ public class HybridNLGComponent extends DiarcComponent {
             }
 
             if (llmOutput != null && !llmOutput.getWordsAsString().isEmpty()) {
-              log.debug("[convertSemanticsToText] Using llm NLG response");
+              log.info("[convertSemanticsToText] Using llm NLG response");
               output = llmOutput;
               if (useCache) {
                 cacheNLGOutput(output);
@@ -250,7 +250,7 @@ public class HybridNLGComponent extends DiarcComponent {
             }
 
             if (simpleNLGOutput != null && !simpleNLGOutput.getWordsAsString().isEmpty()) {
-              log.debug("[convertSemanticsToText] Using SimpleNLG response");
+              log.info("[convertSemanticsToText] Using SimpleNLG response");
               if (useCache && cacheSimpleNLG) {
                 cacheNLGOutput(simpleNLGOutput);
               }
@@ -269,7 +269,7 @@ public class HybridNLGComponent extends DiarcComponent {
           }
 
           if (templatedOutput != null && !templatedOutput.getWordsAsString().isEmpty()) {
-            log.debug("[convertSemanticsToText] Using templated response");
+            log.info("[convertSemanticsToText] Using templated response");
             log.debug("[lat] nlg_done dur={}ms path=templated", (System.nanoTime() - t0) / 1_000_000);
             return templatedOutput;
           }

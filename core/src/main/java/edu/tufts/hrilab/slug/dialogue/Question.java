@@ -168,6 +168,10 @@ public class Question {
         return answer.getAnswerBindings() != null;
     }
 
+    public Map<Variable,Symbol> getAnswerBindings() {
+        return answer.getAnswerBindings();
+    }
+
     public long getTimestamp() {
         return timestamp;
     }

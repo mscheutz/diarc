@@ -47,12 +47,12 @@ public abstract class BasicLLMServiceProvider extends LLMServiceProvider {
     return false;
   }
 
-  @TRADEService
+  @Override
   public Utterance parseUtteranceLLMService(Utterance utterance) {
     return llmChatCompletionHelper(utterance, true);
   }
 
-  @TRADEService
+  @Override
   public Utterance convertSemanticsToTextLLMService(Utterance u) {
     return llmChatCompletionHelper(u, false);
   }

@@ -24,73 +24,83 @@ import java.util.Map;
     java.lang.Boolean !performSayText = true;
     Predicate !semantics;
     String !fillerString;
+    Utterance !outputUtterance;
 
     // If addressee is not local, do not need to locally sayText. Just update the dialogue history / chat displays.
     // Similarly, if streaming TTS occurs disjointly, we will not manually retrigger a sayText upon completion of the generation (done below).
     !addressee = op:invokeMethod(?utterance, "getAddressee");
-    !isLocal = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "isLocalAddressee", !addressee);
+    !isLocal = tsc:isLocalAddressee(!addressee);
     !performSayText = op:newObject("java.lang.Boolean", !isLocal);
 
     // if utterance does not have words, call NLG actions to turn semantics into words
     if (~op:invokeMethod(?utterance, "hasWords")) {
-        // Perform prag
-        ?utterance = act:applyPragmaticMeaning(?utterance);
+      // Perform prag
+      ?utterance = act:applyPragmaticMeaning(?utterance);
 
-        // Convert semantics to text
-        if (tsc:usingLLM()) {
-          // Using LLM, disjointly check for valid results from other NLG components and the LLM NLG component. Based on outcome and rest of system configuration,
-          //  conditionally generate filler phrases and allow for streaming TTS of LLM results.
-          !uttID = op:invokeMethod(!utterance,"getUid");
-          !streamingTTS = tsc:usingStreamingTTS(!addressee);
+      // Convert semantics to text
+      if (tsc:usingLLM()) {
+        // Using LLM, disjointly check for valid results from other NLG components and the LLM NLG component. Based on outcome and rest of system configuration,
+        //  conditionally generate filler phrases and allow for streaming TTS of LLM results.
+        !uttID = op:invokeMethod(?utterance,"getUid");
+        !streamingTTS = tsc:usingStreamingTTS(!addressee);
 
-          // Trigger HybridNLGComponent subcomponents and grab non-llm result first
-          ?utterance = tsc:convertSemanticsToTextForNonLLMResult(?utterance, !streamingTTS);
+        // Trigger HybridNLGComponent subcomponents and grab non-llm result first
+        !outputUtterance = tsc:convertSemanticsToTextForNonLLMResult(?utterance, !streamingTTS);
 
-          // Check non-llm component success
-          if (op:isNull(?utterance)) {
-            // Failure, using LLM result. Generate filler utterance and unblock streamingTTS
+        // Check non-llm component success
+        if (op:isNull(!outputUtterance)) {
+          // Failure, using LLM result. Generate filler utterance and unblock streamingTTS
 
-            // TODO: just sample filler phrase in any case and pass into this method directly to keep code cleaner? (though tradeoff would be generating filler even if not reaching the LLM case)
-            // Filler Utterance generation
-            if (~op:eq(?fillerPhraseCase,0)) {
-              if (op:eq(?fillerPhraseCase,1)) {
-                // TentativeAccept filler
-                !semantics = op:invokeMethod(?utterance, "getSemantics");
-                !fillerResponse = tsc:sampleTentativeAcceptPhrase(!semantics);
-              } elseif (op:eq(?fillerPhraseCase,2)) {
-                // Validation Q filler
-                !fillerResponse = tsc:samplePreValidationFillerPhrase(?utterance,false);
-              } elseif (op:eq(?fillerPhraseCase,3)) {
-                // Validation Q filler - 2nd+ attempt at parse
-                !fillerResponse = tsc:samplePreValidationFillerPhrase(?utterance,true);
-              }
-              async {
-                  act:generateResponseFromString(?speaker,!fillerResponse);
-              }
+          // TODO: just sample filler phrase in any case and pass into this method directly to keep code cleaner? (though tradeoff would be generating filler even if not reaching the LLM case)
+          // Filler Utterance generation
+          if (~op:==(?fillerPhraseCase,0)) {
+            if (op:==(?fillerPhraseCase,1)) {
+              // TentativeAccept filler
+              !semantics = op:invokeMethod(?utterance, "getSemantics");
+              !fillerString = tsc:sampleTentativeAcceptPhrase(!semantics);
+            } elseif (op:==(?fillerPhraseCase,2)) {
+              // Validation Q filler
+              !fillerString = tsc:samplePreValidationFillerPhrase(?utterance,false);
+            } elseif (op:==(?fillerPhraseCase,3)) {
+              // Validation Q filler - 2nd+ attempt at parse
+              !fillerString = tsc:samplePreValidationFillerPhrase(?utterance,true);
             }
-
-            // Grab LLM output, unblock streamingTTS and prevent manual sayText trigger if using
-            if (op:equals(!streamingTTS,true)) {
-              tsc:unbufferStreamingTTSOutputForUID(!uttID);
-              !performSayText = op:newObject("java.lang.Boolean", "false");
+            async {
+              act:generateResponseFromString(?speaker,!fillerString);
             }
-            ?utterance = tsc:getLLMNLGResult(?utterance);
-          } else {
-            // Success, cancel/clear streaming TTS for this utterance and manually sayText below
+          }
+
+          // Grab LLM output, unblock streamingTTS and prevent manual sayText trigger if using
+          if (op:equals(!streamingTTS,true)) {
+            tsc:unbufferStreamingTTSOutputForUID(!uttID);
+            !performSayText = op:newObject("java.lang.Boolean", "false");
+          }
+          !outputUtterance = tsc:getLLMNLGResult(?utterance, !streamingTTS);
+        } else {
+          // Success, cancel/clear streaming TTS for this utterance and manually sayText below
+          if (op:equals(!streamingTTS,true)) {
             tsc:cancelStreamingTTSOutputForUID(!uttID);
           }
-        } else {
-          // No LLM, no filler, no streaming TTS -> parse utterance, update dialogue history, and manually sayText
-          ?utterance = tsc:parseUtterance(?utterance);
         }
-    }
-
-    op:log("debug", "updating dialogue history..");
-    act:updateDialogueHistory(?utterance);
-    !text = op:invokeMethod(?utterance,"getWordsAsString");
-    op:log("debug", "done updating dialogue history with: !text");
-    if (op:equals(!performSayText,true)) {
-      act:sayText(?utterance);
+      } else {
+        // No LLM, no filler, no streaming TTS -> parse utterance, update dialogue history, and manually sayText
+        !outputUtterance = tsc:convertSemanticsToText(?utterance);
+      }
+      op:log("debug", "updating dialogue history..");
+      act:updateDialogueHistory(!outputUtterance);
+      !text = op:invokeMethod(!outputUtterance,"getWordsAsString");
+      op:log("debug", "done updating dialogue history with: !text");
+      if (op:equals(!performSayText,true)) {
+        act:sayText(!outputUtterance);
+      }
+    } else {
+      op:log("debug", "updating dialogue history..");
+      act:updateDialogueHistory(?utterance);
+      !text = op:invokeMethod(?utterance,"getWordsAsString");
+      op:log("debug", "done updating dialogue history with: !text");
+      if (op:equals(!performSayText,true)) {
+        act:sayText(?utterance);
+      }
     }
 
     // TODO: in what cases do we want to trigger the WW, only after e.g. questions, LLM text responses during multi-turn parses, itk output, ... or always? (current impl means always)
