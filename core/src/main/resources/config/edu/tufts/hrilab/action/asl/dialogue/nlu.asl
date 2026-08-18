@@ -47,7 +47,7 @@ import java.lang.String;
       !parsedUtterance = tsc:parseUtteranceForNonLLMResult(?utterance, !streamingTTS);
       if (op:isNull(!parsedUtterance)) {
         if (op:equals(!streamingTTS,true)) {
-          tsc:unbufferStreamingTTSOutputForUID(!parsedUtterance);
+          tsc:unbufferStreamingTTSOutputForUID(!uttID);
         }
         !parsedUtterance = tsc:getLLMParseResult(?utterance, !streamingTTS);
       } else {
@@ -165,6 +165,7 @@ import java.lang.String;
     java.lang.Integer !fillerCase = 2;
     java.lang.Boolean !streaming;
     java.lang.String !fillerString;
+    java.lang.Long !uttID = op:invokeMethod(?unvalidatedUtterance,"getUid");
 
     // Pre LLM validation question generation filler modified based on being 1st vs 2nd+ parse attempt for this particular instruction
     if (op:equals(?firstParse,false)) {
@@ -273,7 +274,7 @@ import java.lang.String;
             ?revalidate = tsc:reattemptParse(?unvalidatedUtterance, !streaming);
             //TODO: double check this, believe we need to immediately unbuffer if going with intended back-end impl (or should change API to not need to do this)
             if (op:equals(!streaming,true)) {
-              tsc:unbufferStreamingTTSOutputForUID(?unvalidatedUtterance);
+              tsc:unbufferStreamingTTSOutputForUID(!uttID);
             }
             ?unvalidatedUtterance = act:resolveReferences(?unvalidatedUtterance);
             return;
