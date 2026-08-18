@@ -164,9 +164,9 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   @Action
-  public void updateDialogueHistoryFromString(Symbol speaker, Symbol addressee, String words) {
+  public void updateDialogueHistoryFromString(Symbol actor, Symbol addressee, String words) {
     log.debug("[updateDialogueHistoryFromString] addressee: {} words: {}", addressee, words);
-    Utterance utterance = Utterance.createOutputUtterance(speaker, addressee);
+    Utterance utterance = Utterance.createOutputUtterance(actor, addressee);
     utterance.setType(UtteranceType.REPLY);
     utterance.setWords(words);
     updateDialogueHistory(utterance);
