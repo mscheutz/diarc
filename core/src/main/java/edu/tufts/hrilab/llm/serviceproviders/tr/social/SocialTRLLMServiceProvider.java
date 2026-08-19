@@ -882,10 +882,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  extra turn afterwards. Cannot just modify and send out response here.
     // a regenerated response never went through the stream, so it must be spoken below
     boolean regenerated = false;
+    // drained here so the retry return below cannot leak the id in the set
+    boolean responseStreamed = ttsStreamedIds.remove(llmResponse.getId());
+    chatContext.lastResponseStreamed = responseStreamed;
     if (chatContext.lastResponseString != null && chatContext.lastResponseString.equals(responseString)) {
       chatContext.identicalResponses += 1;
       if (chatContext.chatType == ChatType.FOCUSED && chatContext.identicalResponses >= 2) {
         log.warn("[handleTextResponse] (FOCUSED) Encountering consecutive identical responses - retaining template but clearing history and informing the user");
+        // the identical reply already streamed and may still be playing; drop it before
+        // speaking the replacement over it
+        ttsCancel(inputUtterance.getUid());
         // Focused contexts - retain current template, clear history, and reprompt with custom message based on template state
         //  (Could also try less drastic clearing of history first like for base context, but I'm worried that it will
         //    result in a different phrasing of a response while still not breaking out of the same reasoning loop)
@@ -925,10 +931,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
           history.remove(i);
         }
-        // Last user input should still be present, submit for a new (hopefully different) generated response
-        return parseUtteranceLLMService(inputUtterance, streaming, true);
+        // Last user input should still be present, submit for a new (hopefully different) generated response.
+        // Not streaming the retry: we already streamed and finished under this uid once, and
+        // when the retry streamed too it looked like it got recorded as spoken without
+        // anything actually playing. Might be able to stream it again if a push ever says
+        // which request it came from.
+        ttsCancel(inputUtterance.getUid());
+        return parseUtteranceLLMService(inputUtterance, false, true);
       } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses > 2) {
         log.warn("[handleTextResponse] Still encountering identical responses, clearing history fully and informing user");
+        ttsCancel(inputUtterance.getUid());
         // 4th identical response - inform user and more drastically reset context
         chatContext.history.messages.clear();
         responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
@@ -939,8 +951,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       chatContext.identicalResponses = 0;
     }
     chatContext.lastResponseString = responseString;
-    boolean responseStreamed = ttsStreamedIds.remove(llmResponse.getId());
-    chatContext.lastResponseStreamed = responseStreamed;
 
     // newlines, backslashes, or nested quotes in the reply were blowing up the belief
     // asserts that read this text back out of a term -- nothing escapes it on the way in.
@@ -1206,10 +1216,14 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Utterance tempUtterance = new Utterance.Builder(utterance)
             .setBindings(new ArrayList<>())
             .setSupplementalSemantics(new ArrayList<>())
+            .setIndirectSemantics(new ArrayList<>())
             .setTierAssignments(new LinkedHashMap<>())
             .build();
     tempUtterance.setSemantics(null);
     tempUtterance.setNeedsValidation(true);
+    // the negative validation reply's input claim is still held here (its history update
+    // skips the signal), so it has to be released by identity once the reattempt is done
+    Utterance claimed = chatCollection.utteranceBeingProcessed;
     try {
       tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
 
@@ -1231,9 +1245,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       utterance.setNeedsValidation(tempUtterance.needsValidation());
       utterance.setType(tempUtterance.getType());
     } finally {
-      // the negative validation reply's input claim is still held here (its history update
-      // skips the signal), so clearing the field without signalling would leave waiters parked
-      chatCollection.signalInputProcessed();
+      if (claimed != null) {
+        chatCollection.signalInputProcessed(claimed);
+      }
     }
     boolean ret = utterance.needsValidation();
     if (!ret) {
@@ -1326,6 +1340,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       handleErrorResponse(utterance, false, false);
       return utterance;
     } else {
+      // handleTextResponse takes these back out again on the nlu side, but I did not find
+      // anything doing it over here, so take it out so the set does not just keep growing
+      ttsStreamedIds.remove(llmResponse.getId());
       resetErrorCount(false, user, agentTeam);
     }
 
@@ -1936,7 +1953,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (parser.completedParam && parser.lastParamName.equals("response")) {
       log.info("[streamingChunkHandler] Done parsing response");
       // arm only when fragments really went out; un-streamed replies arm on their spoken path
-      if (ttsStreamedIds.contains(currentStreamingResponseId)) {
+      if (ttsStreamedIds.contains(id)) {
         armRearm();
       }
       ttsEnd();
@@ -2016,6 +2033,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("armPostStreamRearm")).call(void.class);
     } catch (TRADEException e) {
       log.debug("[streamingChunkHandler] armPostStreamRearm unavailable");
+    }
+  }
+
+  private void ttsCancel(long uid) {
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelStreamingTTSOutputForUID").argTypes(Long.class))
+              .call(void.class, uid);
+    } catch (TRADEException e) {
+      log.debug("[ttsCancel] cancelStreamingTTSOutputForUID unavailable");
     }
   }
 
