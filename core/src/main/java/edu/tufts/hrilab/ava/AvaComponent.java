@@ -156,6 +156,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private boolean inTelepresenceMode = false;
   private CiscoCodecAPI ciscoCodecAPI = new CiscoCodecAPI();
   private Symbol altDockLocation;
 
@@ -2271,8 +2272,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Action
   public void switchDisplayToTRACS() {
     displayLock.lock();
-    telepresenceCondition.signal();
-    displayLock.unlock();
+    try {
+      inTelepresenceMode = false;
+      telepresenceCondition.signalAll();
+    } finally {
+      displayLock.unlock();
+    }
     if (ciscoCodecAPI.getCurrentDisplayMode() != CiscoCodecAPI.DisplayMode.TRACS) {
       //Switch back to TRACS (PC 2 on the Cisco codec)
       boolean success = ciscoCodecAPI.switchToTRACS();
@@ -2288,6 +2293,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @TRADEService
   @Action
   public void switchDisplayToTelepresencePrimitive() {
+    displayLock.lock();
+    try {
+      inTelepresenceMode = true;
+    } finally {
+      displayLock.unlock();
+    }
+
     //Switch to telepresence (PC 1 on the Cisco codec)
     boolean success = ciscoCodecAPI.switchToTelepresence();
     if (success) {
@@ -2296,13 +2308,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("[switchDisplayToTelepresence] failed to switch to telepresence display");
     }
 
-    //Wait until condition is signalled by switchDisplayToTRACS
+    //Wait until switchDisplayToTRACS clears the mode; checked in a loop so a signal that
+    //arrives before the await is not lost
+    displayLock.lock();
     try {
-      displayLock.lock();
-      telepresenceCondition.await();
-      displayLock.unlock();
+      while (inTelepresenceMode) {
+        telepresenceCondition.await();
+      }
     } catch (InterruptedException e) {
       log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition", e);
+    } finally {
+      inTelepresenceMode = false;
+      displayLock.unlock();
     }
 
     //Switch back to TRACS (PC 2 on the Cisco codec)

@@ -105,6 +105,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private boolean inTelepresenceMode = false;
   private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
   private boolean shouldFollow = false;
   private Symbol currentLocation = Factory.createSymbol("unknown");
@@ -1172,14 +1173,25 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Action
   public void switchDisplayToTRACS() {
     displayLock.lock();
-    telepresenceCondition.signal();
-    displayLock.unlock();
+    try {
+      inTelepresenceMode = false;
+      telepresenceCondition.signalAll();
+    } finally {
+      displayLock.unlock();
+    }
   }
 
   @OnInterrupt(onCancelServiceCall = "switchDisplayToTRACS()", onSuspendServiceCall = "switchDisplayToTRACS()")
   @TRADEService
   @Action
   public void switchDisplayToTelepresencePrimitive() {
+    displayLock.lock();
+    try {
+      inTelepresenceMode = true;
+    } finally {
+      displayLock.unlock();
+    }
+
     //Switch to telepresence
     String homeDir = System.getProperty("user.home");
     String scriptDir = Paths.get(homeDir, ".diarc").toString();
@@ -1202,13 +1214,18 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     log.info("[switchDisplayToTelepresence] to telepresence result: " + result);
     //TODO: what is proper error handling/result when switch failed?
 
-    //Wait until condition is signalled by switchDisplayToTRACS
+    //Wait until switchDisplayToTRACS clears the mode; checked in a loop so a signal that
+    //arrives before the await is not lost
+    displayLock.lock();
     try {
-      displayLock.lock();
-      telepresenceCondition.await();
-      displayLock.unlock();
+      while (inTelepresenceMode) {
+        telepresenceCondition.await();
+      }
     } catch (InterruptedException e) {
       log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition",e);
+    } finally {
+      inTelepresenceMode = false;
+      displayLock.unlock();
     }
 
     //TODO: What if out of telepresence display externally? Won't trigger anything here
