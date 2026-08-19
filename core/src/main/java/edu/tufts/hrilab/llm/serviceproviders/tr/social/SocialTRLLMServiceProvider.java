@@ -483,7 +483,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // New: Synchronization - need to wait for any previous chat inputs and corresponding side effects to finish being
     // processed before applying this one
     if (!reattemptedParse) {
-      if (!chatCollection.grabInputLock(utterance)) {
+      if (!chatCollection.grabInputLock(utterance, true)) {
         // Dialogue history update showed that external parser completed before reaching this point. Do not need to proceed.
         return utterance;
       }
