@@ -105,16 +105,20 @@ import java.util.Map;
 
     // TODO: in what cases do we want to trigger the WW, only after e.g. questions, LLM text responses during multi-turn parses, itk output, ... or always? (current impl means always)
     if (tsc:usingWWBasedASR(!addressee)) {
-      //TODO: revisit this in line with back-end StreamingTTS / WW changes. Ideally just keep to triggerWW call here.
+      !streamingTTS = tsc:usingStreamingTTS(!addressee);
       if (op:equals(!streamingTTS,true)) {
+        // the TTS waits for whatever speech is queued to finish before it retriggers, so this
+        // covers both the streamed replies and the ones that go out through sayText
         act:armPostStreamRearm();
       } else {
         act:triggerWW();
       }
       // TODO: Should listening indicator be tied to WW internally, or placed explicitly here?
-      if (tsc:usingListeningIndicator(!addressee)) {
-        act:hideListeningIndicator();
-      }
+      // Took the hideListeningIndicator call out of here -- the retrigger above opens another
+      // listen right after, and hiding it here was blanking the head for that whole window,
+      // which is what I was seeing when it listened without showing anything. The ww loop
+      // already lowers it when a listen ends without speech. Not sure this is the right place
+      // for any of it, see the TODO above
     }
 }
 

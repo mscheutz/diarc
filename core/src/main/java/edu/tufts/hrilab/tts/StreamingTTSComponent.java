@@ -43,8 +43,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Streaming TTS behind a pluggable synthesis backend (kokoro by default). The LLM streaming
@@ -93,6 +98,12 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   private final Object streamingLock = new Object();
   private final Map<Long, SpeechStream> streams = new HashMap<>();
   private final AtomicBoolean pendingRearm = new AtomicBoolean(false);
+  private final ScheduledExecutorService rearmExecutor = Executors.newSingleThreadScheduledExecutor();
+  private final AtomicReference<ScheduledFuture<?>> rearmTask = new AtomicReference<>();
+  // goes up every time speech is stopped, so a retrigger that was set up beforehand does
+  // not go off afterwards
+  private final AtomicLong stopCount = new AtomicLong();
+  private final AtomicInteger audioJobs = new AtomicInteger();
 
   private static final class StreamTarget implements SynthesisBackend.Sink {
     final LinkedBlockingQueue<byte[]> chunks = new LinkedBlockingQueue<>();
@@ -289,6 +300,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   @Override
   protected void shutdownComponent() {
     stopUtterance();
+    rearmExecutor.shutdownNow();
     executor.shutdownNow();
     try {
       executor.awaitTermination(500, TimeUnit.MILLISECONDS);
@@ -363,7 +375,14 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     if (muteMics) disableMics();
 
     final String finalText = text;
-    Future<Boolean> future = executor.submit((Callable<Boolean>) () -> streamAndPlay(finalText, wait));
+    audioJobs.incrementAndGet();
+    Future<Boolean> future = executor.submit((Callable<Boolean>) () -> {
+      try {
+        return streamAndPlay(finalText, wait);
+      } finally {
+        audioJobs.decrementAndGet();
+      }
+    });
 
     boolean result = true;
     if (wait) {
@@ -413,6 +432,10 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       }
       currentTarget = null;
       speaking = false;
+      // restart the quiet window so an arm placed mid-playback fires 500ms after the end
+      if (pendingRearm.get()) {
+        scheduleRearm(stopCount.get());
+      }
     }
     return ok;
   }
@@ -475,7 +498,14 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
 
   private void submitStream(SpeechStream stream) {
     stream.micOff = muteMics;
-    stream.job = executor.submit((Callable<Boolean>) () -> streamAndPlayStreaming(stream, true));
+    audioJobs.incrementAndGet();
+    stream.job = executor.submit((Callable<Boolean>) () -> {
+      try {
+        return streamAndPlayStreaming(stream, true);
+      } finally {
+        audioJobs.decrementAndGet();
+      }
+    });
   }
 
   @TRADEService
@@ -672,21 +702,53 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       stream.micOff = false;
     }
     if (unwindMic) enableMics();
-    // when the user interrupts they have already opened their own listen with the wake word
-    // and the indicator is up, so skip the rearm here. The sleep would otherwise hold the
-    // shared single-thread executor and delay the ding queued right behind us.
-    if (pendingRearm.compareAndSet(true, false) && !aborted) {
-      try {
-        Thread.sleep(POST_DRAIN_REARM_DELAY_MS);
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-        return;
-      }
-      try {
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
-      } catch (TRADEException e) {
-        log.debug("[finishStream] triggerWW unavailable");
-      }
+    // when the user interrupts they have already opened their own listen with the wake word,
+    // so drop the rearm rather than opening a second one
+    if (aborted) {
+      cancelRearm();
+      pendingRearm.set(false);
+    } else if (pendingRearm.get()) {
+      scheduleRearm(stopCount.get());
+    }
+  }
+
+  // the delay runs on its own thread; the audio executor must stay free for the interrupt
+  // ding queued right behind a finished utterance
+  private void scheduleRearm(long armedAtStop) {
+    if (rearmExecutor.isShutdown()) {
+      return;
+    }
+    ScheduledFuture<?> next = rearmExecutor.schedule(() -> fireRearm(armedAtStop), POST_DRAIN_REARM_DELAY_MS, TimeUnit.MILLISECONDS);
+    ScheduledFuture<?> prev = rearmTask.getAndSet(next);
+    if (prev != null) {
+      prev.cancel(false);
+    }
+  }
+
+  private void fireRearm(long armedAtStop) {
+    if (stopCount.get() != armedAtStop) {
+      return;
+    }
+    if (speaking || audioJobs.get() > 0) {
+      // still talking or speech is queued; try again after the playback that finishes
+      // last has had its quiet window
+      scheduleRearm(armedAtStop);
+      return;
+    }
+    if (!pendingRearm.compareAndSet(true, false)) {
+      return;
+    }
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
+    } catch (TRADEException e) {
+      log.debug("[fireRearm] triggerWW unavailable");
+    }
+  }
+
+  private void cancelRearm() {
+    ScheduledFuture<?> t = rearmTask.getAndSet(null);
+    if (t != null) {
+      t.cancel(false);
     }
   }
 
@@ -982,6 +1044,11 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     for (int i = 0; i < micUnwinds; i++) {
       enableMics();
     }
+    // the user is already talking; a queued rearm must not fire into their turn, and any
+    // arm placed before this stop is dead even if its timer is already in flight
+    stopCount.incrementAndGet();
+    cancelRearm();
+    pendingRearm.set(false);
     StreamTarget t = currentTarget;
     log.info("[stopUtterance] enter streamingActive={}", t != null);
     if (t != null) {
@@ -1006,6 +1073,9 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   public void armPostStreamRearm() {
     log.debug("[armPostStreamRearm] set");
     pendingRearm.set(true);
+    // re-arming resets the delay, so filler and answer collapse to one trigger after the
+    // last speech ends
+    scheduleRearm(stopCount.get());
   }
 
   @TRADEService
@@ -1017,6 +1087,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       return;
     }
     final long tSubmit = System.nanoTime();
+    audioJobs.incrementAndGet();
     executor.submit(() -> {
       try {
         long tRun = System.nanoTime();
@@ -1035,6 +1106,8 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
                 (tRun - tSubmit) / 1_000_000, (System.nanoTime() - tRun) / 1_000_000);
       } catch (Exception e) {
         log.error("[playAudioClip] {} failed", path, e);
+      } finally {
+        audioJobs.decrementAndGet();
       }
     });
   }
