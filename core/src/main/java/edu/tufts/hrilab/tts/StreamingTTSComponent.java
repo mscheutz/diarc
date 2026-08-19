@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -103,6 +104,10 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   // goes up every time speech is stopped, so a retrigger that was set up beforehand does
   // not go off afterwards
   private final AtomicLong stopCount = new AtomicLong();
+  // if something sets up a retrigger after the user has interrupted, hold onto it until we
+  // actually speak again -- a reply that is still coming in should not open a listen while
+  // the user is talking
+  private final AtomicBoolean playedSinceStop = new AtomicBoolean(true);
   private final AtomicInteger audioJobs = new AtomicInteger();
 
   private static final class StreamTarget implements SynthesisBackend.Sink {
@@ -172,6 +177,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     final StreamingTextBuffer buffer = new StreamingTextBuffer();
     boolean released;
     boolean cancelled;
+    boolean stopped;
     boolean micOff;
     int bufferedChars;
     Future<Boolean> job;
@@ -449,7 +455,6 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   @TRADEService
   public void pushStreamingSpeech(String fragment, long uid) {
     log.debug("[pushStreamingSpeech] enter uid={} frag_len={}", uid, fragment == null ? 0 : fragment.length());
-    boolean startedJob = false;
     synchronized (streamingLock) {
       removeStaleStreams();
       SpeechStream stream = streams.get(uid);
@@ -487,20 +492,30 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       stream.buffer.push(fragment);
       if (stream.released && stream.job == null) {
         submitStream(stream);
-        startedJob = true;
       }
-    }
-    if (startedJob) {
-      pendingRearm.set(false);
-      if (muteMics) disableMics();
     }
   }
 
   private void submitStream(SpeechStream stream) {
-    stream.micOff = muteMics;
     audioJobs.incrementAndGet();
     stream.job = executor.submit((Callable<Boolean>) () -> {
       try {
+        // mute before micOff is visible to the cancel paths, so an unwind can never run
+        // ahead of the mute it is undoing
+        if (muteMics) {
+          disableMics();
+          boolean cancelled;
+          synchronized (streamingLock) {
+            cancelled = stream.cancelled;
+            if (!cancelled) {
+              stream.micOff = true;
+            }
+          }
+          if (cancelled) {
+            enableMics();
+            return false;
+          }
+        }
         return streamAndPlayStreaming(stream, true);
       } finally {
         audioJobs.decrementAndGet();
@@ -511,10 +526,14 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   @TRADEService
   public void unbufferStreamingTTSOutputForUID(long uid) {
     log.debug("[unbufferStreamingTTSOutputForUID] enter uid={}", uid);
-    boolean startedJob = false;
     synchronized (streamingLock) {
       removeStaleStreams();
       SpeechStream stream = streams.get(uid);
+      if (stream != null && stream.stopped) {
+        // the user talked over this one, so unblocking it later should not start it up again
+        log.debug("[unbufferStreamingTTSOutputForUID] uid={} was stopped, leaving it dropped", uid);
+        return;
+      }
       if (stream == null || stream.cancelled) {
         // release can arrive before any fragment, and a cancelled uid is reused by later
         // parse attempts -- either way a fresh released stream waits for the next push
@@ -526,14 +545,12 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       stream.released = true;
       if (stream.job == null && !stream.buffer.isEmpty()) {
         submitStream(stream);
-        startedJob = true;
       } else if (stream.job == null && stream.buffer.producerDone) {
-        streams.remove(uid);
+        // keep the release for the next stream under this uid instead of forgetting it
+        SpeechStream fresh = new SpeechStream(uid);
+        fresh.released = true;
+        streams.put(uid, fresh);
       }
-    }
-    if (startedJob) {
-      pendingRearm.set(false);
-      if (muteMics) disableMics();
     }
   }
 
@@ -541,7 +558,9 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   public void cancelStreamingTTSOutputForUID(long uid) {
     log.debug("[cancelStreamingTTSOutputForUID] enter uid={}", uid);
     SpeechStream stream;
+    StreamTarget t;
     synchronized (streamingLock) {
+      removeStaleStreams();
       stream = streams.get(uid);
       if (stream == null) {
         // remember the cancel so late fragments for this uid are dropped
@@ -552,11 +571,8 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       }
       stream.cancelled = true;
       stream.buffer.complete();
-      if (stream.job != null && stream.target == null) {
-        stream.job.cancel(false);
-      }
+      t = stream.target;
     }
-    StreamTarget t = stream.target;
     if (t != null) {
       // same abort shape as stopUtterance, scoped to this stream's playback; the single
       // executor guarantees a stream with a live target owns the line
@@ -599,6 +615,13 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     }
     if (streams.size() > MAX_STREAMS) {
       log.warn("[removeStaleStreams] {} live streams; something is leaking uids", streams.size());
+      Iterator<Map.Entry<Long, SpeechStream>> evict = streams.entrySet().iterator();
+      while (streams.size() > MAX_STREAMS && evict.hasNext()) {
+        SpeechStream stream = evict.next().getValue();
+        if (stream.job == null || stream.job.isDone()) {
+          evict.remove();
+        }
+      }
     }
   }
 
@@ -627,6 +650,8 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       } catch (InterruptedException | ExecutionException e) {
         log.error("[endStreamingSpeech] error waiting on future", e);
         ok = false;
+      } catch (CancellationException e) {
+        ok = false;
       }
     }
     return ok;
@@ -640,21 +665,25 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
         return false;
       }
       stream.target = target;
+      // set this inside the lock as well, or a stop landing between the two assignments
+      // ends up missing one of them
+      currentTarget = target;
     }
     log.debug("[lat] streamtts_begin");
     log.info("[streamAndPlayStreaming] enter");
 
     boolean ok = false;
+    SynthesisBackend.Session session = null;
     try {
-      currentTarget = target;
       if (backend == null || !backend.isReady()) {
         log.error("[streamAndPlayStreaming] backend not ready");
         return false;
       }
-      SynthesisBackend.Session session = backend.openSession(target);
+      session = backend.openSession(target);
+      final SynthesisBackend.Session dispatchSession = session;
 
       final int[] sendsRef = new int[]{0};
-      Thread dispatcher = new Thread(() -> dispatchLoop(stream.buffer, session, target, tStart, sendsRef), "tts-dispatch");
+      Thread dispatcher = new Thread(() -> dispatchLoop(stream.buffer, dispatchSession, target, tStart, sendsRef), "tts-dispatch");
       dispatcher.setDaemon(true);
       dispatcher.start();
 
@@ -676,8 +705,6 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
           dispatcher.interrupt();
         }
       }
-      // unblocks a stalled request and deregisters the sink; no-op after clean completion
-      session.abort();
       long tEnd = System.nanoTime();
       long ttfbMs = target.tFirstByte > 0 ? (target.tFirstByte - tStart) / 1_000_000 : -1;
       long ttfaMs = target.tFirstAudio > 0 ? (target.tFirstAudio - tStart) / 1_000_000 : -1;
@@ -685,6 +712,10 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       log.debug("[lat] streamtts_done ttfb={}ms ttfa={}ms total={}ms sends={} bytes={} max_gap={}ms underrun={}",
               ttfbMs, ttfaMs, totalMs, sendsRef[0], target.totalBytes, target.maxGapMs, target.underrun);
     } finally {
+      // unblocks a stalled request and deregisters the sink; no-op after clean completion
+      if (session != null) {
+        session.abort();
+      }
       currentTarget = null;
       speaking = false;
       finishStream(stream, target.aborted);
@@ -695,18 +726,34 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
 
   private void finishStream(SpeechStream stream, boolean aborted) {
     boolean unwindMic;
+    boolean wasStopped;
     synchronized (streamingLock) {
-      // a later parse attempt may have replaced this uid's entry; only remove our own
-      streams.remove(stream.uid, stream);
+      // a later parse attempt may have replaced this uid's entry; only swap out our own
+      if (streams.get(stream.uid) == stream) {
+        SpeechStream next = new SpeechStream(stream.uid);
+        if (aborted) {
+          // fragments that show up after this turn was cut off should keep getting dropped
+          next.cancelled = true;
+          next.stopped = stream.stopped;
+        } else {
+          // the next stream under this uid keeps the release, like a push after end
+          next.released = stream.released;
+        }
+        streams.put(stream.uid, next);
+      }
       unwindMic = stream.micOff;
       stream.micOff = false;
+      wasStopped = stream.stopped;
     }
     if (unwindMic) enableMics();
-    // when the user interrupts they have already opened their own listen with the wake word,
-    // so drop the rearm rather than opening a second one
+    // when the user interrupts, they have already opened their own listen with the wake
+    // word, so drop the retrigger rather than opening a second one. Cancelling a single
+    // utterance is a different case and leaves it alone.
     if (aborted) {
-      cancelRearm();
-      pendingRearm.set(false);
+      if (wasStopped) {
+        cancelRearm();
+        pendingRearm.set(false);
+      }
     } else if (pendingRearm.get()) {
       scheduleRearm(stopCount.get());
     }
@@ -821,6 +868,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     }
 
     speaking = true;
+    playedSinceStop.set(true);
     line.start();
     int frameSize = (BITS_PER_SAMPLE / 8) * CHANNELS;
     byte[] tail = new byte[frameSize];
@@ -1030,10 +1078,8 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       // buffered streams included
       for (SpeechStream stream : streams.values()) {
         stream.cancelled = true;
+        stream.stopped = true;
         stream.buffer.complete();
-        if (stream.job != null && stream.target == null) {
-          stream.job.cancel(false);
-        }
         if (stream.micOff && stream.target == null) {
           stream.micOff = false;
           micUnwinds++;
@@ -1047,6 +1093,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     // the user is already talking; a queued rearm must not fire into their turn, and any
     // arm placed before this stop is dead even if its timer is already in flight
     stopCount.incrementAndGet();
+    playedSinceStop.set(false);
     cancelRearm();
     pendingRearm.set(false);
     StreamTarget t = currentTarget;
@@ -1073,14 +1120,21 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   public void armPostStreamRearm() {
     log.debug("[armPostStreamRearm] set");
     pendingRearm.set(true);
-    // re-arming resets the delay, so filler and answer collapse to one trigger after the
-    // last speech ends
-    scheduleRearm(stopCount.get());
+    // setting this again restarts the delay, so a filler and the answer behind it end up
+    // as one retrigger after the last of the speech. If the user interrupted, wait until
+    // we have actually played something again before setting up the timer.
+    if (playedSinceStop.get()) {
+      scheduleRearm(stopCount.get());
+    }
   }
 
   @TRADEService
   public void playAudioClip(String path) {
     log.debug("[playAudioClip] enter path={}", path);
+    if (sampleRate == 0) {
+      log.warn("[playAudioClip] backend never initialized; dropping {}", path);
+      return;
+    }
     byte[] pcm = clipCache.computeIfAbsent(path, this::loadAndConvert);
     if (pcm == null || pcm.length == 0) {
       log.warn("[playAudioClip] no decoded audio for {}", path);
