@@ -2279,12 +2279,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       displayLock.unlock();
     }
     if (ciscoCodecAPI.getCurrentDisplayMode() != CiscoCodecAPI.DisplayMode.TRACS) {
-      //Switch back to TRACS (PC 2 on the Cisco codec)
-      boolean success = ciscoCodecAPI.switchToTRACS();
-      if (success) {
-        log.info("[switchDisplayToTRACS] successfully switched back to TRACS display");
+      if (ciscoCodecAPI.isInCall()) {
+        //never change the display under a live call; our presentation sitting over the
+        //call layout freezes what the far end sees
+        log.info("[switchDisplayToTRACS] call in progress on the codec, not changing the display");
       } else {
-        log.error("[switchDisplayToTRACS] failed to switch back to TRACS display");
+        //Switch back to TRACS (PC 2 on the Cisco codec)
+        boolean success = ciscoCodecAPI.switchToTRACS();
+        if (success) {
+          log.info("[switchDisplayToTRACS] successfully switched back to TRACS display");
+        } else {
+          log.error("[switchDisplayToTRACS] failed to switch back to TRACS display");
+        }
       }
     } else {
       log.info("[switchDisplayToTRACS] codec already reads TRACS active, not sending switch");
@@ -2302,12 +2308,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       displayLock.unlock();
     }
 
-    //Switch to telepresence (PC 1 on the Cisco codec)
-    boolean success = ciscoCodecAPI.switchToTelepresence();
+    //Hand the display back to native telepresence by stopping our TRACS share rather
+    //than presenting PC 1: presenting swaps the share source and keeps content sitting
+    //over the call layout. Sent even during a call -- removing our content from a live
+    //call is the point. Retried because a transient failure here leaves our share up
+    //for the whole park.
+    boolean success = false;
+    for (int attempt = 0; attempt < 3 && !success; attempt++) {
+      if (attempt > 0) {
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+      success = ciscoCodecAPI.stopPresentation(CiscoCodecAPI.CONNECTOR_ID_TRACS);
+    }
     if (success) {
-      log.info("[switchDisplayToTelepresence] successfully switched to telepresence display");
+      log.info("[switchDisplayToTelepresence] stopped the TRACS presentation, codec now reads {}",
+              ciscoCodecAPI.getCurrentDisplayMode());
     } else {
-      log.error("[switchDisplayToTelepresence] failed to switch to telepresence display");
+      log.error("[switchDisplayToTelepresence] failed to stop the TRACS presentation");
     }
 
     //Wait until switchDisplayToTRACS clears the mode; checked in a loop so a signal that
@@ -2325,11 +2347,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
 
     //Switch back to TRACS (PC 2 on the Cisco codec)
-    success = ciscoCodecAPI.switchToTRACS();
-    if (success) {
-      log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+    if (ciscoCodecAPI.isInCall()) {
+      log.info("[switchDisplayToTelepresence] call in progress on the codec, leaving the display alone");
     } else {
-      log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      success = ciscoCodecAPI.switchToTRACS();
+      if (success) {
+        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+      } else {
+        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      }
     }
   }
 
