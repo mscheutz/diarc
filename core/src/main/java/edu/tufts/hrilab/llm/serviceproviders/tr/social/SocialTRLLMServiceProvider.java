@@ -869,6 +869,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Detect consecutive text responses and attempt to break out if finding too many
     //TODO: This does not interact with streaming responses well. Would have to interrupt sayText or be an explicit
     //  extra turn afterwards. Cannot just modify and send out response here.
+    // a regenerated response never went through the stream, so it must be spoken below
+    boolean regenerated = false;
     if (chatContext.lastResponseString != null && chatContext.lastResponseString.equals(responseString)) {
       chatContext.identicalResponses += 1;
       if (chatContext.chatType == ChatType.FOCUSED && chatContext.identicalResponses >= 2) {
@@ -884,6 +886,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
         }
+        regenerated = true;
         chatContext.identicalResponses = 0;
       } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses == 2) {
         log.warn("[handleTextResponse] detected multiple consecutive identical responses, clearing history of those responses and trying again");
@@ -912,12 +915,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           history.remove(i);
         }
         // Last user input should still be present, submit for a new (hopefully different) generated response
-        return parseUtteranceLLMService(inputUtterance, true);
+        return parseUtteranceLLMService(inputUtterance, streaming, true);
       } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses > 2) {
         log.warn("[handleTextResponse] Still encountering identical responses, clearing history fully and informing user");
         // 4th identical response - inform user and more drastically reset context
         chatContext.history.messages.clear();
         responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
+        regenerated = true;
         chatContext.identicalResponses = 0;
       }
     } else {
@@ -933,7 +937,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
     Predicate generateResponsePred;
-    if (streaming) {
+    if (streaming && !regenerated) {
       generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
     } else {
       generateResponsePred = Factory.createPredicate("generateResponseFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
