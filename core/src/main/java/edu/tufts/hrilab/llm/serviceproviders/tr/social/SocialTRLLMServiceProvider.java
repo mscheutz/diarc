@@ -930,9 +930,20 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     chatContext.lastResponseString = responseString;
     chatContext.lastResponseStreamed = ttsStreamedIds.remove(llmResponse.getId());
 
-    if (!(responseString.startsWith("\"") && responseString.endsWith("\""))) {
-      responseString = "\"" + responseString + "\"";
+    // newlines, backslashes, or nested quotes in the reply were blowing up the belief
+    // asserts that read this text back out of a term -- nothing escapes it on the way in.
+    // Swapping those characters out here is a hack for the breakage I was seeing.
+    // TODO: this almost certainly belongs where the term gets written, not here
+    responseString = responseString
+            .replace('\n', ' ')
+            .replace('\r', ' ')
+            .replace('\t', ' ')
+            .replace('\\', ' ')
+            .trim();
+    if (responseString.length() > 1 && responseString.startsWith("\"") && responseString.endsWith("\"")) {
+      responseString = responseString.substring(1, responseString.length() - 1);
     }
+    responseString = "\"" + responseString.replace('"', '\'') + "\"";
 
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
