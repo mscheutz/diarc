@@ -928,7 +928,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       chatContext.identicalResponses = 0;
     }
     chatContext.lastResponseString = responseString;
-    chatContext.lastResponseStreamed = ttsStreamedIds.remove(llmResponse.getId());
+    boolean responseStreamed = ttsStreamedIds.remove(llmResponse.getId());
+    chatContext.lastResponseStreamed = responseStreamed;
 
     // newlines, backslashes, or nested quotes in the reply were blowing up the belief
     // asserts that read this text back out of a term -- nothing escapes it on the way in.
@@ -948,7 +949,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
     Predicate generateResponsePred;
-    if (streaming && !regenerated) {
+    // a streamed request whose fragments never reached the TTS still has to be spoken here
+    if (streaming && responseStreamed && !regenerated) {
       generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
     } else {
       generateResponsePred = Factory.createPredicate("generateResponseFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
@@ -1918,7 +1920,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     if (parser.completedParam && parser.lastParamName.equals("response")) {
       log.info("[streamingChunkHandler] Done parsing response");
-      armRearm();
+      // arm only when fragments really went out; un-streamed replies arm on their spoken path
+      if (ttsStreamedIds.contains(currentStreamingResponseId)) {
+        armRearm();
+      }
       ttsEnd();
       return;
     }
@@ -1933,16 +1938,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
     if (parser.nlgText.isEmpty()) {
-      String startToken = "{\"translation\":\"";
-      int translationStart = currentText.indexOf(startToken);
-      if (translationStart != -1) {
+      // accept the same whitespace variants around the key as the completed-parse regex below
+      Matcher startMatcher = Pattern.compile("\\{\\s*\"?translation\"?\\s*:\\s*\"?").matcher(currentText);
+      if (startMatcher.find()) {
         Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
         if (m.matches()) {
           log.info("[streamingChunkHandler] One shot NLG parse: {}", m.group(m.groupCount()));
           ttsPush(m.group(m.groupCount()));
           ttsEnd();
         } else {
-          parser.nlgText = currentText.substring(translationStart + startToken.length());
+          parser.nlgText = currentText.substring(startMatcher.end());
           parser.nlgTextDelta = parser.nlgText;
           log.info("[streamingChunkHandler] first NLG delta: {}", parser.nlgTextDelta);
           ttsPush(parser.nlgTextDelta);
@@ -1965,10 +1970,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: in StreamingTTSComponent, have output be buffered by default and add methods unbufferStreamingTTSOutputForUID and cancelStreamingTTSOutputForUID
   private void ttsPush(String fragment) {
     if (fragment == null || fragment.isEmpty()) return;
-    ttsStreamedIds.add(currentStreamingResponseId);
+    String id = currentStreamingResponseId;
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class, Long.class))
               .call(void.class, fragment, currentStreamingUid);
+      // only a push that actually reached the TTS counts as streamed
+      ttsStreamedIds.add(id);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] pushStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
