@@ -467,8 +467,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private void monitorDockingStatus() {
     keepAliveExecutor.scheduleAtFixedRate(() -> {
-      updateRollingPositionData();
       try {
+        //inside the try: an uncaught throw here cancels the scheduled task permanently
+        updateRollingPositionData();
         if (api.hasSession()) {
           RMSDockStatusResponse response = api.getDockStatus();
           if (response != null) {
