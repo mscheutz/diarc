@@ -1159,6 +1159,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private void loadMapMetadata() {
     mapMetadatas = api.getMapMetadatas();
     mapImages = api.getMaps();
+    if (mapMetadatas == null) {
+      //a refused connection comes back as null and gets past the exit guard in init,
+      //leaving a half-initialized component and NPEs later.
+      //null mapImages is not checked: a reachable api with zero maps returns that, and it
+      //should stay the warn-and-continue it has always been, not a restart loop
+      throw new IllegalStateException("no response from the ava base api");
+    }
   }
 
   @TRADEService
