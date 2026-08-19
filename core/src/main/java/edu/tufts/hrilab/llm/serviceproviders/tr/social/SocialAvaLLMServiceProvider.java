@@ -14,6 +14,7 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
+import edu.tufts.hrilab.llm.gson.tool.ToolParameter;
 import edu.tufts.hrilab.llm.openai.ToolParameterHelper;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -518,6 +519,32 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       }
       log.warn("[getServiceForAgent] could not find service {} for agent {}", serviceName, agentName);
       return null;
+   }
+
+   //TODO: remove
+   @Override
+   protected Symbol handleLocationActionPairs(String argumentName, Map<String,Object> toolDefinitionMap, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+        String locationVal = (String)toolDefinitionMap.get("location");
+        Object actionVal = toolDefinitionMap.get("action");
+        Symbol locationSymbol = null;
+        Symbol actionSymbol = null;
+        if (locationVal == null) {
+          log.warn("[processArgument] locationActionPair does not have location field present");
+          errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"location\" field. Each locationPair needs a \"location\" field.\n");
+        } else {
+          locationSymbol = processSymbolArgument(argumentName, locationVal, getLocations("self",true),errorMessage,varMap,builder,false,unpopulatedArgSafe);
+        }
+        if (actionVal == null) {
+          log.warn("[processArgument] locationActionPair does not have action field present");
+          errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"action\" field. Each locationPair needs an \"action\" field.\n");
+        } else {
+          actionSymbol = processToolArgument("inner location action pair's action", actionVal, argumentDefinition, parentTool,actor, builder,varMap,errorMessage,unpopulatedArgSafe);
+        }
+        if (actionSymbol == null || locationSymbol == null) {
+          return null;
+        } else {
+         return Factory.createPredicate("and",locationSymbol,actionSymbol);
+        }
    }
 
    /**

@@ -59,6 +59,7 @@ private:
   void haveNewTablePlane(PlaneNotification::ConstPtr planeNotification);
   void haveNewSaliencyMap(SaliencyNotification::ConstPtr saliencyNotification);
   void sortPointcloud();
+  float calculateMaxDistanceFromPlane(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, ExtractedPlane::ConstPtr& plane, const pcl::PointIndices& cluster);
   diarc::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<pcl::PointIndices>& clusters,
         CaptureData::ConstPtr captureData);
   void display(diarc::stm::MemoryObject::VecPtr newClusterObjects);

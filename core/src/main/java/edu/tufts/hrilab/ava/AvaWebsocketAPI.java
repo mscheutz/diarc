@@ -82,6 +82,15 @@ public class AvaWebsocketAPI implements AvaAPIInterface {
     return send(velMsg);
   }
 
+  @Override
+  public RMSResponse setVelocity(float translation, float rotation, float sidestep, boolean nudge) {
+    String uri = "/robot/drive/velocity";
+    VelocityRequest request = new VelocityRequest(translation, rotation, sidestep, nudge);
+    RMSRequest velMsg = new RMSRequest(uri, request);
+    log.debug("Sending velocity message");
+    return send(velMsg);
+  }
+
   /**
    * Send the robot to a given position on the map.
    *

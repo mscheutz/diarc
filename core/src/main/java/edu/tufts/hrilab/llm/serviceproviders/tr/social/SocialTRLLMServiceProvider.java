@@ -368,7 +368,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           String format;
           if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("scheduled")) {
             format = "I should";
-          } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition")) {
+          } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition") || chatContext.utteranceUpForValidation.getSemantics().getName().equals("startMission")) {
             format = "The task is";
           } else {
             //INSTRUCT
@@ -404,7 +404,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       case "mean" ->
               predDefinition = "\nname: mean(X,Y)\ndescription: Represents a question asking X if they meant to instruct or specify Y.";
       case "attempting" ->
-              predDefinition = "\nname: attempting(X,Y)\ndescription: Report that you are actively engaging in the task defined by Y";
+              predDefinition = "\nname: attempting(X,Y)\ndescription: Report that you are starting the task defined by Y";
       case "and" ->
               predDefinition = "\nname: and(X,Y,...)\ndescription: Conjunctive form signalling desired translation consists of translating X and Y and ...";
       case "taskPredicate" ->
@@ -418,7 +418,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       case "not" ->
               predDefinition = "\nname: not(X)\ndescription: Negation of the fact X";
       case "ack" ->
-              predDefinition = "\nname: ack(X)\ndescription: Signals X should be conveyed in the form of an acknowledgement";
+              predDefinition = "\nname: ack(X)\ndescription: Format as \"<acknowledgement_word_or_phrase_variation>,<translation_of_X>\".";
       case "error" ->
               predDefinition = "\nname: error(X)\ndescription: Signals X should be conveyed in the form of a failure message";
       case "kioskGoal" ->
@@ -2028,7 +2028,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     ChatCollection collection = currentChatCollections.get(Pair.of(getUntypedSymbol(user), getUntypedSymbol(agentTeam)));
     if (collection == null) {
-      log.error("[getChatCollection] no chat collection found for {}/{} pair", user, agentTeam);
+      log.debug("[getChatCollection] no chat collection found for {}/{} pair", user, agentTeam);
     }
     return collection;
   }
@@ -2915,7 +2915,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
   // Process an inner argument which has the flag set to be processed as a tool call
-  private Symbol processToolArgument(String argumentName, Object argumentValue, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+  protected Symbol processToolArgument(String argumentName, Object argumentValue, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
     Map<String,Object> toolDefinitionMap;
     boolean validToolDefinition = true;
     if (argumentValue instanceof String) {
@@ -2992,29 +2992,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     //TODO: move to domain specific processing
     ////TODO: remove this block and extend framework to allow for arbitrary definition of specific json object forms without necessarily being tool calls
-    //if (argumentName.equals("locationActionPairs")) {
-    //  String locationVal = (String)toolDefinitionMap.get("location");
-    //  Object actionVal = toolDefinitionMap.get("action");
-    //  Symbol locationSymbol = null;
-    //  Symbol actionSymbol = null;
-    //  if (locationVal == null) {
-    //    log.warn("[processArgument] locationActionPair does not have location field present");
-    //    errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"location\" field. Each locationPair needs a \"location\" field.\n");
-    //  } else {
-    //    locationSymbol = processSymbolArgument(argumentName, locationVal, getLocations("self",true),errorMessage,varMap,builder,false,unpopulatedArgSafe);
-    //  }
-    //  if (actionVal == null) {
-    //    log.warn("[processArgument] locationActionPair does not have action field present");
-    //    errorMessage.append("- You supplied json for a \"").append(argumentName).append("\" element of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"action\" field. Each locationPair needs an \"action\" field.\n");
-    //  } else {
-    //    actionSymbol = processToolArgument("inner location action pair's action", actionVal, argumentDefinition, parentTool,actor, builder,varMap,errorMessage,unpopulatedArgSafe);
-    //  }
-    //  if (actionSymbol == null || locationSymbol == null) {
-    //    return null;
-    //  } else {
-    //   return Factory.createPredicate("and",locationSymbol,actionSymbol);
-    //  }
-    //}
+    if (argumentName.equals("locationActionPairs")) {
+      return handleLocationActionPairs(argumentName, toolDefinitionMap, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+    }
 
     String toolName = (String)toolDefinitionMap.get("name");
     Object innerArguments = toolDefinitionMap.get("arguments");
@@ -3043,8 +3023,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return null;
     }
   }
+  //TODO: remove
+  protected Symbol handleLocationActionPairs(String argumentName, Map<String,Object> toolDefinitionMap, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+    return null;
+  }
   // Process extracted tool call information
-  private Symbol processToolArgument(String name, Object arguments, Tool intendedTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+  protected Symbol processToolArgument(String name, Object arguments, Tool intendedTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
     boolean validParse;
     Map<String, Object> calledArguments;
     if (arguments instanceof String) {
@@ -3126,7 +3110,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
   // TODO: Do we need to check for unintended JSON strings and reject here?
   // Process a "leaf" (i.e. maximally a Predicate, not list or map) tool call argument
-  private Symbol processSymbolArgument(String argName, String argString, List<String> possible_values, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder builder, boolean inner, boolean unpopulatedArgSafe) {
+  protected Symbol processSymbolArgument(String argName, String argString, List<String> possible_values, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder builder, boolean inner, boolean unpopulatedArgSafe) {
     Symbol processedArg;
     Symbol argValue = Factory.createFOL(argString);
     // If there is an explicit possible_values set, make sure the argument is present
@@ -3233,6 +3217,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     return valid;
   }
+
   //TODO: in subclass?
   private boolean checkForFullyPopulatedTemplate(String templateArgName, Object templateValue, Symbol user, Symbol agentTeam, StringBuilder errorMessage) {
     ChatCollection collection = getChatCollection(user,agentTeam);
@@ -3258,6 +3243,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             expectedSize = 4;
           } else if (templateArgName.equals("currentTaskSequenceDefinition")) {
             expectedSize = 2;
+          } else if (templateArgName.equals("currentMissionDefinition")) {
+            expectedSize = 1;
           } else {
             log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
           }
@@ -3524,7 +3511,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     List<String> required = toolFunction.parameters.getRequired();
     String argumentsString;
     if (includePossibleValues) {
-      return new Gson().toJson(toolFunction);
+      //return new Gson().toJson(toolFunction);
+      argumentsString = toolFunction.parameters.getProperties().isEmpty() ? "None" : "\n" +
+              toolFunction.parameters.getProperties().entrySet().stream().map(entry ->
+                                                                              " - " + entry.getKey() + " (" + (required.contains(entry.getKey()) ? "necessary" : "optional") + ")" + ", (type="+entry.getValue().getType()+"): "
+                                                                              + entry.getValue().getDescription() + (entry.getValue().getPossible_values().isEmpty() ? "" : (". (possible_values = " + entry.getValue().getPossible_values()))).collect(Collectors.joining("\n"));
     } else {
       argumentsString = toolFunction.parameters.getProperties().isEmpty() ? "None" : "\n" +
               toolFunction.parameters.getProperties().entrySet().stream().map(entry ->

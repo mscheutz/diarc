@@ -5,6 +5,7 @@
 #include <point_clouds/PointCloudUtilities.hpp>
 #include <stdint.h>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <pcl/common/transforms.h>
 #include "capture/util/CaptureUtilities.hpp"
 #include "PCLFunctions.hpp"
 #include <pcl/features/moment_of_inertia_estimation.h>
@@ -60,22 +61,26 @@ namespace diarc {
         FilterPointCloud<pcl::PointXYZ>(cloud, indices);
       }
 
-      void depthToPointCloud(const cv::Mat depth, CameraParameters::ConstPtr irParams,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointIndices::Ptr indices) {
+      void depthToPointCloud(const cv::Mat depth,
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointIndices::Ptr indices,
+              int camera_index) {
 
         if (3 == depth.channels()) {
           xyzImageToPointCloud(depth, cloud, indices);
           return;
         }
 
-        if (!irParams->intrinsicSet) {
+        Cameras* cameras = Cameras::getInstance();
+        CameraParameters::ConstPtr camParams = cameras->getCameraParameters(camera_index);
+        if (!camParams->intrinsicSet) {
           LOG4CXX_WARN(logger, "[depthToPointCloud]: camera params not set! Returning.");
           return;
         }
-        const float fx = irParams->M.at<float>(0, 0);
-        const float fy = irParams->M.at<float>(1, 1);
-        const float cx = irParams->M.at<float>(0, 2);
-        const float cy = irParams->M.at<float>(1, 2);
+
+        const float fx = camParams->M.at<float>(0, 0);
+        const float fy = camParams->M.at<float>(1, 1);
+        const float cx = camParams->M.at<float>(0, 2);
+        const float cy = camParams->M.at<float>(1, 2);
         const int imgWidth = depth.cols;
         const int imgHeight = depth.rows;
 
@@ -115,7 +120,8 @@ namespace diarc {
 
       void xyzAndColorToPointCloud(const cv::Mat xyzImage, const cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::Ptr color_cloud,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+              int camera_index) {
         const int imgWidth = xyzImage.cols;
         const int imgHeight = xyzImage.rows;
         const int channels = xyzImage.channels();
@@ -166,8 +172,7 @@ namespace diarc {
         objectPoints.cols = 1;
         //printf("cont: %s depth: %d chan: %d rows: %d cols: %d\n", (objectPoints.isContinuous()?"true":"false"), objectPoints.depth(), objectPoints.channels(), objectPoints.rows, objectPoints.cols);
 
-        diarc::capture::util::projectPoints(objectPoints, imgPoints, 0);
-
+        diarc::capture::util::projectPoints(objectPoints, imgPoints, camera_index);
 
         //fill in point cloud
         color_cloud->width = imgWidth;
@@ -237,7 +242,8 @@ namespace diarc {
 
       void depthAndColorToPointCloud(const cv::Mat depth, const cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::Ptr color_cloud,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+              int camera_index) {
         if (3 == depth.channels()) {
           xyzAndColorToPointCloud(depth, color, color_cloud, cloud);
           return;
@@ -248,7 +254,7 @@ namespace diarc {
 
         // get depth frame camera matrix
         Cameras* cameras = Cameras::getInstance();
-        CameraParameters::ConstPtr camParams = cameras->getCameraParameters(0);
+        CameraParameters::ConstPtr camParams = cameras->getCameraParameters(camera_index);
         float fx, fy, cx, cy = 0.0;
         if (camParams->intrinsicSet) {
           fx = camParams->M.at<float>(0, 0);
@@ -257,6 +263,7 @@ namespace diarc {
           cy = camParams->M.at<float>(1, 2);
         } else {
           //using "default" kinect params
+          LOG4CXX_WARN(logger, "[depthAndColorToPointCloud]: no camera parameters found! Using default values.");
           fx = 580.0 * (imgWidth / 640.0);
           fy = 580.0 * (imgHeight / 480.0);
           cx = imgWidth / 2.0;
@@ -559,6 +566,18 @@ namespace diarc {
         LOG4CXX_DEBUG(logger, boost::format("mass center: %f %f %f.") % mass_center(0) % mass_center(1) % mass_center(2));
         LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point.x % min_point.y % min_point.z);
         LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point.x % max_point.y % max_point.z);
+
+        Eigen::Matrix4f projectionTransform(Eigen::Matrix4f::Identity());
+        projectionTransform.block<3,3>(0,0) = rotational_matrix_OBB.transpose();
+        // projectionTransform.block<3,1>(0,3) = -1.f * (projectionTransform.block<3,3>(0,0) * pcaCentroid.head<3>());
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPointsProjected (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::transformPointCloud(*cloud, *cloudPointsProjected, projectionTransform);
+        // Get the minimum and maximum points of the transformed cloud.
+        pcl::PointXYZ minPoint, maxPoint;
+        pcl::getMinMax3D(*cloudPointsProjected, minPoint, maxPoint);
+
+        LOG4CXX_INFO(logger, boost::format("Dimensions (x,y,z): %f %f %f.") % (maxPoint.x - minPoint.x) % (maxPoint.y - minPoint.y) % (maxPoint.z - minPoint.z));
+        
 //        LOG4CXX_DEBUG(logger, boost::format("position: %f %f %f.") % position_OBB.x % position_OBB.y % position_OBB.z);
 
         ///////////////// TEMPORARY DEBUGGING VIZ //////////////////////////

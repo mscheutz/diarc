@@ -4,17 +4,15 @@
 
 package edu.tufts.hrilab.vision.stm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
+import javax.vecmath.Vector3d;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
-
-import edu.tufts.hrilab.util.RotationHelpers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Describes a position from which an object can be grasped. Not guaranteed to
@@ -51,9 +49,9 @@ public class Grasp implements Serializable {
   }
   
   public void setPoint(int index, double x, double y, double z) {
-//    if (index < 0 || index > 1) {
-//      log.error("[setPoint] Trying to set point with index out of range: " + index);
-//    }
+    if (index < 0 || index > 1) {
+      log.error("[setPoint] Trying to set point with index out of range: " + index);
+    }
 
     Vector3d point = new Vector3d(x, y, z);
     setPoint(index, point);
@@ -92,19 +90,5 @@ public class Grasp implements Serializable {
   public Quat4d getOrientation() {
     return orientation;
   }
-
-  public Vector3d getOrientationXYZ() {
-    return new Vector3d(RotationHelpers.quatToXYZRotations(orientation));
-  }
-
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("points: ");
-    for (Vector3d v : points) {
-      sb.append(" <" + v.x + " " + v.y + " " + v.z + " >,");
-    }
-    sb.deleteCharAt(sb.length() - 1);
-    sb.append("orientation: " + getOrientationXYZ());
-    return sb.toString();
-  }
+  
 }

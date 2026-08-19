@@ -629,10 +629,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        if (tsc:usingWWBasedASR(?actor)) {
             act:triggerWW();
-        } else {
-            act:hideListeningIndicator();
         }
     }
 }
@@ -645,10 +643,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
     act:generateResponseFromString(!output);
-        if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        if (tsc:usingWWBasedASR(?actor)) {
             act:triggerWW();
-        } else {
-            act:hideListeningIndicator();
         }
     }
 }
@@ -661,10 +657,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        if (tsc:usingWWBasedASR(?actor)) {
             act:triggerWW();
-        } else {
-            act:hideListeningIndicator();
         }
     }
 }
@@ -677,10 +671,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        if (tsc:usingWWBasedASR(?actor)) {
             act:triggerWW();
-        } else {
-            act:hideListeningIndicator();
         }
     }
 }
@@ -693,10 +685,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (op:equalsValue(!user,"local_user") || op:equalsValue(!user,"local_visitor")) {
+        if (tsc:usingWWBasedASR(?actor)) {
             act:triggerWW();
-        } else {
-            act:hideListeningIndicator();
         }
     }
 }

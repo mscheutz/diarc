@@ -6,15 +6,14 @@
  */
 package edu.tufts.hrilab.vision;
 
-import java.awt.Dimension;
-
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.annotations.Observes;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -137,7 +136,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @return the image in a byte array
    */
   @TRADEService
-  public byte[] getFrame();
+  byte[] getFrame();
 
   /**
    * Return the camera's last disparity frame in a byte array.
@@ -167,7 +166,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @return Dimension containing the size
    */
   @TRADEService
-  public Dimension getImageSize();
+  Dimension getImageSize();
 
   /**
    * Entry point in vision for making world observations.

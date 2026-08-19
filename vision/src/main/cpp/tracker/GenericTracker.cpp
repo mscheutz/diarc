@@ -102,91 +102,77 @@ void GenericTracker::removeLowConfidenceObjects() {
   }
 }
 
-int GenericTracker::mergeObject(MemoryObject::Ptr newObject) {
+MemoryObject::Ptr GenericTracker::mergeObject(MemoryObject::Ptr newObject) {
   LOG4CXX_TRACE(logger, boost::format("[mergeObject] with frame number: %lld") % newObject->getTypeId());
-  int numAddedObjects = 0;
-  bool matchFound = false;
-
-
+  MemoryObject::Ptr matchedObject;
   long long int typeId = newObject->getTypeId();
-  MemoryObjects_HashedById_Set trackedObjectsByType = trackedObjects->getByTypeId(typeId);
-  MemoryObjects_HashedById_Set::const_iterator trackedObjectsByType_itr;
+  const auto& trackedObjectsByType = trackedObjects->getByTypeId(typeId);
 
   // iterate through all existing tracked objects of moTypeId and try to "match"
   // with newly detected objects and update all existing MemoryObjects of typeId
-  for (trackedObjectsByType_itr = trackedObjectsByType.begin();
-       trackedObjectsByType_itr != trackedObjectsByType.end(); ++trackedObjectsByType_itr) {
-
-    if (matchFound) {
-      // stop looking for a match
-      break;
-    }
+  for (const auto& trackedObject : trackedObjectsByType) {
 
     // first check to see if top-level scene graphs are a match
-    if (compare(*trackedObjectsByType_itr, newObject)) {
+    if (compare(trackedObject, newObject)) {
       // top-level scene graphs match -- now iterate through scene graphs to update/add nodes in tracked object
-      matchFound = true;
+      matchedObject = trackedObject;
 
       // update root node
-      (*trackedObjectsByType_itr)->addNewTrackingResult(newObject->getTrackingMask(),
-                                                        (*trackedObjectsByType_itr)->getTrackingConfidence() * 1.3f);
+      trackedObject->addNewTrackingResult(newObject->getTrackingMask(),
+                                                        trackedObject->getTrackingConfidence() * 1.3f);
 
       // iterate through entire scene graph, trying to find matching nodes in the tracked object
-      MemoryObject::Vec newSceneGraph = newObject->getChildren();
-      MemoryObject::Vec trackedSceneGraph = (*trackedObjectsByType_itr)->getChildren();
-      MemoryObject::Vec::iterator newSceneGraph_itr, trackedSceneGraph_itr;
-      bool nodeMatch;
-      for (newSceneGraph_itr = newSceneGraph.begin(); newSceneGraph_itr != newSceneGraph.end(); ++newSceneGraph_itr) {
-        nodeMatch = false;
-        for (trackedSceneGraph_itr = trackedSceneGraph.begin();
-             trackedSceneGraph_itr != trackedSceneGraph.end(); ++trackedSceneGraph_itr) {
+      for (const auto& newSceneGraphNode : newObject->getChildren()) {
 
+        bool nodeMatch = false;
+        for (const auto& trackedSceneGraphNode : trackedObject->getChildren()) {
           // try to match with newly detected MemoryObject
-          if (compare((*trackedSceneGraph_itr), (*newSceneGraph_itr))) {
+          if (compare(trackedSceneGraphNode, newSceneGraphNode)) {
             //match found, update info and conf
-            (*trackedSceneGraph_itr)->addNewTrackingResult((*newSceneGraph_itr)->getTrackingMask(),
-                                                           (*trackedSceneGraph_itr)->getTrackingConfidence() * 1.3f);
+            trackedSceneGraphNode->addNewTrackingResult(newSceneGraphNode->getTrackingMask(),
+                                                           trackedSceneGraphNode->getTrackingConfidence() * 1.3f);
 
             // stop looking for node match
             nodeMatch = true;
             break;
           }
-
         }
 
         // if no node match found, add new node to existing tracked scene graph
         if (!nodeMatch) {
           // start tracking as a non-root node (i.e., false)
-          (*newSceneGraph_itr)->startTracking(false);
+          newSceneGraphNode->startTracking(false);
 
           // add new node to root node
           LOG4CXX_DEBUG(logger, boost::format("[mergeObject] adding child: %s.")
-                                % (*newSceneGraph_itr)->getValidationResultsString());
-          (*trackedObjectsByType_itr)->addChild(*newSceneGraph_itr);
+                                % newSceneGraphNode->getValidationResultsString());
+          trackedObject->addChild(newSceneGraphNode);
         }
       }
     } else {
       // just print some debug info
       LOG4CXX_DEBUG(logger, boost::format("[mergeObject] top-level didn't match: %s %s.")
-                           % (*trackedObjectsByType_itr)->getValidationResultsString()
+                           % trackedObject->getValidationResultsString()
                            % newObject->getValidationResultsString());
+    }
+
+    if (matchedObject) {
+      // stop looking for a match
+      return matchedObject;
     }
   }
 
   // if top-level scene graphs didn't match -- add newObject to tracker as root of scene graph
-  if (!matchFound) {
-    if (trackedObjectsByType.empty()) {
-      LOG4CXX_DEBUG(logger, "[mergeObject] no tracked objects to compare against.");
-    }
-
-    LOG4CXX_DEBUG(logger, boost::format("[mergeObject] adding new top-level object to tracker (and it's children): %s.")
-                         % newObject->getValidationResultsString());
-
-    newObject->startTracking();
-    ++numAddedObjects;
+  if (trackedObjectsByType.empty()) {
+    LOG4CXX_DEBUG(logger, "[mergeObject] no tracked objects to compare against.");
   }
 
-  return numAddedObjects;
+  LOG4CXX_DEBUG(logger, boost::format("[mergeObject] adding new top-level object to tracker (and it's children): %s.")
+                % newObject->getValidationResultsString());
+
+  newObject->startTracking();
+  return newObject;
+
 }
 
 bool GenericTracker::compare(const MemoryObject::Ptr &mo1, const MemoryObject::Ptr &mo2) {

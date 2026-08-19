@@ -15,9 +15,9 @@ public:
 
   enum DetectorType {
     ARUCO,
-    SIFT, //old sift based method
+    SIFT, //old sift-based method
     BLOB, //color blobs
-    COLORBASED, // another color based detector (generates more granular masks instead of BBs)
+    COLORBASED, // another color-based detector (generates more granular masks instead of BBs)
     HAAR,
     HOUGH,
     CLUSTER,
@@ -32,7 +32,9 @@ public:
     DNN,
     BUTTONDETECTOR,
     ELEVATORDOORDETECTOR,
-    PERSONDETECTOR
+    PERSONDETECTOR,
+    FASTSAM,
+    OWLV2
   };
 
   /**

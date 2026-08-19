@@ -33,7 +33,7 @@ ADD_DEFINITIONS(-DBOOST_FILESYSTEM_DEPRECATED)
 # turn no return-value warnings into errors
 ADD_DEFINITIONS(-Werror=return-type)
 
-# set explciit cmake policies
+# set explicit cmake policies
 CMAKE_POLICY(SET CMP0012 NEW)
 if(CMAKE_VERSION VERSION_LESS "3.13")
   message("Please consider upgrading CMake to 3.13 or newer")
@@ -42,7 +42,7 @@ else()
   CMAKE_POLICY(SET CMP0086 NEW)
 endif()
 
-# Set paths between Vision-Java, Vision-Native and ADE
+# Set paths between Vision-Java, Vision-Native and DIARC
 SET(VISION_BASE_PACKAGE edu.tufts.hrilab.vision)
 SET(SWIG_SRC_BASE_OUTDIR ${CMAKE_SOURCE_DIR}/../../swig/java)
 SET(SWIG_SRC_OUTDIR ${SWIG_SRC_BASE_OUTDIR}/edu/tufts/hrilab/vision)
@@ -67,6 +67,18 @@ FIND_PACKAGE( SWIG 3.0 REQUIRED COMPONENTS java )
 # OpenCV (required)
 FIND_PACKAGE( OpenCV REQUIRED )
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+
+# PyBind11 (required)
+# version 3 to avoid conflicts with ROS pybind11 version on noetic
+#FIND_PACKAGE(pybind11 3)
+FIND_PACKAGE(pybind11)
+if (pybind11_FOUND)
+	add_definitions("-DUSE_PYTHON")
+	FIND_PACKAGE (Python3 COMPONENTS Interpreter Development)
+	INCLUDE_DIRECTORIES(${Python3_INCLUDE_DIRS})
+	message("Python3_LIBRARIES:${Python3_LIBRARIES}")
+	message("pybind11_LIBRARIES:${pybind11_LIBRARIES}")
+endif (pybind11_FOUND)
 
 # check for dnn module
 FIND_PACKAGE( OpenCV 3.4 QUIET OPTIONAL_COMPONENTS dnn)
@@ -102,7 +114,7 @@ else()
 endif(OpenCV_tracking_FOUND)
 
 # PCL (required)
-FIND_PACKAGE(PCL 1.14 REQUIRED)
+FIND_PACKAGE(PCL 1.13 REQUIRED)
 INCLUDE_DIRECTORIES(${PCL_INCLUDE_DIRS})
 LINK_DIRECTORIES(${PCL_LIBRARY_DIRS})
 ADD_DEFINITIONS(${PCL_DEFINITIONS})
@@ -121,6 +133,7 @@ endif(OPENNI2_FOUND)
 
 # Boost (required) -- this is only needed to patch the bug in PCLConfig.cmake that leaves out the "thread" component
 find_package(Boost COMPONENTS system filesystem date_time iostreams thread)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # SWIG (required)
 FIND_PACKAGE(SWIG REQUIRED)
@@ -134,16 +147,23 @@ INCLUDE_DIRECTORIES(${LOG4CXX_INCLUDE_DIRS})
 FIND_PACKAGE( JSONCPP REQUIRED )
 INCLUDE_DIRECTORIES(${JSON_INC_PATH})
 
-# SIFT (checked into ADE-Vision repo)
+# SIFT (checked into this repo)
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/third_party/vlfeat/bin/glnxa64 )
 
+# spot-cpp-sdk disabled until libprotobuf versioning issue can be resolved.
+# Use spot python instead (i.e., CaptureSpotPython.cpp with BOSDYN_PYTHON)
+# FIND_PACKAGE(bosdyn)
+if (bosdyn_FOUND)
+    ADD_DEFINITIONS(-DUSE_BOSDYN)
+endif(bosdyn_FOUND)
+
 # REALSENSE TODO
- FIND_PACKAGE(REALSENSE)
- if (REALSENSE_FOUND)
+FIND_PACKAGE(REALSENSE)
+if (REALSENSE_FOUND)
     INCLUDE_DIRECTORIES(${REALSENSE_INCLUDE_DIRS})
     LINK_DIRECTORIES(${REALSENSE_LIBRARY_DIRS})
     ADD_DEFINITIONS(-DUSE_REALSENSE)
- endif(REALSENSE_FOUND)
+endif(REALSENSE_FOUND)
 
 # ROS
 OPTION(USE_ROS "Turn on/off integration with ROS." OFF)
@@ -172,7 +192,7 @@ ENDIF(USE_ROS)
 
 
 # ROS 2
-OPTION(USE_ROS2 "Turn on/off integration with ROS2." ON)
+OPTION(USE_ROS2 "Turn on/off integration with ROS2." OFF)
 IF(USE_ROS2)
 	FIND_PACKAGE(rclcpp)
 	FIND_PACKAGE(rcl_interfaces)
@@ -261,6 +281,13 @@ if(AGILEGRASP_FOUND)
   ADD_DEFINITIONS(-DUSE_AGILEGRASP)
 endif(AGILEGRASP_FOUND)
 
+#GPD (Grasp Point Detection)
+FIND_PACKAGE(GPD)
+if(GPD_FOUND)
+    INCLUDE_DIRECTORIES(${GPD_INCLUDE_DIRS})
+    ADD_DEFINITIONS(-DUSE_GPD)
+endif(GPD_FOUND)
+
 #OPENPOSE -- requires c++11
 OPTION(USE_OPENPOSE "Turn on/off integration with OpenPose." OFF)
 if(USE_OPENPOSE)
@@ -286,6 +313,9 @@ endif(ZBAR_FOUND)
 #  ADD_SUBDIRECTORY(test)
 #endif(GTest_FOUND)
 
+if (pybind11_FOUND)
+  ADD_SUBDIRECTORY(pyvis)
+endif (pybind11_FOUND)
 ADD_SUBDIRECTORY(capture)
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(detector)

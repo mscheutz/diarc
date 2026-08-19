@@ -1,0 +1,35 @@
+{
+  "processor": {
+    "type": "category",
+    "arity": 1
+  },
+  "config": {
+    "model": "yolov3-door",
+    "type" : "darknet",
+    "yolo_version" : 3,
+    "backend": "CPU",
+    "input_size": 416,
+    "conf_thresh": 0.2,
+    "score_thresh": 0.2,
+    "nms_thresh": 0.2,
+    "classes" : 4
+  },
+  "predicates": [
+    {
+      "name": "door",
+      "classID": 0
+    },
+    {
+      "name": "handle",
+      "classID": 1
+    },
+    {
+      "name": "cabinet",
+      "classID": 2
+    },
+    {
+      "name": "refrigerator",
+      "classID": 3
+    }
+  ]
+}

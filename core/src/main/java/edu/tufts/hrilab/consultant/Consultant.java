@@ -43,7 +43,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * All References hashed refId.
    */
-  private Map<Symbol, T> references;
+  protected Map<Symbol, T> references;
   /**
    * Knowledge base name.
    */

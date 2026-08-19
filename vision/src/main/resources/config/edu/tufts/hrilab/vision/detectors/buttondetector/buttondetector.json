@@ -5,6 +5,7 @@
     },
     "config": {
       "model": "buttonModelS320",
+      "yolo_version" : 5,
       "type" : "onnx",
       "backend": "CPU",
       "input_size": 640,

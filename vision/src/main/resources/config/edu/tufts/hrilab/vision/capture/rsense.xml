@@ -35,11 +35,11 @@ CAM_MODE options:
 -->
 <capture>
     <camMode>REALSENSE</camMode>
-<!--     <imageWidth>640</imageWidth>-->
+    <!-- <imageWidth>640</imageWidth> -->
    <imageWidth>320</imageWidth>
-<!--     <imageHeight>480</imageHeight>-->
+    <!-- <imageHeight>480</imageHeight> -->
    <imageHeight>240</imageHeight>
-    <hasStereo>true</hasStereo>
+    <hasStereo>false</hasStereo>
     <hasDepth>true</hasDepth>
     <publishCloudToRos>false</publishCloudToRos>
 </capture>

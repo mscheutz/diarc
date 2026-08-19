@@ -22,11 +22,11 @@ public:
   typedef boost::shared_ptr<SiftNotification> Ptr;
   typedef boost::shared_ptr<const SiftNotification> ConstPtr;
 
-  SiftNotification(const VisionProcessConstPtr& notifier_,
+  SiftNotification(const long long& processorId_,
                    const unsigned long long& frameNumber_,
                    const CaptureData::ConstPtr& captureData_,
                    const SiftFeatures::ConstPtr& sift_)
-          : ImageProcessorNotification(notifier_, SIFT, frameNumber_, captureData_),
+          : ImageProcessorNotification(SIFT, processorId_, frameNumber_, captureData_),
             siftFeatures(sift_) {
   }
 

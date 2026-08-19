@@ -57,3 +57,19 @@ JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorM
   }
   return graspsJNI.getJavaObject();
 }
+
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorModuleJNI_initialize
+(JNIEnv* env, jclass cls, jstring configFile_jstr) {
+  // Get a pointer to the array of bytes representing the string in modified UTF-8 encoding
+  const char* nativeChars = env->GetStringUTFChars(configFile_jstr, nullptr);
+
+  // Create a std::string, which copies the characters
+  std::string configFile(nativeChars);
+
+  // Release the native character array to avoid memory leaks
+  env->ReleaseStringUTFChars(configFile_jstr, nativeChars);
+
+  // and finally, initialize the grasp detector
+  diarc::grasp::GraspDetector::getInstance()->initialize(configFile);
+}
+

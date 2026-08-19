@@ -34,7 +34,15 @@ public class AvaLocalTTSComponent extends LocalTTSComponent {
 
   @Override
   public boolean sayText(Utterance utterance, boolean wait) {
-    if (utterance.getAddressee().getName().equals("webapp")) {
+    boolean isLocal = false;
+    try {
+      isLocal = TRADE.getAvailableService(
+                      new TRADEServiceConstraints().name("isLocalAddressee").argTypes(Symbol.class))
+              .call(Boolean.class, utterance.getAddressee());
+    } catch (TRADEException e) {
+      log.warn("[sayText] unable to call isLocalAddressee from FrontEndConfigurationComponent");
+    }
+    if (!isLocal) {
       log.info("published in webapp chat: {}", utterance.getWordsAsString());
       return false;
     }

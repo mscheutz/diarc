@@ -165,33 +165,33 @@ public class VisionGuiPanel extends JPanel {
   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
   private void initComponents() {
 
-    jPanel1 = new javax.swing.JPanel();
+    jPanel1 = new JPanel();
     stmDisplay_panel = new DisplayPanel();
-    jLabel1 = new javax.swing.JLabel();
-    detectionConf_slider = new javax.swing.JSlider();
-    jLabel2 = new javax.swing.JLabel();
-    trackingConf_slider = new javax.swing.JSlider();
-    playPause_btn = new javax.swing.JButton();
-    jPanel2 = new javax.swing.JPanel();
-    jScrollPane1 = new javax.swing.JScrollPane();
-    memoryObject_list = new javax.swing.JList();
+    jLabel1 = new JLabel();
+    detectionConf_slider = new JSlider();
+    jLabel2 = new JLabel();
+    trackingConf_slider = new JSlider();
+    playPause_btn = new JButton();
+    jPanel2 = new JPanel();
+    jScrollPane1 = new JScrollPane();
+    memoryObject_list = new JList();
 
-    setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
+    setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-    jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.Y_AXIS));
+    jPanel1.setLayout(new BoxLayout(jPanel1, BoxLayout.Y_AXIS));
 
-    stmDisplay_panel.setBackground(new java.awt.Color(255, 255, 255));
-    stmDisplay_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Short Term Memory (STM)"));
-    stmDisplay_panel.setForeground(new java.awt.Color(255, 255, 255));
+    stmDisplay_panel.setBackground(new Color(255, 255, 255));
+    stmDisplay_panel.setBorder(BorderFactory.createTitledBorder("Short Term Memory (STM)"));
+    stmDisplay_panel.setForeground(new Color(255, 255, 255));
 
-    javax.swing.GroupLayout stmDisplay_panelLayout = new javax.swing.GroupLayout(stmDisplay_panel);
+    GroupLayout stmDisplay_panelLayout = new GroupLayout(stmDisplay_panel);
     stmDisplay_panel.setLayout(stmDisplay_panelLayout);
     stmDisplay_panelLayout.setHorizontalGroup(
-            stmDisplay_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            stmDisplay_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGap(0, 272, Short.MAX_VALUE)
     );
     stmDisplay_panelLayout.setVerticalGroup(
-            stmDisplay_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            stmDisplay_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGap(0, 206, Short.MAX_VALUE)
     );
 
@@ -225,16 +225,16 @@ public class VisionGuiPanel extends JPanel {
 
     add(jPanel1);
 
-    jPanel2.setMaximumSize(new java.awt.Dimension(550, 32767));
-    jPanel2.setPreferredSize(new java.awt.Dimension(350, 388));
-    jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2, javax.swing.BoxLayout.PAGE_AXIS));
+    jPanel2.setMaximumSize(new Dimension(550, 32767));
+    jPanel2.setPreferredSize(new Dimension(350, 388));
+    jPanel2.setLayout(new BoxLayout(jPanel2, BoxLayout.PAGE_AXIS));
 
-    jScrollPane1.setMaximumSize(new java.awt.Dimension(550, 32767));
-    jScrollPane1.setPreferredSize(new java.awt.Dimension(350, 226));
+    jScrollPane1.setMaximumSize(new Dimension(550, 32767));
+    jScrollPane1.setPreferredSize(new Dimension(350, 226));
 
     memoryObject_list.setModel(new MemoryObjectListModel());
-    memoryObject_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-    memoryObject_list.setMaximumSize(new java.awt.Dimension(550, 0));
+    memoryObject_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    memoryObject_list.setMaximumSize(new Dimension(550, 0));
     memoryObject_list.setVisibleRowCount(4);
     jScrollPane1.setViewportView(memoryObject_list);
 
@@ -254,15 +254,15 @@ public class VisionGuiPanel extends JPanel {
   }//GEN-LAST:event_playPause_btnActionPerformed
 
   // Variables declaration - do not modify//GEN-BEGIN:variables
-  private javax.swing.JSlider detectionConf_slider;
-  private javax.swing.JLabel jLabel1;
-  private javax.swing.JLabel jLabel2;
-  private javax.swing.JPanel jPanel1;
-  private javax.swing.JPanel jPanel2;
-  private javax.swing.JScrollPane jScrollPane1;
-  private javax.swing.JList memoryObject_list;
-  private javax.swing.JButton playPause_btn;
-  private javax.swing.JPanel stmDisplay_panel;
-  private javax.swing.JSlider trackingConf_slider;
+  private JSlider detectionConf_slider;
+  private JLabel jLabel1;
+  private JLabel jLabel2;
+  private JPanel jPanel1;
+  private JPanel jPanel2;
+  private JScrollPane jScrollPane1;
+  private JList memoryObject_list;
+  private JButton playPause_btn;
+  private JPanel stmDisplay_panel;
+  private JSlider trackingConf_slider;
   // End of variables declaration//GEN-END:variables
 }

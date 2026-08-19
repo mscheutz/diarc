@@ -3,16 +3,18 @@
  */
 package edu.tufts.hrilab.nao;
 
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.vecmath.Point3d;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.vecmath.Point3d;
 
 import static java.lang.Math.abs;
 
@@ -52,6 +54,14 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
     defRV = 0.3;
 
     isMoving = false;
+  }
+
+  public boolean sayText(Utterance utterance, boolean bool) {
+    return bool;
+  }
+
+  public boolean sayText(Utterance utterance) {
+    return false;
   }
 
   @Override
@@ -231,6 +241,12 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   @Override
+  public boolean setVels(double vel_x, double vel_y, double vel_rot) {
+    log.warn("Ignoring vel_y.");
+    return this.setVels(vel_x, vel_rot);
+  }
+
+  @Override
   public boolean setRV(double rv) {
     log.info("setRV: ({}) {}", getMyGroups(), rv);
     return setVels(0.0, rv);
@@ -267,11 +283,12 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   @Override
-  public void stop() {
+  public Justification stop() {
     log.info("stop ({})", getMyGroups());
     curTV = 0.0;
     curRV = 0.0;
     isMoving = false;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -355,17 +372,6 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   // ********************************************************************
   // *** SpeechProductionComponent interface
   // ********************************************************************
-
-  @Override
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance, true);
-  }
-
-  @Override
-  public boolean sayText(Utterance utterance, boolean wait) {
-    return sayText(utterance.getWordsAsString(), wait);
-  }
-
   @Override
   public boolean sayText(String text) {
     log.info("sayText: ({}) {}", getMyGroups(), text);

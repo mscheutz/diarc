@@ -23,38 +23,29 @@ SET(SOURCES
 SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs")
 
 # optional sources
-if (OpenCV_dnn_FOUND)
+if (pybind11_FOUND AND OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 	    validator/ComponentValidator.cpp
 		)
 
-    # Model trained on 500 one, 1000 two, 2000 three component objects.
-    SET(COMPONENT_MODEL_PATH_V1 "${CONFIG_DIR}/componentvalidator/modelv2_less2comp_epochs800.onnx")
-    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_less2comp_epochs800.onnx")
+    # Model trained with objects_c_rpd_v2_501
+    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/model_objects_c_rpd_v2_501.onnx")
+    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_rpd_v2_501.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
+    	message("Downloading model: ${COMPONENT_MODEL_URL}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL}" "${COMPONENT_MODEL_PATH}")
+    endif()
+
+    # Model trained with objects_c_v1_1500
+    SET(COMPONENT_MODEL_PATH_V1 "${CONFIG_DIR}/componentvalidator/model_objects_c_v1_1500.onnx")
+    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_v1_1500.onnx")
 
     if (NOT EXISTS "${COMPONENT_MODEL_PATH_V1}")
     	message("Downloading model: ${COMPONENT_MODEL_URL_V1}")
     	file(DOWNLOAD "${COMPONENT_MODEL_URL_V1}" "${COMPONENT_MODEL_PATH_V1}")
     endif()
-
-    # Model trained on 500 one, 2000 two, 2000 three component objects.
-    SET(COMPONENT_MODEL_PATH_V2 "${CONFIG_DIR}/componentvalidator/modelv2_more2comp_epochs800.onnx")
-    SET(COMPONENT_MODEL_URL_V2 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_more2comp_epochs800.onnx")
-
-    if (NOT EXISTS "${COMPONENT_MODEL_PATH_V2}")
-    	message("Downloading model: ${COMPONENT_MODEL_URL_V2}")
-    	file(DOWNLOAD "${COMPONENT_MODEL_URL_V2}" "${COMPONENT_MODEL_PATH_V2}")
-    endif()
-
-	# Model trained on 4300 one, 5600 two, 6900 three component objects.
-    SET(COMPONENT_MODEL_PATH_V3 "${CONFIG_DIR}/componentvalidator/model_all_comp_epoch650.onnx")
-    SET(COMPONENT_MODEL_URL_V3 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_all_comp_epoch650.onnx")
-
-    if (NOT EXISTS "${COMPONENT_MODEL_PATH_V3}")
-    	message("Downloading model: ${COMPONENT_MODEL_URL_V3}")
-    	file(DOWNLOAD "${COMPONENT_MODEL_URL_V3}" "${COMPONENT_MODEL_PATH_V3}")
-    endif()
-endif(OpenCV_dnn_FOUND)
+endif (pybind11_FOUND AND OpenCV_dnn_FOUND)
 
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -80,6 +71,11 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES} )
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc capture vl shape_match)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
+if (pybind11_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pyvis)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
+endif (pybind11_FOUND)
 if (V4R_V0_FOUND) 
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rEPUtils v4rAttentionModule)
 endif(V4R_V0_FOUND)

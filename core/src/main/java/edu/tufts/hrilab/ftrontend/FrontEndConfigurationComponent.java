@@ -23,12 +23,12 @@ import java.util.Set;
 public class FrontEndConfigurationComponent extends DiarcComponent
 {
    //TODO: can likely merge some arguments into superset CLI args (e.g. -socialLLM)
-   private boolean useStreamingTTS = true;
+   private boolean useStreamingTTS = false;
    private boolean useTentativeAcceptFiller = true;
    private boolean usePreValidationFiller = true;
    private boolean useReattemptParseFiller = true;
    private boolean supportExtendedParses = true;
-   private boolean useWWBasedASR = true;
+   private boolean useWWBasedASR = false;
    private boolean useListeningIndicator = true;
    private boolean useConfirmation = true;
    private boolean usingQueueEM = true;
@@ -168,6 +168,9 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       String name = state.getName();
       //If movement based:
       switch (name) {
+         case "breakOpenDoor":
+         case "escortCivilianToSafety":
+            return "";
          case "goToLocation":
          case "escortFromToLocation":
          case "measureWifiAtLocations":
@@ -354,6 +357,11 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "setAppointmentListEmptyMessage":
             case "setCheckInHeaderMessage":
             case "setStorageArea":
+            case "learnMission":
+            case "getAllKnownRooms":
+            case "startMission":
+            case "cancelAllCurrentAndQueuedTasks":
+            case "clearRoomForDoor":
                //// Set of actions which should perhaps be "reduced ack"?
                //case "escortToLocation":
                return true;

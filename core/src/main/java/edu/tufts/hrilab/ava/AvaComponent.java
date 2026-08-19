@@ -639,16 +639,30 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    * @param location    robot location
    * @param orientation robot orientation
    */
-  @Override
   public void setPose(Point3d location, Quat4d orientation) {
     log.warn("[setPose] functionality does not exist in Ava API.");
+  }
+
+  // new movebase iface wants these two. ava's got no global setpose so this does nothing
+  public void setPoseGlobal(double x, double y, double z) {
+    return;
+  }
+
+  // was an empty array just to compile -- hand it the real pose so the map's updateRobotPose works
+  public double[] getPoseGlobalQuat() {
+    Pair<Point3d, Quat4d> pose = getPose();
+    Point3d p = pose.getLeft();
+    Quat4d q = pose.getRight();
+    return new double[]{p.x, p.y, q.x, q.y, q.z, q.w};
   }
 
   //////////////////////////////////////////////////////////////////////
   // AvaComponent Interface
   //////////////////////////////////////////////////////////////////////
 
-  @Override
+
+  // getPose used to be a service off the old movebase iface. saveLocation + friends still call it by name, so put the annotation back
+  @TRADEService
   public Pair<Point3d, Quat4d> getPose() {
     RMSPositionResponse res = api.getPosition();
     double positionX = Double.valueOf(res.response.x);
@@ -727,7 +741,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return goToLocation(desiredLocation, true);
   }
 
-  @Override
+
   public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
     log.warn("[goToLocation] not implemented.");
     return new ConditionJustification(false);
@@ -1485,6 +1499,62 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
 
     log.debug("[follow] has been stopped.");
+    return new ConditionJustification(true);
+  }
+
+  @Override
+  public Justification moveForward(double distance) {
+    final double speed = 0.25; // m/s
+    final long pollMs = 250;
+    final double stallThresh = 0.01; // m moved between polls below which the robot is considered blocked
+    final int maxStalledPolls = 4;
+    final long maxTimeMs = (long) ((distance / speed) * 3000) + 5000;
+
+    Point3d start = getPosition();
+    Point3d last = start;
+    double traveled = 0;
+    int stalledPolls = 0;
+    long startTime = System.currentTimeMillis();
+    stopped = false;
+    log.info("[moveForward] driving {} m forward at {} m/s", distance, speed);
+
+    while (traveled < distance) {
+      if (stopped) {
+        log.info("[moveForward] stopped at {} m of {} m", traveled, distance);
+        api.stop();
+        return new ConditionJustification(false);
+      }
+      api.setVelocity((float) speed, 0, 0);
+      try {
+        sleep(pollMs);
+      } catch (InterruptedException ex) {
+        api.stop();
+        Thread.currentThread().interrupt();
+        return new ConditionJustification(false);
+      }
+
+      Point3d current = getPosition();
+      traveled = current.distance(start);
+      if (current.distance(last) < stallThresh) {
+        if (++stalledPolls >= maxStalledPolls) {
+          log.warn("[moveForward] stalled at {} m of {} m target", traveled, distance);
+          api.stop();
+          return new ConditionJustification(false);
+        }
+      } else {
+        stalledPolls = 0;
+      }
+      last = current;
+
+      if (System.currentTimeMillis() - startTime > maxTimeMs) {
+        log.warn("[moveForward] timed out at {} m of {} m target", traveled, distance);
+        api.stop();
+        return new ConditionJustification(false);
+      }
+    }
+
+    api.stop();
+    log.info("[moveForward] reached {} m (target {} m)", traveled, distance);
     return new ConditionJustification(true);
   }
 

@@ -47,6 +47,16 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   Justification follow();
 
   /**
+   * Drive straight forward along the robot's current heading using direct velocity
+   * commands until odometry shows the requested distance has been covered.
+   *
+   * @param distance meters to travel forward
+   */
+  @TRADEService
+  @Action
+  Justification moveForward(double distance);
+
+  /**
    * Close an RMS session with the robot.
    *
    * @return Justification true if successful

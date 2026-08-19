@@ -554,6 +554,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
       return false;
     }
 
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("diarcControlSayText").argTypes(String.class)).call(void.class,text);
+    } catch (TRADEException e) {
+      log.error("[sendStreamingChunk] error forwarding chunk to asr app");
+    }
     String body = buildRequestBody(text, contextId);
     try {
       conn.sendText(body, true).get(5, TimeUnit.SECONDS);
@@ -891,6 +896,11 @@ public class CartesiaTTSComponent extends DiarcComponent implements SpeechProduc
 
   private void sendStreamingChunk(WebSocket conn, String contextId, String text, boolean keepContinue) {
     String body = buildStreamingRequestBody(text, contextId, keepContinue);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("diarcControlSayText").argTypes(String.class)).call(void.class,text);
+    } catch (TRADEException e) {
+      log.error("[sendStreamingChunk] error forwarding chunk to asr app");
+    }
     try {
       conn.sendText(body, true);
     } catch (Exception e) {

@@ -5,26 +5,15 @@
 package edu.tufts.hrilab.map;
 
 import com.google.common.graph.EndpointPair;
-import edu.tufts.hrilab.util.Convert;
+import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
 public class PixelMap {
   private static Logger log = LoggerFactory.getLogger(PixelMap.class);
@@ -109,7 +98,7 @@ public class PixelMap {
 
       Quat4d orientation = new Quat4d(0, 0, 0, 1);
       if (isPortal(property)) {
-        orientation = Convert.convertToQuat4d(0, 0, getPortalNormalAngle(mo));
+        orientation = Utils.eulerToQuat4d(0, 0, getPortalNormalAngle(mo));
       }
       mo.setOrientation(orientation);
 
