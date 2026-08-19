@@ -2282,10 +2282,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       //Switch back to TRACS (PC 2 on the Cisco codec)
       boolean success = ciscoCodecAPI.switchToTRACS();
       if (success) {
-        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+        log.info("[switchDisplayToTRACS] successfully switched back to TRACS display");
       } else {
-        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+        log.error("[switchDisplayToTRACS] failed to switch back to TRACS display");
       }
+    } else {
+      log.info("[switchDisplayToTRACS] codec already reads TRACS active, not sending switch");
     }
   }
 

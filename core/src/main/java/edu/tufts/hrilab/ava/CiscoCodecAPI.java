@@ -105,13 +105,22 @@ public class CiscoCodecAPI {
     }
     log.debug("[getActiveConnectorId] Status: {}", status);
 
-    if (status.contains("<ghost>True</ghost>") || !status.contains("<Source>")) {
+    if (status.contains("<ghost>True</ghost>")) {
       return -1;
     }
 
-    int sourceStart = status.indexOf("<Source>");
-    int sourceEnd = status.indexOf("</Source>");
-    if (sourceStart != -1 && sourceEnd != -1) {
+    //a LocalInstance element exists exactly while a local presentation is up: verified on
+    //ce11.40.1.1 that Presentation Stop removes it,
+    //Start recreates it, and Mode stays Off throughout for LocalOnly shares -- so Mode
+    //says nothing about local state. scope the Source read to the instance rather than
+    //taking the first Source anywhere in the document.
+    int instanceStart = status.indexOf("<LocalInstance");
+    if (instanceStart == -1) {
+      return -1;
+    }
+    int sourceStart = status.indexOf("<Source>", instanceStart);
+    int sourceEnd = status.indexOf("</Source>", instanceStart);
+    if (sourceStart != -1 && sourceEnd != -1 && sourceStart < sourceEnd) {
       try {
         return Integer.parseInt(status.substring(sourceStart + 8, sourceEnd).trim());
       } catch (NumberFormatException e) {
