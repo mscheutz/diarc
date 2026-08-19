@@ -66,7 +66,7 @@ import java.util.Map;
               !fillerString = tsc:samplePreValidationFillerPhrase(?utterance,true);
             }
             async {
-              act:generateResponseFromString(?speaker,!fillerString);
+              act:generateResponseFromString(!addressee,!fillerString);
             }
           }
 
