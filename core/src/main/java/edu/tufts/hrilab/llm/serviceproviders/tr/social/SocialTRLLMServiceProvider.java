@@ -64,6 +64,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
+  private volatile long currentStreamingUid = -1;
 
   /**
    * Maintained set of ChatCollections, split by user/AgentTeam pair
@@ -558,7 +559,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //// Send created chat to LLM completion
     Completion response;
     if (useStreaming) {
-      response = callChatCompletionStreaming(chat, tools);
+      response = callChatCompletionStreaming(chat, tools, utterance.getUid());
     } else {
       response = callChatCompletion(chat, tools);
     }
@@ -637,7 +638,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
       Completion retryResponse;
       if (useStreaming) {
-        retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
+        retryResponse = callChatCompletionStreaming(chatContext.history, toolList, utterance.getUid());
       } else {
         retryResponse = callChatCompletion(chatContext.history, toolList);
       }
@@ -1171,8 +1172,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "their original intention or adding additional information, then you may update your definition with the new information and attempt another updated tool submission call. " +
             "2. Otherwise, please continue with your original task to resolve the misunderstanding.", currentContext.toolCallIdUpForValidation);
 
-    // Call completion with user response and tool message
-    Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
+    // Call completion with user response and tool message. Built from the original utterance so
+    // the reattempt streams under the same uid the ASL unbuffers; the rejected parse's semantics,
+    // bindings, and descriptors are cleared so the corrected parse starts clean.
+    Utterance tempUtterance = new Utterance.Builder(utterance)
+            .setBindings(new ArrayList<>())
+            .setSupplementalSemantics(new ArrayList<>())
+            .setTierAssignments(new LinkedHashMap<>())
+            .build();
+    tempUtterance.setSemantics(null);
     tempUtterance.setNeedsValidation(true);
     tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
 
@@ -1276,7 +1284,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     Completion llmResponse;
     if (streamingSayText) {
-      llmResponse = callChatCompletionStreaming(genChat, null);
+      llmResponse = callChatCompletionStreaming(genChat, null, utterance.getUid());
     } else {
       llmResponse = callChatCompletion(genChat, null);
     }
@@ -1944,8 +1952,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (fragment == null || fragment.isEmpty()) return;
     ttsStreamedIds.add(currentStreamingResponseId);
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class))
-              .call(void.class, fragment);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class, Long.class))
+              .call(void.class, fragment, currentStreamingUid);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] pushStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
@@ -1956,8 +1964,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private void ttsEnd() {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(Boolean.class))
-              .call(Boolean.class, false);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(Boolean.class, Long.class))
+              .call(Boolean.class, false, currentStreamingUid);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
@@ -1974,7 +1982,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
-  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools) {
+  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools, long uid) {
+    currentStreamingUid = uid;
     TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class, Chat.class);
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {
