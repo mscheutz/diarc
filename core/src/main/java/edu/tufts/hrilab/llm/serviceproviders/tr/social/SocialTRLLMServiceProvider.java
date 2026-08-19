@@ -489,124 +489,135 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
 
-    List<ToolDefinition> tools;
-    synchronized (currentChatCollections) {
-      // Check for external parser notification between grabbing input lock and synchronized block
-      if (!chatCollection.shouldProcess(utterance)) {
-        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
-        return utterance;
-      }
-
-      // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
-      // existing state
-      chatContext = chatCollection.currentChat;
-      if (chatContext == null) {
-        chat = new Chat(user.getName(), agentTeam.getName());
-        chatContext = new ChatContext(chat);
-        chatCollection.currentChat = chatContext;
-      }
-
-      //// Update chats based on current state
-      Prompt systemTemplate;
-      ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
-      if (chatTemplates == null) {
-        log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
-        return utterance;
-      }
-      // Pull correct template and update system message and tool targets based off current state
-      if (chatContext.chatState == ChatState.VALIDATION) {
-        systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
-        tools = new ArrayList<>();
-        Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
-        if (focusedTextResponseTool != null) {
-          tools.add(focusedTextResponseTool.toolDefinition);
-        } else {
-          tools.add(textResponseTool.toolDefinition);
+    try {
+      List<ToolDefinition> tools;
+      synchronized (currentChatCollections) {
+        // Check for external parser notification between grabbing input lock and synchronized block
+        if (!chatCollection.shouldProcess(utterance)) {
+          chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
+          return utterance;
         }
 
-        // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
-        //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
-        chat = new Chat(user.getName(), agentTeam.getName());
-        promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
-        //chatContext.history.addUserMessage(utterance.getWordsAsString());
-      } else {
-        systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
-        tools = new ArrayList<>(chatTemplates.toolDefinitions);
-        chat = chatContext.history;
-      }
+        // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
+        // existing state
+        chatContext = chatCollection.currentChat;
+        if (chatContext == null) {
+          chat = new Chat(user.getName(), agentTeam.getName());
+          chatContext = new ChatContext(chat);
+          chatCollection.currentChat = chatContext;
+        }
 
-      if (chatContext.chatType == ChatType.FOCUSED) {
-        tools.addAll(universalFocusedToolDefinitions);
-        // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+        //// Update chats based on current state
+        Prompt systemTemplate;
+        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        if (chatTemplates == null) {
+          log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
+          chatCollection.signalInputProcessed(utterance);
+          return utterance;
+        }
+        // Pull correct template and update system message and tool targets based off current state
         if (chatContext.chatState == ChatState.VALIDATION) {
+          systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
+          tools = new ArrayList<>();
+          Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+          if (focusedTextResponseTool != null) {
+            tools.add(focusedTextResponseTool.toolDefinition);
+          } else {
+            tools.add(textResponseTool.toolDefinition);
+          }
+
+          // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
+          //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
+          chat = new Chat(user.getName(), agentTeam.getName());
+          promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
+          //chatContext.history.addUserMessage(utterance.getWordsAsString());
+        } else {
+          systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
+          tools = new ArrayList<>(chatTemplates.toolDefinitions);
+          chat = chatContext.history;
+        }
+
+        if (chatContext.chatType == ChatType.FOCUSED) {
+          tools.addAll(universalFocusedToolDefinitions);
+          // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+          }
+        } else {
+          // Add all matching system question response tools based off of expected reply semantics
           tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
         }
-      } else {
-        // Add all matching system question response tools based off of expected reply semantics
-        tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
-      }
 
-      // Apply input as user message
-      if (!reattemptedParse) {
-        chat.addUserMessage(utterance.getWordsAsString());
-      }
-
-      // Update and apply prompt vars
-      updatePromptVars(utterance, true);
-      chat.setSystem(systemTemplate.apply(promptVars));
-    }
-
-    //// Send created chat to LLM completion
-    Completion response;
-    if (useStreaming) {
-      response = callChatCompletionStreaming(chat, tools, utterance.getUid());
-    } else {
-      response = callChatCompletion(chat, tools);
-    }
-
-    if (response == null) {
-      log.error("[parseUtteranceLLMService] have null Completion response");
-      handleErrorResponse(utterance, true, false);
-      return utterance;
-    } else {
-      resetErrorCount(false, user, agentTeam);
-    }
-
-    log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
-
-    synchronized (currentChatCollections) {
-      // Check for external parser notification between grabbing input lock and this synchronized block
-      if (!chatCollection.shouldProcess(utterance)) {
-        log.info("[parseUtteranceLLMService] external parser hit, returning without processing {}", response.toolCalls);
-        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
-        return utterance;
-      }
-
-      StringBuilder errorResponseBuilder = new StringBuilder();
-
-      //TODO: handling multiple tool calls present
-      //TODO: handling text response and tool call(s) present
-      //// Handle Responses
-      Utterance output;
-      if (response.toolCalls.isEmpty()) {
-        // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
-        //    Add robot message to chat and return generateResponse semantics with no validation required
-        output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder, useStreaming);
-      } else {
-        if (chatContext.chatState == ChatState.VALIDATION) {
-          // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
-          //  to terminate and/or transfer between base and focused contexts in this case)
-          output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
-        } else {
-          // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
-          output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+        // Apply input as user message
+        if (!reattemptedParse) {
+          chat.addUserMessage(utterance.getWordsAsString());
         }
+
+        // Update and apply prompt vars
+        updatePromptVars(utterance, true);
+        chat.setSystem(systemTemplate.apply(promptVars));
       }
 
-      if (output == null) {
-        output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming);
+      //// Send created chat to LLM completion
+      Completion response;
+      if (useStreaming) {
+        response = callChatCompletionStreaming(chat, tools, utterance.getUid());
+      } else {
+        response = callChatCompletion(chat, tools);
       }
-      return output;
+
+      if (response == null) {
+        log.error("[parseUtteranceLLMService] have null Completion response");
+        handleErrorResponse(utterance, true, false);
+        return utterance;
+      } else {
+        resetErrorCount(false, user, agentTeam);
+      }
+
+      log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
+
+      synchronized (currentChatCollections) {
+        // Check for external parser notification between grabbing input lock and this synchronized block
+        if (!chatCollection.shouldProcess(utterance)) {
+          log.info("[parseUtteranceLLMService] external parser hit, returning without processing {}", response.toolCalls);
+          chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
+          return utterance;
+        }
+
+        StringBuilder errorResponseBuilder = new StringBuilder();
+
+        //TODO: handling multiple tool calls present
+        //TODO: handling text response and tool call(s) present
+        //// Handle Responses
+        Utterance output;
+        if (response.toolCalls.isEmpty()) {
+          // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
+          //    Add robot message to chat and return generateResponse semantics with no validation required
+          output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder, useStreaming);
+        } else {
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
+            //  to terminate and/or transfer between base and focused contexts in this case)
+            output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+          } else {
+            // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
+            output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+          }
+        }
+
+        if (output == null) {
+          output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming);
+        }
+        return output;
+      }
+    } catch (RuntimeException e) {
+      // the dialogue history update is what normally releases the lock we took above, and
+      // it never runs if we throw out of here, so later utterances would just sit waiting
+      log.error("[parseUtteranceLLMService] failed while processing {}", utterance, e);
+      if (!reattemptedParse) {
+        chatCollection.signalInputProcessed(utterance);
+      }
+      throw e;
     }
   }
 
@@ -1199,27 +1210,31 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             .build();
     tempUtterance.setSemantics(null);
     tempUtterance.setNeedsValidation(true);
-    tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
+    try {
+      tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
 
-    if (tempUtterance.getSemantics() == null) {
-      log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
-      tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString", utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
-      tempUtterance.setNeedsValidation(false);
-      tempUtterance.setType(UtteranceType.INSTRUCT);
-    } else if (tempUtterance.getType() == UtteranceType.UNKNOWN) {
-      tempUtterance.setType(UtteranceType.INSTRUCT);
+      if (tempUtterance.getSemantics() == null) {
+        log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
+        tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString", utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
+        tempUtterance.setNeedsValidation(false);
+        tempUtterance.setType(UtteranceType.INSTRUCT);
+      } else if (tempUtterance.getType() == UtteranceType.UNKNOWN) {
+        tempUtterance.setType(UtteranceType.INSTRUCT);
+      }
+
+      //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
+      utterance.setSemantics(tempUtterance.getSemantics());
+      utterance.setBindings(tempUtterance.getBindings());
+      utterance.setSupplementalSemantics(tempUtterance.getSupplementalSemantics());
+      utterance.setIndirectSemantics(tempUtterance.getIndirectSemantics());
+      utterance.setTierAssignments(tempUtterance.getTierAssignments());
+      utterance.setNeedsValidation(tempUtterance.needsValidation());
+      utterance.setType(tempUtterance.getType());
+    } finally {
+      // the negative validation reply's input claim is still held here (its history update
+      // skips the signal), so clearing the field without signalling would leave waiters parked
+      chatCollection.signalInputProcessed();
     }
-
-    //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
-    utterance.setSemantics(tempUtterance.getSemantics());
-    utterance.setBindings(tempUtterance.getBindings());
-    utterance.setSupplementalSemantics(tempUtterance.getSupplementalSemantics());
-    utterance.setIndirectSemantics(tempUtterance.getIndirectSemantics());
-    utterance.setTierAssignments(tempUtterance.getTierAssignments());
-    utterance.setNeedsValidation(tempUtterance.needsValidation());
-    utterance.setType(tempUtterance.getType());
-
-    chatCollection.utteranceBeingProcessed = null;
     boolean ret = utterance.needsValidation();
     if (!ret) {
       // This is kind of weird, but we need to set isValidated to true even for things normally not needing validation
