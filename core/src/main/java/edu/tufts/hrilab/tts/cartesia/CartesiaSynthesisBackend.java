@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +47,9 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
   private HttpClient httpClient;
   private final Object wsLock = new Object();
   private volatile WebSocket ws;
-  private final CartesiaWsListener listener = new CartesiaWsListener();
+  // last time anything came back on the socket at all -- this is per socket, not per
+  // session, so with two contexts running the other one's frames count too
+  private volatile long lastFrameNs;
   private final Map<String, Sink> sinks = new ConcurrentHashMap<>();
 
   public CartesiaSynthesisBackend(String voiceId, String model, String language, String speed) {
@@ -129,10 +132,12 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
         return ws;
       }
       try {
+        // one listener per connection: the jdk only serializes callbacks within a socket,
+        // and a retry can leave two sockets delivering at once
         WebSocket newWs = httpClient.newWebSocketBuilder()
                 .header("X-API-Key", apiKey)
                 .connectTimeout(Duration.ofSeconds(10))
-                .buildAsync(URI.create(WS_URL), listener)
+                .buildAsync(URI.create(WS_URL), new CartesiaWsListener())
                 .get(10, TimeUnit.SECONDS);
         ws = newWs;
         log.info("[cartesia-ws] connected");
@@ -144,10 +149,23 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
     }
   }
 
+  // take the sink out of the map before calling it, so if two threads both try to finish the
+  // same context only one of them ends up calling end or error on it
+  private void finishSink(String contextId, String error) {
+    Sink sink = sinks.remove(contextId);
+    if (sink == null) {
+      return;
+    }
+    if (error == null) {
+      sink.end();
+    } else {
+      sink.error(error);
+    }
+  }
+
   private void failAll(String reason) {
-    for (Map.Entry<String, Sink> entry : sinks.entrySet()) {
-      entry.getValue().error(reason);
-      sinks.remove(entry.getKey());
+    for (String contextId : sinks.keySet()) {
+      finishSink(contextId, reason);
     }
   }
 
@@ -155,6 +173,9 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
     private final String contextId;
     private final Sink sink;
     private volatile boolean aborted = false;
+    private volatile boolean sentAny = false;
+    private volatile long firstSendNs;
+    private volatile CompletableFuture<WebSocket> pendingSend;
 
     CartesiaSession(String contextId, Sink sink) {
       this.contextId = contextId;
@@ -177,29 +198,67 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
       aborted = true;
       // no wire-level cancel; the server drains the context into a deregistered sink
       sinks.remove(contextId);
+      CompletableFuture<WebSocket> inFlight = pendingSend;
+      if (inFlight != null) {
+        inFlight.cancel(true);
+      }
+      // if nothing at all has come back on the socket since we started sending, it is
+      // probably dead in a way that never actually closes, so drop it and let the next
+      // utterance reconnect. Not taking wsLock here: a connect in progress holds it for
+      // its whole timeout, and this runs on the audio thread when the user interrupts
+      if (sentAny && lastFrameNs < firstSendNs) {
+        log.warn("[abort] nothing has come back on the ws since this send; dropping it");
+        WebSocket dead = ws;
+        if (dead != null) {
+          ws = null;
+          dead.abort();
+        }
+      }
     }
 
     private void send(String text, boolean keepContinue) {
       if (aborted || sink.isAborted()) {
         return;
       }
+      if (!sentAny) {
+        sentAny = true;
+        firstSendNs = System.nanoTime();
+      }
       String body = buildRequestBody(text, contextId, keepContinue);
+      WebSocket conn = null;
       try {
-        WebSocket conn = ensureConnected();
-        conn.sendText(body, true).get(5, TimeUnit.SECONDS);
+        conn = ensureConnected();
+        CompletableFuture<WebSocket> sent = conn.sendText(body, true);
+        pendingSend = sent;
+        sent.get(5, TimeUnit.SECONDS);
       } catch (Exception e) {
+        if (aborted || sink.isAborted()) {
+          return;
+        }
         log.warn("[send] sendText failed, resetting WS and retrying: {}", e.toString());
+        // close the socket being discarded, or it lingers and closes on its own later
         synchronized (wsLock) {
-          ws = null;
+          if (ws == conn) {
+            ws = null;
+          }
+        }
+        if (conn != null) {
+          conn.abort();
         }
         try {
-          WebSocket conn = ensureConnected();
-          conn.sendText(body, true).get(5, TimeUnit.SECONDS);
+          WebSocket retryConn = ensureConnected();
+          CompletableFuture<WebSocket> sent = retryConn.sendText(body, true);
+          pendingSend = sent;
+          sent.get(5, TimeUnit.SECONDS);
         } catch (Exception e2) {
+          if (aborted || sink.isAborted()) {
+            return;
+          }
           log.error("[send] sendText retry failed", e2);
-          sinks.remove(contextId);
-          sink.error("sendText failed: " + e2);
+          finishSink(contextId, "sendText failed: " + e2);
         }
+      } finally {
+        pendingSend = null;
       }
     }
   }
@@ -226,19 +285,38 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
     @Override
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
       log.info("[cartesia-ws] closed status={} reason={}", statusCode, reason);
-      synchronized (wsLock) { if (ws == webSocket) ws = null; }
-      failAll("ws closed: " + statusCode + " " + reason);
+      // an orphaned socket from a send retry closes late; only the live one takes
+      // the sessions down with it
+      boolean current;
+      synchronized (wsLock) {
+        current = (ws == webSocket);
+        if (current) {
+          ws = null;
+        }
+      }
+      if (current) {
+        failAll("ws closed: " + statusCode + " " + reason);
+      }
       return null;
     }
 
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
       log.error("[cartesia-ws] error: {}", error.toString());
-      synchronized (wsLock) { if (ws == webSocket) ws = null; }
-      failAll("ws error: " + error);
+      boolean current;
+      synchronized (wsLock) {
+        current = (ws == webSocket);
+        if (current) {
+          ws = null;
+        }
+      }
+      if (current) {
+        failAll("ws error: " + error);
+      }
     }
 
     private void handleMessage(String msg) {
+      lastFrameNs = System.nanoTime();
       try {
         JsonObject obj = JsonParser.parseString(msg).getAsJsonObject();
         JsonElement ctxEl = obj.get("context_id");
@@ -277,16 +355,13 @@ public class CartesiaSynthesisBackend implements SynthesisBackend {
             }
           }
           if (obj.has("done") && !obj.get("done").isJsonNull() && obj.get("done").getAsBoolean()) {
-            sinks.remove(contextId);
-            sink.end();
+            finishSink(contextId, null);
           }
         } else if ("done".equals(type)) {
-          sinks.remove(contextId);
-          sink.end();
+          finishSink(contextId, null);
         } else if ("error".equals(type)) {
           log.error("[cartesia-ws] error frame: {}", msg);
-          sinks.remove(contextId);
-          sink.error("error frame");
+          finishSink(contextId, "error frame");
         }
       } catch (Exception e) {
         log.warn("[cartesia-ws] handleMessage parse failed: {} msg-head={}", e.toString(),
