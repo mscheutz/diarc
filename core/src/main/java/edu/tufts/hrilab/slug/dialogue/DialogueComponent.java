@@ -175,13 +175,7 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public void updateDialogueHistory(Utterance utt) {
-    updateDialogueHistory(utt,true);
-  }
-
-  //TODO: revisit base LLM nlu.asl validation to see if we can fully remove newUtterance
-  @TRADEService
-  @Action
-  public void updateDialogueHistory(Utterance utt, boolean newUtterance) {
+    boolean newUtterance = true;
     // TODO: is dialogue history not trimmed? Is this problematic for long term deployments?
     // (SocialLLM) Can now use Utterance ID to detect whether the input is actually new or post-(re)validation
     List<Utterance> history = diaLog.getDialogueHistory();
