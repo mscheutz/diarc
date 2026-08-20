@@ -35,7 +35,7 @@ public class AvaMaryTTSComponent extends MaryTTSComponent {
     } catch (TRADEException e) {
       log.warn("[sayText] unable to call isLocalAddressee from FrontEndConfigurationComponent");
     }
-    if (!isLocal) {
+    if (isLocal) {
       boolean result = sayText(utterance.getWordsAsString(), wait);
       // Experimental - automatically trigger WW on any SocialLLM text response call. Will still cause a few unnecessary
       //  "false positive" WW triggers in practice.
