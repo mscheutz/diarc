@@ -69,7 +69,7 @@ import java.util.Map;
                !fillerString = tsc:sampleGoalAchievedPhrase(!semantics);
              }
             async {
-              act:generateResponseFromString(?speaker,!fillerString);
+              act:generateResponseFromString(!addressee,!fillerString);
             }
           }
 
