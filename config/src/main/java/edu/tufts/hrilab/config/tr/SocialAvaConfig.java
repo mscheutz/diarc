@@ -172,7 +172,12 @@ public class SocialAvaConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
     //TODO: proper configuration
-    createInstance(FrontEndConfigurationComponent.class);
+    // ava always listens on the ww loop; streaming only when the tts is the streaming component
+    String frontEndArgs = "-wwBasedASR";
+    if (useLocalTTS || useCartesia) {
+      frontEndArgs += " -streamingTTS";
+    }
+    createInstance(FrontEndConfigurationComponent.class, frontEndArgs);
 
 //    if (useLLMNLG || useLLMParser) {
 //      //createInstance(SocialAvaLLMServiceProvider.class,"");

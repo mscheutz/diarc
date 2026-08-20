@@ -41,13 +41,22 @@ public class FrontEndConfigurationComponent extends DiarcComponent
 
    @Override
    protected List<Option> additionalUsageInfo() {
-      //TODO
-      return new ArrayList<>();
+      // TODO: only the two switches the ava config needs for now. the rest of the flags
+      // above are still hardcoded and want a real configuration pass
+      List<Option> options = new ArrayList<>();
+      options.add(Option.builder("streamingTTS").desc("stream llm replies to the tts as they generate").build());
+      options.add(Option.builder("wwBasedASR").desc("listening is wake word driven, rearm after replies").build());
+      return options;
    }
 
    @Override
    protected void parseArgs(CommandLine cmdLine) {
-      //TODO
+      if (cmdLine.hasOption("streamingTTS")) {
+         useStreamingTTS = true;
+      }
+      if (cmdLine.hasOption("wwBasedASR")) {
+         useWWBasedASR = true;
+      }
    }
 
    @Override
