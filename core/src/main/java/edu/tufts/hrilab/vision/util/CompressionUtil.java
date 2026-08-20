@@ -3,13 +3,14 @@
  */
 package edu.tufts.hrilab.vision.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Code to compress/decompress a byte array.

@@ -11,18 +11,18 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 () = cancelCurrentTask() {
     act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Canceled");
+    act:generateResponseFromString("Current task has been canceled");
 }
 
 () = cancelAllQueuedTasks() {
     act:cancelAllPendingGoals();
-    act:generateResponseFromString("Canceled");
+    act:generateResponseFromString("Queued tasks have been canceled");
 }
 
 () = cancelAllCurrentAndQueuedTasks() {
     act:cancelAllPendingGoals();
     act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Canceled");
+    act:generateResponseFromString("Existing tasks have been canceled");
 }
 
 () = suspendSystemGoalsBlocking() {
@@ -56,8 +56,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         !goalId = op:get(!goalIds,0);
         !status = tsc:getGoalStatus(!goalId);
         op:log("debug","[suspendSystemGoalsBlocking] have initial status for goal to suspend: !status");
-        !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
-        op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
+        if (~op:equalsValue(!status,SUSPENDED)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+            op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
+        }
         //Need to write this way because we can't short circuit ||, throws exception when comparing null
         if (~op:isNull(!status)) {
             if (op:equalsValue(!status,SUSPENDED)) {
@@ -169,8 +171,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         !goalId = op:get(!goalIds,0);
         !status = tsc:getGoalStatus(!goalId);
         op:log("debug","[cancelSystemGoalsBlocking] have initial status for goal to cancel: !status");
-        !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
-        op:log("debug","[cancelSystemGoalsBlocking] have status update for canceled goal: !status");
+        if (~op:equalsValue(!status,CANCELED)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+            op:log("debug","[cancelSystemGoalsBlocking] have status update for canceled goal: !status");
+        }
         //Need to write this way because we can't short circuit ||, throws exception when comparing null
         if (~op:isNull(!status)) {
             if (op:equalsValue(!status,CANCELED)) {

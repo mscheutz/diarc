@@ -78,6 +78,16 @@ public class CachedParserComponent extends DiarcComponent {
    */
   @TRADEService
   public void addEntryToCache(Utterance entry) {
+    //TODO: need to generalize this and make sure the cache cannot store hits for focused template actions. Or things
+    //  need to be updated such that LLM state is still appropriately updated (with any relevant context included) in
+    //  the case of external hits
+    if (entry != null && entry.getSemantics() != null) {
+      String name = entry.getSemantics().getName();
+      if (name.equals("learnMission") || name.equals("learnTaskSequence") || name.equals("scheduleTask")) {
+        log.debug("[addEntryToCache] not adding entry for focused template context target");
+        return;
+      }
+    }
     database.add(entry, language);
   }
 

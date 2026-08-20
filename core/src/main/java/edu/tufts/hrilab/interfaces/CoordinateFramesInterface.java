@@ -3,27 +3,15 @@
  */
 package edu.tufts.hrilab.interfaces;
 
-import java.util.List;
-import javax.vecmath.Matrix4d;
-
 import ai.thinkingrobots.trade.TRADEService;
+
+import javax.vecmath.Matrix4d;
+import java.util.List;
 
 /**
  * Core interface for robot coordinate frames and their transformations.
  */
 public interface CoordinateFramesInterface {
-
-  /**
-   * Get the current transform from the base of the robot to whichever frame you
-   * specify. This is just a convenience method for the more general
-   * getTransform(src,dest).
-   *
-   * @param dstFrame
-   * @return
-   *
-   */
-  @TRADEService
-  Matrix4d getTransform(String dstFrame);
 
   /**
    * Get the current transform to convert from one local coordinate frame to a

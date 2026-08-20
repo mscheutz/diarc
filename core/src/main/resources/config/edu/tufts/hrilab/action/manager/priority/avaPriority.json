@@ -310,5 +310,9 @@
   "getInformationAroundTeachingLocationsAndNavigation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "getAllKnownRooms": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

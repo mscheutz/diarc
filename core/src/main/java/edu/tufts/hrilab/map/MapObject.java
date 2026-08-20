@@ -4,18 +4,18 @@
 
 package edu.tufts.hrilab.map;
 
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.util.Convert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.tufts.hrilab.fol.Symbol;
-
-import java.lang.*;
-import java.util.*;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class MapObject {
 

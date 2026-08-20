@@ -24,7 +24,7 @@
 
 #include "saliency/MasterSaliencyProcessor.hpp"
 
-#if defined(OPENCV_DNN)
+#if defined(OPENCV_DNN) && defined(USE_PYTHON)
 #include "validator/ComponentValidator.hpp"
 #endif //OPENCV_DNN
 
@@ -125,10 +125,10 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
     case SIZEVALIDATOR:
       return SizeValidator::Ptr(new SizeValidator(processorId, imgWidth, imgHeight, isStereo));
     case COMPONENTVALIDATOR:
-#if defined(OPENCV_DNN)
+#if defined(OPENCV_DNN) && defined(USE_PYTHON)
       return ComponentValidator::Ptr(new ComponentValidator(processorId, imgWidth, imgHeight, isStereo));
 #else
-      LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+.");
+      LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+ and pybind11.");
       break;
 #endif
     case SPATIALRELATIONVALIDATOR:
@@ -148,7 +148,6 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
 ImageProcessor::ImageProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : VisionProcess(processorId, imgWidth, imgHeight),
 is_stereo(isStereo) {
-  ignoreOlderNotifications = true;
 
   logger = log4cxx::Logger::getLogger("diarc.imgproc.ImageProcessor");
 }

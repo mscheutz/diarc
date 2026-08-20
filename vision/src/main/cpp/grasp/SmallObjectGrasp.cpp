@@ -19,10 +19,10 @@
 
 using namespace diarc::grasp;
 
-SmallObjectGrasp::SmallObjectGrasp()
+SmallObjectGrasp::SmallObjectGrasp(const std::string &config)
     : size_thresh(0.07),
       gripper_depth(0.07) {
-  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.SmallObjectGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.grasp.SmallObjectGrasp");
 }
 
 SmallObjectGrasp::~SmallObjectGrasp() {
@@ -77,11 +77,13 @@ void SmallObjectGrasp::calculateMinBB(pcl::PointCloud<pcl::PointXYZ>::ConstPtr c
   rrect = cv::minAreaRect(points_mat);
   rrect.points(rrPts);
 
-    LOG4CXX_INFO(logger, boost::format("object bb (2D): (%f,%f), (%f,%f), (%f,%f), (%f,%f).")
+  if (logger->isDebugEnabled()) {
+    LOG4CXX_DEBUG(logger, boost::format("object bb (2D): (%f,%f), (%f,%f), (%f,%f), (%f,%f).")
         % rrPts[0].x % rrPts[0].y
         % rrPts[1].x % rrPts[1].y
         % rrPts[2].x % rrPts[2].y
         % rrPts[3].x % rrPts[3].y);
+  }
 
   // find z-height of min bb, using cloud that has been transformed into base frame,
   // that way, using the axis-aligned BB will give a reasonable z-range
@@ -132,114 +134,95 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::Po
 
   //////////////// top-down grasp
 
+  // TODO: should the other 3 top-down grasps be added too?
 
-    pcl::PointXYZ one(rrPts[0].x, rrPts[0].y, 0.0);
-    pcl::PointXYZ two(rrPts[1].x, rrPts[1].y, 0.0);
-    pcl::PointXYZ three(rrPts[2].x, rrPts[2].y, 0.0);
-    pcl::PointXYZ four(rrPts[3].x, rrPts[3].y, 0.0);
+  // rotate z-y_angle to align with minimum bb, then y-90 so x-axis is facing down
+  Eigen::Affine3f Y = Eigen::Affine3f(Eigen::AngleAxisf(0.5 * M_PI, Eigen::Vector3f::UnitY()));
+  Eigen::Affine3f Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle, Eigen::Vector3f::UnitZ()));
+  Eigen::Affine3f RXYZ = transform * Z * Y;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr
-        grasp_points = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  // make sure gripper isn't reaching too far into object
+//  float z_val = (abs(mass_center_base(2) - z_max) < gripper_depth) ? mass_center_base(2) : z_max - gripper_depth;
+  float z_val = z_max;
+  Eigen::Vector3f position(mass_center_base(0), mass_center_base(1), z_val);
 
-    grasp_points->push_back(one);
-    grasp_points->push_back(two);
-    grasp_points->push_back(three);
-    grasp_points->push_back(four);
+  grasps.push_back(createGraspPose(cloud, RXYZ, position));
 
-    grasps.push_back(Grasp(grasp_points, Eigen::Quaternionf()));
+  ///////////////// 2 grasps along width axis (i.e., short side) of 2D non-axis-aligned BB
 
-    return grasps;
+  // this should always be the case
+  if (bb_width < size_thresh) {
+    // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
+    if (bb_length / 2 > gripper_depth) {
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).");
+    }
+
+    // rotate z-y_angle so y-axis is aligned along minor axis of 2D BB (i.e., gripper is grasping along short edge)
+    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle, Eigen::Vector3f::UnitZ()));
+    RXYZ = transform * Z;
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
+
+    // rotate z-y_angle+180
+    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + M_PI, Eigen::Vector3f::UnitZ()));
+    RXYZ = transform * Z;
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
+  }
+
+
+  ///////////////// 2 grasps along length axis (i.e., long side) of 2D non-axis-aligned BB
+
+  if (bb_length < size_thresh) {
+    // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
+    if (bb_width / 2 > gripper_depth) {
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).");
+    }
+
+    // rotate z90 so y-axis is aligned along major axis of 2D BB (i.e., gripper is grasping along long edge)
+    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 0.5 * M_PI, Eigen::Vector3f::UnitZ()));
+    RXYZ = transform * Z;
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
+
+    // rotate z270
+    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 1.5 * M_PI, Eigen::Vector3f::UnitZ()));
+    RXYZ = transform * Z;
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
+  }
+
+  //  ////////////////////// DEBUG VIZ CODE /////////////////////////////
+
+//  //create the pcl viewer
+//  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Grasp Debug"));
+//
+//  //add cloud to viewer
+//  viewer->addPointCloud<pcl::PointXYZRGB>(object->getCaptureData()->cloudRGB, "scene_cloud");
+//  viewer->addPointCloud<pcl::PointXYZ>(cloud, "object_cloud");
+//
+//  viewer->initCameraParameters();
+//  viewer->addCoordinateSystem(0.1, "camera", 0);
+//  viewer->setPosition(0, 0);
+//  viewer->setSize(640, 480);
+//
+//  for (int i = 0; i < grasps.size(); ++i) {
+////  for (int i = 0; i < 2; ++i) {
+//    pcl::PointXYZ center(grasps.at(i).points->at(0).x, grasps.at(i).points->at(0).y, grasps.at(i).points->at(0).z);
+//    std::string pt_id = "grasp_center_" + std::to_string(i);
+//    std::string orient_id = "grasp_orient_" + std::to_string(i);
+//    viewer->addSphere(center, 0.01, 255, 0, 0, pt_id, 0);
+//    viewer->addCoordinateSystem(0.1, debuggingOrientations[i], orient_id, 0);
+//  }
+//
+//  //runviewer until closed
+//  while (!viewer->wasStopped()) {
+//    viewer->spinOnce(100);
+//    boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+//  }
+//
+//  viewer->close();
+//  ////////////////////// DEBUG VIZ CODE /////////////////////////////
+
+  debuggingOrientations.clear();
+  return grasps;
 }
-
-//  // TODO: should the other 3 top-down grasps be added too?
-//
-//  // rotate z-y_angle to align with minimum bb, then y-90 so x-axis is facing down
-//  Eigen::Affine3f Y = Eigen::Affine3f(Eigen::AngleAxisf(0.5 * M_PI, Eigen::Vector3f::UnitY()));
-//  Eigen::Affine3f Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle, Eigen::Vector3f::UnitZ()));
-//  Eigen::Affine3f RXYZ = transform * Z * Y;
-//
-//  // make sure gripper isn't reaching too far into object
-////  float z_val = (abs(mass_center_base(2) - z_max) < gripper_depth) ? mass_center_base(2) : z_max - gripper_depth;
-//  float z_val = z_max;
-//  Eigen::Vector3f position(mass_center_base(0), mass_center_base(1), z_val);
-//
-//  grasps.push_back(createGraspPose(cloud, RXYZ, position));
-//
-//  ///////////////// 2 grasps along width axis (i.e., short side) of 2D non-axis-aligned BB
-//
-//  // this should always be the case
-//  if (bb_width < size_thresh) {
-//    // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
-//    if (bb_length / 2 > gripper_depth) {
-//      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).");
-//    }
-//
-//    // rotate z-y_angle so y-axis is aligned along minor axis of 2D BB (i.e., gripper is grasping along short edge)
-//    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle, Eigen::Vector3f::UnitZ()));
-//    RXYZ = transform * Z;
-//    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
-//
-//    // rotate z-y_angle+180
-//    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + M_PI, Eigen::Vector3f::UnitZ()));
-//    RXYZ = transform * Z;
-//    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
-//  }
-//
-//
-//  ///////////////// 2 grasps along length axis (i.e., long side) of 2D non-axis-aligned BB
-//
-//  if (bb_length < size_thresh) {
-//    // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
-//    if (bb_width / 2 > gripper_depth) {
-//      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).");
-//    }
-//
-//    // rotate z90 so y-axis is aligned along major axis of 2D BB (i.e., gripper is grasping along long edge)
-//    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 0.5 * M_PI, Eigen::Vector3f::UnitZ()));
-//    RXYZ = transform * Z;
-//    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
-//
-//    // rotate z270
-//    Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 1.5 * M_PI, Eigen::Vector3f::UnitZ()));
-//    RXYZ = transform * Z;
-//    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
-//  }
-//
-//  //  ////////////////////// DEBUG VIZ CODE /////////////////////////////
-//
-////  //create the pcl viewer
-////  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Grasp Debug"));
-////
-////  //add cloud to viewer
-////  viewer->addPointCloud<pcl::PointXYZRGB>(object->getCaptureData()->cloudRGB, "scene_cloud");
-////  viewer->addPointCloud<pcl::PointXYZ>(cloud, "object_cloud");
-////
-////  viewer->initCameraParameters();
-////  viewer->addCoordinateSystem(0.1, "camera", 0);
-////  viewer->setPosition(0, 0);
-////  viewer->setSize(640, 480);
-////
-////  for (int i = 0; i < grasps.size(); ++i) {
-//////  for (int i = 0; i < 2; ++i) {
-////    pcl::PointXYZ center(grasps.at(i).points->at(0).x, grasps.at(i).points->at(0).y, grasps.at(i).points->at(0).z);
-////    std::string pt_id = "grasp_center_" + std::to_string(i);
-////    std::string orient_id = "grasp_orient_" + std::to_string(i);
-////    viewer->addSphere(center, 0.01, 255, 0, 0, pt_id, 0);
-////    viewer->addCoordinateSystem(0.1, debuggingOrientations[i], orient_id, 0);
-////  }
-////
-////  //runviewer until closed
-////  while (!viewer->wasStopped()) {
-////    viewer->spinOnce(100);
-////    boost::this_thread::sleep(boost::posix_time::microseconds(100000));
-////  }
-////
-////  viewer->close();
-////  ////////////////////// DEBUG VIZ CODE /////////////////////////////
-//
-//  debuggingOrientations.clear();
-//  return grasps;
-//}
 
 Grasp SmallObjectGrasp::createGraspPose(pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud,
                                             const Eigen::Affine3f &orientation,

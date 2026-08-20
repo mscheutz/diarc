@@ -20,6 +20,8 @@ public interface AvaAPIInterface {
 
   RMSResponse setVelocity(float transVel, float rotVel, float stepVel);
 
+  RMSResponse setVelocity(float transVel, float rotVel, float stepVel, boolean nudge);
+
   RMSResponse goToArbitrary(double x, double y);
 
   RMSResponse goToArbitrary(double x, double y, double theta);

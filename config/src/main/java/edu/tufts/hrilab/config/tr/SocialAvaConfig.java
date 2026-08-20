@@ -171,6 +171,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     }
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    //TODO: proper configuration
     createInstance(FrontEndConfigurationComponent.class);
 
 //    if (useLLMNLG || useLLMParser) {

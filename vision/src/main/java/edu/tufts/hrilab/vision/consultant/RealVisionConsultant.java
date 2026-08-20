@@ -40,10 +40,12 @@ public class RealVisionConsultant extends VisionConsultant {
   public Map<Symbol, Double> getActivatedEntities() {
     // get all tokens in STM
     List<MemoryObject> tokens = visionComponent.getTokens();
+    log.debug("[getActivatedEntities] number of tokens: " + tokens.size());
 
     // get/generate the objectRefs
     Map<Symbol, Double> activatedEntities = new HashMap<>();
     for (MemoryObject token : tokens) {
+      log.debug("[getActivatedEntities] token: " + token.getDisplayString());
       // first try to find matching objectRef for token
       Symbol objectRef = null;
       if (visionTypes.containsKey(token.getTypeId())) {

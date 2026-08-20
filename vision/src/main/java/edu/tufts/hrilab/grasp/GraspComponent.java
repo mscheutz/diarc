@@ -5,21 +5,14 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.packing.Quadrilateral;
-import edu.tufts.hrilab.packing.Vector2D;
-import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.common.swig.CommonModule;
 import edu.tufts.hrilab.vision.grasp.swig.GraspDetectorModule;
 import edu.tufts.hrilab.vision.stm.Grasp;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
-import edu.tufts.hrilab.vision.stm.MemoryObjectUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.Pair;
 
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,16 +29,28 @@ public class GraspComponent extends DiarcComponent {
    */
   private String defaultConfigPath = "config/edu/tufts/hrilab/vision";
   private String log4cxxConfig = "log4cxx.txt";
+  private String graspConfig = "grasps.json";
 
   @Override
   protected void init() {
 
-    URL url = Resources.getResource(defaultConfigPath + "/logging", log4cxxConfig);
-    if (url != null) {
-      CommonModule.setLoggingConfiguration(url.getPath());
+    // set log4cxx logging config
+    URL loggingUrl = Resources.getResource(defaultConfigPath + "/logging", log4cxxConfig);
+    if (loggingUrl != null) {
+      CommonModule.setLoggingConfiguration(loggingUrl.getPath());
     } else {
       log.error("Could not find log4cxx configuration file: {}.", log4cxxConfig);
     }
+
+    // load grasp config file
+    URL graspUrl = Resources.getResource(defaultConfigPath + "/grasp", graspConfig);
+    if (graspUrl != null) {
+      GraspDetectorModule.initialize(graspUrl.getPath());
+    } else {
+      log.error("Could not find log4cxx configuration file: {}.", log4cxxConfig);
+    }
+
+    // turn on/off sandbox loop
     shouldRunExecutionLoop = false;
   }
 
@@ -86,75 +91,12 @@ public class GraspComponent extends DiarcComponent {
     return calculateGraspOptions(mo, constraints);
   }
 
+  @TRADEService
   public List<Grasp> calculateGraspOptions(MemoryObject mo) {
     return calculateGraspOptions(mo, new ArrayList<>());
   }
 
-  //tood: (pete) put this somewhere sensible
   @TRADEService
-  public Grasp calculateSingleGraspOption(MemoryObject mo) {
-    List<Grasp> graspOptions = calculateGraspOptions(mo);
-    graspOptions.sort((grasp0, grasp1) -> {
-      Vector3d vertical = new Vector3d(0, 0, -1);
-      double angleA = MemoryObjectUtil.getAngleFromAngle(grasp0, vertical);
-      double angleB = MemoryObjectUtil.getAngleFromAngle(grasp1, vertical);
-      if (angleA == angleB)
-        return 0;
-      else
-        return (angleA < angleB) ? -1 : 1;
-    });
-    if (graspOptions.isEmpty()) {
-      return null;
-    }
-    return graspOptions.get(0);
-  }
-
-@TRADEService
-public double calculateAngleOfObject(MemoryObject mo) {
-    Quadrilateral boundingBox = calculateQuadrilateral(mo);
-    Vector2D bottomLeft = boundingBox.getP4();
-    Vector2D bottomRight = boundingBox.getP3();
-
-  double theta = Math.atan2(bottomRight.y() - bottomLeft.y(), bottomRight.x() - bottomLeft.x());
-  return theta;
-}
-
-@TRADEService
-public Quadrilateral calculateQuadrilateral(MemoryObject mo) {
-  Grasp grasp = calculateGraspOptions(mo).get(0);
-  List <Vector3d> points = new ArrayList<>();
-  for (int i = 0; i < grasp.getNumPoints(); i++) {
-    points.add(grasp.getPoint(i));
-  }
-  points.sort((a, b) -> {
-    if (a.x == b.x)
-      return 0;
-    else
-      return (a.x < b.x) ? -1 : 1;
-  });
-
-  Vector2D bottomLeft;
-  Vector2D bottomRight;
-  Vector2D topLeft;
-  Vector2D topRight;
-  if (points.get(0).y < points.get(1).y) {
-    bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
-    topLeft = new Vector2D(points.get(1).x, points.get(1).y);
-  } else {
-    bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
-    topLeft = new Vector2D(points.get(0).x, points.get(0).y);
-  }
-  if (points.get(2).y < points.get(3).y) {
-    bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
-    topRight = new Vector2D(points.get(3).x, points.get(3).y);
-  } else {
-    bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
-    topRight = new Vector2D(points.get(2).x, points.get(2).y);
-  }
-  log.info("[calculateQuadrilateral] bottom left: " + bottomLeft + " bottom right " + bottomRight + " top left " + topLeft + " top right" + topRight);
-  return new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
-}
-
   public List<Grasp> calculateGraspOptions(MemoryObject mo, List<? extends Term> constraints) {
     double[][] cloud = mo.getPointCloud();
     int numPoints = cloud.length;

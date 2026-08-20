@@ -117,6 +117,19 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
+  // new movebase iface wants these. mock ava's got no global setpose, so nothing
+  public void setPoseGlobal(double x, double y, double theta) {
+    return;
+  }
+
+  // was returning null just to compile -- give it the real (mock) pose so updateRobotPose doesn't npe
+  public double[] getPoseGlobalQuat() {
+    Pair<Point3d, Quat4d> pose = getPose();
+    Point3d p = pose.getLeft();
+    Quat4d q = pose.getRight();
+    return new double[]{p.x, p.y, q.x, q.y, q.z, q.w};
+  }
+
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
@@ -320,6 +333,12 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);  }
 
   @Override
+  public Justification moveForward(double distance) {
+    log.info("[moveForward] called. distance: {}", distance);
+    return new ConditionJustification(true);
+  }
+
+  @Override
   public Justification endSession() {
     log.info("[endSession] called.");
     return new ConditionJustification(true);
@@ -397,15 +416,20 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return 0;
   }
 
-  @Override
+  // same deal as the real component -- used to be a service off the old movebase iface, putting the annotation back
+  @TRADEService
   public Pair<Point3d, Quat4d> getPose() {
     log.debug("[getPose] called.");
     return new MutablePair<>(new Point3d(), new Quat4d());
   }
 
-  @Override
   public void setPose(Point3d location, Quat4d orientation) {
     log.info("[setPose] called.");
+  }
+
+  @Override
+  public Justification goToLocation(Symbol location) {
+    return goToLocation(location, true);
   }
 
   @Override
@@ -431,7 +455,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);
   }
 
-  @Override
   public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
     log.warn("[goToLocation] not implemented.");
     return new ConditionJustification(false);

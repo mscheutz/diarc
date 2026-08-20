@@ -132,6 +132,25 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     return resObj;
   }
 
+  @Override
+  public RMSResponse setVelocity(float translation, float rotation, float sidestep, boolean nudge) {
+    String uri = baseUrl + "/robot/drive/velocity";
+    VelocityRequest request = new VelocityRequest(translation, rotation, sidestep, nudge);
+    String res = null;
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending setVelocity request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, request, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    log.debug("RMSResponse: {}", res);
+
+    return resObj;
+  }
+
   /**
    * Send the robot to an arbitrary position on the map.
    *

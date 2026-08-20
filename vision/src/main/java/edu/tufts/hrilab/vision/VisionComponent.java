@@ -9,6 +9,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.fol.util.PragUtil;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.util.Convert;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.consultant.RealVisionConsultant;
@@ -24,6 +25,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
@@ -256,6 +259,10 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
           Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, baseFrame, cameraCoordinateFrame);
           if (tmpTransform != null) {
             currVisionTransform = tmpTransform;
+            //Quat4d rot = new Quat4d();
+            //currVisionTransform.get(rot);
+            //Point3d euler = Convert.convertToEuler(rot);
+            //log.info("Vision transform height: {} rot: {}", currVisionTransform.m23, Math.toDegrees(euler.x+(Math.PI/2.0)));
           } else {
             log.warn("getTransform returned null, not updating vision transform.");
           }
@@ -571,9 +578,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
   }
 
   @Override
-  public Long getTypeId(Symbol objectRef) {
-    log.debug("[getTypeId] objectRef: " + objectRef);
-    return Vision.consultant.getTypeId(objectRef);
+  public Long getTypeId(Symbol descriptor) {
+    log.debug("[getTypeId] descriptor: " + descriptor);
+
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTypeId(descriptor);
+    } else {
+      return getTypeId(List.of(descriptor));
+    }
   }
 
   @Override
@@ -665,6 +677,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
   }
 
   @Override
+  public List<Long> getTokenIds(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokenIds(descriptor);
+    } else {
+      return getTokenIds(List.of(descriptor));
+    }
+  }
+
+  @Override
   public List<MemoryObject> getTokens() {
     log.trace("[getTokens] called.");
 
@@ -706,6 +728,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     log.trace(String.format("getTokens (by descriptors): %s", descriptors));
     long typeId = getTypeId(descriptors);
     return getTokens(typeId);
+  }
+
+  @Override
+  public List<MemoryObject> getTokens(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokens(descriptor);
+    } else {
+      return getTokens(List.of(descriptor));
+    }
   }
 
   @Override
@@ -893,14 +925,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     }
 
     boolean somethingLearned = false;
-
-    // iterate through sets of bindings
-    for (Map<Variable, Symbol> binding : bindings) {
-      // get the bindings from the bindings list
-      Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
-      Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
-      if (nameLearned != null) {
-        somethingLearned = true;
+    if (bindings.isEmpty()) {
+      Vision.availableLearners.learn(learningTerm);
+    } else {
+      // iterate through sets of bindings
+      for (Map<Variable, Symbol> binding : bindings) {
+        // get the bindings from the bindings list
+        Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
+        Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
+        if (nameLearned != null) {
+          somethingLearned = true;
+        }
       }
     }
 

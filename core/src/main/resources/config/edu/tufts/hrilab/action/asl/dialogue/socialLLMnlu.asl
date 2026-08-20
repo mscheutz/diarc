@@ -80,7 +80,9 @@ import java.lang.String;
         tsc:interruptWaitOnFocusedChat(?user,?agentTeam,?cid);
     } else {
         act:handleParsedUtterance(!responseUtterance);
-        act:triggerWW();
+        if (tsc:usingWWBasedASR(!agentTeam)) {
+            act:triggerWW();
+        }
     }
 }
 
@@ -129,6 +131,20 @@ import java.lang.String;
 }
 
 () = learnTaskSequence() {
+    Symbol !submitter;
+    java.lang.Long !cid;
+    String !contextId;
+
+    !submitter = this:getOriginalSubmitter();
+    !cid = this:getId();
+    !contextId = this:getCommand();
+
+    act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
+
+    op:log("info", "[learnTour] out");
+}
+
+() = learnMission() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -217,4 +233,60 @@ import java.lang.String;
     // TODO: if this instruction doesn't require validation, then we want a longer-form response listing learned steps? (Otherwise we should have already listed each step in the validation question)
     !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
     act:generateResponse(!actionPred);
+}
+
+() = startMission(Predicate ?actionList) {
+    Integer !index;
+    java.util.List !pairs;
+    Integer !numPairs;
+    Predicate !pair;
+    java.util.List !pairArgs;
+    Predicate !actionPred;
+    Predicate !actionSignature;
+    Symbol !location;
+    Symbol !lastLocation;
+    Symbol !action;
+    Symbol !actionName = "definedMission";
+
+    op:log(info,"[submitTourDefinition] ?actionList");
+
+    //act:generateResponseFromString("Compiling mission steps");
+
+    !actionSignature = op:createPredicate(!actionName);
+    async {
+        act:learnAction(!actionSignature);
+    }
+    act:waitForActionLearningStart(!actionSignature);
+
+    !pairs = op:invokeMethod(?actionList, "getArgs");
+    !numPairs = op:invokeMethod(!pairs,"size");
+    for (!index=0; !index lt !numPairs; !index ++) {
+        !action = op:get(!pairs,!index);
+        //!pair = op:get(!pairs,!index);
+        //!pairArgs = op:invokeMethod(!pair, "getArgs");
+        //!location = op:get(!pairArgs,0);
+        //// ASL bug(?) with || not short circuiting requires duplicate blocks
+        //if (op:isNull(!lastLocation)) {
+        //    !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+        //    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+        //    act:submitGoal(!actionPred);
+        //} elseif (~op:equalsValue(!location,!lastLocation)) {
+        //    !lastLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!location");
+        //    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","goToLocation",?actor,!location);
+        //    act:submitGoal(!actionPred);
+        //}
+        //!action = op:get(!pairArgs,1);
+        act:submitGoal(!action);
+    }
+
+    act:endActionLearning(!actionSignature);
+
+    //// TODO: if this instruction doesn't require validation, then we want the long-form response. (Otherwise we have already
+    ////  listed each step in the validation question)
+    //act:generateResponseFromString("I have learned the new mission definition");
+    ////!actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
+    ////act:generateResponse(!actionPred);
+
+    act:generateResponseFromString("Embarking on my mission");
+    act:definedMission();
 }

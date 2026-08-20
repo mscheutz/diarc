@@ -67,7 +67,6 @@ public class AvailableDetectors {
       String[] requirements;
       String[] dependencies;
       String[] trackers;
-      String detectorConfigFile;
 
       try {
         //get directory
@@ -75,10 +74,10 @@ public class AvailableDetectors {
         String dir = file.getParent() + "/";
 
         //get node
-        Xml config = new Xml(configFile, "detectors");
+        Xml detectors = new Xml(configFile, "detectors");
 
         //get node list
-        List<Xml> manyDetectors = config.children("detector");
+        List<Xml> manyDetectors = detectors.children("detector");
         for (Xml singleDetectorType : manyDetectors) {
 
           //get and check detector type
@@ -154,30 +153,33 @@ public class AvailableDetectors {
             }
             typesDetail.put(detectorType, newDetectorDetail);
           } else {
-            log.warn("{} detector type has already been loaded. Ignoring duplicate request.", detectorType);
-            continue;
+            log.warn("{} detector type has already been loaded. Keeping initially loaded settings..", detectorType);
           }
 
-          //parse Detector's config file to get info for each predicate option
-          detectorConfigFile = singleDetectorType.string("config");
-          try {
-            if (detectorConfigFile != null && !detectorConfigFile.isEmpty()) {
-
-              detectorConfigFile = dir + detectorConfigFile; // add dir to path
-              if (detectorConfigFile.endsWith(".json")) {
-                parseDetectorFileJson(detectorConfigFile, detectorType);
-              } else if (detectorConfigFile.endsWith(".xml")) {
-                parseDetectorFileXml(detectorConfigFile, detectorType);
+          //parse Detector's detectors files to get info for each predicate option
+          List<String> configs = new ArrayList<>();
+          if (singleDetectorType.containsAttribute("config")) {
+            configs.add(singleDetectorType.string("config"));
+          }
+          List<Xml> manyConfigs = singleDetectorType.children("config");
+          manyConfigs.forEach(xml -> configs.add(xml.content()));
+          for (String config : configs) {
+            try {
+              config = dir + config; // add dir to path
+              if (config.endsWith(".json")) {
+                parseDetectorFileJson(config, detectorType);
+              } else if (config.endsWith(".xml")) {
+                parseDetectorFileXml(config, detectorType);
               } else {
-                log.error("Invalid detector config file format. Must be XML or JSON. File: " + detectorConfigFile);
+                log.error("Invalid detector detectors file format. Must be XML or JSON. File: " + config);
               }
+            } catch (FileNotFoundException e) {
+              log.error("Error parsing detectors file: {}.", config, e);
             }
-          } catch (FileNotFoundException e) {
-            log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
           }
         }
       } catch (Exception e) {
-        log.error(String.format("Error parsing config file: %s.", configFile), e);
+        log.error("Error parsing config file: {}.", configFile, e);
       }
     }
   }
@@ -357,11 +359,9 @@ public class AvailableDetectors {
 
       //only single instances of these allowed
       //TODO: add this info to config file
-      if (dType == DetectorType.CLUSTER_ADVANCED
-              || dType == DetectorType.CLUSTER) {
+      if (dType == DetectorType.CLUSTER_ADVANCED || dType == DetectorType.CLUSTER || dType == DetectorType.OWLV2) {
         singleInstance = true;
       }
-      log.info("");
 
       //get list of instantiated detectors of requested type
       DefaultComboBoxModel detectorList = instantiatedDetectors.get(dType);
