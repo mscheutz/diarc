@@ -78,15 +78,22 @@ public class CachedParserComponent extends DiarcComponent {
    */
   @TRADEService
   public void addEntryToCache(Utterance entry) {
-    //TODO: need to generalize this and make sure the cache cannot store hits for focused template actions. Or things
-    //  need to be updated such that LLM state is still appropriately updated (with any relevant context included) in
-    //  the case of external hits
+    // TODO: Should have a general method to determine what parses are not cacheable
     if (entry != null && entry.getSemantics() != null) {
       String name = entry.getSemantics().getName();
+      // Do not cache focused context transfer actions
+      // TODO: or allow this but find a way to make sure SocialLLM state is still appropriately updated with any relevant context before transferring
+      // TODO: Generally define a "focused context" action rather than hardcode
       if (name.equals("learnMission") || name.equals("learnTaskSequence") || name.equals("scheduleTask")) {
         log.debug("[addEntryToCache] not adding entry for focused template context target");
         return;
       }
+      // Do no cache SocialLLM "text response" parses - generateResponseFromString || updateDialogueHistoryFromString
+      if (name.equals("generateResponseFromString") || name.equals("updateDialogueHistoryFromString")) {
+        log.debug("[addEntryToCache] not adding entry for text response target");
+        return;
+      }
+      //TODO: Keep an eye on validation question response parses - how much can context change the base yes/no distinction of a single statement?
     }
     database.add(entry, language);
   }
