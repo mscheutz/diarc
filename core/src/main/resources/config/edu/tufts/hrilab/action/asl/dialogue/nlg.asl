@@ -64,7 +64,10 @@ import java.util.Map;
             } elseif (op:==(?fillerPhraseCase,3)) {
               // Validation Q filler - 2nd+ attempt at parse
               !fillerString = tsc:samplePreValidationFillerPhrase(?utterance,true);
-            }
+            } elseif (op:==(?fillerPhraseCase,4)) {
+               // Goal immediately successful filler
+               !fillerString = tsc:sampleGoalAchievedPhrase(!semantics);
+             }
             async {
               act:generateResponseFromString(?speaker,!fillerString);
             }

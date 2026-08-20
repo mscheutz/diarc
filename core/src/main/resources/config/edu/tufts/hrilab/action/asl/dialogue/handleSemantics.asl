@@ -249,7 +249,7 @@ import java.lang.Boolean;
         } else {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
         }
-        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
+        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(achieved(?actor,?state))");
         act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType, ?priorityTier);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
         !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
@@ -298,7 +298,7 @@ import java.lang.Boolean;
       } else {
           !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
       }
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,achieved(?actor,?state))");
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(achieved(?actor,?state))");
       act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType);
     } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
       !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
@@ -423,14 +423,15 @@ import java.lang.Boolean;
       //obligation infer : not(isForbidden(?state));
     }
 
-    //TODO: this should be per speaker/agent pair or conversation group
+    // TODO: this should be per speaker/agent pair or conversation group
+    // Reject any goal submission until the agentTeam's outstanding question has been answered
     if (~op:equalsValue(?priorityTier,SKIPPENDING) && ~op:equalsValue(?priorityTier,URGENT) && tsc:isAgentWaitingForResponse(?actor)) {
         act:generateResponseFromString(?speaker, "Please answer my previous question before sending further instructions");
         //TODO: state unanswered question proactively here?
         return;
     }
 
-    //// Pre-submission checks / Acknowledgement
+    // Check if the goal was placed in the queue - if so, override tentative accept
     if (tsc:usingQueueEM()) {
       // Compare goal priorities
       !priority = act:getPriorityForGoal(?state);
@@ -442,30 +443,58 @@ import java.lang.Boolean;
       }
     }
 
-    // Respond differently based on whether it is executed immediately or placed in the queue
+    // Submit goal
+    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
+
+    // Perform acknowledgement
     if (op:equals(!goalPlacedInQueue,true)) {
-        // Goal placed in the queue, notify the user of the fact
+        // Goal placed in the queue, notify the user of the fact rather than using default tentative accept semantics
         !ackString = tsc:sampleGoalPlacedInQueueAcknowledgement(?state);
         async {
             act:generateResponseFromString(?speaker,!ackString);
         }
     } else {
-        // Goal executing immediately, respond based on domain-specific ignoreTentativeAccept configuration and if validation for this utterance already occurred
+        // Goal beginning execution immediately, respond based on domain-specific ignoreTentativeAccept configuration and if validation for this utterance already occurred
         //    (If validation already/just occurred, we don't need to be as descriptive)
         if(~tsc:ignoreTentativeAccept(?state)) {
-          if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
-            // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood
-            !ackString = tsc:sampleTentativeAcceptPhrase(?state);
-            async {
-                act:generateResponseFromString(?speaker,!ackString);
+          // TODO: tune timeout duration empirically
+          // If goal immediately terminates, use acceptSemantics rather than tentativeAcceptSemantics
+          !goalStatus = act:joinOnGoal(!goalID,500);
+          if (op:invokeMethod(!goalStatus, "isTerminated")) {
+            if (~op:invokeMethod(!goalStatus, "isFailure")) {
+              // Goal terminated successfully, use accept semantics
+              if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+                // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood.
+                !ackString = tsc:sampleGoalAchievedPhrase(?state);
+                async {
+                    act:generateResponseFromString(?speaker,!ackString);
+                }
+              } else {
+                // Validation did not occur, giving descriptive acknowledgement restating the understood parse
+                if (tsc:useTentativeAcceptFiller()) {
+                  // CommunicateUtterance with specific filler phrase case (can change this API)
+                  !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?speaker);
+                  !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+                  op:invokeMethod(!utterance, "setType", !type);
+                  op:invokeMethod(!utterance, "setSemantics", ?acceptSemantics);
+                  act:communicateUtterance(!utterance, 4);
+                } else {
+                  // General communicateUtterance call
+                  act:generateResponse(?speaker, ?acceptSemantics, ?semanticType);
+                }
+              }
             }
+            // Else exit fail below
           } else {
-            // Validation did not occur, giving descriptive acknowledgement restating the understood parse
-            //// TODO: Worth looking into alternate solution on timing. Synchronous may lead to time sensitive action
-            ////  submission being a bit slow. Async may lead to action nlg and ack nlg colliding (or the action
-            ////  completing before ack happens). May want to async generateResponse, joinOnGoal w/ timeout, ack only
-            ////  if not terminated and/or conditional timing based on the goal itself.
-            //async {
+            // Goal did not immediately terminate, use tentative accept semantics
+            if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+              // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood
+              !ackString = tsc:sampleTentativeAcceptPhrase(?state);
+              async {
+                  act:generateResponseFromString(?speaker,!ackString);
+              }
+            } else {
+              // Validation did not occur, giving descriptive acknowledgement restating the understood parse
               if (tsc:useTentativeAcceptFiller()) {
                 // CommunicateUtterance with specific filler phrase case (can change this API)
                 !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?speaker);
@@ -477,13 +506,11 @@ import java.lang.Boolean;
                 // General communicateUtterance call
                 act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
               }
-            //}
+            }
           }
         }
     }
 
-    //// Submit goal
-    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
     op:log("debug", "waiting to get into state: ?state goalId: !goalID");
     !goalStatus = act:joinOnGoal(!goalID);
     op:log("debug", "?state status !goalStatus");

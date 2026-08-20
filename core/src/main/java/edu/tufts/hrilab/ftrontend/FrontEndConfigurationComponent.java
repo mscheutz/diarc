@@ -164,6 +164,43 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    }
 
    @TRADEService
+   public String sampleGoalAchievedPhrase(Predicate state) {
+      String name = state.getName();
+      //If movement based:
+      switch (name) {
+         case "breakOpenDoor":
+         case "escortCivilianToSafety":
+            return "";
+         case "goToLocation":
+         case "escortFromToLocation":
+         case "measureWifiAtLocations":
+         case "measureWifiAtLocationsAndReportAt":
+         case "measureTemperatureAtLocations":
+         case "measureTemperatureAtLocationsAndReportAt":
+         case "playNextVideoAtLocation":
+         case "playSpecificVideoAtLocation":
+         case "displayNamedImageAtLocation":
+         case "displayNamedImageForDurationAtLocation":
+            int option = new Random().nextInt(3);
+            return switch (option) {
+               case 0 -> "Made it there.";
+               case 1 -> "Reached my destination.";
+               case 2 -> "Arrived.";
+               default -> "Okay";
+            };
+      }
+      int option = new Random().nextInt(5);
+      return switch (option) {
+         case 0 -> "Done.";
+         case 1 -> "Succeeded.";
+         case 2 -> "Complete.";
+         case 3 -> "Finished.";
+         case 4 -> "Achieved.";
+         default -> "Okay";
+      };
+   }
+
+   @TRADEService
    public String sampleTentativeAcceptPhrase(Predicate state) {
       String name = state.getName();
       //If movement based:
@@ -362,6 +399,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "startMission":
             case "cancelAllCurrentAndQueuedTasks":
             case "clearRoomForDoor":
+            //
+            case "followUser":
                //// Set of actions which should perhaps be "reduced ack"?
                //case "escortToLocation":
                return true;

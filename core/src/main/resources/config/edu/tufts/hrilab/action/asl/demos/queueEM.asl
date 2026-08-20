@@ -6,23 +6,23 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 () = suspendCurrentTask() {
     act:suspendSystemGoalsBlocking();
-    act:generateResponseFromString("Suspended");
+    //act:generateResponseFromString("Suspended");
 }
 
 () = cancelCurrentTask() {
     act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Current task has been canceled");
+    //act:generateResponseFromString("Current task has been canceled");
 }
 
 () = cancelAllQueuedTasks() {
     act:cancelAllPendingGoals();
-    act:generateResponseFromString("Queued tasks have been canceled");
+    //act:generateResponseFromString("Queued tasks have been canceled");
 }
 
 () = cancelAllCurrentAndQueuedTasks() {
     act:cancelAllPendingGoals();
     act:cancelSystemGoalsWrapper();
-    act:generateResponseFromString("Existing tasks have been canceled");
+    //act:generateResponseFromString("Existing tasks have been canceled");
 }
 
 () = suspendSystemGoalsBlocking() {

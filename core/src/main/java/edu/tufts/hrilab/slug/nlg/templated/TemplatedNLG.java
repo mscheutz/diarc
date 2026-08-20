@@ -406,6 +406,9 @@ public final class TemplatedNLG extends DiarcComponent {
         if (content instanceof Call a && a.name().equals("attempting")) {
             String realization = realizeAttempting(a, Form.CLAUSE);
             return realization == null ? null : "Okay, " + lowerInitial(realization).replaceFirst("^I am attempting to ", "I will attempt to ");
+        } else if (content instanceof Call a && a.name().equals("achieved")) {
+            String realization = realizeAchieved(a);
+            return realization == null ? null : "Okay, " + realization;
         }
         String realization = realize(content, Form.CLAUSE);
         return realization == null ? null : "Okay, " + lowerInitial(realization);
@@ -415,6 +418,13 @@ public final class TemplatedNLG extends DiarcComponent {
         requireArity(c, 3);
         String addressee = entities.resolve(c.args().get(1));
         return "Hello " + capitalizeName(addressee);
+    }
+
+    private String realizeAchieved(Call c) {
+        requireArity(c, 2);
+        String action = realize(c.args().get(1), Form.INFINITIVE);
+        if (action == null) return null;
+        return "I have achieved " + action;
     }
 
     private String realizeAttempting(Call c, Form form) {
