@@ -3,7 +3,7 @@ package edu.tufts.hrilab.config.tr;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.tts.cartesia.CartesiaTTSComponent;
+import edu.tufts.hrilab.tts.StreamingTTSComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -43,7 +43,7 @@ public class CartesiaLatencyTest extends DiarcConfiguration {
     String args = " -volume 1.0";
     if (!voiceId.isEmpty()) args += " -voiceId " + voiceId;
     if (!matchMixer.isEmpty()) args += " -matchMixer " + matchMixer;
-    createInstance(CartesiaTTSComponent.class, args);
+    createInstance(StreamingTTSComponent.class, args + " -ttsBackend cartesia");
 
     new Thread(() -> {
       try {

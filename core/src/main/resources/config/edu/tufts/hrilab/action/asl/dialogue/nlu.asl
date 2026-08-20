@@ -272,11 +272,10 @@ import java.lang.String;
             //      Tool call response (new direct parse made using additional information from validation response) -> set ?revalidate to true and continue outer loop calling this function
             //      Text response (enter extended recovery dialogue interaction to figure out what is wrong) -> set ?revalidate false, Utterance.isValidated true, and generateResponse semantics
             !streaming = tsc:usingStreamingTTS(!addressee);
-            ?revalidate = tsc:reattemptParse(?unvalidatedUtterance, !streaming);
-            //TODO: double check this, believe we need to immediately unbuffer if going with intended back-end impl (or should change API to not need to do this)
             if (op:equals(!streaming,true)) {
               tsc:unbufferStreamingTTSOutputForUID(!uttID);
             }
+            ?revalidate = tsc:reattemptParse(?unvalidatedUtterance, !streaming);
             ?unvalidatedUtterance = act:resolveReferences(?unvalidatedUtterance);
             return;
         } else {

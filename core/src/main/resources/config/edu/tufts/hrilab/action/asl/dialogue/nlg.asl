@@ -121,6 +121,8 @@ import java.util.Map;
     if (tsc:usingWWBasedASR(?agentTeam)) {
       //TODO: revisit this in line with back-end StreamingTTS / WW changes. Ideally just keep to triggerWW call here.
       if (op:equals(!streamingTTS,true)) {
+        // the TTS waits for whatever speech is queued to finish before it retriggers, so this
+        // covers both the streamed replies and the ones that go out through sayText
         act:armPostStreamRearm();
       } else {
         act:triggerWW();

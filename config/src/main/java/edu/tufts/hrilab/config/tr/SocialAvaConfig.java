@@ -172,7 +172,12 @@ public class SocialAvaConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
     //TODO: proper configuration
-    createInstance(FrontEndConfigurationComponent.class);
+    // ava always listens on the ww loop; streaming only when the tts is the streaming component
+    String frontEndArgs = "-wwBasedASR";
+    if (useLocalTTS || useCartesia) {
+      frontEndArgs += " -streamingTTS";
+    }
+    createInstance(FrontEndConfigurationComponent.class, frontEndArgs);
 
 //    if (useLLMNLG || useLLMParser) {
 //      //createInstance(SocialAvaLLMServiceProvider.class,"");
@@ -200,6 +205,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       simSpeechRec = createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
+    // TODO: make StreamingTTSComponent (kokoro) the no-flag default here once the MaryTTS sites migrate
     if (useLocalTTS) {
       String localArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
       if (!speakerId.isEmpty()) {
@@ -214,7 +220,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       if (muteMics) {
         localArgs += " -muteMics";
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaLocalTTSComponent.class, localArgs);
+      createInstance(edu.tufts.hrilab.tts.StreamingTTSComponent.class, localArgs + " -ttsBackend kokoro");
     } else if (useCartesia) {
       String cartesiaArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
       if (!speakerId.isEmpty()) {
@@ -226,7 +232,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       if (muteMics) {
         cartesiaArgs += " -muteMics";
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaCartesiaTTSComponent.class, cartesiaArgs);
+      createInstance(edu.tufts.hrilab.tts.StreamingTTSComponent.class, cartesiaArgs + " -ttsBackend cartesia");
     } else {
       String maryTTSArgs = " -female -volume 1.0 -showMixers";
       if (!speakerId.isEmpty()) {

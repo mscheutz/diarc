@@ -64,6 +64,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
+  private volatile long currentStreamingUid = -1;
 
   /**
    * Maintained set of ChatCollections, split by user/AgentTeam pair
@@ -482,130 +483,141 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // New: Synchronization - need to wait for any previous chat inputs and corresponding side effects to finish being
     // processed before applying this one
     if (!reattemptedParse) {
-      if (!chatCollection.grabInputLock(utterance)) {
+      if (!chatCollection.grabInputLock(utterance, true)) {
         // Dialogue history update showed that external parser completed before reaching this point. Do not need to proceed.
         return utterance;
       }
     }
 
-    List<ToolDefinition> tools;
-    synchronized (currentChatCollections) {
-      // Check for external parser notification between grabbing input lock and synchronized block
-      if (!chatCollection.shouldProcess(utterance)) {
-        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
-        return utterance;
-      }
-
-      // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
-      // existing state
-      chatContext = chatCollection.currentChat;
-      if (chatContext == null) {
-        chat = new Chat(user.getName(), agentTeam.getName());
-        chatContext = new ChatContext(chat);
-        chatCollection.currentChat = chatContext;
-      }
-
-      //// Update chats based on current state
-      Prompt systemTemplate;
-      ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
-      if (chatTemplates == null) {
-        log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
-        return utterance;
-      }
-      // Pull correct template and update system message and tool targets based off current state
-      if (chatContext.chatState == ChatState.VALIDATION) {
-        systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
-        tools = new ArrayList<>();
-        Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
-        if (focusedTextResponseTool != null) {
-          tools.add(focusedTextResponseTool.toolDefinition);
-        } else {
-          tools.add(textResponseTool.toolDefinition);
+    try {
+      List<ToolDefinition> tools;
+      synchronized (currentChatCollections) {
+        // Check for external parser notification between grabbing input lock and synchronized block
+        if (!chatCollection.shouldProcess(utterance)) {
+          chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
+          return utterance;
         }
 
-        // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
-        //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
-        chat = new Chat(user.getName(), agentTeam.getName());
-        promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
-        //chatContext.history.addUserMessage(utterance.getWordsAsString());
-      } else {
-        systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
-        tools = new ArrayList<>(chatTemplates.toolDefinitions);
-        chat = chatContext.history;
-      }
+        // If previous input caused a context to be terminated, need to generate a new one. Otherwise, continue with
+        // existing state
+        chatContext = chatCollection.currentChat;
+        if (chatContext == null) {
+          chat = new Chat(user.getName(), agentTeam.getName());
+          chatContext = new ChatContext(chat);
+          chatCollection.currentChat = chatContext;
+        }
 
-      if (chatContext.chatType == ChatType.FOCUSED) {
-        tools.addAll(universalFocusedToolDefinitions);
-        // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+        //// Update chats based on current state
+        Prompt systemTemplate;
+        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        if (chatTemplates == null) {
+          log.error("[parseUtteranceLLMService] could not find chat template for contextID {}", chatContext.contextID);
+          chatCollection.signalInputProcessed(utterance);
+          return utterance;
+        }
+        // Pull correct template and update system message and tool targets based off current state
         if (chatContext.chatState == ChatState.VALIDATION) {
+          systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
+          tools = new ArrayList<>();
+          Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+          if (focusedTextResponseTool != null) {
+            tools.add(focusedTextResponseTool.toolDefinition);
+          } else {
+            tools.add(textResponseTool.toolDefinition);
+          }
+
+          // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
+          //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
+          chat = new Chat(user.getName(), agentTeam.getName());
+          promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
+          //chatContext.history.addUserMessage(utterance.getWordsAsString());
+        } else {
+          systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
+          tools = new ArrayList<>(chatTemplates.toolDefinitions);
+          chat = chatContext.history;
+        }
+
+        if (chatContext.chatType == ChatType.FOCUSED) {
+          tools.addAll(universalFocusedToolDefinitions);
+          // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+          }
+        } else {
+          // Add all matching system question response tools based off of expected reply semantics
           tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
         }
-      } else {
-        // Add all matching system question response tools based off of expected reply semantics
-        tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
-      }
 
-      // Apply input as user message
-      if (!reattemptedParse) {
-        chat.addUserMessage(utterance.getWordsAsString());
-      }
-
-      // Update and apply prompt vars
-      updatePromptVars(utterance, true);
-      chat.setSystem(systemTemplate.apply(promptVars));
-    }
-
-    //// Send created chat to LLM completion
-    Completion response;
-    if (useStreaming) {
-      response = callChatCompletionStreaming(chat, tools);
-    } else {
-      response = callChatCompletion(chat, tools);
-    }
-
-    if (response == null) {
-      log.error("[parseUtteranceLLMService] have null Completion response");
-      handleErrorResponse(utterance, true, false);
-      return utterance;
-    } else {
-      resetErrorCount(false, user, agentTeam);
-    }
-
-    log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
-
-    synchronized (currentChatCollections) {
-      // Check for external parser notification between grabbing input lock and this synchronized block
-      if (!chatCollection.shouldProcess(utterance)) {
-        log.info("[parseUtteranceLLMService] external parser hit, returning without processing {}", response.toolCalls);
-        chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
-        return utterance;
-      }
-
-      StringBuilder errorResponseBuilder = new StringBuilder();
-
-      //TODO: handling multiple tool calls present
-      //TODO: handling text response and tool call(s) present
-      //// Handle Responses
-      Utterance output;
-      if (response.toolCalls.isEmpty()) {
-        // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
-        //    Add robot message to chat and return generateResponse semantics with no validation required
-        output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder, useStreaming);
-      } else {
-        if (chatContext.chatState == ChatState.VALIDATION) {
-          // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
-          //  to terminate and/or transfer between base and focused contexts in this case)
-          output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
-        } else {
-          // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
-          output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+        // Apply input as user message
+        if (!reattemptedParse) {
+          chat.addUserMessage(utterance.getWordsAsString());
         }
+
+        // Update and apply prompt vars
+        updatePromptVars(utterance, true);
+        chat.setSystem(systemTemplate.apply(promptVars));
       }
 
-      if (output == null) {
-        output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming);
+      //// Send created chat to LLM completion
+      Completion response;
+      if (useStreaming) {
+        response = callChatCompletionStreaming(chat, tools, utterance.getUid());
+      } else {
+        response = callChatCompletion(chat, tools);
       }
-      return output;
+
+      if (response == null) {
+        log.error("[parseUtteranceLLMService] have null Completion response");
+        handleErrorResponse(utterance, true, false);
+        return utterance;
+      } else {
+        resetErrorCount(false, user, agentTeam);
+      }
+
+      log.info("[parseUtteranceLLMService] num tool calls: {}, text response: {}", response.toolCalls.size(), response.text);
+
+      synchronized (currentChatCollections) {
+        // Check for external parser notification between grabbing input lock and this synchronized block
+        if (!chatCollection.shouldProcess(utterance)) {
+          log.info("[parseUtteranceLLMService] external parser hit, returning without processing {}", response.toolCalls);
+          chatCollection.signalInputProcessed(utterance); //Failsafe - revisit input lock grab
+          return utterance;
+        }
+
+        StringBuilder errorResponseBuilder = new StringBuilder();
+
+        //TODO: handling multiple tool calls present
+        //TODO: handling text response and tool call(s) present
+        //// Handle Responses
+        Utterance output;
+        if (response.toolCalls.isEmpty()) {
+          // Handle text response - always handled the same regardless of state (superfluous dialogue, extended parse attempt, extended validation)
+          //    Add robot message to chat and return generateResponse semantics with no validation required
+          output = handleTextResponse(response, utterance, chatContext, errorResponseBuilder, useStreaming);
+        } else {
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
+            //  to terminate and/or transfer between base and focused contexts in this case)
+            output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+          } else {
+            // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
+            output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+          }
+        }
+
+        if (output == null) {
+          output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming);
+        }
+        return output;
+      }
+    } catch (RuntimeException e) {
+      // the dialogue history update is what normally releases the lock we took above, and
+      // it never runs if we throw out of here, so later utterances would just sit waiting
+      log.error("[parseUtteranceLLMService] failed while processing {}", utterance, e);
+      if (!reattemptedParse) {
+        chatCollection.signalInputProcessed(utterance);
+      }
+      throw e;
     }
   }
 
@@ -637,7 +649,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
       Completion retryResponse;
       if (useStreaming) {
-        retryResponse = callChatCompletionStreaming(chatContext.history, toolList);
+        retryResponse = callChatCompletionStreaming(chatContext.history, toolList, utterance.getUid());
       } else {
         retryResponse = callChatCompletion(chatContext.history, toolList);
       }
@@ -868,10 +880,18 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Detect consecutive text responses and attempt to break out if finding too many
     //TODO: This does not interact with streaming responses well. Would have to interrupt sayText or be an explicit
     //  extra turn afterwards. Cannot just modify and send out response here.
+    // a regenerated response never went through the stream, so it must be spoken below
+    boolean regenerated = false;
+    // drained here so the retry return below cannot leak the id in the set
+    boolean responseStreamed = ttsStreamedIds.remove(llmResponse.getId());
+    chatContext.lastResponseStreamed = responseStreamed;
     if (chatContext.lastResponseString != null && chatContext.lastResponseString.equals(responseString)) {
       chatContext.identicalResponses += 1;
       if (chatContext.chatType == ChatType.FOCUSED && chatContext.identicalResponses >= 2) {
         log.warn("[handleTextResponse] (FOCUSED) Encountering consecutive identical responses - retaining template but clearing history and informing the user");
+        // the identical reply already streamed and may still be playing; drop it before
+        // speaking the replacement over it
+        ttsCancel(inputUtterance.getUid());
         // Focused contexts - retain current template, clear history, and reprompt with custom message based on template state
         //  (Could also try less drastic clearing of history first like for base context, but I'm worried that it will
         //    result in a different phrasing of a response while still not breaking out of the same reasoning loop)
@@ -883,6 +903,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
         }
+        regenerated = true;
         chatContext.identicalResponses = 0;
       } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses == 2) {
         log.warn("[handleTextResponse] detected multiple consecutive identical responses, clearing history of those responses and trying again");
@@ -910,29 +931,47 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
           history.remove(i);
         }
-        // Last user input should still be present, submit for a new (hopefully different) generated response
-        return parseUtteranceLLMService(inputUtterance, true);
+        // Last user input should still be present, submit for a new (hopefully different) generated response.
+        // Not streaming the retry: we already streamed and finished under this uid once, and
+        // when the retry streamed too it looked like it got recorded as spoken without
+        // anything actually playing. Might be able to stream it again if a push ever says
+        // which request it came from.
+        ttsCancel(inputUtterance.getUid());
+        return parseUtteranceLLMService(inputUtterance, false, true);
       } else if (chatContext.chatType != ChatType.FOCUSED && chatContext.identicalResponses > 2) {
         log.warn("[handleTextResponse] Still encountering identical responses, clearing history fully and informing user");
+        ttsCancel(inputUtterance.getUid());
         // 4th identical response - inform user and more drastically reset context
         chatContext.history.messages.clear();
         responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
+        regenerated = true;
         chatContext.identicalResponses = 0;
       }
     } else {
       chatContext.identicalResponses = 0;
     }
     chatContext.lastResponseString = responseString;
-    chatContext.lastResponseStreamed = ttsStreamedIds.remove(llmResponse.getId());
 
-    if (!(responseString.startsWith("\"") && responseString.endsWith("\""))) {
-      responseString = "\"" + responseString + "\"";
+    // newlines, backslashes, or nested quotes in the reply were blowing up the belief
+    // asserts that read this text back out of a term -- nothing escapes it on the way in.
+    // Swapping those characters out here is a hack for the breakage I was seeing.
+    // TODO: this almost certainly belongs where the term gets written, not here
+    responseString = responseString
+            .replace('\n', ' ')
+            .replace('\r', ' ')
+            .replace('\t', ' ')
+            .replace('\\', ' ')
+            .trim();
+    if (responseString.length() > 1 && responseString.startsWith("\"") && responseString.endsWith("\"")) {
+      responseString = responseString.substring(1, responseString.length() - 1);
     }
+    responseString = "\"" + responseString.replace('"', '\'') + "\"";
 
     // Updating response from dialogue history now - in case this parse result is not used
     //chatContext.history.addRobotMessage(responseString, llmResponse.toolCalls);
     Predicate generateResponsePred;
-    if (streaming) {
+    // a streamed request whose fragments never reached the TTS still has to be spoken here
+    if (streaming && responseStreamed && !regenerated) {
       generateResponsePred = Factory.createPredicate("updateDialogueHistoryFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
     } else {
       generateResponsePred = Factory.createPredicate("generateResponseFromString", inputUtterance.getAddressee().toString(), inputUtterance.getSpeaker().toString(), responseString);
@@ -1171,30 +1210,45 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "their original intention or adding additional information, then you may update your definition with the new information and attempt another updated tool submission call. " +
             "2. Otherwise, please continue with your original task to resolve the misunderstanding.", currentContext.toolCallIdUpForValidation);
 
-    // Call completion with user response and tool message
-    Utterance tempUtterance = new Utterance.Builder().setSpeaker(utterance.getSpeaker()).setAddressee(utterance.getAddressee()).setWords(utterance.getWords()).build();
+    // Call completion with user response and tool message. Built from the original utterance so
+    // the reattempt streams under the same uid the ASL unbuffers; the rejected parse's semantics,
+    // bindings, and descriptors are cleared so the corrected parse starts clean.
+    Utterance tempUtterance = new Utterance.Builder(utterance)
+            .setBindings(new ArrayList<>())
+            .setSupplementalSemantics(new ArrayList<>())
+            .setIndirectSemantics(new ArrayList<>())
+            .setTierAssignments(new LinkedHashMap<>())
+            .build();
+    tempUtterance.setSemantics(null);
     tempUtterance.setNeedsValidation(true);
-    tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
+    // the negative validation reply's input claim is still held here (its history update
+    // skips the signal), so it has to be released by identity once the reattempt is done
+    Utterance claimed = chatCollection.utteranceBeingProcessed;
+    try {
+      tempUtterance = parseUtteranceLLMService(tempUtterance, streamingTTS, true);
 
-    if (tempUtterance.getSemantics() == null) {
-      log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
-      tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString", utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
-      tempUtterance.setNeedsValidation(false);
-      tempUtterance.setType(UtteranceType.INSTRUCT);
-    } else if (tempUtterance.getType() == UtteranceType.UNKNOWN) {
-      tempUtterance.setType(UtteranceType.INSTRUCT);
+      if (tempUtterance.getSemantics() == null) {
+        log.warn("[reattemptParse] original utterance returned from inner parse method - indicates exception occurred");
+        tempUtterance.setSemantics(Factory.createPredicate("generateResponseFromString", utterance.getAddressee().toString(), utterance.getSpeaker().toString(), "\"Sorry, an internal error has occurred. What did you mean to instruct me to do?\""));
+        tempUtterance.setNeedsValidation(false);
+        tempUtterance.setType(UtteranceType.INSTRUCT);
+      } else if (tempUtterance.getType() == UtteranceType.UNKNOWN) {
+        tempUtterance.setType(UtteranceType.INSTRUCT);
+      }
+
+      //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
+      utterance.setSemantics(tempUtterance.getSemantics());
+      utterance.setBindings(tempUtterance.getBindings());
+      utterance.setSupplementalSemantics(tempUtterance.getSupplementalSemantics());
+      utterance.setIndirectSemantics(tempUtterance.getIndirectSemantics());
+      utterance.setTierAssignments(tempUtterance.getTierAssignments());
+      utterance.setNeedsValidation(tempUtterance.needsValidation());
+      utterance.setType(tempUtterance.getType());
+    } finally {
+      if (claimed != null) {
+        chatCollection.signalInputProcessed(claimed);
+      }
     }
-
-    //TODO: better way to do this/prevent doing this - needs to be updated by reference as of now
-    utterance.setSemantics(tempUtterance.getSemantics());
-    utterance.setBindings(tempUtterance.getBindings());
-    utterance.setSupplementalSemantics(tempUtterance.getSupplementalSemantics());
-    utterance.setIndirectSemantics(tempUtterance.getIndirectSemantics());
-    utterance.setTierAssignments(tempUtterance.getTierAssignments());
-    utterance.setNeedsValidation(tempUtterance.needsValidation());
-    utterance.setType(tempUtterance.getType());
-
-    chatCollection.utteranceBeingProcessed = null;
     boolean ret = utterance.needsValidation();
     if (!ret) {
       // This is kind of weird, but we need to set isValidated to true even for things normally not needing validation
@@ -1276,7 +1330,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     Completion llmResponse;
     if (streamingSayText) {
-      llmResponse = callChatCompletionStreaming(genChat, null);
+      llmResponse = callChatCompletionStreaming(genChat, null, utterance.getUid());
     } else {
       llmResponse = callChatCompletion(genChat, null);
     }
@@ -1286,6 +1340,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       handleErrorResponse(utterance, false, false);
       return utterance;
     } else {
+      // handleTextResponse takes these back out again on the nlu side, but I did not find
+      // anything doing it over here, so take it out so the set does not just keep growing
+      ttsStreamedIds.remove(llmResponse.getId());
       resetErrorCount(false, user, agentTeam);
     }
 
@@ -1895,7 +1952,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     if (parser.completedParam && parser.lastParamName.equals("response")) {
       log.info("[streamingChunkHandler] Done parsing response");
-      armRearm();
+      // arm only when fragments really went out; un-streamed replies arm on their spoken path
+      if (ttsStreamedIds.contains(id)) {
+        armRearm();
+      }
       ttsEnd();
       return;
     }
@@ -1910,16 +1970,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
     if (parser.nlgText.isEmpty()) {
-      String startToken = "{\"translation\":\"";
-      int translationStart = currentText.indexOf(startToken);
-      if (translationStart != -1) {
+      // accept the same whitespace variants around the key as the completed-parse regex below
+      Matcher startMatcher = Pattern.compile("\\{\\s*\"?translation\"?\\s*:\\s*\"?").matcher(currentText);
+      if (startMatcher.find()) {
         Matcher m = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL).matcher(currentText);
         if (m.matches()) {
           log.info("[streamingChunkHandler] One shot NLG parse: {}", m.group(m.groupCount()));
           ttsPush(m.group(m.groupCount()));
           ttsEnd();
         } else {
-          parser.nlgText = currentText.substring(translationStart + startToken.length());
+          parser.nlgText = currentText.substring(startMatcher.end());
           parser.nlgTextDelta = parser.nlgText;
           log.info("[streamingChunkHandler] first NLG delta: {}", parser.nlgTextDelta);
           ttsPush(parser.nlgTextDelta);
@@ -1942,10 +2002,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: in StreamingTTSComponent, have output be buffered by default and add methods unbufferStreamingTTSOutputForUID and cancelStreamingTTSOutputForUID
   private void ttsPush(String fragment) {
     if (fragment == null || fragment.isEmpty()) return;
-    ttsStreamedIds.add(currentStreamingResponseId);
+    String id = currentStreamingResponseId;
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class))
-              .call(void.class, fragment);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("pushStreamingSpeech").argTypes(String.class, Long.class))
+              .call(void.class, fragment, currentStreamingUid);
+      // only a push that actually reached the TTS counts as streamed
+      ttsStreamedIds.add(id);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] pushStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
@@ -1956,8 +2018,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private void ttsEnd() {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(Boolean.class))
-              .call(Boolean.class, false);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("endStreamingSpeech").argTypes(Boolean.class, Long.class))
+              .call(Boolean.class, false, currentStreamingUid);
     } catch (TRADEException e) {
       log.warn("[streamingChunkHandler] endStreamingSpeech failed", e);
       if (e.getMessage().contains("didn't find unique service for constraints")) {
@@ -1974,7 +2036,17 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
-  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools) {
+  private void ttsCancel(long uid) {
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelStreamingTTSOutputForUID").argTypes(Long.class))
+              .call(void.class, uid);
+    } catch (TRADEException e) {
+      log.debug("[ttsCancel] cancelStreamingTTSOutputForUID unavailable");
+    }
+  }
+
+  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools, long uid) {
+    currentStreamingUid = uid;
     TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class, Chat.class);
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {

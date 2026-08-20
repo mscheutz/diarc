@@ -62,16 +62,22 @@ public class ChatCollection {
     pendingFocusedChats = new HashMap<>();
   }
 
+  public boolean grabInputLock(Utterance incoming) {
+    return grabInputLock(incoming, false);
+  }
+
   /**
    * Method to wait for and grab lock to safely start processing an input Utterance and apply side effects to all member
    *  ChatContexts. Note that any member variables may have been modified between the start of and returning from this
    *  call. To release the lock grabbed from this method, signalInputProcessed must be called with the same Utterance
-   *  (or simply one with matching Utterance ID).
+   *  (or simply one with matching Utterance ID). With allowReentry set, a call with the Utterance already being
+   *  processed returns immediately without taking another claim.
    * @param incoming Related Utterance to be processed in conjunction with the grabbed input lock
+   * @param allowReentry whether a call with the Utterance already being processed may proceed instead of waiting
    * @return shouldProcess - indication of whether signalInputProcessed has already been called with the corresponding
    *  Utterance due to an external parser hit (false == external hit occurred).
    */
-  public boolean grabInputLock(Utterance incoming) {
+  public boolean grabInputLock(Utterance incoming, boolean allowReentry) {
     log.debug("[waitToProcessInput] acquiring input lock");
 
     boolean shouldProcess;
@@ -80,7 +86,12 @@ public class ChatCollection {
       shouldProcess = false;
     } else {
       shouldProcess = true;
-      if (utteranceBeingProcessed != null) {
+      // the WW loop parses an utterance once to check whether it was a false positive, then
+      // reports that same utterance. That first parse never reaches a dialogue history
+      // update, so nothing releases the lock it took, and waiting on our own id here was
+      // seen sitting forever. Letting the same id straight back in is a workaround --
+      // arguably that first parse should not be taking this lock in the first place
+      if (utteranceBeingProcessed != null && (!allowReentry || utteranceBeingProcessed.getUid() != incoming.getUid())) {
         try {
           inputCondition.await();
           log.debug("[waitToProcessInput] acquired input lock");

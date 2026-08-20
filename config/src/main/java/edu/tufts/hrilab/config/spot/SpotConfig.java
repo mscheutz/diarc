@@ -131,7 +131,7 @@ public class SpotConfig extends DiarcConfiguration {
       if (muteMics) {
         localArgs += " -muteMics";
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaLocalTTSComponent.class, localArgs);
+      createInstance(edu.tufts.hrilab.tts.StreamingTTSComponent.class, localArgs + " -ttsBackend kokoro");
     } else if (useCartesia) {
       String cartesiaArgs = " -volume " + voiceVolume + " -speed " + voiceSpeed + " -clipVolume " + voiceClipVolume;
       if (!speakerId.isEmpty()) {
@@ -143,7 +143,7 @@ public class SpotConfig extends DiarcConfiguration {
       if (muteMics) {
         cartesiaArgs += " -muteMics";
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaCartesiaTTSComponent.class, cartesiaArgs);
+      createInstance(edu.tufts.hrilab.tts.StreamingTTSComponent.class, cartesiaArgs + " -ttsBackend cartesia");
     } else {
       String maryTTSArgs = " -female -volume 1.0 -showMixers";
       if (!speakerId.isEmpty()) {
