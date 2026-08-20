@@ -178,9 +178,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       return input;
     }
 
-    // Create a list or some structure to hold debug utterances if you want to inspect them
-    List<Utterance> debugUtterances = new ArrayList<>();
-
     Symbol speaker = input.getSpeaker();
     Symbol addressee = input.getAddressee();
 
@@ -188,13 +185,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     // Only proceed if finalParses is non-empty
     if (!finalParses.isEmpty()) {
-      // Iterate through all parses to create debug utterances
-      for (int i = 0; i < finalParses.size(); i++) {
-        Node currentParse = finalParses.get(i);
-        Utterance debugUtterance = createUtterance(currentParse, speaker, addressee);
-        debugUtterances.add(debugUtterance);
-      }
-
       // The first parse in finalParses is considered "best"
       // but remember to check again to avoid IndexOutOfBounds
       Node bestParse = finalParses.get(0);
@@ -206,8 +196,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
 
      // perform reasoning on multiple parses in debugUtterances here if needed
-    List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
-    List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
+//    List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
+//    List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
 
 // Finally, return only the best parse's utterance
     return endOfChartUtterance;
@@ -218,10 +208,18 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   public Utterance parseUtterance(Utterance input) {
     // Check for end-of-utterance signal and reset if necessary
     // Example end-of-utterance condition or reasoning step//
-    // resetChart();
+     resetChart();
 
     // Perform incremental parsing
-    return parseIncrementally(input);
+    Utterance output = parseIncrementally(input);
+//    Utterance output = parseUtteranceHelper(input);
+
+    // use addressee history when there's no parse so the correct address generates the failure explanation
+    if (output.getSemantics() == null && useAddressHistory && addressHistory.containsKey(input.getSpeaker())) {
+      output = new Utterance.Builder(output).setAddressee(addressHistory.get(input.getSpeaker())).build();
+    }
+    log.info("[parseUtterance] Words: {} Result: {}", input.getWordsAsString(), output);
+    return output;
   }
 
   public void doChartParsingWithDP(Utterance input) {
@@ -732,44 +730,44 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   //Create an utterance
-  public Utterance createUtterance(Node finalNode, Symbol interactor, Symbol listener) {
+  public Utterance createUtterance(Node finalNode, Symbol speaker, Symbol addressee) {
     //NLPacket nlPacketTest = null;
     try {
       /// CREATE NEW UTTERANCE
       for (NodeEntry nodeRule : finalNode.rules) {
-        Pair<List<Symbol>, Map<Variable, Symbol>> POWERSemanticsTest = nodeRule.semantics.getDIARCSemantics();
-        List<Symbol> fullSemanticsTest = POWERSemanticsTest.getLeft();
-        log.debug("full semantics: " + fullSemanticsTest);
+        Pair<List<Symbol>, Map<Variable, Symbol>> diarcSemantics = nodeRule.semantics.getDIARCSemantics();
+        List<Symbol> fullSemantics = diarcSemantics.getLeft();
+        log.debug("full semantics: " + fullSemantics);
 
-        UtteranceType tTest = terminalCategories.get(nodeRule.syntax.type);
-        if (tTest == null) {
+        UtteranceType utteranceType = terminalCategories.get(nodeRule.syntax.type);
+        if (utteranceType == null) {
           log.warn("Skipping nodeRule with unknown terminal category: {}", nodeRule.syntax.type);
           continue;
         }
-        Symbol mainSemanticsTest = fullSemanticsTest.remove(0);
-        mainSemanticsTest = updateDirectAddress(mainSemanticsTest, interactor, listener, tTest);
-        // mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, addressHistory.get(Pair.of(interactor, listener)), interactor);
-        mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, listener, interactor);
+        Symbol mainSemantics = fullSemantics.remove(0);
+        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, utteranceType);
+        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
         List<Term> supplementalSemanticsTest = new ArrayList<>();
-        for (Symbol semTest : fullSemanticsTest) {
+        for (Symbol semTest : fullSemantics) {
           if (semTest.isTerm()) {
             //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
-            supplementalSemanticsTest.add((Term) updateSpeakerNames(semTest, addressHistory.get(Pair.of(interactor, listener)), interactor));
+            supplementalSemanticsTest.add((Term) updateSpeakerNames(semTest, addressHistory.get(Pair.of(speaker, addressee)), speaker));
           } else {
             log.warn("badly formatted supplemental semantics: " + semTest + " . Still added though");
             supplementalSemanticsTest.add((Term) semTest);
           }
         }
-        log.debug("Bindings: " + POWERSemanticsTest);
+        log.debug("Bindings: " + diarcSemantics);
 
         Utterance utteranceTest = new Utterance.Builder()
-                .setSpeaker(interactor)
-                // .addListener(addressHistory.get(Pair.of(interactor, listener)))
-                .addListener(listener)
-                .setSemantics(mainSemanticsTest)
+                .setSpeaker(speaker)
+                .setAddressee(currentAddressee)
+                .setSemantics(mainSemantics)
                 .setSupplementalSemantics(supplementalSemanticsTest)
-                .setTierAssignments(POWERSemanticsTest.getRight())
-                .setUtteranceType(tTest)
+                .setTierAssignments(diarcSemantics.getRight())
+                .setIsInputUtterance(true)
+                .setUtteranceType(utteranceType)
+                .setWords(Arrays.asList(nodeRule.morpheme.split(" ")))
                 .build();
 
         return utteranceTest;
