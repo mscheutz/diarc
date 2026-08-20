@@ -346,9 +346,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       StringBuilder sb = new StringBuilder();
       populateSemanticDefinitionsString(utterance.getSemantics(), sb);
       if (sb.isEmpty()) {
-        promptVars.put("NLGSemanticDefinitions","<none found>");
+        promptVars.put("%NLGSemanticDefinitions","<none found>");
       } else {
-        promptVars.put("NLGSemanticDefinitions",sb.toString());
+        promptVars.put("%NLGSemanticDefinitions",sb.toString());
       }
     }
 
