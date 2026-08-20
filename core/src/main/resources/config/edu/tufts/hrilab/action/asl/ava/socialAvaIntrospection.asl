@@ -629,9 +629,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (tsc:usingWWBasedASR(?actor)) {
-            act:triggerWW();
-        }
+        act:listenPostCommunicateUtterance(?addressee);
     }
 }
 
@@ -642,10 +640,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !contextId = this:getCommand();
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
-    act:generateResponseFromString(!output);
-        if (tsc:usingWWBasedASR(?actor)) {
-            act:triggerWW();
-        }
+        act:generateResponseFromString(!output);
+        act:listenPostCommunicateUtterance(?addressee);
     }
 }
 
@@ -657,9 +653,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (tsc:usingWWBasedASR(?actor)) {
-            act:triggerWW();
-        }
+        act:listenPostCommunicateUtterance(?addressee);
     }
 }
 
@@ -671,9 +665,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (tsc:usingWWBasedASR(?actor)) {
-            act:triggerWW();
-        }
+        act:listenPostCommunicateUtterance(?addressee);
     }
 }
 
@@ -685,9 +677,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:invokeMethod(!output,"isEmpty")) {
         act:generateResponseFromString(!output);
-        if (tsc:usingWWBasedASR(?actor)) {
-            act:triggerWW();
-        }
+        act:listenPostCommunicateUtterance(?addressee);
     }
 }
 

@@ -80,9 +80,9 @@ import java.lang.String;
         tsc:interruptWaitOnFocusedChat(?user,?agentTeam,?cid);
     } else {
         act:handleParsedUtterance(!responseUtterance);
-        if (tsc:usingWWBasedASR(!agentTeam)) {
-            act:triggerWW();
-        }
+        //if (tsc:usingWWBasedASR(!agentTeam)) {
+        //    act:triggerWW(); //TODO: revisit
+        //}
     }
 }
 

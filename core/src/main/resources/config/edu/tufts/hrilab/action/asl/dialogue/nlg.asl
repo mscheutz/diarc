@@ -106,8 +106,19 @@ import java.util.Map;
       }
     }
 
+    //act:listenPostCommunicateUtterance(?actor);
+}
+
+// Pulled out of communicateUtterance because practically it seemed that we don't actually want to blindly trigger the WW and listen after any spoken output.
+// An alternate solution could be to go the other direction - have it on by default and configure a type of "ignoreWWTrigger" somehow
+() = listenPostCommunicateUtterance(Symbol ?agentTeam) {
+    java.lang.Boolean !streamingTTS = false;
+
+    if (tsc:usingLLM()) {
+      !streamingTTS = tsc:usingStreamingTTS(!agentTeam);
+    }
     // TODO: in what cases do we want to trigger the WW, only after e.g. questions, LLM text responses during multi-turn parses, itk output, ... or always? (current impl means always)
-    if (tsc:usingWWBasedASR(!addressee)) {
+    if (tsc:usingWWBasedASR(?agentTeam)) {
       //TODO: revisit this in line with back-end StreamingTTS / WW changes. Ideally just keep to triggerWW call here.
       if (op:equals(!streamingTTS,true)) {
         act:armPostStreamRearm();
@@ -115,7 +126,7 @@ import java.util.Map;
         act:triggerWW();
       }
       // TODO: Should listening indicator be tied to WW internally, or placed explicitly here?
-      if (tsc:usingListeningIndicator(!addressee)) {
+      if (tsc:usingListeningIndicator(?agentTeam)) {
         act:hideListeningIndicator();
       }
     }
@@ -334,6 +345,7 @@ import java.util.Map;
         // TODO: Removed (previously Ava specific) WW/StreamingTTS interactions from this block. Revisit and make sure changes in communicateUtterance comply
         //  with desired behaviore here appropriately
         act:communicateUtterance(?utterance, ?fillerPhraseCase);
+        act:listenPostCommunicateUtterance(!addressee);
       }
       !tracker = op:newObject("java.lang.Integer", 1);
     }

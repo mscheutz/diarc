@@ -242,6 +242,7 @@ import java.lang.String;
         op:log("debug", "Utterance validation aborted, not processing utterance");
         // General TODO: consolidate generateResponses which are really meant to be hardcoded, but are/were left as semantics for conceptual different language/multilingual LLM implementations
         act:generateResponse(!speaker, and(ack(okay),forgettingAbout(?actor,attemptedInstruction),letMeKnowHowICanFurtherAssistYou()));
+        act:listenPostCommunicateUtterance(!addressee);
         return;
     } elseif (op:equalsValue(!response, yes())) {
         // Utterance validated - progress through NLU pipeline or focused context script
@@ -281,6 +282,7 @@ import java.lang.String;
         } else {
             // No extended parse / parse recovery in the system, exit out.
             act:generateResponse(!speaker,please(rephrase));
+            act:listenPostCommunicateUtterance(!addressee);
             return;
         }
     } else {
@@ -301,6 +303,7 @@ import java.lang.String;
     Predicate !suppSemantics;
     java.lang.Integer !indirectSemanticsSize;
     java.lang.Boolean !validated = op:invokeMethod(?utterance,"isValidated");
+    java.lang.String !semanticsName;
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
@@ -316,6 +319,11 @@ import java.lang.String;
     // handle direct semantics
     // has the form "semantics(boundOption1, boundOption2, ...)"
     act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct, !validated);
+
+    !semanticsName = op:getName(!semantics);
+    if (op:equals(!semanticsName,"generateResponseFromString") || op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
+      act:listenPostCommunicateUtterance(!addressee);
+    }
 
     // handle indirect semantics
     // has the form "indirectSemantics(semantics(boundOption1, boundOption2, ...), semantics(...),...)"
