@@ -837,6 +837,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           // noConfirmation case - deferred until dialogue history update in case of external parser hit
           //handleValidatedToolCall(outputUtterance, chatCollection);
+          outputUtterance.setNeedsValidation(false);
         }
       }
 
