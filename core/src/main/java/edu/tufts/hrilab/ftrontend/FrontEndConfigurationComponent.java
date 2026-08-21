@@ -410,8 +410,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "clearRoomForDoor":
             //
             case "followUser":
-               //// Set of actions which should perhaps be "reduced ack"?
-               //case "escortToLocation":
+            case "escortToLocation":
+            case "escortFromLocationToLocation":
                return true;
             default:
                return false;
