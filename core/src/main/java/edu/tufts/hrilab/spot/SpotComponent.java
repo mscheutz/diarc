@@ -34,8 +34,8 @@ public class SpotComponent extends DiarcComponent {
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("hubContainer")) {
-      hubContainer = cmdLine.getOptionValue("hubContainer");
+    if (cmdLine.hasOption("hub")) {
+      hubContainer = cmdLine.getOptionValue("hub");
     }
     if (cmdLine.hasOption("spotConfigFile")) {
       spotConfigFile = cmdLine.getOptionValue("spotConfigFile");

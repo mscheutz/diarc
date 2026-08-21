@@ -19,8 +19,8 @@ public class SpotMapBuilder extends DiarcConfiguration {
     if (cmdLine.hasOption("spotConfig")) {
       spotConfigFile = cmdLine.getOptionValue("spotConfig");
     }
-    if (cmdLine.hasOption("tradeHubContainer")) {
-      tradeHubContainer = cmdLine.getOptionValue("tradeHubContainer");
+    if (cmdLine.hasOption("hub")) {
+      tradeHubContainer = cmdLine.getOptionValue("hub");
     }
   }
 
@@ -40,7 +40,7 @@ public class SpotMapBuilder extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile
-                    + " -hubContainer " + tradeHubContainer
+                    + " -hub " + tradeHubContainer
     );
 
     createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.spot.SpotInterface");
