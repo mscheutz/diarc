@@ -20,6 +20,27 @@ public class AvaHybridParserComponent extends HybridParserComponent {
   private List<Long> modifiedUtteranceUids = new ArrayList<>();
 
   @Override
+  public Utterance parseUtteranceForNonLLMResult(Utterance incoming, boolean callStreaming) {
+    //TODO: AvaDemo "hack" to prevent duplicate parsing when checking for false positive wakeword triggers
+    if (incoming.getSemantics() != null) {
+      log.info("[parseUtterance] receiving utterance with set semantics. Please unset before calling parseUtterance if desiring a new result");
+      return incoming;
+    }
+
+    if (incoming.getWordsAsString().equals("reset")) {
+      incoming.setSemantics(Factory.createPredicate("resetConversation",incoming.getAddressee()));
+      incoming.setType(UtteranceType.INSTRUCT);
+      return incoming;
+    }
+
+    Utterance output = super.parseUtteranceForNonLLMResult(incoming, callStreaming);
+    if (output != null) {
+      output = applyContextToOutput(output);
+    }
+    return output;
+  }
+
+  @Override
   public Utterance parseUtterance(Utterance incoming) {
     //TODO: AvaDemo "hack" to prevent duplicate parsing when checking for false positive wakeword triggers
     if (incoming.getSemantics() != null) {
