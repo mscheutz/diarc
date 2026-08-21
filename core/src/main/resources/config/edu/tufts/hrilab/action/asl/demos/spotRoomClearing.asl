@@ -303,11 +303,18 @@ import java.util.List;
 () = getCurrentLocationString() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateCurrentLocationString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
@@ -323,11 +330,18 @@ import java.util.List;
 () = getAllKnownRooms() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateAllKnownRoomsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 

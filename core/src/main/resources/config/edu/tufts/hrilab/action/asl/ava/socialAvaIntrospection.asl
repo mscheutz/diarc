@@ -472,222 +472,364 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = getBatteryLevelString() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateBatteryLevelString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getCurrentLocationString() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateCurrentLocationString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getAllKnownLocations() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateAllKnownLocationsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getAllKnownPatrolPaths() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateAllKnownPatrolPathsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getAllLocationsOnPatrolPath(Symbol ?pathName) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateAllLocationsOnPatrolPathString(?pathName);
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getTaughtActions() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateTaughtActionsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getPredefinedActions() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generatePredefinedActionsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getActionSteps(Predicate ?action) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateActionStepsString(?action);
     !output = op:newObject("java.lang.String","!output Summarize this description if relaying to the user.");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getIfCanPerform(Predicate ?actionPredicate) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateIfCanPerformString(?actionPredicate);
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getKioskSettings() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateKioskSettingsString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getSavedVideos() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateSavedVideosString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getVideoVolume() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateVideoVolumeString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getIsVideoSaved(Symbol ?videoName) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateIsVideoSavedString(?videoName);
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getSavedImages() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = act:generateSavedImagesString();
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 () = getCurrentPendingScheduledGoalInformation() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = tsc:getFullGoalsSummary(?actor);
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = getInformationAroundHowToTeachATask() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = op:newObject("java.lang.String","You can teach me how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\". I can take it from there and guide you through supplying all the information I need to learn the task. Alternatively, ask me for an explanation of what a taught task sequence consists of and you can supply all the necessary information yourself!");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
-        act:listenPostCommunicateUtterance(?addressee);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = getInformationAroundWhatALearnedTaskIs() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = op:newObject("java.lang.String","Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
-        act:listenPostCommunicateUtterance(?addressee);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = getInformationAroundWhatActionsCanBePerformedAlongALearnedTask() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = op:newObject("java.lang.String","Steps of a taught task sequence can include things like playing a video, saying a phrase, taking a wi-fi measurement, and more. I can also simply pause briefly at each location if desired.");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
-        act:listenPostCommunicateUtterance(?addressee);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = getInformationAroundTeachingNewActions() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = op:newObject("java.lang.String","- Teaching new actions: A user can begin teaching you how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\" (after which you will call the \"learnTaskSequence\" tool). You can take it from there and guide them through supplying all the information you need to learn the task. Alternatively, they can ask you for an explanation of what a taught task sequence consists of and then be able to supply all the necessary information themselves!\\n- Taught Task Components: Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.\\n- Possible Taught Task Sequence Steps: Steps of a taught task sequence can include things like playing a video, saying a phrase, taking a wi-fi measurement, and more. You can also simply pause briefly at each location if desired.\\n- Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
-        act:listenPostCommunicateUtterance(?addressee);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = getInformationAroundTeachingLocationsAndNavigation() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = op:newObject("java.lang.String","Fact List:\\n- The set of saved locations available to you are presented in the location list.\\n- You only know how to navigate between saved locations. You cannot travel to any other position in the environment without explicitly saving it first.\\n- The only way to save a new location is if the user instructs you to save your current position as a new location (where you will subsequently call the \"saveLocation\" tool).\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new.\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"followUser\" tool). Do not tell the user you are following them unless you have done so and/or your active task is follow.\\n- The only way you will stop following a user is if they instruct you to stop following (where you will subsequently call the \"stopFollow\" tool)\\n#\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.");
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!user,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
-        act:listenPostCommunicateUtterance(?addressee);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }
 
 () = checkPastInteractionHistoryForMissingInformation(Symbol ?user, Symbol ?agentTeam) {
     String !output;
-    Symbol !submitter = this:getOriginalSubmitter();
+    Symbol !user = this:getOriginalSubmitter();
+    Predicate !response;
     !output = tsc:getExtendedConversationHistoryString(?user, ?agentTeam);
     String !contextId = this:getCommand();
-    !output = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
-    if (~op:invokeMethod(!output,"isEmpty")) {
-        act:generateResponseFromString(!output);
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        !goalID = act:submitGoal(!response);
+        act:joinOnGoal(!goalID);
+        !output = op:getName(!response);
+        if (op:equals(!output,"generateResponseFromString")) {
+          act:listenPostCommunicateUtterance(?actor);
+        }
     }
 }

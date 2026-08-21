@@ -2142,23 +2142,25 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * call the Completion endpoint with the updated Chat for a text response.
    */
   @TRADEService
-  public String addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
+  public Predicate addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
     ChatCollection collection;
     ChatContext chatContext;
+    String toolCallId = "";
     synchronized (currentChatCollections) {
       collection = getChatCollection(speaker, addressee);
       if (collection == null) {
-        log.error("[callChatCompletionForTextResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
-        return "";
+        log.error("[addToolResponse] supplied user/agent pair {}/{} does not have an existing Chat history", speaker, addressee);
+        //TODO: return an error string? Or does this failure case mean collision with other input/output and we should not respond
+        return null;
       } else if (collection.currentChat == null) {
-        log.warn("[callChatCompletionForTextResponse] no current chat for pair with id {}/{}", speaker, addressee);
-        return "";
+        log.warn("[addToolResponse] no current chat for pair with id {}/{}", speaker, addressee);
+        //TODO: return an error string? Or does this failure case mean collision with other input/output and we should not respond
+        return null;
       } else {
         chatContext = collection.currentChat;
         int size = chatContext.history.messages.size();
-        String toolCallId = "";
         for (int i=size-1;i>0;i--) {
           Message msg = chatContext.history.messages.get(i);
           if (msg.tool_calls != null && msg.tool_calls.length>0) {
@@ -2178,12 +2180,34 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
-      if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
-        return ((Predicate)out.getSemantics()).get(2).toString();
-      } else {
-        log.error("[callChatCompletionForTextResponse] got unexpected output {}", out);
-        return "";
+      if (out.getSemantics() != null) {
+        if (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) {
+          //if (out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
+          //  return ((Predicate) out.getSemantics()).get(2).toString();
+          //}
+          return (Predicate) out.getSemantics();
+        } else if (itkActionNames.contains(out.getSemantics().getName()) && !out.getSemantics().getName().equals(toolCallName)) {
+          //TODO: want to allow this - call itk action. Issue is can't call action in asl from string. Or can't do in java because don't have itk response string in java.
+          // Would need to return a Predicate and do a bunch of checking and then submitGoal in asl.
+          return (Predicate) out.getSemantics();
+        } else {
+          log.info("[addToolResponse] Trying again with added guidance before failing");
+          if (toolCallId.isEmpty()) {
+            chatContext.history.addMessage("tool", "Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
+          } else {
+            chatContext.history.addToolMessage("Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
+          }
+          out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+          if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+            return (Predicate) out.getSemantics();
+          } else {
+            log.error("[addToolResponse] got unexpected output even after asking to use text response {}", out);
+            return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
+          }
+        }
       }
+      log.error("[addToolResponse] got unexpected output {}", out);
+      return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
     }
   }
 
