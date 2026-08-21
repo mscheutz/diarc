@@ -200,7 +200,7 @@ public class HybridParserComponent extends DiarcComponent {
   // Associated with parseUtteranceForNonLLMResult - Get Trailing LLM result after checking non-llm success
   @TRADEService
   public Utterance getLLMParseResult(Utterance incoming, boolean callStreaming) {
-    log.debug("[getLLMParseResult] in method");
+    log.info("[getLLMParseResult] in method");
 
     // If starting the LLM asynchronously
     //*TODO: Would need to store futures and index on utteranceID to retrieve here(and probably move unblock/cancelTTSOutputForUID to this component and rename)
