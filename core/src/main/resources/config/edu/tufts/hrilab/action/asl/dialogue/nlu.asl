@@ -305,6 +305,7 @@ import java.lang.String;
     java.lang.String !semanticsName;
     Predicate !goal;
     java.lang.Integer !numArgs;
+    java.lang.Long !uttID;
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
@@ -316,6 +317,7 @@ import java.lang.String;
     !semantics = op:invokeMethod(?utterance, "getBoundSemanticsPredicate");
     !indirectSemantics = op:invokeMethod(?utterance, "getBoundIndirectSemanticsPredicate");
     !suppSemantics = op:invokeMethod(?utterance, "getBoundSupplementalSemanticsPredicate");
+    !uttID = op:invokeMethod(?utterance,"getUid");
 
     // handle direct semantics
     // has the form "semantics(boundOption1, boundOption2, ...)"
@@ -330,7 +332,12 @@ import java.lang.String;
       op:log("debug", "[handleDialogueInput] !goal");
       !semanticsName = op:getName(!goal);
       op:log("debug", "[handleDialogueInput] !semanticsName");
-      if (op:equals(!semanticsName,"generateResponseFromString") || op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
+      if (op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
+        tsc:waitForStreamingSpeechCompletion(!uttID);
+        act:listenPostCommunicateUtterance(!addressee);
+      } elseif (op:equals(!semanticsName,"generateResponseFromString")) {
+        //TODO URGENT: WW + non-streaming - need similar waitForCompletion method
+        //tsc:waitForStreamingSpeechCompletion(!uttID);
         act:listenPostCommunicateUtterance(!addressee);
       }
     }

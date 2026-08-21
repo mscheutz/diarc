@@ -657,6 +657,24 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     return ok;
   }
 
+  //TODO: Need to ensure this method isn't called before the stream is created?
+  @TRADEService
+  public void waitForStreamingSpeechCompletion(long uid) {
+    SpeechStream stream;
+    synchronized (streamingLock) {
+      stream = streams.get(uid);
+    }
+    if (stream != null) {
+      log.info("[waitForStreamingSpeechCompletion] waiting on job");
+      try {
+        stream.job.get();
+      } catch (ExecutionException | InterruptedException e) {
+        log.error("[waitForStreamingSpeechCompletion] error waiting on job", e);
+      }
+      log.info("[waitForStreamingSpeechCompletion] got job");
+    }
+  }
+
   private boolean streamAndPlayStreaming(SpeechStream stream, boolean wait) {
     long tStart = System.nanoTime();
     StreamTarget target = new StreamTarget();
@@ -785,11 +803,11 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     if (!pendingRearm.compareAndSet(true, false)) {
       return;
     }
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
-    } catch (TRADEException e) {
-      log.debug("[fireRearm] triggerWW unavailable");
-    }
+//    try {
+//      TRADE.getAvailableService(new TRADEServiceConstraints().name("triggerWW")).call(void.class);
+//    } catch (TRADEException e) {
+//      log.debug("[fireRearm] triggerWW unavailable");
+//    }
   }
 
   private void cancelRearm() {

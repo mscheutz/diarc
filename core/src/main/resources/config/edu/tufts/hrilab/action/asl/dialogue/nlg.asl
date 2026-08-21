@@ -95,6 +95,8 @@ import java.util.Map;
       op:log("debug", "done updating dialogue history with: !text");
       if (op:equals(!performSayText,true)) {
         act:sayText(!outputUtterance);
+      } else {
+        tsc:waitForStreamingSpeechCompletion(!uttID);
       }
     } else {
       op:log("debug", "updating dialogue history..");
@@ -103,6 +105,8 @@ import java.util.Map;
       op:log("debug", "done updating dialogue history with: !text");
       if (op:equals(!performSayText,true)) {
         act:sayText(?utterance);
+      } else {
+        tsc:waitForStreamingSpeechCompletion(!uttID);
       }
     }
 
