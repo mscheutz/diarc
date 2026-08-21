@@ -303,6 +303,8 @@ import java.lang.String;
     java.lang.Integer !indirectSemanticsSize;
     java.lang.Boolean !validated = op:invokeMethod(?utterance,"isValidated");
     java.lang.String !semanticsName;
+    Predicate !goal;
+    java.lang.Integer !numArgs;
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
@@ -319,9 +321,18 @@ import java.lang.String;
     // has the form "semantics(boundOption1, boundOption2, ...)"
     act:handleSemantics(!speaker, !addressee, !semantics, !suppSemantics, direct, !validated);
 
-    !semanticsName = op:getName(!semantics);
-    if (op:equals(!semanticsName,"generateResponseFromString") || op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
-      act:listenPostCommunicateUtterance(!addressee);
+    op:log("debug", "[handleDialogueInput] !semantics");
+    !goal = op:getArg(!semantics,0);
+    op:log("debug", "[handleDialogueInput] !goal");
+    !numArgs = op:invokeMethod(!goal,"size");
+    if (op:gt(!numArgs,1)) {
+      !goal = op:getArg(!goal,1);
+      op:log("debug", "[handleDialogueInput] !goal");
+      !semanticsName = op:getName(!goal);
+      op:log("debug", "[handleDialogueInput] !semanticsName");
+      if (op:equals(!semanticsName,"generateResponseFromString") || op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
+        act:listenPostCommunicateUtterance(!addressee);
+      }
     }
 
     // handle indirect semantics
