@@ -18,7 +18,7 @@ import java.util.Map;
 () = communicateUtterance(Utterance ?utterance, Integer ?fillerPhraseCase = 0) {
     String !text;
     Symbol !addressee;
-    java.lang.Long !uttID;
+    java.lang.Long !uttID = op:invokeMethod(?utterance,"getUid");
     java.lang.Boolean !streamingTTS = false;
     java.lang.Boolean !isLocal;
     java.lang.Boolean !performSayText = true;
@@ -41,7 +41,6 @@ import java.util.Map;
       if (tsc:usingLLM()) {
         // Using LLM, disjointly check for valid results from other NLG components and the LLM NLG component. Based on outcome and rest of system configuration,
         //  conditionally generate filler phrases and allow for streaming TTS of LLM results.
-        !uttID = op:invokeMethod(?utterance,"getUid");
         !streamingTTS = tsc:usingStreamingTTS(!addressee);
 
         // Trigger HybridNLGComponent subcomponents and grab non-llm result first
