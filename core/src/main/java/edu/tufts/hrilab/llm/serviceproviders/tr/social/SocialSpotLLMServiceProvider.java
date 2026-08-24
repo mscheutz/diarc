@@ -488,7 +488,7 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
             "You pause your current task, which can be later resumed. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-    definition = new ToolDefinition("resumeSystemGoals",
+    definition = new ToolDefinition("resumeCurrentTask",
             "You resume the currently paused task. \nExample Instruction: \"resume previous task.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));

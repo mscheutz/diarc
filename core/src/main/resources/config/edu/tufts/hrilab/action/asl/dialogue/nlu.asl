@@ -242,7 +242,7 @@ import java.lang.String;
         op:log("debug", "Utterance validation aborted, not processing utterance");
         // General TODO: consolidate generateResponses which are really meant to be hardcoded, but are/were left as semantics for conceptual different language/multilingual LLM implementations
         act:generateResponse(!speaker, and(ack(okay),forgettingAbout(?actor,attemptedInstruction),letMeKnowHowICanFurtherAssistYou()));
-        act:listenPostCommunicateUtterance(!addressee);
+        act:listenPostCommunicateUtterance(!speaker);
         return;
     } elseif (op:equalsValue(!response, yes())) {
         // Utterance validated - progress through NLU pipeline or focused context script
@@ -281,7 +281,7 @@ import java.lang.String;
         } else {
             // No extended parse / parse recovery in the system, exit out.
             act:generateResponse(!speaker,please(rephrase));
-            act:listenPostCommunicateUtterance(!addressee);
+            act:listenPostCommunicateUtterance(!speaker);
             return;
         }
     } else {
@@ -334,11 +334,11 @@ import java.lang.String;
       op:log("debug", "[handleDialogueInput] !semanticsName");
       if (op:equals(!semanticsName,"updateDialogueHistoryFromString")) {
         tsc:waitForStreamingSpeechCompletion(!uttID);
-        act:listenPostCommunicateUtterance(!addressee);
+        act:listenPostCommunicateUtterance(!speaker);
       } elseif (op:equals(!semanticsName,"generateResponseFromString")) {
         //TODO URGENT: WW + non-streaming - need similar waitForCompletion method
         //tsc:waitForStreamingSpeechCompletion(!uttID);
-        act:listenPostCommunicateUtterance(!addressee);
+        act:listenPostCommunicateUtterance(!speaker);
       }
     }
 

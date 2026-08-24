@@ -676,10 +676,6 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
                                               new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelCurrentTask",
-                                      "You stop and fully discard your current task. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("cancelAllQueuedTasks",
                                       "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
                                       new ArrayList());
@@ -699,12 +695,16 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("cancelCurrentTask",
+              "You stop and fully discard your current task, whether active or suspended. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("suspendCurrentTask",
-                                      "You pause your current task, which can be later resumed. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
+                                      "You pause your current task, which can be later resumed or canceled. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("resumeSystemGoals",
-                                      "You resume the currently paused task. \nExample Instruction: \"resume previous task.\"",
+      definition = new ToolDefinition("resumeCurrentTask",
+                                      "You resume your current task if it is paused. \nExample Instruction: \"resume\" or \"continue your previous task.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -712,7 +712,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
             "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
       definition = new ToolDefinition("forgetTaughtAction",
-                                      "You forget a previously taught action. \nExample Instruction: \"forget how to go to %exampleLocation.\" \nExample Call: " + exampleCallString,
+                                      "You forget/delete a previously taught action. \nExample Instruction: \"forget how to go to %exampleLocation.\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON representing the tool call to forget. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
@@ -1249,10 +1249,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("suspendCurrentTask",
-                                      "Pause your current task, which can be later resumed",
+                                      "Pause your current task, which can be later resumed or canceled",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("resumeSystemGoals",
+      definition = new ToolDefinition("resumeCurrentTask",
                                       "Resume the currently paused task",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));

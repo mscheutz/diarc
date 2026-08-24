@@ -313,7 +313,7 @@ import java.util.List;
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(?actor);
+          act:listenPostCommunicateUtterance(!user);
         }
     }
 }
@@ -340,7 +340,7 @@ import java.util.List;
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(?actor);
+          act:listenPostCommunicateUtterance(!user);
         }
     }
 }

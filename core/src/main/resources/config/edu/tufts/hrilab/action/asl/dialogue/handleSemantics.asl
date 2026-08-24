@@ -208,7 +208,7 @@ import java.lang.Boolean;
           act:generateResponse(?speaker, ?query, !beliefs, direct);
         }
       }
-      act:listenPostCommunicateUtterance(?addressee);
+      act:listenPostCommunicateUtterance(?speaker);
     }
 }
 

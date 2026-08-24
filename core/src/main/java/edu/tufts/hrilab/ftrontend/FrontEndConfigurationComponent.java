@@ -37,7 +37,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
 
    // Addressees the robot is physically co-present with: their replies are spoken aloud. Replies to
    // any other addressee (webapp, remote/text channels) are delivered via dialogue history only.
-   public final Set<String> LOCAL_ADDRESSEES = Set.of("temi", "local_user", "local_visitor", "operator", "ava");
+   public final Set<String> LOCAL_ADDRESSEES = Set.of("local_user", "local_visitor", "operator");
 
    @Override
    protected List<Option> additionalUsageInfo() {
@@ -64,6 +64,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       //TODO: check configuration
    }
 
+   //TODO: This doesn't really make sense, needs to be a pair of interactors. Currently this is spiritually whether the
+   //      original input is from the webapp or not. Naming of everything is misleading
    @TRADEService
    public boolean isLocalAddressee(Symbol addressee) {
       return addressee != null && LOCAL_ADDRESSEES.contains(addressee.getName());
@@ -77,14 +79,17 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    //TODO: Does technically every method here need to take in agentTeam as an argument?
    @TRADEService
    public boolean usingStreamingTTS(Symbol agentTeam) {
+      log.debug("[usingStreamingTTS] {}",agentTeam);
       return useStreamingTTS && isLocalAddressee(agentTeam);
    }
    @TRADEService
    public boolean usingWWBasedASR(Symbol agentTeam) {
+      log.debug("[usingWWBasedASR] {}",agentTeam);
       return useWWBasedASR && isLocalAddressee(agentTeam);
    }
    @TRADEService
    public boolean usingListeningIndicator(Symbol agentTeam) {
+      log.debug("[usingListeningIndicator] {}",agentTeam);
       return useListeningIndicator && isLocalAddressee(agentTeam);
    }
 
@@ -412,6 +417,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "followUser":
             case "escortToLocation":
             case "escortFromLocationToLocation":
+            case "cancelAllScheduledGoals":
+            //case "scheduled":
                return true;
             default:
                return false;

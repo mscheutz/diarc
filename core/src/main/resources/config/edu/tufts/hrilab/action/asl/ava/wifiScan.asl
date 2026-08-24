@@ -70,7 +70,7 @@ import java.lang.Integer;
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(?actor);
+          act:listenPostCommunicateUtterance(!user);
         }
     }
 }
@@ -115,7 +115,7 @@ import java.lang.Integer;
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(?actor);
+          act:listenPostCommunicateUtterance(!user);
         }
     }
 }
@@ -147,7 +147,7 @@ import java.lang.Integer;
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(?actor);
+          act:listenPostCommunicateUtterance(!user);
         }
     }
 }

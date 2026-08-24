@@ -83,6 +83,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "resumeCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "supersedeSystemGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

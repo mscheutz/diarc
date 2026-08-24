@@ -3,6 +3,10 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.Justification;
 
+() = resumeCurrentTask() {
+    act:resumeSystemGoals();
+    //act:generateResponseFromString("Resumed");
+}
 
 () = suspendCurrentTask() {
     act:suspendSystemGoalsBlocking();

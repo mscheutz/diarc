@@ -65,7 +65,8 @@ import java.util.Map;
               !fillerString = tsc:samplePreValidationFillerPhrase(?utterance,true);
             } elseif (op:==(?fillerPhraseCase,4)) {
                // Goal immediately successful filler
-               !fillerString = tsc:sampleGoalAchievedPhrase(!semantics);
+              !semantics = op:invokeMethod(?utterance, "getSemantics");
+              !fillerString = tsc:sampleGoalAchievedPhrase(!semantics);
              }
             async {
               act:generateResponseFromString(!addressee,!fillerString);
@@ -114,24 +115,25 @@ import java.util.Map;
 
 // Pulled out of communicateUtterance because practically it seemed that we don't actually want to blindly trigger the WW and listen after any spoken output.
 // An alternate solution could be to go the other direction - have it on by default and configure a type of "ignoreWWTrigger" somehow
-() = listenPostCommunicateUtterance(Symbol ?agentTeam) {
+() = listenPostCommunicateUtterance(Symbol ?interactor) {
     java.lang.Boolean !streamingTTS = false;
 
+    op:log("debug","[listenPostCommunicateUtterance] ?interactor");
     if (tsc:usingLLM()) {
-      !streamingTTS = tsc:usingStreamingTTS(!agentTeam);
+      !streamingTTS = tsc:usingStreamingTTS(?interactor);
     }
     // TODO: in what cases do we want to trigger the WW, only after e.g. questions, LLM text responses during multi-turn parses, itk output, ... or always? (current impl means always)
-    if (tsc:usingWWBasedASR(?agentTeam)) {
+    if (tsc:usingWWBasedASR(?interactor)) {
       //TODO: revisit this in line with back-end StreamingTTS / WW changes. Ideally just keep to triggerWW call here.
-      if (op:equals(!streamingTTS,true)) {
-        // the TTS waits for whatever speech is queued to finish before it retriggers, so this
-        // covers both the streamed replies and the ones that go out through sayText
-        act:armPostStreamRearm();
-      } else {
-        act:triggerWW();
-      }
+      //if (op:equals(!streamingTTS,true)) {
+      //  // the TTS waits for whatever speech is queued to finish before it retriggers, so this
+      //  // covers both the streamed replies and the ones that go out through sayText
+      //  act:armPostStreamRearm();
+      //} else {
+      act:triggerWW();
+      //}
       // TODO: Should listening indicator be tied to WW internally, or placed explicitly here?
-      if (tsc:usingListeningIndicator(?agentTeam)) {
+      if (tsc:usingListeningIndicator(?interactor)) {
         act:hideListeningIndicator();
       }
     }

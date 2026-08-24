@@ -523,6 +523,7 @@ public final class TemplatedNLG extends DiarcComponent {
         lexicalizer("cancelCurrentTask", c -> "cancel my current task");
         lexicalizer("suspendCurrentTask", c -> "suspend my current task");
         lexicalizer("resumeSystemGoals", c -> "resume my paused task");
+        lexicalizer("resumeCurrentTask", c -> "resume my paused task");
         lexicalizer("sit", c -> "sit");
         lexicalizer("stand", c -> "stand");
         lexicalizer("open", c -> "open " + entities.resolve(c.args().get(0)));

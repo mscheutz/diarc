@@ -309,7 +309,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         foreach (!gid : !scheduledGoalIds) {
             act:cancelGoal(!gid);
         }
-        act:generateResponseFromString("cancelled all scheduled tasks");
+        act:generateResponseFromString("canceled all scheduled tasks");
     }
 }
 

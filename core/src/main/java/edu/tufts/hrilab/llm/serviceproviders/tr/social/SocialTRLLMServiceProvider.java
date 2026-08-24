@@ -271,7 +271,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
               "Stop and fully discard your current task.",
               new ArrayList<>()),
-              UtteranceType.INSTRUCT));
+              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
       for (Tool itkTool : itkTools) {
         universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
       }
@@ -285,7 +285,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
               "You stop and fully discard your current task. \nExample Instruction: \"stop what you're doing.\", \"cancel current task\"",
               new ArrayList<>()),
-              UtteranceType.INSTRUCT));
+              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
       for (Tool itkTool : itkTools) {
         universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
       }

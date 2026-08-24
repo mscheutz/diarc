@@ -157,7 +157,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     } else {
       // Added LLM before TLDL in sequence because some TLDL ITK targets (and just in general targets) are problematic/out of date
       //  TODO: ^at least want this for testing. If we want direct ITK versions still available for deployment can swap back
-      parserArgs = "-patternMatching -tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -llm -sequence cache pattern tldl llm";
+      parserArgs = "-patternMatching -tldl socialavadict.dict -cache -cacheName ava -cachePersist -llm -sequence cache pattern tldl llm";
     }
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.domains.AvaHybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
