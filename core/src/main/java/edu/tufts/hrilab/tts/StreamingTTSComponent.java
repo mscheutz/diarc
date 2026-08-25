@@ -1020,7 +1020,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
 
   private String sanitizeText(String text) {
     if (text == null) return "";
-    return text.replaceAll(":[a-zA-Z]\\w*", "").replace("_", " ");
+    return text.replaceAll(":[a-zA-Z]\\w*", "").replace("_", " ").replace("\"", "");
   }
 
   private static int findSplitPoint(CharSequence buf, boolean isFirst) {
