@@ -104,7 +104,7 @@ import java.lang.String;
             op:log("warn","[resumeContextSpecificChat] no response received on resume");
         } else {
             act:generateResponseFromString(?user,!response);
-            act:listenPostCommunicateUtterance(?agentTeam);
+            act:listenPostCommunicateUtterance(?user);
         }
     }
 }
