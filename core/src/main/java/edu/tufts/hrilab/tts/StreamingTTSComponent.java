@@ -416,15 +416,33 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
       currentTarget = target;
       session = backend.openSession(target);
 
-      String phrase = sanitizeText(text).trim();
-      if (!phrase.isEmpty()) {
-        session.sendPhrase(phrase);
-      }
-      if (!target.isFinished()) {
-        session.finish();
-      }
+      // run the whole utterance through the same chunker the streamed path uses. sending it as
+      // one phrase meant the backend had to synthesize all of it before any audio came back,
+      // which is ~60ms per character of silence on a long reply
+      StreamingTextBuffer buffer = new StreamingTextBuffer();
+      buffer.push(text);
+      buffer.complete();
+      final SynthesisBackend.Session dispatchSession = session;
+      final int[] sendsRef = new int[]{0};
+      Thread dispatcher = new Thread(() -> dispatchLoop(buffer, dispatchSession, target, tStart, sendsRef), "tts-dispatch");
+      dispatcher.setDaemon(true);
+      dispatcher.start();
 
       ok = playFromTarget(target, wait, tStart, "tts");
+
+      if (!target.aborted) {
+        try {
+          dispatcher.join(2000);
+          if (dispatcher.isAlive()) {
+            log.warn("[streamAndPlay] dispatcher did not exit within 2s; interrupting");
+            dispatcher.interrupt();
+            dispatcher.join(500);
+          }
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          dispatcher.interrupt();
+        }
+      }
       long tEnd = System.nanoTime();
       long ttfbMs = target.tFirstByte > 0 ? (target.tFirstByte - tStart) / 1_000_000 : -1;
       long ttfaMs = target.tFirstAudio > 0 ? (target.tFirstAudio - tStart) / 1_000_000 : -1;
