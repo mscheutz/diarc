@@ -384,9 +384,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   // do something. Keep it up for replies and for focused-context entries that start an
   // interactive instruction dialogue (scheduleTask, learnTaskSequence) -- the robot is
   // still asking the user for info there.
+  // Terminated statuses are skipped because a goal finishing can otherwise take the head
+  // back down after the re-arm has already put it up.
   @TRADEService
   public void hideListeningIndicatorGoalListener(GoalInfo info) throws TRADEException {
-    switch (info.goal.getName()) {
+    if (info.status.isTerminated()) {
+      return;
+    }
+    String goalname = info.goal == null ? info.unboundGoal.getName() : info.goal.getName();
+    switch (goalname) {
       case "generateResponseFromString":
       case "updateDialogueHistoryFromString":
       case "scheduleTask":

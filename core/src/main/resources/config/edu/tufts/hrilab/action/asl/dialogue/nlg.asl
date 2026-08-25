@@ -132,10 +132,8 @@ import java.util.Map;
       //} else {
       act:triggerWW();
       //}
-      // TODO: Should listening indicator be tied to WW internally, or placed explicitly here?
-      if (tsc:usingListeningIndicator(?interactor)) {
-        act:hideListeningIndicator();
-      }
+      // triggerWW brings the indicator up itself, so hiding it right here only blinked it off
+      // and back on. the ww loop lowers it when a listen ends without speech.
     }
 }
 
