@@ -818,18 +818,18 @@ import edu.tufts.hrilab.action.goal.Goal;
 
 () = checkPastInteractionHistoryForMissingInformation(Symbol ?user, Symbol ?agentTeam) {
     String !output;
-    Symbol !user = this:getOriginalSubmitter();
+    Symbol !submitter = this:getOriginalSubmitter();
     Predicate !response;
     !output = tsc:getExtendedConversationHistoryString(?user, ?agentTeam);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
-    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    !response = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         !goalID = act:submitGoal(!response);
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
+          act:listenPostCommunicateUtterance(!submitter);
         }
     }
 }
