@@ -12,13 +12,13 @@ Output:{"translation":"Confirming I should go to the ?destination location?"}
 Input:QUESTION(ava,%user,mean(%user,reportBatteryLevel(ava)),{})
 Output:{"translation":"Did you mean to ask me what percent my battery is at?"}
 #
-Input:QUESTION(ava,%user,mean(%user,followUser(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,follow(ava)),{})
 Output:{"translation":"Confirming I should follow you?"}
 #
 Input:QUESTION(ava,%user,mean(%user,say(ava,?words)),{})
 Output:{"translation":"Confirming I should say the phrase \'?words\"?"}
 #
-Input:QUESTION(ava,%user,mean(%user,stopFollow(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,stopFollowing(ava)),{})
 Output:{"translation":"Confirming I should stop following you?"}
 #
 Input:QUESTION(ava,%user,mean(%user,playNextVideo(ava)),{})
@@ -138,7 +138,7 @@ Output:{"translation":"Confirming you meant ?num?"}
 Input:QUESTION(ava,%user,mean(%user,reportTaughtActions(ava)),{})
 Output:{"translation":"Confirming I should list my learned actions?"}
 #
-Input:QUESTION(ava,%user,mean(%user,forgetTaughtAction(ava,followUser(ava))),{})
+Input:QUESTION(ava,%user,mean(%user,forgetTaughtAction(ava,follow(ava))),{})
 Output:{"translation":"Confirming I should forget how to follow you?"}
 ##
 In all future examples of this task you will not be given robot output with variables (inner words starting with ?). These variables will be replaced with input values from the user. Your output should reflect this and include the user values. For example:

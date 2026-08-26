@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 // Expansive higher level TODO list currently in personal notes
 public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
-  boolean useCondensedTools = false; //Condensed Tools have not been maintained. Would need to be updated before use
+  boolean useCondensedTools = true; //Condensed Tools have not been maintained. Would need to be updated before use
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
@@ -200,7 +200,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     Tool defaultGoalInfoTool;
     if (useCondensedTools) {
       focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
-              "End the conversation with the user and discard shared dialogue-based tasks.",
+              "End the conversation with the user and discard the current in progress definition.",
               new ArrayList<>()),
               UtteranceType.INSTRUCT
       );
@@ -230,9 +230,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     if (useCondensedTools) {
       textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
-              "Reply briefly while gathering missing information",
+              "You are still gathering information before being able to submit an accurate, fully defined " +
+                      "instruction and need to speak with the user to gather missing information.",
               List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                      "Short spoken reply", true))),
+                      "What you want to say to the user", true))),
               UtteranceType.INSTRUCT);
     } else {
       //TODO: add current "best guess parse" field similar to what is done now in some "focused" template targeting contexts?
@@ -703,14 +704,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     ChatContext chatContext = chatCollection.currentChat;
 
-    //Experimental - adding tool calls back into history now that we have safeguards against them being called from
-    // incorrect contexts when no longer available. Text response tool calls will be added from the dialogue history listener.
-    if (!toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
-      //TODO: make sure it is okay to not include text response calls here. Believe the only time it
-      //    really matters would be on malformed/invalid target.
-      chatContext.history.addRobotMessage("", List.of(toolCall));
-    }
-
     //// Check that tool response is valid
     ToolFunction functionCall = toolCall.function;
     Tool correspondingTool = null;
@@ -733,6 +726,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Internal LLM error - should there be LLM specific error responses in this case?
     if (correspondingTool == null) {
       errorResponseBuilder.append("- Your chosen tool \"").append(toolCall.function.name).append("\" is no longer available for you to call in your current context. Please find an alternate specific tool call to use which is explicitly present in the tool list, or respond using the " + textResponseTool.toolDefinition.function.name + " tool");
+      if (!toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+        chatContext.history.addRobotMessage("", List.of(toolCall));
+      }
       return null;
     }
 
@@ -761,6 +757,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     } else {
       error = true;
+    }
+
+    //(Moved to after correctCommonNLUMistakes are applied - This is desired for NLG, does it affect parsing negatively?)
+    //Experimental - adding tool calls back into history now that we have safeguards against them being called from
+    // incorrect contexts when no longer available. Text response tool calls will be added from the dialogue history listener.
+    if (!toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+      //TODO: make sure it is okay to not include text response calls here. Believe the only time it
+      //    really matters would be on malformed/invalid target.
+      chatContext.history.addRobotMessage("", List.of(toolCall));
     }
 
     //// Handle processed response
@@ -2655,7 +2660,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   private void addLearnedActionToCollections(ActionDBEntry dbEntry) {
     Predicate signature = dbEntry.getSignature(false);
-    Tool correspondingTool = new Tool(new ToolDefinition(signature.getName(), "This is an action which was previously taught to you by a human user. It was given the name \"" + signature.getName() + "\" during instruction. You may use the getActionSteps function to get a description of the steps contained within this action if desired.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
+    Tool correspondingTool;
+    if (useCondensedTools) {
+      correspondingTool = new Tool(new ToolDefinition(signature.getName(), "An action previously taught by the user. Call this if the user asks you to perform something referring to the supplied name.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
+    } else {
+      correspondingTool = new Tool(new ToolDefinition(signature.getName(), "This is an action which was previously taught to you by a human user. It was given the name \"" + signature.getName() + "\" during instruction. You may use the getActionSteps function to get a description of the steps contained within this action if desired.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
+    }
     String nluString = toolToDescString(correspondingTool, false);//true);
     String nlgString = toolToDescString(correspondingTool, false);
 
@@ -3264,6 +3274,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           } else {
             errorMessage.append("- The tool call was missing a value for a required \"").append(argName).append("\" argument\n");
           }
+          return null;
+        }
+
+        if (argString.isEmpty()) {
+          errorMessage.append("- The tool call's supplied value for a \"").append(argName).append("\" argument was empty. If it is a required argument, populate it with the help of the user if necessary. Otherwise, simply omit this argument.");
           return null;
         }
 

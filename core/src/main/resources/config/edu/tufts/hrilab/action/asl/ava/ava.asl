@@ -53,9 +53,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     //act:goToLocation(?escorteeLoc);
 }
 
-() = followUser() {
+() = follow() {
     act:generateResponseFromString("Following you until you tell me to stop");
-    act:follow();
+    act:avaFollow();
 }
 
 /**

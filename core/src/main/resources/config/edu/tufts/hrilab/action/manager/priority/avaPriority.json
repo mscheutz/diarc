@@ -39,7 +39,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "stopFollow": {
+  "stopFollowing": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -207,11 +207,11 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getWifiAtLocationString":  {
+  "getPreviouslyMeasuredWifiAtLocationString":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getTemperatureAtLocationString":  {
+  "getPreviouslyMeasuredTemperatureAtLocationString":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

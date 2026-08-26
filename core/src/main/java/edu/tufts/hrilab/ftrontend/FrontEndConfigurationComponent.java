@@ -76,7 +76,6 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       return addresseeName != null && LOCAL_ADDRESSEES.contains(addresseeName);
    }
 
-   //TODO: Does technically every method here need to take in agentTeam as an argument?
    @TRADEService
    public boolean usingStreamingTTS(Symbol agentTeam) {
       log.debug("[usingStreamingTTS] {}",agentTeam);
@@ -326,8 +325,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getIsVideoSaved":
             case "getSavedVideos":
             case "getSavedImages":
-            case "getWifiAtLocationString":
-            case "getTemperatureAtLocationString":
+            case "getPreviouslyMeasuredWifiAtLocationString":
+            case "getPreviouslyMeasuredTemperatureAtLocationString":
             case "getCurrentPendingScheduledGoalInformation":
             case "resetConversation":
             case "learnTaskSequence":
@@ -337,10 +336,10 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getInformationAroundWhatALearnedTaskIs":
             case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
             case "getInformationAroundTeachingLocationsAndNavigation":
-            case "getWifiAtLocationsString":
-            case "getWifiAtCurrentLocationString":
-            case "getTemperatureAtLocationsString":
-            case "getTemperatureAtCurrentLocationString":
+            case "getPreviouslyMeasuredWifiAtLocationsString":
+            case "getPreviouslyMeasuredWifiAtCurrentLocationString":
+            case "getPreviouslyMeasuredTemperatureAtLocationsString":
+            case "getPreviouslyMeasuredTemperatureAtCurrentLocationString":
             case "updateDialogueHistoryFromString":
             case "checkPastInteractionHistoryForMissingInformation":
             case "stopTalking":
@@ -414,7 +413,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "cancelAllCurrentAndQueuedTasks":
             case "clearRoomForDoor":
             //
-            case "followUser":
+            case "follow":
             case "escortToLocation":
             case "escortFromLocationToLocation":
             case "cancelAllScheduledGoals":

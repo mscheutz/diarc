@@ -309,7 +309,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification stopFollow() {
+  public Justification stopFollowing() {
     if (shouldFollow) {
       shouldFollow = false;
       return new ConditionJustification(true);
@@ -319,7 +319,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification follow() {
+  public Justification avaFollow() {
     shouldFollow = true;
     while (shouldFollow) {
       try {

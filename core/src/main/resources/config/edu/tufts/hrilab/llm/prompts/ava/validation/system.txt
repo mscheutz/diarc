@@ -14,7 +14,7 @@ Output:{"translation":"Did you mean to ask me to follow you?"}
 Input:QUESTION(ava,%addressee,mean(%addressee,say(ava,?words)),{})
 Output:{"translation":"Did you mean to ask me to say the phrase \'?words\"?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,stopFollow(ava)),{})
+Input:QUESTION(ava,%addressee,mean(%addressee,stopFollowing(ava)),{})
 Output:{"translation":"Did you mean to ask me to stop following you?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,playNextVideo(ava)),{})

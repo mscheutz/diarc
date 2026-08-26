@@ -18,7 +18,7 @@
         "id" : "call_17f4fc9b415c45d4b8ec49f1",
         "type" : "function",
         "function" : {
-          "name" : "getWifiAtLocationsString",
+          "name" : "getPreviouslyMeasuredWifiAtLocationsString",
           "arguments" : "{\"locations\":[\"reception:location\"]}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "call_c606ed91df924fbaa28181af",
         "type" : "function",
         "function" : {
-          "name" : "getWifiAtLocationsString",
+          "name" : "getPreviouslyMeasuredWifiAtLocationsString",
           "arguments" : "{\"locations\":[\"reception:location\"]}"
         },
         "index" : 0
@@ -154,7 +154,7 @@
         "id" : "call_289b8931aee14052a741d001",
         "type" : "function",
         "function" : {
-          "name" : "getWifiAtCurrentLocationString",
+          "name" : "getPreviouslyMeasuredWifiAtCurrentLocationString",
           "arguments" : "{}"
         },
         "index" : 0
@@ -198,7 +198,7 @@
         "id" : "call_40a2e895b7d74a418d773054",
         "type" : "function",
         "function" : {
-          "name" : "getTemperatureAtCurrentLocationString",
+          "name" : "getPreviouslyMeasuredTemperatureAtCurrentLocationString",
           "arguments" : "{}"
         },
         "index" : 0

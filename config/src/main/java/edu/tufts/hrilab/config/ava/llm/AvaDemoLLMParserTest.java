@@ -208,7 +208,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("stop following me",
-              "INSTRUCT(eric,ava,stopFollow(ava),{})"
+              "INSTRUCT(eric,ava,stopFollowing(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -385,7 +385,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("stop coming with me",
-              "INSTRUCT(eric,ava,stopFollow(ava),{})"
+              "INSTRUCT(eric,ava,stopFollowing(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -562,7 +562,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("you can stay behind now",
-              "INSTRUCT(eric,ava,stopFollow(ava),{})"
+              "INSTRUCT(eric,ava,stopFollowing(ava),{})"
               ,num_runs
       );
       count_total += num_runs;

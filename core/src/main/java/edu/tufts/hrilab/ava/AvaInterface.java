@@ -39,12 +39,12 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
           type = EffectType.ALWAYS,
           infer = {"at(?actor,unknown)"}
   )
-  Justification stopFollow();
+  Justification stopFollowing();
 
   @TRADEService
   @Action
-  @OnInterrupt(onCancelServiceCall = "stopFollow()", onSuspendServiceCall = "stopFollow()")
-  Justification follow();
+  @OnInterrupt(onCancelServiceCall = "stopFollowing()", onSuspendServiceCall = "stopFollowing()")
+  Justification avaFollow();
 
   /**
    * Drive straight forward along the robot's current heading using direct velocity

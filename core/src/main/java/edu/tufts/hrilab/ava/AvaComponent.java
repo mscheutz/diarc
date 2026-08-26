@@ -1465,7 +1465,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification stopFollow() {
+  public Justification stopFollowing() {
     if (shouldFollow) {
       shouldFollow = false;
       return new ConditionJustification(true);
@@ -1475,7 +1475,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification follow() {
+  public Justification avaFollow() {
     long lastTargetFound = System.currentTimeMillis();
     long maxWaitTime = 10000;
     shouldFollow = true;

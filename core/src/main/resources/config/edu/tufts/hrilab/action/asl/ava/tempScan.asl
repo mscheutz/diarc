@@ -44,6 +44,12 @@ import java.lang.Integer;
     }
 }
 
+() = measureTemperatureAtCurrentLocationAndReportAt(Symbol ?reportLocation) {
+    act:measureTemperatureAtCurrentLocation();
+    act:goToLocation(?reportLocation);
+    act:generateTemperatureSummaryString();
+}
+
 () = measureTemperatureAtLocationsAndReportAt(Predicate ?locations, Symbol ?reportLocation) {
     act:measureTemperatureAtLocations(?locations);
     act:goToLocation(?reportLocation);
@@ -56,7 +62,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getTemperatureAtLocationString(Symbol ?location) {
+() = getPreviouslyMeasuredTemperatureAtLocationString(Symbol ?location) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     Predicate !response;
@@ -74,7 +80,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportTemperatureOfLocations(Predicate ?locations) {
+() = reportPreviouslyMeasuredTemperatureOfLocations(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -90,7 +96,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getTemperatureAtLocationsString(Predicate ?locations) {
+() = getPreviouslyMeasuredTemperatureAtLocationsString(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -119,7 +125,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportTemperatureOfCurrentLocation() {
+() = reportPreviouslyMeasuredTemperatureOfCurrentLocation() {
     act:measureTemperatureAtCurrentLocation();
 
     Symbol !currentLocation;
@@ -129,7 +135,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getTemperatureAtCurrentLocationString() {
+() = getPreviouslyMeasuredTemperatureAtCurrentLocationString() {
     act:measureTemperatureAtCurrentLocation();
 
     Symbol !currentLocation;

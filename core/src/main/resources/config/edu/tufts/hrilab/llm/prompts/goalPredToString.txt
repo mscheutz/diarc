@@ -37,7 +37,7 @@ Output:{"translation":"Go home to charge until 50 percent battery"}
 Input:goToLocation(%addressee,reception:location)
 Output:{"translation":"Go to reception."}
 #
-Input:followUser(%addressee)
+Input:follow(%addressee)
 Output:{"translation":"Follow the nearest user"}
 #
 Input:sit(%addressee)

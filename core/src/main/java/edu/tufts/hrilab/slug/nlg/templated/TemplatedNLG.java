@@ -517,8 +517,8 @@ public final class TemplatedNLG extends DiarcComponent {
         lexicalizer("scanForPeople", c -> "scan the area in front of me for people");
         lexicalizer("scanForDoor", c -> "scan the area in front of me for doors");
         lexicalizer("breakOpenDoor", c -> "open the door");
-        lexicalizer("followUser", c -> "follow you");
-        lexicalizer("stopFollow", c -> "stop following you");
+        lexicalizer("follow", c -> "follow you");
+        lexicalizer("stopFollowing", c -> "stop following you");
         lexicalizer("goHome", c -> "go home to charge");
         lexicalizer("cancelCurrentTask", c -> "cancel my current task");
         lexicalizer("suspendCurrentTask", c -> "suspend my current task");
@@ -590,6 +590,7 @@ public final class TemplatedNLG extends DiarcComponent {
         if (t instanceof Atom a) return a.value();
         throw new IllegalArgumentException("Expected atom, got " + t.renderSource());
     }
+    //TODO: handle NumberFormatException (e.g. 60.0)
     private long number(Term t) { return Long.parseLong(atom(t)); }
 
     private void requireArity(Call c, int... allowed) {

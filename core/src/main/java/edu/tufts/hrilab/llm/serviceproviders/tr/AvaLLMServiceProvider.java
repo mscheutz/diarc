@@ -596,10 +596,10 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
                 "say hello, it's me",
                 "say(hello, it's me)", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("stopFollow()",
+        entry = new LLMActionEntry("stopFollowing()",
                 "You stop following the user",
                 "stop following me",
-                "stopFollow()", 10);
+                "stopFollowing()", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("escortToLocation(?name, ?destination:location)",
                 "You escort ?name to location ?destination:location",

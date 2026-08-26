@@ -45,6 +45,12 @@ import java.lang.Integer;
     }
 }
 
+() = measureWifiAtCurrentLocationAndReportAt(Symbol ?reportLocation) {
+    act:measureWifiAtCurrentLocation();
+    act:goToLocation(?reportLocation);
+    act:generateWifiSummaryString(?reportLocation);
+}
+
 () = measureWifiAtLocationsAndReportAt(Predicate ?locations, Symbol ?reportLocation) {
     act:measureWifiAtLocations(?locations);
     act:goToLocation(?reportLocation);
@@ -57,7 +63,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getWifiAtLocationString(Symbol ?location) {
+() = getPreviouslyMeasuredWifiAtLocationString(Symbol ?location) {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     Predicate !response;
@@ -75,7 +81,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportWifiOfLocations(Predicate ?locations) {
+() = reportPreviouslyMeasuredWifiOfLocations(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -91,7 +97,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getWifiAtLocationsString(Predicate ?locations) {
+() = getPreviouslyMeasuredWifiAtLocationsString(Predicate ?locations) {
     List !locList;
     Symbol !location;
     String !output;
@@ -120,7 +126,7 @@ import java.lang.Integer;
     }
 }
 
-() = reportWifiOfCurrentLocation() {
+() = reportPreviouslyMeasuredWifiOfCurrentLocation() {
     act:measureWifiAtCurrentLocation();
 
     Symbol !currentLocation;
@@ -130,7 +136,7 @@ import java.lang.Integer;
     act:generateResponseFromString(!output);
 }
 
-() = getWifiAtCurrentLocationString() {
+() = getPreviouslyMeasuredWifiAtCurrentLocationString() {
     act:measureWifiAtCurrentLocation();
     Predicate !response;
 
