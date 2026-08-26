@@ -2,6 +2,7 @@ package edu.tufts.hrilab.llm.serviceproviders.tr.social;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
@@ -75,6 +76,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    public void init() {
       super.init();
 
+      try {
+         TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("getKBName"),null, "newConsultantCallback");
+      } catch (TRADEException e) {
+         log.error("[init] error registering for TRADE notification for new consultant join");
+      }
+
       //// init prompt vars
       // Generating string representations of toolset as reference for NLG and scheduleTask (want to present them, but not actually supply them as targets)
       // TODO: move into initPromptVars
@@ -126,6 +133,25 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //TODO: Need general way to remove certain actions from the advertised list in specific contexts
       promptVars.put("%taskInstructList", instructTools.stream().filter(t -> !t.toolDefinition.function.name.startsWith("measureWifiAtLocations") && !t.toolDefinition.function.name.startsWith("measureTemperatureAtLocations")).map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
       promptVars.putAll(initPromptVars());
+   }
+
+   @Override
+   public void shutdownComponent() {
+      super.shutdownComponent();
+      try {
+         TRADE.cancelNotification(this, "joined",null);
+      } catch (TRADEException e) {
+         log.error("[shutdownComponent] error canceling TRADE notification for new consultant join");
+      }
+
+      TRADEServiceInfo newConsultantPropertyCallback = getMyService("newConsultantPropertyCallback");
+      TRADE.getAvailableServices(new TRADEServiceConstraints().name("unregisterForNewPropertyNotification")).forEach(x -> {
+         try {
+            x.call(void.class, newConsultantPropertyCallback);
+         } catch (TRADEException e) {
+            log.error("[shutdownComponent] error unregistering for new property notifications from consultants when shutting down",e);
+         }
+      });
    }
 
    @Override
@@ -273,13 +299,29 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
    @Override
    protected Map<String,String> updateDomainPromptVars(Utterance utterance, boolean parsing) {
-      //TODO: video,image,location lists? <- should be done based off of listeners?
-      //Map<String,String> vars = initPromptVars();
       Map<String,String> vars = new HashMap<>();
       vars.put("%batteryLevel", getBatteryLevel());
       vars.put("%currentLocation", getCurrentLocation());
       vars.put("%videoVolume", getVideoVolume());
       return vars;
+   }
+
+   @TRADEService
+   public void newConsultantCallback(TRADEServiceInfo tsi) {
+      TRADEServiceInfo newConsultantPropertyCallback = getMyService("newConsultantPropertyCallback");
+      TRADE.getAvailableServices(new TRADEServiceConstraints().name("registerForNewPropertyNotification")).forEach( x -> {
+                 try {
+                    x.call(void.class, newConsultantPropertyCallback);
+                 } catch (TRADEException e) {
+                    log.error("[newConsultantCallback] error registering for new properties callback after a new consultant joined",e);
+                 }
+              }
+      );
+   }
+
+   @TRADEService
+   public void newConsultantPropertyCallback() {
+      promptVars.putAll(initPromptVars());
    }
 
    private String getBatteryLevel() {
