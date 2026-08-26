@@ -426,6 +426,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       case "kioskGoal" ->
         predDefinition = "\nname: kioskGoal(X,Y)\ndescription: Specification of a 'kiosk goal' (a goal which occurs automatically after a period of inactivity) configuration. X is a task to be performed after Y seconds of inactivity";
       default -> {
+        //TODO: account for conversions in correctCommonNLUMistakes
         Tool correspondingTool = chatTemplates.get("nlu").tools.get(pred.getName());
         if (correspondingTool == null) {
           correspondingTool = chatTemplates.get("nluextended").tools.get(pred.getName());

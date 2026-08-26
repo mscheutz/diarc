@@ -1479,6 +1479,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("cancelSingleScheduledGoal",
+              "You cancel a particular scheduled goal, meaning one tasks which has been scheduled to occur at a specific time in the future",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("cancelCurrentTask",
               "You cancel and fully discard your current goal, whether it is active or suspended.",
               new ArrayList());
@@ -1597,7 +1601,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "You forget/delete a previously taught action",
               List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON representing the tool call to forget. This json minimally needs \"name\" and \"argument\" fields, for example: " + exampleCallString, true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
+      definition = new ToolDefinition("forgetAllTaughtActions",
+              "You forget all previously taught actions",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       return instructTools;
    }
 

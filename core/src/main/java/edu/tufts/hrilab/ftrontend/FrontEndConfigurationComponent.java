@@ -418,6 +418,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "escortFromLocationToLocation":
             case "cancelAllScheduledGoals":
             //case "scheduled":
+            case "cancelSingleScheduledGoal":
+            case "forgetAllTaughtActions":
                return true;
             default:
                return false;
