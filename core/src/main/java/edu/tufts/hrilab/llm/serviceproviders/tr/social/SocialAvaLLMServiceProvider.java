@@ -1410,7 +1410,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       definition = new ToolDefinition("measureWifiSignal",
               "You measure wifi signal strength at certain :locations",
               List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved :locations to visit and measure wifi at. Empty if only measuring at your current position", false),
-                      new ToolParameterHelper("reportLocation", "string", locationNames, "The saved :location to return and give a summary of the results. Don't supply if not reporting a summary of the results", false)));
+                      new ToolParameterHelper("reportLocation", "string", locationNames, "The saved :location to go to and give a summary of the results. Don't supply if not reporting a summary of the results", false)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("measureTemperature",
