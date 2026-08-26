@@ -291,3 +291,11 @@ import java.lang.String;
     act:generateResponseFromString("Embarking on my mission");
     act:definedMission();
 }
+
+//Temp, remove when functionality introduced
+() = cancelSingleScheduledGoal() {
+    act:generateResponseFromString("I cannot currently pick out individual scheduled goals to cancel, but you may do so yourself through the website. I can cancel all scheduled goals at once though if you would like");
+}
+() = forgetAllTaughtActions() {
+    act:generateResponseFromString("I cannot currently forget all taught task sequences at once. I can remove them one at a time for you, otherwise it would be quicker for you to delete multiple through the website");
+}
