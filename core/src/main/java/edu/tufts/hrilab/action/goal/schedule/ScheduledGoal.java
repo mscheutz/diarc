@@ -308,7 +308,7 @@ public class ScheduledGoal extends Goal {
       scheduleInfo.startTime = parseDateString(start.get(0).toString());
     } else if (start.size() == 2) {
       // "start(num, time-unit)"
-      long delay = Long.parseLong(start.get(0).toString());
+      long delay = (long)Double.parseDouble(start.get(0).toString());
       long millis = TimeUnit.valueOf(start.get(1).toString().toUpperCase()).toMillis(delay);
       scheduleInfo.startTime = new Date(System.currentTimeMillis() + millis);
     } else {
@@ -333,7 +333,7 @@ public class ScheduledGoal extends Goal {
 
     if (period.size() == 2) {
       // "period(num, time-unit)"
-      long delay = Long.parseLong(period.get(0).toString());
+      long delay = (long)Double.parseDouble(period.get(0).toString());
       scheduleInfo.period = TimeUnit.valueOf(period.get(1).toString().toUpperCase()).toMillis(delay);
     } else {
       log.error("Invalid periodicity predicate: {}", period);
@@ -361,7 +361,7 @@ public class ScheduledGoal extends Goal {
       scheduleInfo.endTime = parseDateString(end.get(0).toString());
     } else if (end.size() == 2) {
       // "end(num, time-unit)"
-      long delay = Long.parseLong(end.get(0).toString());
+      long delay = (long)Double.parseDouble(end.get(0).toString());
       long millis = TimeUnit.valueOf(end.get(1).toString().toUpperCase()).toMillis(delay);
       scheduleInfo.endTime = new Date(System.currentTimeMillis() + millis);
     } else {

@@ -558,8 +558,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
   public boolean displayImageWithName(String imageName, Symbol timeoutSymbol) {
     try {
-      //TODO: handle e.g. 60.0
-      long timeout = Long.parseLong(timeoutSymbol.getName());
+      long timeout = (long)Double.parseDouble(timeoutSymbol.getName());
       return displayImageWithName(imageName, timeout);
     } catch (NumberFormatException e) {
       log.error("[displayImageWithName] error parsing timeoutSymbol {}", timeoutSymbol, e);
