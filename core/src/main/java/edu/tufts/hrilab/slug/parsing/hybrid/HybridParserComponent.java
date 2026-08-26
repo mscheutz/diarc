@@ -212,8 +212,24 @@ public class HybridParserComponent extends DiarcComponent {
     }
     Utterance output = llmParser.parseUtterance(llmInputUtterance, callStreaming);
 
-    if (!confirmation && output != null && cacheLLM && !output.getWordsAsString().isEmpty()) {
-      cacheParse(output);
+    //Copying missed control flow from below sequence handling, revisit
+    if (output != null) {
+      if (output.getType() == UtteranceType.UNKNOWN) {
+        //TODO: revisit, using a hack to allow for LLM to return error responses as strings. A better way is
+        //  to just return semantics but populate the cache or make sure SimpleNLG can handle them properly
+        //Use LLM UNKNOWN parse in case all other parsers fail
+        output.setType(UtteranceType.INSTRUCT);
+      } else {
+        if (!confirmation && cacheLLM && !output.getWordsAsString().isEmpty()) {
+          cacheParse(output);
+        }
+
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("usedLLMParse").argTypes(Symbol.class, Symbol.class)).call(void.class, incoming.getSpeaker(), incoming.getAddressee());
+        } catch (TRADEException ex) {
+          log.error("Error calling usedLLMParse service", ex);
+        }
+      }
     }
     return output;
   }
