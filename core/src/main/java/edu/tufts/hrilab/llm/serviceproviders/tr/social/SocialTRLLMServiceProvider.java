@@ -1171,6 +1171,36 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return collection.currentChat.history.messages.size();
   }
 
+  @TRADEService
+  public void reduceChatContextHistory() {
+    synchronized (currentChatCollections) {
+      //TODO: ideally need user/agent pair as an argument
+      int maxLength = 0;
+      ChatCollection mostLikelyOffender = null;
+      for (Map.Entry<Pair<Symbol,Symbol>,ChatCollection> collectionPair : currentChatCollections.entrySet()) {
+        int convoLength = getLLMConversationLength(collectionPair.getKey().getLeft(),collectionPair.getKey().getRight());
+        if (mostLikelyOffender == null) {
+          mostLikelyOffender = collectionPair.getValue();
+          maxLength = convoLength;
+        } else {
+          if (convoLength > maxLength) {
+            mostLikelyOffender = collectionPair.getValue();
+            maxLength = convoLength;
+          }
+        }
+      }
+      //TODO: do something more principled here - need ability to internally measure token lengths of individual messages
+      //      and then relate it to the configured max input size
+      //Doubled with fixing conversation history ITK response size and persistence in history this should be okay.
+      if (mostLikelyOffender != null) {
+        while (maxLength > 10) {
+          mostLikelyOffender.currentChat.history.messages.remove(0);
+          maxLength--;
+        }
+      }
+    }
+  }
+
   /**
    * Method called from nlu.asl after negative validation of an LLM parse. Adds a system message informing the LLM of
    * what occurred and calling the completion endpoint again with the user response. May result in an updated tool call
@@ -2186,6 +2216,36 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+
+      // TODO: quick band-aid fix, revisit - Removing retrieved past conversation history from the current history as it
+      //    can get very large very quickly. Can more safely leave in if proper history trimming and request token length
+      //    checking is implemented using an internal tokenizer.
+      //   See if the model appropriately re-calls getExtendedConversationHistory if necessary and having a multi-turn conversation about it
+      if (toolCallName.equals("checkPastInteractionHistoryForMissingInformation")) {
+        if (!toolCallId.isEmpty()) {
+          chatContext = collection.currentChat;
+          int size = chatContext.history.messages.size();
+          int toolCallIndex = -1;
+          int toolCallResponseIndex = -1;
+          for (int i=size-1;i>0;i--) {
+            Message msg = chatContext.history.messages.get(i);
+            if (msg.tool_calls != null && msg.tool_calls.length>0) {
+              if (msg.tool_calls[0].id.equals(toolCallId)) {
+                toolCallIndex = i;
+              }
+            } else if (msg.tool_call_id != null && msg.tool_call_id.equals(toolCallId)) {
+              toolCallResponseIndex = i;
+            }
+          }
+          if (toolCallResponseIndex != -1) {
+            chatContext.history.messages.remove(toolCallResponseIndex);
+          }
+          if (toolCallIndex != -1) {
+            chatContext.history.messages.remove(toolCallIndex);
+          }
+        }
+      }
+
       if (out.getSemantics() != null) {
         if (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) {
           //if (out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
@@ -2566,8 +2626,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (extendedHistory == null) {
       extendedHistoryString.append("<You do not remember any past histories with this user>\n##\n");
     } else {
-      // What should cap size be? Should we allow iteratively longer history retrieval?
-      int numHistories = Math.min(extendedHistory.size(), 5);
+      // TODO: should be based on token length, not number of chats. (4 should now be safe without having conversation histories inside of histories)
+      // What should cap size be? TODO: Should we allow iteratively longer history retrieval?
+      int numHistories = Math.min(extendedHistory.size(), 4);
       for (int i=0; i<numHistories;i++) {
         ChatContext cc = extendedHistory.get(i);
         if (cc != null) {

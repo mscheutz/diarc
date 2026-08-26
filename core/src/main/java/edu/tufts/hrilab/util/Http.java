@@ -14,6 +14,9 @@ import java.io.InputStreamReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -212,6 +215,12 @@ public class Http {
         } else {
             log.error("Request failed with response code: " + responseCode + ".");
             log.error(response.toString());
+            //TODO: HACK / Band-aid - somehow propagate error result and handle appropriately elsewhere
+            if (responseCode == 400 && response.toString().contains("This model's maximum content length is")) {
+                try {
+                    TRADE.getAvailableService(new TRADEServiceConstraints().name("reduceChatContextHistory")).call(void.class);
+                } catch (TRADEException ignored){}
+            }
         }
 
         return new HTTPRequestResponse(null, responseCode);
