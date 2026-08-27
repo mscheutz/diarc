@@ -2542,16 +2542,21 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     StringBuilder stringBuilder = new StringBuilder("Current Task Overview:\n" +
             "Information about Tasks:\n" +
-            "- You have a collection of tasks you are currently planning to perform.\n" +
-            "- This collection includes a current task, a queue of pending tasks, and a set of scheduled tasks\n" +
-            "- You can only perform one task at a time. The task you are performing is the current task.\n" +
-            "- Newly instructed tasks are placed at the end of the pending task queue by default.\n" +
-            "- Once the current task completes, the first pending task will become the new current task.\n" +
-            "- Scheduled tasks are tasks which are scheduled to be added to the pending queue at certain time(s).\n" +
-            "- The current task may be \"suspended\", which means no tasks are actively performed until the suspended task is resumed or canceled.\n" +
+            "- You have a collection of tasks you currently have assigned to you at any time. This collection is split into three types of tasks:\n" +
+            "-- One Current Task:\n" +
+            "--- The current task is the task you are focused on. There is only one current task at a time.\n" +
+            "--- The current task has an associated status. This status may be ACTIVE or SUSPENDED. \n" +
+            "---- ACTIVE status == actively engaging in actions pursuing the task. \n" +
+            "---- SUSPENDED status == paused and waiting for the current task to be resumed or canceled. You are still focusing on this task even in a SUSPENDED state. \n" +
+            "-- A queue of Pending Tasks\n" +
+            "--- Queued/Pending tasks are tasks which will become the current task after the existing current task completes. These tasks are in an ordered list." +
+            "--- Newly instructed tasks are placed at the end of the pending task queue by default.\n" +
+            "--- Once the current task completes, the first pending task will become the new current task.\n" +
+            "-- A set of Scheduled Tasks\n" +
+            "--- Scheduled tasks are tasks which are scheduled to become the current task at specific times in the future" +
             "\nCollection of Existing Tasks:\n");
 
-    stringBuilder.append("Your \"current task\"/\"active task\"/\"what you are currently doing\" is:\n");
+    stringBuilder.append("Current Task:\n");
     if (!currentGoalPredicates.isEmpty()) {
         if (currentGoalPredicates.get(0).hasArgs()) {
           String statusString = currentGoalPredicates.get(0).getName();
@@ -2563,7 +2568,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       stringBuilder.append(" - <You have no current task>\n");
     }
 
-    stringBuilder.append("Your queue of \"pending tasks\"/\"upcoming tasks\"/\"next tasks\" are:\n");
+    stringBuilder.append("Pending Task Queue:\n");
     if (pendingGoalPredicates.isEmpty()) {
       stringBuilder.append(" - <You have no pending tasks>\n");
     } else {
@@ -2572,7 +2577,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
 
-    stringBuilder.append("Your set of \"scheduled tasks\" are:\n");
+    stringBuilder.append("Scheduled Tasks:\n");
     if (scheduledGoals.isEmpty()) {
       stringBuilder.append(" - <You have no scheduled tasks>\n");
     } else {
