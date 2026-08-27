@@ -32,6 +32,6 @@ public class AvaGuiProvider extends DiarcComponent implements GuiProvider {
 
   @Override
   public String[] getAdapterClassNames() {
-    return new String[] {AvaGUIAdapter.class.getName()};
+    return new String[] {AvaGUIAdapter.class.getName(), AvaTaughtActionsAdapter.class.getName()};
   }
 }
