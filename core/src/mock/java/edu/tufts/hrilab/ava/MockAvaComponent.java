@@ -107,6 +107,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private Condition telepresenceCondition = displayLock.newCondition();
   private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
   private boolean shouldFollow = false;
+  private Symbol currentLocation = Factory.createSymbol("unknown");
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -260,8 +261,13 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   // do something. Keep it up for replies and for focused-context entries that start an
   // interactive instruction dialogue (scheduleTask, learnTaskSequence) -- the robot is
   // still asking the user for info there.
+  // Terminated statuses are skipped because a goal finishing can otherwise take the head
+  // back down after the re-arm has already put it up.
   @TRADEService
   public void hideListeningIndicatorGoalListener(GoalInfo info) throws TRADEException {
+    if (info.status.isTerminated()) {
+      return;
+    }
     String goalname = info.goal == null ? info.unboundGoal.getName() : info.goal.getName();
     switch (goalname) {
       case "generateResponseFromString":
@@ -438,6 +444,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     if (wait) {
       Util.Sleep(10000);
     }
+    currentLocation = location;
     return new ConditionJustification(true);
   }
 
@@ -452,6 +459,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
     log.info("[goToLocation] called. desiredLocation: {} initialLocation: {}", desiredLocation, initialLocation);
     Util.Sleep(10000);
+    currentLocation = desiredLocation;
     return new ConditionJustification(true);
   }
 
@@ -494,7 +502,9 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
     log.info("[checkAt] called. locationTerm: {}", locationTerm);
     List<Map<Variable, Symbol>> results = new ArrayList<>();
-    results.add(new HashMap<>()); // i.e., true
+    if (currentLocation.equalsIgnoreType(locationTerm.get(1))) {
+      results.add(new HashMap<>()); // i.e., true
+    }
     return results;
   }
 

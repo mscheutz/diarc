@@ -39,8 +39,8 @@ import java.lang.String;
 () = handleSpeechInput(Utterance ?utterance) {
     op:log("debug", "handleSpeechInput for utterance: ?utterance");
     java.lang.Long !uttID = op:invokeMethod(?utterance,"getUid");
-    Symbol !addressee = op:invokeMethod(?utterance, "getAddressee");
-    java.lang.Boolean !streamingTTS = tsc:usingStreamingTTS(!addressee);
+    Symbol !speaker = op:invokeMethod(?utterance, "getSpeaker");
+    java.lang.Boolean !streamingTTS = tsc:usingStreamingTTS(!speaker);
     Utterance !parsedUtterance;
 
     if (tsc:usingLLM()) {
@@ -271,7 +271,7 @@ import java.lang.String;
             //  Call Chat completion again including the users negative validation response. Cases based on return value:
             //      Tool call response (new direct parse made using additional information from validation response) -> set ?revalidate to true and continue outer loop calling this function
             //      Text response (enter extended recovery dialogue interaction to figure out what is wrong) -> set ?revalidate false, Utterance.isValidated true, and generateResponse semantics
-            !streaming = tsc:usingStreamingTTS(!addressee);
+            !streaming = tsc:usingStreamingTTS(!speaker);
             if (op:equals(!streaming,true)) {
               tsc:unbufferStreamingTTSOutputForUID(!uttID);
             }
