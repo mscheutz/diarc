@@ -263,7 +263,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       return switch (option)
       {
          case 0 -> "Will do that when I'm done with my current tasks.";
-         case 1 -> "Scheduling after my other tasks.";
+         case 1 -> "Queueing after my other tasks.";
          case 2 -> "Adding to my list of tasks.";
          case 3 -> "I have other assigned tasks, but I'll get to that when I can.";
          default -> "Okay";

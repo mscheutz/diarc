@@ -478,9 +478,9 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
     String exampleCallString = xml ?
-            "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>" :
-            "{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
-    definition = new ToolDefinition("cancelTaskInQueueByIndex",
+            "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>" :
+            "{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
+    definition = new ToolDefinition("cancelSingleTaskInQueue",
             "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
             List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));

@@ -900,10 +900,10 @@ public class AvaLLMServiceProvider extends TRLLMServiceProvider {
                 "go to %exampleLocation right now",
                 "urgentPriority(goToLocation(%exampleLocation:location))", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("cancelTaskInQueueByIndex(?index)",
+        entry = new LLMActionEntry("cancelSingleTaskInQueue(?index)",
                 "You cancel and remove the task in task queue at position ?index if it exists. ?index is a 0-based index.",
                 "Remove the first task from the queue",
-                "cancelTaskInQueueByIndex(0)", 10);
+                "cancelSingleTaskInQueue(0)", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("enableAdminMode()",
                 "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.",

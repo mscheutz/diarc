@@ -515,7 +515,7 @@ forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
 %at a time; VAL\NUM; #x.amount($x)
 
 learn new tour sequence; VERBI; learnTourAction
-remove the task from the queue at position; C/LIT* ; #x.cancelTaskInQueueByIndex(?ADDRESSEE,$x)
+remove the task from the queue at position; C/LIT* ; #x.cancelSingleTaskInQueue(?ADDRESSEE,$x)
 
 enable admin mode; VERBI; enableAdminMode
 disable admin mode; VERBI; disableAdminMode

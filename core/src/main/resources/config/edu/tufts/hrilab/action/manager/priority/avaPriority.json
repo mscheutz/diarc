@@ -155,7 +155,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelTaskInQueueByIndex": {
+  "cancelSingleTaskInQueue": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

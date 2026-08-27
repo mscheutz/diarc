@@ -185,7 +185,7 @@ Output:{"translation":"Confirming I should wait for ?seconds seconds?"}
 Input:QUESTION(ava,%user,mean(%user,urgentPriority(goToLocation(ava,?destination:location))),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should go to the ?destination location with high assigned priority?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,cancelTaskInQueueByIndex(0))],{})
+Input:QUESTION(ava,%user,[mean(%user,cancelSingleTaskInQueue(0))],{})
 Output:{"translation":"Confirming I should not perform my next task?"}
 #
 Input:QUESTION(ava,%user,[mean(%user,enableAdminMode())],{})

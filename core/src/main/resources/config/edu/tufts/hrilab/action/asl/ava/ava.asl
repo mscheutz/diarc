@@ -665,7 +665,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponseFromString("Okay, I have updated the kiosk action");
 }
 
-() = cancelTaskInQueueByIndex(Integer ?index) {
+() = cancelSingleTaskInQueue(Integer ?index) {
     Boolean !success;
 
     !success = act:cancelPendingGoalByIndex(?index);

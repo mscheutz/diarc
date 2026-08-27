@@ -10,5 +10,5 @@ isAdminGoal(updateKioskTimeout(D)).
 isAdminGoal(setKioskTimeout(D,A,B)).
 isAdminGoal(updateKioskAction(D)).
 isAdminGoal(setKioskModeEnabled(D,A)).
-isAdminGoal(cancelTaskInQueueByIndex(D,A)).
+isAdminGoal(cancelSingleTaskInQueue(D,A)).
 isAdminGoal(enableAdminMode(D)).

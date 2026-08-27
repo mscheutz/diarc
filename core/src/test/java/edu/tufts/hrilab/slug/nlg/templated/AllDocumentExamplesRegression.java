@@ -269,7 +269,7 @@ public final class AllDocumentExamplesRegression {
             new Example("cancel-current", "cancelCurrentTask(ava)", "cancel", "current task"),
             new Example("cancel-queued", "cancelAllQueuedTasks(ava)", "cancel all queued tasks"),
             new Example("cancel-current-queued", "cancelAllCurrentAndQueuedTasks(ava)", "cancel all current and queued tasks"),
-            new Example("cancel-queue-index", "cancelTaskInQueueByIndex(ava,1)", "cancel task in queue by index", "1"),
+            new Example("cancel-queue-index", "cancelSingleTaskInQueue(ava,1)", "cancel task in queue by index", "1"),
             new Example("cancel-scheduled", "cancelAllScheduledGoals(self)", "cancel all scheduled goals"),
             new Example("suspend", "suspendCurrentTask(self)", "suspend", "current task"),
             new Example("resume", "resumeSystemGoals(self)", "resume", "paused task"),

@@ -76,7 +76,7 @@ cancel all active goals; VERBI; cancelAllCurrentAndQueuedTasks
 cancel all goals; VERBI; cancelAllCurrentAndQueuedTasks
 cancel all scheduled goals; VERBI; cancelAllScheduledGoals
 cancel all scheduled tasks; VERBI; cancelAllScheduledGoals
-remove the task from the queue at position; C/LIT* ; #x.cancelTaskInQueueByIndex(?ADDRESSEE,$x)
+remove the task from the queue at position; C/LIT* ; #x.cancelSingleTaskInQueue(?ADDRESSEE,$x)
 
 now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)

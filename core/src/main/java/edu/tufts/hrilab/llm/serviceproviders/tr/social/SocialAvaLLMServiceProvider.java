@@ -956,9 +956,9 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
-            "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>" :
-            "{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
-      definition = new ToolDefinition("cancelTaskInQueueByIndex",
+            "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>" :
+            "{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
+      definition = new ToolDefinition("cancelSingleTaskInQueue",
                                       "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -1463,26 +1463,6 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //TODO long term: goal manipulation focused context?
       //TODO short term: give standardized goal type definition somewhere?
-      definition = new ToolDefinition("cancelAllQueuedTasks",
-              "You cancel all goals currently in the pending queue.",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
-              "You cancel both your current goal and all goals currently in the pending queue",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelTaskInQueueByIndex",
-              "You cancel and remove a specific goal in the queue specified by its index",
-              List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllScheduledGoals",
-              "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelSingleScheduledGoal",
-              "You cancel a particular scheduled goal, meaning one tasks which has been scheduled to occur at a specific time in the future",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("cancelCurrentTask",
               "You cancel and fully discard your current goal, whether it is active or suspended.",
               new ArrayList());
@@ -1492,7 +1472,30 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("resumeCurrentTask",
-              "You resume your current goal if it is paused",
+              "You resume your current goal if it is suspended",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+      definition = new ToolDefinition("cancelSingleTaskInQueue",
+              "You cancel and remove a specific goal in the queue specified by its index",
+              List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("cancelAllQueuedTasks",
+              "You cancel all goals currently in the pending queue.",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+      definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+              "You cancel both your current goal and all goals currently in the pending queue",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+      definition = new ToolDefinition("cancelSingleScheduledGoal",
+              "You cancel a particular scheduled goal, meaning one tasks which has been scheduled to occur at a specific time in the future",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("cancelAllScheduledGoals",
+              "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1577,6 +1580,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "You stop talking and do not verbally respond",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
       definition = new ToolDefinition("scheduleTask",
               "You begin a more focused dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
               new ArrayList());
@@ -1585,16 +1589,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      String exampleCallString = xml ?
-              "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
-              "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
-      definition = new ToolDefinition("urgentPriority",
-              "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to %exampleLocation right now.\" \nExample Call: " + exampleCallString,
-              List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
       //TODO: transform into focused context?
       //TODO: restrict list of acceptable tools to taught ones, not all nlu targets
-      exampleCallString = xml ?
+      String exampleCallString = xml ?
               "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
               "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
       definition = new ToolDefinition("forgetTaughtAction",
@@ -1604,6 +1602,14 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       definition = new ToolDefinition("forgetAllTaughtActions",
               "You forget all previously taught actions",
               new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+      exampleCallString = xml ?
+              "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
+              "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
+      definition = new ToolDefinition("urgentPriority",
+              "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to %exampleLocation right now.\" \nExample Call: " + exampleCallString,
+              List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       return instructTools;
    }
@@ -2051,7 +2057,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 //                                      "Submit a separate tool call with urgent priority. This means that the other task will interrupt execution of the current task and be immediately prioritized.",
 //                                      List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The action to submit with urgent priority. This should be JSON defining a fully populated instance of another tool call. The JSON minimally needs \"name\" and \"argument\" fields.", true, true, "nlu")));
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-//      definition = new ToolDefinition("cancelTaskInQueueByIndex",
+//      definition = new ToolDefinition("cancelSingleTaskInQueue",
 //                                      "Cancel and remove a task in the pending queue specified by its index.",
 //                                      List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -2125,9 +2131,9 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 //      String exampleCallString =
 //            //xml ?
-//            "<function=cancelTaskInQueueByIndex><parameter=index>0</parameter></function>"; //:
-//      //"{\"name\":\"cancelTaskInQueueByIndex\", \"arguments\":{\"index\":0}}";
-//      definition = new ToolDefinition("cancelTaskInQueueByIndex",
+//            "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>"; //:
+//      //"{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
+//      definition = new ToolDefinition("cancelSingleTaskInQueue",
 //                                      "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
 //                                      List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
