@@ -83,7 +83,9 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   private int mixerID = -1;
   private Mixer.Info mixer;
   private boolean muteMics;
-  private float volume = 1.0f;
+  private volatile float volume = 1.0f;
+  private float configuredVolume = 1.0f;
+  private static final int VOICE_VOLUME_STEP = 15;
   private float clipVolume = 0.4f;
   private volatile boolean speaking = false;
 
@@ -269,6 +271,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
 
   @Override
   protected void init() {
+    configuredVolume = volume > 0.0f ? volume : 1.0f;
     backend = createBackend(backendType);
     backend.init();
     if (!backend.isReady()) {
@@ -1072,6 +1075,16 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     }
   }
 
+  // below 1.0 the line's gain control does the attenuation; above it applySoftGain scales the samples
+  private void applyLineGain(SourceDataLine line) {
+    try {
+      FloatControl gain = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
+      gain.setValue(volume < 1.0f ? 20f * (float) Math.log10(Math.max(volume, 0.0001f)) : 0f);
+    } catch (IllegalArgumentException e) {
+      log.debug("[applyLineGain] MASTER_GAIN not supported");
+    }
+  }
+
   private SourceDataLine openLine() {
     AudioFormat fmt = new AudioFormat(sampleRate, BITS_PER_SAMPLE, CHANNELS, true, false);
     DataLine.Info info = new DataLine.Info(SourceDataLine.class, fmt);
@@ -1080,14 +1093,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
               ? (SourceDataLine) AudioSystem.getMixer(mixer).getLine(info)
               : (SourceDataLine) AudioSystem.getLine(info);
       line.open(fmt);
-      if (volume < 1.0f) {
-        try {
-          FloatControl gain = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
-          gain.setValue(20f * (float) Math.log10(Math.max(volume, 0.0001f)));
-        } catch (IllegalArgumentException e) {
-          log.debug("[openLine] MASTER_GAIN not supported");
-        }
-      }
+      applyLineGain(line);
       return line;
     } catch (LineUnavailableException ex) {
       log.error("[openLine] line unavailable", ex);
@@ -1240,5 +1246,46 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   @Action
   public void toggleVoiceOff() {
     log.debug("[toggleVoiceOff] (no-op for streaming TTS)");
+  }
+
+  @TRADEService
+  public boolean setVoiceVolume(Symbol volumeSymbol) {
+    try {
+      return setVoiceVolume(Integer.parseInt(volumeSymbol.getName()));
+    } catch (NumberFormatException e) {
+      log.error("[setVoiceVolume] supplied volumeSymbol not parseable as int: {}", volumeSymbol, e);
+      return false;
+    }
+  }
+
+  // percent is relative to the launch -volume, so a site tuned above 1.0 keeps its boost as 100
+  @TRADEService
+  public boolean setVoiceVolume(int percent) {
+    if (percent < 0 || percent > 100) {
+      log.error("[setVoiceVolume] supplied volume is out of bounds [0,100]: {}", percent);
+      return false;
+    }
+    volume = configuredVolume * percent / 100f;
+    synchronized (lineLock) {
+      if (audioLine != null) {
+        applyLineGain(audioLine);
+      }
+    }
+    return true;
+  }
+
+  @TRADEService
+  public boolean lowerVoiceVolume() {
+    return setVoiceVolume(Math.max(0, getVoiceVolume() - VOICE_VOLUME_STEP));
+  }
+
+  @TRADEService
+  public boolean raiseVoiceVolume() {
+    return setVoiceVolume(Math.min(100, getVoiceVolume() + VOICE_VOLUME_STEP));
+  }
+
+  @TRADEService
+  public int getVoiceVolume() {
+    return Math.round(volume / configuredVolume * 100f);
   }
 }

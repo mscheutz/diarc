@@ -6,6 +6,7 @@ package edu.tufts.hrilab.asr;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import javax.sound.sampled.*;
 
 import org.slf4j.Logger;
@@ -100,6 +101,7 @@ public class ConfigurableMicrophone {
         return i;
       }
     }
+    log.warn("[matchMixer] nothing matched \"{}\", falling back to the default mixer. available: {}", match, Arrays.toString(mixers));
     return -1; // Return -1 if no match is found
   }
 }

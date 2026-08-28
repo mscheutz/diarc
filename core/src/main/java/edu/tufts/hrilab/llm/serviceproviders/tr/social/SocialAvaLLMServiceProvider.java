@@ -739,6 +739,29 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       "You set the volume of videos played on your screen. \nExample Instruction: \"Set the video volume to max.\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("lowerVideoVolume",
+                                      "You lower the volume of videos played on your screen by one step. \nExample Instruction: \"turn it down.\"",
+                                      new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("raiseVideoVolume",
+                                      "You raise the volume of videos played on your screen by one step. \nExample Instruction: \"turn it up.\"",
+                                      new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      exampleCallString = xml ?
+            "<function=setVoiceVolume><parameter=volume>50</parameter></function>" :
+            "{\"name\":\"setVoiceVolume\", \"arguments\":{\"volume\":\"50\"}}";
+      definition = new ToolDefinition("setVoiceVolume",
+                                      "You set the volume of your own speaking voice. \nExample Instruction: \"Set your voice volume to half.\" \nExample Call: " + exampleCallString,
+                                      List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The voice volume as a percentage. Acceptable values are whole numbers between 0 and 100", true)));
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("lowerVoiceVolume",
+                                      "You lower the volume of your own speaking voice by one step. \nExample Instruction: \"speak more quietly.\"",
+                                      new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("raiseVoiceVolume",
+                                      "You raise the volume of your own speaking voice by one step. \nExample Instruction: \"speak louder.\"",
+                                      new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
             "<function=waitForDuration><parameter=seconds>60</parameter></function>":
             "{\"name\":\"waitForDuration\", \"arguments\":{\"seconds\":\"60\"}}";

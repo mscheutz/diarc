@@ -44,7 +44,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 //        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
 ////    }
 ////    act:waitForReadyAck();
-    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm);
+    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm, 1, 300);
     act:say("Okay, please follow me");
 
     act:goToLocation(?dstLoc);
@@ -145,7 +145,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = monitorBattery() {
     int !sleepTime = 30000; // 30s How often to check the battery
     double !currBatteryLevel;
-    double !lowChargeLevel = 15;
+    double !lowChargeLevel = 30;
     double !veryLowChargeLevel = 15; // Threshold to suspend tasks and go home and charge immediately
     double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
@@ -445,8 +445,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
     op:add(!responseFormList,!responseForm);
 
-    (!bindings) = act:askQuestionFromString("What is the name of the task?", !responseFormList);
-   if (op:invokeMethod(!bindings, "isEmpty")) {
+    (!bindings) = act:askQuestionFromString("What is the name of the task?", !responseFormList, 1, 300);
+   if (op:isNull(!bindings) || op:invokeMethod(!bindings, "isEmpty")) {
         ?name = op:setNull();
     } else {
         !response = op:get(!bindings,!x);
@@ -518,8 +518,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString("What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !responseBinding = op:get(!bindings, !x);
@@ -531,8 +531,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("location(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString("Where would you like the tour to begin?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("Where would you like the tour to begin?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !responseBinding = op:get(!bindings, !x);
@@ -561,8 +561,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     op:add(!responseFormList,!responseForm);
     !responseForm = op:createPredicate("taskPredicate(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString("Do you want me to perform an action at the starting location?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("Do you want me to perform an action at the starting location?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         act:cancelActionLearning(!actionPred);
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -574,9 +574,9 @@ import edu.tufts.hrilab.action.goal.Goal;
             !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
             !responseForm = op:createPredicate("taskPredicate(X)");
             op:add(!responseFormList,!responseForm);
-            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList);
+            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList, 1, 300);
         }
-        if (op:invokeMethod(!bindings,"isEmpty")) {
+        if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
             act:cancelActionLearning(!actionPred);
             exit(FAIL,not(wasAnswered(myQuestion)));
         } else {
@@ -593,8 +593,8 @@ import edu.tufts.hrilab.action.goal.Goal;
         !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
         !responseForm = op:createPredicate("location(X)");
         op:add(!responseFormList,!responseForm);
-        !bindings = act:askQuestionFromString("What is the next location along the tour path?", !responseFormList);
-        if (op:invokeMethod(!bindings,"isEmpty")) {
+        !bindings = act:askQuestionFromString("What is the next location along the tour path?", !responseFormList, 1, 300);
+        if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
             act:cancelActionLearning(!actionPred);
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
@@ -610,8 +610,8 @@ import edu.tufts.hrilab.action.goal.Goal;
             !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
             !responseForm = op:createPredicate("taskPredicate(X)");
             op:add(!responseFormList,!responseForm);
-            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList);
-            if (op:invokeMethod(!bindings,"isEmpty")) {
+            !bindings = act:askQuestionFromString("What would you like me to do there?", !responseFormList, 1, 300);
+            if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
                 act:cancelActionLearning(!actionPred);
                 exit(FAIL,not(wasAnswered(myQuestion)));
             } else {
@@ -636,8 +636,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     Symbol !addl;
     Boolean !success;
 
-    !bindings = act:askQuestionFromString("How long should the inactivity timeout be?", relativeTime(X,Y));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("How long should the inactivity timeout be?", relativeTime(X,Y), 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !time = op:get(!bindings, !x);
@@ -656,8 +656,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     Variable !x = "X";
     Predicate !goalPredicate;
 
-    !bindings = act:askQuestionFromString("What should the new kiosk action be?", taskPredicate(X));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("What should the new kiosk action be?", taskPredicate(X), 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !goalPredicate = op:get(!bindings, !x);

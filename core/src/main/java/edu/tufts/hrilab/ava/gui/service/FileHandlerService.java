@@ -86,7 +86,11 @@ public class FileHandlerService {
     try {
       Files.copy(file.getInputStream(), targetLocation);
       if (MediaTypes.isVideo(filename) && normalizeVideoAudio) {
-        normalizeVideoAudio(targetLocation);
+        try {
+          normalizeVideoAudio(targetLocation);
+        } catch (Exception e) {
+          log.warn("[store] normalization failed for {}; file saved unnormalized: {}", filename, e.getMessage());
+        }
       }
     } catch (IOException e) {
       log.error("[store] error attempting to write file from stream");
@@ -162,7 +166,11 @@ public class FileHandlerService {
       activeUploads.remove(uploadId);
 
       if (MediaTypes.isVideo(info.fileName) && normalizeVideoAudio) {
-        normalizeVideoAudio(targetLocation);
+        try {
+          normalizeVideoAudio(targetLocation);
+        } catch (Exception e) {
+          log.warn("[completeChunkedUpload] normalization failed for {}; file saved unnormalized: {}", info.fileName, e.getMessage());
+        }
       }
 
       return info.fileName;
@@ -238,6 +246,13 @@ public class FileHandlerService {
       if (p.exitValue() != 0) {
         log.warn("[normalizeVideoAudio] ffmpeg failed for {} (exit {}); leaving original. stderr: {}",
             name, p.exitValue(), err.length() > 500 ? err.substring(0, 500) + "..." : err);
+        return;
+      }
+      if (!Files.exists(normalized) || Files.size(normalized) == 0) {
+        log.warn("[normalizeVideoAudio] ffmpeg produced no output for {}; leaving original", name);
+        try {
+          if (Files.exists(normalized)) Files.delete(normalized);
+        } catch (IOException ignored) {}
         return;
       }
       Files.move(normalized, videoPath, StandardCopyOption.REPLACE_EXISTING);

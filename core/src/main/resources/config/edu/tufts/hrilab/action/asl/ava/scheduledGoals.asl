@@ -36,15 +36,15 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
 
 
-    !bindings = act:askQuestionFromString("What should the scheduled task be?", taskPredicate(X));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("What should the scheduled task be?", taskPredicate(X), 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !goalPredicate = op:get(!bindings, !x);
     op:log(debug, "[scheduleGoal] goal !goalPredicate");
 
-    !bindings = act:askQuestionFromString("When should this task be scheduled for?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("When should this task be scheduled for?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !time = op:get(!bindings, !x);
@@ -64,8 +64,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
     !responseForm = op:createPredicate("relativeTime(X,Y)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString("Should this task be repeated?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("Should this task be repeated?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !confirmation = op:get(!bindings, !x);
@@ -79,8 +79,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     } else {
         if (op:equalsValue(!confirmation, yes())) {
             //Only allowing relativeTime(X,Y) response form here for code simplicity.
-            !bindings = act:askQuestionFromString("How often?", !responseForm);
-            if (op:invokeMethod(!bindings,"isEmpty")) {
+            !bindings = act:askQuestionFromString("How often?", !responseForm, 1, 300);
+            if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
                 exit(FAIL,not(wasAnswered(myQuestion)));
             }
         }
@@ -139,8 +139,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     //Scheduled Persistent Scheduled or Persistent Scheduled cases
     if (~op:equalsValue(!startPred, none()) && ~op:equalsValue(!periodPred, none())) {
         //Ask to modify either inner or outer timing
-        !bindings = act:askQuestionFromString("Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
-        if (~op:invokeMethod(!bindings,"isEmpty")) {
+        !bindings = act:askQuestionFromString("Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X), 1, 300);
+        if (~op:isNull(!bindings) && ~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             if (op:equalsValue(!response,execution)) {
                 op:log("debug", "[modifyScheduledGoal] got response to modify first execution");
@@ -164,16 +164,16 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
     if (op:equals(!modifyInterval,true)) {
         //Scheduled Persistent Scheduled or Persistent Scheduled Interval
-        !bindings = act:askQuestionFromString("How frequently would you like to schedule this task instead?", !responseFormList);
+        !bindings = act:askQuestionFromString("How frequently would you like to schedule this task instead?", !responseFormList, 1, 300);
     } else {
         if (~op:equalsValue(periodPred,none())) {
-            !bindings = act:askQuestionFromString("When would you like to schedule this task instead?", !responseFormList);
+            !bindings = act:askQuestionFromString("When would you like to schedule this task instead?", !responseFormList, 1, 300);
         } else {
-            !bindings = act:askQuestionFromString("When should this task's next execution occur?", !responseFormList);
+            !bindings = act:askQuestionFromString("When should this task's next execution occur?", !responseFormList, 1, 300);
         }
     }
 
-    if (~op:invokeMethod(!bindings,"isEmpty")) {
+    if (~op:isNull(!bindings) && ~op:invokeMethod(!bindings,"isEmpty")) {
         !response = op:get(!bindings,!x);
         !yResponse = op:get(!bindings,!y);
         op:log(debug, "!response");
@@ -259,9 +259,9 @@ import edu.tufts.hrilab.action.justification.Justification;
         }
         //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString("Which task did you want to modify?", option(X));
+        !bindings = act:askQuestionFromString("Which task did you want to modify?", option(X), 1, 300);
         act:resumeWaitForResponse(option(X),?actor);
-        if (~op:invokeMethod(!bindings,"isEmpty")) {
+        if (~op:isNull(!bindings) && ~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             !numberString = op:getName(!response);
             !goalNumber = op:newObject("java.lang.Integer", !numberString);
@@ -399,8 +399,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     !responseForm = op:createPredicate("pathName(X)");
     op:add(!responseFormList,!responseForm);
 
-    !bindings = act:askQuestionFromString("What is the name of the path?", !responseFormList);
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("What is the name of the path?", !responseFormList, 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !pathName = op:get(!bindings, !x);
@@ -420,8 +420,8 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !locations = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
 
-    !bindings = act:askQuestionFromString("What's the first location on the path?", location(X));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("What's the first location on the path?", location(X), 1, 300);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !locationId = op:get(!bindings, !x);
@@ -434,8 +434,8 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     while(~op:equalsValue(!locationId,"none()")){
         op:add(!locations, !tmp);
-        !bindings = act:askQuestionFromString("What's the next location on the path?", location(X));
-        if (op:invokeMethod(!bindings,"isEmpty")) {
+        !bindings = act:askQuestionFromString("What's the next location on the path?", location(X), 1, 300);
+        if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
         !locationId = op:get(!bindings, !x);
