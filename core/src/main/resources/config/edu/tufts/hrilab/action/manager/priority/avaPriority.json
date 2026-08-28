@@ -303,6 +303,18 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "cancelAllScheduledGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtPrimaryDock": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtSecondaryDock": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelAllQueuedTasks": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

@@ -86,6 +86,24 @@ forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
 yes; VAL; val(yes)
 no; VAL; val(no)
 
+% the dashboard quick actions send these exact strings
+lower media volume; C; lowerVideoVolume(?ADDRESSEE)
+raise media volume; C; raiseVideoVolume(?ADDRESSEE)
+switch display to tracs; C; switchDisplayToTRACS(?ADDRESSEE)
+switch display to telepresence; C; switchDisplayToTelepresence(?ADDRESSEE)
+
+% VERBI is not a template in this dict, so the VERBI lines above never parse; these are the live forms
+cancel pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
+cancel all pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
+cancel all active goals; C; cancelAllCurrentAndQueuedTasks(?ADDRESSEE)
+cancel all goals; C; cancelAllCurrentAndQueuedTasks(?ADDRESSEE)
+cancel all scheduled goals; C; cancelAllScheduledGoals(?ADDRESSEE)
+cancel all scheduled tasks; C; cancelAllScheduledGoals(?ADDRESSEE)
+
+ready; VAL; val(yes)
+i am ready; VAL; val(yes)
+im ready; VAL; val(yes)
+
 %TODO: what of these (and of what has been deleted) are necessary for the website?
 
 %ww; VERBI; triggerWW
@@ -100,5 +118,5 @@ no; VAL; val(no)
 %stop idle image cycle; VERBI; stopIdleImageCycle
 
 %play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)
-%primary dock; C; setAtPrimaryDock(?ADDRESSEE)
-%secondary dock; C; setAtSecondaryDock(?ADDRESSEE)
+primary dock; C; setAtPrimaryDock(?ADDRESSEE)
+secondary dock; C; setAtSecondaryDock(?ADDRESSEE)
