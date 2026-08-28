@@ -339,6 +339,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       vars.put("%batteryLevel", getBatteryLevel());
       vars.put("%currentLocation", getCurrentLocation());
       vars.put("%videoVolume", getVideoVolume());
+      vars.put("%voiceVolume", getVoiceVolume());
       //Failed attempt at including context to be used in the base prompt itself
       ////TODO: based of EM listener
       //Symbol agent = parsing ? utterance.getAddressee() : utterance.getSpeaker();
@@ -466,6 +467,21 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          output = "Unknown";
       }
       return output;
+   }
+
+   //TODO: streaming TTS only - remove associated tool targets if not using streaming TTS
+   private String getVoiceVolume() {
+      String voiceVolume = "unknown";
+      //TODO: check if streaming TTS to avoid error message spam
+      try {
+         Integer voiceVolumeInt = TRADE.getAvailableService(new TRADEServiceConstraints().name("getVoiceVolume").argTypes()).call(Integer.class);
+         if (voiceVolumeInt != null) {
+            voiceVolume = String.valueOf(voiceVolumeInt);
+         }
+      } catch (TRADEException e) {
+         log.error("[getVoiceVolume] error getting Ava voice volume");
+      }
+      return voiceVolume;
    }
 
    private String getVideoVolume() {
@@ -1698,26 +1714,26 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-      definition = new ToolDefinition("lowerVideoVolume",
-              "You lower the volume of videos played on your screen by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVideoVolume",
-              "You raise the volume of videos played on your screen by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("lowerVideoVolume",
+      //        "You lower the volume of videos played on your screen by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("raiseVideoVolume",
+      //        "You raise the volume of videos played on your screen by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("setVoiceVolume",
               "You set the volume of your own speaking voice",
               List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The voice volume as a percentage. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("lowerVoiceVolume",
-              "You lower the volume of your own speaking voice by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVoiceVolume",
-              "You raise the volume of your own speaking voice by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("lowerVoiceVolume",
+      //        "You lower the volume of your own speaking voice by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("raiseVoiceVolume",
+      //        "You raise the volume of your own speaking voice by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("displayImage",
               "You display an :image from your saved collection on your built-in screen display at a :location.",

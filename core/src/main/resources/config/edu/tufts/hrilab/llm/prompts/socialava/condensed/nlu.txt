@@ -4,6 +4,7 @@ Contextual Information:
 - Current Location: %currentLocation
 - Current Battery Level: %batteryLevel
 - Current Video Volume: %videoVolume
+- Current Speaking Voice Volume: %voiceVolume
 - OUTSTANDING QUESTIONs the back-end is awaiting a response for:
 %questionList
 - Location List:
