@@ -35,6 +35,11 @@ public class ChatAdapter extends GuiAdapter {
 
   private Set<String> diarcAgents = new HashSet<>();
 
+  // hide the robot's self-directed dialogue from the chat view for the ava front-end config only.
+  // other configs want to see self, so this keys off the presence of the front-end config component.
+  // TODO: interim -- replace with a proper per-config chat display toggle.
+  private boolean hideSelf = false;
+
 
   //==========================================================================
   // Constructor
@@ -145,6 +150,7 @@ public class ChatAdapter extends GuiAdapter {
             new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class,Boolean.class)
     );
     service.call(void.class, sendUtteranceService);
+    hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
     log.debug("Dialogue registered");
   }
 
@@ -158,12 +164,21 @@ public class ChatAdapter extends GuiAdapter {
     if (!newUtterance) {
       return;
     }
+    String sender = utterance.getSpeaker().toUntypedString();
+    String recipient = utterance.getAddressee().toUntypedString();
+    if (hideSelf && ("self".equals(sender) || "self".equals(recipient))) {
+      return;
+    }
     // send to client
     try {
       JsonObject json = new JsonObject();
       json.addProperty("message", utterance.getWordsAsString());
-      json.addProperty("sender", utterance.getSpeaker().toUntypedString());
-      json.addProperty("recipient", utterance.getAddressee().toUntypedString());
+      json.addProperty("sender", sender);
+      json.addProperty("recipient", recipient);
+      // no per-utterance time exists, so this is send time -- accurate for live messages, and the
+      // robot's own zone so the dashboard can show robot-local time regardless of the viewer
+      json.addProperty("timestamp", System.currentTimeMillis());
+      json.addProperty("timezone", java.time.ZoneId.systemDefault().getId());
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {
