@@ -85,9 +85,14 @@ public class ChatAdapter extends GuiAdapter {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
       //Set<String> diarcAgents = new HashSet<>();
+      //todo (pete): ava-deploy specific. fix in general -- agent groups?
+      boolean hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
       diarcAgents.clear();
-      //agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
-      agents.forEach(agent -> diarcAgents.add(agent.getName()));
+      agents.forEach(agent -> {
+        if (!hideSelf || !agent.getName().equals("self")) {
+          diarcAgents.add(agent.getName());
+        }
+      });
       sendDiarcAgents(diarcAgents);
       log.debug("DIARC agents received");
     } catch (TRADEException e) {
@@ -158,12 +163,18 @@ public class ChatAdapter extends GuiAdapter {
     if (!newUtterance) {
       return;
     }
+    String sender = utterance.getSpeaker().toUntypedString();
+    String recipient = utterance.getAddressee().toUntypedString();
     // send to client
     try {
       JsonObject json = new JsonObject();
       json.addProperty("message", utterance.getWordsAsString());
-      json.addProperty("sender", utterance.getSpeaker().toUntypedString());
-      json.addProperty("recipient", utterance.getAddressee().toUntypedString());
+      json.addProperty("sender", sender);
+      json.addProperty("recipient", recipient);
+      // no per-utterance time exists, so this is send time -- accurate for live messages, and the
+      // robot's own zone so the dashboard can show robot-local time regardless of the viewer
+      json.addProperty("timestamp", System.currentTimeMillis());
+      json.addProperty("timezone", java.time.ZoneId.systemDefault().getId());
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {

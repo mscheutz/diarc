@@ -63,6 +63,44 @@ import java.util.Map;
     }
 }
 
+() = lowerVideoVolume() {
+    Boolean !success = tsc:lowerVideoVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
+() = raiseVideoVolume() {
+    Boolean !success = tsc:raiseVideoVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
+() = setVoiceVolume(Symbol ?volume) {
+    Boolean !success;
+
+    !success = tsc:setVoiceVolume(?volume);
+    if (op:equals(!success,false)) {
+        act:generateResponseFromString("Supplied volume must be between 0 and 100");
+        exit(FAIL,invalid(volume));
+    }
+}
+
+() = lowerVoiceVolume() {
+    Boolean !success = tsc:lowerVoiceVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
+() = raiseVoiceVolume() {
+    Boolean !success = tsc:raiseVoiceVolume();
+    if (op:equals(!success,false)) {
+        exit(FAIL,invalid(volume));
+    }
+}
+
 ////Could just have playNextVideo kiosk action with low timeout, not sure if this should ideally be instructed directly or exist
 //() = playAllVideosLoping() {
 //    while (true) {

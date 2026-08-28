@@ -151,6 +151,26 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "lowerVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "raiseVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "lowerVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "raiseVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "reportIsVideoSaved": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -292,6 +312,18 @@
     "priorityTier": "SKIPPENDING"
   },
   "cancelAllCurrentAndQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllScheduledGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtPrimaryDock": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtSecondaryDock": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

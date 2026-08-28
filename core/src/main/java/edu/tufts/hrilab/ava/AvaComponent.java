@@ -147,7 +147,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDing = true;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
-  private boolean listenForWW = true;
+  private volatile boolean listenForWW = true;
   private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private final AtomicBoolean micMuted = new AtomicBoolean(false);
   private final AtomicInteger micMuteCount = new AtomicInteger(0);
@@ -156,6 +156,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private boolean inTelepresenceMode = false;
   private CiscoCodecAPI ciscoCodecAPI = new CiscoCodecAPI();
   private Symbol altDockLocation;
 
@@ -467,8 +468,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private void monitorDockingStatus() {
     keepAliveExecutor.scheduleAtFixedRate(() -> {
-      updateRollingPositionData();
       try {
+        //inside the try: an uncaught throw here cancels the scheduled task permanently
+        updateRollingPositionData();
         if (api.hasSession()) {
           RMSDockStatusResponse response = api.getDockStatus();
           if (response != null) {
@@ -1158,6 +1160,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private void loadMapMetadata() {
     mapMetadatas = api.getMapMetadatas();
     mapImages = api.getMaps();
+    if (mapMetadatas == null) {
+      //a refused connection comes back as null and gets past the exit guard in init,
+      //leaving a half-initialized component and NPEs later.
+      //null mapImages is not checked: a reachable api with zero maps returns that, and it
+      //should stay the warn-and-continue it has always been, not a restart loop
+      throw new IllegalStateException("no response from the ava base api");
+    }
   }
 
   @TRADEService
@@ -2263,16 +2272,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Action
   public void switchDisplayToTRACS() {
     displayLock.lock();
-    telepresenceCondition.signal();
-    displayLock.unlock();
+    try {
+      inTelepresenceMode = false;
+      telepresenceCondition.signalAll();
+    } finally {
+      displayLock.unlock();
+    }
     if (ciscoCodecAPI.getCurrentDisplayMode() != CiscoCodecAPI.DisplayMode.TRACS) {
-      //Switch back to TRACS (PC 2 on the Cisco codec)
-      boolean success = ciscoCodecAPI.switchToTRACS();
-      if (success) {
-        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+      if (ciscoCodecAPI.isInCall()) {
+        //never change the display under a live call; our presentation sitting over the
+        //call layout freezes what the far end sees
+        log.info("[switchDisplayToTRACS] call in progress on the codec, not changing the display");
       } else {
-        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+        //Switch back to TRACS (PC 2 on the Cisco codec)
+        boolean success = ciscoCodecAPI.switchToTRACS();
+        if (success) {
+          log.info("[switchDisplayToTRACS] successfully switched back to TRACS display");
+        } else {
+          log.error("[switchDisplayToTRACS] failed to switch back to TRACS display");
+        }
       }
+    } else {
+      log.info("[switchDisplayToTRACS] codec already reads TRACS active, not sending switch");
     }
   }
 
@@ -2280,29 +2301,61 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @TRADEService
   @Action
   public void switchDisplayToTelepresencePrimitive() {
-    //Switch to telepresence (PC 1 on the Cisco codec)
-    boolean success = ciscoCodecAPI.switchToTelepresence();
-    if (success) {
-      log.info("[switchDisplayToTelepresence] successfully switched to telepresence display");
-    } else {
-      log.error("[switchDisplayToTelepresence] failed to switch to telepresence display");
+    displayLock.lock();
+    try {
+      inTelepresenceMode = true;
+    } finally {
+      displayLock.unlock();
     }
 
-    //Wait until condition is signalled by switchDisplayToTRACS
+    //Hand the display back to native telepresence by stopping our TRACS share rather
+    //than presenting PC 1: presenting swaps the share source and keeps content sitting
+    //over the call layout. Sent even during a call -- removing our content from a live
+    //call is the point. Retried because a transient failure here leaves our share up
+    //for the whole park.
+    boolean success = false;
+    for (int attempt = 0; attempt < 3 && !success; attempt++) {
+      if (attempt > 0) {
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
+      }
+      success = ciscoCodecAPI.stopPresentation(CiscoCodecAPI.CONNECTOR_ID_TRACS);
+    }
+    if (success) {
+      log.info("[switchDisplayToTelepresence] stopped the TRACS presentation, codec now reads {}",
+              ciscoCodecAPI.getCurrentDisplayMode());
+    } else {
+      log.error("[switchDisplayToTelepresence] failed to stop the TRACS presentation");
+    }
+
+    //Wait until switchDisplayToTRACS clears the mode; checked in a loop so a signal that
+    //arrives before the await is not lost
+    displayLock.lock();
     try {
-      displayLock.lock();
-      telepresenceCondition.await();
-      displayLock.unlock();
+      while (inTelepresenceMode) {
+        telepresenceCondition.await();
+      }
     } catch (InterruptedException e) {
       log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition", e);
+    } finally {
+      inTelepresenceMode = false;
+      displayLock.unlock();
     }
 
     //Switch back to TRACS (PC 2 on the Cisco codec)
-    success = ciscoCodecAPI.switchToTRACS();
-    if (success) {
-      log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+    if (ciscoCodecAPI.isInCall()) {
+      log.info("[switchDisplayToTelepresence] call in progress on the codec, leaving the display alone");
     } else {
-      log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      success = ciscoCodecAPI.switchToTRACS();
+      if (success) {
+        log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+      } else {
+        log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+      }
     }
   }
 
