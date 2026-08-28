@@ -90,7 +90,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDing = true;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
-  private boolean listenForWW = true;
+  private volatile boolean listenForWW = true;
   private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private final AtomicBoolean micMuted = new AtomicBoolean(false);
   private final AtomicInteger micMuteCount = new AtomicInteger(0);
@@ -709,7 +709,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //dual local setup
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--gpu", "--model_type", "0", "--model_size", "medium", "--diarc");
 
-    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
+    //keep the child's stderr so a python death leaves a traceback
+    processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(new File(home + "/.diarc/python/ww/ww_stderr.log")));
     try {
       Process process = processBuilder.start();
       InputStream is = process.getInputStream();
@@ -763,7 +764,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           //// ASR ////
           //Wait for ASR result:
           log.info("waiting for ASR result");
-          while (is.available() == 0) {
+          while (is.available() == 0 && listenForWW) {
             Thread.sleep(100);
           }
           //Get ASR result (using <unk> to signal ASR timed out before any results were detected)

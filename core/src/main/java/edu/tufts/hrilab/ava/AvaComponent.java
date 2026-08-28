@@ -147,7 +147,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDing = true;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
-  private boolean listenForWW = true;
+  private volatile boolean listenForWW = true;
   private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private final AtomicBoolean micMuted = new AtomicBoolean(false);
   private final AtomicInteger micMuteCount = new AtomicInteger(0);
@@ -1864,7 +1864,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     //********If haven't updated ww env and script, use the below*******
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
 
-    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
+    //keep the child's stderr so a python death leaves a traceback
+    processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(new File(home + "/.diarc/python/ww/ww_stderr.log")));
     try {
       Process process = processBuilder.start();
       InputStream is = process.getInputStream();
