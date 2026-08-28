@@ -46,6 +46,11 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * (speaker -> current parse if it exists), only exists in cases of incremental input
    */
   private Map<Symbol, Parse> parses;
+  /**
+   * Factory for creating unique variables.
+   * NOTE: currently a singleton used across all speakers. Need instance per speaker to handle incremental parsing for more than one speaker
+   */
+  private VariableFactory variableFactory = VariableFactory.getInstance();
 
   static Dictionary dictionary;
   /**
@@ -106,6 +111,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     chart = null;
     isChartInitialized = false;
     currentChartSize = 0;
+    variableFactory.reset();
   }
 
   // Initialize the chart for parsing
@@ -173,10 +179,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   public Utterance buildPartialUtterance(Utterance input) {
     // Retrieve final parses from the chart
     List<Node> finalParses = chart[0][currentChartSize - 1];
-    if (finalParses == null || finalParses.isEmpty()) {
-      log.warn("[buildPartialUtterance] No valid parses found.");
-      return input;
-    }
 
     Symbol speaker = input.getSpeaker();
     Symbol addressee = input.getAddressee();
@@ -184,18 +186,22 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     Utterance endOfChartUtterance = null;
 
     // Only proceed if finalParses is non-empty
-    if (!finalParses.isEmpty()) {
+    if (finalParses != null && !finalParses.isEmpty()) {
       // The first parse in finalParses is considered "best"
       // but remember to check again to avoid IndexOutOfBounds
       Node bestParse = finalParses.get(0);
       endOfChartUtterance = createUtterance(bestParse, speaker, addressee);
-    } else {
-      // Handle the case where finalParses is empty, if needed
-      // e.g., set endOfChartUtterance = null or throw an exception
-      // endOfChartUtterance = null;
     }
 
-     // perform reasoning on multiple parses in debugUtterances here if needed
+    if (endOfChartUtterance == null) {
+      // Handle the case where finalParses is empty
+      log.warn("[buildPartialUtterance] No valid parses found.");
+//      endOfChartUtterance = generateErrorSemantics(speaker, addressee, input.getWordsAsString().toLowerCase());
+//      endOfChartUtterance.setWords(input.getWords());
+      return input;
+    }
+
+    // perform reasoning on multiple parses in debugUtterances here if needed
 //    List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
 //    List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
 
@@ -206,9 +212,17 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
   @Override
   public Utterance parseUtterance(Utterance input) {
+    if (input == null || input.getWords() == null || input.getWords().isEmpty()) {
+      log.warn("[parseUtterance] Null or empty input utterance.");
+      return input;
+    }
+
     // Check for end-of-utterance signal and reset if necessary
     // Example end-of-utterance condition or reasoning step//
-     resetChart();
+    resetChart();
+
+    // clear addressee from previous utterance
+    currentAddressee = null;
 
     // Perform incremental parsing
     Utterance output = parseIncrementally(input);
@@ -222,31 +236,75 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return output;
   }
 
+  /**
+   * Retrieves the starting index of a substring (sequence of words) within a given list of strings,
+   * if it exists. Compares words in a case-insensitive manner. If the substring is not found,
+   * returns -1.
+   *
+   * @param utterance The list of strings representing the main text to search in.
+   * @param words     The list of strings representing the sequence of words to find.
+   * @return The starting index in the utterance where the sequence begins, or -1 if no match is found.
+   */
+  private int getChartIndex(List<String> utterance, List<String> words, int startIndex) {
+    for (int i = startIndex; i <= utterance.size() - words.size(); i++) {
+      if (utterance.get(i).equalsIgnoreCase(words.get(0))) {
+        // found first word match --> check the rest of the phrase
+        for (int j = 1; j < words.size(); j++) {
+          if (!utterance.get(i + j).equalsIgnoreCase(words.get(j))) {
+            break;
+          }
+        }
+
+        // if didn't break from for-loop above, a match is found
+        // NOTE: this is always the first match. Should we find ALL matches?
+        return i;
+      }
+    }
+
+    log.error("[getChartIndex] No match found for word: {}", words);
+    return -1;
+  }
+
+  /**
+   * Executes dynamic programming-based chart parsing on the provided input utterance.
+   * This method tokenizes the input, initializes and updates the chart,
+   * and combines spans using available parsing rules and syntax.
+   *
+   * @param input the utterance to be parsed, containing words for tokenization and chart creation
+   */
   public void doChartParsingWithDP(Utterance input) {
+    // TODO: EAK this tokenize method is a bit odd. It returns multi-word dictionary entries
+    //       but ignores corresponding single word entries. Doesn't this ignore potentially valid parses?
     List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
     log.debug("[doChartParsingWithDP] Tokenized input: {}", tokens);
 
-    int startOffset = currentChartSize - tokens.size();
-    int tokenCount = tokens.size();
-
     // Initialize chart cells for the new tokens
-    for (int i = 0; i < tokenCount; i++) {
-      int chartIndex = startOffset + i;
-      List<Entry> entries = tokens.get(i).getRight();
+    int startIndex = 0;
+    for (int i = 0; i < tokens.size(); i++) {
+      // get chart index and span for current token
+      Pair<String, List<Entry>> token = tokens.get(i);
 
+      List<Entry> entries = token.getRight();
       if (entries.isEmpty()) {
-        log.warn("[doChartParsingWithDP] Unknown token: {}", tokens.get(i).getLeft());
+        log.warn("[doChartParsingWithDP] Unknown token: {}", token.getLeft());
         continue;
       }
 
+      // get chart index and span for current token
+      List<String> tokenWords = Arrays.stream(token.getLeft().split(" ")).toList();
+      int chartIndex_1 = getChartIndex(input.getWords(), tokenWords, startIndex);
+      int chartSpan = tokenWords.size();
+      int chartIndex_2 = chartIndex_1 + chartSpan - 1;
+      startIndex = chartIndex_2 + 1;
+
       Node node = new Node(entries);
-      if (chart[chartIndex][chartIndex] == null) {
-        chart[chartIndex][chartIndex] = new ArrayList<>();
+      if (chart[chartIndex_1][chartIndex_2] == null) {
+        chart[chartIndex_1][chartIndex_2] = new ArrayList<>();
       }
 
       // **Check for duplicates before adding**
-      if (!chart[chartIndex][chartIndex].contains(node)) {
-        chart[chartIndex][chartIndex].add(node);
+      if (!chart[chartIndex_1][chartIndex_2].contains(node)) {
+        chart[chartIndex_1][chartIndex_2].add(node);
       } else {
         log.debug("[doChartParsingWithDP] Duplicate node detected, skipping: {}", node.getLabel());
       }
@@ -257,31 +315,35 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       for (int start = 0; start <= currentChartSize - span; start++) {
         int end = start + span - 1;
 
-        if (chart[start][end] == null) {
-          chart[start][end] = new ArrayList<>();
-        }
-
         for (int split = start; split < end; split++) {
           List<Node> leftNodes = chart[start][split];
-          List<Node> rightNodes = chart[split + 1][end];
+          if (leftNodes == null) {
+            continue;
+          }
 
-          if (leftNodes != null && rightNodes != null) {
-            for (Node left : leftNodes) {
+          for (Node left : leftNodes) {
+            // if Node has rule that has literal syntax argType, it can accept anything on the right side
+            // create new Node with all words on right side and add to the chart
+            if (left.rules.stream().anyMatch(r -> r.syntax.argType != null && r.syntax.argType.isLiteral)) {
+              addNewLiteralNode(input.getWordsAsString(), left, split + 1);
+            }
+
+            List<Node> rightNodes = chart[split + 1][end];
+            if (rightNodes != null) {
+
               for (Node right : rightNodes) {
-                try {
-                  List<NodeEntry> validCombinations = left.combineTest(right);
-                  if (!validCombinations.isEmpty()) {
-                    Node combinedNode = new Node(left, right, validCombinations);
-
-                    // **Check for duplicates before adding**
-                    if (!chart[start][end].contains(combinedNode)) {
-                      chart[start][end].add(combinedNode);
-                    } else {
-                      log.debug("[doChartParsingWithDP] Duplicate combined node detected, skipping: {}", combinedNode.getLabel());
-                    }
+                Node combinedNode = left.combine(right);
+                if (combinedNode != null) {
+                  if (chart[start][end] == null) {
+                    chart[start][end] = new ArrayList<>();
                   }
-                } catch (Exception e) {
-                  // Do nothing - silently catch the exception);
+
+                  // Check for duplicates before adding
+                  if (!chart[start][end].contains(combinedNode)) {
+                    chart[start][end].add(combinedNode);
+                  } else {
+                    log.debug("[doChartParsingWithDP] Duplicate combined node detected, skipping: {}", combinedNode.getLabel());
+                  }
                 }
               }
             }
@@ -289,6 +351,52 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         }
       }
     }
+  }
+
+  /**
+   * Adds a new literal node to the parsing chart based on the provided utterance and left node.
+   *
+   * @param utteranceWordsAsString the full input sentence as a string
+   * @param left                   the left Node containing a rule with a literal syntax argument type
+   * @param chartIndex             the index in the chart where the new node should be added
+   */
+  private void addNewLiteralNode(String utteranceWordsAsString, Node left, int chartIndex) {
+    // if Node has rule that has literal syntax argType, it can accept anything on the right side
+    // create new Node with all words on right side and add to the chart
+    log.debug("[doChartParsingWithDP] Literal syntax detected, creating new LIT node");
+    String literalTokens = utteranceWordsAsString.substring(utteranceWordsAsString.toLowerCase().indexOf(left.label.toLowerCase()) + left.label.length()).trim().toLowerCase();
+
+    // find literal syntax rule
+    NodeEntry rule = left.rules.stream().filter(r -> r.syntax.argType != null && r.syntax.argType.isLiteral).findFirst().orElse(null);
+
+    Entry entry = generateLiteralEntry(literalTokens.toString(), rule.syntax);
+    Node literalNode = new Node(Collections.singletonList(entry));
+
+    if (chart[chartIndex][currentChartSize - 1] == null) {
+      chart[chartIndex][currentChartSize - 1] = new ArrayList<>();
+    }
+    chart[chartIndex][currentChartSize - 1].add(literalNode);
+  }
+
+  /**
+   * Generates a literal entry based on the provided morpheme and syntactic rule.
+   * This method creates an entry by utilizing the input morpheme,
+   * updating the syntactic rule type, and generating a default literal semantic rule.
+   *
+   * @param morpheme the input string representing the morpheme for the entry
+   * @param syntax   the syntactic rule associated with the morpheme
+   * @return a new Entry object with the provided morpheme, updated syntactic rule,
+   * default literal semantic rule, and an empty string for additional information
+   */
+  private Entry generateLiteralEntry(String morpheme, SyntacticRule syntax) {
+    log.debug("generating wild card entry for: " + morpheme);
+    //For now the convention is to have the syntatic type before the star
+    String argtype = syntax.argType.type;
+    //String newType = argtype.substring(0,argtype.indexOf("*"));
+    String newType = argtype;
+
+    //TODO:brad: it might be nice to be able to provide semantic type info here some how at some point
+    return new Entry(morpheme, new SyntacticRule(newType), SemanticRule.generateLiteralSemanticRule(morpheme, ""), "");
   }
 
   @Override
@@ -394,7 +502,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   /**
    * Determines if a parse is valid based on Prolog belief reasoning.
    *
-   * @param parse The candidate Utterance.
+   * @param parse         The candidate Utterance.
    * @param beliefResults The corresponding Prolog query results.
    * @return True if the parse is valid, False otherwise.
    */
@@ -479,9 +587,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * Also removes direct address wrappers from generated semantics.
    *
    * @param semantics current utterance semantics
-   * @param speaker utterance speaker
+   * @param speaker   utterance speaker
    * @param addressee utterance addressee
-   * @param type utterance type
+   * @param type      utterance type
    * @return updated semantics with direct address wrapper removed
    */
   private Symbol updateDirectAddress(Symbol semantics, Symbol speaker, Symbol addressee, UtteranceType type) {
@@ -543,138 +651,138 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
   }
 
-  /**
-   * First step of Utterance Processing, updates address history and passes utterance to
-   * addWords. This allows for parallelization across incoming utterances, while still preserving
-   * incremental processing to some degree.
-   * <p>
-   * Tokenizes the text of the utterance and updates the parse with each token in order.
-   *
-   * @param input utterance to be parsed
-   * @return parsed Utterance (or Utterance with failure semantics)
-   */
-  private Utterance parseUtteranceHelper(Utterance input) {
-    // clear addressee from previous utterance
-    currentAddressee = null;
-
-    Symbol speaker = input.getSpeaker();
-    Symbol addressee = input.getAddressee();
-    if (addressee == null) {
-      log.warn("addressee not set in incoming utterance. Setting to \"unknown\" unless direct address overrides this value.");
-    }
-
-    //Make sure there is a Parse object for the speaker of the current Utterance
-    if (!parses.containsKey(speaker)) {
-      parses.put(speaker, new Parse(terminalCategories.keySet()));
-    }
-    Parse currentParse = parses.get(speaker);
-
-    List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
-
-    Utterance output;
-    for (ListIterator<Pair<String, List<Entry>>> tokensIterator = tokens.listIterator(); tokensIterator.hasNext(); ) {
-      Pair<String, List<Entry>> nextToken = tokensIterator.next();
-      String token = nextToken.getLeft();
-      List<Entry> entries = nextToken.getRight();
-      if (entries.isEmpty()) {
-        log.warn("[parseUtterance] unknown token: " + token);
-        log.debug("current interactor: " + speaker);
-        parses.put(speaker, new Parse(terminalCategories.keySet()));
-        // TODO: this should be handled in the NLU scripts
-
-        output = generateErrorSemantics(speaker, addressee, token);
-        output.setWords(input.getWords());
-        return output;
-      }
-      currentParse = addEntriesForToken(entries, speaker);
-      //this occurs if we're in not in learning mode and we get a morpheme that's not in the dict
-      if (currentParse == null) {
-        parses.put(speaker, new Parse(terminalCategories.keySet()));
-        log.debug("parse tree reset");
-        return input;
-      }
-
-      if (currentParse.isLiteral()) {
-        StringBuilder newToken = new StringBuilder();
-        while (tokensIterator.hasNext()) {
-          newToken.append(tokensIterator.next().getLeft()).append(" ");
-        }
-        //convert all of the rest of they keys into a new token
-        //TODO:brad check if this is empty
-        if (!newToken.toString().isEmpty()) {
-          Entry e = currentParse.generateLiteralEntry(newToken.toString());
-          //add the new entry to the parse
-          addWord(e, speaker);
-          //we're done and the utterance is complete
-          break;
-        } else {
-          log.warn("expecting literal args at the end of utterance, getting ignored: " + token);
-        }
-      }
-
-      //TODO:brad: do we actually want this behavior?
-      //utterance ends in the middle of tokens
-      //if the utterance ends in the middle of tokens, we want to send it on the complete utterance,
-      // but also keep the remainder of tokens
-//      if (currentParse.verifyParseCompletion()) {
-////        log.debug("Addition of \"" + token + "\" verifies the previous utterance was over");
-//        Node previousParse = currentParse.popPreviousParse();
-//        log.debug("previous parse: " + previousParse);
-//        sendParse(previousParse, currentInteractor,currentListener);
+//  /**
+//   * First step of Utterance Processing, updates address history and passes utterance to
+//   * addWords. This allows for parallelization across incoming utterances, while still preserving
+//   * incremental processing to some degree.
+//   * <p>
+//   * Tokenizes the text of the utterance and updates the parse with each token in order.
+//   *
+//   * @param input utterance to be parsed
+//   * @return parsed Utterance (or Utterance with failure semantics)
+//   */
+//  private Utterance parseUtteranceHelper(Utterance input) {
+//    // clear addressee from previous utterance
+//    currentAddressee = null;
 //
-//        //reset parse tree once utterance has been set, but re add the word we just added
-//        parses.put(u.getSpeaker(), new Parse(terminalCategories.keySet()));
-//        addEntriesForToken(entries, currentInteractor);
+//    Symbol speaker = input.getSpeaker();
+//    Symbol addressee = input.getAddressee();
+//    if (addressee == null) {
+//      log.warn("addressee not set in incoming utterance. Setting to \"unknown\" unless direct address overrides this value.");
+//    }
+//
+//    //Make sure there is a Parse object for the speaker of the current Utterance
+//    if (!parses.containsKey(speaker)) {
+//      parses.put(speaker, new Parse(terminalCategories.keySet()));
+//    }
+//    Parse currentParse = parses.get(speaker);
+//
+//    List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
+//
+//    Utterance output;
+//    for (ListIterator<Pair<String, List<Entry>>> tokensIterator = tokens.listIterator(); tokensIterator.hasNext(); ) {
+//      Pair<String, List<Entry>> nextToken = tokensIterator.next();
+//      String token = nextToken.getLeft();
+//      List<Entry> entries = nextToken.getRight();
+//      if (entries.isEmpty()) {
+//        log.warn("[parseUtterance] unknown token: " + token);
+//        log.debug("current interactor: " + speaker);
+//        parses.put(speaker, new Parse(terminalCategories.keySet()));
+//        // TODO: this should be handled in the NLU scripts
+//
+//        output = generateErrorSemantics(speaker, addressee, token);
+//        output.setWords(input.getWords());
+//        return output;
 //      }
-    }
+//      currentParse = addEntriesForToken(entries, speaker);
+//      //this occurs if we're in not in learning mode and we get a morpheme that's not in the dict
+//      if (currentParse == null) {
+//        parses.put(speaker, new Parse(terminalCategories.keySet()));
+//        log.debug("parse tree reset");
+//        return input;
+//      }
+//
+//      if (currentParse.isLiteral()) {
+//        StringBuilder newToken = new StringBuilder();
+//        while (tokensIterator.hasNext()) {
+//          newToken.append(tokensIterator.next().getLeft()).append(" ");
+//        }
+//        //convert all of the rest of they keys into a new token
+//        //TODO:brad check if this is empty
+//        if (!newToken.toString().isEmpty()) {
+//          Entry e = currentParse.generateLiteralEntry(newToken.toString());
+//          //add the new entry to the parse
+//          addWord(e, speaker);
+//          //we're done and the utterance is complete
+//          break;
+//        } else {
+//          log.warn("expecting literal args at the end of utterance, getting ignored: " + token);
+//        }
+//      }
+//
+//      //TODO:brad: do we actually want this behavior?
+//      //utterance ends in the middle of tokens
+//      //if the utterance ends in the middle of tokens, we want to send it on the complete utterance,
+//      // but also keep the remainder of tokens
 
-    //Once we've heard all of the words in the utterance:
-    //if the current parse is a terminal case
-    if (currentParse.checkTerminal()) {
-      //currentParse.pruneNonTerminal();
-      log.debug("terminal condition found");
-      output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-
-      //reset parse tree once utterance has been sent
-      //TODO: in the future we might want to keep track of the set of all previous parses somewhere
-      parses.put(input.getSpeaker(), new Parse(terminalCategories.keySet()));
-    }
-    else {
-      //otherwise check to see if we can make it a terminal case...
-      log.debug("no valid parse and no more input in time.");
-      log.debug("current parse: " + currentParse);
-      //if we don't have parse rules for a word try to figure them out
-      //TODO:brad: make a separate pipeline that results in in infer unknowns getting called.
-      if (!currentParse.checkAllDefinitionsExist() && false) {
-        log.debug("inferring new definitions ");
-        dictionary.addEntries(currentParse.inferUnknowns());
-        log.debug("sending inferred parse");
-        output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-      } else if (currentParse.checkComplete()) {
-        //try to rebuild the tree because the current parsing algorithm is too greedy and might be wrong
-        log.debug("parse might be fixable");
-        currentParse.reviseParse();
-        //now check if it's complete
-        if (currentParse.checkTerminal()) {
-          log.debug("sending revised parse");
-          output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-        } else {
-          log.debug("it wasn't...");
-          return input;
-        }
-      } else {
-        //otherwise let the system no that we couldn't find a parse
-        return input;
-      }
-
-      log.debug("currentInteractor " + speaker);
-      parses.put(speaker, new Parse(terminalCategories.keySet()));
-      log.debug("parse tree reset");
-    }
-
-    return output;
-  }
-
+  /// /      if (currentParse.verifyParseCompletion()) {
+  /// ///        log.debug("Addition of \"" + token + "\" verifies the previous utterance was over");
+  /// /        Node previousParse = currentParse.popPreviousParse();
+  /// /        log.debug("previous parse: " + previousParse);
+  /// /        sendParse(previousParse, currentInteractor,currentListener);
+  /// /
+  /// /        //reset parse tree once utterance has been set, but re add the word we just added
+  /// /        parses.put(u.getSpeaker(), new Parse(terminalCategories.keySet()));
+  /// /        addEntriesForToken(entries, currentInteractor);
+  /// /      }
+//    }
+//
+//    //Once we've heard all of the words in the utterance:
+//    //if the current parse is a terminal case
+//    if (currentParse.checkTerminal()) {
+//      //currentParse.pruneNonTerminal();
+//      log.debug("terminal condition found");
+//      output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+//
+//      //reset parse tree once utterance has been sent
+//      //TODO: in the future we might want to keep track of the set of all previous parses somewhere
+//      parses.put(input.getSpeaker(), new Parse(terminalCategories.keySet()));
+//    }
+//    else {
+//      //otherwise check to see if we can make it a terminal case...
+//      log.debug("no valid parse and no more input in time.");
+//      log.debug("current parse: " + currentParse);
+//      //if we don't have parse rules for a word try to figure them out
+//      //TODO:brad: make a separate pipeline that results in in infer unknowns getting called.
+//      if (!currentParse.checkAllDefinitionsExist() && false) {
+//        log.debug("inferring new definitions ");
+//        dictionary.addEntries(currentParse.inferUnknowns());
+//        log.debug("sending inferred parse");
+//        output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+//      } else if (currentParse.checkComplete()) {
+//        //try to rebuild the tree because the current parsing algorithm is too greedy and might be wrong
+//        log.debug("parse might be fixable");
+//        currentParse.reviseParse();
+//        //now check if it's complete
+//        if (currentParse.checkTerminal()) {
+//          log.debug("sending revised parse");
+//          output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
+//        } else {
+//          log.debug("it wasn't...");
+//          return input;
+//        }
+//      } else {
+//        //otherwise let the system no that we couldn't find a parse
+//        return input;
+//      }
+//
+//      log.debug("currentInteractor " + speaker);
+//      parses.put(speaker, new Parse(terminalCategories.keySet()));
+//      log.debug("parse tree reset");
+//    }
+//
+//    return output;
+//  }
   private Parse addEntriesForToken(List<Entry> entries, Symbol speaker) {
     Parse currentParse = parses.get(speaker);
     log.debug("\nadding: " + entries);
@@ -729,52 +837,58 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return utterance.build();
   }
 
-  //Create an utterance
+  /**
+   * Constructs an Utterance object based on the provided finalNode's rules and given speaker
+   * and addressee symbols. The method processes semantic and syntactic information from the node's
+   * rules to generate a structured Utterance.
+   *
+   * @param finalNode The Node object containing the rules from which the utterance is generated.
+   * @param speaker   The Symbol representing the speaker of the utterance.
+   * @param addressee The Symbol representing the addressee of the utterance.
+   * @return An Utterance object constructed based on the rules, semantics, and other properties of the node.
+   * Returns null if no valid Utterance could be created from the node's rules.
+   */
   public Utterance createUtterance(Node finalNode, Symbol speaker, Symbol addressee) {
-    //NLPacket nlPacketTest = null;
-    try {
-      /// CREATE NEW UTTERANCE
-      for (NodeEntry nodeRule : finalNode.rules) {
-        Pair<List<Symbol>, Map<Variable, Symbol>> diarcSemantics = nodeRule.semantics.getDIARCSemantics();
-        List<Symbol> fullSemantics = diarcSemantics.getLeft();
-        log.debug("full semantics: " + fullSemantics);
+    for (NodeEntry nodeRule : finalNode.rules) {
 
-        UtteranceType utteranceType = terminalCategories.get(nodeRule.syntax.type);
-        if (utteranceType == null) {
-          log.warn("Skipping nodeRule with unknown terminal category: {}", nodeRule.syntax.type);
-          continue;
-        }
-        Symbol mainSemantics = fullSemantics.remove(0);
-        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, utteranceType);
-        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
-        List<Term> supplementalSemanticsTest = new ArrayList<>();
-        for (Symbol semTest : fullSemantics) {
-          if (semTest.isTerm()) {
-            //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
-            supplementalSemanticsTest.add((Term) updateSpeakerNames(semTest, addressHistory.get(Pair.of(speaker, addressee)), speaker));
-          } else {
-            log.warn("badly formatted supplemental semantics: " + semTest + " . Still added though");
-            supplementalSemanticsTest.add((Term) semTest);
-          }
-        }
-        log.debug("Bindings: " + diarcSemantics);
-
-        Utterance utteranceTest = new Utterance.Builder()
-                .setSpeaker(speaker)
-                .setAddressee(currentAddressee)
-                .setSemantics(mainSemantics)
-                .setSupplementalSemantics(supplementalSemanticsTest)
-                .setTierAssignments(diarcSemantics.getRight())
-                .setIsInputUtterance(true)
-                .setUtteranceType(utteranceType)
-                .setWords(Arrays.asList(nodeRule.morpheme.split(" ")))
-                .build();
-
-        return utteranceTest;
-
+      UtteranceType utteranceType = terminalCategories.get(nodeRule.syntax.type);
+      if (utteranceType == null) {
+        log.warn("Skipping nodeRule with unknown terminal category: {}", nodeRule.syntax.type);
+        continue;
       }
-    } catch (Exception e) {
-      log.error("Error calling nodeRule");
+
+      Pair<List<Symbol>, Map<Variable, Symbol>> diarcSemantics = nodeRule.semantics.getDIARCSemantics();
+      List<Symbol> fullSemantics = diarcSemantics.getLeft();
+      log.debug("full semantics: " + fullSemantics);
+
+      Symbol mainSemantics = fullSemantics.remove(0);
+      mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, utteranceType);
+      mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
+      List<Term> supplementalSemanticsTest = new ArrayList<>();
+      for (Symbol semTest : fullSemantics) {
+        if (semTest.isTerm()) {
+          //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
+          supplementalSemanticsTest.add((Term) updateSpeakerNames(semTest, currentAddressee, speaker));
+        } else {
+          log.warn("badly formatted supplemental semantics: " + semTest + " . Still added though");
+          supplementalSemanticsTest.add((Term) semTest);
+        }
+      }
+      log.debug("Bindings: " + diarcSemantics);
+
+      Utterance utteranceTest = new Utterance.Builder()
+              .setSpeaker(speaker)
+              .setAddressee(currentAddressee)
+              .setSemantics(mainSemantics)
+              .setSupplementalSemantics(supplementalSemanticsTest)
+              .setTierAssignments(diarcSemantics.getRight())
+              .setIsInputUtterance(true)
+              .setUtteranceType(utteranceType)
+              .setWords(Arrays.asList(nodeRule.morpheme.split(" ")))
+              .build();
+
+      return utteranceTest;
+
     }
     return null;
   }
@@ -802,68 +916,68 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return null;
   }
 
-  //Pass along new utterance with updated semantics to another NLPComponent
-  private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
-    log.debug("sending semantics");
-    log.trace("number of parses found: " + possibleSemantics.rules.size());
-
-    //iterat over possible parses at terminal Node
-    for (NodeEntry rule : possibleSemantics.rules) {
-      log.trace("complete? " + rule.semantics.isComplete());
-      //if the semantics are complete, meaning there are no unbound lambda args
-      if (rule.semantics.isComplete() && terminalCategories.get(rule.syntax.type) != null) {
-        Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.semantics.getDIARCSemantics();
-        List<Symbol> fullSemantics = DIARCSemantics.getLeft();
-        log.debug("full semantics: " + fullSemantics);
-
-        // start building utterance and set utterance type
-        Utterance.Builder builder = new Utterance.Builder();
-        UtteranceType type = terminalCategories.get(rule.syntax.type);
-        builder.setUtteranceType(type);
-
-        // set utterance semantics
-        Symbol mainSemantics = fullSemantics.remove(0);
-        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, type);
-        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
-        builder.setSemantics(mainSemantics);
-
-        // set utterance supplemental semantics
-        for (Symbol sem : fullSemantics) {
-          if (sem.isTerm()) {
-            //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
-            builder.addSupplementalSemantics((Term) updateSpeakerNames(sem, currentAddressee, speaker));
-          } else {
-            log.error("Badly formatted supplemental semantics: " + sem);
-          }
-        }
-        // set remaining utterance info
-        log.debug("Bindings: " + DIARCSemantics);
-        builder.setSpeaker(speaker);
-        builder.setAddressee(currentAddressee);
-        builder.setTierAssignments(DIARCSemantics.getRight());
-        builder.setIsInputUtterance(true);
-        builder.setWords(Arrays.asList(rule.morpheme.split(" ")));
-
-        Utterance utterance = builder.build();
-        log.debug("utterance generated: " + utterance);
-        log.debug("utterance words: " + utterance.getWordsAsString());
-
-        // NOTE: if we want to support multiple parse options, we should process
-        // the rest of the parse options and add them to the Utterance before returning
-
-        // This is where we do chart parsing to collection multiple parses at the end of the utterance
-        //TODO send partial semantics (e.g. "grab the mug") from "grab the mug on the table"
-        //
-        List<Utterance> final_parses = doChartParsing(utterance);
-        doChartParsingIncrementally(utterance);
-        doChartParsingWithDP(utterance);
-
-        return final_parses.get(0);
-      }
-    }
-    log.warn("tried to send incomplete semantics, nothing sent... " + possibleSemantics);
-    return null;
-  }
+//  //Pass along new utterance with updated semantics to another NLPComponent
+//  private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
+//    log.debug("sending semantics");
+//    log.trace("number of parses found: " + possibleSemantics.rules.size());
+//
+//    //iterat over possible parses at terminal Node
+//    for (NodeEntry rule : possibleSemantics.rules) {
+//      log.trace("complete? " + rule.semantics.isComplete());
+//      //if the semantics are complete, meaning there are no unbound lambda args
+//      if (rule.semantics.isComplete() && terminalCategories.get(rule.syntax.type) != null) {
+//        Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.semantics.getDIARCSemantics();
+//        List<Symbol> fullSemantics = DIARCSemantics.getLeft();
+//        log.debug("full semantics: " + fullSemantics);
+//
+//        // start building utterance and set utterance type
+//        Utterance.Builder builder = new Utterance.Builder();
+//        UtteranceType type = terminalCategories.get(rule.syntax.type);
+//        builder.setUtteranceType(type);
+//
+//        // set utterance semantics
+//        Symbol mainSemantics = fullSemantics.remove(0);
+//        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, type);
+//        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
+//        builder.setSemantics(mainSemantics);
+//
+//        // set utterance supplemental semantics
+//        for (Symbol sem : fullSemantics) {
+//          if (sem.isTerm()) {
+//            //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
+//            builder.addSupplementalSemantics((Term) updateSpeakerNames(sem, currentAddressee, speaker));
+//          } else {
+//            log.error("Badly formatted supplemental semantics: " + sem);
+//          }
+//        }
+//        // set remaining utterance info
+//        log.debug("Bindings: " + DIARCSemantics);
+//        builder.setSpeaker(speaker);
+//        builder.setAddressee(currentAddressee);
+//        builder.setTierAssignments(DIARCSemantics.getRight());
+//        builder.setIsInputUtterance(true);
+//        builder.setWords(Arrays.asList(rule.morpheme.split(" ")));
+//
+//        Utterance utterance = builder.build();
+//        log.debug("utterance generated: " + utterance);
+//        log.debug("utterance words: " + utterance.getWordsAsString());
+//
+//        // NOTE: if we want to support multiple parse options, we should process
+//        // the rest of the parse options and add them to the Utterance before returning
+//
+//        // This is where we do chart parsing to collection multiple parses at the end of the utterance
+//        //TODO send partial semantics (e.g. "grab the mug") from "grab the mug on the table"
+//        //
+//        List<Utterance> final_parses = doChartParsing(utterance);
+//        doChartParsingIncrementally(utterance);
+//        doChartParsingWithDP(utterance);
+//
+//        return final_parses.get(0);
+//      }
+//    }
+//    log.warn("tried to send incomplete semantics, nothing sent... " + possibleSemantics);
+//    return null;
+//  }
 
   private void addNodeToChart(Node newNode, int position, Utterance input) {
     log.debug("[addNodeToChart] Adding new node at position {}: {}", position, newNode);
@@ -891,41 +1005,38 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
           if (leftNodes != null && rightNodes != null) {
             for (Node left : leftNodes) {
               for (Node right : rightNodes) {
-                try {
-                  // Attempt to combine nodes
-                  List<NodeEntry> validCombinations = left.combineTest(right);
+                // Attempt to combine nodes
+                Node combinedNode = left.combine(right);
 
-                  // Check if there are valid combinations
-                  if (!validCombinations.isEmpty()) {
-                    //masterNodeEntry.add(validCombinations);
+                // Check if there are valid combinations
+                if (combinedNode != null) {
+                  //masterNodeEntry.add(validCombinations);
 
-                    // Need to catch node combination errors
-                    try {
-                      log.debug("[addNodeToChart] Combining nodes: {} and {}", left, right);
-                      Node combinedNode = new Node(left, right, validCombinations);
-                      // Potential spot to create utterance with node and send down the pipeline
-                      // Make a decision to reset chart to continue parsing
-                      Node combinedNodeCopy = combinedNode.clone();
-
-                      // Create full utterance with completed node
-                      Symbol sp = addressHistory.keySet().iterator().next();
-                      Utterance nodeUtterance = createUtterance(combinedNodeCopy, input.getSpeaker(), input.getAddressee());
-                      completedNodes.put(combinedNodeCopy, nodeUtterance);
-
-                      // Add the combined node to the chart
-                      if (chart[start][end] == null) {
-                        chart[start][end] = new ArrayList<>();
-                      }
-                      chart[start][end].add(combinedNode);
-                      log.debug("[addNodeToChart] Combined node added to chart: {}", combinedNode);
-                    } catch (Exception e) {
-                      log.error("[addNodeToChart] Error while creating combined node: {}", e.getMessage(), e);
-                    }
-                  } else {
-                    log.debug("[addNodeToChart] No valid combinations found for nodes: {} and {}", left, right);
+                  // Need to catch node combination errors
+                  log.debug("[addNodeToChart] Combining nodes: {} and {}", left, right);
+                  // Potential spot to create utterance with node and send down the pipeline
+                  // Make a decision to reset chart to continue parsing
+                  Node combinedNodeCopy = null;
+                  try {
+                    combinedNodeCopy = combinedNode.clone();
+                  } catch (CloneNotSupportedException e) {
+                    log.error("Could not clone combined Node.", e);
+                    continue;
                   }
-                } catch (Exception e) {
-                  log.error("[addNodeToChart] Error during combineTest for nodes: {} and {}", left, right, e);
+
+                  // Create full utterance with completed node
+                  Symbol sp = addressHistory.keySet().iterator().next();
+                  Utterance nodeUtterance = createUtterance(combinedNodeCopy, input.getSpeaker(), input.getAddressee());
+                  completedNodes.put(combinedNodeCopy, nodeUtterance);
+
+                  // Add the combined node to the chart
+                  if (chart[start][end] == null) {
+                    chart[start][end] = new ArrayList<>();
+                  }
+                  chart[start][end].add(combinedNode);
+                  log.debug("[addNodeToChart] Combined node added to chart: {}", combinedNode);
+                } else {
+                  log.debug("[addNodeToChart] No valid combinations found for nodes: {} and {}", left, right);
                 }
               }
             }
@@ -975,7 +1086,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * Retrieves all valid parses from a specific cell in the chart.
    *
    * @param start The start index of the chart cell.
-   * @param end The end index of the chart cell.
+   * @param end   The end index of the chart cell.
    * @return List of Utterance objects representing possible parses.
    */
   public List<Utterance> getParsesFromChartCell(int start, int end, Symbol speaker, Symbol addressee) {
@@ -1005,154 +1116,150 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return parses;
   }
 
-  private List<Utterance> doChartParsing(Utterance utterance) {
-    log.debug("[doChartParsing] utterance: {}", utterance);
+//  private List<Utterance> doChartParsing(Utterance utterance) {
+//    log.debug("[doChartParsing] utterance: {}", utterance);
+//
+//    LinkedList<Utterance> all_parses = new LinkedList();
+//    all_parses.add(utterance);
+//
+//    //////////////////////////////////////////////////////////////////
+//    // TESTING CHART PARSING GIVEN WORDS, RULES, AND EXISTING METHODS
+//    // nodeCollection
+//    // TEST 1: TRY COMBINING
+//    ArrayList<List<NodeEntry>> masterNodeEntry = new ArrayList<>();
+//    List<Node> NodeCollectionCopy = new ArrayList<>();
+//    NodeCollectionCopy.addAll(nodeCollection);
+//    this.chart = new ArrayList[nodeCollection.size()][nodeCollection.size()];
+//    ArrayList<Node> allParses = new ArrayList<>();
+//
+//    // initialize chart
+//    for (int i = 0; i < nodeCollection.size(); i++) {
+//      for (int j = 0; j < nodeCollection.size(); j++) {
+//        chart[i][j] = new ArrayList<>();
+//      }
+//    }
+//
+//    // Populate the initial chart with nodes for individual words
+//    for (int i = 0; i < nodeCollection.size(); i++) {
+//      Node nodeWord = nodeCollection.get(i);
+//      List<NodeEntry> rules = nodeWord.rules;
+//      chart[i][i].add(nodeWord);
+//    }
+//
+//    /////////////////////////////////////////////////////////////////////
+//    // Main parsing algorithm
+//
+//    // Populate the chart based on the sentence and grammarRules
+//    for (int length = 1; length <= nodeCollection.size(); length++) {
+//      for (int start = 0; start <= nodeCollection.size() - length; start++) {
+//        int end = start + length - 1;
+//
+//        // Iterate over possible split points
+//        for (int split = start; split < end; split++) {
+//          // Iterate over nodes in chart[start][split] and chart[split+1][end]
+//          for (Node left : chart[start][split]) {
+//            for (Node right : chart[split + 1][end]) {
+//              // Check for valid combinations
+//              //List<NodeEntry> validcombinationsTest = null;
+//                Node combinedNode = left.combine(right);
+//
+//                if (combinedNode != null) {
+//                  // Create a new combined node
+//                  chart[start][end].add(combinedNode);
+//                  allParses.add(combinedNode);
+//
+//                }
+//            }
+//          }
+//        }
+//      }
+//    }
+//
+//    /////////////////////////////////////////////////////////////////////
+//
+//    for (Node n : nodeCollection) {
+//      System.out.println("NODE AND RULES");
+//      log.info(n.getLabel());
+//      int size = nodeCollection.size();
+//
+//      for (int i = 0; i < size - 1; i++) {
+//        // Get the current node and its next node
+//        Node currentNode = n;
+//        Node nextNode = nodeCollection.get(i + 1);
+//
+//        // Perform the operation on the current node and its next node
+//        NodeEntry combination = null;
+//
+//        try {
+//          List<NodeEntry> validcombinationsTest = currentNode.combine(nextNode);
+//          if (!validcombinationsTest.isEmpty()) {
+//            masterNodeEntry.add(validcombinationsTest);
+//            try {
+//              log.info(currentNode.label);
+//              log.info(nextNode.label);
+//              Node combinedNode = new Node(currentNode, nextNode, validcombinationsTest);
+//              NodeCollectionCopy.add(combinedNode);
+//              log.info("COMBINED");
+//            } catch (Exception e) {
+//              log.error("Error calling validcombinationsTest");
+//            }
+//          }
+//          log.info("validcombinationsTest: {}", validcombinationsTest);
+//        } catch (Exception e) {
+//          log.error("Error calling validcombinationsTest");
+//        }
+//      }
+//
+//      //if (combination != null) {
+//      //  log.trace("valid combinations size" + validCombinations.size());
+//      //}
+//      log.info("MADE IT OUT OF LOOP");
+//
+//    }
+//
+//    // grab --> (the mug)
+//    // ArrayList<NodeEntry> themuglist = masterNodeEntry.get(0);
+//    // Node n1 = new Node(this, partner, validCombinations);
+//    //ArrayList<NodeEntry> validcombinationsTest2 = NodeCollection.get(0).combineTest(themuglist.get(0));
+//
+//    NodeEntry combination = null;
+//
+//    List<Utterance> packetTest = new LinkedList<>();
+//
+//    // get any parse from the chart (holds multiple parses)
+//    int endOfParse = nodeCollection.size() - 1;
+//
+//    // collect all COMPLETED parses that have a single terminal symbol remaining "C"
+//
+//    List<Node> completeParses = new LinkedList<>();
+//
+//    List<Node>[] cellrow = this.chart[0];
+//
+//    List<Node> lastList = cellrow[cellrow.length - 1]; // Accessing the last list in the array
+//    Node lastElement = lastList.get(lastList.size() - 1);
+//
+//    for (Node endParse : lastList) {
+//      Utterance utTest = createUtterance(endParse, utterance.getSpeaker(), utterance.getAddressee());
+//      packetTest.add(utTest);
+//
+//      //List<NodeEntry> rule = endParse.rules;
+//
+//      //if (rule.get(0).semantics.isComplete() && terminalCategories.get(rule.get(0).syntax.type) != null) {
+//      //Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.get(0).semantics.getDIARCSemantics();
+//      //List<Symbol> fullSemantics = DIARCSemantics.getLeft();
+//      //log.debug("full semantics: " + fullSemantics);
+//
+//      //add to final list of parses
+//      //packetTest.add(fullSemantics);
+//    }
+//
+//    return packetTest;
+//
+//    // END OF CHART PARSING
+//    //////////////////////////////////////////////////////////////////
+//
+//  }
 
-    LinkedList<Utterance> all_parses = new LinkedList();
-    all_parses.add(utterance);
-
-    //////////////////////////////////////////////////////////////////
-    // TESTING CHART PARSING GIVEN WORDS, RULES, AND EXISTING METHODS
-    // nodeCollection
-    // TEST 1: TRY COMBINING
-    ArrayList<List<NodeEntry>> masterNodeEntry = new ArrayList<>();
-    List<Node> NodeCollectionCopy = new ArrayList<>();
-    NodeCollectionCopy.addAll(nodeCollection);
-    this.chart = new ArrayList[nodeCollection.size()][nodeCollection.size()];
-    ArrayList<Node> allParses = new ArrayList<>();
-
-    // initialize chart
-    for (int i = 0; i < nodeCollection.size(); i++) {
-      for (int j = 0; j < nodeCollection.size(); j++) {
-        chart[i][j] = new ArrayList<>();
-      }
-    }
-
-    // Populate the initial chart with nodes for individual words
-    for (int i = 0; i < nodeCollection.size(); i++) {
-      Node nodeWord = nodeCollection.get(i);
-      List<NodeEntry> rules = nodeWord.rules;
-      chart[i][i].add(nodeWord);
-    }
-
-    /////////////////////////////////////////////////////////////////////
-    // Main parsing algorithm
-
-    // Populate the chart based on the sentence and grammarRules
-    for (int length = 1; length <= nodeCollection.size(); length++) {
-      for (int start = 0; start <= nodeCollection.size() - length; start++) {
-        int end = start + length - 1;
-
-        // Iterate over possible split points
-        for (int split = start; split < end; split++) {
-          // Iterate over nodes in chart[start][split] and chart[split+1][end]
-          for (Node left : chart[start][split]) {
-            for (Node right : chart[split + 1][end]) {
-              // Check for valid combinations
-              //List<NodeEntry> validcombinationsTest = null;
-              try {
-                List<NodeEntry> validcombinationsTest = left.combineTest(right);
-
-                if (!validcombinationsTest.isEmpty()) {
-                  // Create a new combined node
-                  Node combinedNode = new Node(left, right, validcombinationsTest);
-                  chart[start][end].add(combinedNode);
-                  allParses.add(combinedNode);
-
-                }
-              } catch (Exception e) {
-                log.error("Error calling validcombinationsTest");
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /////////////////////////////////////////////////////////////////////
-
-    for (Node n : nodeCollection) {
-      System.out.println("NODE AND RULES");
-      log.info(n.getLabel());
-      int size = nodeCollection.size();
-
-      for (int i = 0; i < size - 1; i++) {
-        // Get the current node and its next node
-        Node currentNode = n;
-        Node nextNode = nodeCollection.get(i + 1);
-
-        // Perform the operation on the current node and its next node
-        NodeEntry combination = null;
-
-        try {
-          List<NodeEntry> validcombinationsTest = currentNode.combineTest(nextNode);
-          if (!validcombinationsTest.isEmpty()) {
-            masterNodeEntry.add(validcombinationsTest);
-            try {
-              log.info(currentNode.label);
-              log.info(nextNode.label);
-              Node combinedNode = new Node(currentNode, nextNode, validcombinationsTest);
-              NodeCollectionCopy.add(combinedNode);
-              log.info("COMBINED");
-            } catch (Exception e) {
-              log.error("Error calling validcombinationsTest");
-            }
-          }
-          log.info("validcombinationsTest: {}", validcombinationsTest);
-        } catch (Exception e) {
-          log.error("Error calling validcombinationsTest");
-        }
-      }
-
-      //if (combination != null) {
-      //  log.trace("valid combinations size" + validCombinations.size());
-      //}
-      log.info("MADE IT OUT OF LOOP");
-
-    }
-
-    // grab --> (the mug)
-    // ArrayList<NodeEntry> themuglist = masterNodeEntry.get(0);
-    // Node n1 = new Node(this, partner, validCombinations);
-    //ArrayList<NodeEntry> validcombinationsTest2 = NodeCollection.get(0).combineTest(themuglist.get(0));
-
-    NodeEntry combination = null;
-
-    List<Utterance> packetTest = new LinkedList<>();
-
-    // get any parse from the chart (holds multiple parses)
-    int endOfParse = nodeCollection.size() - 1;
-
-    // collect all COMPLETED parses that have a single terminal symbol remaining "C"
-
-    List<Node> completeParses = new LinkedList<>();
-
-    List<Node>[] cellrow = this.chart[0];
-
-    List<Node> lastList = cellrow[cellrow.length - 1]; // Accessing the last list in the array
-    Node lastElement = lastList.get(lastList.size() - 1);
-
-    for (Node endParse : lastList) {
-      Utterance utTest = createUtterance(endParse, utterance.getSpeaker(), utterance.getAddressee());
-      packetTest.add(utTest);
-
-      //List<NodeEntry> rule = endParse.rules;
-
-      //if (rule.get(0).semantics.isComplete() && terminalCategories.get(rule.get(0).syntax.type) != null) {
-      //Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.get(0).semantics.getDIARCSemantics();
-      //List<Symbol> fullSemantics = DIARCSemantics.getLeft();
-      //log.debug("full semantics: " + fullSemantics);
-
-      //add to final list of parses
-      //packetTest.add(fullSemantics);
-    }
-
-    return packetTest;
-
-    // END OF CHART PARSING
-    //////////////////////////////////////////////////////////////////
-
-  }
   /**
    * Used in parser test to toggle updateAddressHistory
    *

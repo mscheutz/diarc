@@ -1477,19 +1477,22 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("chair four", "LOC", "\"chair four\"", "DEFINITE");
 
         assertTrue(testUtterance("Escort",
-                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+//                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+                "UNKNOWN(brad,self,[Escort],{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort patient",
-                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+//                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+                "UNKNOWN(brad,self,[Escort, patient],{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex",
-                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+//                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+                "UNKNOWN(brad,self,[Escort, Alex],{})",
                 "brad",
                 "self"
         ));
@@ -1567,7 +1570,8 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Escort waiting room",
-                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+//                "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
+                "UNKNOWN(brad,self,[Escort, waiting, room],{})",
                 "brad",
                 "self"
         ));

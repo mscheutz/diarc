@@ -10,6 +10,7 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.util.*;
 import java.io.Serializable;
+import java.util.stream.Collectors;
 
 import edu.tufts.hrilab.fol.Term;
 import org.slf4j.Logger;
@@ -242,12 +243,14 @@ public final class Utterance implements Serializable {
     }
 
     public Builder setWords(List<String> words) {
-      this.words = new ArrayList<>(words);
+      this.words = words.stream().filter(word -> !word.isBlank()).collect(Collectors.toList());
       return this;
     }
 
     public Builder addWord(String word) {
-      this.words.add(word);
+      if (!word.isBlank()) {
+        this.words.add(word);
+      }
       return this;
     }
 
@@ -474,10 +477,13 @@ public final class Utterance implements Serializable {
 
   /**
    * Set words of this Utterance. The input String will be split on spaces.
+   * Empty or whitespace-only words will be ignored.
    * @param words
    */
   public void setWords(String words) {
-    this.words = new ArrayList<>(Arrays.asList(words.trim().split(" ")));
+    this.words = Arrays.stream(words.trim().split(" "))
+            .filter(word -> !word.isBlank())
+            .toList();
   }
 
   /**
@@ -485,7 +491,7 @@ public final class Utterance implements Serializable {
    * @param words
    */
   public void setWords(List<String> words) {
-    this.words = new ArrayList<>(words);
+    this.words = words.stream().filter(word -> !word.isBlank()).collect(Collectors.toList());
   }
 
   /**

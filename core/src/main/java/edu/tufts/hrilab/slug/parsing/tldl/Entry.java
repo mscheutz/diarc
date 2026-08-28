@@ -495,7 +495,7 @@ class SemanticRule implements Cloneable {
           type=body.substring(i+1);
         }
         //make new term and free variable if its a new VAR
-        Variable newThing = Parse.getNextVar(type);
+        Variable newThing = VariableFactory.getInstance().getNextVariable(type);
         Term newSemBinding = new Term(functorName, newThing);
         log.trace("new var and bindings created: " + newThing + " " + newSemBinding);
         semBindings.add(newThing);
@@ -515,7 +515,7 @@ class SemanticRule implements Cloneable {
           functorName=body.substring(0, i);
           type=body.substring(i+1);
         }
-        Variable newVar = Parse.getNextVar(type);
+        Variable newVar = VariableFactory.getInstance().getNextVariable(type);
         Term newSemBinding = new Term(functorName, newVar);
 //        Term newSemBinding = new Term(body, newVar);
         semBindings.add(newVar);

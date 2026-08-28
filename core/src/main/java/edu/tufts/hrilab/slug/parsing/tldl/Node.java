@@ -48,15 +48,25 @@ public class Node implements Cloneable {
         try {
           if (current != null) currentClone = current.clone();
           if (next != null) nextClone = next.clone();
-        } catch (Exception e) {
+        } catch (CloneNotSupportedException e) {
           log.error("Exception in cloning during combine: {}", e.getMessage());
         }
 
-        NodeEntry combination = null;
-        if (currentClone != null) {
-          combination = currentClone.combine(nextClone);
+        if (currentClone == null || nextClone == null) continue;
+
+        // directAddress checks: directAddress can't combine from both sides
+        // i.e., direct address name can only appear at the beginning or end of utterance, not the middle
+        if (currentClone.getSemantics().body.startsWith("directAddress") && this.lAncestor != null && this.rAncestor != null) {
+          continue;
         }
-        if (combination != null) validCombinations.add(combination);
+        if (nextClone.getSemantics().body.startsWith("directAddress") && partner.lAncestor != null && partner.rAncestor != null) {
+          continue;
+        }
+
+        NodeEntry combination = currentClone.combine(nextClone);
+        if (combination != null) {
+          validCombinations.add(combination);
+        }
       }
     }
 
@@ -105,29 +115,29 @@ public class Node implements Cloneable {
   }
 
   // Check possible combinations for test purposes
-  public List<NodeEntry> combineTest(Node partner) {
-    List<NodeEntry> validCombinations = new ArrayList<>();
-    for (NodeEntry current : this.rules) {
-      for (NodeEntry next : partner.rules) {
-        NodeEntry currentClone = null;
-        NodeEntry nextClone = null;
-        try {
-          currentClone = (current != null) ? current.clone() : null;
-          nextClone = (next != null) ? next.clone() : null;
-        } catch (Exception e) {
-          log.error("Exception in cloning during combine test: {}", e.getMessage());
-        }
-
-        NodeEntry combination = null;
-        if (currentClone != null) {
-          combination = currentClone.combine(nextClone);
-        }
-        if (combination != null) validCombinations.add(combination);
-      }
-    }
-
-    return validCombinations.isEmpty() ? null : validCombinations;
-  }
+//  public List<NodeEntry> combineTest(Node partner) {
+//    List<NodeEntry> validCombinations = new ArrayList<>();
+//    for (NodeEntry current : this.rules) {
+//      for (NodeEntry next : partner.rules) {
+//        NodeEntry currentClone = null;
+//        NodeEntry nextClone = null;
+//        try {
+//          currentClone = (current != null) ? current.clone() : null;
+//          nextClone = (next != null) ? next.clone() : null;
+//        } catch (Exception e) {
+//          log.error("Exception in cloning during combine test: {}", e.getMessage());
+//        }
+//
+//        NodeEntry combination = null;
+//        if (currentClone != null) {
+//          combination = currentClone.combine(nextClone);
+//        }
+//        if (combination != null) validCombinations.add(combination);
+//      }
+//    }
+//
+//    return validCombinations.isEmpty() ? null : validCombinations;
+//  }
 
   // Getters
   public String getLabel() {
