@@ -284,7 +284,10 @@ public class GoalViewerAdapter extends GuiAdapter {
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
       goalJson.addProperty("priority", info.priority);
       goalJson.addProperty("id", info.gid);
-      if (info.schedulingInfo != null) {
+      // a finished schedule still carries schedulingInfo in getPastGoals, so gate on a live (non-
+      // terminated) status: a scheduled goal is ACTIVE while it exists in the scheduler and only
+      // terminates on cancel/end. this also updates live -- the status change fires on schedule add
+      if (info.schedulingInfo != null && !info.status.isTerminated()) {
         goalJson.addProperty("scheduled", true);
         ScheduleInfo scheduleInfo = info.schedulingInfo;
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");

@@ -70,11 +70,6 @@ public class CiscoCodecAPI {
     }
   }
 
-  public boolean switchToTelepresence() {
-    log.info("[switchToTelepresence] Switching to PC 1");
-    return startPresentation(CONNECTOR_ID_TELEPRESENCE);
-  }
-
   public boolean switchToTRACS() {
     log.info("[switchToTRACS] Switching to PC 2");
     return startPresentation(CONNECTOR_ID_TRACS);
@@ -88,9 +83,18 @@ public class CiscoCodecAPI {
     return sendCommand(xmlCommand);
   }
 
-  public boolean stopPresentation() {
-    log.info("[stopPresentation] Stopping presentation");
-    return sendCommand("<Command><Presentation><Stop></Stop></Presentation></Command>");
+  //scoped to one source so a share we did not start is never touched. verified on
+  //ce11.40.1.1: stops only that source's share, no-ops cleanly when nothing is
+  //presenting, and leaves a different source's share up. never send an unscoped Stop.
+  //Start takes ConnectorId and Stop takes PresentationSource by Cisco's API; both are
+  //the video input number.
+  public boolean stopPresentation(int connectorId) {
+    log.info("[stopPresentation] Stopping presentation from connector {}", connectorId);
+    String xmlCommand = String.format(
+            "<Command><Presentation><Stop><PresentationSource>%d</PresentationSource></Stop></Presentation></Command>",
+            connectorId
+    );
+    return sendCommand(xmlCommand);
   }
 
   public boolean isPresentationActive() {
@@ -105,13 +109,22 @@ public class CiscoCodecAPI {
     }
     log.debug("[getActiveConnectorId] Status: {}", status);
 
-    if (status.contains("<ghost>True</ghost>") || !status.contains("<Source>")) {
+    if (status.contains("<ghost>True</ghost>")) {
       return -1;
     }
 
-    int sourceStart = status.indexOf("<Source>");
-    int sourceEnd = status.indexOf("</Source>");
-    if (sourceStart != -1 && sourceEnd != -1) {
+    //a LocalInstance element exists exactly while a local presentation is up: verified on
+    //ce11.40.1.1 that Presentation Stop removes it,
+    //Start recreates it, and Mode stays Off throughout for LocalOnly shares -- so Mode
+    //says nothing about local state. scope the Source read to the instance rather than
+    //taking the first Source anywhere in the document.
+    int instanceStart = status.indexOf("<LocalInstance");
+    if (instanceStart == -1) {
+      return -1;
+    }
+    int sourceStart = status.indexOf("<Source>", instanceStart);
+    int sourceEnd = status.indexOf("</Source>", instanceStart);
+    if (sourceStart != -1 && sourceEnd != -1 && sourceStart < sourceEnd) {
       try {
         return Integer.parseInt(status.substring(sourceStart + 8, sourceEnd).trim());
       } catch (NumberFormatException e) {
@@ -140,6 +153,14 @@ public class CiscoCodecAPI {
     return getActiveConnectorId() == CONNECTOR_ID_TRACS;
   }
 
+  public boolean isInCall() {
+    String status = sendGetRequest("/getxml?location=/Status/Call");
+    if (status == null) {
+      return false;
+    }
+    return status.contains("<Call item");
+  }
+
   private boolean sendCommand(String xmlCommand) {
     HttpsURLConnection connection = null;
     try {
@@ -159,15 +180,21 @@ public class CiscoCodecAPI {
 
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
+        StringBuilder response = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-          StringBuilder response = new StringBuilder();
           String line;
           while ((line = reader.readLine()) != null) {
             response.append(line);
           }
-          log.debug("[sendCommand] Response: {}", response);
         }
+        //the codec answers 200 with status="Error" in the body when it rejects a
+        //command; the http code alone says nothing about acceptance
+        if (response.toString().contains("status=\"Error\"")) {
+          log.error("[sendCommand] codec rejected {}: {}", xmlCommand, response);
+          return false;
+        }
+        log.debug("[sendCommand] Response: {}", response);
         return true;
       } else {
         log.error("[sendCommand] HTTP {}: {}", responseCode, xmlCommand);

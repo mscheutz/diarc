@@ -237,8 +237,8 @@ import edu.tufts.hrilab.action.goal.Goal;
         op:add(!responseFormList,!responseForm);
         !responseForm = op:createPredicate("amount(X)");
         op:add(!responseFormList,!responseForm);
-        !bindings = act:askQuestionFromString("I have !numPredefined predefined actions. Would you like me to start listing them out?", !responseFormList);
-        if (op:invokeMethod(!bindings,"isEmpty")) {
+        !bindings = act:askQuestionFromString("I have !numPredefined predefined actions. Would you like me to start listing them out?", !responseFormList, 1, 120);
+        if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
         !confirmation = op:get(!bindings, !x);
@@ -246,8 +246,8 @@ import edu.tufts.hrilab.action.goal.Goal;
             act:generateResponseFromString("Okay, not listing any predefined actions");
         } else {
             if (op:equalsValue(!confirmation, yes)) {
-                !bindings = act:askQuestionFromString("How many should I list at a time?", amount(X));
-                if (op:invokeMethod(!bindings,"isEmpty")) {
+                !bindings = act:askQuestionFromString("How many should I list at a time?", amount(X), 1, 120);
+                if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
                     exit(FAIL,not(wasAnswered(myQuestion)));
                 }
             }
@@ -260,8 +260,8 @@ import edu.tufts.hrilab.action.goal.Goal;
             if (op:gt(!numToReport,0)) {
                 foreach (!actionName : !instructableActions) {
                     if (op:equals(!numReported,!numToReport)) {
-                        !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X));
-                        if (op:invokeMethod(!bindings,"isEmpty")) {
+                        !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X), 1, 120);
+                        if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
                             exit(FAIL,not(wasAnswered(myQuestion)));
                         }
                         !confirmation = op:get(!bindings, !x);
@@ -335,8 +335,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     Variable !x = "X";
     Boolean !validResponse = false;
 
-    !bindings = act:askQuestionFromString("Would you like me to report all of the actions I have been taught, my predefined actions, or both?", actionType(X));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
+    !bindings = act:askQuestionFromString("Would you like me to report all of the actions I have been taught, my predefined actions, or both?", actionType(X), 1, 120);
+    if (op:isNull(!bindings) || op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
 

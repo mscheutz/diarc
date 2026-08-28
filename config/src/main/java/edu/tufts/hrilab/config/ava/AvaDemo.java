@@ -88,6 +88,21 @@ public class AvaDemo extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
+    //a component that wedges during startup (hung awt call against a dead display) leaves
+    //a jvm that never exits, so systemd's Restart=always never fires. halt rather than
+    //exit: shutdown hooks can block on the same wedge. healthy startup takes ~1 minute.
+    Thread startupWatchdog = new Thread(() -> {
+      try {
+        Thread.sleep(5 * 60 * 1000);
+      } catch (InterruptedException e) {
+        return;
+      }
+      log.error("startup did not complete within 5 minutes, halting for a restart");
+      Runtime.getRuntime().halt(1);
+    }, "startup-watchdog");
+    startupWatchdog.setDaemon(true);
+    startupWatchdog.start();
+
     //EW: Adding noConfirmation, but still setting needsValidation in AvaLLMServiceProvider so it will perform validation.
     //  Doing to add the possibility of generating failure responses from the Ava service provider without affecting other domains
     //  (to prevent nonsensical tldl failure responses from being used)
@@ -202,6 +217,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.ava.gui.AvaGuiProvider.class);
     createInstance(edu.tufts.hrilab.ava.gui.AvaMediaProvider.class);
 
+    startupWatchdog.interrupt();
     log.info("Finished Ava Demo Config");
   }
 
