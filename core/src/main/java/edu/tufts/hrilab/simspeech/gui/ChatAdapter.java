@@ -35,11 +35,6 @@ public class ChatAdapter extends GuiAdapter {
 
   private Set<String> diarcAgents = new HashSet<>();
 
-  // hide the robot's self-directed dialogue from the chat view for the ava front-end config only.
-  // other configs want to see self, so this keys off the presence of the front-end config component.
-  // TODO: interim -- replace with a proper per-config chat display toggle.
-  private boolean hideSelf = false;
-
 
   //==========================================================================
   // Constructor
@@ -90,9 +85,17 @@ public class ChatAdapter extends GuiAdapter {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
       //Set<String> diarcAgents = new HashSet<>();
+      // hide the ability to address "self" directly from the dashboard on the ava configs for now.
+      // TODO: this does not really belong in the adapter -- it is a dashboard display choice and
+      //  should move to a proper per-config toggle the webui consumes once that exists. other
+      //  configs still want self, so for now this keys off the presence of the front-end config.
+      boolean hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
       diarcAgents.clear();
-      //agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
-      agents.forEach(agent -> diarcAgents.add(agent.getName()));
+      agents.forEach(agent -> {
+        if (!hideSelf || !agent.getName().equals("self")) {
+          diarcAgents.add(agent.getName());
+        }
+      });
       sendDiarcAgents(diarcAgents);
       log.debug("DIARC agents received");
     } catch (TRADEException e) {
@@ -150,7 +153,6 @@ public class ChatAdapter extends GuiAdapter {
             new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class,Boolean.class)
     );
     service.call(void.class, sendUtteranceService);
-    hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
     log.debug("Dialogue registered");
   }
 
@@ -166,9 +168,6 @@ public class ChatAdapter extends GuiAdapter {
     }
     String sender = utterance.getSpeaker().toUntypedString();
     String recipient = utterance.getAddressee().toUntypedString();
-    if (hideSelf && ("self".equals(sender) || "self".equals(recipient))) {
-      return;
-    }
     // send to client
     try {
       JsonObject json = new JsonObject();
