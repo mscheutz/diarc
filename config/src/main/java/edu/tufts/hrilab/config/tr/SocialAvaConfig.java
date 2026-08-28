@@ -151,6 +151,21 @@ public class SocialAvaConfig extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
+    //a component that wedges during startup (hung awt call against a dead display) leaves
+    //a jvm that never exits, so systemd's Restart=always never fires. halt rather than
+    //exit: shutdown hooks can block on the same wedge. healthy startup takes ~1 minute.
+    Thread startupWatchdog = new Thread(() -> {
+      try {
+        Thread.sleep(5 * 60 * 1000);
+      } catch (InterruptedException e) {
+        return;
+      }
+      log.error("startup did not complete within 5 minutes, halting for a restart");
+      Runtime.getRuntime().halt(1);
+    }, "startup-watchdog");
+    startupWatchdog.setDaemon(true);
+    startupWatchdog.start();
+
     String parserArgs;
     if (llmOnly) {
       parserArgs = "-llm";
@@ -324,6 +339,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.ava.gui.AvaGuiProvider.class);
     createInstance(edu.tufts.hrilab.ava.gui.AvaMediaProvider.class);
 
+    startupWatchdog.interrupt();
     log.info("Finished Ava Demo Config");
   }
 
