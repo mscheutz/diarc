@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 //as well as wrappers for the calls to the apply (and compose if it existed) functions of the
 //underlying syntactic and semantic rule classes.
 
-public class NodeEntry extends Entry implements Cloneable  {
+public class NodeEntry extends Entry implements Cloneable {
   private static Logger log = LoggerFactory.getLogger(NodeEntry.class);
 
   private NodeEntry functionAncestor;
@@ -22,14 +22,14 @@ public class NodeEntry extends Entry implements Cloneable  {
   public NodeEntry clone() throws CloneNotSupportedException {
     NodeEntry clonedNodeEntry = (NodeEntry) super.clone();
     //TODO:brad should these be cloned? do we want separate tree histories?
-    if(this.functionAncestor == null){
-      clonedNodeEntry.functionAncestor=null;
-    }else {
+    if (this.functionAncestor == null) {
+      clonedNodeEntry.functionAncestor = null;
+    } else {
       clonedNodeEntry.functionAncestor = this.functionAncestor.clone();
     }
-    if(this.argumentAncestor == null){
-      clonedNodeEntry.argumentAncestor=null;
-    }else {
+    if (this.argumentAncestor == null) {
+      clonedNodeEntry.argumentAncestor = null;
+    } else {
       clonedNodeEntry.argumentAncestor = this.argumentAncestor.clone();
     }
     return clonedNodeEntry;
@@ -39,22 +39,22 @@ public class NodeEntry extends Entry implements Cloneable  {
     //TODO:brad: should these be clones?
     morpheme = m.morpheme;
     try {
-      if(m.syntax == null) {
+      if (m.syntax == null) {
         syntax = null;
-      }else{
-          syntax = m.syntax.clone();
+      } else {
+        syntax = m.syntax.clone();
       }
-    }catch (Exception e){
-      log.error("Exception cloning syntax." +e);
+    } catch (Exception e) {
+      log.error("Exception cloning syntax." + e);
     }
-    try{
-      if(m.semantics == null){
-        semantics=null;
-      }else {
+    try {
+      if (m.semantics == null) {
+        semantics = null;
+      } else {
         semantics = m.semantics.clone();
       }
-    }catch (Exception e){
-      log.error("Exception cloning semantics." +e);
+    } catch (Exception e) {
+      log.error("Exception cloning semantics." + e);
     }
     functionAncestor = fa;
     argumentAncestor = aa;
@@ -63,14 +63,14 @@ public class NodeEntry extends Entry implements Cloneable  {
   public NodeEntry combine(NodeEntry adjacent) {
     Entry combined = new Entry();
 
-    log.debug("in combine current: " + morpheme +" "+syntax+ " adjacent: " + adjacent.morpheme+" "+adjacent.syntax);
+    log.debug("in combine current: " + morpheme + " " + syntax + " adjacent: " + adjacent.morpheme + " " + adjacent.syntax);
 
     //check for valid forward application
     if (syntax != null && adjacent.syntax != null && syntax.forwardApply) {
       log.trace("trying forward apply");
       //build new node from application
       combined.syntax = syntax.apply(adjacent.syntax);
-      if(combined.syntax == null){
+      if (combined.syntax == null) {
         log.trace("syntax is null");
       }
 
@@ -80,10 +80,10 @@ public class NodeEntry extends Entry implements Cloneable  {
       if (adjacent.semantics == null) {
         log.trace("adjacent semantics is null");
       }
-      combined.semantics= semantics.apply(adjacent.semantics);
+      combined.semantics = semantics.apply(adjacent.semantics);
       combined.morpheme = morpheme + " " + adjacent.morpheme;
 
-      if(combined.syntax != null && combined.semantics != null) {
+      if (combined.syntax != null && combined.semantics != null) {
         log.trace("new syntax: " + combined.syntax.type);
         log.trace("new semantics: " + combined.semantics);
         log.trace("new morpheme " + combined.morpheme);
@@ -104,16 +104,18 @@ public class NodeEntry extends Entry implements Cloneable  {
 //    }
     //check for valid backward application
     //todo:brad:made this not else, hopefully it doesn't break too much...
-    if (syntax !=null && adjacent.syntax != null && adjacent.syntax.backwardApply) {
+    if (syntax != null && adjacent.syntax != null && adjacent.syntax.backwardApply) {
       log.trace("trying backward apply");
       //build new node from application
       combined.syntax = adjacent.syntax.apply(syntax);
-      if (combined.syntax== null ) return null;
+      if (combined.syntax == null) {
+        return null;
+      }
       log.trace("new syntax: " + combined.syntax.type + " " + combined.syntax.forwardApply);
-      combined.semantics= adjacent.semantics.apply(semantics);
+      combined.semantics = adjacent.semantics.apply(semantics);
       combined.morpheme = morpheme + " " + adjacent.morpheme;
       //log.info("new morpheme: " + combined.morpheme);
-      if(combined.syntax != null && combined.semantics != null) {
+      if (combined.syntax != null && combined.semantics != null) {
         return new NodeEntry(combined, adjacent, this);
       }
     }
@@ -129,8 +131,8 @@ public class NodeEntry extends Entry implements Cloneable  {
 //      return combined;
 //    }
 //    else {
-      log.debug("No valid entry combinations found, returning NULL");
-      return null;
+    log.debug("No valid entry combinations found, returning NULL");
+    return null;
 //    }
 
   }

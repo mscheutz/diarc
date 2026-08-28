@@ -29,8 +29,8 @@ class SyntacticRule implements Cloneable {
 
   private SyntacticRule returnType;
   SyntacticRule argType;
-//  boolean isWildcard=false;
-  boolean isLiteral=false;
+  //  boolean isWildcard=false;
+  boolean isLiteral = false;
   //number of apply statements in the rule and it's return types
   int depth;
 
@@ -41,6 +41,7 @@ class SyntacticRule implements Cloneable {
   public SyntacticRule getReturnType() {
     return returnType;
   }
+
   /**
    * Construct new instance from string form specified in dictionary
    */
@@ -51,9 +52,9 @@ class SyntacticRule implements Cloneable {
     if (parts.size() == 1) {
       returnType = null;
       depth = 0;
-      if(type.equals("LIT*")){
-        isLiteral=true;
-        type=type.substring(0,type.length()-1);
+      if (type.equals("LIT*")) {
+        isLiteral = true;
+        type = type.substring(0, type.length() - 1);
       }
 //      else if (type.endsWith("*")) {
 ////       isWildcard=true;
@@ -82,8 +83,11 @@ class SyntacticRule implements Cloneable {
     for (int i = 0; i < definition.length(); i++) {
       char c = definition.charAt(i);
 
-      if (c == '(') parenDepth++;
-      else if (c == ')') parenDepth--;
+      if (c == '(') {
+        parenDepth++;
+      } else if (c == ')') {
+        parenDepth--;
+      }
 
       if (parenDepth == 0 && (c == '/' || c == '\\')) {
         String LHS = definition.substring(0, i).trim();
@@ -103,7 +107,9 @@ class SyntacticRule implements Cloneable {
       }
     }
     //if no apply statement then just add
-    if (pieces.size() == 0) pieces.add(definition);
+    if (pieces.size() == 0) {
+      pieces.add(definition);
+    }
     return pieces;
   }
 
@@ -132,18 +138,26 @@ class SyntacticRule implements Cloneable {
       backwardApply = true;
       returnType = new SyntacticRule(ret, preceding, following);
       depth = returnType.depth + 1;
-      if (returnType.argType != null) type += "(";
+      if (returnType.argType != null) {
+        type += "(";
+      }
       type += returnType.type;
-      if (returnType.argType != null) type += ")";
+      if (returnType.argType != null) {
+        type += ")";
+      }
       type += "\\" + argType.type;
     } else if (!following.isEmpty()) {
       argType = following.remove(following.size() - 1);
       forwardApply = true;
       returnType = new SyntacticRule(ret, preceding, following);
       depth = returnType.depth + 1;
-      if (returnType.argType != null) type += "(";
+      if (returnType.argType != null) {
+        type += "(";
+      }
       type += returnType.type;
-      if (returnType.argType != null) type += ")";
+      if (returnType.argType != null) {
+        type += ")";
+      }
       type += "/" + argType.type;
     } else {
       returnType = ret;
@@ -157,15 +171,15 @@ class SyntacticRule implements Cloneable {
   public SyntacticRule clone() throws CloneNotSupportedException {
     SyntacticRule clonedSyntacticRule = (SyntacticRule) super.clone();
     clonedSyntacticRule.type = this.type;
-    if(this.returnType == null){
-      clonedSyntacticRule.returnType =  null;
-    }else{
-      clonedSyntacticRule.returnType =  this.returnType.clone();
+    if (this.returnType == null) {
+      clonedSyntacticRule.returnType = null;
+    } else {
+      clonedSyntacticRule.returnType = this.returnType.clone();
     }
-    if(this.argType == null) {
+    if (this.argType == null) {
       clonedSyntacticRule.argType = null;
-    } else{
-        clonedSyntacticRule.argType =  this.argType.clone();
+    } else {
+      clonedSyntacticRule.argType = this.argType.clone();
     }
     clonedSyntacticRule.depth = this.depth;
 //    clonedSyntacticRule.isWildcard= this.isWildcard;
@@ -247,9 +261,9 @@ class SemanticRule implements Cloneable {
     clonedSemanticRule.argsSet = this.argsSet;
     clonedSemanticRule.args = new TreeMap<>();
     for (Map.Entry<String, SemanticRule> e : this.args.entrySet()) {
-      if(e.getValue() == null){
+      if (e.getValue() == null) {
         clonedSemanticRule.args.put(e.getKey(), null);
-      }else{
+      } else {
         clonedSemanticRule.args.put(e.getKey(), e.getValue().clone());
       }
     }
@@ -264,18 +278,19 @@ class SemanticRule implements Cloneable {
     String[] args = body.split("\\,");
     return args.length;
   }
+
   //Construct new semantic rule from string from in .dict file
   SemanticRule(String definition) {
     log.trace("new semantic rule: " + definition);
-    this.definition=definition.trim();
+    this.definition = definition.trim();
     args = new TreeMap<>();
     unsetArgs = new LinkedList<>();
 
     //the 2 here allows for there to be .'s in the body of the wildcard
-    String[] pieces = definition.split("\\.",2);
+    String[] pieces = definition.split("\\.", 2);
 
 
-    if (definition.startsWith("\"") && definition.endsWith("\"") ||  pieces.length == 1) {
+    if (definition.startsWith("\"") && definition.endsWith("\"") || pieces.length == 1) {
       body = definition.trim();
       argsSet = true;
     } else if (pieces.length == 2) {
@@ -290,7 +305,7 @@ class SemanticRule implements Cloneable {
 
           String uniqueArg = "$" + curArg + UUID.randomUUID();
           unsetArgs.add(uniqueArg);
-          log.trace("adding arg: "+uniqueArg);
+          log.trace("adding arg: " + uniqueArg);
           body = body.replaceAll("\\$" + curArg, Matcher.quoteReplacement(uniqueArg));
           log.trace("updated body: " + body);
         }
@@ -318,36 +333,36 @@ class SemanticRule implements Cloneable {
   //TODO:brad: should this be public?
   public static SemanticRule generateLiteralSemanticRule(String body, String semanticType) {
     SemanticRule s = new SemanticRule();
-    body=body.trim();
+    body = body.trim();
 
     //TODO:brad: what if we put everything in quotes? would that affect anything?
     Pattern alphaNumericPattern = Pattern.compile("\\w+");
     Matcher matcher = alphaNumericPattern.matcher(body);
     if (!matcher.matches()) {
-      body="\"" + body + "\"";
+      body = "\"" + body + "\"";
     }
-   if(!semanticType.isEmpty()) {
-     s.body = body + ":" + semanticType;
-   }else{
-     s.body=body;
-   }
+    if (!semanticType.isEmpty()) {
+      s.body = body + ":" + semanticType;
+    } else {
+      s.body = body;
+    }
     return s;
   }
 
-  SemanticRule bindWildcard(String wildcardValue){
+  SemanticRule bindWildcard(String wildcardValue) {
 
     Pattern alphaNumericPattern = Pattern.compile("\\w+");
     Matcher matcher = alphaNumericPattern.matcher(wildcardValue);
     if (!matcher.matches()) {
-      wildcardValue="\"" + wildcardValue + "\"";
+      wildcardValue = "\"" + wildcardValue + "\"";
     }
 
-    String newDefinition= this.definition;
-    if(newDefinition.contains("*")){
-      newDefinition=newDefinition.replace("*",wildcardValue);
+    String newDefinition = this.definition;
+    if (newDefinition.contains("*")) {
+      newDefinition = newDefinition.replace("*", wildcardValue);
       return new SemanticRule(newDefinition);
-    }else{
-      log.error("trying to bind a wildcard to a semantic rule that doesn't have one? definition:"+definition+" wildcard: "+wildcardValue);
+    } else {
+      log.error("trying to bind a wildcard to a semantic rule that doesn't have one? definition:" + definition + " wildcard: " + wildcardValue);
       //TODO:brad: should this be null instead?
       return this;
     }
@@ -367,7 +382,9 @@ class SemanticRule implements Cloneable {
       String varName = "$" + (char) key + this.hashCode();
       unsetArgs.add(varName);
     }
-    if (airty > 26) log.warn("more arguments than there are characters, weird stuff might happen");
+    if (airty > 26) {
+      log.warn("more arguments than there are characters, weird stuff might happen");
+    }
     for (String arg : unsetArgs) {
       body += arg + ",";
     }
@@ -408,7 +425,7 @@ class SemanticRule implements Cloneable {
     } catch (Exception e) {
       log.error("exception cloning in apply.", e);
     }
-    if ( result ==null || argClone == null) {
+    if (result == null || argClone == null) {
       log.error("semantic rule couldn't be cloned, returning null");
     } else if (result.unsetArgs.isEmpty()) {
       // log.error("no remaining args cannot apply: " + argClone.getSemantics() + " to: " + result.getSemantics());
@@ -429,24 +446,24 @@ class SemanticRule implements Cloneable {
 
   //helper method to update argument values in lambda expressions
   private void updateArgs(String argName, SemanticRule rule) {
-    if (!updateArgsInChildren(this,argName,rule)) {
+    if (!updateArgsInChildren(this, argName, rule)) {
       args.put(argName, rule);
     }
   }
 
-  private boolean updateArgsInChildren(SemanticRule parent, String argName, SemanticRule rule){
-    log.trace("[updateArgsHelper] "+argName+", "+rule);
-    boolean found= false;
-    for(Map.Entry<String,SemanticRule> arg: parent.args.entrySet()){
-      SemanticRule argRule= arg.getValue();
-      if(!argRule.args.isEmpty()){
-        found = found || updateArgsInChildren(argRule,argName,rule);
+  private boolean updateArgsInChildren(SemanticRule parent, String argName, SemanticRule rule) {
+    log.trace("[updateArgsHelper] " + argName + ", " + rule);
+    boolean found = false;
+    for (Map.Entry<String, SemanticRule> arg : parent.args.entrySet()) {
+      SemanticRule argRule = arg.getValue();
+      if (!argRule.args.isEmpty()) {
+        found = found || updateArgsInChildren(argRule, argName, rule);
       }
-      if(!found && argRule.unsetArgs.contains(argName)){
-        log.trace("[updateArgsInChildren] found arg in child! "+argName+" "+argRule);
-        argRule.args.put(argName,rule);
+      if (!found && argRule.unsetArgs.contains(argName)) {
+        log.trace("[updateArgsInChildren] found arg in child! " + argName + " " + argRule);
+        argRule.args.put(argName, rule);
         argRule.unsetArgs.remove(argName);
-        found= true;
+        found = true;
       }
     }
     return found;
@@ -486,13 +503,13 @@ class SemanticRule implements Cloneable {
     if (args.isEmpty()) {
       if (ghTier.equals("VAR")) {
 
-        String functorName=body;
-        String type="";
+        String functorName = body;
+        String type = "";
         //TODO:brad:revisit this, this is a mechanism to allow parse rules for descriptors with arguments that have semantic types, as well as descriptors whose names contain ":"
-        if(body.contains(":") && !(body.startsWith("\"") && body.endsWith("\""))){
+        if (body.contains(":") && !(body.startsWith("\"") && body.endsWith("\""))) {
           int i = body.lastIndexOf(":");
-          functorName=body.substring(0, i);
-          type=body.substring(i+1);
+          functorName = body.substring(0, i);
+          type = body.substring(i + 1);
         }
         //make new term and free variable if its a new VAR
         Variable newThing = VariableFactory.getInstance().getNextVariable(type);
@@ -507,13 +524,13 @@ class SemanticRule implements Cloneable {
       } else if (!ghTier.isEmpty()) {
         //for cases where there is a ghTier we need a new free variable and to pass on the ghTier
         //eg: "give me that"
-        String functorName=body;
-        String type="";
+        String functorName = body;
+        String type = "";
         //TODO:brad:is this case a hack? should this only happen in the VAR case?
-        if(body.contains(":") && !(body.startsWith("\"") && body.endsWith("\""))){
+        if (body.contains(":") && !(body.startsWith("\"") && body.endsWith("\""))) {
           int i = body.lastIndexOf(":");
-          functorName=body.substring(0, i);
-          type=body.substring(i+1);
+          functorName = body.substring(0, i);
+          type = body.substring(i + 1);
         }
         Variable newVar = VariableFactory.getInstance().getNextVariable(type);
         Term newSemBinding = new Term(functorName, newVar);
@@ -532,14 +549,14 @@ class SemanticRule implements Cloneable {
       }
       //otherwise, just pass on a symbol
       else {
-        log.trace("body "+body);
+        log.trace("body " + body);
         //TODO:brad: are there cases where making a predicate is bad?
         Symbol newSym = Factory.createFOL(body);
         semBindings.add(newSym);
         log.trace("new constant symbol created: " + newSym);
       }
     }
-      //recursive cases
+    //recursive cases
     else {
       String returnValue = body;
       SortedMap<String, Symbol> predArgs = new TreeMap<>();
@@ -556,10 +573,10 @@ class SemanticRule implements Cloneable {
       }
 
       //this is like this so that the lambda function args don't need to align with predicate args
-      for (Map.Entry<String,Symbol> a : predArgs.entrySet()) {
+      for (Map.Entry<String, Symbol> a : predArgs.entrySet()) {
         returnValue = returnValue.replace(a.getKey(), a.getValue().toString());
       }
-      log.debug("[getDIARCsemantics] return value: "+returnValue);
+      log.debug("[getDIARCsemantics] return value: " + returnValue);
 
       //in the case of adjectives/ adjectival prepositions with multiple args
       //we need to do some shenanigans with the form that is stored in the main verb
@@ -570,17 +587,17 @@ class SemanticRule implements Cloneable {
       }
 
       //appropriately generate predicate for main verb/ main semantic form
-      log.trace("returnValue: "+returnValue);
-      Symbol mainSemantics=Factory.createFOL(returnValue);
+      log.trace("returnValue: " + returnValue);
+      Symbol mainSemantics = Factory.createFOL(returnValue);
       semBindings.add(mainSemantics);
       semBindings.addAll(additionalBindings);
 
       //pass along GH tier info
       if (!ghTier.isEmpty() && !ghTier.equals("MOD")) {
         //TODO:Brad: confirm that this is general enough
-        if(mainSemantics.isTerm()){
+        if (mainSemantics.isTerm()) {
           ghBindings.put(new Variable(predArgs.get(predArgs.firstKey()).getName()), Factory.createSymbol(ghTier));
-        }else {
+        } else {
           ghBindings.put(new Variable(returnValue), Factory.createSymbol(ghTier));
         }
       }
@@ -588,7 +605,7 @@ class SemanticRule implements Cloneable {
     }
     log.trace("semBindings: " + semBindings);
     log.trace("ghBindings: " + ghBindings);
-    if(!semBindings.isEmpty()) {
+    if (!semBindings.isEmpty()) {
 
       semBindings.set(0, flattenAnd(semBindings.get(0)));
     }
@@ -603,7 +620,7 @@ class SemanticRule implements Cloneable {
       List<Term> toReplace = new ArrayList<>();
       for (Symbol arg : t.getArgs()) {
         if (arg.isTerm() && arg.getName().equals("and")) {
-          toReplace.add((Term)arg);
+          toReplace.add((Term) arg);
         }
       }
       if (toReplace.isEmpty()) {
@@ -612,7 +629,7 @@ class SemanticRule implements Cloneable {
         List<Symbol> newArgs = t.getArgs();
         newArgs.removeAll(toReplace);
         for (Term arg : toReplace) {
-          newArgs.addAll(0,arg.getArgs().stream().map(SemanticRule::flattenAnd).collect(Collectors.toList()));
+          newArgs.addAll(0, arg.getArgs().stream().map(SemanticRule::flattenAnd).collect(Collectors.toList()));
         }
         return Factory.createPredicate(t.getName(), newArgs);
       }
@@ -627,7 +644,7 @@ class SemanticRule implements Cloneable {
 
   @Override
   public String toString() {
-    return body+" "+args+" "+unsetArgs;
+    return body + " " + args + " " + unsetArgs;
   }
 }
 
@@ -680,35 +697,35 @@ public class Entry implements Cloneable {
   public Entry clone() throws CloneNotSupportedException {
     Entry clonedEntry = (Entry) super.clone();
     clonedEntry.morpheme = this.morpheme;
-    if(syntax == null){
-      clonedEntry.syntax =  null;
+    if (syntax == null) {
+      clonedEntry.syntax = null;
     } else {
       clonedEntry.syntax = this.syntax.clone();
     }
-    if(semantics==null){
+    if (semantics == null) {
       clonedEntry.semantics = null;
-    }else{
+    } else {
       clonedEntry.semantics = this.semantics.clone();
     }
     return clonedEntry;
   }
 
-  public Entry generateBoundWildcard(String wildcardValue){
-    Entry bound= null;
+  public Entry generateBoundWildcard(String wildcardValue) {
+    Entry bound = null;
     try {
       bound = this.clone();
-      bound.morpheme = bound.morpheme.replace("*",wildcardValue);
+      bound.morpheme = bound.morpheme.replace("*", wildcardValue);
       bound.semantics = bound.getSemantics().bindWildcard(wildcardValue);
 
     } catch (CloneNotSupportedException e) {
-      log.error("exception cloning an entry, I dont this this can happen?",e);
+      log.error("exception cloning an entry, I dont this this can happen?", e);
     }
     return bound;
   }
 
   @Override
   public String toString() {
-    return "morpheme: " + morpheme + " | sem: " + semantics.toString() + " | syn: " + syntax.toString()+ " | gh: "+semantics.ghTier;
+    return "morpheme: " + morpheme + " | sem: " + semantics.toString() + " | syn: " + syntax.toString() + " | gh: " + semantics.ghTier;
   }
 
   public SemanticRule getSemantics() {

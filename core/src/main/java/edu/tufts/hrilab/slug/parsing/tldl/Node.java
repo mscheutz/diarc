@@ -21,7 +21,9 @@ public class Node implements Cloneable {
     label = entries.get(0).morpheme;
     rules = new ArrayList<>();
     for (Entry e : entries) {
-      if (e.syntax != null) rules.add(new NodeEntry(e, null, null));
+      if (e.syntax != null) {
+        rules.add(new NodeEntry(e, null, null));
+      }
     }
     learned = true;
     lAncestor = null;
@@ -46,13 +48,19 @@ public class Node implements Cloneable {
         NodeEntry currentClone = null;
         NodeEntry nextClone = null;
         try {
-          if (current != null) currentClone = current.clone();
-          if (next != null) nextClone = next.clone();
+          if (current != null) {
+            currentClone = current.clone();
+          }
+          if (next != null) {
+            nextClone = next.clone();
+          }
         } catch (CloneNotSupportedException e) {
           log.error("Exception in cloning during combine: {}", e.getMessage());
         }
 
-        if (currentClone == null || nextClone == null) continue;
+        if (currentClone == null || nextClone == null) {
+          continue;
+        }
 
         // directAddress checks: directAddress can't combine from both sides
         // i.e., direct address name can only appear at the beginning or end of utterance, not the middle
@@ -100,10 +108,14 @@ public class Node implements Cloneable {
           combination = currentClone.combine(nextClone);
           if (combination == null) {
             combination = nextClone.combine(currentClone);
-            if (combination != null) reverse = true;
+            if (combination != null) {
+              reverse = true;
+            }
           }
         }
-        if (combination != null) validCombinations.add(combination);
+        if (combination != null) {
+          validCombinations.add(combination);
+        }
       }
     }
 
@@ -113,31 +125,6 @@ public class Node implements Cloneable {
 
     return null;
   }
-
-  // Check possible combinations for test purposes
-//  public List<NodeEntry> combineTest(Node partner) {
-//    List<NodeEntry> validCombinations = new ArrayList<>();
-//    for (NodeEntry current : this.rules) {
-//      for (NodeEntry next : partner.rules) {
-//        NodeEntry currentClone = null;
-//        NodeEntry nextClone = null;
-//        try {
-//          currentClone = (current != null) ? current.clone() : null;
-//          nextClone = (next != null) ? next.clone() : null;
-//        } catch (Exception e) {
-//          log.error("Exception in cloning during combine test: {}", e.getMessage());
-//        }
-//
-//        NodeEntry combination = null;
-//        if (currentClone != null) {
-//          combination = currentClone.combine(nextClone);
-//        }
-//        if (combination != null) validCombinations.add(combination);
-//      }
-//    }
-//
-//    return validCombinations.isEmpty() ? null : validCombinations;
-//  }
 
   // Getters
   public String getLabel() {
@@ -182,8 +169,12 @@ public class Node implements Cloneable {
   // Check for node equality
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null || getClass() != obj.getClass()) return false;
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
     Node other = (Node) obj;
 
     // Compare label, rules, and ancestors
