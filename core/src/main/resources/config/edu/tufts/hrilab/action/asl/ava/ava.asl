@@ -44,7 +44,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 //        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
 ////    }
 ////    act:waitForReadyAck();
-    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm);
+    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm, 1, 300);
     act:say("Okay, please follow me");
 
     act:goToLocation(?dstLoc);
