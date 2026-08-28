@@ -709,8 +709,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //dual local setup
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--gpu", "--model_type", "0", "--model_size", "medium", "--diarc");
 
-    //keep the child's stderr so a python death leaves a traceback
-    processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(new File(home + "/.diarc/python/ww/ww_stderr.log")));
+    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();
       InputStream is = process.getInputStream();
