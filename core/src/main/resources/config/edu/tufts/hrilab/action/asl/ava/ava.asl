@@ -145,7 +145,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = monitorBattery() {
     int !sleepTime = 30000; // 30s How often to check the battery
     double !currBatteryLevel;
-    double !lowChargeLevel = 15;
+    double !lowChargeLevel = 30;
     double !veryLowChargeLevel = 15; // Threshold to suspend tasks and go home and charge immediately
     double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
