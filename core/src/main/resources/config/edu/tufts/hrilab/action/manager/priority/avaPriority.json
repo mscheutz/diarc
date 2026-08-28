@@ -159,6 +159,18 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "setVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "lowerVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "raiseVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "reportIsVideoSaved": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

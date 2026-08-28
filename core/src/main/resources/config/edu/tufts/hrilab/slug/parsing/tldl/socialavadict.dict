@@ -92,6 +92,11 @@ raise media volume; C; raiseVideoVolume(?ADDRESSEE)
 switch display to tracs; C; switchDisplayToTRACS(?ADDRESSEE)
 switch display to telepresence; C; switchDisplayToTelepresence(?ADDRESSEE)
 
+set output volume to; C/LIT*; #x.setVoiceVolume(?ADDRESSEE,$x)
+set output volume; C/LIT*; #x.setVoiceVolume(?ADDRESSEE,$x)
+lower output volume; C; lowerVoiceVolume(?ADDRESSEE)
+raise output volume; C; raiseVoiceVolume(?ADDRESSEE)
+
 % VERBI is not a template in this dict, so the VERBI lines above never parse; these are the live forms
 cancel pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
 cancel all pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
