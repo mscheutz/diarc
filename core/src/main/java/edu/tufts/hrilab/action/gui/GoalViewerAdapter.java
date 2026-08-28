@@ -50,8 +50,6 @@ public class GoalViewerAdapter extends GuiAdapter {
    */
   private TRADEServiceInfo resumeGoal;
 
-  private TRADEServiceInfo getScheduledGoalIds;
-
 //  private Map<Long, GoalInfo> allGoals = new HashMap<>();
 
   //==========================================================================
@@ -268,13 +266,6 @@ public class GoalViewerAdapter extends GuiAdapter {
   private JsonArray toJson(List<GoalInfo> goals) {
     JsonArray result = new JsonArray();
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
-    List<Long> liveScheduledIds;
-    try {
-      liveScheduledIds = getScheduledGoalIds.call(List.class);
-    } catch (TRADEException e) {
-      log.error("[toJson] could not get scheduled goal ids", e);
-      liveScheduledIds = new ArrayList<>();
-    }
     for (GoalInfo info : goals) {
       //AVA Specific Change - temp
       if (info.priorityTier == PriorityTier.SKIPPENDING && info.schedulingInfo == null) {
@@ -293,9 +284,10 @@ public class GoalViewerAdapter extends GuiAdapter {
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
       goalJson.addProperty("priority", info.priority);
       goalJson.addProperty("id", info.gid);
-      // a finished schedule still carries schedulingInfo in getPastGoals, so only mark goals still
-      // in the scheduler as scheduled -- otherwise a stale entry shows up that cancelGoal cannot find
-      if (info.schedulingInfo != null && liveScheduledIds.contains(info.gid)) {
+      // a finished schedule still carries schedulingInfo in getPastGoals, so gate on a live (non-
+      // terminated) status: a scheduled goal is ACTIVE while it exists in the scheduler and only
+      // terminates on cancel/end. this also updates live -- the status change fires on schedule add
+      if (info.schedulingInfo != null && !info.status.isTerminated()) {
         goalJson.addProperty("scheduled", true);
         ScheduleInfo scheduleInfo = info.schedulingInfo;
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
@@ -363,8 +355,6 @@ public class GoalViewerAdapter extends GuiAdapter {
               .name("suspendGoal").argTypes(Long.class));
       resumeGoal = TRADE.getAvailableService(new TRADEServiceConstraints()
               .name("resumeGoal").argTypes(Long.class));
-      getScheduledGoalIds = TRADE.getAvailableService(new TRADEServiceConstraints()
-              .name("getScheduledGoalIds").argTypes());
 
       updateGoals();
 
