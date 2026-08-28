@@ -1416,6 +1416,67 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  public boolean cancelPendingGoalsByIndices(Predicate indicesPred) {
+    log.debug("[cancelPendingGoalsByIndices] removing pending goals with indices: " + indicesPred);
+    List<PendingGoal> entries = new ArrayList<>();
+    synchronized (pendingGoalsLock) {
+      List<Integer> indices = new ArrayList<>();
+      for (Symbol index : indicesPred.getArgs()) {
+        try {
+          indices.add((int) Double.parseDouble(index.getName()));
+        } catch (NumberFormatException e) {
+          log.error("[cancelPendingGoalsByIndices] unexpected index {}", index, e);
+        }
+      }
+      indices.sort(Comparator.reverseOrder());
+      for (int index : indices) {
+        if (index < pendingGoals.size()) {
+          Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
+          int i = 0;
+          while (i < index) {
+            pendingGoalsIterator.next();
+            i++;
+          }
+          entries.add(pendingGoalsIterator.next());
+        } else {
+          log.warn("[cancelPendingGoalsByIndices] Queue is of length: " + pendingGoals.size() + ", cannot remove goal with index: " + index);
+        }
+      }
+    }
+    for (PendingGoal entry : entries) {
+      cancelPendingGoal(entry);
+    }
+    return true;
+  }
+
+  /**
+   * Cancels the upcoming scheduled goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  public boolean cancelScheduledGoalsByIndices(Predicate indicesPred) {
+    log.debug("[cancelScheduledGoalsByIndices] removing scheduled goals with indices: " + indicesPred);
+    List<ScheduledGoal> scheduledGoals = getScheduledGoals();
+    List<Integer> indices = new ArrayList<>();
+    for (Symbol index : indicesPred.getArgs()) {
+      try {
+        indices.add((int) Double.parseDouble(index.getName()));
+      } catch (NumberFormatException e) {
+        log.error("[cancelScheduledGoalsByIndices] unexpected index {}", index, e);
+      }
+    }
+    indices.sort(Comparator.reverseOrder());
+    for (int index : indices) {
+      if (index < scheduledGoals.size()) {
+        cancelGoal(scheduledGoals.get(index).getId());
+      } else {
+        log.warn("[cancelScheduledGoalsByIndices] Have " + scheduledGoals.size() + " scheduled goals, cannot remove goal with index: " + index);
+      }
+    }
+    return true;
+  }
+
+  /**
    * Cancel the supplied active goal and transfer to past goals
    *
    * @param goal

@@ -501,8 +501,8 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
             List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-    definition = new ToolDefinition("stopTalking",
-            "You stop talking and do not verbally respond. \nExample Instruction: \"shut up.\"",
+    definition = new ToolDefinition("dontRespond",
+            "You do not verbally respond. \nExample Instruction: \"shut up.\"",
             new ArrayList());
     instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 

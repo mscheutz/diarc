@@ -324,6 +324,10 @@ import edu.tufts.hrilab.action.justification.Justification;
     act:generateResponseFromString("the scheduled task has been canceled");
 }
 
+() = cancelScheduledTasks(Predicate ?indices) {
+    tsc:cancelScheduledGoalsByIndices(?indices);
+}
+
 () = forEachOnInterrupt(Long ?currentGid, Symbol ?interruptionType) {
     if (op:equals(?currentGid,-1)) {
         op:log("debug", "[forEachOnInterrupt] no current goal found");

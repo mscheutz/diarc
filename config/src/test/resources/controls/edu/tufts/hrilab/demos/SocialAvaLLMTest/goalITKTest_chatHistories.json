@@ -184,7 +184,7 @@
         "id" : "call_f9f6294ac5464b2882b1f47b",
         "type" : "function",
         "function" : {
-          "name" : "getCurrentPendingScheduledGoalInformation",
+          "name" : "getCurrentPendingScheduledTaskInformation",
           "arguments" : "{}"
         },
         "index" : 0

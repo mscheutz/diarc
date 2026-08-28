@@ -285,7 +285,7 @@ public final class AllDocumentExamplesRegression {
             new Example("display-image-location", "displayNamedImageAtLocation(ava,infographic.png,chair_one:location)", "display named image at location", "chair one"),
             new Example("display-duration", "displayNamedImageForDuration(ava,infographic.png,180)", "display named image for duration", "180"),
             new Example("display-duration-location", "displayNamedImageForDurationAtLocation(ava,infographic.png,60,chair_one:location)", "display named image for duration at location", "60", "chair one"),
-            new Example("stop-talking", "stopTalking(ava)", "stop talking"),
+            new Example("stop-talking", "dontRespond(ava)", "stop talking"),
             new Example("schedule-task", "scheduleTask(ava)", "schedule task"),
             new Example("learn-task", "learnTaskSequence(ava)", "learn task sequence"),
             new Example("sit", "sit(ava)", "sit"),

@@ -708,7 +708,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         }
     }
 }
-() = getCurrentPendingScheduledGoalInformation() {
+() = getCurrentPendingScheduledTaskInformation() {
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     Predicate !response;

@@ -251,7 +251,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getCurrentPendingScheduledGoalInformation": {
+  "getCurrentPendingScheduledTaskInformation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -283,7 +283,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "stopTalking": {
+  "dontRespond": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -312,6 +312,22 @@
     "priorityTier": "SKIPPENDING"
   },
   "getAllKnownRooms": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "modifyExistingTaskStatus": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "submitTaskStatusModificationDefinition": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelScheduledTasks": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }
