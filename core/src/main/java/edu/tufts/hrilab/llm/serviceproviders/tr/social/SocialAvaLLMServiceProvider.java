@@ -1562,6 +1562,27 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
+      definition = new ToolDefinition("lowerVideoVolume",
+              "You lower the volume of videos played on your screen by one step",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("raiseVideoVolume",
+              "You raise the volume of videos played on your screen by one step",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("setVoiceVolume",
+              "You set the volume of your own speaking voice",
+              List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The voice volume as a percentage. Acceptable values are whole numbers between 0 and 100", true)));
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("lowerVoiceVolume",
+              "You lower the volume of your own speaking voice by one step",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("raiseVoiceVolume",
+              "You raise the volume of your own speaking voice by one step",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
       definition = new ToolDefinition("displayImage",
               "You display an :image from your saved collection on your built-in screen display at a :location.",
               List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display", true),
