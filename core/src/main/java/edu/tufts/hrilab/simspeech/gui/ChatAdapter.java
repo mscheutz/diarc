@@ -85,10 +85,7 @@ public class ChatAdapter extends GuiAdapter {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
       //Set<String> diarcAgents = new HashSet<>();
-      // hide the ability to address "self" directly from the dashboard on the ava configs for now.
-      // TODO: this does not really belong in the adapter -- it is a dashboard display choice and
-      //  should move to a proper per-config toggle the webui consumes once that exists. other
-      //  configs still want self, so for now this keys off the presence of the front-end config.
+      //todo (pete): ava-deploy specific. fix in general -- agent groups?
       boolean hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
       diarcAgents.clear();
       agents.forEach(agent -> {
