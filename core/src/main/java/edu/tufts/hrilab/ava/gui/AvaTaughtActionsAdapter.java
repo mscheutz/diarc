@@ -2,11 +2,14 @@ package edu.tufts.hrilab.ava.gui;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -43,11 +46,28 @@ public class AvaTaughtActionsAdapter extends GuiAdapter {
       log.error("Failed to find TRADE services", e);
       throw new RuntimeException(e);
     }
+    try {
+      TRADEServiceInfo changed = TRADE.getAvailableService(new TRADEServiceConstraints()
+              .returnType(void.class).name("taughtActionsChanged").argTypes(ActionDBEntry.class));
+      TRADEServiceInfo register = TRADE.getAvailableService(new TRADEServiceConstraints()
+              .returnType(void.class).name("registerGoalManagerNotification")
+              .argTypes(TRADEServiceInfo.class, NotificationType.class));
+      register.call(void.class, changed, NotificationType.DATABASE_ADDITION);
+      register.call(void.class, changed, NotificationType.DATABASE_REMOVAL);
+    } catch (TRADEException e) {
+      log.error("[init] could not register for action database notifications", e);
+    }
   }
 
   @Override
   protected boolean providesTradeServices() {
-    return false;
+    return true;
+  }
+
+  // a task taught or forgotten by voice changes the list without a dashboard refresh
+  @TRADEService
+  public void taughtActionsChanged(ActionDBEntry entry) {
+    sendTaughtActions();
   }
 
   private void sendTaughtActions() {
