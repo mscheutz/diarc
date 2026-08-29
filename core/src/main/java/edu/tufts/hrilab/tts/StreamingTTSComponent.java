@@ -1026,7 +1026,8 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
 
   private String sanitizeText(String text) {
     if (text == null) return "";
-    return text.replaceAll(":[a-zA-Z]\\w*", "").replace("_", " ").replace("\"", "");
+    return text.replaceAll(":[a-zA-Z]\\w*", "").replace("_", " ").replace("\"", "")
+            .replace("\u201c", "").replace("\u201d", "").replace("\u2018", "'").replace("\u2019", "'");
   }
 
   // Kokoro plans intonation per request, so a comma cut puts a sentence-final contour mid-sentence.
