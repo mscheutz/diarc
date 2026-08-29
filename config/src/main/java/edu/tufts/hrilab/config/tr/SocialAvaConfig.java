@@ -68,7 +68,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     options.add(Option.builder("cartesia").desc("use Cartesia TTS instead of MaryTTS").build());
     options.add(Option.builder("cartesiaVoiceId").hasArg().desc("Cartesia voice UUID; overrides CARTESIA_VOICE_ID env").build());
     options.add(Option.builder("localtts").desc("use local self-hosted streaming TTS (Kokoro sidecar) instead of MaryTTS").build());
-    options.add(Option.builder("localVoice").hasArg().desc("local TTS voice name (default am_onyx)").build());
+    options.add(Option.builder("localVoice").hasArg().desc("local TTS voice name (default: the sidecar default)").build());
     options.add(Option.builder("ttsEndpoint").hasArg().desc("local TTS sidecar base URL (default http://127.0.0.1:5002)").build());
     options.add(Option.builder("voiceVolume").hasArg().desc("Cartesia voice volume 0.0-2.0 (default 1.0)").build());
     options.add(Option.builder("voiceSpeed").hasArg().desc("Cartesia voice speed: slowest|slow|normal|fast|fastest or float (default normal)").build());

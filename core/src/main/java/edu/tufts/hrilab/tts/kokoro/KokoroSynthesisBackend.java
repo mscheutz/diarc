@@ -27,7 +27,7 @@ public class KokoroSynthesisBackend implements SynthesisBackend {
   private static final long SYNTH_TIMEOUT_SECONDS = 30;
 
   private String endpoint = "http://127.0.0.1:5002";
-  private String voice = "am_onyx";
+  private String voice = "";
   private double speed = 1.0;
 
   private HttpClient httpClient;
@@ -93,7 +93,9 @@ public class KokoroSynthesisBackend implements SynthesisBackend {
       if (aborted) {
         return;
       }
-      String body = "{\"text\":\"" + jsonEscape(phrase) + "\",\"voice\":\"" + voice + "\",\"speed\":" + speed + "}";
+      // no voice configured: leave the field out so the sidecar's own default applies
+      String voiceField = voice.isEmpty() ? "" : ",\"voice\":\"" + voice + "\"";
+      String body = "{\"text\":\"" + jsonEscape(phrase) + "\"" + voiceField + ",\"speed\":" + speed + "}";
       HttpRequest req = HttpRequest.newBuilder(URI.create(endpoint + "/synth"))
               .header("Content-Type", "application/json")
               .timeout(Duration.ofSeconds(SYNTH_TIMEOUT_SECONDS))
