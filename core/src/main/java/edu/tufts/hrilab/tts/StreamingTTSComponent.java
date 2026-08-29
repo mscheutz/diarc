@@ -64,8 +64,11 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   private static final double PRIME_SECONDS = 0.04;
   private static final byte[] END_SENTINEL = new byte[0];
   private static final long CHUNK_POLL_TIMEOUT_MS = 30000;
-  private static final int MIN_CHUNK_CHARS = 25;
-  private static final int FORCE_FLUSH_CHARS = 100;
+  private static final int FIRST_CHUNK_MAX_CHARS = 80;
+  private static final int FIRST_SOFT_MIN_CHARS = 25;
+  private static final int MAX_CHUNK_CHARS = 140;
+  private static final int SOFT_SPLIT_MIN_CHARS = 90;
+  private static final int TAIL_MIN_CHARS = 12;
   private static final long DISPATCHER_POLL_TIMEOUT_MS = 50;
   private static final long POST_DRAIN_REARM_DELAY_MS = 500;
   private static final long NO_UID = -1L;
@@ -1026,21 +1029,34 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     return text.replaceAll(":[a-zA-Z]\\w*", "").replace("_", " ").replace("\"", "");
   }
 
+  // Kokoro plans intonation per request, so a comma cut puts a sentence-final contour mid-sentence.
+  // First piece: the first sentence when it ends within FIRST_CHUNK_MAX_CHARS, else the first clause
+  // boundary past FIRST_SOFT_MIN_CHARS, else whitespace -- quick first audio without a bare "Sure,".
+  // Later pieces: sentence ends only; a sentence running past MAX_CHUNK_CHARS is cut at the last clause
+  // boundary after SOFT_SPLIT_MIN_CHARS so one long sentence cannot stall playback. A sentence end is
+  // not taken while fewer than TAIL_MIN_CHARS follow it: a short tail like "Okay." folds into the
+  // previous piece once the text is complete instead of getting its own contour.
   private static int findSplitPoint(CharSequence buf, boolean isFirst) {
-    int hardLimit = buf.length();
-    for (int i = 0; i < hardLimit; i++) {
+    int len = buf.length();
+    int limit = isFirst ? FIRST_CHUNK_MAX_CHARS : MAX_CHUNK_CHARS;
+    int softMin = isFirst ? FIRST_SOFT_MIN_CHARS : SOFT_SPLIT_MIN_CHARS;
+    int softCut = -1;
+    for (int i = 0; i < len; i++) {
       char c = buf.charAt(i);
-      boolean hard = (c == '.' || c == '!' || c == '?');
-      boolean soft = (c == ',' || c == ';' || c == ':' || c == '\u2014');
-      boolean atBoundary = (i + 1 < hardLimit && Character.isWhitespace(buf.charAt(i + 1)));
-      if (hard && atBoundary) {
+      int end = i + 1;
+      boolean atBoundary = end < len && Character.isWhitespace(buf.charAt(end));
+      if (atBoundary && (c == '.' || c == '!' || c == '?')) {
         if (c == '.' && (isAbbrevAt(buf, i) || isDecimalDot(buf, i))) continue;
-        if (isFirst || (i + 1) >= MIN_CHUNK_CHARS) return i + 1;
+        if (isFirst || len - end >= TAIL_MIN_CHARS) return end;
+        return -1;
       }
-      if (soft && atBoundary) {
-        if (isFirst || (i + 1) >= MIN_CHUNK_CHARS) return i + 1;
+      if (atBoundary && (c == ',' || c == ';' || c == ':' || c == '\u2014') && end >= softMin) {
+        if (!isFirst || softCut < 0) softCut = end;
       }
-      if ((i + 1) >= FORCE_FLUSH_CHARS && Character.isWhitespace(c)) return i + 1;
+      if (end >= limit) {
+        if (softCut > 0) return softCut;
+        if (Character.isWhitespace(c)) return end;
+      }
     }
     return -1;
   }
