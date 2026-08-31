@@ -791,9 +791,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             Predicate taskIndicesPred = (Predicate)args.get(3);
             if (taskType.equals("current")) {
               switch (modificationType) {
-                case "suspend" -> Factory.createPredicate("suspendCurrentTask", args.get(0));
-                case "resume" ->  Factory.createPredicate("resumeCurrentTask", args.get(0));
-                case "cancel" -> Factory.createPredicate("cancelCurrentTask", args.get(0));
+                 case "suspend":
+                    return Factory.createPredicate("suspendCurrentTask", args.get(0));
+                 case "resume":
+                    return Factory.createPredicate("resumeCurrentTask", args.get(0));
+                 case "cancel":
+                    return Factory.createPredicate("cancelCurrentTask", args.get(0));
               }
             } else {
                List<Long> taskIndices = new ArrayList<>();
