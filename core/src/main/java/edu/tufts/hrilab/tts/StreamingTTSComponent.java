@@ -1268,7 +1268,7 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   @TRADEService
   public boolean setVoiceVolume(Symbol volumeSymbol) {
     try {
-      return setVoiceVolume(Integer.parseInt(volumeSymbol.getName()));
+      return setVoiceVolume((int)Double.parseDouble(volumeSymbol.getName()));
     } catch (NumberFormatException e) {
       log.error("[setVoiceVolume] supplied volumeSymbol not parseable as int: {}", volumeSymbol, e);
       return false;

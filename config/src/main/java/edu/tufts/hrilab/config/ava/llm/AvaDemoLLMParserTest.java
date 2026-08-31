@@ -310,7 +310,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("add a new scheduled task",
-              "INSTRUCT(eric,ava,scheduleGoal(ava),{})"
+              "INSTRUCT(eric,ava,scheduleTask(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -487,7 +487,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("I want to schedule a new task",
-              "INSTRUCT(eric,ava,scheduleGoal(ava),{})"
+              "INSTRUCT(eric,ava,scheduleTask(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -664,7 +664,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("Can you do something for me later?",
-              "INSTRUCT(eric,ava,scheduleGoal(ava),{})"
+              "INSTRUCT(eric,ava,scheduleTask(ava),{})"
               ,num_runs
       );
       count_total += num_runs;

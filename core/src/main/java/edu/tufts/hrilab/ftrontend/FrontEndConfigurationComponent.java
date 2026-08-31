@@ -262,7 +262,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       int option = new Random().nextInt(4);
       return switch (option)
       {
-         case 0 -> "Will do that when I'm done with my current tasks.";
+         case 0 -> "Will do that when I'm done with my other tasks.";
          case 1 -> "Queueing after my other tasks.";
          case 2 -> "Adding to my list of tasks.";
          case 3 -> "I have other assigned tasks, but I'll get to that when I can.";
@@ -278,7 +278,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "suspendGoal":
             case "cancelCurrentTask":
             case "cancelGoal":
-            case "stopTalking":
+            case "dontRespond":
+            case "modifyExistingTaskStatus":
                return true;
             default:
                return false;
@@ -327,7 +328,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getSavedImages":
             case "getPreviouslyMeasuredWifiAtLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationString":
-            case "getCurrentPendingScheduledGoalInformation":
+            case "getCurrentPendingScheduledTaskInformation":
             case "resetConversation":
             case "learnTaskSequence":
             case "scheduleTask":
@@ -342,7 +343,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getPreviouslyMeasuredTemperatureAtCurrentLocationString":
             case "updateDialogueHistoryFromString":
             case "checkPastInteractionHistoryForMissingInformation":
-            case "stopTalking":
+            case "dontRespond":
             case "reportAllPackingParameters":
             case "reportFullyPackedCrateConfiguration":
             case "reportMaxNumberOfPackedItemsPerLayer":
@@ -410,7 +411,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "learnMission":
             case "getAllKnownRooms":
             case "startMission":
-            case "cancelAllCurrentAndQueuedTasks":
+            //case "cancelAllCurrentAndQueuedTasks":
             case "clearRoomForDoor":
             //
             case "follow":
@@ -420,6 +421,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             //case "scheduled":
             case "cancelSingleScheduledGoal":
             case "forgetAllTaughtActions":
+            case "modifyExistingTaskStatus":
                return true;
             default:
                return false;

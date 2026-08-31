@@ -204,7 +204,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               new ArrayList<>()),
               UtteranceType.INSTRUCT
       );
-      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledGoalInformation",
+      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
               "Use this to ask the system for up to date information about your current list of tasks. Call this" +
                       "tool in order to get relevant information to help answer user questions about what you are currently" +
                       " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
@@ -218,7 +218,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               new ArrayList<>()),
               UtteranceType.INSTRUCT
       );
-      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledGoalInformation",
+      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
               "Use this to ask the system for up to date information about your current list of tasks. Call this" +
                       "tool in order to get relevant information to help answer user questions about what you are currently" +
                       " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
@@ -226,7 +226,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               new ArrayList<>()),
               UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     }
-    itkActionNames.add("getCurrentPendingScheduledGoalInformation");
+    itkActionNames.add("getCurrentPendingScheduledTaskInformation");
 
     if (useCondensedTools) {
       textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
@@ -393,6 +393,38 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     promptVars.put("%addressee", agent.getName());
     promptVars.putAll(updateDomainPromptVars(utterance,parsing));
+    if (parsing) {
+      promptVars.putAll(updateFocusedContextPromptVars(user, agent));
+    }
+  }
+
+  //TODO: move to/overridable by subclass
+  protected Map<String,String> updateFocusedContextPromptVars(Symbol user, Symbol agent) {
+    Map<String,String> vars = new HashMap<>();
+    ChatCollection chatCollection = getChatCollection(user, agent);
+    if (chatCollection != null) {
+      ChatContext chatContext = chatCollection.currentChat;
+      if (chatContext != null && chatContext.chatType == ChatType.FOCUSED && chatContext.chatState != ChatState.VALIDATION) {
+        String contextId = chatContext.contextID;
+        if (contextId.equals("modifyExistingTaskStatus")) {
+          vars.put("%goalSummaryString", getFullGoalsSummary(agent));
+        }
+      }
+    }
+    return vars;
+  }
+  protected List<ToolDefinition> getContextDependentToolDefinitions(Symbol agentTeam) {
+    List<ToolDefinition> contextDependentDefinitions = new ArrayList<>();
+    List<Predicate> currentGoals = getCurrentGoals(agentTeam);
+    if (currentGoals != null && !currentGoals.isEmpty()) {
+      if (currentGoals.get(0).getName().equals("follow")) {
+        ToolDefinition stopFollowDefinition = chatTemplates.get("nluextended").tools.get("stopFollowing").toolDefinition;
+        if (stopFollowDefinition != null) {
+          contextDependentDefinitions.add(stopFollowDefinition);
+        }
+      }
+    }
+    return contextDependentDefinitions;
   }
 
   private void populateSemanticDefinitionsString(Symbol semantics, StringBuilder sb) {
@@ -549,6 +581,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           // Add all matching system question response tools based off of expected reply semantics
           tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
         }
+
+        // Experimental, allow advertisement of certain tools based on current context
+        tools.addAll(getContextDependentToolDefinitions(agentTeam));
 
         // Apply input as user message
         if (!reattemptedParse) {
@@ -1511,6 +1546,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //  in system prompt itself and resetting message list
           String chatHistoryAsString = getChatHistoryAsString(chat);
           //promptVars.put("%focusedChatHistoryAsString", chatHistoryAsString);
+          updateFocusedContextPromptVars(user, agentTeam);
           chat.setMessages(new ArrayList<>());
           // Qwen3.5 chat template requires a user message
           String templateArgumentName = "target template";
@@ -2560,9 +2596,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (!currentGoalPredicates.isEmpty()) {
         if (currentGoalPredicates.get(0).hasArgs()) {
           String statusString = currentGoalPredicates.get(0).getName();
-          stringBuilder.append(" - Status: ").append(statusString).append(", Description: ").append(translatedGoalList.get(0)).append("\n");
+          stringBuilder.append(" - 0: Status: ").append(statusString).append(", Description: ").append(translatedGoalList.get(0)).append("\n");
         } else {
-          stringBuilder.append("- Description: ").append(translatedGoalList.get(0)).append("\n");
+          stringBuilder.append("- 0: Description: ").append(translatedGoalList.get(0)).append("\n");
         }
     } else {
       stringBuilder.append(" - <You have no current task>\n");
@@ -2573,7 +2609,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       stringBuilder.append(" - <You have no pending tasks>\n");
     } else {
       for (int i = 0; i < numPending; i++) {
-        stringBuilder.append(" - ").append(translatedGoalList.get(i+1)).append("\n");
+        stringBuilder.append(" - ").append(i).append(": ").append(translatedGoalList.get(i+1)).append("\n");
       }
     }
 
@@ -2582,12 +2618,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       stringBuilder.append(" - <You have no scheduled tasks>\n");
     } else {
       for (int i = 0; i < numScheduled; i++) {
-        stringBuilder.append(" - ").append(translatedGoalList.get(i+numCurrent+numPending)).append("\n");
+        stringBuilder.append(" - ").append(i).append(": ").append(translatedGoalList.get(i+numCurrent+numPending)).append("\n");
       }
     }
     //Doesn't seem to do anything - may need to just split calls for retrieving current vs pending vs scheduled vs all tasks
 //    stringBuilder.append("-------\nOnly respond to the user with information relevant to what they actually asked about " +
-//            "which caused you to trigger the getCurrentPendingScheduledGoalInformation tool call. For example: asking what" +
+//            "which caused you to trigger the getCurrentPendingScheduledTaskInformation tool call. For example: asking what" +
 //            " you are doing should cause you to only say what your current task is, being asked how many scheduled goals you have" +
 //            " should cause you to only answer with the number of scheduled goals, and being asked what you have to do after your" +
 //            " current task should cause you to only begin listing your pending tasks. Do not list more than 5 tasks at once" +
@@ -2674,8 +2710,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class,agent);
       List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
       if (expectedResponseForms != null && !expectedResponseForms.isEmpty()) {
-        output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
-        output += questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
+        //output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
+        output = questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
         output += "\nThere should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
       } else {
         output += "<No questions have been asked by the back end system>";
@@ -3418,14 +3454,24 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
         if (templateMap != null) {
           int expectedSize = -1;
+          //A bit more nuance necessary for task modification output - allowed to have empty or missing taskIndex list if directed at the current goal
+          if (templateArgName.equals("currentTaskStatusModificationDefinition")) {
+            Object taskType = templateMap.get("taskType");
+            if (taskType != null && ((String)taskType).equals("current") && templateMap.containsKey("modification")) {
+              return true;
+            }
+          }
           if (templateArgName.equals("currentScheduledDefinition")) {
             expectedSize = 4;
           } else if (templateArgName.equals("currentTaskSequenceDefinition")) {
             expectedSize = 2;
           } else if (templateArgName.equals("currentMissionDefinition")) {
             expectedSize = 1;
+          } else if (templateArgName.equals("currentTaskStatusModificationDefinition")) {
+            expectedSize = 1;
           } else {
             log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
+            return false;
           }
           if (templateMap.size() == expectedSize) {
             for (Object templateInnerArg : templateMap.values()) {
@@ -3445,14 +3491,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
                 return false;
               }
             }
-            log.info("[checkForFullyPopulatedTemplate] detected full template definition in first response after a " +
-                    "transfer to a focused context - recommending the LLM to directly submit the template definition.");
-            // Should we rephrase the base error message or make a new one in this case?
-            errorMessage.append("- It looks like your current definition of the target to be submitted is fully filled " +
-                    "out. If this seems to be the case, try submitting the target submission tool call directly instead" +
-                    "of responding to the user.");
-            return true;
+          } else {
+            return false;
           }
+          log.info("[checkForFullyPopulatedTemplate] detected full template definition in first response after a " +
+                  "transfer to a focused context - recommending the LLM to directly submit the template definition.");
+          // Should we rephrase the base error message or make a new one in this case?
+          errorMessage.append("- It looks like your current definition of the target to be submitted is fully filled " +
+                  "out. If this seems to be the case, try submitting the target submission tool call directly instead" +
+                  "of responding to the user.");
+          return true;
         }
       }
     }
@@ -3709,6 +3757,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: can specialize responses based on contextId
   @TRADEService
   public String getContextTransferFillerPhrase(String contextId, long cid, Symbol user, Symbol agent) {
+    //TODO: make externally configurable
+    if (contextId.equals("modifyExistingTaskStatus")) {
+      return "";
+    }
     //based on input/history length choose between "gathering relevant information ..." type response and simple "okay" type
     boolean additionalInformationHeuristic = false;
     ChatCollection chatCollection = getChatCollection(user, agent);

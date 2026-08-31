@@ -84,7 +84,7 @@ public class CachedParserComponent extends DiarcComponent {
       // Do not cache focused context transfer actions
       // TODO: or allow this but find a way to make sure SocialLLM state is still appropriately updated with any relevant context before transferring
       // TODO: Generally define a "focused context" action rather than hardcode
-      if (name.equals("learnMission") || name.equals("learnTaskSequence") || name.equals("scheduleTask")) {
+      if (name.equals("learnMission") || name.equals("learnTaskSequence") || name.equals("scheduleTask") || name.equals("modifyExistingTaskStatus")) {
         log.debug("[addEntryToCache] not adding entry for focused template context target");
         return;
       }

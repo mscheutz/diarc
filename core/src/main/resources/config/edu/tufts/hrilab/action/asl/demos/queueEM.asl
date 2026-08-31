@@ -29,6 +29,10 @@ import edu.tufts.hrilab.action.justification.Justification;
     //act:generateResponseFromString("Existing tasks have been canceled");
 }
 
+() = cancelQueuedTasks(Predicate ?indices) {
+    tsc:cancelPendingGoalsByIndices(?indices);
+}
+
 () = suspendSystemGoalsBlocking() {
     java.util.List !goalIds;
     java.lang.Long !goalId;

@@ -43,7 +43,7 @@ public class ScheduledGoalManager {
    * TODO: move this into AgentTeam?
    * TODO: should active goals include scheduled goals? currently they do not
    */
-  private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
+  private final Map<ScheduledGoal, JobKey> scheduledGoals = new LinkedHashMap<>();
 
   private final ExecutionManager em;
 

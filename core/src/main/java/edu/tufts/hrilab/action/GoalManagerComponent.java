@@ -723,6 +723,24 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.cancelPendingGoalByIndex(index);
   }
 
+  /**
+   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  @TRADEService
+  @Action
+  public boolean cancelPendingGoalsByIndices(Predicate indices) {
+    return em.cancelPendingGoalsByIndices(indices);
+  }
+
+  //TODO: when having the time, implement this method body in asl and remove this
+  /**
+   * Cancels scheduled goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  @TRADEService
+  @Action
+  public boolean cancelScheduledGoalsByIndices(Predicate indices) {
+    return em.cancelScheduledGoalsByIndices(indices);
+  }
 
   /**
    * Searches pending and active goals to suspend the goal corresponding to the supplied goalId

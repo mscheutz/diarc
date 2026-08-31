@@ -159,6 +159,20 @@ import java.lang.String;
     op:log("info", "[learnTour] out");
 }
 
+() = modifyExistingTaskStatus() {
+    Symbol !submitter;
+    java.lang.Long !cid;
+    String !contextId;
+
+    !submitter = this:getOriginalSubmitter();
+    !cid = this:getId();
+    !contextId = this:getCommand();
+
+    act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
+
+    op:log("info", "[modifyExistingTaskStatus] out");
+}
+
 // Empty script to be held as target to abandon base context interaction
 () = endConversation() {
     op:log(info,"[endConversation]");
@@ -166,8 +180,8 @@ import java.lang.String;
     //TODO: prompt the system to say something in this case? goodbye?
 }
 
-() = stopTalking() {
-    op:log("info","[stopTalking] in method");
+() = dontRespond() {
+    op:log("info","[dontRespond] in method");
 }
 
 // Discard current chat state - not fully intended to be exposed to the user / not guaranteed safe during focused contexts or suspended states

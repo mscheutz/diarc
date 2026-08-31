@@ -109,6 +109,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                  "The speaker on the robot will emit the supplied phrase. Do not use this when you want to respond to the user. This should be targeted when a user is explicitly instructing you to say something out loud in person, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>\"" ,
                  List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+         definition = new ToolDefinition("stopFollowing",
+                                         "You stop following the user. \nExample Instruction: \"stop following me.\"",
+                                         new ArrayList());
+         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       } else {
          ToolDefinition definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfLocations",
                  "You report the wifi signal strength you had previously measured at certain :locations",
@@ -122,6 +126,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          definition = new ToolDefinition("sayLocally",
                  "The speaker on the robot will emit the supplied phrase",
                  List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The exact phrase instructed to be said", true)));
+         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+         definition = new ToolDefinition("stopFollowing",
+                 "You stop following the user",
+                 new ArrayList());
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       }
 
@@ -256,6 +264,34 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
          //chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/learntour_splitresponse"), learnTourTools));
       }
+
+      // Goal status modification
+      List<Tool> modifyExistingTaskStatusTools = new ArrayList<>();
+      modifyExistingTaskStatusTools.add(new Tool(new ToolDefinition("submitTaskStatusModificationDefinition",
+              "Submit the details of the fully defined task status modification for application.", List.of(
+              new ToolParameterHelper("modification", "string", List.of("cancel","suspend","resume"), "The type of status modification to apply", true),
+              new ToolParameterHelper("taskType", "string", List.of("current","queued","scheduled"), "Which task collection the desired task to modify is found in", true),
+              new ToolParameterHelper("taskIndex", "array", new ArrayList<>(), "The index(es) of desired task(s) to modify within the corresponding task collection. May be empty or [0] in the case of a 'current' taskType.", true)
+      )),
+              UtteranceType.INSTRUCT
+      ));
+      modifyExistingTaskStatusTools.add(new Tool(new ToolDefinition("stillGatheringInformation",
+              "You are still being told new or modifying existing details of the task status modification by the user. You will respond to" +
+                      "the user while following the Response Rules and Style Requirements.",
+              List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                              "What you want to say to the user", true),
+                      new ToolParameterHelper("currentTaskStatusModificationDefinition", "object", new ArrayList<>(),
+                              "Your current understanding of the task status modification being instructed to you. The expected format is json matching the submitTaskStatusModificationDefinition function described above.", true)
+              )),
+              UtteranceType.INSTRUCT));
+      //TODO: when we have more time - modify the template to allow for these behaviors
+      modifyExistingTaskStatusTools.add(new Tool(new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+              "Cancel the current task and all tasks in the queue. Only use this when the user wants to cancel all assigned tasks, as the standard taskStatusModification template is not flexible enough to represent this.",
+              new ArrayList<>()),
+              UtteranceType.INSTRUCT
+      ));
+      chatTemplates.put("modifyExistingTaskStatus", new ChatTemplates(Prompts.getPrompt("socialava/condensed/focused/goalStatusManipulation"), modifyExistingTaskStatusTools));
+
       return chatTemplates;
    }
 
@@ -303,7 +339,65 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       vars.put("%batteryLevel", getBatteryLevel());
       vars.put("%currentLocation", getCurrentLocation());
       vars.put("%videoVolume", getVideoVolume());
+      vars.put("%voiceVolume", getVoiceVolume());
+      //Failed attempt at including context to be used in the base prompt itself
+      ////TODO: based of EM listener
+      //Symbol agent = parsing ? utterance.getAddressee() : utterance.getSpeaker();
+      //Symbol user = parsing ? utterance.getSpeaker() : utterance.getAddressee();
+      //vars.put("%goalSummaryCondensed", getCondensedGoalSummary(agent));
+      ////TODO: once per chat cycle
+      //List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agent.toUntyped()));
+      //vars.put("%lastConvoSummary", (extendedHistory == null || extendedHistory.isEmpty()) ? "- <No past chat histories>" : getChatHistoryAsString(extendedHistory.get(0).history));
       return vars;
+   }
+
+   //Failed attempt at including context to be used in the base prompt itself
+   @TRADEService
+   public String getCondensedGoalSummary(Symbol agent) {
+      List<Predicate> currentGoalPredicates = getCurrentGoals(agent);
+      List<Predicate> pendingGoalPredicates = getPendingGoals(agent);
+      List<Predicate> scheduledGoals = getScheduledGoals(agent);
+      int numPending = pendingGoalPredicates.size();
+      int numScheduled = scheduledGoals.size();
+
+
+      StringBuilder stringBuilder = new StringBuilder();
+//      stringBuilder.append("-- Current Task (the task you are focused on): ");
+      stringBuilder.append("-- Current Task: ");
+      if (!currentGoalPredicates.isEmpty()) {
+         Predicate currentGoalPredicate = replaceReferencesInSemantics(currentGoalPredicates.get(0));
+         if (currentGoalPredicate.hasArgs()) {
+            String statusString = currentGoalPredicate.getName();
+            stringBuilder.append(currentGoalPredicate.get(0));
+            stringBuilder.append(". Status: ").append(statusString).append("\n");
+         } else {
+            stringBuilder.append(currentGoalPredicate).append("\n");
+         }
+      } else {
+         stringBuilder.append(" <You have no current task>\n");
+      }
+
+      stringBuilder.append("-- Queued Tasks:\n");
+      //stringBuilder.append("-- Queued Tasks (ordered list of tasks which will become the current task when the current task completes):\n");
+      if (pendingGoalPredicates.isEmpty()) {
+         stringBuilder.append(" --- <You have no pending tasks>\n");
+      } else {
+         for (int i = 0; i < numPending; i++) {
+            stringBuilder.append(" --- ").append(i).append(": ").append(replaceReferencesInSemantics(pendingGoalPredicates.get(i))).append("\n");
+         }
+      }
+
+      //stringBuilder.append("-- Scheduled Tasks (tasks which will be submitted to the Pending Task Queue at specific times in the future):\n");
+      stringBuilder.append("-- Scheduled Tasks:\n");
+      if (scheduledGoals.isEmpty()) {
+         stringBuilder.append(" --- <You have no scheduled tasks>\n");
+      } else {
+         for (int i = 0; i < numScheduled; i++) {
+            stringBuilder.append(" --- ").append(replaceReferencesInSemantics(scheduledGoals.get(i))).append("\n");
+         }
+      }
+
+      return stringBuilder.toString();
    }
 
    @TRADEService
@@ -373,6 +467,21 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          output = "Unknown";
       }
       return output;
+   }
+
+   //TODO: streaming TTS only - remove associated tool targets if not using streaming TTS
+   private String getVoiceVolume() {
+      String voiceVolume = "unknown";
+      //TODO: check if streaming TTS to avoid error message spam
+      try {
+         Integer voiceVolumeInt = TRADE.getAvailableService(new TRADEServiceConstraints().name("getVoiceVolume").argTypes()).call(Integer.class);
+         if (voiceVolumeInt != null) {
+            voiceVolume = String.valueOf(voiceVolumeInt);
+         }
+      } catch (TRADEException e) {
+         log.error("[getVoiceVolume] error getting Ava voice volume");
+      }
+      return voiceVolume;
    }
 
    private String getVideoVolume() {
@@ -669,6 +778,42 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             } else if (args.size() == 2 && !args.get(1).hasArgs()) {
                return Factory.createPredicate("reportPreviouslyMeasuredTemperatureAtCurrentLocation", args.get(0));
             }
+         } else if (command.equals("submitTaskStatusModificationDefinition")) {
+            List<Symbol> args = semantics.getArgs();
+            String modificationType = args.get(1).getName();
+            String taskType = args.get(2).getName();
+            Predicate taskIndicesPred = (Predicate)args.get(3);
+            if (taskType.equals("current")) {
+              switch (modificationType) {
+                case "suspend" -> Factory.createPredicate("suspendCurrentTask", args.get(0));
+                case "resume" ->  Factory.createPredicate("resumeCurrentTask", args.get(0));
+                case "cancel" -> Factory.createPredicate("cancelCurrentTask", args.get(0));
+              }
+            } else {
+               List<Long> taskIndices = new ArrayList<>();
+               for (Symbol arg : taskIndicesPred.getArgs()) {
+                  try {
+                     Long index = (long) Double.parseDouble(arg.getName());
+                     taskIndices.add(index);
+                  } catch (NumberFormatException e) {
+                     log.error("[correctCommonNLUMistakes] unexpected task index argument {}", arg, e);
+                  }
+               }
+               if (taskIndices.isEmpty()) {
+                  errorStringBuilder.append("- at least one taskIndex must be supplied for the task you are attempting to cancel");
+               }
+               if (!modificationType.equals("cancel")) {
+                  errorStringBuilder.append("- the supplied type of tasks can only be canceled, not suspended or resumed");
+               }
+
+               //TODO: check if indices are in bounds here?
+               //TODO: better NLG for this?
+               if (taskType.equals("queued")) {
+                  return Factory.createPredicate("cancelQueuedTasks", args.get(0),taskIndicesPred);
+               } else if (taskType.equals("scheduled")) {
+                  return Factory.createPredicate("cancelScheduledTasks",args.get(0),taskIndicesPred);
+               }
+            }
          }
       }
       catch (Exception e) {
@@ -853,10 +998,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       "The speaker on the robot will emit the supplied phrase. Do not use this when you want to respond to the user. This should be targeted when a user is explicitly instructing you to say something out loud in person, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("stopFollowing",
-                                      "You stop following the user. \nExample Instruction: \"stop following me.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("stopFollowing",
+      //                                "You stop following the user. \nExample Instruction: \"stop following me.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
             "<function=escortToLocation><parameter=name>owen</parameter><parameter=destination>%exampleLocation</parameter></function>" :
             "{\"name\":\"escortToLocation\", \"arguments\":{\"name\":\"owen\",\"destination\":\"%exampleLocation\"}}";
@@ -947,37 +1092,39 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
                                               new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllQueuedTasks",
-                                      "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
-                                      "You cancel all currently assigned goals. This includes the current active goal and all pending goals which have yet to begin execution. \nExample Instruction: \"cancel all tasks.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>" :
-            "{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
-      definition = new ToolDefinition("cancelSingleTaskInQueue",
-                                      "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllScheduledGoals",
-                                      "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelCurrentTask",
-              "You stop and fully discard your current task, whether active or suspended. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("suspendCurrentTask",
-                                      "You pause your current task, which can be later resumed or canceled. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("resumeCurrentTask",
-                                      "You resume your current task if it is paused. \nExample Instruction: \"resume\" or \"continue your previous task.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+
+      //Temporarily removed in focused context attempt
+      //definition = new ToolDefinition("cancelAllQueuedTasks",
+      //                                "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+      //                                "You cancel all currently assigned goals. This includes the current active goal and all pending goals which have yet to begin execution. \nExample Instruction: \"cancel all tasks.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //exampleCallString = xml ?
+      //      "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>" :
+      //      "{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
+      //definition = new ToolDefinition("cancelSingleTaskInQueue",
+      //                                "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
+      //                                List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("cancelAllScheduledGoals",
+      //                                "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("cancelCurrentTask",
+      //        "You stop and fully discard your current task, whether active or suspended. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("suspendCurrentTask",
+      //                                "You pause your current task, which can be later resumed or canceled. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("resumeCurrentTask",
+      //                                "You resume your current task if it is paused. \nExample Instruction: \"resume\" or \"continue your previous task.\"",
+      //                                new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       exampleCallString = xml ?
             "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
@@ -1115,8 +1262,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-      definition = new ToolDefinition("stopTalking",
-                                      "You stop talking and do not verbally respond. \nExample Instruction: \"shut up.\"",
+      definition = new ToolDefinition("dontRespond",
+                                      "You do not verbally respond. \nExample Instruction: \"shut up.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1127,6 +1274,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       definition = new ToolDefinition("learnTaskSequence",
                                       "You begin a dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
                                       new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("modifyExistingTaskStatus",
+              "You begin a dialogue interaction with the user to pause, cancel, or resume existing assigned tasks.",
+              new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       ////TODO: need to update this with new social extended interaction structure - Do we still even need this as an action? Or should be rephrased to repeatSystemQuestion
@@ -1450,11 +1601,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "You follow the user",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //TODO: only advertised when actively following
-      definition = new ToolDefinition("stopFollowing",
-              "You stop following the user",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      ////TODO: only advertised when actively following
+      //definition = new ToolDefinition("stopFollowing",
+      //        "You stop following the user",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("escort",
               "You lead someone between two :locations",
               List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
@@ -1484,43 +1635,44 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                       new ToolParameterHelper("reportLocation", "string", locationNames, "The saved :location to return and give a summary of the results. Don't supply if not reporting a summary of the results", false)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-      //TODO long term: goal manipulation focused context?
-      //TODO short term: give standardized goal type definition somewhere?
-      definition = new ToolDefinition("cancelCurrentTask",
-              "You cancel and fully discard your current goal, whether it is active or suspended.",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("suspendCurrentTask",
-              "You pause your current goal, which can be later resumed or canceled",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("resumeCurrentTask",
-              "You resume your current goal if it is suspended",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      definition = new ToolDefinition("cancelSingleTaskInQueue",
-              "You cancel and remove a specific goal in the queue specified by its index",
-              List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllQueuedTasks",
-              "You cancel all goals currently in the pending queue.",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
-              "You cancel both your current goal and all goals currently in the pending queue",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      definition = new ToolDefinition("cancelSingleScheduledGoal",
-              "You cancel a particular scheduled goal, meaning one tasks which has been scheduled to occur at a specific time in the future",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("cancelAllScheduledGoals",
-              "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //Temporarily removed in focused context attempt
+//      //TODO long term: goal manipulation focused context?
+//      //TODO short term: give standardized goal type definition somewhere?
+//      definition = new ToolDefinition("cancelCurrentTask",
+//              "You cancel and fully discard your current goal, whether it is active or suspended.",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//      definition = new ToolDefinition("suspendCurrentTask",
+//              "You pause your current goal, which can be later resumed or canceled",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//      definition = new ToolDefinition("resumeCurrentTask",
+//              "You resume your current goal if it is suspended",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//
+//      definition = new ToolDefinition("cancelSingleTaskInQueue",
+//              "You cancel and remove a specific goal in the queue specified by its index",
+//              List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//      definition = new ToolDefinition("cancelAllQueuedTasks",
+//              "You cancel all goals currently in the pending queue.",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//
+//      definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
+//              "You cancel both your current goal and all goals currently in the pending queue",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//
+//      definition = new ToolDefinition("cancelSingleScheduledGoal",
+//              "You cancel a particular scheduled goal, meaning one tasks which has been scheduled to occur at a specific time in the future",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+//      definition = new ToolDefinition("cancelAllScheduledGoals",
+//              "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future",
+//              new ArrayList());
+//      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       //TODO long term: make focused context
       //TODO short term: including kiosk mode? (through language?) <- think this is either something that needs to be externally explained or integrated deeply enough that it is a focused context.
@@ -1562,26 +1714,26 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
-      definition = new ToolDefinition("lowerVideoVolume",
-              "You lower the volume of videos played on your screen by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVideoVolume",
-              "You raise the volume of videos played on your screen by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("lowerVideoVolume",
+      //        "You lower the volume of videos played on your screen by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("raiseVideoVolume",
+      //        "You raise the volume of videos played on your screen by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("setVoiceVolume",
               "You set the volume of your own speaking voice",
               List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The voice volume as a percentage. Acceptable values are whole numbers between 0 and 100", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("lowerVoiceVolume",
-              "You lower the volume of your own speaking voice by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVoiceVolume",
-              "You raise the volume of your own speaking voice by one step",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("lowerVoiceVolume",
+      //        "You lower the volume of your own speaking voice by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      //definition = new ToolDefinition("raiseVoiceVolume",
+      //        "You raise the volume of your own speaking voice by one step",
+      //        new ArrayList());
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("displayImage",
               "You display an :image from your saved collection on your built-in screen display at a :location.",
@@ -1620,8 +1772,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
 
-      definition = new ToolDefinition("stopTalking",
-              "You stop talking and do not verbally respond",
+      definition = new ToolDefinition("dontRespond",
+              "You do not verbally respond",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1631,6 +1783,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("learnTaskSequence",
               "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("modifyExistingTaskStatus",
+              "You begin a dialogue interaction with the user to pause, cancel, or resume existing assigned tasks. Examples of when this is relevant could be when a user tells you to forget about, stop, or pick back up with what you are doing.",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -2185,8 +2341,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 //                                      "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
 //                                      new ArrayList());
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-//      definition = new ToolDefinition("stopTalking",
-//                                      "You stop talking and do not verbally respond. \nExample Instruction: \"shut up.\"",
+//      definition = new ToolDefinition("dontRespond",
+//                                      "You do not verbally respond. \nExample Instruction: \"shut up.\"",
 //                                      new ArrayList());
 //      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 //
