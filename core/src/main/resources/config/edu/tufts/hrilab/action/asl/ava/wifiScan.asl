@@ -64,6 +64,9 @@ import java.lang.Integer;
 }
 
 () = getPreviouslyMeasuredWifiAtLocationString(Symbol ?location) {
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
     Predicate !response;
@@ -72,7 +75,9 @@ import java.lang.Integer;
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !goalID = act:submitGoal(!response);
+        !priorityTier = act:getPriorityTierForGoal(!response);
+        !priority = act:getPriorityForGoal(!response);
+        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
@@ -112,12 +117,17 @@ import java.lang.Integer;
     }
     !output = op:invokeMethod(!sb,"toString");
 
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     Symbol !user = this:getOriginalSubmitter();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !goalID = act:submitGoal(!response);
+        !priorityTier = act:getPriorityTierForGoal(!response);
+        !priority = act:getPriorityForGoal(!response);
+        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {
@@ -140,6 +150,9 @@ import java.lang.Integer;
     act:measureWifiAtCurrentLocation();
     Predicate !response;
 
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     Symbol !currentLocation;
     String !output;
     !currentLocation = act:getCurrentLocation();
@@ -149,7 +162,9 @@ import java.lang.Integer;
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !goalID = act:submitGoal(!response);
+        !priorityTier = act:getPriorityTierForGoal(!response);
+        !priority = act:getPriorityForGoal(!response);
+        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
         act:joinOnGoal(!goalID);
         !output = op:getName(!response);
         if (op:equals(!output,"generateResponseFromString")) {

@@ -18,7 +18,7 @@
         "id" : "call_2e29902b9d4c4e8f9763d2d5",
         "type" : "function",
         "function" : {
-          "name" : "getInformationAroundTeachingLocationsAndNavigation",
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
           "arguments" : "{}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "call_5b00ca79d48f4196aa95aee3",
         "type" : "function",
         "function" : {
-          "name" : "getInformationAroundTeachingLocationsAndNavigation",
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
           "arguments" : "{}"
         },
         "index" : 0
@@ -202,7 +202,7 @@
         "id" : "call_90c1e89ffc9b46049594d0dd",
         "type" : "function",
         "function" : {
-          "name" : "getInformationAroundTeachingLocationsAndNavigation",
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
           "arguments" : "{}"
         },
         "index" : 0
@@ -294,7 +294,7 @@
         "id" : "call_b7f6f71e5f66447eb653e62d",
         "type" : "function",
         "function" : {
-          "name" : "getInformationAroundTeachingLocationsAndNavigation",
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
           "arguments" : "{}"
         },
         "index" : 0

@@ -202,7 +202,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
               "End the conversation with the user and discard the current in progress definition.",
               new ArrayList<>()),
-              UtteranceType.INSTRUCT
+              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
       );
       defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
               "Use this to ask the system for up to date information about your current list of tasks. Call this" +
@@ -216,7 +216,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               "End the conversation with the user. This is usually desired in two main cases. 1. The user no" +
                       " longer wants to perform your shared task. Or 2. The user has said goodbye or needs to leave.",
               new ArrayList<>()),
-              UtteranceType.INSTRUCT
+              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
       );
       defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
               "Use this to ask the system for up to date information about your current list of tasks. Call this" +
