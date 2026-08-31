@@ -336,7 +336,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getInformationAroundHowToTeachATask":
             case "getInformationAroundWhatALearnedTaskIs":
             case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
-            case "getInformationAroundTeachingLocationsAndNavigation":
+            case "getAssistanceOnUsingSaveLocationAndGoToLocationProperly":
             case "getPreviouslyMeasuredWifiAtLocationsString":
             case "getPreviouslyMeasuredWifiAtCurrentLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationsString":

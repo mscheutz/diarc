@@ -332,7 +332,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       vars.put("%language", language);
 
       if (useCondensedTools) {
-         vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ". Values not present in the lists must be rejected and/or resolved to the correct entry.");
+         vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. Values not present in the lists must be rejected\\n-- For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ".\\n- If asked to go to a location which does not exist, call the \"getAssistanceOnUsingSaveLocationAndGoToLocationProperly\" tool to learn how to save new locations.\\n- New videos and images can be added through the associated website.");
       } else {
          vars.put("%toolArgumentTypeDescription","");
       }
@@ -520,7 +520,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       Predicate semantics = (Predicate) utterance.getSemantics();
       StringBuilder errorStringBuilder = new StringBuilder();
       Predicate transformed = correctCommonNLUMistakesHelper(semantics, utterance.getAddressee(), utterance.getSpeaker(), errorStringBuilder);
-      if (transformed == null) {
+      if (transformed == null || !errorStringBuilder.isEmpty()) {
          return errorStringBuilder.toString();
       } else {
          utterance.setSemantics(transformed);
@@ -822,6 +822,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                } else if (taskType.equals("scheduled")) {
                   return Factory.createPredicate("cancelScheduledTasks",args.get(0),taskIndicesPred);
                }
+            }
+         } else if (command.equals("saveLocation")) {
+            //TODO: type should be manually stripped and/or tool argument processing updated to only slot in VAR for actual existing entities to prevent LLM mistakes
+            List<Symbol> args = semantics.getArgs();
+            if (args.get(1).hasType()) {
+               errorStringBuilder.append("- saveLocation takes in a new location label, not an existing location entity. Please call this tool again without the :location suffix. Do not involve the user in this operation.");
             }
          }
       }
@@ -1459,7 +1465,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
                                       new ArrayList());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getInformationAroundTeachingLocationsAndNavigation",
+      definition = new ToolDefinition("getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
                                       "Use this to get information from the system around the concepts of saved locations, navigating between them, and how to save new ones. The provided information may be helpful to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"Can I teach you how to go to X\".",
                                       new ArrayList<>());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -1636,7 +1642,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //TODO: Methods you cannot schedule or teach (this, maybe follow/stopFollowing, dontRespond, forgetTaughtAction, focused contexts, ...)
       definition = new ToolDefinition("saveLocation",
-              "You save your current position under the supplied name",
+              "You save your current position under the supplied name. Use the 'getAssistanceOnUsingSaveLocationAndGoToLocationProperly' tool to understand how to use this function properly.",
               List.of(new ToolParameterHelper("name", "string", new ArrayList(), "The label to save the location as", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1857,8 +1863,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //        "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
       //        new ArrayList<>());
       //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getInformationAroundTeachingLocationsAndNavigation",
-              "Use this to get information from the system around the concepts of saved locations, navigating between them, and how to save new ones. The provided information may be helpful to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"Can I teach you how to go to X\".",
+      definition = new ToolDefinition("getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
+              "Use this to get information from the system about navigation, saved locations, the map, and how to learn new locations.",
               new ArrayList<>());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
