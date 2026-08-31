@@ -413,18 +413,18 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     return vars;
   }
-  protected List<ToolDefinition> getContextDependentToolDefinitions(Symbol agentTeam) {
-    List<ToolDefinition> contextDependentDefinitions = new ArrayList<>();
+  protected Map<String,Tool> getContextDependentTools(Symbol agentTeam) {
+    Map<String,Tool> contextDependentTools = new HashMap<>();
     List<Predicate> currentGoals = getCurrentGoals(agentTeam);
     if (currentGoals != null && !currentGoals.isEmpty()) {
-      if (currentGoals.get(0).getName().equals("follow")) {
-        ToolDefinition stopFollowDefinition = chatTemplates.get("nluextended").tools.get("stopFollowing").toolDefinition;
-        if (stopFollowDefinition != null) {
-          contextDependentDefinitions.add(stopFollowDefinition);
+      if (currentGoals.get(0).get(0).getName().equals("follow")) {
+        Tool stopFollowTool = chatTemplates.get("nluextended").tools.get("stopFollowing");
+        if (stopFollowTool != null) {
+          contextDependentTools.put("stopFollowing",stopFollowTool);
         }
       }
     }
-    return contextDependentDefinitions;
+    return contextDependentTools;
   }
 
   private void populateSemanticDefinitionsString(Symbol semantics, StringBuilder sb) {
@@ -583,7 +583,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
 
         // Experimental, allow advertisement of certain tools based on current context
-        tools.addAll(getContextDependentToolDefinitions(agentTeam));
+        tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
 
         // Apply input as user message
         if (!reattemptedParse) {
@@ -754,6 +754,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (correspondingTool == null) {
           correspondingTool = replyToolset.get(functionCall.name);
         }
+      }
+      //TODO: more formally define and integrate how this is done. Don't want this inefficient block here
+      if (correspondingTool == null) {
+        correspondingTool = getContextDependentTools(inputUtterance.getAddressee()).get(functionCall.name);
       }
     } catch (NullPointerException e) {
       log.error("[handleToolResponse] error finding Tool definition for called tool found in Completion response", e);
