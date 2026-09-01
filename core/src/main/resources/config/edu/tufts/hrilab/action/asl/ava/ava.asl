@@ -309,7 +309,9 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     !current = act:getCurrentLocation();
 
-    // the two-arg primitive observes both at(?location) and not(at(!current)), which can't both hold when they're the same place
+    // with the same place in both slots the two-arg primitive can never verify: its observable success
+    // effects include at(?location) and not(at(!current)), and the engine cannot observe both true for one
+    // place. skip the drive; this action's own at(?actor, ?location) effect still verifies we are there
     if (op:equals(!current, ?location)) {
         op:log("info", "[goToLocation] already at ?location");
     } else {
@@ -332,20 +334,10 @@ import edu.tufts.hrilab.action.goal.Goal;
 /******************************** Misc Testing Scripts ********************************/
 
 (Symbol ?currentLocation) = getCurrentLocation() {
-    List !bindings;
-    Map !binding;
-    Predicate !queryPred;
-    Variable !x = X;
-
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
-
-    !bindings = act:queryBelief(!queryPred);
-    if (~op:isEmpty(!bindings)) {
-        !binding = op:get(!bindings, 0);
-        ?currentLocation = op:get(!binding, !x);
-    } elseif (~obs:at(?actor, ?currentLocation)) {
-        // belief is empty after a boot or a failed move, and the pose puts us at no known location either
-        op:log("warn", "[getCurrentLocation] nothing in belief and not at any known location");
+    // always answered from the pose, never from belief: belief only changes at action boundaries, so it lags
+    // or lies during and after motion. the observation also keeps belief in step for everything that reads it
+    if (~obs:at(?actor, ?currentLocation)) {
+        op:log("info", "[getCurrentLocation] not at any known location");
         ?currentLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "unknown");
     }
 }

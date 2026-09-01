@@ -899,32 +899,20 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     log.info("[checkAt] Arrived at x: " + currentPosition.x+ ", y: " + currentPosition.y + ", theta: " + currentTheta);
 
-    // an unbound ?location asks which known locations we are at, and unknown means we are at none of them
-    if (refId.isVariable() || refId.getName().equals("unknown")) {
-      Map<Symbol, PoseReference> references;
-      try {
-        references = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes()).call(Map.class);
-      } catch (TRADEException e) {
-        log.error("[checkAt] Error getting map references", e);
-        return returnVal;
+    // the robot is at one place at a time: the nearest reference within the thresholds. sites with close-together
+    // locations overlap otherwise, and at(?desired) with not(at(?initial)) could never both check out mid-overlap.
+    // an unbound ?location binds to that place, and unknown means there is no such place
+    Symbol atLocation = nearestReferenceAt(currentPosition, currentTheta);
+    if (refId.isVariable()) {
+      if (atLocation != null) {
+        Map<Variable, Symbol> binding = new HashMap<>();
+        binding.put((Variable) refId, atLocation);
+        returnVal.add(binding);
       }
-      List<Symbol> atLocations = new ArrayList<>();
-      for (Map.Entry<Symbol, PoseReference> entry : references.entrySet()) {
-        if (!entry.getValue().hasPose()) {
-          continue;
-        }
-        double[] offset = offsetFrom(entry.getValue(), currentPosition, currentTheta);
-        if (offset[0] <= pointDistThresh && offset[1] <= orientationThresh) {
-          atLocations.add(entry.getKey());
-        }
-      }
-      if (refId.isVariable()) {
-        for (Symbol location : atLocations) {
-          Map<Variable, Symbol> binding = new HashMap<>();
-          binding.put((Variable) refId, location);
-          returnVal.add(binding);
-        }
-      } else if (atLocations.isEmpty()) {
+      return returnVal;
+    }
+    if (refId.getName().equals("unknown")) {
+      if (atLocation == null) {
         returnVal.add(new HashMap<>());
       }
       return returnVal;
@@ -947,6 +935,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     double[] offset = offsetFrom(poseReference, currentPosition, currentTheta);
     double pointDist = offset[0];
     double orientationDiff = offset[1];
+    if (atLocation != null && !atLocation.getName().equals(refId.getName())) {
+      log.warn("[checkAt] " + refId + " is within the thresholds but " + atLocation + " is nearer");
+      return returnVal;
+    }
     if (pointDist <= pointDistThresh && orientationDiff <= orientationThresh) {
       returnVal.add(new HashMap<>());
     } else {
@@ -959,6 +951,30 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     //
     return returnVal;
+  }
+
+  // the single place the robot counts as being at: the nearest reference within the thresholds, or null
+  private Symbol nearestReferenceAt(Point3d currentPosition, double currentTheta) {
+    Map<Symbol, PoseReference> references;
+    try {
+      references = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes()).call(Map.class);
+    } catch (TRADEException e) {
+      log.error("[nearestReferenceAt] Error getting map references", e);
+      return null;
+    }
+    Symbol nearest = null;
+    double nearestDist = Double.MAX_VALUE;
+    for (Map.Entry<Symbol, PoseReference> entry : references.entrySet()) {
+      if (!entry.getValue().hasPose()) {
+        continue;
+      }
+      double[] offset = offsetFrom(entry.getValue(), currentPosition, currentTheta);
+      if (offset[0] <= pointDistThresh && offset[1] <= orientationThresh && offset[0] < nearestDist) {
+        nearest = entry.getKey();
+        nearestDist = offset[0];
+      }
+    }
+    return nearest;
   }
 
   // distance and yaw difference from the current pose to a map reference
