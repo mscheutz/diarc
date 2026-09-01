@@ -1280,7 +1280,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("dontRespond",
-                                      "You do not verbally respond. \nExample Instruction: \"shut up.\"",
+                                      "The user has asked you to not verbally respond. \nExample Instruction: \"shut up.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1700,7 +1700,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("dontRespond",
-              "You do not verbally respond",
+              "The user has asked you to not verbally respond",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
