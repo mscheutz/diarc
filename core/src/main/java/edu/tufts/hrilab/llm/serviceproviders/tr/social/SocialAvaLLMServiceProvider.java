@@ -538,7 +538,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                List<Symbol> argsWithActor = new ArrayList<>();
                argsWithActor.add(actor);
                if (innerArg.isTerm()) {
-                  argsWithActor.addAll(((Term) semantics.get(1)).getArgs());
+                  innerArg = correctCommonNLUMistakesHelper((Predicate)innerArg, actor, instructor, errorStringBuilder);
+                  if (innerArg != null) {
+                     argsWithActor.addAll(((Term)innerArg).getArgs());
+                  } else {
+                     return null;
+                  }
                }
                return Factory.createPredicate(command, actor, Factory.createPredicate(innerArg.getName(), argsWithActor));
             }
@@ -828,6 +833,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             List<Symbol> args = semantics.getArgs();
             if (args.get(1).hasType()) {
                errorStringBuilder.append("- saveLocation takes in a new location label, not an existing location entity. Please call this tool again without the :location suffix. Do not involve the user in this operation.");
+            }
+         } else if (command.equals("urgentPriority") || command.equals("forgetTaughtAction")) {
+            Predicate transformedArg = correctCommonNLUMistakesHelper((Predicate)semantics.get(1), actor, instructor, errorStringBuilder);
+            if (transformedArg != null) {
+               return Factory.createPredicate(command,semantics.get(0),transformedArg);
             }
          }
       }
