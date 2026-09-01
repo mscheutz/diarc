@@ -30,4 +30,3 @@ admin(local_user).
 
 %% Specific beliefs to ava
 alwaysAt(patient,robot).
-at(ava,unknown).

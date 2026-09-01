@@ -452,7 +452,14 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
     log.info("[checkAt] called. locationTerm: {}", locationTerm);
     List<Map<Variable, Symbol>> results = new ArrayList<>();
-    if (currentLocation.equalsIgnoreType(locationTerm.get(1))) {
+    Symbol location = locationTerm.get(1);
+    if (location.isVariable()) {
+      if (!currentLocation.getName().equals("unknown")) {
+        Map<Variable, Symbol> binding = new HashMap<>();
+        binding.put((Variable) location, currentLocation);
+        results.add(binding);
+      }
+    } else if (currentLocation.equalsIgnoreType(location)) {
       results.add(new HashMap<>()); // i.e., true
     }
     return results;

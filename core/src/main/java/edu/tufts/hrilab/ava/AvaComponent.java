@@ -888,25 +888,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
     ArrayList<Map<Variable, Symbol>> returnVal = new ArrayList<>();
-
-    // get pose reference for target ?location
     Symbol refId = locationTerm.get(1);
-    PoseReference poseReference = null;
-    try {
-      poseReference = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
-                      .call(PoseReference.class, refId);
-    } catch (TRADEException e) {
-      log.error("Error getting pose reference for {}", refId, e);
-      return returnVal;
-    }
-    if (poseReference == null) {
-      log.warn("[checkAt] no map reference for {}; unknown location", refId);
-      return returnVal;
-    }
-    Point3d goalPosition = poseReference.getPose().getLeft();
-    Quat4d goalOrientation = poseReference.getPose().getRight();
-    double[] goalAngles = Convert.convertToEuler(goalOrientation);
-    double goalTheta = goalAngles[Convert.YAW];
 
     // get current pose
     Pair<Point3d, Quat4d> currentPose = getPose();
@@ -917,8 +899,54 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     log.info("[checkAt] Arrived at x: " + currentPosition.x+ ", y: " + currentPosition.y + ", theta: " + currentTheta);
 
-    double pointDist = currentPosition.distance(goalPosition);
-    double orientationDiff = Math.abs(goalTheta - currentTheta);
+    // an unbound ?location asks which known locations we are at, and unknown means we are at none of them
+    if (refId.isVariable() || refId.getName().equals("unknown")) {
+      Map<Symbol, PoseReference> references;
+      try {
+        references = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes()).call(Map.class);
+      } catch (TRADEException e) {
+        log.error("[checkAt] Error getting map references", e);
+        return returnVal;
+      }
+      List<Symbol> atLocations = new ArrayList<>();
+      for (Map.Entry<Symbol, PoseReference> entry : references.entrySet()) {
+        if (!entry.getValue().hasPose()) {
+          continue;
+        }
+        double[] offset = offsetFrom(entry.getValue(), currentPosition, currentTheta);
+        if (offset[0] <= pointDistThresh && offset[1] <= orientationThresh) {
+          atLocations.add(entry.getKey());
+        }
+      }
+      if (refId.isVariable()) {
+        for (Symbol location : atLocations) {
+          Map<Variable, Symbol> binding = new HashMap<>();
+          binding.put((Variable) refId, location);
+          returnVal.add(binding);
+        }
+      } else if (atLocations.isEmpty()) {
+        returnVal.add(new HashMap<>());
+      }
+      return returnVal;
+    }
+
+    // get pose reference for target ?location
+    PoseReference poseReference = null;
+    try {
+      poseReference = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReference").argTypes(Symbol.class))
+                      .call(PoseReference.class, refId);
+    } catch (TRADEException e) {
+      log.error("Error getting pose reference for {}", refId, e);
+      return returnVal;
+    }
+    if (poseReference == null) {
+      log.warn("[checkAt] no map reference for {}", refId);
+      return returnVal;
+    }
+
+    double[] offset = offsetFrom(poseReference, currentPosition, currentTheta);
+    double pointDist = offset[0];
+    double orientationDiff = offset[1];
     if (pointDist <= pointDistThresh && orientationDiff <= orientationThresh) {
       returnVal.add(new HashMap<>());
     } else {
@@ -931,6 +959,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     //
     return returnVal;
+  }
+
+  // distance and yaw difference from the current pose to a map reference
+  private double[] offsetFrom(PoseReference poseReference, Point3d currentPosition, double currentTheta) {
+    Point3d goalPosition = poseReference.getPose().getLeft();
+    Quat4d goalOrientation = poseReference.getPose().getRight();
+    double[] goalAngles = Convert.convertToEuler(goalOrientation);
+    double goalTheta = goalAngles[Convert.YAW];
+    return new double[]{currentPosition.distance(goalPosition), Math.abs(goalTheta - currentTheta)};
   }
 
   protected Justification followPath(List<PathAction> path) {

@@ -295,9 +295,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         success infer : not(at(?actor, !current));
         success infer : at(?actor, ?location);
         nonperf infer : not(at(?actor, !current));
-        nonperf infer : at(?actor, unknown);
         failure infer : not(at(?actor, !current));
-        failure infer : at(?actor, unknown);
     }
     onInterrupt : {
         cancel : act:stop();
@@ -306,7 +304,12 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     !current = act:getCurrentLocation();
 
-    act:goToLocation(?location, !current);
+    // the two-arg primitive observes both at(?location) and not(at(!current)), which can't both hold when they're the same place
+    if (op:equals(!current, ?location)) {
+        op:log("info", "[goToLocation] already at ?location");
+    } else {
+        act:goToLocation(?location, !current);
+    }
 }
 
 () = goHome() {
@@ -332,12 +335,13 @@ import edu.tufts.hrilab.action.goal.Goal;
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
 
     !bindings = act:queryBelief(!queryPred);
-    if (op:isEmpty(!bindings)) {
-        op:log("warn", "[getCurrentLocation] locQuery returned no results");
-        ?currentLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "unknown");
-    } else {
+    if (~op:isEmpty(!bindings)) {
         !binding = op:get(!bindings, 0);
         ?currentLocation = op:get(!binding, !x);
+    } elseif (~obs:at(?actor, ?currentLocation)) {
+        // belief is empty after a boot or a failed move, and the pose puts us at no known location either
+        op:log("warn", "[getCurrentLocation] nothing in belief and not at any known location");
+        ?currentLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "unknown");
     }
 }
 
