@@ -50,6 +50,7 @@ public class DisplayCanvas extends JPanel {
     Font font = new Font("Arial", Font.PLAIN, fontSize);
 
     simpleImageElement = new SimpleImageElement();
+    simpleImageElement.setRepaint(this::repaint);
     simpleTextElement = new SimpleTextElement(font, fg, fgRobot);
   }
 

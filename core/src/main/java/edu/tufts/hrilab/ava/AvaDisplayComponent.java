@@ -374,7 +374,11 @@ public class AvaDisplayComponent extends DiarcComponent {
 
       BufferedImage blankCursorImage = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
       Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(blankCursorImage, new Point(0, 0), "blank cursor");
+      // the glass pane and the video surface are outside the content pane, so they need it too
+      frame.setCursor(blankCursor);
       frame.getContentPane().setCursor(blankCursor);
+      listeningIndicatorPane.setCursor(blankCursor);
+      mediaPlayerComponent.videoSurfaceComponent().setCursor(blankCursor);
     } else {
       frame.setUndecorated(false);
       frame.setResizable(false);
