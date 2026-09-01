@@ -332,9 +332,9 @@ import edu.tufts.hrilab.action.goal.Goal;
         op:invokeMethod(!actDescArgs, "add", !stepPredicate);
         !actionDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
         !desc = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
-        ?output = act:generateOutputStringFromSemantics(!desc);
+        ?output = act:generateOutputStringFromSemantics("!desc. Summarize this description if relaying to the user.");
     } else {
-        ?output = op:newObject("java.lang.String","As of right now, I can only describe the actions which have been taught to me by a user. For predefined actions, please refer to my user guide");
+        ?output = op:newObject("java.lang.String","?action is a predefined action and not one which the user has taught you. As of right now, you can only describe the actions which have been taught by a user. For predefined actions, please refer the user to the user guide");
     }
 }
 
@@ -579,7 +579,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         }
     }
 }
-() = getTaughtActions() {
+() = getTaughtActionsList() {
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Long !priority;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
@@ -631,7 +631,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     Symbol !user = this:getOriginalSubmitter();
     Predicate !response;
     !output = act:generateActionStepsString(?action);
-    !output = op:newObject("java.lang.String","!output Summarize this description if relaying to the user.");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);

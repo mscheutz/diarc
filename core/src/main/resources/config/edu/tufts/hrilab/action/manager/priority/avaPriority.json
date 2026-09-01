@@ -235,7 +235,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getTaughtActions":  {
+  "getTaughtActionsList":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
