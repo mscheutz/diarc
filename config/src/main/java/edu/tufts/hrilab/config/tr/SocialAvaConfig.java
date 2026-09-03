@@ -184,7 +184,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
     } else {
       nlgArgs = "-templated -cache -cacheName ava-reverse -cachePersist -llm -sequence cache templated llm";
     }
-    createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
+    createInstance(edu.tufts.hrilab.slug.nlg.hybrid.domains.AvaHybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
     //TODO: proper configuration
     // ava always listens on the ww loop; streaming only when the tts is the streaming component
