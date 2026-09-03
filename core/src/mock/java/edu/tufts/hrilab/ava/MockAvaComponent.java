@@ -8,10 +8,8 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.Gson;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
-import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.response.HTTPMapResponse;
 import edu.tufts.hrilab.ava.message.response.HTTPMapsResponse;
@@ -233,55 +231,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //    }
     //  }
     //}
-  }
-
-  @Override
-  protected void postRegistrationInit() {
-    try {
-      TRADE.registerNotificationNowOrWhenJoined(this,
-                                                new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class),
-                                                "onGoalManagerRegistrationAvailable");
-    } catch (TRADEException e) {
-      log.error("[postRegistrationInit] Error registering for goal manager availability.", e);
-    }
-  }
-
-  /**
-   * Called by TRADE when registerGoalManagerNotification becomes available (now or when joined).
-   * Registers our callback for GOAL_STATUS_CHANGE notifications.
-   */
-  @TRADEService
-  public void onGoalManagerRegistrationAvailable(TRADEServiceInfo registerService) throws TRADEException {
-    TRADEServiceInfo myHandler = getMyService("hideListeningIndicatorGoalListener", GoalInfo.class);
-    registerService.call(void.class, myHandler, NotificationType.GOAL_STATUS_CHANGE);
-    log.info("[onGoalManagerRegistrationAvailable] Registered for goal status notifications.");
-  }
-
-  // Ava-only listening indicator: drop the robot head when a real terminal task action is
-  // submitted (e.g. "go to chair 1"), so the head goes away once we stop listening to go
-  // do something. Keep it up for replies and for focused-context entries that start an
-  // interactive instruction dialogue (scheduleTask, learnTaskSequence) -- the robot is
-  // still asking the user for info there.
-  // Terminated statuses are skipped because a goal finishing can otherwise take the head
-  // back down after the re-arm has already put it up.
-  @TRADEService
-  public void hideListeningIndicatorGoalListener(GoalInfo info) throws TRADEException {
-    if (info.status.isTerminated()) {
-      return;
-    }
-    String goalname = info.goal == null ? info.unboundGoal.getName() : info.goal.getName();
-    switch (goalname) {
-      case "generateResponseFromString":
-      case "updateDialogueHistoryFromString":
-      case "scheduleTask":
-      case "learnTaskSequence":
-        return;
-    }
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("hideListeningIndicator")).call(void.class);
-    } catch (TRADEException e) {
-      log.error("[hideListeningIndicatorGoalListener] unable to call hideListeningIndicator", e);
-    }
   }
 
   //@Override
@@ -637,7 +586,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
     log.info("[triggerWW] in method");
     forcedWWInFlight.set(true);
-    updateListeningIndicator(true);
     try {
       writer.write("hello\n");
       writer.flush();
@@ -746,11 +694,10 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             micMuteCount.set(0);
             micMuted.set(false);
             asrSessionTainted.set(false);
-            // Real wake-word brings up the listening indicator; forced/auto rearms keep it
-            // up via triggerWW, so it persists across the conversation instead of per turn.
-            updateListeningIndicator(true);
           }
 
+          // the head is the capture indicator: up from the wake word (real or forced) until the result line
+          updateListeningIndicator(true);
           //Display on screen that we are now listening using ASR
           displayText("Understanding speech", 10000);
           //Also play audio indicating listening status
@@ -772,6 +719,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             s.append((char) is.read());
           }
           result = s.toString();
+          updateListeningIndicator(false);
         }
 
         //Parse ASR result - form: <prefix> <speech>
@@ -801,7 +749,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (result.equals("<novad>\n")) {
               displayText("<No voice input detected>", 5000);
             }
-            updateListeningIndicator(false);
             result = "";
             continue;
           } else if (result.startsWith("<cutoff> ")) {
@@ -842,7 +789,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             if (utterance.getType() == UtteranceType.UNKNOWN) {
               //TODO: How should this be phrased?
               displayText("<Input could not be understood and detected as potential background noise>", 10000);
-              updateListeningIndicator(false);
               result = "";
               continue;
             } else {
@@ -864,6 +810,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           result = "";
         }
       }
+      // the listener can stop mid-capture (park, cancel, python exit)
+      updateListeningIndicator(false);
       is.close();
       ww_process_os.close();
       process.destroy();
