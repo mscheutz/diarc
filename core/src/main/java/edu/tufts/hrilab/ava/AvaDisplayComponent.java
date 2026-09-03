@@ -882,7 +882,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public boolean setVideoVolume(Symbol volumeSymbol) {
     try {
-      int volume = Integer.parseInt(volumeSymbol.getName());
+      int volume = (int)Double.parseDouble(volumeSymbol.getName());
       return setVideoVolume(volume);
     } catch (NumberFormatException e) {
       log.error("[setVideoVolume] supplied volumeSymbol not parseable as int: {}", volumeSymbol, e);

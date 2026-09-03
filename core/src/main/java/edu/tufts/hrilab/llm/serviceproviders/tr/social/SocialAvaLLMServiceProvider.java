@@ -538,7 +538,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                List<Symbol> argsWithActor = new ArrayList<>();
                argsWithActor.add(actor);
                if (innerArg.isTerm()) {
-                  argsWithActor.addAll(((Term) semantics.get(1)).getArgs());
+                  innerArg = correctCommonNLUMistakesHelper((Predicate)innerArg, actor, instructor, errorStringBuilder);
+                  if (innerArg != null) {
+                     argsWithActor.addAll(((Term)innerArg).getArgs());
+                  } else {
+                     return null;
+                  }
                }
                return Factory.createPredicate(command, actor, Factory.createPredicate(innerArg.getName(), argsWithActor));
             }
@@ -828,6 +833,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             List<Symbol> args = semantics.getArgs();
             if (args.get(1).hasType()) {
                errorStringBuilder.append("- saveLocation takes in a new location label, not an existing location entity. Please call this tool again without the :location suffix. Do not involve the user in this operation.");
+            }
+         } else if (command.equals("urgentPriority") || command.equals("forgetTaughtAction")) {
+            Predicate transformedArg = correctCommonNLUMistakesHelper((Predicate)semantics.get(1), actor, instructor, errorStringBuilder);
+            if (transformedArg != null) {
+               return Factory.createPredicate(command,semantics.get(0),transformedArg);
             }
          }
       }
@@ -1280,7 +1290,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("dontRespond",
-                                      "You do not verbally respond. \nExample Instruction: \"shut up.\"",
+                                      "The user has asked you to not verbally respond. \nExample Instruction: \"shut up.\"",
                                       new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1496,7 +1506,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //        new ArrayList());
       //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
       //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt
-      definition = new ToolDefinition("getTaughtActions",
+      definition = new ToolDefinition("getTaughtActionsList",
                                       "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
                                       new ArrayList());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
@@ -1700,7 +1710,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       definition = new ToolDefinition("dontRespond",
-              "You do not verbally respond",
+              "The user has asked you to not verbally respond",
               new ArrayList());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1870,6 +1880,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //TODO: move to base class
       //// Domain independent ITK
+      definition = new ToolDefinition("getTaughtActionsList",
+              "Use this to ask the system for a list of all of the actions which have been taught to you by a user.",
+              new ArrayList());
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       String exampleCallString = "<function=getActionSteps><parameter=action>escort</parameter></function>";
       definition = new ToolDefinition("getActionSteps",
               "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by populated JSON representing another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\" \nExample Call: " + exampleCallString,
@@ -1890,10 +1904,6 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //// Removed
       //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt
-      //definition = new ToolDefinition("getTaughtActions",
-      //        "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       //definition = new ToolDefinition("getPredefinedActions",
       //        "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
       //        new ArrayList());

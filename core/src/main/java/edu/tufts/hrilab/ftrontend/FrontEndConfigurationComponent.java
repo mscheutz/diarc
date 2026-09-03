@@ -317,7 +317,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getAllKnownLocations":
             case "getBatteryLevelString":
             case "getCurrentLocationString":
-            case "getTaughtActions":
+            case "getTaughtActionsList":
             case "getIfCanPerform":
             case "getPredefinedActions":
             case "getActionSteps":
