@@ -2276,8 +2276,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
-      //TODO: Call out to front end config?
-      dummy.setNeedsValidation(true);
+      boolean useValidation = true;
+      try {
+        useValidation = TRADE.getAvailableService(new TRADEServiceConstraints().name("usingValidation")).call(Boolean.class);
+      } catch (TRADEException e) {
+        log.error("[addToolResponse] error reaching out to FrontEndConfigurationComponent for validation setting");
+      }
+      dummy.setNeedsValidation(useValidation);
       //Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
       Utterance out = runCompletionRetryLoop(null, tools, dummy, collection, new StringBuilder(), false);
 
