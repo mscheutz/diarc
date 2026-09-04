@@ -7,6 +7,8 @@ VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
 VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}
 VERBTTT; {((C/REF)/REF)/REF; #x#y#z.?PH(?ADDRESSEE,$y,$x)}, {(((C/REF)/REF)/REF)\AGENT; #a#x#y#z.?PH($a,$y,$x)}
 
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S,  C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+
 THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
 LOC;{RN; ?PH:location ; VAR}, {DN; ?PH:property}
 
@@ -29,6 +31,10 @@ an; DESC/DN ; #x.$x
 a; DESC/DESC ; #x.$x
 an; DESC/DESC ; #x.$x
 
+can you; Q/C ; #x.can($x)
+could you; Q/C ; #x.can($x)
+would you; Q/C ; #x.can($x)
+
 can; (AGENT/C) \ AGENT ; #x.$x
 could; (AGENT/C) \ AGENT ; #x.$x
 would; (AGENT/C) \ AGENT ; #x.$
@@ -49,8 +55,8 @@ there is; VERBTT ; addfact
 
 %%%%%%%%%% Introspection %%%%%%%%%%%%%
 do; Q/ C; #x.$x
-%see; (Q/REF)\AGENT; #x#y.see($x,$y)
-see; (Q/DESC)\AGENT; #x#y.see($x,$y)
+%see; (C/REF)\AGENT; #x#y.see($x,$y)
+see; (C/DESC)\AGENT; #x#y.see($x,$y)
 
 know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
 to; INF/C; #x.to($x)
@@ -67,7 +73,8 @@ get; VERBTT ; getTo
 get me; VERBTT ; deliver
 deliver; VERBTT ; deliver
 bring; VERBTT ; deliver
-bring me; VERBTT ; deliver
+bring; VERBTTT ; deliver
+%bring me; VERBTTT ; deliver
 fetch; VERBTT ; deliver
 fetch me; VERBTT ; deliver
 deliver; VERBTT ; deliver
@@ -257,7 +264,7 @@ you; AGENT; ?ADDRESSEE
 me; AGENT; ?INTERACTOR
 i; AGENT; ?INTERACTOR
 %spot; AGENT; spot:agent
-spot; AGENT; ?ADDRESSEE
+spot; ADDRESSABLE; self
 
 %available; RN/RN; #x.available($x) ; MOD
 %available; REF/REF; #x.available($x) ; MOD
@@ -296,6 +303,7 @@ search for; VERBT; perceiveEntity
 find; VERBT; perceiveEntity
 
 %Versions which allow ref specified?
+i am holding it; VAL; holding(it)
 am holding it; VAL; holding(it)
 im holding it; VAL; holding(it)
 i'm holding it; VAL; holding(it)

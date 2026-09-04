@@ -30,6 +30,7 @@ import com.google.gson.GsonBuilder;
 import java.io.InputStreamReader;
 
 public class OpenaiClient {
+
   static private Logger log = LoggerFactory.getLogger(OpenaiClient.class);
 
   private String completionEndpoint     = "https://api.openai.com/v1/completions";
@@ -66,14 +67,24 @@ public class OpenaiClient {
 
   public OpenaiClient () {
     try {
-      Dotenv dotenv = Dotenv.load();
+      Dotenv dotenv = Dotenv.configure()
+              .directory(System.getProperty("user.home") + "/.diarc")
+              .filename(".env")                           // make sure file is named `.env`
+              .load();
       apiKey = dotenv.get("OPENAI_API_KEY");
+      log.info("Loaded OpenAI key from ~/.diarc/.env");
     } catch (DotenvException ex) {
-      log.error("Error loading .env file and retreiving API key");
+      log.warn("Could not load .env from ~/.diarc. Trying environment variable.");
+      apiKey = System.getenv("OPENAI_API_KEY");
     }
+
     if (apiKey == null) {
       log.error("OpenAI requires an API key to use their services.");
     }
+  }
+
+  public boolean hasApiKey() {
+    return apiKey != null && !apiKey.isEmpty();
   }
 
   public void setEndpoint (String endpoint) {
@@ -244,31 +255,32 @@ public class OpenaiClient {
    * @param requestBody an OpenaiChatRequestBody object containing the chat model and messages
    * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
    **/
-  private OpenaiChatCompletionResponse chatCompletion (OpenaiChatRequestBody requestBody) {
+  private OpenaiChatCompletionResponse chatCompletion(OpenaiChatRequestBody requestBody) {
     if (canonical && apiKey == null) {
-      log.error("Cannot complete request without an API key for OpenAI.");
+      log.error("❌ Cannot complete request without an API key for OpenAI.");
       return null;
     }
+
     if (canonical && !chatCompletionModels.containsKey(requestBody.model)) {
-      log.error("Model " + model + " cannot be used with the OpenAI chat completion endpoint.");
+      log.error("❌ Model {} cannot be used with the OpenAI chat completion endpoint.", requestBody.model);
       return null;
     }
-    /*tokenizer.setEncoding("openai", requestBody.model);
-    int tokens = 0;
-    for (Message message : requestBody.messages) {
-      tokens += tokenizer.count(message.content);
-    }
-    log.warn("Tokens in request: " + tokens);
-    if (tokens > maxTokens ) {
-      log.warn("prompt contains: " + tokens + " tokens. Max tokens: " + maxTokens + " for model: " + model);
-    }*/
+
     Map<String, String> headers = new HashMap<>();
     if (canonical) {
       headers.put("Authorization", "Bearer " + apiKey);
     }
+
     Gson gson = new Gson();
     String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
-    log.debug("Response: " + response);
+
+    if (response == null) {
+      log.error("OpenAI HTTP call returned null.");
+      return null;
+    }
+
+    log.debug("📥 Raw OpenAI response: {}", response);
+
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);
   }
   /**
