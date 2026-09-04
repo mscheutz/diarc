@@ -275,11 +275,12 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       if (goalPred != null) {
          switch (goalPred.getName()) {
             case "suspendCurrentTask":
+            case "resumeCurrentTask":
             case "suspendGoal":
             case "cancelCurrentTask":
             case "cancelGoal":
             case "dontRespond":
-            case "modifyExistingTaskStatus":
+            //case "modifyExistingTaskStatus":
                return true;
             default:
                return false;
@@ -422,6 +423,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "cancelSingleScheduledGoal":
             case "forgetAllTaughtActions":
             case "modifyExistingTaskStatus":
+            case "submitTaskSequenceDefinition":
                return true;
             default:
                return false;

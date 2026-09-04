@@ -475,20 +475,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateBatteryLevelString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getCurrentLocationString() {
@@ -497,20 +499,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateCurrentLocationString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getAllKnownLocations() {
@@ -519,20 +523,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateAllKnownLocationsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getAllKnownPatrolPaths() {
@@ -541,20 +547,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateAllKnownPatrolPathsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getAllLocationsOnPatrolPath(Symbol ?pathName) {
@@ -563,20 +571,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateAllLocationsOnPatrolPathString(?pathName);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getTaughtActionsList() {
@@ -585,20 +595,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateTaughtActionsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getPredefinedActions() {
@@ -607,20 +619,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generatePredefinedActionsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getActionSteps(Predicate ?action) {
@@ -629,20 +643,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateActionStepsString(?action);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getIfCanPerform(Predicate ?actionPredicate) {
@@ -651,20 +667,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateIfCanPerformString(?actionPredicate);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getKioskSettings() {
@@ -673,20 +691,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateKioskSettingsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getSavedVideos() {
@@ -695,20 +715,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateSavedVideosString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getVideoVolume() {
@@ -717,20 +739,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateVideoVolumeString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getIsVideoSaved(Symbol ?videoName) {
@@ -739,20 +763,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateIsVideoSavedString(?videoName);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getSavedImages() {
@@ -761,20 +787,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateSavedImagesString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 () = getCurrentPendingScheduledTaskInformation() {
@@ -783,20 +811,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = tsc:getFullGoalsSummary(?actor);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -806,20 +836,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = op:newObject("java.lang.String","You can teach me how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\". I can take it from there and guide you through supplying all the information I need to learn the task. Alternatively, ask me for an explanation of what a taught task sequence consists of and you can supply all the necessary information yourself!");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -829,20 +861,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = op:newObject("java.lang.String","Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -852,20 +886,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = op:newObject("java.lang.String","Steps of a taught task sequence can include things like playing a video, saying a phrase, taking a wi-fi measurement, and more. I can also simply pause briefly at each location if desired.");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -875,21 +911,24 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     //!output = op:newObject("java.lang.String","- Teaching new actions: A user can begin teaching you how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\" (after which you will call the \"learnTaskSequence\" tool). You can take it from there and guide them through supplying all the information you need to learn the task. Alternatively, they can ask you for an explanation of what a taught task sequence consists of and then be able to supply all the necessary information themselves!\\n- Taught Task Components: Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action.Supplying this information will result in a task which is instructable through reference to the supplied label.\\n- Possible Taught Task Sequence Steps: Steps of a taught task sequence can include things like playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, and more.\\n- Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it");
-    !output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new instructable task from a user, a user must simply ask you to learn a new task sequence or action which will cause you to enter an action teaching specific dialogue (by you calling the \"learnTaskSequence\" tool)\\n-- Doing so with no additional task sequence details will cause the system to prompt the user for all relevant pieces of information to define the new task.\\n-- The user may also supply additional task sequence information proactively, which the system will preload into the teaching dialogue.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more\\nResponse Instructions:\\n- If the user asked relevant questions around task sequence teaching, use information from the fact list above to answer them to the best of your ability\\n- If the user explicitly asked to teach you something new, call the \"learnTaskSequence\" tool\\n- If none of this information is relevant to user input causing you to call this tool, you may ignore it or say that you do not know the answer to their questions\\nExceptions:\\n- If the user has asked anything around saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.");
+    //!output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new instructable task from a user, a user must simply ask you to learn a new task sequence or action which will cause you to enter an action teaching specific dialogue (by you calling the \"learnTaskSequence\" tool)\\n-- Doing so with no additional task sequence details will cause the system to prompt the user for all relevant pieces of information to define the new task.\\n-- The user may also supply additional task sequence information proactively, which the system will preload into the teaching dialogue.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more\\nResponse Instructions:\\n- If the user asked relevant questions around task sequence teaching, use information from the fact list above to answer them to the best of your ability\\n- If the user explicitly asked to teach you something new, call the \"learnTaskSequence\" tool\\n- If none of this information is relevant to user input causing you to call this tool, you may ignore it or say that you do not know the answer to their questions\\nExceptions:\\n- If the user has asked anything around saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.");
+    !output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new task, task sequence or action, you must call the \"learnTaskSequence\" function.\\n-- A user can instruct you to call this function by saying any variation of \"learn a new task\" or \"learn something new\".\\n-- Calling this function will trigger a task learning specific dialogue interaction.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name.\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one.\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence.\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more.\\nResponse Policy:\\n- a. If the user has asked to teach you something new, then call the \"learnTaskSequence\" tool immediately.\\n- b. If not and the user asked relevant questions around teaching, then use information from the fact list above to answer them to the best of your ability.\\n- c. If none of this information is relevant to user input, you may ignore it or say that you do not know the answer to their questions.\\nExceptions:\\n- If the user asked about saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.\\nAdditional Response Rules:\\n- Do not try to learn anything or gather any task sequence information before calling the learnTaskSequence function. You cannot learn things on your own.");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -899,7 +938,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     //!output = op:newObject("java.lang.String","Fact List:\\n- The set of saved locations available to you are presented in the location list.\\n- You only know how to navigate between saved locations, you cannot travel to any other position in the environment unless it is first saved as a location\\n- The only way to save a new location is to save your current position as a new location (by using the \"saveLocation\" tool).\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new (by using the \"follow\" tool)\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so and/or your current task is follow.\\n- You currently do not have any concept of relative position or proximity of locations. A user cannot describe the position of or path towards a new location.\\n#\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.");
     !output = op:newObject("java.lang.String","Fact List:\\n- Navigation:\\n-- You only know how to navigate between saved locations (shown in the Location List), you have no other way of autonomously navigating the environment.\\n-- You have the ability to save new locations with assistance from the user (described in the Saving Locations section).\\n-- You cannot be taught new paths between saved locations.\\n-- You have no concept of saved locations' relative position or proximity to each other.\\n-- You cannot relate any visual indicators to saved locations.\\n-- Users can only delete existing saved locations through the associated website.\\n- Saving Locations:\\n-- The only way to add a new saved location is by saving your current position as a new location (by using the \"saveLocation\" tool).\\n-- The only way to move to a novel current position is by following the user to somewhere new (by using the \"follow\" tool).\\n--- The user must instruct you to follow them (where you subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so.\\nResponse Instructions:\\n- If the user asked relevant questions around navigation or saved locations, use information from the fact list above to answer them to the best of your ability\\n- If none of this information is relevant to user input causing you to call this tool, you may ignore it or say that you do not know the answer to their questions\\nExceptions:\\n- If the user is attempting to teach you a navigation loop between existing saved locations, you may use the \"learnTaskSequence\" tool and/or the associated guide returned by the \"getInformationAroundTeachingNewActions\" tool.");
 
@@ -907,14 +947,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -924,19 +965,21 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !submitter = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = tsc:getExtendedConversationHistoryString(?user, ?agentTeam);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!submitter);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!submitter);
-        }
+        act:handleParsedUtterance(!response);
+        //!priorityTier = act:getPriorityTierForGoal(!response);
+        //!priority = act:getPriorityForGoal(!response);
+        //!goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!submitter);
+        //act:joinOnGoal(!goalID);
+        //!output = op:getName(!response);
+        //if (op:equals(!output,"generateResponseFromString")) {
+        //  act:listenPostCommunicateUtterance(!submitter);
+        //}
     }
 }

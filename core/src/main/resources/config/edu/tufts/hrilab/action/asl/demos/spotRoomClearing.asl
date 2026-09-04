@@ -306,20 +306,22 @@ import java.util.List;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateCurrentLocationString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -338,20 +340,22 @@ import java.util.List;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateAllKnownRoomsString();
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 

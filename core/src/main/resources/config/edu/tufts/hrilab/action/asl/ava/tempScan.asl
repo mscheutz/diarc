@@ -68,20 +68,22 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     String !output;
     Symbol !user = this:getOriginalSubmitter();
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !output = act:generateTemperatureAtLocationString(?location);
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -105,7 +107,8 @@ import java.lang.Integer;
     List !locList;
     Symbol !location;
     String !output;
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
 
     !locList = op:invokeMethod(?locations, "getArgs");
@@ -124,14 +127,15 @@ import java.lang.Integer;
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }
 
@@ -153,7 +157,8 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
     Symbol !currentLocation;
     String !output;
-    Predicate !response;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
     !currentLocation = act:getCurrentLocation();
     Symbol !user = this:getOriginalSubmitter();
     !output = act:generateTemperatureAtLocationString(!location);
@@ -161,13 +166,14 @@ import java.lang.Integer;
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
-        !priorityTier = act:getPriorityTierForGoal(!response);
-        !priority = act:getPriorityForGoal(!response);
-        !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-        act:joinOnGoal(!goalID);
-        !output = op:getName(!response);
-        if (op:equals(!output,"generateResponseFromString")) {
-          act:listenPostCommunicateUtterance(!user);
-        }
+        act:handleParsedUtterance(!response);
+    //    !priorityTier = act:getPriorityTierForGoal(!response);
+    //    !priority = act:getPriorityForGoal(!response);
+    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
+    //    act:joinOnGoal(!goalID);
+    //    !output = op:getName(!response);
+    //    if (op:equals(!output,"generateResponseFromString")) {
+    //      act:listenPostCommunicateUtterance(!user);
+    //    }
     }
 }

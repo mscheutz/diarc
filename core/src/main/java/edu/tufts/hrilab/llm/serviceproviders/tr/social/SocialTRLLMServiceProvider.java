@@ -2219,11 +2219,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * call the Completion endpoint with the updated Chat for a text response.
    */
   @TRADEService
-  public Predicate addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
+  public Utterance addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
     ChatCollection collection;
     ChatContext chatContext;
+    List<ToolDefinition> tools;
     String toolCallId = "";
     synchronized (currentChatCollections) {
       collection = getChatCollection(speaker, addressee);
@@ -2253,10 +2254,37 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           chatContext.history.addToolMessage(toolResponse, toolCallId);
         }
+
+        // Want to be able to point LLM towards making certain tool calls appropriately from ITK responses, adding tool list in here as well
+        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        if (chatTemplates != null) {
+          tools = new ArrayList<>(chatTemplates.toolDefinitions);
+        } else {
+          tools = new ArrayList<>(List.of(textResponseTool.toolDefinition));
+        }
+        if (chatContext.chatType == ChatType.FOCUSED) {
+          tools.addAll(universalFocusedToolDefinitions);
+          // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+          }
+        } else {
+          // Add all matching system question response tools based off of expected reply semantics
+          tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+        }
+        tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
       }
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
-      Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+      boolean useValidation = true;
+      try {
+        useValidation = TRADE.getAvailableService(new TRADEServiceConstraints().name("usingValidation")).call(Boolean.class);
+      } catch (TRADEException e) {
+        log.error("[addToolResponse] error reaching out to FrontEndConfigurationComponent for validation setting");
+      }
+      dummy.setNeedsValidation(useValidation);
+      //Utterance out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+      Utterance out = runCompletionRetryLoop(null, tools, dummy, collection, new StringBuilder(), false);
 
       // TODO: quick band-aid fix, revisit - Removing retrieved past conversation history from the current history as it
       //    can get very large very quickly. Can more safely leave in if proper history trimming and request token length
@@ -2288,33 +2316,63 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
 
       if (out.getSemantics() != null) {
-        if (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) {
-          //if (out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
-          //  return ((Predicate) out.getSemantics()).get(2).toString();
-          //}
-          return (Predicate) out.getSemantics();
-        } else if (itkActionNames.contains(out.getSemantics().getName()) && !out.getSemantics().getName().equals(toolCallName)) {
-          //TODO: want to allow this - call itk action. Issue is can't call action in asl from string. Or can't do in java because don't have itk response string in java.
-          // Would need to return a Predicate and do a bunch of checking and then submitGoal in asl.
-          return (Predicate) out.getSemantics();
+
+        // New - any sort of response allowed
+        if (out.getSemantics().getName().equals(toolCallName)) {
+          log.warn("[addToolResponse] ITK response attempting to call itself, not allowing");
         } else {
-          log.info("[addToolResponse] Trying again with added guidance before failing");
-          if (toolCallId.isEmpty()) {
-            chatContext.history.addMessage("tool", "Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
-          } else {
-            chatContext.history.addToolMessage("Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
-          }
-          out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
-          if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
-            return (Predicate) out.getSemantics();
-          } else {
-            log.error("[addToolResponse] got unexpected output even after asking to use text response {}", out);
-            return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
-          }
+          // Need to grab input lock to have side effect occur because we are not explicitly hitting parseUtteranceLLMService
+          // again, but forwarding this return value to the NLU pipeline
+          collection.grabInputLock(out, true);
+          return out;
         }
+
+        log.info("[addToolResponse] Trying again with added guidance before failing");
+        if (toolCallId.isEmpty()) {
+          chatContext.history.addMessage("tool", "Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
+        } else {
+          chatContext.history.addToolMessage("Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
+        }
+        out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+        if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
+          collection.grabInputLock(out, true);
+          return out;
+        } else {
+          log.error("[addToolResponse] got unexpected output even after asking to use text response {}", out);
+          collection.grabInputLock(out, true);
+          out.setSemantics(Factory.createPredicate("generateResponseFromString", agentTeam.toString(), "Sorry, an internal error occurred. Could you repeat that?"));
+          return out;
+        }
+
+        // Old - only text response (and nested itk calls) allowed
+        //if (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) {
+        //  //if (out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
+        //  //  return ((Predicate) out.getSemantics()).get(2).toString();
+        //  //}
+        //  return (Predicate) out.getSemantics();
+        //} else if (itkActionNames.contains(out.getSemantics().getName()) && !out.getSemantics().getName().equals(toolCallName)) {
+        //  return (Predicate) out.getSemantics();
+        //} else {
+        //  log.info("[addToolResponse] Trying again with added guidance before failing");
+        //  if (toolCallId.isEmpty()) {
+        //    chatContext.history.addMessage("tool", "Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
+        //  } else {
+        //    chatContext.history.addToolMessage("Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
+        //  }
+        //  out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+        //  if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
+        //    return (Predicate) out.getSemantics();
+        //  } else {
+        //    log.error("[addToolResponse] got unexpected output even after asking to use text response {}", out);
+        //    return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
+        //  }
+        //}
       }
       log.error("[addToolResponse] got unexpected output {}", out);
-      return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
+      collection.grabInputLock(out, true);
+      out.setSemantics(Factory.createPredicate("want",user,Factory.createPredicate("generateResponseFromString", agentTeam.toString(), "Sorry, an internal error occurred. Could you repeat that?")));
+      return out;
+      //return Factory.createPredicate("generateResponseFromString",agentTeam.toString(),"Sorry, an internal error occurred. Could you repeat that?");
     }
   }
 
@@ -3512,6 +3570,33 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   Predicate replaceReferencesInSemantics(Predicate semantics) {
+    if (semantics.getName().equals("actionDescription")) {
+      Pattern refPattern = Pattern.compile(",[^()]*?:location");
+      List<String> refStrings = new ArrayList<>();
+      String semanticString = semantics.toString();
+      Matcher matcher = refPattern.matcher(semanticString);
+      while (matcher.find()) {
+        String str = matcher.group();
+        refStrings.add(str.substring(1));
+      }
+      int maxAttempts = 3;
+      for (String str : refStrings) {
+        Symbol sym = Factory.createSymbol(str);
+        for (int i=0; i<maxAttempts;i++) {
+          try {
+            Map<Symbol, List<Term>> refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, sym);
+            if (refs != null && refs.get(sym).size() == 1) {
+              semanticString = semanticString.replaceAll(str,refs.get(sym).get(0).getName());//, refs.get(arg).get(0).get(0).getType());
+              break;
+            }
+          } catch (TRADEException e) {
+            log.warn("[generateREG] {}", str, e);
+          }
+        }
+      }
+      return Factory.createPredicate(semanticString);
+    }
+
     List<Symbol> transformedArgs = new ArrayList<>();
     for (Symbol arg: semantics.getArgs()) {
       if (arg.isPredicate()) {
@@ -3526,6 +3611,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
               if (refs.get(arg).size() == 1) {
                 transformedArg = Factory.createSymbol(refs.get(arg).get(0).getName());//, refs.get(arg).get(0).get(0).getType());
+                break;
               }
             } catch (TRADEException e) {
               log.warn("[generateREG] {}", arg, e);
