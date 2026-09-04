@@ -137,15 +137,23 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private final ScheduledExecutorService keepAliveExecutor = Executors.newScheduledThreadPool(1);
   private final ScheduledExecutorService stopGoingHomeExecutor = Executors.newScheduledThreadPool(1);
   private final ScheduledExecutorService dockingPositionCorrectionExecutor = Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService headUpdateExecutor = Executors.newScheduledThreadPool(1);
 
   private final Lock chargingLock = new ReentrantLock();
   private final Condition chargingTerminatedCondition = chargingLock.newCondition();
+  private final Object headLock = new Object();
 
   private OutputStream ww_process_os = null;
   private boolean shouldDing = true;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private volatile boolean listenForWW = true;
+  private volatile boolean capturing = false;
+  // set when we are between events with something on the way: a reply to what we just heard, or the mic
+  // opening for a re-arm we asked for. bounded, so a dead listener or a silent turn cannot hold the head up.
+  private volatile long waitingSince = 0;
+  private static final long HEAD_WAIT_MS = 6000;
+  private boolean headShown = false;
   private final AtomicBoolean forcedWWInFlight = new AtomicBoolean(false);
   private final AtomicBoolean micMuted = new AtomicBoolean(false);
   private final AtomicInteger micMuteCount = new AtomicInteger(0);
@@ -333,6 +341,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
 
     keepAlive();
+    headUpdateExecutor.scheduleAtFixedRate(() -> {
+      try {
+        //inside the try: an uncaught throw here cancels the scheduled task permanently
+        updateHead();
+      } catch (Exception e) {
+        log.error("Exception while updating the head.", e);
+      }
+    }, 0, 300, TimeUnit.MILLISECONDS);
     stopGoingHomeOnTheHour();
     monitorDockingStatus();
 
@@ -1757,12 +1773,40 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   private void updateListeningIndicator(boolean visible) {
-    log.info("[updateListeningIndicator] visible={}", visible);
+    capturing = visible;
+    updateHead();
+  }
+
+  private boolean querySpeaking() {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
-              .call(void.class, visible);
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("isSpeaking").argTypes()).call(Boolean.class);
     } catch (TRADEException e) {
-      log.debug("[updateListeningIndicator] setListeningIndicator unavailable");
+      return false;
+    }
+  }
+
+  // head up while we are mid-exchange with a local user: capturing their speech, waiting on a re-arm we
+  // asked for, working on a reply, or speaking one. an ASR timeout, an unparsed result or a dropped
+  // capture leave none of those true, so the head drops.
+  private void updateHead() {
+    boolean speaking = querySpeaking(); //outside the lock: a slow answer here would hold up a raise
+    synchronized (headLock) {
+      if (capturing || speaking) {
+        waitingSince = 0;
+      }
+      boolean waiting = waitingSince != 0 && System.currentTimeMillis() - waitingSince < HEAD_WAIT_MS;
+      boolean desired = capturing || speaking || waiting;
+      if (desired == headShown) {
+        return;
+      }
+      log.info("[updateHead] visible={} capturing={} speaking={} waiting={}", desired, capturing, speaking, waiting);
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
+                .call(void.class, desired);
+        headShown = desired;
+      } catch (TRADEException e) {
+        log.debug("[updateHead] setListeningIndicator unavailable");
+      }
     }
   }
 
@@ -1776,6 +1820,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
     log.info("[triggerWW] in method");
     forcedWWInFlight.set(true);
+    // the mic is about to open without the user saying the wake word; hold the head over that gap
+    waitingSince = System.currentTimeMillis();
+    updateHead();
     try {
       writer.write("hello\n");
       writer.flush();
@@ -1964,6 +2011,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
                       line.split(" ", 2)[0], line.length(), asrPolls, asrPollMs);
               // Preserve trailing newline so the existing equals/startsWith checks below still match.
               result = line + "\n";
+              // heard something to act on: a reply is on the way, which is what holds the head up
+              // between the end of the capture and the TTS starting
+              if (line.startsWith("<full>") || line.startsWith("<cutoff>")) {
+                waitingSince = System.currentTimeMillis();
+              }
               updateListeningIndicator(false);
             } else {
               log.warn("[listenForWWandASR] unexpected line during ASR phase: {}", line);
@@ -1984,6 +2036,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           if (asrSessionTainted.compareAndSet(true, false)) {
             log.info("[listenForWWAndASR] dropping ASR result captured while mic muted: {}", result.trim());
             result = "";
+            waitingSince = 0;
+            updateHead();
             continue;
           }
           //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
@@ -2042,6 +2096,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               //TODO: How should this be phrased?
               displayText("<Input could not be understood and detected as potential background noise>", 10000);
               result = "";
+              waitingSince = 0;
+              updateHead();
               continue;
             } else {
               // Present successful parse as normal
