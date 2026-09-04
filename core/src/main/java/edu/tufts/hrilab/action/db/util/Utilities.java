@@ -167,24 +167,11 @@ public class Utilities {
   public final static <T extends DBEntry> List<T> findMatchingEntries(List<T> entries, List<Class<?>> inputRoleTypes) {
     Map<Integer, List<T>> matches = new TreeMap<>(Collections.reverseOrder());
 
-    for (T entry : entries) {
+    entryLoop : for (T entry : entries) {
       List<Class<?>> required = entry.getRequiredInputRolesTypes();
       List<Class<?>> optional = entry.getOptionalInputRolesTypes();
       List<Class<?>> tmpInputArgTypes;
 
-      // attempt to deal with varargs entries by dynamically generating a new DBEntry
-      // with fully expanded varargs to match provided args (e.g., Object[] --> Object, Object)
-//      if (entry.isVarArgs()) {
-//        T varArgEntry = (T) entry.getDynamicVarArgsEntry(inputRoleTypes);
-//
-//        if (varArgEntry == null) {
-//          // could not be converted to DBEntry with varArgs
-//          continue;
-//        }
-//        entry = varArgEntry;
-//        required = entry.getRequiredInputRolesTypes();
-//        optional = entry.getOptionalInputRolesTypes();
-//      }
       if (entry.isVarArgs()) {
         // get vararg java type (e.g., String if String[])
         Class<?> varArgType = required.get(required.size() - 1);
@@ -202,7 +189,7 @@ public class Utilities {
         // check that all vararg input arg types can be assigned to entry's vararg type
         for (int i = required.size() - 1; i < inputRoleTypes.size(); ++i) {
           if (!isAssignable(inputRoleTypes.get(i), varArgComponentType)) {
-            continue;
+            continue entryLoop;
           }
         }
         tmpInputArgTypes.add(varArgType);
@@ -260,10 +247,22 @@ public class Utilities {
       orderedMatches.addAll(matches.get(i));
     }
 
+    // get ordered non-vararg matches
+    List<T> orderedNonVarargMatches = new ArrayList<>();
+    for (T match : orderedMatches) {
+      if (!match.isVarArgs()) {
+        orderedNonVarargMatches.add(match);
+      }
+    }
+
+    // prefer non-vararg options
+    if (!orderedNonVarargMatches.isEmpty()) {
+      return orderedNonVarargMatches;
+    }
+
     if (orderedMatches.size() == 0) {
       log.debug("Could not find matching signature for roles: " + inputRoleTypes.toString());
     }
-
     return orderedMatches;
   }
 

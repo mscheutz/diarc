@@ -23,6 +23,9 @@ extern "C" {
 JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorModuleJNI_calculateGraspPoses
 (JNIEnv* env, jclass cls, jdoubleArray transform, jdoubleArray pointcloud, jint width, jint height);
 
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorModuleJNI_initialize
+(JNIEnv* env, jclass cls, jstring configFile);
+
 #ifdef __cplusplus
 }
 #endif

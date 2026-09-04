@@ -330,6 +330,26 @@ public class ActionScriptsComponentTest {
     }
   }
 
+  @Test
+  public void testFOLOperators() {
+
+    String filename = aslPath + "fol_tests.asl";
+    Database.getInstance().loadDatabaseFromFile(filename);
+
+    // create goal and execute
+    executeAndCheckGoal(Factory.createPredicate("createPredicateTest(self:agent)"), GoalStatus.SUCCEEDED);
+  }
+
+  @Test
+  public void testTHIS() {
+
+    String filename = aslPath + "this_tests.asl";
+    Database.getInstance().loadDatabaseFromFile(filename);
+
+    // create goal and execute
+    executeAndCheckGoal(Factory.createPredicate("aslThisTest(self:agent)"), GoalStatus.SUCCEEDED);
+  }
+
   /**
    * Helper method to submit a goal, wait for it to finish, and then check the status.
    * @param goalPredicate

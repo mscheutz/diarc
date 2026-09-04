@@ -80,6 +80,14 @@ public class DialogueComponent extends DiarcComponent {
     } catch (TRADEException e) {
       log.error("[shutdownComponent] error trying to deregister dialogue consultant", e);
     }
+
+    //Believe shutdown during Question Asking was causing a thread to hang
+    List<Term> questionsToCancel = new ArrayList<>();
+    questionsToCancel.addAll(currentQuestions.keySet());
+    questionsToCancel.addAll(suspendedQuestions.keySet());
+    for (Term question: questionsToCancel) {
+      cancelWaitForResponse(question);
+    }
   }
 
   @TRADEService

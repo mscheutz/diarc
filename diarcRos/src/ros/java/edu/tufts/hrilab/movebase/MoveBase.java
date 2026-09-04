@@ -14,7 +14,6 @@ import edu.tufts.hrilab.diarcros.msg.geometry_msgs.PoseStamped;
 import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Point;
 import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Quaternion;
 import edu.tufts.hrilab.diarcros.msg.move_base_msgs.MoveBaseGoal;
-import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ros.actionlib.state.SimpleClientGoalState;
@@ -22,7 +21,7 @@ import org.ros.exception.RosException;
 
 import java.lang.*;
 
-import edu.tufts.hrilab.diarcros.common.MoveBaseNode;
+import edu.tufts.hrilab.diarcros.movebase.MoveBaseNode;
 import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;

@@ -29,4 +29,5 @@
 //native hand-written methods (defined in GraspsJNI.hpp)
 // TODO: change this to take in just the segmented point cloud (double[][] or double[]) and transform (double[][] or double[])
 %native(calculateGraspPoses) ArrayList calculateGraspPoses(double* transform, double* pointcloud, int width, int height);
+%native(initialize) void initialize(std::string configFile);
 

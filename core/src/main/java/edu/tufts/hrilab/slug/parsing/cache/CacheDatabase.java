@@ -269,7 +269,7 @@ public class CacheDatabase {
     Symbol semantics = entry.getSemantics();
     List<Term> indirectSemantics = entry.getIndirectSemantics();
     List<Map<Variable, Symbol>> bindings = entry.getBindings();
-    CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings);
+    CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
 
     try {
       insertStatement.setString(1, words);
@@ -324,6 +324,8 @@ public class CacheDatabase {
       incoming.setSemantics(semantics);
       incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
       incoming.setBindings(cachedUtterance.getBindings());
+      incoming.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
+      incoming.setTierAssignments(cachedUtterance.getTierAssignments());
     }
 
     return incoming;

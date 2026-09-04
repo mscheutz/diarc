@@ -3,7 +3,6 @@
  */
 
 #include <cfloat>
-//#include <eigen3/Eigen/src/StlSupport/StdVector.h>
 #include <boost/lexical_cast.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -14,6 +13,10 @@
 #include "display/Display.hpp"
 #include "imgproc/saliency/SaliencyProcessor.hpp"
 #include "point_clouds/sorted_extract_clusters.hpp"
+
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
 
 using namespace diarc::stm;
 
@@ -32,6 +35,24 @@ object_cluster_min_size(20 * (imgWidth / 320) * (imgHeight / 240)) {
 }
 
 ClusterDetector::~ClusterDetector() {
+}
+
+void ClusterDetector::loadConfig(const std::string &config) {
+  // populate tree structure pt
+  using boost::property_tree::ptree;
+  ptree pt;
+  read_xml(config, pt);
+
+  std::string predicateName;
+
+  // traverse pt
+
+  BOOST_FOREACH(ptree::value_type const& dataNode, pt.get_child("processor")) {
+          if (dataNode.first.compare("config") == 0) {
+            object_cluster_tolerance = dataNode.second.get<float>("object_cluster_tolerance", object_cluster_tolerance);
+            object_cluster_min_size = dataNode.second.get<float>("object_cluster_min_size", object_cluster_min_size);
+          }
+        }
 }
 
 void ClusterDetector::registerForCaptureNotification() {
@@ -102,6 +123,21 @@ void ClusterDetector::handlePlaneNotification(PlaneNotification::ConstPtr notifi
     LOG4CXX_ERROR(logger, "Unable to extract clusters!");
   }
 
+  // remove all clusters below plane dist threshold
+  float dist_thresh = 0.03;
+  auto it = clusters.begin();
+  while (it != clusters.end()) {
+    float dist = calculateMaxDistanceFromPlane(cloud, plane, *it);
+    LOG4CXX_DEBUG(logger, boost::format("Max cluster distance from plane: %f") % dist);
+    if (dist < dist_thresh) {
+      // erase() returns the iterator to the next element
+      it = clusters.erase(it);
+    } else {
+      // Only increment if we didn't erase
+      ++it;
+    }
+  }
+
   //send notifications
   MemoryObject::VecPtr newClusterObjects = createMemoryObjects(clusters, notification->captureData);
   sendDetectionNotifications(newClusterObjects);
@@ -109,6 +145,24 @@ void ClusterDetector::handlePlaneNotification(PlaneNotification::ConstPtr notifi
   if (getDisplayFlag()) {
     display(newClusterObjects);
   }
+}
+
+float ClusterDetector::calculateMaxDistanceFromPlane(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr& cloud, ExtractedPlane::ConstPtr& plane, const pcl::PointIndices& cluster) {
+
+  const pcl::ModelCoefficients::ConstPtr& coefficients = plane->getPlaneCoefficients();
+  Eigen::Vector4f model_coefficients(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
+
+  float max_distance = 0;
+  for (auto index : cluster.indices) {
+    pcl::PointXYZRGB p = cloud->at(index);
+    Eigen::Vector4f pp(p.x, p.y, p.z, 1);
+    float dist = pp.dot(model_coefficients);
+    if (dist > max_distance) {
+      max_distance = dist;
+    }
+  }
+
+  return max_distance;
 }
 
 void ClusterDetector::sortPointcloud() {
@@ -148,6 +202,8 @@ MemoryObject::VecPtr ClusterDetector::createMemoryObjects(const std::vector<pcl:
 
   std::vector<pcl::PointIndices>::const_iterator cluster_iter;
   for (cluster_iter = clusters.begin(); cluster_iter != clusters.end(); ++cluster_iter) {
+
+    LOG4CXX_DEBUG(logger, boost::format("Num points in detected cluster: %d.") % cluster_iter->indices.size());
 
     // set detection confidence, descriptors, and typeids
     float confidence = 1.0f; //TODO
@@ -219,7 +275,7 @@ void ClusterDetector::display(MemoryObject::VecPtr newClusterObjects) {
     displayCloud->at(index).b = 0;
   }
 
-  // set plane points to blue
+  // set plane points to red
   for (unsigned long i = 0; i < plane->getPlaneIndices()->indices.size(); ++i) {
     int index = plane->getPlaneIndices()->indices.at(i);
     displayCloud->at(index).r = 255;

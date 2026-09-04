@@ -192,8 +192,8 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     sendTrustedUserInput("crouch down shafer");
     sendTrustedUserInput("lower your arms dempster");
     sendTrustedUserInput("stand up shafer");
-//    sendTrustedUserInput("dempster that is how you dance with shafer"); // TODO: this leading direct address doesn't parse
-    sendTrustedUserInput("that is how you dance with shafer dempster"); // TODO: this leading direct address doesn't parse
+    sendTrustedUserInput("dempster that is how you dance with shafer"); // TODO: this leading direct address workds
+//    sendTrustedUserInput("that is how you dance with shafer dempster"); // TODO: this trailing direct address gives two parse options, but the "wrong" one is selected
     sendTrustedUserInput("dance with shafer");
     sendTrustedUserInput("hello shafer");
     sendTrustedUserInput("dance with dempster");

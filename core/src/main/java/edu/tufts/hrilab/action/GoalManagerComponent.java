@@ -16,7 +16,6 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
-import edu.tufts.hrilab.action.gui.ActionProgrammerAdapter;
 import edu.tufts.hrilab.action.gui.GoalManagerAdapter;
 import edu.tufts.hrilab.action.gui.GoalViewerAdapter;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -654,7 +653,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getCurrentGoals()) {
       if (g.getActor().equals(actor)) {
-        pg.add(g.getPredicate());
+        pg.add(g.getGoalPredicate());
       }
     }
     return pg;
@@ -680,8 +679,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @Action
   @TRADEService
-  public List<Goal> getCurrentGoals(Goal queryGoal) {
-    return em.getCurrentGoals();
+  public List<Goal> getCurrentGoals(Predicate goalPredicate) {
+    return em.getCurrentGoals(goalPredicate);
   }
 
   /**
@@ -693,7 +692,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Predicate> getPastGoals() {
     List<Predicate> result = new ArrayList<>();
     for (Goal g : em.getPastGoals())
-      result.add(g.getPredicate());
+      result.add(g.getGoalPredicate());
     return result;
   }
 
@@ -706,7 +705,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Predicate> getActiveGoals() {
     List<Predicate> result = new ArrayList<>();
     for (Goal g : em.getActiveGoals())
-      result.add(g.getPredicate());
+      result.add(g.getGoalPredicate());
     return result;
   }
 
@@ -721,7 +720,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
       if (g.getActor().equals(actor)) {
-        pg.add(g.getPredicate());
+        pg.add(g.getGoalPredicate());
       }
     }
     return pg;
@@ -820,13 +819,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * Get the goal ID for all goals matching the supplied predicate. Checks current and
    * past goals.
    *
-   * @param goal
+   * @param goalPredicate
    * @return
    */
   @TRADEService
-  public List<Long> getGoalIds(Predicate goal) {
-    Goal queryGoal = new Goal(goal);
-    List<Goal> goals = em.getAllGoals(queryGoal);
+  public List<Long> getGoalIds(Predicate goalPredicate) {
+    List<Goal> goals = em.getAllGoals(goalPredicate);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
   }
 

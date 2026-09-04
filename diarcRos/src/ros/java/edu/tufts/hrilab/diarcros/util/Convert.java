@@ -101,18 +101,18 @@ public class Convert {
     public static Pose convertToPose(Matrix4d m) {
         Vector3d v = new Vector3d();
         m.get(v);
-        Quat4d q = new Quat4d();
+        Quat4d q = rotationToQuaternion(m);
         // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
-        q.set(m);
+        //q.set(m);
         return new Pose(new Point(v.x, v.y, v.z), new Quaternion(q.x, q.y, q.z, q.w));
     }
 
     public static TransformStamped convertToTransformStamped(Matrix4d m) {
         Vector3d v = new Vector3d();
         m.get(v);
-        Quat4d q = new Quat4d();
+        Quat4d q = rotationToQuaternion(m);
         // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
-        q.set(m);
+        //q.set(m);
         return convertToTransformStamped(v,q);
     }
 
@@ -178,5 +178,61 @@ public class Convert {
         q.setZ(cr * cp * sy - sr * sp * cy);
 
         return q;
+    }
+
+    public static Quat4d rotationToQuaternion(Matrix4d T) {
+        double[][] R = new double[3][3];
+        R[0][0] = T.getM00();
+        R[0][1] = T.getM01();
+        R[0][2] = T.getM02();
+        R[1][0] = T.getM10();
+        R[1][1] = T.getM11();
+        R[1][2] = T.getM12();
+        R[2][0] = T.getM20();
+        R[2][1] = T.getM21();
+        R[2][2] = T.getM22();
+
+        double[] quat = rotationToQuaternion(R);
+        return new Quat4d(quat[1], quat[2], quat[3], quat[0]);
+    }
+
+    /**
+     * Shepperd's method for converting a rotation matrix to a quaternion.
+     *
+     * @param R - 3x3 rotation matrix
+     * @return - quaternion
+     */
+    public static double[] rotationToQuaternion(double[][] R) {
+        double w, x, y, z;
+
+        double trace = R[0][0] + R[1][1] + R[2][2];
+
+        if (trace > 0) {
+            double s = 0.5 / Math.sqrt(trace + 1.0);
+            w = 0.25 / s;
+            x = (R[2][1] - R[1][2]) * s;
+            y = (R[0][2] - R[2][0]) * s;
+            z = (R[1][0] - R[0][1]) * s;
+        } else if (R[0][0] > R[1][1] && R[0][0] > R[2][2]) {
+            double s = 2.0 * Math.sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]);
+            w = (R[2][1] - R[1][2]) / s;
+            x = 0.25 * s;
+            y = (R[0][1] + R[1][0]) / s;
+            z = (R[0][2] + R[2][0]) / s;
+        } else if (R[1][1] > R[2][2]) {
+            double s = 2.0 * Math.sqrt(1.0 + R[1][1] - R[0][0] - R[2][2]);
+            w = (R[0][2] - R[2][0]) / s;
+            x = (R[0][1] + R[1][0]) / s;
+            y = 0.25 * s;
+            z = (R[1][2] + R[2][1]) / s;
+        } else {
+            double s = 2.0 * Math.sqrt(1.0 + R[2][2] - R[0][0] - R[1][1]);
+            w = (R[1][0] - R[0][1]) / s;
+            x = (R[0][2] + R[2][0]) / s;
+            y = (R[1][2] + R[2][1]) / s;
+            z = 0.25 * s;
+        }
+
+        return new double[]{w, x, y, z};
     }
 }

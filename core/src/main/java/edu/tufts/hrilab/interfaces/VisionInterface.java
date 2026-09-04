@@ -55,7 +55,6 @@ public interface VisionInterface {
 	 */
     @TRADEService
     @Action
-	//TODO: should this exist as an action independent of the identical signature action in VisionConsultantInterface?
     Long getTypeId(Symbol descriptor);
 
 	/**
@@ -115,7 +114,20 @@ public interface VisionInterface {
     List<Long> getTokenIds(List<? extends Symbol> descriptors);
 
 	/**
-	 * Get MemoryObjects in STM. Only considers results from SearchManager
+	 * Get MemoryObjects IDs matching either (1) the search descriptor
+	 * or (2) the object reference. In the case of (1), this method serves as
+	 * a convenience method for the getTokenIds method that takes in a list of descriptors.
+	 * Case (2) forwards the request to the underlying VisionConsultant.
+	 *
+	 * @param descriptor
+	 * @return
+	 */
+	@TRADEService
+	@Action
+	List<Long> getTokenIds(Symbol descriptor);
+
+	/**
+	 * Get MemoryObjects in STM. This method only considers results from SearchManager
 	 * searches that are currently running.
 	 *
 	 * @return List of MemoryObjects
@@ -148,6 +160,19 @@ public interface VisionInterface {
     @TRADEService
     @Action
     List<MemoryObject> getTokens(List<? extends Symbol> descriptors);
+
+	/**
+	 * Get MemoryObjects matching either (1) the search descriptor
+	 * or (2) the object reference. In the case of (1), this method serves as
+	 * a convenience method for the getTokens method that takes in a list of descriptors.
+	 * Case (2) forwards the request to the underlying VisionConsultant.
+	 *
+	 * @param descriptor
+	 * @return
+	 */
+	@TRADEService
+	@Action
+	List<MemoryObject> getTokens(Symbol descriptor);
 
 	/**
 	 * Get the MemoryObject with the specified id.

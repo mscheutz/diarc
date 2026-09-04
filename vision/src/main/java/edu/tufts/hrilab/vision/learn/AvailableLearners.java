@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,19 +29,21 @@ import org.slf4j.LoggerFactory;
 
 public class AvailableLearners {
 
-  private HashMap<LearnerType, LearnerDetail> typesDetail = new HashMap<>();
+  private Map<LearnerType, LearnerDetail> typesDetail = new HashMap<>();
   private static final Logger log = LoggerFactory.getLogger(AvailableLearners.class);
 
   public AvailableLearners(final int imgWidth, final int imgHeight, final String configFile) {
     //TODO: pass in config file
     typesDetail.put(LearnerType.DEFINITION, new LearnerDetail(LearnerType.DEFINITION, imgWidth, imgHeight, ImageProcessorType.DEFINITIONVALIDATOR));
     typesDetail.put(LearnerType.INSTANCE, new LearnerDetail(LearnerType.INSTANCE, imgWidth, imgHeight, ImageProcessorType.GLOBALFEATUREVALIDATOR));
+    typesDetail.put(LearnerType.MODEL, new LearnerDetail(LearnerType.INSTANCE, imgWidth, imgHeight, ImageProcessorType.COMPONENTVALIDATOR));
   }
 
   public Term learn(Term learningTerm) {
     // separate the name and target description
     // definitionOf(description, name) e.g., definitionOf(partOf(orange,knife), handle)
-    // instanceOf(description, name) e.g., instanceOf(object_4, knife)
+    // instanceOf(refId, name) e.g., instanceOf(object_4, knife)
+    // modelOf(description, name) e.g., modelOf(and(components(two), component(one,cylindrical), type_one)
     Term nameToLearn;
     List<Term> arg1 = PredicateHelper.convertToVisionForm(learningTerm.get(1));
     if (arg1.size() == 1) {
@@ -62,6 +65,8 @@ public class AvailableLearners {
       learnInstanceOf(learningTerm, nameToLearn, targetObjectDescriptors);
     } else if (learningTerm.getName().equals("definitionOf")) {
       learnDefinitionOf(learningTerm, nameToLearn, targetObjectDescriptors);
+    } else if (learningTerm.getName().equals("modelOf")) {
+      learnModelOf(learningTerm, nameToLearn, targetObjectDescriptors);
     } else {
       log.error("[learn] can't handle learning term: " + learningTerm);
       return null;
@@ -262,5 +267,33 @@ public class AvailableLearners {
         Vision.consultant.retractProperties(objectRef, properties);
       }
     }
+  }
+
+  private void learnModelOf(Term learningTerm, Term nameToLearn, List<Term> targetObjectDescriptors) {
+    log.debug("[learnModelOf]: " + learningTerm);
+
+    // instantiate learner processor
+    LearnerDetail learnerDetail = typesDetail.get(LearnerType.MODEL);
+
+    // instantiate vision processor that needs to learn
+    ImageProcessor learningProc = Vision.availableValidationProcessors.getInstance(this, learnerDetail.getImageProcessorType());
+    learningProc.handleLearningNotification(learningTerm);
+
+    // stop things once the learner has performed one iteration
+//    Util.Sleep(2000);
+//    while (!learningProc.hasLearned()) {
+//      log.debug("Waiting on learner to learn...");
+//      Util.Sleep(50);
+//    }
+//    learningProc.resetHasLearned();
+
+    // add learned thing to availableValidationProcessors
+    Vision.availableValidationProcessors.addImageProcessorOption(nameToLearn, learnerDetail.getImageProcessorType());
+
+    // add nameToLearn to consultant so that it can be searched for
+    List<Term> properties = new ArrayList<>();
+    properties.add(nameToLearn);
+    Vision.consultant.addPropertiesHandled(properties);
+
   }
 }

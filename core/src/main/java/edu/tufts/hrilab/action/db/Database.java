@@ -492,10 +492,11 @@ public class Database {
 
   private static void addEffect(edu.tufts.hrilab.action.annotations.Effect annotation, ActionDBEntry.Builder builder) {
     List<String> observables = Arrays.asList(annotation.observable());
+    List<String> infer = Arrays.asList(annotation.infer());
 
     for (String e : annotation.effect()) {
       Predicate pred = Factory.createPredicate(e);
-      Observable obs = Observable.get(observables.contains(e), false);
+      Observable obs = Observable.get(observables.contains(e), infer.contains(e));
       builder.addEffect(new Effect(pred, annotation.type(), obs));
     }
   }

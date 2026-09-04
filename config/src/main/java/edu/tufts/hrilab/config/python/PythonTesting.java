@@ -13,7 +13,7 @@ public class PythonTesting extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl -asl kinova/kinova_examples.asl ");
-    String file = "examples.minial_example"; // Specify the python file you want to run, according to its package path
+    String file = "diarc.examples.minimal_example"; // Specify the python file you want to run, according to its package path
     PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
     wrapper.start(); // Start the wrapper
 
@@ -30,6 +30,5 @@ public class PythonTesting extends DiarcConfiguration {
     } catch (TRADEException e) {
       throw new RuntimeException(e);
     }
-
   }
 }

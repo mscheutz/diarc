@@ -6,6 +6,7 @@ package edu.tufts.hrilab.vision.imgproc;
 
 import edu.tufts.hrilab.vision.imgproc.swig.NativeImageProcessor;
 import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
+import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.visionproc.VisionProcess;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.vision.Vision;
@@ -45,6 +46,10 @@ public class ImageProcessor extends VisionProcess<ImageProcessorType, ImageProce
     //start image processing dependecies
     for (ImageProcessor dependency : dependencies.values()) {
       dependency.start(this);
+    }
+
+    for (SearchManager searchDependency : searchDependencies.values()) {
+      searchDependency.start(this);
     }
 
     long looptime = 0;

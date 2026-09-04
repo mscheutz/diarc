@@ -111,6 +111,7 @@ public class TryContext extends Context {
   protected void setupNextStep() {
     switch (getExecType()) {
       case SIMULATE_ACT:
+      case SIMULATE_PERFORMANCE:
       case ACT:
         setupStepForState();
         break;

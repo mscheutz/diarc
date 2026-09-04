@@ -312,7 +312,7 @@ The planning system can be configured to use the Metric-FF PDDL planner. To enab
    2. flex
    3. bison
 3. Extract the archive and compile with `make`
-4. update `~/.gradle/gradle.properties` to include the property `diarc.planner.ff= `  with the path to the artifact produced in step 3
+4. update `gradle.properties` to include the property `diarc.planner.ff= `  with the path to the artifact produced in step 3
 
 
 ## Demonstration Videos

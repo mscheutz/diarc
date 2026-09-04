@@ -63,7 +63,7 @@ public class PathPlannerComponent extends DiarcComponent {
       } catch (TRADEException e){
         if (shouldLogBeliefMsg) {
           shouldLogBeliefMsg = false;
-          log.warn("registerForNotification service is not yet available. Will only print once.",e);
+          log.warn("registerForNotification service is not yet available. Will only print once.");
         }
       }
     }
@@ -118,7 +118,7 @@ public class PathPlannerComponent extends DiarcComponent {
    */
   private boolean querySupport(Predicate query) {
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(Boolean.class, query);
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(Boolean.class, query);
     } catch (TRADEException e) {
       log.error("Error querying belief for: " + query, e);
     }

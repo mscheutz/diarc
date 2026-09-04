@@ -40,7 +40,7 @@ void OpticalFlowProcessor::handleCaptureNotification(CaptureNotification::ConstP
   LOG4CXX_TRACE(logger, "[handleNotification] trying to calculate optical flow...");
   calcOpticalFlow(prevCaptureData->frame, currCaptureData->frame, opticalFlow);
 
-  MotionNotification::Ptr motionNotification(new MotionNotification(shared_from_this(), notification->frameNumber, notification->captureData, opticalFlow));
+  MotionNotification::Ptr motionNotification(new MotionNotification(this->getProcessorId(), notification->frameNumber, notification->captureData, opticalFlow));
   sendNotifications(motionNotification);
 
   if (getDisplayFlag()) {

@@ -990,6 +990,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     } else if (eStatus == ActionStatus.RESUME && getDBE().hasOnResumeEvent()) {
       // OnResume Recovery Behavior
       interruptEvent = getDBE().getOnResumeEvent();
+      if (interruptEvent.getCommand().equals("reset")) {
+        resetContext();
+        return;
+      }
     } else {
       //No need for interruption
       return;

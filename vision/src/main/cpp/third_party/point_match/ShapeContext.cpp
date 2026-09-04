@@ -88,7 +88,7 @@ int	CalPointDist(MYPOINT *Pnt, int nPnt, double **r_array, double &mean_dist)
 /*	Return:		0 -- Succeed
 /*****************************************************************************/
 int	CalShapeContext(MYPOINT *Pnt, int nPnt, int nbins_theta, int nbins_r, 
-			   double *r_bins_edges, double **SC, double **r_array, double mean_dist, BOOL bRotateInvariant)
+			   double *r_bins_edges, double **SC, double **r_array, double mean_dist, BBOOL bRotateInvariant)
 {
 	//Calculate the quantized angle matrix
 	int i, j, k;

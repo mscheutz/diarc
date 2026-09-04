@@ -44,22 +44,22 @@ public class TypedActionSelector extends ActionSelector {
     log.debug("Selecting action for goal: " + goal);
 
     if (goal.isObservation()){
-      return selectActionByLookUp(goal,constraints,stateMachine,Database.getObserverDB().getObservers(goal.getActor(), goal.getPredicate()));
+      return selectActionByLookUp(goal,constraints,stateMachine,Database.getObserverDB().getObservers(goal.getActor(), goal.getGoalStatePredicate()));
     }
 //    else if(goal.getPredicate().getName().equals("prepare")){
 //      return selectPrepareAction();
 //    }
     else if(goal.isAction()){
-      return selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsBySignature(goal.getPredicate()));
-    } else if("handled".equals(goal.getPredicate().getName())
-            || "knows".equals(goal.getPredicate().getName())){
+      return selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsBySignature(goal.getGoalStatePredicate()));
+    } else if("handled".equals(goal.getGoalStatePredicate().getName())
+            || "knows".equals(goal.getGoalStatePredicate().getName())){
 
-      return selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsByEffect(goal.getActor(), goal.getPredicate()));
+      return selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsByEffect(goal.getActor(), goal.getGoalStatePredicate()));
 
 
     } else {
       //todo:brad: added to let you submit action signatures to goal specs in asl, so you can dynamically build goal predicates in action scripts, this can be remove once action selection is better and we don't need to do it in action scripts.
-       ParameterizedAction selectedAction = selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsBySignature(goal.getPredicate()));
+       ParameterizedAction selectedAction = selectActionByLookUp(goal,constraints,stateMachine,Database.getActionDB().getActionsBySignature(goal.getGoalStatePredicate()));
 
        if(selectedAction != null){
          goal.setIsAction(true);

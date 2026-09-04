@@ -12,23 +12,23 @@
 #ifndef LEARNINGNOTIFICATION_HPP
 #define	LEARNINGNOTIFICATION_HPP
 
-#include "common/notification/VisionNotification.hpp"
+#include "common/notification/Notification.hpp"
 #include "stm/MemoryObject.hpp"
 
 /*
  * Notifies about a new object learning event.
  */
-class LearningNotification : public VisionNotification {
+class LearningNotification : public Notification {
 public:
   typedef boost::shared_ptr<LearningNotification> Ptr;
   typedef boost::shared_ptr<const LearningNotification> ConstPtr;
 
-  LearningNotification(const VisionProcessConstPtr& notifier_,
+  LearningNotification(const long long& processorId_,
                        const long long& typeId_,
                        const unsigned long long& frameNumber_,
                        diarc::stm::MemoryObject::Ptr& object_,
                        PredicateHelper::Set descriptors_)
-  : VisionNotification(notifier_, LEARNING, typeId_, frameNumber_),
+  : Notification(LEARNING, processorId_, typeId_, frameNumber_),
   object(object_),
   descriptors(descriptors_) {
   }

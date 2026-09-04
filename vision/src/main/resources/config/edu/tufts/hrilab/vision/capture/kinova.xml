@@ -10,32 +10,11 @@ Required:
 	publishCloudToRos: should captured point cloud be published to ROS (only possible if
 						VisionComponent is compiled with ROS support and hasDepth is true)
 
-Optional:
-	any additional fields the particular camera mode might need
-
-
-CAM_MODE options:
-      MONO_FW,
-      STEREO_FW,
-      STEREO_SYNC,
-      MONO_V4L2,
-      STEREO_V4L2,
-      MONO_AVI,
-      MONO_FILE,
-      MULTI_FILE_LOG,
-      KINECT (or XTION),
-      KINECT_ONI, //from oni file
-      SIM_PC1, //simulate kinect version 1 (rgb and disparity separately)
-      SIM_PC2 (or PCD), //simulate kinect version w (pcd files)
-      KINECT_PLUS, //kinect plus another rgb camera (mainly for calibration of robot system with multiple sensors)
-      DRONE, //ar drone
-      ROS,
-      NAO,
-      GSTREAMER, // H264-encoded stream via GStreamer
-
-
 NOTE: info about the kinova kortex vision sensor can be found here:
 https://github.com/Kinovarobotics/ros_kortex_vision
+
+Run this ROS command:
+roslaunch kinova_vision kinova_vision_rgbd.launch 
 -->
 
 <capture>
@@ -44,10 +23,12 @@ https://github.com/Kinovarobotics/ros_kortex_vision
     <imageHeight>240</imageHeight>
     <hasStereo>false</hasStereo>
     <hasDepth>true</hasDepth>
-    <imageTopic>/camera/color/image_rect_color</imageTopic>
-    <depthTopic>/camera/depth/image_rect</depthTopic>
-    <cameraInfo>../calibration/kortex.calib2</cameraInfo>
+    <imageTopic>/camera/color/image_raw</imageTopic>
+    <depthTopic>/camera/depth/image</depthTopic>
+    <cameraInfoTopic>/camera/color/camera_info</cameraInfoTopic>
+    <depthInfoTopic>/camera/depth/camera_info</depthInfoTopic>
     <convertToRGB>true</convertToRGB>
     <depthRegistration>true</depthRegistration>
     <publishCloudToRos>false</publishCloudToRos>
+    <depthToColorT>-0.0195 -0.005 0.0</depthToColorT>
 </capture>

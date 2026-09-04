@@ -43,7 +43,8 @@ public:
     KCF,
     CMT,
     RELATION,
-    V4R
+    V4R,
+    TAPNET
   };
 
   /** @brief - ObjectTracker factory method
@@ -73,9 +74,8 @@ protected:
 
   /** @brief - method to merge currently tracked object(s) with newly detected object(s).
    * calls addTrackedObject
-   * @return - number of objects added to tracker */
-  virtual int mergeObjects(diarc::stm::MemoryObject::VecPtr newlyDetectedObjects);
-  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
+   * @return - newly tracked object, updated object already tracked, or nullptr (object rejected) */
+  virtual diarc::stm::MemoryObject::Ptr mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
 
   /** @brief - remove tracked objects with confidence below a certain threshold */
   virtual void removeLowConfidenceObjects();
@@ -177,6 +177,9 @@ private:
   //! For logging in factory method only.
   static log4cxx::LoggerPtr factoryLogger;
   bool publishToROS;
+
+  //! counter for saving tracked objects to file
+  int counter = 0;
 
   // // ros::NodeHandle* nh;
   // ros::Publisher pub;

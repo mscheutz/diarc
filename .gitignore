@@ -7,6 +7,7 @@ core/src/main/resources/*-test.properties
 core/src/main/resources/serviceDocumentation.json
 diarcRos/build/
 vision/build/
+vision/data/
 vision/src/swig/
 .idea/
 .vscode/
@@ -27,8 +28,4 @@ vision/bin/
 /node_modules/
 **/.venv/
 /core/src/main/python/spot/spot_phi.yaml
-/vosk**
-.direnv/
-.envrc
-COLCON_IGNORE
-__pycache__
+**/__pycache__/

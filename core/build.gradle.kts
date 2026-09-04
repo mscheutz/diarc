@@ -1,6 +1,5 @@
 plugins {
   `java-library`
-  scala
   `maven-publish`
 }
 
@@ -28,9 +27,8 @@ repositories {
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven {
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
@@ -38,13 +36,8 @@ sourceSets {
   main {
     java {
       exclude(listOf(
-              //scala
-              "edu/tufts/hrilab/slug/refResolution/**",
               "edu/tufts/hrilab/nao/NaoExtended*",
       ))
-    }
-    scala {
-      setSrcDirs(listOf("src/main/scala", "src/main/java/edu/tufts/hrilab/slug/refResolution"))
     }
   }
 
@@ -81,27 +74,12 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 tasks.compileJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
 tasks.compileTestJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
-  options.compilerArgs = listOf("-parameters")
-}
-
-tasks.compileScala {
-  scalaCompileOptions.additionalParameters.apply {
-    scalaCompileOptions.additionalParameters = scalaCompileOptions.additionalParameters.orEmpty() + "-target:jvm-1.8"
-  }
-  options.compilerArgs = listOf("-parameters")
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala/"))
-
-  dependsOn(listOf("processResources", "processTestResources"))
-}
-
-tasks.compileTestScala {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
+  options.sourcepath = files(listOf("src/main/java", "src/test/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -111,7 +89,6 @@ tasks.named<Test>("test") {
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
-  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
@@ -120,7 +97,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -190,14 +167,6 @@ dependencies {
   implementation("org.antlr:antlr4-runtime:4.13.1")
   implementation("com.github.pellierd:pddl4j:3.8.3")
 
-  //scala for rr
-  implementation("org.scala-lang:scala-compiler:2.12.4")
-  implementation("org.scala-lang:scala-library:2.12.4")
-  implementation("org.scala-lang:scala-reflect:2.12.4")
-  implementation("org.scalatest:scalatest_2.12:3.0.5")
-  implementation("org.scalacheck:scalacheck_2.12:1.14.0")
-  implementation("org.scalamock:scalamock-scalatest-support_2.12:3.6.0")
-  implementation("org.scalamock:scalamock-core_2.12:3.6.0")
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
   implementation("org.xerial:sqlite-jdbc:3.45.2.0")
@@ -221,7 +190,6 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
-  implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -252,8 +220,10 @@ dependencies {
   implementation("com.aldebaran:qimessaging:2.1.0.19-linux64")
 
   //ros2
-  api("io.github.pinorobotics:jros2services:4.0");
-  api("io.github.pinorobotics:jros2tf2:2.0")
+  api("io.github.pinorobotics:jros2services:6.0");
+  api("io.github.lambdaprime:jros2client:9.0")
+  api("io.github.pinorobotics:jros2actionlib:4.0");
+  api("io.github.pinorobotics:jros2tf2:3.0")
 
 
   //gui

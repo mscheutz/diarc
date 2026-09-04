@@ -29,7 +29,6 @@ import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.topic.Publisher;
-import sensor_msgs.JointState;
 import sensor_msgs.PointCloud2;
 import sensor_msgs.PointField;
 import std_msgs.ColorRGBA;
@@ -42,7 +41,9 @@ import visualization_msgs.MarkerArray;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,7 @@ public class RosVisionComponent extends DiarcComponent {
 
   // TODO: add services to turn on/off publishing visualization data
   private boolean publishVisData = false;
+  private String visFrameId = "base_link";
 
   private Publisher<MarkerArray> visualizationPub;
   private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
@@ -73,14 +75,18 @@ public class RosVisionComponent extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("pub_vis").desc("publish visualization data").build());
+    options.add(Option.builder("vis").desc("publish visualization data").build());
+    options.add(Option.builder("vis_frame").hasArg().desc("tf frame_id for publishing visualization data (default: base_link)").build());
     return options;
   }
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("pub_vis")) {
+    if (cmdLine.hasOption("vis")) {
       publishVisData = true;
+    }
+    if (cmdLine.hasOption("vis_frame")) {
+      visFrameId = cmdLine.getOptionValue("vis_frame");
     }
   }
 
@@ -153,48 +159,84 @@ public class RosVisionComponent extends DiarcComponent {
     }
   }
 
-  private int visPubId = 0;
+  private Set<Long> markerIds = new HashSet();
   private void publishVisualizationMarkers() {
 
-    List<MemoryObject> mos;
     try {
-      mos = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTokens").argTypes()).call(List.class);
-    } catch (TRADEException e) {
-      log.error("Error calling getTokens service.", e);
-      return;
-    }
+      List<MemoryObject> mos;
+      try {
+        log.debug("Calling getTokens...");
+        mos = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTokens").argTypes()).call(List.class);
+        log.debug("Received {} tokens.", mos.size());
+      } catch (TRADEException e) {
+        log.error("Error calling getTokens service.", e);
+        return;
+      }
 
-    MarkerArray markerArray = node.getTopicMessageFactory().newFromType(MarkerArray._TYPE);
-    List<Marker> markers = new ArrayList<>();
-    for (MemoryObject mo : mos) {
-      Marker marker = node.getTopicMessageFactory().newFromType(Marker._TYPE);
-      marker.setType(Marker.CUBE);
-      marker.setAction(Marker.ADD);
-      marker.setId(visPubId++);
-      Pose pose = marker.getPose();
-      Point point = pose.getPosition();
-      point.setX(mo.getLocation().x);
-      point.setY(mo.getLocation().y);
-      point.setZ(mo.getLocation().z);
-      Quaternion orient = pose.getOrientation();
-      orient.setX(mo.getOrientation().x);
-      orient.setY(mo.getOrientation().y);
-      orient.setZ(mo.getOrientation().z);
-      orient.setW(mo.getOrientation().w);
-      ColorRGBA color = marker.getColor();
-      color.setR(1f);
-      color.setG(0f);
-      color.setB(0f);
-      color.setA(1f);
-      Vector3 scale = marker.getScale(); // size
-      scale.setX(0.5);
-      scale.setY(0.5);
-      scale.setZ(0.5);
+      MarkerArray markerArray = node.getTopicMessageFactory().newFromType(MarkerArray._TYPE);
+      List<Marker> markers = new ArrayList<>();
+      Set<Long> markerIdsToDelete = new HashSet<>(markerIds);
+      markerIds.clear();
+      for (MemoryObject mo : mos) {
+        markerIdsToDelete.remove(mo.getTokenId());
+        markerIds.add(mo.getTokenId());
 
-      markers.add(marker);
+        Marker marker = node.getTopicMessageFactory().newFromType(Marker._TYPE);
+        marker.getHeader().setFrameId(visFrameId);
+        marker.setType(Marker.CUBE);
+        marker.setAction(Marker.ADD);
+        marker.setId((int) mo.getTokenId());
+        Pose pose = marker.getPose();
+        Point point = pose.getPosition();
+        point.setX(mo.getLocation().x);
+        point.setY(mo.getLocation().y);
+        point.setZ(mo.getLocation().z);
+        Quaternion orient = pose.getOrientation();
+        if (mo.getOrientation() == null) {
+          orient.setX(0);
+          orient.setY(0);
+          orient.setZ(0);
+          orient.setW(1);
+        } else {
+          orient.setX(mo.getOrientation().x);
+          orient.setY(mo.getOrientation().y);
+          orient.setZ(mo.getOrientation().z);
+          orient.setW(mo.getOrientation().w);
+        }
+        ColorRGBA color = marker.getColor();
+        color.setR(1f);
+        color.setG(0f);
+        color.setB(0f);
+        color.setA(0.5f);
+        Vector3 scale = marker.getScale(); // size
+        if (!Double.isNaN(mo.getDimensions().x) && !Double.isNaN(mo.getDimensions().y) && !Double.isNaN(mo.getDimensions().z)) {
+          scale.setX(mo.getDimensions().x);
+          scale.setY(mo.getDimensions().y);
+          scale.setZ(mo.getDimensions().z);
+        } else {
+          scale.setX(2);
+          scale.setY(2);
+          scale.setZ(2);
+        }
+
+        markers.add(marker);
+      }
+
+      for (Long id : markerIdsToDelete) {
+        Marker marker = node.getTopicMessageFactory().newFromType(Marker._TYPE);
+        marker.getHeader().setFrameId(visFrameId);
+        marker.setId(id.intValue());
+        marker.setAction(Marker.DELETE);
+        markers.add(marker);
+      }
+
+      markerArray.setMarkers(markers);
+      log.debug("Publishing markers for detected objects. MOs: {}. Markers: {}", mos.size(), markerArray.getMarkers().size());
+      visualizationPub.publish(markerArray);
+
+    } catch (Exception e) {
+      log.error("Exception in publishVisualizationMarkers.", e);
     }
-    markerArray.setMarkers(markers);
-    visualizationPub.publish(markerArray);
   }
 
   /**

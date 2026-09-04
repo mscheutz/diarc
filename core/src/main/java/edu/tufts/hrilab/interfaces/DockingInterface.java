@@ -11,11 +11,11 @@ import edu.tufts.hrilab.fol.Symbol;
 
 public interface DockingInterface {
 
-    @TRADEService
-    @Action
-    Justification dock(Symbol dockId);
+  @TRADEService
+  @Action
+  Justification dock(Symbol dockId);
 
-    @TRADEService
-    @Action
-    Justification undock();
+  @TRADEService
+  @Action
+  Justification undock();
 }

@@ -19,6 +19,7 @@ OPERATOR : 'op';
 OBSERVATION : 'obs';
 GOAL : 'goal';
 TSC : 'tsc';
+THIS : 'this';
 INFER : 'infer';
 VAR : 'var';
 SET : 'setting';
@@ -92,7 +93,7 @@ alias : AS javaType;
 
 definitions : definition+;
 
-reserved : TSC | ACTION | OPERATOR | GOAL | OBSERVATION | VAR | SET | OR | PRE | POST | OVERALL | OBLIGATION | EFFECT
+reserved : THIS | TSC | ACTION | OPERATOR | GOAL | OBSERVATION | VAR | SET | OR | PRE | POST | OVERALL | OBLIGATION | EFFECT
         | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | LOCKS | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
         | FOR | FOREACH | TRUE | FALSE | EXIT | TRY | CATCH | FINALLY | NOT | RETURN | ASYNC | JOIN;
 
@@ -190,7 +191,9 @@ onCancel : CANCEL ':' interruptSpec;
 
 onSuspend : SUSPEND ':' interruptSpec;
 
-onResume : RESUME ':' interruptSpec;
+onResume : RESUME ':' ( interruptSpec | resumeResetSpec );
+
+resumeResetSpec : 'reset' ';';
 
 interruptSpec : interruptSpecType ':' function ';';
 
@@ -223,7 +226,7 @@ singleArgReturn : ('(' output ')' | output) '=';
 
 specFunction : specReturn? specType ':' function;
 
-specType : TSC | ACTION | GOAL | OBSERVATION | OPERATOR | name '.' TSC | name '.' ACTION  | name '.' GOAL | name '.' OBSERVATION;
+specType : THIS | TSC | ACTION | GOAL | OBSERVATION | OPERATOR | name '.' TSC | name '.' ACTION  | name '.' GOAL | name '.' OBSERVATION;
 
 function : name inputList?;
 

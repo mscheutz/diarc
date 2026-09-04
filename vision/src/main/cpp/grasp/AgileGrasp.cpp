@@ -22,8 +22,9 @@
 
 using namespace diarc::grasp;
 
-AgileGrasp::AgileGrasp() {
-  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.AgileGrasp");
+AgileGrasp::AgileGrasp(const std::string &config) {
+  logger = log4cxx::Logger::getLogger("diarc.grasp.AgileGrasp");
+  loadConfig(config);
 }
 
 AgileGrasp::~AgileGrasp() {
