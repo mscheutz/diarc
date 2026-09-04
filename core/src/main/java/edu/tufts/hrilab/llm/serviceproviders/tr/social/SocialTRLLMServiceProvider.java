@@ -3570,6 +3570,33 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   Predicate replaceReferencesInSemantics(Predicate semantics) {
+    if (semantics.getName().equals("actionDescription")) {
+      Pattern refPattern = Pattern.compile(",[^()]*?:location");
+      List<String> refStrings = new ArrayList<>();
+      String semanticString = semantics.toString();
+      Matcher matcher = refPattern.matcher(semanticString);
+      while (matcher.find()) {
+        String str = matcher.group();
+        refStrings.add(str.substring(1));
+      }
+      int maxAttempts = 3;
+      for (String str : refStrings) {
+        Symbol sym = Factory.createSymbol(str);
+        for (int i=0; i<maxAttempts;i++) {
+          try {
+            Map<Symbol, List<Term>> refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, sym);
+            if (refs != null && refs.get(sym).size() == 1) {
+              semanticString = semanticString.replaceAll(str,refs.get(sym).get(0).getName());//, refs.get(arg).get(0).get(0).getType());
+              break;
+            }
+          } catch (TRADEException e) {
+            log.warn("[generateREG] {}", str, e);
+          }
+        }
+      }
+      return Factory.createPredicate(semanticString);
+    }
+
     List<Symbol> transformedArgs = new ArrayList<>();
     for (Symbol arg: semantics.getArgs()) {
       if (arg.isPredicate()) {
@@ -3584,6 +3611,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               refs = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, arg);
               if (refs.get(arg).size() == 1) {
                 transformedArg = Factory.createSymbol(refs.get(arg).get(0).getName());//, refs.get(arg).get(0).get(0).getType());
+                break;
               }
             } catch (TRADEException e) {
               log.warn("[generateREG] {}", arg, e);
