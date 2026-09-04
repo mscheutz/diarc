@@ -125,7 +125,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     log.info("🔄 Reset command detected! Clearing queue and resetting parser.");
 
                     recognizedTextQueue.clear(); // ✅ Clear all queued phrases
-                    component.resetChart(); // ✅ Reset the parser component
+                    component.resetParser(); // ✅ Reset the parser component
 
                     incrementalPhrase.setLength(0); // ✅ Clear incremental phrase tracking
 
@@ -137,7 +137,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     log.info("🔴 Exit command detected! Terminating program.");
 
                     recognizedTextQueue.clear(); // Clear all queued phrases
-                    component.resetChart(); // Reset the parser component
+                    component.resetParser(); // Reset the parser component
                     incrementalPhrase.setLength(0); // Clear incremental phrase tracking
 
                     log.info("✅ Cleanup complete. Exiting...");
@@ -179,14 +179,14 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
      * Start the Python ASR service.
      */
     private void initializePythonWrapper() {
-        String file = "asr.asr_service"; // Python module path
+        String file = "diarc.asr.asr_service"; // Python module path
         wrapper = new PythonWrapper(file, true); // Start Python as a TRADE spoke
         wrapper.start();
 
-        // String file_planner = "planner.experiment0";
-        // String file_planner = "planner.experiment1";
-        // String file_planner = "planner.experiment2";
-        //String file_planner = "planner.experiment3";
+        // String file_planner = "diarc.mcp_planner.experiment0";
+        // String file_planner = "diarc.mcp_planner.experiment1";
+        // String file_planner = "diarc.mcp_planner.experiment2";
+        //String file_planner = "diarc.mcp_planner.experiment3";
        // wrapper_planner = new PythonWrapper(file_planner, true);
         //wrapper_planner.start();
 
@@ -199,7 +199,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
     private void resetASRSystem() {
         recognizedTextQueue.clear();  // ✅ Clear any pending recognized text
-        component.resetChart();       // ✅ Reset parser component
+        component.resetParser();       // ✅ Reset parser component
         log.info("✅ ASR system reset. Please try speaking again.");
     }
 
@@ -214,7 +214,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
         // ✅ Only process the most recent phrase
         Utterance partialUtterance = createUtterance(cleanedPhrase);
-        Utterance result = component.parseUtterance(partialUtterance);
+        Utterance result = component.parsePartialUtterance(partialUtterance);
         String parsedResult = (result != null) ? result.toString() : "PARSE_FAILED";
         log.warn("Parsing result is null, using default: {}", parsedResult);
 

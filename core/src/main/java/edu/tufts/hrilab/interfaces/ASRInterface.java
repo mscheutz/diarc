@@ -8,21 +8,18 @@ public interface ASRInterface {
      * Starts the ASR recognition process.
      */
     @TRADEService
-    @Action
     String startRecognition();
 
     /**
      * Stops the ASR recognition process.
      */
     @TRADEService
-    @Action
     void stopRecognition();
 
     /**
      * Resets the ASR recognition process to clear any stored state or context.
      */
     @TRADEService
-    @Action
     void resetRecognition();
 
     /**
@@ -30,7 +27,6 @@ public interface ASRInterface {
      * @return The most recently recognized text.
      */
     @TRADEService
-    @Action
     String getLastRecognizedText();
 
     /**
@@ -38,18 +34,12 @@ public interface ASRInterface {
      * @return true if the ASR system is active, false otherwise.
      */
     @TRADEService
-    @Action
     boolean isRecognitionActive();
 
 
     @TRADEService
-    @Action
     void logParse(String parsedText);
 
     @TRADEService
-    @Action
     String mapParsedTextToAction(String parsedText);
-
-
-
 }

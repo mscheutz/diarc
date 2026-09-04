@@ -23,7 +23,7 @@ from bound_mpc.utils.util_functions import normalize_set_size
 from bound_mpc_msg.msg import Vector
 from bound_mpc_msg.srv import MPCParams, Trajectory, UpdateConstraints
 from control_msgs.action import GripperCommand
-from edu.tufts.hrilab.interfaces import PlannerInterface
+from edu.tufts.hrilab.interfaces import MCPInterface
 from jpype import JImplements, JOverride, JString
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -41,7 +41,7 @@ logger.addHandler(handler)
 logger.info("Starting Planner Service...")
 
 
-@JImplements(PlannerInterface)
+@JImplements(MCPInterface)
 class DiarcWrapper:
     def __init__(self):
         self.positions = []
