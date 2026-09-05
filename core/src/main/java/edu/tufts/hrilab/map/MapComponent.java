@@ -20,6 +20,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.map.gui.AvaMapAdapter;
 import edu.tufts.hrilab.map.gui.MapAdapter;
 import edu.tufts.hrilab.map.util.Pose;
 import edu.tufts.hrilab.map.util.Utils;
@@ -80,6 +81,8 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
   private String refsConfigDir = "config/edu/tufts/hrilab/map";
 
+  private boolean avaGui = false;
+
   public MapComponent() {
     super();
   }
@@ -93,6 +96,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     options.add(Option.builder("start_floor").hasArg().argName("number").desc("floor the robot is starting on at launch").build());
     options.add(Option.builder("refs").longOpt("references").hasArg().argName("file").desc("load pre-defined object references and their properties").build());
     options.add(Option.builder("kb_name").hasArg().argName("file").desc("consultant kbName (default: location)").build());
+    options.add(Option.builder("ava_gui").desc("serve the map tab from the ava base maps instead of the ros map files").build());
     return options;
   }
 
@@ -113,6 +117,9 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     }
     if (cmdLine.hasOption("kb_name")) {
       poseKBName = cmdLine.getOptionValue("kb_name");
+    }
+    if (cmdLine.hasOption("ava_gui")) {
+      avaGui = true;
     }
   }
 
@@ -781,6 +788,11 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   @Override
   public String[] getAdapterClassNames() {
     log.info("getting classname from map");
+    if (avaGui) {
+      return new String[]{
+              AvaMapAdapter.class.getName()
+      };
+    }
     return new String[]{
             MapAdapter.class.getName()
     };

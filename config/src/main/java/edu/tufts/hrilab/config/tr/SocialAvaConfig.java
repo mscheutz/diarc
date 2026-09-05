@@ -265,9 +265,9 @@ public class SocialAvaConfig extends DiarcConfiguration {
 //    }
 
 
-    String mapArgs = "";
+    String mapArgs = "-ava_gui";
     if (useMockAva) {
-      mapArgs += "-refs " + locationRefs;
+      mapArgs += " -refs " + locationRefs;
     }
     createInstance(edu.tufts.hrilab.map.MapComponent.class, mapArgs);
 

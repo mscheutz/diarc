@@ -45,6 +45,7 @@ import javax.vecmath.Vector3d;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1016,8 +1017,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  public List<BufferedImage> getMapImages() {
-    return mapImages;
+  public List<byte[]> getMapImages() {
+    List<byte[]> toReturn = new ArrayList<>();
+    for (BufferedImage image : mapImages) {
+      //a zero byte tile png in ~/.diarc reads back as a null image. it still gets an entry: the
+      //tiles are placed by their index in the metadata list
+      if (image == null) {
+        toReturn.add(new byte[0]);
+        continue;
+      }
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        ImageIO.write(image, "png", baos);
+      } catch (IOException e) {
+        log.error("[getMapImages] exception writing map image to serializable format");
+      }
+      toReturn.add(baos.toByteArray());
+    }
+    return toReturn;
   }
 
   @TRADEService
