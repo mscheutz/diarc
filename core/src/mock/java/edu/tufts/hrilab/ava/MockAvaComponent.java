@@ -609,7 +609,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   // asked for, working on a reply, or speaking one. an ASR timeout, an unparsed result or a dropped
   // capture leave none of those true, so the head drops.
   private void updateHead() {
-    boolean speaking = querySpeaking(); //outside the lock: a slow answer here would hold up a raise
+    boolean speaking = querySpeaking(); //outside the lock: a TRADE round trip, and the listener thread wants the same lock
     synchronized (headLock) {
       if (capturing || speaking) {
         waitingSince = 0;
@@ -619,11 +619,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       if (desired == headShown) {
         return;
       }
-      log.info("[updateHead] visible={} capturing={} speaking={} waiting={}", desired, capturing, speaking, waiting);
       try {
         TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
                 .call(void.class, desired);
         headShown = desired;
+        log.info("[updateHead] visible={} capturing={} speaking={} waiting={}", desired, capturing, speaking, waiting);
       } catch (TRADEException e) {
         log.debug("[updateHead] setListeningIndicator unavailable");
       }
@@ -794,6 +794,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           if (asrSessionTainted.compareAndSet(true, false)) {
             log.info("[listenForWWAndASR] dropping ASR result captured while mic muted: {}", result.trim());
             result = "";
+            waitingSince = 0;
+            updateHead();
             continue;
           }
           //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
@@ -852,6 +854,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
               //TODO: How should this be phrased?
               displayText("<Input could not be understood and detected as potential background noise>", 10000);
               result = "";
+              waitingSince = 0;
+              updateHead();
               continue;
             } else {
               // Present successful parse as normal
@@ -873,6 +877,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         }
       }
       // the listener can stop mid-capture (park, cancel, python exit)
+      waitingSince = 0;
       updateListeningIndicator(false);
       is.close();
       ww_process_os.close();

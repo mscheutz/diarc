@@ -1789,7 +1789,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   // asked for, working on a reply, or speaking one. an ASR timeout, an unparsed result or a dropped
   // capture leave none of those true, so the head drops.
   private void updateHead() {
-    boolean speaking = querySpeaking(); //outside the lock: a slow answer here would hold up a raise
+    boolean speaking = querySpeaking(); //outside the lock: a TRADE round trip, and the listener thread wants the same lock
     synchronized (headLock) {
       if (capturing || speaking) {
         waitingSince = 0;
@@ -1799,11 +1799,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       if (desired == headShown) {
         return;
       }
-      log.info("[updateHead] visible={} capturing={} speaking={} waiting={}", desired, capturing, speaking, waiting);
       try {
         TRADE.getAvailableService(new TRADEServiceConstraints().name("setListeningIndicator").argTypes(Boolean.class))
                 .call(void.class, desired);
         headShown = desired;
+        log.info("[updateHead] visible={} capturing={} speaking={} waiting={}", desired, capturing, speaking, waiting);
       } catch (TRADEException e) {
         log.debug("[updateHead] setListeningIndicator unavailable");
       }
@@ -2120,6 +2120,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         }
       }
       // the listener can stop mid-capture (park, cancel, python exit)
+      waitingSince = 0;
       updateListeningIndicator(false);
       is.close();
       ww_process_os.close();
