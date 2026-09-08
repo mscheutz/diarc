@@ -93,7 +93,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //  actions for general interaction to populate corresponding toolsets effectively
       if (!useCondensedTools) {
          ToolDefinition definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfLocations",
-                 "You report the wifi signal strength you had previously measured at each of the supplied locations in the list. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
+                 "You report the wifi signal strength you had previously measured at each of the supplied locations in the list. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at "+promptVars.get("%exampleLocation")+", example_location_2, and example_location_3?\"",
                  List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
          definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfCurrentLocation",
@@ -102,7 +102,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
          if (includeDemoTargets) {
             definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfLocations",
-                    "You report the temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
+                    "You report the temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at "+promptVars.get("%exampleLocation")+"?, example_location_2, and example_location_3?\"",
                     List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
             instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
             definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfCurrentLocation",
@@ -325,10 +325,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       }
       vars.put("%locationList", locationList);
       vars.put("%videoList", videoList);
-      vars.put("%exampleVideo", videos.isEmpty() ? "test_video" : videos.get(0));
-      vars.put("%exampleImage", images.isEmpty() ? "test_image" : images.get(0));
+      vars.put("%exampleVideo", videos.isEmpty() ? "example_video" : videos.get(0));
+      vars.put("%exampleImage", images.isEmpty() ? "example_image" : images.get(0));
       vars.put("%imageList", imageList);
-      vars.put("%exampleLocation", locations.isEmpty() ? "test_location:location" : locations.get(0));
+      vars.put("%exampleLocation", locations.isEmpty() ? "example_location:location" : locations.get(0));
       vars.put("%language", language);
 
       if (useCondensedTools) {
@@ -1004,10 +1004,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       List<String> locationNames = getLocations("self", true);
 
       String exampleCallString = xml ?
-            "<function=goToLocation><parameter=destination>%exampleLocation</parameter></function>." :
-            "{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}.";
+            "<function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function>." :
+            "{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}.";
       definition = new ToolDefinition("goToLocation",
-                                      "You go to the supplied destination location.\n- Example instruction: \"please navigate to %exampleLocation\" \n- Example Call: " + exampleCallString,
+                                      "You go to the supplied destination location.\n- Example instruction: \"please navigate to "+promptVars.get("%exampleLocation")+"\" \n- Example Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("destination", "string", locationNames, "The destination location to go to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true))
       );
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -1028,19 +1028,19 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //                                new ArrayList());
       //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
-            "<function=escortToLocation><parameter=name>owen</parameter><parameter=destination>%exampleLocation</parameter></function>" :
-            "{\"name\":\"escortToLocation\", \"arguments\":{\"name\":\"owen\",\"destination\":\"%exampleLocation\"}}";
+            "<function=escortToLocation><parameter=name>owen</parameter><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function>" :
+            "{\"name\":\"escortToLocation\", \"arguments\":{\"name\":\"owen\",\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}";
       definition = new ToolDefinition("escortToLocation",
-                                      "You lead someone from your current location to a different one. \nExample Instruction: \"bring Owen to %exampleLocation.\" \nExample Call: " + exampleCallString,
+                                      "You lead someone from your current location to a different one. \nExample Instruction: \"bring Owen to "+promptVars.get("%exampleLocation")+".\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
                                               new ToolParameterHelper("destination", "string", locationNames, "The destination location to escort to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
                                       ));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
-            "<function=escortFromLocationToLocation><parameter=name>guest</parameter><parameter=start>%exampleLocation</parameter><parameter=destination>dock:location</parameter></function>" :
-            "{\"name\":\"escortFromLocationToLocation\", \"arguments\":{\"name\":\"guest\",\"start\":\"%exampleLocation\",\"destination\":\"dock:location\"}}";
+            "<function=escortFromLocationToLocation><parameter=name>guest</parameter><parameter=start>"+promptVars.get("%exampleLocation")+"</parameter><parameter=destination>dock:location</parameter></function>" :
+            "{\"name\":\"escortFromLocationToLocation\", \"arguments\":{\"name\":\"guest\",\"start\":\""+promptVars.get("%exampleLocation")+"\",\"destination\":\"dock:location\"}}";
       definition = new ToolDefinition("escortFromLocationToLocation",
-                                      "You meet someone at the specific start location and then lead them to the destination location. \nExample Instruction: \"bring our guest from %exampleLocation to the dock.\" \nExample Call: " + exampleCallString,
+                                      "You meet someone at the specific start location and then lead them to the destination location. \nExample Instruction: \"bring our guest from "+promptVars.get("%exampleLocation")+" to the dock.\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
                                               new ToolParameterHelper("start", "location", locationNames, "The start location to escort from. This should be where ?name can be found", true),
                                               new ToolParameterHelper("destination", "location", locationNames, "The destination location to escort to", true)
@@ -1065,10 +1065,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       new ArrayList<>());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
-            "<function=measureWifiAtLocations><parameter=locations>[%exampleLocation,dock:location]</parameter></function>" :
-            "{\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\",\"dock:location\"]}}";
+            "<function=measureWifiAtLocations><parameter=locations>["+promptVars.get("%exampleLocation")+",dock:location]</parameter></function>" :
+            "{\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\""+promptVars.get("%exampleLocation")+"\",\"dock:location\"]}}";
       definition = new ToolDefinition("measureWifiAtLocations",
-                                      "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"check the wifi at %exampleLocation and the dock\" \nExample Call: " + exampleCallString,
+                                      "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"check the wifi at "+promptVars.get("%exampleLocation")+" and the dock\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
@@ -1107,10 +1107,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                  new ArrayList<>());
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
          exampleCallString = xml ?
-                 "<function=measureTemperatureAtLocations><parameter=locations>[%exampleLocation]</parameter></function>" :
-                 "{\"name\":\"measureTemperatureAtLocations\", \"arguments\":{\"locations\":[\"%exampleLocation\"]}}";
+                 "<function=measureTemperatureAtLocations><parameter=locations>["+promptVars.get("%exampleLocation")+"]</parameter></function>" :
+                 "{\"name\":\"measureTemperatureAtLocations\", \"arguments\":{\"locations\":[\""+promptVars.get("%exampleLocation")+"\"]}}";
          definition = new ToolDefinition("measureTemperatureAtLocations",
-                 "You drive to each of the supplied locations in order and measure temperature in degrees Fahrenheit at each one. Use this when a user asks you to survey or check temperature at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"take the temperature at %exampleLocation\" \nExample Call: " + exampleCallString,
+                 "You drive to each of the supplied locations in order and measure temperature in degrees Fahrenheit at each one. Use this when a user asks you to survey or check temperature at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"take the temperature at "+promptVars.get("%exampleLocation")+"\" \nExample Call: " + exampleCallString,
                  List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
          definition = new ToolDefinition("measureTemperatureAtLocationsAndReportAt",
@@ -1154,10 +1154,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       exampleCallString = xml ?
-            "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
-            "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
+            "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
+            "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
       definition = new ToolDefinition("forgetTaughtAction",
-                                      "You forget/delete a previously taught action. \nExample Instruction: \"forget how to go to %exampleLocation.\" \nExample Call: " + exampleCallString,
+                                      "You forget/delete a previously taught action. \nExample Instruction: \"forget how to go to "+promptVars.get("%exampleLocation")+".\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON representing the tool call to forget. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
@@ -1220,28 +1220,28 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //List<String> videoTranslations = new ArrayList<>();
       //videoInstructions.add("play video");
       //videoTranslations.add("playVideo(default,default)");
-      //videoInstructions.add("Show the %exampleVideo video");
-      //videoTranslations.add("playVideo(%exampleVideo:video,default)");
-      //videoInstructions.add("Play videos at %exampleLocation");
-      //videoTranslations.add("playVideo(default,%exampleLocation)");
-      //videoInstructions.add("Go to %exampleLocation then play the %exampleVideo video");
-      //videoTranslations.add("playVideo(%exampleVideo:video,%exampleLocation)");
+      //videoInstructions.add("Show the "+promptVars.get("%exampleVideo")+" video");
+      //videoTranslations.add("playVideo("+promptVars.get("%exampleVideo")+":video,default)");
+      //videoInstructions.add("Play videos at "+promptVars.get("%exampleLocation")+"");
+      //videoTranslations.add("playVideo(default,"+promptVars.get("%exampleLocation")+")");
+      //videoInstructions.add("Go to "+promptVars.get("%exampleLocation")+" then play the "+promptVars.get("%exampleVideo")+" video");
+      //videoTranslations.add("playVideo("+promptVars.get("%exampleVideo")+":video,"+promptVars.get("%exampleLocation")+")");
       definition = new ToolDefinition("playNextVideo",
                                       "You begin playback of the next video from your saved collection on your built-in screen display at your current location. An example of instructing this would be \"play any video\".",
                                       new ArrayList<>());
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("playNextVideoAtLocation",
-                                      "You begin playback of the next video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the next video at %exampleLocation\".",
+                                      "You begin playback of the next video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the next video at "+promptVars.get("%exampleLocation")+"\".",
                                       List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
                                       ));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("playSpecificVideo",
-                                      "You begin playback of a specific video from your saved collection on your built-in screen display at your current location. An example of instructing this would be \"play the %exampleVideo\".",
+                                      "You begin playback of a specific video from your saved collection on your built-in screen display at your current location. An example of instructing this would be \"play the "+promptVars.get("%exampleVideo")+"\".",
                                       List.of(new ToolParameterHelper("videoName", "string", getVideoNames(), "The specific video to play. Accepted values are only those found in the Video List", true)
                                       ));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition("playSpecificVideoAtLocation",
-                                      "You begin playback of a specific video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the %exampleVideo at the %exampleLocation\".",
+                                      "You begin playback of a specific video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the "+promptVars.get("%exampleVideo")+" at the "+promptVars.get("%exampleLocation")+"\".",
                                       List.of(new ToolParameterHelper("videoName", "string", getVideoNames(), "The specific video to play. Accepted values are only those found in the Video List", true),
                                               new ToolParameterHelper("location", "string", getLocations("self",true), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
                                       ));
@@ -1249,14 +1249,14 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //TODO: Test that postprocessing of all forms of this action works correctly
       //List<String> imageInstructions = new ArrayList<>();
       //List<String> imageTranslations = new ArrayList<>();
-      //imageInstructions.add("Display the %exampleImage image");
-      //imageTranslations.add("displayImage(%exampleImage:image,default,default)");
-      //imageInstructions.add("Display the %exampleImage image at the %exampleLocation location");
-      //imageTranslations.add("displayImage(%exampleImage:image,%exampleLocation,default)");
-      //imageInstructions.add("Display the %exampleImage image for a minute");
-      //imageTranslations.add("displayImage(%exampleImage:image,default,60)");
-      //imageInstructions.add("Display the %exampleImage image at the %exampleLocation location for 45 seconds");
-      //imageTranslations.add("displayImage(%exampleImage:image,%exampleLocation,45)");
+      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image");
+      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,default,default)");
+      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image at the "+promptVars.get("%exampleLocation")+" location");
+      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,"+promptVars.get("%exampleLocation")+",default)");
+      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image for a minute");
+      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,default,60)");
+      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image at the "+promptVars.get("%exampleLocation")+" location for 45 seconds");
+      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,"+promptVars.get("%exampleLocation")+",45)");
       definition = new ToolDefinition("displayNamedImage",
                                       "You display an image from your saved collection on your built-in display at your current location indefinitely.",
                                       List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display. Accepted values are only those found in the Image List", true)
@@ -1282,10 +1282,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       ));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       exampleCallString = xml ?
-            "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
-            "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
+            "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
+            "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
       definition = new ToolDefinition("urgentPriority",
-                                      "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to %exampleLocation right now.\" \nExample Call: " + exampleCallString,
+                                      "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to "+promptVars.get("%exampleLocation")+" right now.\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1330,8 +1330,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       //definition = new ToolDefinition("deliver(?objectName, ?location:location)",
       //        "You deliver ?objectName to location ?location:location",
-      //        "bring the mug to %exampleLocation",
-      //        "deliver(mug,%exampleLocation)", 10);
+      //        "bring the mug to "+promptVars.get("%exampleLocation")+"",
+      //        "deliver(mug,"+promptVars.get("%exampleLocation")+")", 10);
       //toolDefinitions.add(definition);
       //    definition = new ToolDefinition("enableAdminMode",
       //            "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.. \nExample Instruction: \"enable admin mode.\"",
@@ -1415,7 +1415,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       new ArrayList());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       //definition = new ToolDefinition("getIsVideoSaved",
-      //        "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the %exampleVideo video saved.\" \nExample Call: reportIsVideoSaved(?videoName)",
+      //        "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the "+promptVars.get("%exampleVideo")+" video saved.\" \nExample Call: reportIsVideoSaved(?videoName)",
       //        List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
       //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
       definition = new ToolDefinition("getSavedVideos",
@@ -1427,12 +1427,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                       new ArrayList());
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       definition = new ToolDefinition("getPreviouslyMeasuredWifiAtLocationsString",
-                                      "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at %exampleLocation, example_location_2, and example_location_3?\"",
+                                      "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at "+promptVars.get("%exampleLocation")+", example_location_2, and example_location_3?\"",
                                       List.of(new ToolParameterHelper("locations", "array", getLocations("self",true), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       if (includeDemoTargets) {
          definition = new ToolDefinition("getPreviouslyMeasuredTemperatureAtLocationsString",
-                 "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at %exampleLocation?, example_location_2, and example_location_3?\"",
+                 "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at "+promptVars.get("%exampleLocation")+"?, example_location_2, and example_location_3?\"",
                  List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
          itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
          definition = new ToolDefinition("getPreviouslyMeasuredWifiAtCurrentLocationString",
@@ -1496,7 +1496,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //  want a more formal representation or rigid relationship between itk tool responses and LLM text output. Seems to
       //  handle information directly from the prompt fairly well though
       //definition = new ToolDefinition("getIfCanPerform",
-      //        "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from %exampleLocation to the dock.\" \nExample Call: getIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation,dock:location))",
+      //        "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from "+promptVars.get("%exampleLocation")+" to the dock.\" \nExample Call: getIfCanPerform(escortFromLocationToLocation(guest,"+promptVars.get("%exampleLocation")+",dock:location))",
       //        List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action queried about", true)));
       //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
@@ -1551,11 +1551,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       replyTools.put("location",new Tool(definition,UtteranceType.REPLY));
       //replyTools.put(Factory.createPredicate("location(X:location)"), new Tool(definition,UtteranceType.REPLY));
       //String exampleCallString = xml ?
-      //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>" :
-      //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
-      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>";
+      //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>" :
+      //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
+      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>";
       definition = new ToolDefinition("taskPredicate",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to %exampleLocation\" \nExample Call: " + exampleCallString,
+                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to "+promptVars.get("%exampleLocation")+"\" \nExample Call: " + exampleCallString,
                                       List.of(new ToolParameterHelper("toolCall","string",new ArrayList<>(),"This argument should be replaced by definition of another tool call and populated arguments from the previous examples",true, true, "nlu")));
       replyTools.put("taskPredicate",new Tool(definition,UtteranceType.REPLY));
       //replyTools.put(Factory.createPredicate("taskPredicate(X)"), new Tool(definition,UtteranceType.REPLY));
@@ -1717,8 +1717,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //TODO: forgetTaughtAction(s) focused context with action specification similar to that for goal manipulation
       //TODO: restrict list of acceptable tools to taught ones, not all nlu targets
       String exampleCallString = xml ?
-              "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
-              "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
+              "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
+              "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
       definition = new ToolDefinition("forgetTaughtAction",
               "You forget/delete a previously taught action",
               List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON representing the tool call to forget. This json minimally needs \"name\" and \"argument\" fields, for example: " + exampleCallString, true, true, "nlu")));
@@ -1730,10 +1730,10 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //TODO: goalPriority(re)assignment focused context
       exampleCallString = xml ?
-              "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\"%exampleLocation\"}}</parameter></function>" :
-              "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
+              "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
+              "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
       definition = new ToolDefinition("urgentPriority",
-              "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to %exampleLocation right now.\" \nExample Call: " + exampleCallString,
+              "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to "+promptVars.get("%exampleLocation")+" right now.\" \nExample Call: " + exampleCallString,
               List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1777,8 +1777,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //// Functionality temporarily removed whether due to lack of robust implementation or unsure if wanting to expose through flexible language
       //definition = new ToolDefinition("deliver(?objectName, ?location:location)",
       //        "You deliver ?objectName to location ?location:location",
-      //        "bring the mug to %exampleLocation",
-      //        "deliver(mug,%exampleLocation)", 10);
+      //        "bring the mug to "+promptVars.get("%exampleLocation")+"",
+      //        "deliver(mug,"+promptVars.get("%exampleLocation")+")", 10);
       //toolDefinitions.add(definition);
       //    definition = new ToolDefinition("enableAdminMode",
       //            "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.. \nExample Instruction: \"enable admin mode.\"",
@@ -1971,11 +1971,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       replyTools.put("location",new Tool(definition,UtteranceType.REPLY));
       //replyTools.put(Factory.createPredicate("location(X:location)"), new Tool(definition,UtteranceType.REPLY));
       //String exampleCallString = xml ?
-      //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>" :
-      //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\"%exampleLocation\"}}}}";
-      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>%exampleLocation</parameter></function></parameter></function>";
+      //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>" :
+      //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
+      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>";
       definition = new ToolDefinition("taskPredicate",
-              "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to %exampleLocation\" \nExample Call: " + exampleCallString,
+              "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to "+promptVars.get("%exampleLocation")+"\" \nExample Call: " + exampleCallString,
               List.of(new ToolParameterHelper("toolCall","string",new ArrayList<>(),"This argument should be replaced by definition of another tool call and populated arguments from the previous examples",true, true, "nlu")));
       replyTools.put("taskPredicate",new Tool(definition,UtteranceType.REPLY));
       //replyTools.put(Factory.createPredicate("taskPredicate(X)"), new Tool(definition,UtteranceType.REPLY));
