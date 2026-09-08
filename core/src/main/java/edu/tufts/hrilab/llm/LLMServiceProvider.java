@@ -391,7 +391,6 @@ public abstract class LLMServiceProvider extends DiarcComponent {
   @TRADEService
   public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
     learnedActions.remove(entry);
-    //TODO: (external) should ideally remove any cache entries relevant to this action
   }
 
   //////////////// Taught Action Tracking End ////////////////
@@ -435,5 +434,10 @@ public abstract class LLMServiceProvider extends DiarcComponent {
       s = Factory.createSymbol(s.toUntypedString());
     }
     return s;
+  }
+
+  // Use dependent on subclass. Not something generally supported at the moment.
+  public void setLanguage(String language) {
+    this.language = language;
   }
 }

@@ -414,4 +414,18 @@ public class CacheDatabase {
 
     return incoming;
   }
+
+  public void removeRelatedEntries(Predicate semantics) {
+    //TODO: properly introspect specifically on Utterance.semantics field
+    try {
+      PreparedStatement eraseStatement = connection.prepareStatement("DELETE FROM " + tableName + " WHERE utterance LIKE ?;");
+      eraseStatement.setString(1,"%"+semantics.getName()+"%");
+      eraseStatement.execute();
+      log.debug("successfully erased related entries");
+    } catch (SQLException ex) {
+      log.error("[removeRelatedEntries] Couldn't delete all related rows in table", ex);
+    } catch (Exception ex) {
+      log.error("[removeRelatedEntries] Error deleting all related rows in table", ex);
+    }
+  }
 }

@@ -4,8 +4,14 @@
 
 package edu.tufts.hrilab.slug.parsing.cache;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -21,6 +27,7 @@ public class CachedParserComponent extends DiarcComponent {
   private boolean persist = false;
   private CacheDatabase database;
   private String language = "English";
+  private boolean addedActionListeners = false;
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -88,6 +95,13 @@ public class CachedParserComponent extends DiarcComponent {
         log.debug("[addEntryToCache] not adding entry for focused template context target");
         return;
       }
+      // TODO: nothing around taught actions should be cached OR everything associated with a taught action should be deleted upon forgetting it
+      if (name.equals("forgetTaughtAction")) {
+        //getActionSteps
+        log.debug("[addEntryToCache] not adding entry pointing at taught action which is being deleted");
+        return;
+      }
+
       // Do no cache SocialLLM "text response" parses - generateResponseFromString || updateDialogueHistoryFromString
       if (name.equals("generateResponseFromString") || name.equals("updateDialogueHistoryFromString")) {
         log.debug("[addEntryToCache] not adding entry for text response target");
@@ -101,5 +115,9 @@ public class CachedParserComponent extends DiarcComponent {
   //TODO: should eventually remove this and use utterance language, see CacheDatabase
   public void setLanguage(String language) {
     this.language = language;
+  }
+
+  public void removeDeletedActionCacheEntries(ActionDBEntry entry) {
+    database.removeRelatedEntries(entry.getSignature(true));
   }
 }

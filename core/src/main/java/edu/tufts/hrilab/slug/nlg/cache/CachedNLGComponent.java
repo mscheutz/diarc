@@ -6,6 +6,7 @@ package edu.tufts.hrilab.slug.nlg.cache;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -72,5 +73,9 @@ public class CachedNLGComponent extends DiarcComponent {
     //TODO: should eventually remove this and use utterance language, see CacheDatabase
     public void setLanguage(String language) {
       this.language = language;
+    }
+
+    public void removeDeletedActionCacheEntries(ActionDBEntry entry) {
+        database.removeRelatedEntries(entry.getSignature(true));
     }
 }

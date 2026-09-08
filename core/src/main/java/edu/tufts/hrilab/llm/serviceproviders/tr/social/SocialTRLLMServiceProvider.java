@@ -2820,7 +2820,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
     super.handleDatabaseRemoval(entry);
     removeLearnedActionFromCollections(entry.getName());
-
   }
 
   private void addLearnedActionToCollections(ActionDBEntry dbEntry) {

@@ -4,8 +4,14 @@
 
 package edu.tufts.hrilab.slug.nlg.hybrid;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
@@ -42,6 +48,7 @@ public class HybridNLGComponent extends DiarcComponent {
   private String[] sequence;
   private boolean restrictedMode = false;
   private String[] cachedSequence = null;
+  private boolean registeredActionListener = false;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -134,6 +141,8 @@ public class HybridNLGComponent extends DiarcComponent {
     if (useTemplatedNLG) {
       templatedNLG = TemplatedNLG.defaults();
     }
+
+    shouldRunExecutionLoop = true;
   }
 
   // TODO: This new API currently assumes streaming TTS and filler phrases are only associated with the LLMParser (if a social subclass), could be generalized
@@ -348,5 +357,28 @@ public class HybridNLGComponent extends DiarcComponent {
   @TRADEService
   public boolean getHybridParserRestrictedMode() {
     return restrictedMode;
+  }
+
+  @Override
+  protected void executionLoop() {
+    if (!registeredActionListener) {
+      try {
+        TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+        TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("removeDeletedActionNLGCacheEntries").argTypes(ActionDBEntry.class));
+        registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
+        registeredActionListener = true;
+        shouldRunExecutionLoop = false;
+        log.info("[registerForNotifications] successfully registered for database removals");
+      } catch (TRADEException e) {
+        log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+      }
+    }
+  }
+
+  @TRADEService
+  public void removeDeletedActionNLGCacheEntries(ActionDBEntry entry) {
+    if (cacheNLG != null) {
+      cacheNLG.removeDeletedActionCacheEntries(entry);
+    }
   }
 }
