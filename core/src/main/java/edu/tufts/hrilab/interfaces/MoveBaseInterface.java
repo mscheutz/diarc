@@ -82,7 +82,8 @@ public interface MoveBaseInterface {
   @Effect(
       effect={"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"},
       type = EffectType.SUCCESS,
-      observable = {"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"}
+      observable = {"at(?actor,?desiredLocation)"},
+      infer = {"not(at(?actor,?initialLocation))"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol desiredLocation, Symbol initialLocation);

@@ -309,26 +309,25 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     !current = act:getCurrentLocation();
 
-    // with the same place in both slots the two-arg primitive can never verify: its observable success
-    // effects include at(?location) and not(at(!current)), and the engine cannot observe both true for one
-    // place. skip the drive; this action's own at(?actor, ?location) effect still verifies we are there
-    if (op:equals(!current, ?location)) {
-        op:log("info", "[goToLocation] already at ?location");
-    } else {
-        act:goToLocation(?location, !current);
-    }
+    act:goToLocation(?location, !current);
 }
 
 () = goHome() {
     Symbol !homeLocation;
+    java.lang.Boolean !docked = False;
     onInterrupt : {
         cancel : act:stop();
         suspend : act:stop();
     }
-    !homeLocation = act:getDockRefId();
-    //todo: this should not be hardcoded here.
-    act:goToLocation(!homeLocation);
-    act:goHomePrimitive();
+    // the dock reference sits a metre in front of where we park, so from the dock a drive to it is a real
+    // metre out and back. nothing to do if we are already on it
+    !docked = act:isDocked();
+    if (op:equals(!docked, False)) {
+        !homeLocation = act:getDockRefId();
+        //todo: this should not be hardcoded here.
+        act:goToLocation(!homeLocation);
+        act:goHomePrimitive();
+    }
 }
 
 /******************************** Misc Testing Scripts ********************************/
