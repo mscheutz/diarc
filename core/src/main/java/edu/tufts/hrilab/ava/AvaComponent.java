@@ -118,7 +118,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private Symbol dockLocation;
 
-  private final int dockingTimeout = 90; //30 seconds
+  private final int dockingTimeout = 180; //seconds; a dock from a long approach has taken 84
+  private final int noProgressTimeout = 60; //seconds the pose can sit still before a drive is given up on
+  // close enough to call it arrived. the base parks within 0.25 m of what we asked for, and when it gives up
+  // against something in the way it stops metres short, so this separates the two. not the old two metre guess
+  private final double arrivalDistThresh = 0.5; //meters
+  private final double arrivalOrientationThresh = 0.25; //radians
 
   private boolean stopped = false;
 
@@ -126,6 +131,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean wasDocked = false;
   private final Set<TRADEServiceInfo> statisticsSubscribers = Collections.synchronizedSet(new HashSet<>());
   private static final double STATS_DISTANCE_THRESHOLD_M = 0.05;
+  private static final double STATS_ROTATION_THRESHOLD_RAD = 0.02;
 
   /**
    * Flag to keep follow action loop alive.
@@ -783,8 +789,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
     }
 
-    // Keep checking until the robot is close enough to the goal (point and orientation threshold)
-    DriveStatus ds = getDriveStatus();
+    // Keep checking until the base says the drive is over. planStatus and currentCommand are how the base's own
+    // drive interface decides that; both are left at the previous drive's values while it sits idle, so wait to
+    // see this one in progress before a terminal planStatus means anything about it
+    boolean accepted = false;
+    int canceledCount = 0;
+    long lastProgressMs = System.currentTimeMillis();
+    String plan = null;
+    String command = null;
     Pair<Point3d, Quat4d> currentPose = getPose();
     Point3d currentPosition = currentPose.getLeft();
     Point3d lastPosition = new Point3d(currentPosition);
@@ -793,9 +805,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     Quat4d currentOrientation = currentPose.getRight();
     double[] currentAngles = Convert.convertToEuler(currentOrientation);
     double currentTheta = currentAngles[Convert.YAW];
-    while ((currentPosition.distance(goalPosition) > pointDistThresh
-            || Math.abs(goalTheta - currentTheta) > orientationThresh)
-            && ds != DriveStatus.COMPLETE_DRIVE_WAYPOINT) {
+    double lastTheta = currentTheta;
+    while (true) {
 
       // update current pose
       currentPose = getPose();
@@ -806,8 +817,16 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       double delta = currentPosition.distance(lastPosition);
       if (delta >= STATS_DISTANCE_THRESHOLD_M) {
         segmentCumulativeM += delta;
+        lastProgressMs = System.currentTimeMillis();
+      }
+      // turning in place moves the pose not at all, and the base does that at both ends of a leg
+      if (yawDifference(currentTheta, lastTheta) >= STATS_ROTATION_THRESHOLD_RAD) {
+        lastProgressMs = System.currentTimeMillis();
       }
       lastPosition.set(currentPosition);
+      lastTheta = currentTheta;
+
+      double distToGoal = currentPosition.distance(goalPosition);
 
       // Every 3 seconds check the status
       if (statusDelay > 3) {
@@ -822,8 +841,64 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         statusDelay++;
       }
 
-      ds = getDriveStatus();
-      if (ds == DriveStatus.FAILED_DRIVE_WAYPOINT) {
+      RMSDriveStatusResponse dsr = api.getDriveStatus();
+      if (dsr != null && dsr.response != null) {
+        plan = dsr.response.planStatus;
+        command = dsr.response.currentCommand;
+      }
+      boolean ourDrive = "DriveWaypoint".equals(command);
+      if (ourDrive && "IN_PROGRESS".equals(plan)) {
+        if (!accepted) {
+          lastProgressMs = System.currentTimeMillis();
+        }
+        accepted = true;
+      }
+      if (!"CANCELED".equals(plan)) {
+        canceledCount = 0;
+      }
+
+      if (accepted && ourDrive && "COMPLETE".equals(plan)) {
+        if (distToGoal <= arrivalDistThresh) {
+          break;
+        }
+        // complete means the base has stopped trying, not that it got there. it stops short of anything it
+        // cannot get around, and saying we arrived leaves the caller to find out the hard way
+        log.warn("[goToArbitrary] base finished the drive {} m short of the goal position: {}", distToGoal, goalPosition);
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+            .segmentStartTimestampMs(segmentStartTimeMs)
+            .cumulativeDistanceM(segmentCumulativeM)
+            .driveStatusEnd("COMPLETE_SHORT");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
+        polling = false;
+        return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
+      }
+
+      // a leg short enough to finish inside one poll can be over before we ever see it in progress
+      if (distToGoal <= arrivalDistThresh && yawDifference(goalTheta, currentTheta) <= arrivalOrientationThresh) {
+        break;
+      }
+
+      // the base cancels our drive when something else takes the wheels, including its own return to the dock
+      // on the hour, which stopGoingHomeOnTheHour stops and reinstates. take two readings before believing it
+      if (accepted && ourDrive && "CANCELED".equals(plan)) {
+        canceledCount++;
+        if (canceledCount > 1) {
+          log.warn("[goToArbitrary] drive canceled by the base {} m from the goal", distToGoal);
+          AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+              .segmentStartTimestampMs(segmentStartTimeMs)
+              .cumulativeDistanceM(segmentCumulativeM)
+              .driveStatusEnd("CANCELED");
+          Double bat = getBatteryLevelForStats();
+          if (bat != null) b.batteryPct(bat);
+          notifyStatisticsSubscribers(b.build());
+          polling = false;
+          return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
+        }
+      }
+
+      if (accepted && ourDrive && "FAILED".equals(plan)) {
         log.warn("[goToArbitrary] Failed to reach goal position: " + goalPosition + " theta: " + goalTheta);
         AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
             .segmentStartTimestampMs(segmentStartTimeMs)
@@ -832,12 +907,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         Double bat = getBatteryLevelForStats();
         if (bat != null) b.batteryPct(bat);
         notifyStatisticsSubscribers(b.build());
+        polling = false;
         return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
       }
 
       // Stop the robot if the DIARC is set to stop the robot
       if (stopped) {
         break;
+      }
+
+      long stillMs = System.currentTimeMillis() - lastProgressMs;
+      if (stillMs > noProgressTimeout * 1000L) {
+        log.warn("[goToArbitrary] no progress for {} ms, giving up {} m from the goal", stillMs, distToGoal);
+        api.stop();
+        AvaStatisticsEvent.Builder b = AvaStatisticsEvent.builder(AvaStatisticsEvent.Kind.STOPPED_MOVING)
+            .segmentStartTimestampMs(segmentStartTimeMs)
+            .cumulativeDistanceM(segmentCumulativeM)
+            .driveStatusEnd("NO_PROGRESS");
+        Double bat = getBatteryLevelForStats();
+        if (bat != null) b.batteryPct(bat);
+        notifyStatisticsSubscribers(b.build());
+        polling = false;
+        return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
       }
 
       try {
@@ -854,6 +945,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         Double bat = getBatteryLevelForStats();
         if (bat != null) b.batteryPct(bat);
         notifyStatisticsSubscribers(b.build());
+        polling = false;
         return new ConditionJustification(false, Factory.createPredicate("http_server", "connected"));
       }
     }
@@ -877,7 +969,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    */
   @Override
   public Justification stop() {
-    log.info("[stop()] called");
+    log.info("[stop] called");
     stopped = true;
     api.stop();
     return new ConditionJustification(true);
@@ -993,6 +1085,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return nearest;
   }
 
+  // the base reports yaw in [-pi, pi], so a heading either side of pi reads as a ~2pi difference raw
+  private static double yawDifference(double a, double b) {
+    double diff = Math.abs(a - b) % (2 * Math.PI);
+    return diff > Math.PI ? (2 * Math.PI) - diff : diff;
+  }
+
   // distance and yaw difference from the current pose to a map reference
   private double[] offsetFrom(PoseReference poseReference, Point3d currentPosition, double currentTheta) {
     Point3d goalPosition = poseReference.getPose().getLeft();
@@ -1076,7 +1174,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     // Determine which dock we're heading to before docking
     String targetDock = getCloserDock();
     log.info("[goToDock] determined closer dock: {}", targetDock);
-    
+
     boolean docked = false;
     int timeoutCounter = 0;
     api.dock();
@@ -1282,12 +1380,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public Justification goHomePrimitive() {
     log.debug("Starting [goHome]");
     currentMoveGoal.setGoHomeGoal();
-    Justification ret;
-    if (!stopped) {
-      ret = goToDock();
-    } else {
-      ret = new ConditionJustification(false);
-    }
+    // a cancelled goal never reaches this step at all, and a resumed one is meant to finish going home, so a
+    // stop left over from an earlier exchange must not be what decides whether we dock
+    Justification ret = goToDock();
     currentMoveGoal.setIdleGoal(AvaMoveGoal.CommandType.GO_HOME);
     log.debug("Finishing [goHome]");
     return ret;
