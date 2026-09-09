@@ -92,6 +92,8 @@ import java.util.Map;
       op:log("debug", "updating dialogue history..");
       act:updateDialogueHistory(!outputUtterance);
       !text = op:invokeMethod(!outputUtterance,"getWordsAsString");
+      //TODO: 9/9 make sure this is safe. Done in order to have asked questions' string properly stored
+      op:invokeMethod(?utterance,"setWords",!text);
       op:log("debug", "done updating dialogue history with: !text");
       if (op:equals(!performSayText,true)) {
         act:sayText(!outputUtterance);
@@ -346,17 +348,19 @@ import java.util.Map;
     // communicate utterance (which also updates dialogue history)
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
     noInterrupt {
-      async {
-        // TODO: Removed (previously Ava specific) WW/StreamingTTS interactions from this block. Revisit and make sure changes in communicateUtterance comply
-        //  with desired behaviore here appropriately
-        act:communicateUtterance(?utterance, ?fillerPhraseCase);
-        act:listenPostCommunicateUtterance(!addressee);
-      }
+      // 9/9 removed async block because this needs to occur before waitForResponse is called in order for the asked Question's
+      //  string to be stored (it must be generated and stored in the utterance before waitForResponse is called)
+      //  Cannot currently generate separately in a way that is compatible with streaming TTS. Make sure there are no
+      //  practical cases where a question response comes in before waitForResponse is called (shouldn't occur though theoretically possible)
+      act:communicateUtterance(?utterance, ?fillerPhraseCase);
       !tracker = op:newObject("java.lang.Integer", 1);
     }
 
     // wait for response - default duration is -1, which means block indefinitely
     !questionString = op:invokeMethod(?utterance, "getWordsAsString");
+    async {
+      act:listenPostCommunicateUtterance(!addressee);
+    }
     ?answerBindings = act:waitForResponse(!questionString, ?responseForms, !speaker, !addressee, ?duration);
     !tracker = op:newObject("java.lang.Integer", 2);
   }

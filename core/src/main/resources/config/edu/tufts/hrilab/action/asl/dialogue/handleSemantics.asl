@@ -403,6 +403,7 @@ import java.lang.Boolean;
     edu.tufts.hrilab.slug.common.Utterance !utterance;
     edu.tufts.hrilab.slug.common.UtteranceType !type;
     java.lang.String !ackString;
+    java.lang.String !lastQuestion;
 
     conditions : {
       or : {
@@ -427,8 +428,10 @@ import java.lang.Boolean;
     // TODO: this should be per speaker/agent pair or conversation group
     // Reject any goal submission until the agentTeam's outstanding question has been answered
     if (~op:equalsValue(?priorityTier,SKIPPENDING) && ~op:equalsValue(?priorityTier,URGENT) && tsc:isAgentWaitingForResponse(?actor)) {
-        act:generateResponseFromString(?speaker, "Please answer my previous question before sending further instructions");
-        //TODO: state unanswered question proactively here?
+        !lastQuestion = tsc:getLastQuestion(?actor);
+        act:generateResponseFromString(?speaker, "Sorry, please answer my previous question before sending further instructions. I had asked you the following: !lastQuestion");
+        act:listenPostCommunicateUtterance(?speaker);
+        //act:generateResponseFromString(?speaker, "Please answer my previous question before sending further instructions");
         return;
     }
 
