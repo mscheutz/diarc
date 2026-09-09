@@ -326,7 +326,7 @@ public class Recovery {
             log.error("[selectRecoveryAction] called with incompatible context type {}", context.getClass());
             return null;
         }
-        newFailureInfo.goal = goalContext == null ? null : goalContext.getGoal().getPredicate();
+        newFailureInfo.goal = goalContext == null ? null : goalContext.getGoal().getGoalStatePredicate();
         newFailureInfo.actionStatus = failureStatus;
         newFailureInfo.failedActions = getFailedActions(context,failureStatus,failureJustification);
         newFailureInfo.isCatchingContextParent = failedActionIsChild;

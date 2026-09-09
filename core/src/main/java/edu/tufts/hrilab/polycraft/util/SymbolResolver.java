@@ -45,6 +45,11 @@ public class SymbolResolver {
     gridToPoly.put("unlocked_safe", "polycraft:unlocked_safe");
     gridToPoly.put("door", "minecraft:wooden_door");
     gridToPoly.put("sapling", "minecraft:sapling");
+    // updated NGW -- these are also entities, so can be ignored in the map
+    gridToPoly.put("entity_pogoist", "minecraft:pogoist");
+    gridToPoly.put("entity_agent", "minecraft:agent");
+    gridToPoly.put("entity_trader", "minecraft:trader");
+
 
     for (Map.Entry<String, String> entry : gridToPoly.entrySet()) {
       polyToGrid.put(entry.getValue(), entry.getKey());

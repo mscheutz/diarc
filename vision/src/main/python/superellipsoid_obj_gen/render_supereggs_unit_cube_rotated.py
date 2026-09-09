@@ -360,7 +360,7 @@ def create_rotate_rescale_translate_objects(output_object_file_path, side_compon
                                                                 )
 
     rot_x_A = np.random.uniform(ANGLE_MIN, max_angle_A)
-    rot_z_A = np.random.uniform(ANGLE_MIN, max_angle_A)
+    rot_z_A = np.random.uniform(ANGLE_MIN, max_angle_A/2)
     vol_A = a_x_A * a_y_A * a_z_A
     
     jitter_scale = UNIT_CUBE_SIDELENGTH / 30  # Small jitter in overall object placement within unit cube
@@ -486,7 +486,7 @@ def create_rotate_rescale_translate_objects(output_object_file_path, side_compon
                     distance_is_okay = True
                         
             rot_x = np.random.uniform(ANGLE_MIN, max_angle)
-            rot_z = np.random.uniform(ANGLE_MIN, max_angle)
+            rot_z = np.random.uniform(ANGLE_MIN, max_angle/2)
 
             # get side object obb
             side_center, side_axes, side_half = get_obb_data_from_superellipsoid(
@@ -694,35 +694,33 @@ def generate_blender_superegg_dataset(args):
 
 def define_shape_parameters(shape_type):
     # n1, n2, ax, ay, az, max_angle
-    if "spher" in shape_type:
-        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 1, ANGLE_MAX 
 
-    elif "cube" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 1, ANGLE_MAX 
+    if "cylinder" in shape_type:
+        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 4, ANGLE_MAX
+
+    elif "sphere" in shape_type:
+        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 1, ANGLE_MAX 
+    
+    elif "disk" in shape_type:
+        return EDGINESS_MIN, EDGINESS_MAX, 4, 4, 1, ANGLE_MAX
 
     elif "cuboid" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 3, ANGLE_MAX
-
-    elif "cylind" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
+        return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 4, ANGLE_MAX
 
     elif "capsule" in shape_type:
-        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
+        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 4, ANGLE_MAX
 
-    elif "disk" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 3, 3, 1, ANGLE_MAX
-
-    elif "rod" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
+    elif "plate" in shape_type:
+        return EDGINESS_MIN, EDGINESS_MIN, 4, 4, 1, ANGLE_MAX
     
     elif "part" in shape_type:
         n1 = np.random.uniform(EDGINESS_MIN, EDGINESS_MAX)
         n2 = np.random.uniform(EDGINESS_MIN, EDGINESS_MAX)
-        ax = np.random.uniform(1, 3)
-        ay = np.random.uniform(1, 3)
-        az = np.random.uniform(1, 3)
+        ax = np.random.uniform(1, 4)
+        ay = np.random.uniform(1, 4)
+        az = np.random.uniform(1, 4)
 
-        return n1, n2, ax, ay, az, ANGLE_MAX*2
+        return n1, n2, ax, ay, az, ANGLE_MAX
         
     else:
         raise ValueError(f"Unsupported shape type: {shape_type}")
@@ -741,10 +739,16 @@ def parse_arguments():
     parser.add_argument('--number_of_samples', type=int, required=True)
     parser.add_argument('--num_of_side_components', type=int, required=True)
     parser.add_argument('--shape_type1', type=str, default='firstshape_part', 
-                       choices=['firstshape_cylindrical', 'firstshape_cuboid', 'firstshape_spherical', 'firstshape_disk', 'firstshape_part'],
+                       choices=['firstshape_cylinder', 'firstshape_sphere', 
+                                'firstshape_disk', 'firstshape_cuboid', 
+                                'firstshape_capsule', 'firstshape_plate', 
+                                'firstshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument('--shape_type2', type=str, default='secondshape_other_part', 
-                       choices=['secondshape_cylindrical', 'secondshape_cuboid', 'secondshape_spherical', 'secondshape_disk', 'secondshape_part'],
+                       choices=['secondshape_cylinder', 'secondshape_sphere', 
+                                'secondshape_disk', 'secondshape_cuboid', 
+                                'secondshape_capsule', 'secondshape_plate', 
+                                'secondshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument(
         '--size2',
@@ -770,7 +774,10 @@ def parse_arguments():
         help='Position of the second component relative to the first'
     )
     parser.add_argument('--shape_type3', type=str, default='thirdshape_other_part', 
-                       choices=['thirdshape_cylindrical', 'thirdshape_cuboid', 'thirdshape_spherical', 'thirdshape_disk', 'thirdshape_part'],
+                       choices=['thirdshape_cylinder', 'thirdshape_sphere', 
+                                'thirdshape_disk', 'thirdshape_cuboid', 
+                                'thirdshape_capsule', 'thirdshape_plate', 
+                                'thirdshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument(
         '--position3',

@@ -81,11 +81,11 @@ public class QueueExecutionManager extends ExecutionManager {
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
           if (!goal.isLearningGoal()) {
             //TODO: Not sure if we want to ever teach teaching or teach freeze? If not, get rid of above conditional block
-            if (goal.getPredicate().getName().equals("learnAction")) {
+            if (goal.getGoalStatePredicate().getName().equals("learnAction")) {
               //Action learning itself takes the learning lock - prevents non-learning goals from being submitted
               resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
               continue;
-            } else if (goal.getPredicate().getName().equals("freeze")) {
+            } else if (goal.getGoalStatePredicate().getName().equals("freeze")) {
               //Freeze itself takes the freeze lock - prevents everything else from being submitted
               resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
               continue;

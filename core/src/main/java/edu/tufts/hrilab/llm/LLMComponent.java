@@ -7,12 +7,16 @@ package edu.tufts.hrilab.llm;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import edu.tufts.hrilab.llm.hf.HFClient;
+import edu.tufts.hrilab.util.Http;
 
 import java.awt.*;
+import java.beans.Transient;
+import java.io.InputStreamReader;
 
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
+
+import static java.util.Map.entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
@@ -24,7 +28,12 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Symbol;
 
 import edu.tufts.hrilab.llm.openai.OpenaiClient;
+import edu.tufts.hrilab.llm.openai.request.*;
+import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.llama.LlamaClient;
+import edu.tufts.hrilab.llm.llama.request.*;
+import edu.tufts.hrilab.llm.llama.response.*;
+import edu.tufts.hrilab.llm.hf.HFClient;
 
 public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);

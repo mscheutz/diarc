@@ -96,7 +96,7 @@ public class ActionInterpreterTest {
 	instance = aiForGoal(goal);
 
     assertNotNull(instance);
-    assertEquals("located(ball)", instance.getGoal().getPredicate().toString());
+    assertEquals("located(ball)", instance.getGoal().getGoalStatePredicate().toString());
   }
 
   //TODO:brad: do these even need to exist?
@@ -246,7 +246,7 @@ public class ActionInterpreterTest {
     log.debug("starting instance...");
     instance.call();
 
-    assertTrue(sm.holds(goal.getPredicate()).getValue());
+    assertTrue(sm.holds(goal.getGoalStatePredicate()).getValue());
   }
 
   private ActionInterpreter aiForGoal(Goal goal) {

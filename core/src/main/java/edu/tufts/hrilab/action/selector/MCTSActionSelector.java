@@ -140,7 +140,7 @@ public class MCTSActionSelector extends ActionSelector {
       //back up the tree!
       rolloutNode.backup(value);
       //If we have reached our goal
-      if (rolloutNode.getContext().getStateMachine().holds(goal.getPredicate()).getValue()) {
+      if (rolloutNode.getContext().getStateMachine().holds(goal.getGoalStatePredicate()).getValue()) {
         log.debug("[MCTS] reached goal");
         break;
       }
@@ -384,7 +384,7 @@ public class MCTSActionSelector extends ActionSelector {
   private List<ActionDBEntry> filterActionsByGoal(Set<ActionDBEntry> entries, Goal goal, ActionConstraints constraints, StateMachine sm) {
     //Only look at goal predicates
     Set<String> relevantEffects = new HashSet<>();
-    for (Symbol p : goal.getPredicate().getArgs()) {
+    for (Symbol p : goal.getGoalStatePredicate().getArgs()) {
       if (Operators.DIARC_TO_PDDL.containsKey(p.getName())) {
         relevantEffects.add(((Term) p).getArgs().get(0).getName());
       } else {

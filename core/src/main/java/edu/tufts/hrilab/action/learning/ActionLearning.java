@@ -113,11 +113,11 @@ public class ActionLearning {
           Goal g = goalQueue.remove();
           if (shouldExecute()) {
             //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
-            ignoreActionSet.add(g.getPredicate());
+            ignoreActionSet.add(g.getGoalStatePredicate());
             g.setIsLearningGoal(true);
             g = executionManager.submitGoal(g);
             GoalStatus goalStatus = executionManager.joinOnGoal(g.getId());
-            ignoreActionSet.remove(g.getPredicate());
+            ignoreActionSet.remove(g.getGoalStatePredicate());
 
             if (goalStatus == GoalStatus.SUCCEEDED) {
               currentLearningState.createEventSpec(g);
@@ -345,7 +345,7 @@ public class ActionLearning {
   }
 
   public boolean shouldIgnore(Goal goal) {
-    return ignoreActionSet.stream().anyMatch(a -> goal.getPredicate().instanceOf(a));
+    return ignoreActionSet.stream().anyMatch(a -> goal.getGoalStatePredicate().instanceOf(a));
   }
 
   /**

@@ -62,9 +62,9 @@ public class ScheduledGoal extends Goal {
   }
 
   @Override
-  public Predicate getPredicate() {
+  public Predicate getGoalPredicate() {
     List<Symbol> args = new ArrayList<>();
-    args.add(super.getPredicate()); // goal state
+    args.add(super.getGoalStatePredicate()); // goal state
     if (start != null) {
       // the start pred could be a relative time, so always return as a non-relative date string
       args.add(Factory.createPredicate("start", scheduleInfo.startTime.toString()));
@@ -102,7 +102,7 @@ public class ScheduledGoal extends Goal {
       }
     }
 
-    Goal nextGoal = createGoal(super.getPredicate());
+    Goal nextGoal = createGoal(super.getGoalPredicate());
     submittedGoals.add(nextGoal);
     return nextGoal;
   }

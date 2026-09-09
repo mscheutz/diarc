@@ -173,6 +173,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);
   }
 
+  @Override
+  public Justification goToLocation(Symbol location) {
+    return goToLocation(location, true);
+  }
+
 //  @Override
 //  public Justification goToLocation(Symbol location) {
 //    log.info("[goToLocation] called. location: {}", location);

@@ -59,6 +59,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   private Random random;
 
   private VisionConsultant visionConsultant;
+  private String kbName = "physobj";
 
   //fake fields
   private long nextTypeId;
@@ -111,7 +112,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
 //    sceneCollection = SceneGenerator.readSceneCollection(sceneCollectionFilename);
 
     sceneCollection = selectedScene.generateSceneCollection();
-    visionConsultant = new MockVisionConsultant(this,"physobj", sceneCollection);
+    visionConsultant = new MockVisionConsultant(this,kbName, sceneCollection);
 
     try {
       Collection<String> consultantGroups=this.getMyGroups();
@@ -178,6 +179,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     options.add(Option.builder("makeObservations").hasArg().argName("true/false").desc("set if observations should be successfully observed or not (true by default)").build());
     options.add(Option.builder("runType").hasArgs().argName("types").desc("turn on detection/tracking of specified memory object type(s)").build());
     options.add(Option.builder("refs").longOpt("references").hasArg().argName("file").desc("load pre-defined object references and their properties").build());
+    options.add(Option.builder("refsKbName").longOpt("refsKbName").hasArg().argName("semantic-type").desc("Set the semantic type (i.e., kbName) for RR consultant.").build());
     options.add(Option.builder("sceneClass").hasArgs().argName("scene class fully qualified name").desc("specify a SceneGenerator class to be used for this mock vision component").build());
 //    options.add(Option.builder("sceneCollection").hasArg().argName("file").desc("load config file with fake scene information").build());
     return options;
@@ -213,6 +215,10 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     if (cmdLine.hasOption("refs")) {
       refsConfigFile = cmdLine.getOptionValue("refs");
     }
+    if (cmdLine.hasOption("refsKbName")) {
+      kbName = cmdLine.getOptionValue("refsKbName");
+    }
+
   }
 
   @Override
@@ -291,9 +297,14 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public Long getTypeId(Symbol objectRef) {
-    log.debug("[getTypeId] objectRef: " + objectRef);
-    return visionConsultant.getTypeId(objectRef);
+  public Long getTypeId(Symbol descriptor) {
+    log.debug("[getTypeId] descriptor: " + descriptor);
+
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(visionConsultant.getKBName())) {
+      return visionConsultant.getTypeId(descriptor);
+    } else {
+      return getTypeId(List.of(descriptor));
+    }
   }
 
   @Override
@@ -358,6 +369,16 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
+  public List<Long> getTokenIds(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(visionConsultant.getKBName())) {
+      return visionConsultant.getTokenIds(descriptor);
+    } else {
+      return getTokenIds(List.of(descriptor));
+    }
+  }
+
+  @Override
   public List<MemoryObject> getTokens() {
     List<MemoryObject> results = new ArrayList<>();
     if (sceneCollection != null) {
@@ -384,7 +405,8 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     List<MemoryObject> tokensOut = new ArrayList<>();
 
     if (typeIdDescriptors.containsKey(typeId)) {
-      if (typeIdDescriptors.get(typeId).get(0).getName().equals("any")) {
+      String descriptorName = typeIdDescriptors.get(typeId).get(0).getName();
+      if (descriptorName.equals("any") || descriptorName.equals("all")) {
         return sceneCollection.getSceneDetectionResults();
       }
 
@@ -413,6 +435,16 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     return getTokens(typeId);
   }
 
+  @Override
+  public List<MemoryObject> getTokens(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(visionConsultant.getKBName())) {
+      return visionConsultant.getTokens(descriptor);
+    } else {
+      return getTokens(List.of(descriptor));
+    }
+  }
+
 
   @Override
   public MemoryObject getToken(long tokenId) {
@@ -420,7 +452,6 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
     for (MemoryObject mo : sceneCollection.getSceneDetectionResults()) {
       if (mo.getTokenId() == tokenId) {
         return mo;
-
       }
     }
 

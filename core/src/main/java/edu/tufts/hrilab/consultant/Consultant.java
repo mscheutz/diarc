@@ -245,7 +245,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   }
 
   /**
-   * A convenience method for creating references from with a DIARC component housing a Consultant instance. The
+   * A convenience method for creating references from within a DIARC component housing a Consultant instance. The
    * new reference is automatically added to this consultant.
    *
    * @param var        Variable associated with new reference (only important if properties contain more than one Variable)

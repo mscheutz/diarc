@@ -37,6 +37,8 @@ public class NovelRunComponent extends DiarcComponent {
   private long maxExploreTime = 60000; // max exploration time allowed in each game (ms)
   private Symbol actor = Factory.createSymbol("self");
 
+  private TRADEServiceInfo submitGoalTSI = null;
+
   public NovelRunComponent() {
     super();
   }
@@ -51,10 +53,9 @@ public class NovelRunComponent extends DiarcComponent {
   public Boolean playGame() {
     // wait for submitGoal to be available in the system
     log.info("Waiting for TRADE Service for submitGoal to be available ...");
-    TRADEServiceInfo tsi = null;
-    while (tsi == null) {
+    while (submitGoalTSI == null) {
       try {
-        tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal"));
+        submitGoalTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class));
       } catch (TRADEException e) {
         Util.Sleep(100);
       }
@@ -71,30 +72,26 @@ public class NovelRunComponent extends DiarcComponent {
       // Initializing beliefs, reporting and exploring pre-goal-execution novelties
       try {
         log.info("Initializing world.");
-        tsi = null;
-        while (tsi == null) {
+        TRADEServiceInfo initBeliefsTSI = null;
+        while (initBeliefsTSI == null) {
           try {
-            tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("initializeBeliefs"));
+            initBeliefsTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("initializeBeliefs").argTypes());
           } catch (TRADEException e) {
             Util.Sleep(1000);
           }
         }
 
-        // TODO: remove these once PAL init bug is fixed
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("senseRecipe")).call(Object.class);
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("senseRecipe")).call(Object.class);
-
         // initialize belief from new game, and detect pre-game novelties
-        Set<Term> novelties = tsi.call(Set.class);
+        Set<Term> novelties = initBeliefsTSI.call(Set.class);
 
         // report detected pre-game novelties (will handle them below, after interacting with traders)
         if (!novelties.isEmpty()) {
           log.info("Detected pre-execution novelties: " + novelties);
           // report novelty
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, novelties);
+//          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, novelties);
 
           // assert recipe and object novelties into universal so they aren't detected as novel every subsequent game
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, novelties, MemoryLevel.UNIVERSAL);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class, MemoryLevel.class)).call(Object.class, novelties, MemoryLevel.UNIVERSAL);
         }
 
 
@@ -118,20 +115,20 @@ public class NovelRunComponent extends DiarcComponent {
           log.info("Handling pre-execution novelties: " + novelties);
           for (Term novelty : novelties) {
             // initialize other info needed in belief for various novelties (e.g., object types)
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("initializeNovelty")).call(Object.class, novelty);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("initializeNovelty").argTypes(Term.class)).call(Object.class, novelty);
 
             // generate list of explorations to try
-            Set<Predicate> explorationsToTry = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateExplorationsToTry")).call(Set.class, novelty);
+            Set<Predicate> explorationsToTry = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateExplorationsToTry").argTypes(Term.class)).call(Set.class, novelty);
 
             // assert explorations to try, which will be removed as they're explored
             // this allows explorations to continue into subsequent games if explorations can't be completed
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, explorationsToTry, MemoryLevel.UNIVERSAL);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Term.class, MemoryLevel.class)).call(Object.class, explorationsToTry, MemoryLevel.UNIVERSAL);
           }
         }
 
         // execute any remaining novelty explorations left to try
         Predicate explorationPredicate = Factory.createPredicate("toExplore(X,Y)");
-        List<Map<Variable, Symbol>> explorationResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, explorationPredicate);
+        List<Map<Variable, Symbol>> explorationResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, explorationPredicate);
         List<Term> explorationsToTry = new ArrayList<>(explorationPredicate.copyWithNewBindings(explorationResults));
         log.info("Exploring novelties: " + explorationsToTry);
         long explorationStartTime = System.currentTimeMillis();
@@ -140,41 +137,41 @@ public class NovelRunComponent extends DiarcComponent {
             log.info("Max exploration time reached. Moving on to main goal.\n\n\n\n");
             break;
           }
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("executeExploration")).call(Object.class, explorationToTry);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("executeExploration").argTypes(Predicate.class)).call(Object.class, explorationToTry);
         }
 
       } catch (TRADEException e) {
         log.error("Error in initialization", e);
-
-        // Execute primary top-level goal
-        boolean goalSuccess = doGoal(goal);
-
-        // if didn't succeed and game isn't over, report novelty and give up
-        log.info("Goal success: " + goalSuccess);
-        if (!goalSuccess && !isGameOver.get()) {
-          try {
-            Set<Term> novelties = new HashSet<>();
-            novelties.add(Factory.createPredicate("unknown(failure)"));
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, novelties);
-            log.info("Giving up. Trial #" + trialCount);
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("giveUp")).call(Object.class);
-          } catch (TRADEException e2) {
-            log.error("Error trying to give up.", e2);
-          }
-        }
-
-        // wait until game is over before starting next game
-        while (!isGameOver.get()) {
-          log.info("Waiting for game to be over...");
-          try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("nop")).call(Object.class);
-          } catch (TRADEException e2) {
-            log.error("Error waiting for game to be over.");
-          }
-          Util.Sleep(1000);
-        }
-        log.info("Game over.\n\n\n\n\n\n\n\n\n\n");
       }
+
+      // Execute primary top-level goal
+      boolean goalSuccess = doGoal(goal);
+
+      // if didn't succeed and game isn't over, report novelty and give up
+      log.info("Goal success: " + goalSuccess);
+      if (!goalSuccess && !isGameOver.get()) {
+        try {
+          Set<Term> novelties = new HashSet<>();
+          novelties.add(Factory.createPredicate("unknown(failure)"));
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties").argTypes(Set.class)).call(Object.class, novelties);
+          log.info("Giving up. Trial #" + trialCount);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("giveUp").argTypes()).call(Object.class);
+        } catch (TRADEException e2) {
+          log.error("Error trying to give up.", e2);
+        }
+      }
+
+      // wait until game is over before starting next game
+      while (!isGameOver.get()) {
+        log.info("Waiting for game to be over...");
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("nop").argTypes()).call(Object.class);
+        } catch (TRADEException e2) {
+          log.error("Error waiting for game to be over.");
+        }
+        Util.Sleep(1000);
+      }
+      log.info("Game over.\n\n\n\n\n\n\n\n\n\n");
     }
   }
 
@@ -193,11 +190,11 @@ public class NovelRunComponent extends DiarcComponent {
 
     GoalStatus goalStatus = null;
     try {
-      boolean known = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(Boolean.class, goal);
+      boolean known = TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(Boolean.class, goal);
       if (!known) {
         log.info("Submitting goal: " + goal);
-        goalID.set(TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal")).call(Long.class, goal));
-        goalStatus = TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal")).call(GoalStatus.class, goalID.get());
+        goalID.set(submitGoalTSI.call(Long.class, goal));
+        goalStatus = TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, goalID.get());
         log.info("Goal terminated (" + goal + ") with status: " + goalStatus);
       } else {
         log.info("Goal already achieved: " + goal);
@@ -216,12 +213,12 @@ public class NovelRunComponent extends DiarcComponent {
 
   private void cancelCurrentGoals() {
     try {
-      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentGoals")).call(List.class, actor);
+      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentGoals").argTypes(Symbol.class)).call(List.class, actor);
       for (Predicate goal : currGoals) {
         log.info("Terminating current goal: " + goal);
         Predicate cancelGoal = Factory.createPredicate("cancelGoal", actor, goal);
-        long cancelGoalId = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal")).call(Long.class, cancelGoal);
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal")).call(Object.class, cancelGoalId);
+        long cancelGoalId = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, cancelGoal);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(Object.class, cancelGoalId);
         log.info("Goal Terminated: " + goal);
       }
     } catch (TRADEException e) {
@@ -241,9 +238,7 @@ public class NovelRunComponent extends DiarcComponent {
     log.info("TRIAL " + trialCount + " COMPLETED in " + trialTime + " sec.");
 
     isGameOver.set(true);
-    if (!goalAchieved) {
-      cancelCurrentGoals();
-    }
+    cancelCurrentGoals();
   }
 
   @TRADEService
@@ -254,7 +249,7 @@ public class NovelRunComponent extends DiarcComponent {
   @TRADEService
   public Boolean receivedNoveltySignal() {
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(Boolean.class, Factory.createPredicate("noveltySignal", "true"));
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(Boolean.class, Factory.createPredicate("noveltySignal", "true"));
     } catch (TRADEException e) {
       log.error("Error checking belief for novelty signal.", e);
     }
@@ -269,7 +264,7 @@ public class NovelRunComponent extends DiarcComponent {
   private boolean reportedNovelty() {
     try {
       Predicate noveltyQuery = Factory.createPredicate("novelty", "X", "Y");
-      List<Map<Variable, Symbol>> reportedNovelties = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, noveltyQuery);
+      List<Map<Variable, Symbol>> reportedNovelties = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, noveltyQuery);
       if (reportedNovelties.size() > 0) {
         return true;
       }

@@ -8,6 +8,7 @@ VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.
 VERBTTT; {((C/REF)/REF)/REF; #x#y#z.?PH(?ADDRESSEE,$y,$x)}, {(((C/REF)/REF)/REF)\AGENT; #a#x#y#z.?PH($a,$y,$x)}
 
 THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
+LOC;{RN; ?PH:location ; VAR}, {DN; ?PH:property}
 
 %% object as property, location as reference:
 %VERBT; {(C/DESC)\AGENT ; #x#y.?PH($x,$y)}, {C/DESC ; #x.?PH(?ADDRESSEE, $x)}
@@ -33,8 +34,9 @@ could; (AGENT/C) \ AGENT ; #x.$x
 would; (AGENT/C) \ AGENT ; #x.$
 might; (AGENT/C) \ AGENT ; #x.$x
 
-%please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
-please; (AGENT/C) \ AGENT, C\C ; AGENT\AGENT, #x. $x
+
+please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
+%please; (AGENT/C) \ AGENT, C\C ; AGENT\AGENT, #x. $x
 
 the; REF/RN ; #x.$x ; DEFINITE
 the; LREF/LN ; #x.$x ; DEFINITE
@@ -75,7 +77,7 @@ obtain; VERBTT ; deliver
 collect; VERBTT ; deliver
 
 % goto(?ADDRESSEE, REF:location)
-go to; VERBT; goto
+go to; VERBT; goToLocation
 go towards; VERBT; goto
 go over to; VERBT; goto
 come to; VERBT; goto
@@ -86,13 +88,29 @@ travel to; VERBT; goto
 head to; VERBT; goto
 advance to; VERBT; goto
 
+% TODO: REMOVE THESE
+home; LOC; home
+dropoff; LOC; dropoff
+tableA; LOC; tableA
+tableC; LOC; tableC
+
 % pickup(?ADDRESSEE, REF:physobj)
-pick up; VERBT; pickup
-grab; VERBT; pickup
-pickup; VERBT; pickup
-lift up; VERBT; pickup
-lift; VERBT; pickup
-raise; VERBT; pickup
+pick up; VERBT; pickUp
+pickup; VERBT; pickUp
+lift up; VERBT; pickUp
+lift; VERBT; pickUp
+raise; VERBT; pickUp
+
+% grab(?ADDRESSEE, REF:physobj)
+grab; VERBT; grab
+pull out; VERBT; pullOut
+% open the door by; VERBT; openDoor
+push; VERBT; pushButton
+
+claim; VERBI; claim
+release; VERBI; release
+power on; VERBI; powerOn
+power off; VERBI; powerOff
 
 
 % DO WE HAVE A PICKUP FROM?  pickup(?ADDRESSEE, REF:physobj; REF:location)
@@ -118,29 +136,29 @@ leave; VERBTT; putdownat
 set; VERBTT; putdownat
 
 % openGripper(?ADDRESSEE)
-open gripper; VERBI; openGripper
-open your gripper; VERBI; openGripper
-open the gripper; VERBI; openGripper
-open the clamp; VERBI; openGripper
-open up the gripper; VERBI; openGripper
-open your hand; VERBI; openGripper
-release the gripper; VERBI; openGripper
-release your grip; VERBI; openGripper
+open gripper; C; openGripper(?ADDRESSEE, arm)
+open your gripper; C; openGripper(?ADDRESSEE, arm)
+open the gripper; C; openGripper(?ADDRESSEE, arm)
+open the clamp; C; openGripper(?ADDRESSEE, arm)
+open up the gripper; C; openGripper(?ADDRESSEE, arm)
+open your hand; C; openGripper(?ADDRESSEE, arm)
+release the gripper; C; openGripper(?ADDRESSEE, arm)
+release your grip; C; openGripper(?ADDRESSEE, arm)
 
 
 
 % closeGripper(?ADDRESSEE)
-close gripper; VERBI; closeGripper
-close your gripper; VERBI; closeGripper
-close the gripper; VERBI; closeGripper
-clamp your gripper; VERBI; closeGripper
-clench the gripper; VERBI; closeGripper
-close up the gripper; VERBI; closeGripper
-close your hand; VERBI; closeGripper
-lock the gripper; VERBI; closeGripper
-shut the gripper; VERBI; closeGripper
-tighten the gripper; VERBI; closeGripper
-tTighten your grip; VERBI; closeGripper
+close gripper; C; closeGripper(?ADDRESSEE, arm)
+close your gripper; C; closeGripper(?ADDRESSEE, arm)
+close the gripper; C; closeGripper(?ADDRESSEE, arm)
+clamp your gripper; C; closeGripper(?ADDRESSEE, arm)
+clench the gripper; C; closeGripper(?ADDRESSEE, arm)
+close up the gripper; C; closeGripper(?ADDRESSEE, arm)
+close your hand; C; closeGripper(?ADDRESSEE, arm)
+lock the gripper; C; closeGripper(?ADDRESSEE, arm)
+shut the gripper; C; closeGripper(?ADDRESSEE, arm)
+tighten the gripper; C; closeGripper(?ADDRESSEE, arm)
+tTighten your grip; C; closeGripper(?ADDRESSEE, arm)
 
 
 
@@ -188,13 +206,51 @@ from; DESC/DESC; #x.$x
 in; DESC/DESC; #x.$x
 
 shut down; VERBI; shutDown
-stow arm; VERBI; stow
-unstow arm; VERBI; unstow
-carry mode; VERBI; carry
+
+stow arm; C; goToPose(?ADDRESSEE,stow)
+stow arms; C; goToPose(?ADDRESSEE,stow)
+stow your arm; C; goToPose(?ADDRESSEE,stow)
+stow the arm; C; goToPose(?ADDRESSEE,stow)
+
+unstow arm; C; goToPose(?ADDRESSEE,unstow)
+unstow arms; C; goToPose(?ADDRESSEE,unstow)
+unstow your arm; C; goToPose(?ADDRESSEE,unstow)
+unstow the arm; C; goToPose(?ADDRESSEE,unstow)
+
+carry mode; C; goToPose(?ADDRESSEE,carry)
+go to carry pose; C; goToPose(?ADDRESSEE,carry)
+go to the carry pose; C; goToPose(?ADDRESSEE,carry)
+
+detection mode; C; goToPose(?ADDRESSEE,detection)
+go to detection pose; C; goToPose(?ADDRESSEE,detection)
+go to the detection pose; C; goToPose(?ADDRESSEE,detection)
+
+%% vision search demo %%
+look for available parts; VERBI; lookForObjects
+look for parts; VERBI; lookForObjects
+look for available objects; VERBI; lookForObjects
+look for objects; VERBI; lookForObjects
+search for available parts; VERBI; lookForObjects
+search for parts; VERBI; lookForObjects
+search for available objects; VERBI; lookForObjects
+search for objects; VERBI; lookForObjects
+
+done; VERBI; shutDown
+i'm done; VERBI; shutDown
+i am done; VERBI; shutDown
+all done; VERBI; shutDown
 
 look for; VERBT; perceiveEntity
 undock; VERBI; undock
 dock; VERBI; dock
+doc; VERBI; dock
+
+% flex actions
+%analyze joint; C; callPolicy(?ADDRESSEE, analyze_joint)
+%open the door; C; callPolicy(?ADDRESSEE, open_door)
+
+% spot action
+open; VERBT; open
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE
@@ -214,6 +270,7 @@ spot; AGENT; ?ADDRESSEE
 
 yes; VAL; val(yes)
 no; VAL; val(no)
+ready; VAL; val(ready)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Additional entries for flexibility %%
@@ -234,10 +291,6 @@ hi there; G ; hi_there
 hello; G ; hello
 
 turn off; VERBI; shutDown
-stow your arm; VERBI; stow
-stow the arm; VERBI; stow
-unstow your arm; VERBI; unstow
-unstow the arm; VERBI; unstow
 enter carry mode; VERBI; carry
 search for; VERBT; perceiveEntity
 find; VERBT; perceiveEntity
@@ -258,7 +311,12 @@ got it; VAL; holding(it)
 object; THING
 bottle; THING
 cup; THING
+door; THING
+doorhandle; THING
 apple; THING
+handle; THING
+rod; THING
+button; THING
 unknown; RN/RN; #x.unknown($x) ; MOD
 unknown; REF/REF; #x.unknown($x) ; MOD
 

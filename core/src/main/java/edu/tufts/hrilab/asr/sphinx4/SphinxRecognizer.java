@@ -13,7 +13,6 @@ import edu.cmu.sphinx.frontend.util.StreamDataSource;
 import edu.cmu.sphinx.recognizer.Recognizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.tools.jline_embedded.internal.Log;
 
 /**
  * High-level class for live speech recognition.
@@ -113,7 +112,7 @@ public class SphinxRecognizer extends AbstractSpeechRecognizer {
     if (recognizer.getState() == Recognizer.State.DEALLOCATED) {
       recognizer.allocate();
     } else {
-      Log.warn("[startRecognition] Could not start recognition because recognizer is not in DEALLOCATED state");
+      log.warn("[startRecognition] Could not start recognition because recognizer is not in DEALLOCATED state");
     }
 
   }
@@ -129,7 +128,7 @@ public class SphinxRecognizer extends AbstractSpeechRecognizer {
     if (recognizer.getState() == Recognizer.State.ALLOCATED) {
       recognizer.deallocate();
     } else {
-      Log.warn("[stopRecognition] Could not stop recognition because recognizer is not in ALLOCATED state" );
+      log.warn("[stopRecognition] Could not stop recognition because recognizer is not in ALLOCATED state" );
     }
   }
 }

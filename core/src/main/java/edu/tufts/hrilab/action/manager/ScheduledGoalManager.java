@@ -136,7 +136,7 @@ public class ScheduledGoalManager {
     try {
       triggers = goalScheduler.getTriggersOfJob(jobKey);
     } catch (SchedulerException e) {
-      log.error("Error looking up goal trigger. Goal: {}", goal.getPredicate());
+      log.error("Error looking up goal trigger. Goal: {}", goal.getGoalStatePredicate());
     }
     if (triggers == null || triggers.size() != 1) {
       return null;

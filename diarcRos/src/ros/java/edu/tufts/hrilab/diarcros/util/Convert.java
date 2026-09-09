@@ -30,6 +30,9 @@ import java.lang.Math;
  * NOTE: this is similar to the edu.tufts.hrilab.util.Convert class but contains all methods that require ROS.
  */
 public class Convert {
+    public static final int ROLL  = 0;
+    public static final int PITCH = 1;
+    public static final int YAW   = 2;
 
   // vecmath -> geometry_msgs
   public static Point convertToPoint(Point3d p) {
@@ -97,23 +100,23 @@ public class Convert {
     return new MutablePair<>(convertToPoint3d(pt), convertToQuat4d(qt));
   }
 
-  public static Pose convertToPose(Matrix4d m) {
-    Vector3d v = new Vector3d();
-    m.get(v);
-    Quat4d q = new Quat4d();
-    // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
-    q.set(m);
-    return new Pose(new Point(v.x, v.y, v.z), new Quaternion(q.x, q.y, q.z, q.w));
-  }
+    public static Pose convertToPose(Matrix4d m) {
+        Vector3d v = new Vector3d();
+        m.get(v);
+        Quat4d q = rotationToQuaternion(m);
+        // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
+        //q.set(m);
+        return new Pose(new Point(v.x, v.y, v.z), new Quaternion(q.x, q.y, q.z, q.w));
+    }
 
-  public static TransformStamped convertToTransformStamped(Matrix4d m) {
-    Vector3d v = new Vector3d();
-    m.get(v);
-    Quat4d q = new Quat4d();
-    // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
-    q.set(m);
-    return convertToTransformStamped(v, q);
-  }
+    public static TransformStamped convertToTransformStamped(Matrix4d m) {
+        Vector3d v = new Vector3d();
+        m.get(v);
+        Quat4d q = rotationToQuaternion(m);
+        // m.get(q); EAK: there's a bug in java8 Matrix4d.get(Quat4d) that results in occasional NaNs after sqrt of a negative
+        //q.set(m);
+        return convertToTransformStamped(v,q);
+    }
 
   /* Convenience methods: Make a new transform from whatever type of vector and quaternion. */
   // Plain old transform -> TransformStamped
@@ -139,45 +142,100 @@ public class Convert {
     return convertToTransformStamped(new Transform(convertToVector3(v), convertToQuaternion(q)));
   }
 
-  public static double[] convertToEuler(Quaternion q) {
+  public static double[] quaternionToEuler(Quaternion q) {
     double[] angles = {0, 0, 0};
 
     // roll (x-axis rotation)
     double sinr_cosp = 2 * (q.getW() * q.getX() + q.getY() * q.getZ());
     double cosr_cosp = 1 - 2 * (q.getX() * q.getX() + q.getY() * q.getY());
-    angles[edu.tufts.hrilab.util.Convert.ROLL] = Math.atan2(sinr_cosp, cosr_cosp);
+    angles[ROLL] = Math.atan2(sinr_cosp, cosr_cosp);
 
     // pitch (y-axis rotation)
     double sinp = 2 * (q.getW() * q.getY() - q.getZ() * q.getX());
     if (Math.abs(sinp) >= 1) {
-      angles[edu.tufts.hrilab.util.Convert.PITCH] = Math.copySign(Math.PI / 2, sinp); // use 90 degrees if out of range
+      angles[PITCH] = Math.copySign(Math.PI / 2, sinp); // use 90 degrees if out of range
     } else {
-      angles[edu.tufts.hrilab.util.Convert.PITCH] = Math.asin(sinp);
+      angles[PITCH] = Math.asin(sinp);
     }
 
     // yaw (z-axis rotation)
     double siny_cosp = 2 * (q.getW() * q.getZ() + q.getX() * q.getY());
     double cosy_cosp = 1 - 2 * (q.getY() * q.getY() + q.getZ() * q.getZ());
-    angles[edu.tufts.hrilab.util.Convert.YAW] = Math.atan2(siny_cosp, cosy_cosp);
+    angles[YAW] = Math.atan2(siny_cosp, cosy_cosp);
 
     return angles;
   }
 
-  public static Quaternion convertToQuaternion(double yaw, double pitch, double roll) {
-    double cy = Math.cos(yaw * 0.5);
-    double sy = Math.sin(yaw * 0.5);
-    double cp = Math.cos(pitch * 0.5);
-    double sp = Math.sin(pitch * 0.5);
-    double cr = Math.cos(roll * 0.5);
-    double sr = Math.sin(roll * 0.5);
+    public static Quaternion eulerToQuaternion(double yaw, double pitch, double roll) {
+        double cy = Math.cos(yaw * 0.5);
+        double sy = Math.sin(yaw * 0.5);
+        double cp = Math.cos(pitch * 0.5);
+        double sp = Math.sin(pitch * 0.5);
+        double cr = Math.cos(roll * 0.5);
+        double sr = Math.sin(roll * 0.5);
 
-    Quaternion q = new Quaternion();
-    q.setW(cr * cp * cy + sr * sp * sy);
-    q.setX(sr * cp * cy - cr * sp * sy);
-    q.setY(cr * sp * cy + sr * cp * sy);
-    q.setZ(cr * cp * sy - sr * sp * cy);
+        Quaternion q = new Quaternion();
+        q.setW(cr * cp * cy + sr * sp * sy);
+        q.setX(sr * cp * cy - cr * sp * sy);
+        q.setY(cr * sp * cy + sr * cp * sy);
+        q.setZ(cr * cp * sy - sr * sp * cy);
 
-    return q;
-  }
+        return q;
+    }
 
+    public static Quat4d rotationToQuaternion(Matrix4d T) {
+        double[][] R = new double[3][3];
+        R[0][0] = T.getM00();
+        R[0][1] = T.getM01();
+        R[0][2] = T.getM02();
+        R[1][0] = T.getM10();
+        R[1][1] = T.getM11();
+        R[1][2] = T.getM12();
+        R[2][0] = T.getM20();
+        R[2][1] = T.getM21();
+        R[2][2] = T.getM22();
+
+        double[] quat = rotationToQuaternion(R);
+        return new Quat4d(quat[1], quat[2], quat[3], quat[0]);
+    }
+
+    /**
+     * Shepperd's method for converting a rotation matrix to a quaternion.
+     *
+     * @param R - 3x3 rotation matrix
+     * @return - quaternion
+     */
+    public static double[] rotationToQuaternion(double[][] R) {
+        double w, x, y, z;
+
+        double trace = R[0][0] + R[1][1] + R[2][2];
+
+        if (trace > 0) {
+            double s = 0.5 / Math.sqrt(trace + 1.0);
+            w = 0.25 / s;
+            x = (R[2][1] - R[1][2]) * s;
+            y = (R[0][2] - R[2][0]) * s;
+            z = (R[1][0] - R[0][1]) * s;
+        } else if (R[0][0] > R[1][1] && R[0][0] > R[2][2]) {
+            double s = 2.0 * Math.sqrt(1.0 + R[0][0] - R[1][1] - R[2][2]);
+            w = (R[2][1] - R[1][2]) / s;
+            x = 0.25 * s;
+            y = (R[0][1] + R[1][0]) / s;
+            z = (R[0][2] + R[2][0]) / s;
+        } else if (R[1][1] > R[2][2]) {
+            double s = 2.0 * Math.sqrt(1.0 + R[1][1] - R[0][0] - R[2][2]);
+            w = (R[0][2] - R[2][0]) / s;
+            x = (R[0][1] + R[1][0]) / s;
+            y = 0.25 * s;
+            z = (R[1][2] + R[2][1]) / s;
+        } else {
+            double s = 2.0 * Math.sqrt(1.0 + R[2][2] - R[0][0] - R[1][1]);
+            w = (R[1][0] - R[0][1]) / s;
+            x = (R[0][2] + R[2][0]) / s;
+            y = (R[1][2] + R[2][1]) / s;
+            z = 0.25 * s;
+        }
+
+        return new double[]{w, x, y, z};
+    }
 }

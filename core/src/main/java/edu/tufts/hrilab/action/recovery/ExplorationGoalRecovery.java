@@ -54,7 +54,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
   /**
    * Max times to explore the same failure with no progress before giving up.
    */
-  private int maxRepeatedExplorations = 5;
+  private int maxRepeatedExplorations = 2;
 
   public ExplorationGoalRecovery() {
     super();
@@ -222,7 +222,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
   private ActionDBEntry selectRecoveryAction(GoalContext goalContext) {
     // populate policy constraints based on current goal context
     lastFailureInfo = new FailureInformation();
-    lastFailureInfo.goal = goalContext.getGoal().getPredicate();
+    lastFailureInfo.goal = goalContext.getGoal().getGoalStatePredicate();
     lastFailureInfo.actor = goalContext.getGoal().getActor();
     lastFailureInfo.actionStatus = actionStatus;
     lastFailureInfo.failedActions = new ArrayList<>();
@@ -252,7 +252,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
     Predicate failedActionPredicate;
     if (this.actionStatus == ActionStatus.FAIL_NOTFOUND) {
       // failed to plan or find action to execute in pursuit of goal -- no particular action failed
-      failedActionPredicate = goalContext.getGoal().getPredicate();
+      failedActionPredicate = goalContext.getGoal().getGoalStatePredicate();
     } else {
       // get failed action context. only need to check from goal context's current child (don't care about contexts from previous attempts).
       ActionContext failedAction = ContextUtils.getActionContext(goalContext.getChildContexts().getCurrent(), justification.getStep(), this.actionStatus);

@@ -4,15 +4,12 @@
 
 #include "PlaneProcessor.hpp"
 
-#include "capture/Capture.hpp"
 #include "common/notification/PlaneNotification.hpp"
 #include "display/Display.hpp"
 #include "point_clouds/PCLFunctions.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <opencv2/opencv.hpp>
-#include <pcl/common/time.h>
-#include <sys/time.h>
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -104,7 +101,7 @@ void PlaneProcessor::handleCaptureNotification(CaptureNotification::ConstPtr not
                     % currentPlane->getFilteredObjectsIndices()->indices.size());
 
   PlaneNotification::Ptr
-      n(new PlaneNotification(shared_from_this(), frameNum, notification->captureData, currentPlane));
+      n(new PlaneNotification(this->getProcessorId(), frameNum, notification->captureData, currentPlane));
   sendNotifications(n);
 
   if (getDisplayFlag()) {

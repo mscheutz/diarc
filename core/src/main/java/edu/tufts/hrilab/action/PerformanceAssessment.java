@@ -199,7 +199,7 @@ public class PerformanceAssessment {
     Goal goal = executionManager.submitGoal(simGoal);
     executionManager.joinOnGoal(goal.getId());
     // clone simulated goal and root context node
-    Goal clonedGoal = Goal.createGoal(goal.getPredicate().clone());
+    Goal clonedGoal = Goal.createGoal(goal.getGoalPredicate().clone());
     //clonedGoal.setStatus(GoalStatus.PENDING);
     // tmf: does system need to create simulated root?
 
@@ -227,7 +227,7 @@ public class PerformanceAssessment {
     if (goal == null) {
       return null;
     }
-    Goal simGoal = Goal.createGoal(goal.getPredicate().clone());
+    Goal simGoal = Goal.createGoal(goal.getGoalPredicate().clone());
 
     // following assumes top most state in statemachine hasn't been updated since execution of the goal
     Context goalContext = goal.getRootContext();
@@ -258,7 +258,7 @@ public class PerformanceAssessment {
     boolean goalFound = false;
     for (Goal tmpGoal : goals) { // convert following to stream?
       // matching predicate && not simulation
-      if (tmpGoal.getPredicate().instanceOf(goalPred) && !tmpGoal.getRootContext().getExecType().isSimulation()) {
+      if (tmpGoal.getGoalPredicate().instanceOf(goalPred) && !tmpGoal.getRootContext().getExecType().isSimulation()) {
         if (goalFound) {
           if (goal.getId() < tmpGoal.getId()) { // current goals are in map, so order may not be guaranteed?
             goal = tmpGoal;
@@ -281,9 +281,9 @@ public class PerformanceAssessment {
   private static Map<Set<Predicate>, Integer> getSuccessStates(Goal goal, Map<Set<Predicate>, StateDistribution> distribution) {
     Map<Set<Predicate>, Integer> successStates = new HashMap<>();
     for (Set<Predicate> state : distribution.keySet()) {
-      Predicate goalState = goal.getPredicate();
+      Predicate goalState = goal.getGoalStatePredicate();
       if (goal.isAction()) {
-        goalState = Factory.createPredicate("succeeded", goal.getPredicate());
+        goalState = Factory.createPredicate("succeeded", goal.getGoalStatePredicate());
       }
       if (goalState.isNegated()) {
         if (!state.contains(Factory.createPredicate(goalState.getArgs().get(0).toString()))) {
@@ -298,7 +298,7 @@ public class PerformanceAssessment {
       }
     }
     if (successStates.isEmpty()) {
-      log.warn("could not locate success state for " + goal.getPredicate());
+      log.warn("could not locate success state for " + goal.getGoalPredicate());
     }
     return successStates;
   }
@@ -488,7 +488,7 @@ public class PerformanceAssessment {
         //       or
         //       select an action to simulate which will result in the correct state
         RootContext tmpRoot = new RootContext(new ActionConstraints(), new StateMachine(tmpState), ExecutionType.SIMULATE_PERFORMANCE);
-        Goal tmpGoal = Goal.createGoal(simGoal.getPredicate());
+        Goal tmpGoal = Goal.createGoal(simGoal.getGoalPredicate());
         Context tmpContext = failedContext.copy(tmpRoot);
         tmpGoal.setRootContext(tmpContext);
 
@@ -613,7 +613,7 @@ public class PerformanceAssessment {
   private static Pair<Goal, Context> executeSimulation(Goal goal, StateMachine stateMachine) {
     long t0 = System.currentTimeMillis();
     // clone the original goal for simulation
-    Goal simGoal = Goal.createGoal(goal.getPredicate().clone());
+    Goal simGoal = Goal.createGoal(goal.getGoalPredicate().clone());
     // clone state machine from cloned goal's root context -- should point to the correct starting state
     Context goalRootContext = goal.getRootContext();
     StateMachine simStateMachine = new StateMachine(stateMachine, false);
@@ -851,7 +851,7 @@ public class PerformanceAssessment {
     if (terminationState != null && !terminationState.isEmpty()) {
       // filter out all default post-conditions unless the action matches the goal
       terminationState = terminationState.stream().filter(p -> (!(p.getName().equals("succeeded") || p.getName().equals("failed"))
-        || p.getArgs().get(0).equals(goal.getPredicate()))).collect(Collectors.toSet());
+        || p.getArgs().get(0).equals(goal.getGoalStatePredicate()))).collect(Collectors.toSet());
       Triple<Long, PerformanceAssessment.ActionTrace, Set<Predicate>> executionInfo = processExecutionTrace(startStep, topContext, false);
       simulationResult = new PerformanceAssessment.SimulationResult(terminationState, executionInfo.getMiddle(), executionInfo.getLeft(), executionInfo.getRight());
     }

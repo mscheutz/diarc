@@ -1,4 +1,4 @@
-define new visual search
+define new object structure
 one
 two
 three
@@ -6,6 +6,9 @@ cylinder
 sphere
 disk
 cuboid
-type one
-type two
+capsule
+plate
+object structure one
+object structure two
+---------------------
 what do you see

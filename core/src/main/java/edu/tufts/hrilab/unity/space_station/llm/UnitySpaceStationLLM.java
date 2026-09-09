@@ -4,11 +4,18 @@
 
 package edu.tufts.hrilab.unity.space_station.llm;
 
+import java.io.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.ArrayList;
 import java.util.List;
-
+import java.util.HashMap;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import ai.thinkingrobots.trade.TRADE;
@@ -18,15 +25,79 @@ import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
+
+import edu.tufts.hrilab.slug.common.Utterance;
+
+import com.google.gson.Gson;
+
+import edu.tufts.hrilab.consultant.pose.*;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.slug.parsing.llm.AlternateResponse;
+import edu.tufts.hrilab.util.resource.Resources;
 
 public class UnitySpaceStationLLM extends DiarcComponent {
+  static private Logger log = LoggerFactory.getLogger(UnitySpaceStationLLM.class);
+
+  private static String refsDirectoryPath = "config/edu/tufts/hrilab/map";
   Pattern agentPattern = Pattern.compile("agent:");
   Matcher agentMatcher = agentPattern.matcher("");
+
+  private String refsFile;
+  HashMap<String, Symbol> locationRefs;
+
+  public UnitySpaceStationLLM() {
+    super();
+  }
+
+  /**
+   * Simplified Pose Reference class only used for reading/writing JSON files.
+   */
+  class PoseRefJson {
+    public List<PoseReferenceJson> poseReferences;
+  }
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("refs").hasArg().required().argName("refs").desc("Use a map file for reference resolution").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs (CommandLine cmdLine) {
+    if (cmdLine.hasOption("refs")) {
+      refsFile = cmdLine.getOptionValue("refs");
+    }
+  }
+
+  @Override
+  protected void init () {
+    Gson gson = new Gson();
+    String[] parts;
+    String refId;
+    List<String> properties;
+
+    String filename = Resources.createFilepath(UnitySpaceStationLLM.refsDirectoryPath, refsFile);
+
+    InputStream stream = UnitySpaceStationLLM.class.getResourceAsStream(filename);
+    if (stream == null) {
+      log.error("Resource not found: " + filename);
+      return;
+    }
+
+    BufferedReader reader = new BufferedReader((new InputStreamReader(stream)));
+    PoseRefJson loadedPoseRefs = gson.fromJson(reader, PoseRefJson.class);
+    locationRefs = new HashMap<>();
+    for (PoseReferenceJson poseRef : loadedPoseRefs.poseReferences) {
+      refId = poseRef.getRefId();
+      properties = poseRef.getProperties();
+      parts = properties.get(0).split("\\(");
+      locationRefs.put(parts[0], Factory.createSymbol(refId));
+    }
+  }
 
   @TRADEService
   public void LLMListenSpaceStationFinetune(String message) {
@@ -78,14 +149,15 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   }
 
   @TRADEService
-  public AlternateResponse spaceStationLLMParser(String utterance) {
+  public AlternateResponse spaceStationLLMParser(Utterance utterance) {
+    String utteranceWords = utterance.getWordsAsString();
     Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
     String jsonString = "";
     LlamaSpaceStationResponse lssRes = null;
 
-    chat.addUserMessage(utterance);
+    chat.addUserMessage(utteranceWords);
 
     try {
       oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
@@ -120,6 +192,40 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     return "robot1";
   }
 
+  public static String toSpoken (String str) {
+    return String.join(" ", str.split("(?<=[a-z])(?=[A-Z])"));
+  }
+
+  public static String capitalize (String str) {
+    return str.substring(0, 1).toUpperCase() + str.substring(1);
+  }
+
+  public static Symbol toFullTube (Symbol area, Symbol side, Symbol number) {
+    return Factory.createSymbol( area.toString() + capitalize(side.toString()) + capitalize(number.toString()) );
+  }
+
+  public static Symbol toTubeNumber (Symbol side, Symbol number) {
+    return Factory.createSymbol( capitalize(side.toString()) + capitalize(number.toString()) );
+  }
+
+  public static Symbol getTubeSide (Symbol tubeCombined) {
+    String[] parts = tubeCombined.toString().split("(?=[A-Z])");
+    return Factory.createSymbol( parts[0].toLowerCase() );
+  }
+
+  public static Symbol getTubeNumber (Symbol tubeCombined) {
+    String[] parts = tubeCombined.toString().split("(?=[A-Z])");
+    return Factory.createSymbol( parts[1].toLowerCase() );
+  }
+
+  public static List<Symbol> fromFullTube (Symbol fullTube) {
+    List <Symbol> symbolList = new ArrayList<>();
+    for (String str : fullTube.toString().split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+      symbolList.add( Factory.createSymbol(str.toLowerCase()) );
+    }
+    return symbolList;
+  }
+
   @TRADEService
   @Action
   public void stylizeUnitySpeak(Symbol original) {
@@ -150,4 +256,12 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public Symbol resolveReferenceLLM (Symbol location) {
+    if (locationRefs.containsKey(location.toString())) {
+      return locationRefs.get(location.toString());
+    }
+    return null;
+  }
 }

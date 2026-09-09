@@ -7,6 +7,7 @@ package edu.tufts.hrilab.vision.learn;
 import edu.tufts.hrilab.vision.imgproc.ImageProcessor;
 import edu.tufts.hrilab.vision.learn.swig.NativeLearner;
 import edu.tufts.hrilab.vision.learn.swig.NativeLearner.LearnerType;
+import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.visionproc.VisionProcess;
 import edu.tufts.hrilab.vision.Vision;
 
@@ -43,6 +44,10 @@ public class Learner extends VisionProcess<LearnerType, LearnerDetail, NativeLea
     //start image processing dependecies
     for (ImageProcessor dependency : dependencies.values()) {
       dependency.start(this);
+    }
+
+    for (SearchManager searchDependency : searchDependencies.values()) {
+      searchDependency.start(this);
     }
 
     long looptime = 0;

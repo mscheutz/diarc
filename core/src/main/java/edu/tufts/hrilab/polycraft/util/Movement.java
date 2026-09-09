@@ -7,12 +7,9 @@ package edu.tufts.hrilab.polycraft.util;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.fol.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,18 +45,26 @@ public class Movement {
     int goalY = Integer.parseInt(y.getName());
     List<Direction> valid = new ArrayList<>(Arrays.asList(Direction.values())); //Start with all valid directions
 
+    TRADEServiceInfo isEmptyTSI;
+    try {
+      isEmptyTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty").argTypes(Integer.class, Integer.class));
+    } catch (TRADEException e) {
+      log.error("Error getting isEmpty service.", e);
+      return new ArrayList<>();
+    }
+
     for (int i = 1; i <= rad; ++i) {
       try {
-        if (valid.contains(Direction.NORTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX, goalY - i)) {
+        if (valid.contains(Direction.NORTH) && !isEmptyTSI.call(boolean.class, goalX, goalY - i)) {
           valid.remove(Direction.NORTH);
         }
-        if (valid.contains(Direction.SOUTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX, goalY + i)) {
+        if (valid.contains(Direction.SOUTH) && !isEmptyTSI.call(boolean.class, goalX, goalY + i)) {
           valid.remove(Direction.SOUTH);
         }
-        if (valid.contains(Direction.WEST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX - i, goalY)) {
+        if (valid.contains(Direction.WEST) && !isEmptyTSI.call(boolean.class, goalX - i, goalY)) {
           valid.remove(Direction.WEST);
         }
-        if (valid.contains(Direction.EAST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX + i, goalY)) {
+        if (valid.contains(Direction.EAST) && !isEmptyTSI.call(boolean.class, goalX + i, goalY)) {
           valid.remove(Direction.EAST);
         }
       } catch (TRADEException e) {
@@ -88,21 +93,29 @@ public class Movement {
     int goalY = Integer.parseInt(y.getName());
     List<Direction> valid = new ArrayList<>(Arrays.asList(Direction.values())); //Start with all valid directions
 
+    TRADEServiceInfo isEmptyTSI;
+    try {
+      isEmptyTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty").argTypes(Integer.class, Integer.class));
+    } catch (TRADEException e) {
+      log.error("Error getting isEmpty service.", e);
+      return new ArrayList<>();
+    }
+
     for (int i = 1; i <= rad; ++i) {
       try {
-        if (valid.contains(Direction.NORTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX - i, goalY - i)) {
+        if (valid.contains(Direction.NORTH) && !isEmptyTSI.call(boolean.class, goalX - i, goalY - i)) {
           //northwest
           valid.remove(Direction.NORTH);
         }
-        if (valid.contains(Direction.SOUTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX + i, goalY + i)) {
+        if (valid.contains(Direction.SOUTH) && !isEmptyTSI.call(boolean.class, goalX + i, goalY + i)) {
           //southeast
           valid.remove(Direction.SOUTH);
         }
-        if (valid.contains(Direction.WEST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX - i, goalY + i)) {
+        if (valid.contains(Direction.WEST) && !isEmptyTSI.call(boolean.class, goalX - i, goalY + i)) {
           //southwest
           valid.remove(Direction.WEST);
         }
-        if (valid.contains(Direction.EAST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isEmpty")).call(boolean.class, goalX + i, goalY - i)) {
+        if (valid.contains(Direction.EAST) && !isEmptyTSI.call(boolean.class, goalX + i, goalY - i)) {
           //northeast
           valid.remove(Direction.EAST);
         }
@@ -126,20 +139,27 @@ public class Movement {
    * @return
    */
   static public List<Direction> getPassableDirections(int goalX, int goalY, int radius) {
+    TRADEServiceInfo isPAssableTSI;
+    try {
+      isPAssableTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("isPassable").argTypes(Integer.class, Integer.class));
+    } catch (TRADEException e) {
+      log.error("Error getting isPassable service.", e);
+      return new ArrayList<>();
+    }
 
     List<Direction> valid = new ArrayList<>(Arrays.asList(Direction.values())); //Start with all valid directions
     for (int i = 1; i <= radius; ++i) {
       try {
-        if (valid.contains(Direction.NORTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isPassable")).call(boolean.class, goalX, goalY - i)) {
+        if (valid.contains(Direction.NORTH) && !isPAssableTSI.call(boolean.class, goalX, goalY - i)) {
           valid.remove(Direction.NORTH);
         }
-        if (valid.contains(Direction.SOUTH) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isPassable")).call(boolean.class, goalX, goalY + i)) {
+        if (valid.contains(Direction.SOUTH) && !isPAssableTSI.call(boolean.class, goalX, goalY + i)) {
           valid.remove(Direction.SOUTH);
         }
-        if (valid.contains(Direction.WEST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isPassable")).call(boolean.class, goalX - i, goalY)) {
+        if (valid.contains(Direction.WEST) && !isPAssableTSI.call(boolean.class, goalX - i, goalY)) {
           valid.remove(Direction.WEST);
         }
-        if (valid.contains(Direction.EAST) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("isPassable")).call(boolean.class, goalX + i, goalY)) {
+        if (valid.contains(Direction.EAST) && !isPAssableTSI.call(boolean.class, goalX + i, goalY)) {
           valid.remove(Direction.EAST);
         }
       } catch (TRADEException e) {
@@ -257,7 +277,7 @@ public class Movement {
     Variable objVar = Factory.createVariable("OBJ");
     Predicate query = Factory.createPredicate("at", objVar, locX, locY);
     try {
-      List<Map<Variable, Symbol>> result = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      List<Map<Variable, Symbol>> result = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
       if (result.isEmpty()) {
         return null;
       } else if (result.size() > 1) {
@@ -288,12 +308,12 @@ public class Movement {
     Predicate query = Factory.createPredicate("at", targetObject, XVar, YVar);
     try {
       log.debug("getPathToObjectHelper: " + query);
-      List<Map<Variable, Symbol>> result = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      List<Map<Variable, Symbol>> result = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
       log.debug("results: " + result);
       if (result.size() == 0) {
         Predicate fluentCorrection = Factory.createPredicate("fluent_equals", Factory.createPredicate("world", targetObject), Factory.createSymbol("0"));
         log.warn("[getPathToObjectHelper] None found: " + targetObject + ". Asserting " + fluentCorrection + " to belief.");
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, fluentCorrection, MemoryLevel.EPISODIC);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class)).call(Object.class, fluentCorrection, MemoryLevel.EPISODIC);
         return null;
       } else if (targetObject.getName().equals("self")) {
         int objectX = Integer.parseInt(result.get(0).get(XVar).toString());
@@ -304,7 +324,7 @@ public class Movement {
         return object;
       } else {
         //maybe we can have something like with less than X objects, find closest, over X objects, spiral
-        List<Map<Variable, Symbol>> agentLoc = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, Factory.createPredicate("at", Factory.createSymbol("self"), XVar, YVar));
+        List<Map<Variable, Symbol>> agentLoc = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, Factory.createPredicate("at", Factory.createSymbol("self"), XVar, YVar));
         Symbol agentX = agentLoc.get(0).get(XVar);
         Symbol agentY = agentLoc.get(0).get(YVar);
 
@@ -487,7 +507,8 @@ public class Movement {
       }
 
       try {
-        tmpWeight = TRADE.getAvailableService(new TRADEServiceConstraints().name("findPath")).call(Integer.class, playerX, playerY, tempX, tempY, tmpPath);
+        tmpWeight = TRADE.getAvailableService(new TRADEServiceConstraints().name("findPath").argTypes(Integer.class, Integer.class, Integer.class, Integer.class, List.class))
+                .call(Integer.class, playerX, playerY, tempX, tempY, tmpPath);
       } catch (TRADEException e) {
         log.error("Couldn't call findPath:", e);
       }
@@ -675,11 +696,12 @@ public class Movement {
     Symbol targetX = null;
     Symbol targetY = null;
     try {
-      List<Map<Variable, Symbol>> queryResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      List<Map<Variable, Symbol>> queryResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
       if (queryResults.size() == 0) {
         Predicate fluentCorrection = Factory.createPredicate("fluent_equals", Factory.createPredicate("world", targetObject), Factory.createSymbol("0"));
         log.warn("[getClosestObject] None found: " + targetObject + ". Asserting " + fluentCorrection + " to belief.");
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, fluentCorrection, MemoryLevel.EPISODIC);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class))
+                .call(Object.class, fluentCorrection, MemoryLevel.EPISODIC);
         return null;
       } else if (queryResults.size() == 1) {
         targetX = queryResults.get(0).get(xVar);

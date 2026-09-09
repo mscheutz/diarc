@@ -742,7 +742,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getCurrentGoals()) {
       if (g.getActor().equals(actor)) {
-        pg.add(g.getPredicate());
+        pg.add(g.getGoalPredicate());
       }
     }
     return pg;
@@ -751,7 +751,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get a list of all pending and active goals.
    *
-   * TODO: remove this method. No Goal instances should be passed in TRADE services.
+   * TODO: remove this method, or at least make it not a trade service
    */
   @TRADEService
   public List<Goal> getCurrentGoals() {
@@ -778,7 +778,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Predicate> getPastGoals() {
     List<Predicate> result = new ArrayList<>();
     for (Goal g : em.getPastGoals()) {
-      result.add(g.getPredicate());
+      result.add(g.getGoalPredicate());
     }
     return result;
   }
@@ -792,7 +792,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Predicate> getActiveGoals() {
     List<Predicate> result = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
-      result.add(g.getPredicate());
+      result.add(g.getGoalPredicate());
     }
     return result;
   }
@@ -807,7 +807,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
       if (g.getActor().equals(actor)) {
-        pg.add(g.getPredicate());
+        pg.add(g.getGoalPredicate());
       }
     }
     return pg;
@@ -823,7 +823,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Predicate> getScheduledGoals() {
     List<Predicate> result = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
-      result.add(g.getPredicate());
+      result.add(g.getGoalPredicate());
     }
     return result;
   }
@@ -839,7 +839,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
       if (g.getActor().equals(actor)) {
-        pg.add(g.getPredicate());
+        pg.add(g.getGoalPredicate());
       }
     }
     return pg;
@@ -1020,12 +1020,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * Get the goal ID for all goals matching the supplied predicate. Checks current and
    * past goals.
    *
-   * @param goal
+   * @param goalPredicate
    * @return
    */
   @TRADEService
-  public List<Long> getGoalIds(Predicate goal) {
-    List<Goal> goals = em.getAllGoals(goal);
+  public List<Long> getGoalIds(Predicate goalPredicate) {
+    List<Goal> goals = em.getAllGoals(goalPredicate);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
   }
 
@@ -1137,9 +1137,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Register to be notified of the specified NotificationType.
    *
+   * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
+   *
    * @param callback TRADE service callback
    * @param type NotificationType
-   * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
    */
   @TRADEService
   public void registerGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {

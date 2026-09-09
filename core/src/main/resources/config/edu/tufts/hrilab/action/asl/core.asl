@@ -18,6 +18,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       act:assertBelief(!capableOf);
     } else {
       act:retractBelief(!capableOf);
+      // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
+      //       way that ITKs are handled
+      exit(FAIL);
     }
 }
 
@@ -430,7 +433,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Predicate !mostRecentGoalPred;
     Goal !queryGoal;
     Goal !goal;
-
 
     !mostRecentGoalPred = op:createPredicate("goal(mostRecent)");
     if (op:equals(?goalPredicate, !mostRecentGoalPred)) {

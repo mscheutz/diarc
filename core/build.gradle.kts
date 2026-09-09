@@ -1,6 +1,5 @@
 plugins {
   `java-library`
-  scala
   `maven-publish`
 }
 
@@ -22,15 +21,14 @@ tasks.named("compileJava").get().dependsOn("copyGitHooks")
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-//  mavenLocal()
+  mavenLocal()
   maven {
     name = "Thinking Robots TRADE mvn host"
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven {
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
@@ -38,13 +36,8 @@ sourceSets {
   main {
     java {
       exclude(listOf(
-              //scala
-              "edu/tufts/hrilab/slug/refResolution/**",
               "edu/tufts/hrilab/nao/NaoExtended*",
       ))
-    }
-    scala {
-      setSrcDirs(listOf("src/main/scala", "src/main/java/edu/tufts/hrilab/slug/refResolution"))
     }
   }
 
@@ -54,10 +47,8 @@ sourceSets {
 
     java {
       exclude(
-        //currently not passing
-        "edu/tufts/hrilab/slug/pragmatics/**",
-        "edu/tufts/hrilab/slug/nlg/**",
-        "edu/tufts/hrilab/demos/SortingDemoTest.java"
+              //currently not passing
+              "edu/tufts/hrilab/slug/pragmatics/**", "edu/tufts/hrilab/slug/nlg/**",
       )
     }
   }
@@ -100,27 +91,12 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 tasks.compileJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
 tasks.compileTestJava {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
-  options.compilerArgs = listOf("-parameters")
-}
-
-tasks.compileScala {
-  scalaCompileOptions.additionalParameters.apply {
-    scalaCompileOptions.additionalParameters = scalaCompileOptions.additionalParameters.orEmpty() + "-target:jvm-1.8"
-  }
-  options.compilerArgs = listOf("-parameters")
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala/"))
-
-  dependsOn(listOf("processResources", "processTestResources"))
-}
-
-tasks.compileTestScala {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala", "src/test/java", "src/test/scala"))
+  options.sourcepath = files(listOf("src/main/java", "src/test/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -140,7 +116,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
-  options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
+  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -211,14 +187,6 @@ dependencies {
   implementation("com.github.pellierd:pddl4j:3.8.3")
   implementation("org.quartz-scheduler:quartz:2.5.0")
 
-  //scala for rr
-  implementation("org.scala-lang:scala-compiler:2.12.4")
-  implementation("org.scala-lang:scala-library:2.12.4")
-  implementation("org.scala-lang:scala-reflect:2.12.4")
-  implementation("org.scalatest:scalatest_2.12:3.0.5")
-  implementation("org.scalacheck:scalacheck_2.12:1.14.0")
-  implementation("org.scalamock:scalamock-scalatest-support_2.12:3.6.0")
-  implementation("org.scalamock:scalamock-core_2.12:3.6.0")
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
   implementation("org.xerial:sqlite-jdbc:3.45.2.0")
@@ -275,8 +243,10 @@ dependencies {
   implementation("org.java-websocket:Java-WebSocket:1.6.0")
 
   //ros2
-  api("io.github.pinorobotics:jros2services:4.0");
-  api("io.github.pinorobotics:jros2tf2:2.0")
+  api("io.github.pinorobotics:jros2services:6.0");
+  api("io.github.lambdaprime:jros2client:9.0")
+  api("io.github.pinorobotics:jros2actionlib:4.0");
+  api("io.github.pinorobotics:jros2tf2:3.0")
 
 
   //gui

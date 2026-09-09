@@ -17,6 +17,7 @@ name(human,human).
 name(ava,ava).
 
 actor(brad).
+actor(pete).
 actor(eric).
 actor(medic).
 actor(searcher).
@@ -57,8 +58,9 @@ memberOf(andy, self).
 memberOf(leftArm, self).
 memberOf(rightArm, self).
 memberOf(human, self).
-memberOf(human, self).
 memberOf(ava, self).
+memberOf(robotone, self).
+memberOf(robottwo, self).
 object(temi, agent).
 object(andy, agent).
 object(fetch, agent).
@@ -66,6 +68,8 @@ object(ava, agent).
 object(leftArm, yumi).
 object(rightArm, yumi).
 object(human, mobileyumi).
+object(robotone, agent).
+object(robottwo, agent).
 
 object(self, agent).
 team(self).

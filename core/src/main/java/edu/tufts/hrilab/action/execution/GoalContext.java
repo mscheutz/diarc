@@ -109,7 +109,7 @@ public class GoalContext extends ArgumentBasedContext {
     if (getExecType().shouldExecute()) {
       // bind goal predicate (which can be the case for asl sub-goals. e.g., goal:?state, goal:holding(?actor,?obj)
       if (!goal.bindPredicate(this)) {
-        Justification just = new ConditionJustification(false, Factory.createPredicate("valid", goal.getPredicate()));
+        Justification just = new ConditionJustification(false, Factory.createPredicate("valid", goal.getGoalStatePredicate()));
         Context child = new FailureContext(this, stateMachine, ActionStatus.FAIL_ARGUMENTS, just);
         this.childContexts.add(child);
         return;
@@ -119,7 +119,7 @@ public class GoalContext extends ArgumentBasedContext {
     // check if goal state has already been achieved (in the case that some action has already been executed in an attempt to achieve goal)
     if (!this.getChildContexts().isEmpty()) {
       // two cases: (1) if goal state is desired world state or (2) goal state is a particular action to perform
-      if (this.stateMachine.holds(goal.getPredicate()).getValue()) {
+      if (this.stateMachine.holds(goal.getGoalStatePredicate()).getValue()) {
         // case (1): goal state is already true -- no need to do anything in this case
         // NOTE: this will need to be generalized for goals that start recovery for a failed action, and then re-select
         // an action that has already been executed in the past as part of some other goal
@@ -128,9 +128,9 @@ public class GoalContext extends ArgumentBasedContext {
         // case (2): we're adopting the notion that an action "completed" if all steps in an action succeed, regardless of the post-condition outcome.
         // NOTE: selectionAction will not be called again when an action finishes with SUCCESS, so FAIL_POSTCONDITIONS is
         // the only special case to check for
-        Context actionContext = ContextUtils.getMatchingContext(this, this.goal.getPredicate(), ActionStatus.FAIL_POSTCONDITIONS);
+        Context actionContext = ContextUtils.getMatchingContext(this, this.goal.getGoalStatePredicate(), ActionStatus.FAIL_POSTCONDITIONS);
         if (actionContext != null) {
-          log.info("Goal (specified as an action) failed post-condition checks. Assuming goal state holds: " + goal.getPredicate());
+          log.info("Goal (specified as an action) failed post-condition checks. Assuming goal state holds: " + goal.getGoalStatePredicate());
           return;
         }
       }
@@ -138,13 +138,13 @@ public class GoalContext extends ArgumentBasedContext {
 
     Context child;
     if (goal.isObservation()) {
-      child = new ObservationContext(this, stateMachine, goal.getPredicate(), goal.getActor(), Observable.TRUE);
+      child = new ObservationContext(this, stateMachine, goal.getGoalStatePredicate(), goal.getActor(), Observable.TRUE);
     } else {
       // perform action selection
       ParameterizedAction action = recovery.selectNextAction(goal, constraints, stateMachine);
 
       if (action == null) {
-        Justification just = new ConditionJustification(false, new Predicate("found", goal.getActor(), goal.getPredicate()));
+        Justification just = new ConditionJustification(false, new Predicate("found", goal.getActor(), goal.getGoalStatePredicate()));
         child = new FailureContext(this, stateMachine, ActionStatus.FAIL_NOTFOUND, just);
       } else if (!action.getJustification().getValue()) { // Verify action has support and no critics
         log.error("No permissible action found for goal " + goal + ". Critics: " + action.getJustification().getFailureReason());
@@ -179,7 +179,7 @@ public class GoalContext extends ArgumentBasedContext {
       justification = new ConditionJustification(true);
     } else {
       // else make sure goal state holds
-      justification = stateMachine.holds(goal.getPredicate());
+      justification = stateMachine.holds(goal.getGoalStatePredicate());
     }
 
     return justification;
@@ -224,13 +224,7 @@ public class GoalContext extends ArgumentBasedContext {
 
   public Predicate getSignatureInPredicateForm() {
     if (goal != null) {
-      if (goal.isAction()) {
-        return goal.getPredicate();
-      } else if (goal.isObservation()) {
-        return Factory.createPredicate("obs", goal.getActor(), goal.getPredicate());
-      } else {
-        return Factory.createPredicate("goal", goal.getActor(), goal.getPredicate());
-      }
+      return goal.getGoalPredicate();
     }
     return Factory.createPredicate(cmd);
   }
@@ -250,7 +244,7 @@ public class GoalContext extends ArgumentBasedContext {
    */
   @Override
   public GoalContext copy(Context newParent) {
-    Goal newGoal = Goal.createGoal(goal.getActor(), goal.getPredicate().clone());
+    Goal newGoal = Goal.createGoal(goal.getActor(), goal.getGoalStatePredicate().clone());
     // TODO: probably change the following so that it has the proper execution type
     GoalContext newGoalContext = new GoalContext(newParent, newParent.stateMachine, newGoal, newParent.getExecType());
     copyInternal(newGoalContext);

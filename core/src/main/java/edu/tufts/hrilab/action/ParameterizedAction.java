@@ -58,9 +58,9 @@ public class ParameterizedAction {
     actor = goal.getActor();
 
     if (observable.shouldObserve()) {
-      actionParameters = collectArgsForObservation(entry, goal.getPredicate());
+      actionParameters = collectArgsForObservation(entry, goal.getGoalStatePredicate());
     } else {
-      actionParameters = collectArgsForGoalState(entry, goal.getPredicate());
+      actionParameters = collectArgsForGoalState(entry, goal.getGoalStatePredicate());
     }
 
     // try to set actionParameters actor field

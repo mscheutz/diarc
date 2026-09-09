@@ -6,6 +6,7 @@
   "config": {
     "model": "yolov5m",
     "type" : "onnx",
+    "yolo_version" : 5,
     "backend": "CPU",
     "input_size": 640,
     "conf_thresh": 0.5,
