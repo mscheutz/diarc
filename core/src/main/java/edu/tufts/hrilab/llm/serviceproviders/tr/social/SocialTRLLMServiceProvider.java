@@ -2942,7 +2942,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //   External parser hit for an action instruction - discard chat context holding any side effects from unused LLM parse
           //   LLM noConfirmation case - handle side effects as if a validated instruction just occurred
           //   +1
-          if (utterance.getType() == UtteranceType.INSTRUCT && !utterance.needsValidation()) {
+          // 9/9 modification: do not clear context / handle validated tool call if currently in a VALIDATION state. As
+          //  of now, any INSTRUCT input will be rejected if an outstanding system question still exists.
+          if (utterance.getType() == UtteranceType.INSTRUCT && !utterance.needsValidation() && chatContext.chatState != ChatState.VALIDATION) {
             String command = chatContext.lastToolCallName;
             chatContext.lastToolCallName = "";
             if (utterance.getSemantics() != null && utterance.getSemantics().isPredicate()) {
