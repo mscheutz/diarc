@@ -59,6 +59,7 @@ public interface MoveBaseInterface {
    * @return justification specifying if the robot navigated to the location
    */
   @TRADEService
+  @Action
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location);
 
