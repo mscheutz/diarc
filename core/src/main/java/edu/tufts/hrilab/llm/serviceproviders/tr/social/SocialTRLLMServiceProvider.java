@@ -2896,16 +2896,20 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
 
-    synchronized (currentChatCollections) {
-      if (utterance.isInputUtterance()) {
+    ChatCollection chatCollection;
+    Predicate semantics = (Predicate) utterance.getSemantics();
+    Symbol agentTeam;
+    Symbol user;
+
+    if (utterance.isInputUtterance()) {
+      synchronized (currentChatCollections) {
         //NLU
-         if (utterance.getSemantics() == null || !utterance.getSemantics().isPredicate()) {
-           return;
-         }
-        Symbol agentTeam = utterance.getAddressee().toUntyped();
-        Symbol user = utterance.getSpeaker().toUntyped();
-        ChatCollection chatCollection = getChatCollection(user, agentTeam);
-        Predicate semantics = (Predicate) utterance.getSemantics();
+        if (utterance.getSemantics() == null || !utterance.getSemantics().isPredicate()) {
+          return;
+        }
+        agentTeam = utterance.getAddressee().toUntyped();
+        user = utterance.getSpeaker().toUntyped();
+        chatCollection = getChatCollection(user, agentTeam);
 
         // Create new collection in case another parser hit completes and triggers a history update
         //  before the input even reaches this parser. In this case, we want to short-circuit the parse call for this
@@ -2914,7 +2918,14 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatCollection = new ChatCollection();
           currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
         }
+      }
 
+      if (chatCollection.utteranceBeingProcessed != null && chatCollection.utteranceBeingProcessed.getUid() != utterance.getUid()) {
+        log.error("[updateLLMConversationHistory] waiting for other utterance to finish being processed before applying effects");
+        chatCollection.grabInputLock(utterance);
+      }
+
+      synchronized (currentChatCollections) {
         if (chatCollection.currentChat != null) {
           ChatContext chatContext = chatCollection.currentChat;
 
@@ -2963,11 +2974,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // TODO: do we want to extend holding the lock until around tentative accept response or failure response?
         // Side effects complete - Unlock input lock for this user/agent pair
         chatCollection.signalInputProcessed(utterance);
-      } else {
+      }
+    } else {
+      synchronized (currentChatCollections) {
         //NLG - add to current context if exists
-        Symbol user = utterance.getAddressee().toUntyped();
-        Symbol agentTeam = utterance.getSpeaker().toUntyped();
-        ChatCollection chatCollection = getChatCollection(user, agentTeam);
+        user = utterance.getAddressee().toUntyped();
+        agentTeam = utterance.getSpeaker().toUntyped();
+        chatCollection = getChatCollection(user, agentTeam);
         if (chatCollection != null) {
           ChatContext chatContext = chatCollection.currentChat;
           if (chatContext != null) {
