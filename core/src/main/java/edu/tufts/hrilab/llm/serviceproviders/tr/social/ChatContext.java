@@ -36,6 +36,7 @@ public class ChatContext {
   // Quick failure recovery feature: Keeping track of consecutive identical text responses in order to manipulate history
   //  to prevent getting stuck in a long context where the LLM begins replying with the same content.
   int identicalResponses = 0;
+  protected int onQuestionAskedHistorySize = -1;
 
   /**
    * "Focused Context" only details

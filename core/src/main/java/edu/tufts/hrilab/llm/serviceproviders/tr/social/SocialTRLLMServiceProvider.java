@@ -103,6 +103,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   protected abstract Prompt getNlgSystemPrompt();
   protected abstract Prompt getValidationNLUSystemPrompt();
   protected abstract Prompt getValidationNLGSystemPrompt();
+  //TODO: remove socialava context when doing prompt templating refactor
+  protected Prompt getQuestionAnswerSystemPrompt() {return Prompts.getPrompt("socialava/condensed/questionAnswer");}
   protected Prompt getGoalTranslationPrompt() {return Prompts.getPrompt("goalPredToString");}
 
   protected abstract List<Tool> generateInstructTools(boolean xml);
@@ -245,6 +247,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               UtteranceType.INSTRUCT);
     }
 
+    itkTools.add(defaultGoalInfoTool);
     //// Gather Tool Sets and System Prompts ////
     // Base "nlu" tool set:
     //  - INSTRUCT targets
@@ -252,7 +255,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //  - (done dynamically at call-time) relevant REPLY targets
     List<Tool> baseNLUTools = new ArrayList<>(instructTools);
     baseNLUTools.addAll(itkTools);
-    baseNLUTools.add(defaultGoalInfoTool);
+    //baseNLUTools.add(defaultGoalInfoTool);
     baseNLUTools.add(textResponseTool);
     chatTemplates.put("nlu", new ChatTemplates(getNluSystemPrompt(), baseNLUTools));
 
@@ -297,8 +300,18 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Validation tool set:
     //  - Just reply forms, which are added dynamically (yes,no,abort)
-    // Q: anything else needed? ITK? Or just always force validation questions to be addressed immediately
-    chatTemplates.put("validationnlu", new ChatTemplates(getValidationNLUSystemPrompt(), new ArrayList<>()));
+    //  - ITK
+    chatTemplates.put("validationnlu", new ChatTemplates(getValidationNLUSystemPrompt(), itkTools));
+
+    //TODO: Only conditionally add cancel/suspend if there is actually an underlying task present?
+    List<Tool> questionAnswerToolList = new ArrayList<>(itkTools);
+    questionAnswerToolList.add(new Tool(new ToolDefinition("cancelCurrentTask",
+            "You cancel and fully discard your current goal, whether it is active or suspended.",
+            new ArrayList()),UtteranceType.INSTRUCT));
+    questionAnswerToolList.add(new Tool(new ToolDefinition("suspendCurrentTask",
+            "You pause your current goal, which can be later resumed or canceled",
+            new ArrayList()),UtteranceType.INSTRUCT));
+    chatTemplates.put("questionAnswer", new ChatTemplates(getQuestionAnswerSystemPrompt(), questionAnswerToolList));
 
     // NLG tool sets: none
     chatTemplates.put("nlg", new ChatTemplates(getNlgSystemPrompt(), new ArrayList<>()));
@@ -549,9 +562,34 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatCollection.signalInputProcessed(utterance);
           return utterance;
         }
+
+        boolean hasQuestions = false;
+        try {
+          hasQuestions = TRADE.getAvailableService(new TRADEServiceConstraints().name("isAgentWaitingForResponse").argTypes(Symbol.class)).call(Boolean.class, agentTeam);
+        } catch (TRADEException e) {
+          log.error("[parseUtteranceLLMService] unable to query agents QA status");
+        }
+        // hasQuestions should always be true if validation is, make sure this is the case
+        // 9/10 (can remove if never seeing this log for a sufficient amount of time)
+        if (chatContext.chatState == ChatState.VALIDATION && !hasQuestions) {
+          log.error("[parseUtteranceLLMService] mismatched states - in VALIDATION but agentTeam has no system questions");
+        }
+
         // Pull correct template and update system message and tool targets based off current state
-        if (chatContext.chatState == ChatState.VALIDATION) {
-          systemTemplate = new Prompt(this.chatTemplates.get("validationnlu").systemMessageTemplate.getText());
+        if (hasQuestions) {
+          // Question asking has chat history as part of system message. Otherwise, content in the history will be parsed as responses.
+          //  Creating a new chat just for QA, but maintaining proper history in Chat stored in this ChatContext in case of continued interaction
+          chat = new Chat(user.getName(), agentTeam.getName());
+          int currentHistorySize = chatContext.history.messages.size();
+          int historySizeBeforeQA = chatContext.onQuestionAskedHistorySize;
+          if (historySizeBeforeQA == -1) {
+            chatContext.onQuestionAskedHistorySize = currentHistorySize;
+            historySizeBeforeQA = currentHistorySize;
+          }
+          promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history.messages, historySizeBeforeQA));
+          chat.messages = new ArrayList<>(chatContext.history.messages).subList(historySizeBeforeQA,currentHistorySize);
+
+          // Pull correct text response tool first based on whether in focused context with associated template or not
           tools = new ArrayList<>();
           Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
           if (focusedTextResponseTool != null) {
@@ -560,30 +598,28 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             tools.add(textResponseTool.toolDefinition);
           }
 
-          // ValidationNLU has chat history as part of system message. Otherwise, content in the history will be parsed as validation responses.
-          //  Creating a new chat just for validation, but maintaining proper history in Chat stored in this ChatContext in case of negative validation and continued interaction
-          chat = new Chat(user.getName(), agentTeam.getName());
-          promptVars.put("%chatHistoryAsString", getChatHistoryAsString(chatContext.history));
-          //chatContext.history.addUserMessage(utterance.getWordsAsString());
+          // Add appropriate QA tool list
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            chatTemplates = this.chatTemplates.get("validationnlu");
+          } else {
+            chatTemplates = this.chatTemplates.get("questionAnswer");
+            chatContext.history.addUserMessage(utterance.getWordsAsString()); // Also add message to actual history in this case, because conversation will inevitably continue
+          }
+          tools.addAll(chatTemplates.toolDefinitions);
+          systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
+          // Add relevant response form tools based on question
+          tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
         } else {
           systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
           tools = new ArrayList<>(chatTemplates.toolDefinitions);
           chat = chatContext.history;
-        }
+          // Experimental, allow advertisement of certain tools based on current context
+          tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
 
-        if (chatContext.chatType == ChatType.FOCUSED) {
-          tools.addAll(universalFocusedToolDefinitions);
-          // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
-          if (chatContext.chatState == ChatState.VALIDATION) {
-            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+          if (chatContext.chatType == ChatType.FOCUSED) {
+            tools.addAll(universalFocusedToolDefinitions);
           }
-        } else {
-          // Add all matching system question response tools based off of expected reply semantics
-          tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
         }
-
-        // Experimental, allow advertisement of certain tools based on current context
-        tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
 
         // Apply input as user message
         if (!reattemptedParse) {
@@ -1056,31 +1092,17 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     // Handle expected validation question yes/no response semantics
+    // (Associated logic / additional side effects present in question answer callback)
     if (toolCall.function.name.equals("val") || toolCall.function.name.equals("validated")) {
       String argument = toolCall.function.arguments.contains("yes") ? "yes" : "no";
       output.setSemantics(Factory.createPredicate("val", argument));
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
-
-      // Logic moved to question answer callback
-      //// If positively validated, terminate associated context and submit instruction
-      //if (argument.equals("yes")) {
-      //  handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
-      //} else {
-      //  chatContext.lastToolCallName = "";
-      //  // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
-      //  //  side effects will be triggered from reattemptParse / the NLU asl pipeline
-      //  chatContext.chatState = ChatState.PARSE;
-      //}
     } else if (toolCall.function.name.equals("abort")) {
       // User declined to answer the validation question - terminate context entirely and refocus base parse state
       output.setSemantics(Factory.createPredicate("abort(question)"));
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
-      // Logic moved to question answer callback
-      //chatCollection.currentChat.signalCompletion();
-      //saveContextHistory(inputUtterance.getSpeaker(), inputUtterance.getAddressee(), chatCollection.currentChat);
-      //chatCollection.currentChat = null;
     }
     return output.build();
   }
@@ -1283,7 +1305,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     currentContext.history.addToolMessage("The user has just informed you that your previous interpretation of their command " +
             "which resulted in your tool call with id " + currentContext.toolCallIdUpForValidation + " represented by " + semantics + " was not what they intended to instruct. Use the last " +
             "user message to determine one of two ways to proceed: 1. If the user's message includes additional information clarifying " +
-            "their original intention or adding additional information, then you may update your definition with the new information and attempt another updated tool submission call. " +
+            "their original intention or adding additional information, then you may update your definition with the new information and attempt another updated tool submission call. Do not immediately make the same tool call with the same arguments. " +
             "2. Otherwise, please continue with your original task to resolve the misunderstanding.", currentContext.toolCallIdUpForValidation);
 
     // Call completion with user response and tool message. Built from the original utterance so
@@ -2773,8 +2795,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
       if (expectedResponseForms != null && !expectedResponseForms.isEmpty()) {
         //output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
-        output = questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
-        output += "\nThere should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
+        output = "-- OUTSTANDING QUESTION: \"" + questionString + "\""+ "\n-- EXPECTED REPLY FORM:" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
+        output += "\n-- There should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
       } else {
         output += "<No questions have been asked by the back end system>";
       }
@@ -2937,15 +2959,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             } catch (TRADEException e) {
               log.error("[updateLLMConversationHistory] unable to reset timeout for validation questions", e);
             }
-          }
 
-          // If negative validation response, don't release inputLock until reattemptParse completes
-          if ((semantics.getName().equals("val") || semantics.getName().equals("validated"))) {
-            //// Synchronize history update before question answer response callback side effects (new because external parsers can handle validation responses now)
-            //chatContext.signalValidationResponseHistoryUpdate();
-            chatContext.history.addUserMessage(utterance.getWordsAsString());
-            if (semantics.get(0).getName().equals("no")) {
-              return;
+            // If negative validation response, don't release inputLock until reattemptParse completes
+            if ((semantics.getName().equals("val") || semantics.getName().equals("validated"))) {
+              //// Synchronize history update before question answer response callback side effects (new because external parsers can handle validation responses now)
+              //chatContext.signalValidationResponseHistoryUpdate();
+              chatContext.history.addUserMessage(utterance.getWordsAsString());
+              if (semantics.get(0).getName().equals("no")) {
+                return;
+              }
             }
           }
 
@@ -2981,53 +3003,61 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         user = utterance.getAddressee().toUntyped();
         agentTeam = utterance.getSpeaker().toUntyped();
         chatCollection = getChatCollection(user, agentTeam);
-        if (chatCollection != null) {
-          ChatContext chatContext = chatCollection.currentChat;
-          if (chatContext != null) {
-            //// Add as assistant message "content" string
-            //chatContext.history.addRobotMessage(utterance.getWordsAsString());
+        if (chatCollection == null) {
+          chatCollection = new ChatCollection(new Chat(user.getName(), agentTeam.getName()));
+          currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
+        }
+        ChatContext chatContext = chatCollection.currentChat;
+        if (chatContext == null) {
+          Chat chat = new Chat(user.getName(), agentTeam.getName());
+          chatContext = new ChatContext(chat);
+          chatCollection.currentChat = chatContext;
+        }
+        //// Add as assistant message "content" string
+        //chatContext.history.addRobotMessage(utterance.getWordsAsString());
 
-            //// Add as assistant message text response tool call
-            if (chatContext.chatState == ChatState.VALIDATION) {
-              // TODO: keep an eye on this, make sure the LLM doesn't try to target this fabricated tool in the future
-              // (Not sure how to best represent this; Balancing act of accurately conveying what is actually happening
-              //  vs preventing LLM from targeting tool calls which aren't exposed to it / doing validation on its own)
-              ToolCall toolCall = new ToolCall();
-              toolCall.id = "";
-              toolCall.type = "function";
-              ToolFunction toolFunction = new ToolFunction();
-              toolFunction.name = "validatingToolSubmission";
-              Map<String, Object> responseArguments = new HashMap<>();
-              responseArguments.put("response", utterance.getWordsAsString());
-              toolFunction.arguments = new Gson().toJson(responseArguments);
-              toolCall.function = toolFunction;
-              chatContext.history.addRobotMessage("", List.of(toolCall));
-            } else {
-              // TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
-              Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
-              if (textResponseTool != null) {
-                ToolCall toolCall = new ToolCall();
-                toolCall.id = "";
-                toolCall.type = "function";
-                ToolFunction toolFunction = new ToolFunction();
-                toolFunction.name = this.textResponseTool.toolDefinition.function.name;
-                Map<String, Object> responseArguments = new LinkedTreeMap<>();
-                //TODO: this argument order needs to align with how it is defined on init - automatically enforce this
-                responseArguments.put("response", utterance.getWordsAsString());
-                if (!chatContext.lastTemplateName.isEmpty() && textResponseTool.toolDefinition.function.parameters.getProperties().containsKey(chatContext.lastTemplateName)) {
-                  responseArguments.put(chatContext.lastTemplateName, chatContext.lastTemplateValue);
-                }
-                toolFunction.arguments = new Gson().toJson(responseArguments);
-                toolCall.function = toolFunction;
-                chatContext.history.addRobotMessage("", List.of(toolCall));
-              }
+        //// Add as assistant message text response tool call
+        if (chatContext.chatState == ChatState.VALIDATION) {
+          // TODO: keep an eye on this, make sure the LLM doesn't try to target this fabricated tool in the future
+          // (Not sure how to best represent this; Balancing act of accurately conveying what is actually happening
+          //  vs preventing LLM from targeting tool calls which aren't exposed to it / doing validation on its own)
+          ToolCall toolCall = new ToolCall();
+          toolCall.id = "";
+          toolCall.type = "function";
+          ToolFunction toolFunction = new ToolFunction();
+          toolFunction.name = "validatingToolSubmission";
+          Map<String, Object> responseArguments = new HashMap<>();
+          responseArguments.put("response", utterance.getWordsAsString());
+          toolFunction.arguments = new Gson().toJson(responseArguments);
+          toolCall.function = toolFunction;
+          chatContext.history.addRobotMessage("", List.of(toolCall));
+        } else {
+          // TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
+          Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
+          if (textResponseTool != null) {
+            ToolCall toolCall = new ToolCall();
+            toolCall.id = "";
+            toolCall.type = "function";
+            ToolFunction toolFunction = new ToolFunction();
+            toolFunction.name = this.textResponseTool.toolDefinition.function.name;
+            Map<String, Object> responseArguments = new LinkedTreeMap<>();
+            //TODO: this argument order needs to align with how it is defined on init - automatically enforce this
+            responseArguments.put("response", utterance.getWordsAsString());
+            if (!chatContext.lastTemplateName.isEmpty() && textResponseTool.toolDefinition.function.parameters.getProperties().containsKey(chatContext.lastTemplateName)) {
+              responseArguments.put(chatContext.lastTemplateName, chatContext.lastTemplateValue);
             }
+            toolFunction.arguments = new Gson().toJson(responseArguments);
+            toolCall.function = toolFunction;
+            chatContext.history.addRobotMessage("", List.of(toolCall));
           }
-          //TODO: Should this be added to a new history/context if none currently exists? Hard question to answer because
-          //  sometimes it may be relevant and sometimes it may throw off future parses significantly. Best case is to
-          //  have an "extended dialogue history" itk target which is handled well
         }
       }
+      //TODO: Should this be added to a new history/context if none currently exists? Hard question to answer because
+      //  sometimes it may be relevant and sometimes it may throw off future parses significantly. Best case is to
+      //  have an "extended dialogue history" itk target which is handled well
+      // ^9/10 rewrote the above in order to add this to new contexts. Added specifically for things like escort, where
+      //  the instruction from the user may come from a remote place, but the first output from the robot as part of the
+      //  action addresses the local user.
     }
   }
 
@@ -3042,76 +3072,58 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       return;
     }
 
-    // Only care if validation question
-    if (!question.hasMatchingResponseForms(List.of(Factory.createPredicate("val(X)"), Factory.createPredicate("validated(X)")))) {
-      return;
-    }
-
-    Symbol user = question.getAddressee().toUntyped();
-    Symbol agentTeam = agent.toUntyped();
-    // Validation questions from socialLLMnlu.asl should always have a specific target
-    if (user.getName().equals("any")) {
-      return;
-    }
+    //TODO: should history be cleared in general after question asking termination?
 
     //// Synchronize between necessary dialogue history side effects and potential reattemptParse call
     ChatContext chatContext;
-    //synchronized (currentChatCollections) {
-    //  ChatCollection chatCollection = getChatCollection(user, agentTeam);
-    //  if (chatCollection != null) {
-    //    chatContext = chatCollection.currentChat;
-    //    if (chatContext != null) {
-    //      chatContext.signalValidationQuestionAnswered();
-    //    }
-    //  }
-    //}
-
+    Symbol user = question.getAddressee().toUntyped();
+    Symbol agentTeam = agent.toUntyped();
     synchronized (currentChatCollections) {
       ChatCollection chatCollection = getChatCollection(user, agentTeam);
       if (chatCollection != null) {
         chatContext = chatCollection.currentChat;
         if (chatContext != null) {
-          if (chatContext.chatState != ChatState.VALIDATION) {
-            log.warn("[questionAskingCallback] receiving validation question answered notification but context not in validation state");
-            return;
-          }
-          if (!question.wasAnswered()) {
-            // If validation question expired but chat context is still in validation state, we know the validation question expired.
-            //  So update chat state accordingly.
-            chatCollection.signalInputProcessed();
-            if (chatContext.chatType == ChatType.FOCUSED) {
-              chatContext.chatState = ChatState.PARSE;
-              chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"" + chatContext.contextID + "\" and will need to call your target tool call again if they try answering your question affirmatively.", chatContext.toolCallIdUpForValidation);
-              chatContext.toolCallIdUpForValidation = "";
-              chatContext.utteranceUpForValidation = null;
-            } else {
-              //TODO: add message indicating timeout occurred?
-              saveContextHistory(user, agentTeam, chatCollection.currentChat);
-              chatCollection.currentChat = null;
-            }
-          } else {
-            // TODO: block reattemptParse call until this (and dialogue history update) happens
-            // (This logic was moved from handleValidatedToolCall to here to support external parsers parsing validation question responses)
-            // Validation question was explicitly answered, update chat state accordingly
-            Map<Variable, Symbol> bindings = question.getAnswerBindings();
-            if (bindings != null) {
-              //chatContext.history.addUserMessage(question.getWordsAsString());
-              Symbol answer = bindings.get(Factory.createVariable("X"));
-              if (answer != null) {
-                if (answer.getName().equals("yes")) {
-                  // If positively validated, terminate associated context and submit instruction
-                  handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
-                } else if (answer.getName().equals("no")) {
-                  chatContext.lastToolCallName = "";
-                  // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
-                  //  side effects will be triggered from reattemptParse / the NLU asl pipeline
-                  chatContext.chatState = ChatState.PARSE;
-                }
+          // Reset QA specific "past history"
+          chatContext.onQuestionAskedHistorySize = -1;
+          if (chatContext.chatState == ChatState.VALIDATION) {
+            if (!question.wasAnswered()) {
+              // If validation question expired but chat context is still in validation state, we know the validation question expired.
+              //  So update chat state accordingly.
+              chatCollection.signalInputProcessed();
+              if (chatContext.chatType == ChatType.FOCUSED) {
+                chatContext.chatState = ChatState.PARSE;
+                chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"" + chatContext.contextID + "\" and will need to call your target tool call again if they try answering your question affirmatively.", chatContext.toolCallIdUpForValidation);
+                chatContext.toolCallIdUpForValidation = "";
+                chatContext.utteranceUpForValidation = null;
               } else {
-                // User explicitly declined to answer the validation question - terminate context entirely and refocus base parse state
-                chatCollection.currentChat.signalCompletion();
+                chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system", chatContext.toolCallIdUpForValidation);
                 saveContextHistory(user, agentTeam, chatCollection.currentChat);
                 chatCollection.currentChat = null;
+              }
+            } else {
+              // TODO: block reattemptParse call until this (and dialogue history update) happens
+              // (This logic was moved from handleValidatedToolCall to here to support external parsers parsing validation question responses)
+              // Validation question was explicitly answered, update chat state accordingly
+              Map<Variable, Symbol> bindings = question.getAnswerBindings();
+              if (bindings != null) {
+                //chatContext.history.addUserMessage(question.getWordsAsString());
+                Symbol answer = bindings.get(Factory.createVariable("X"));
+                if (answer != null) {
+                  if (answer.getName().equals("yes")) {
+                    // If positively validated, terminate associated context and submit instruction
+                    handleValidatedToolCall(chatContext.utteranceUpForValidation, chatCollection);
+                  } else if (answer.getName().equals("no")) {
+                    chatContext.lastToolCallName = "";
+                    // Negative validation - reset to PARSE state to continue interaction. Architecture messages and other
+                    //  side effects will be triggered from reattemptParse / the NLU asl pipeline
+                    chatContext.chatState = ChatState.PARSE;
+                  }
+                } else {
+                  // User explicitly declined to answer the validation question - terminate context entirely and refocus base parse state
+                  chatCollection.currentChat.signalCompletion();
+                  saveContextHistory(user, agentTeam, chatCollection.currentChat);
+                  chatCollection.currentChat = null;
+                }
               }
             }
           }
@@ -3799,9 +3811,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (chat == null) {
       return "";
     }
+    return getChatHistoryAsString(chat.messages, -1);
+  }
+  public String getChatHistoryAsString(List<Message> messages, int numMessages) {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     //return chat.getMessages().stream().map(m -> m.role + ": " + ((m.tool_calls == null || m.tool_calls.length < 1) ? m.content : gson.toJson(m.tool_calls[0]))).collect(Collectors.joining("\n"));
-    return chat.getMessages().stream().map(gson::toJson).collect(Collectors.joining("\n"));
+    if (numMessages == -1) {
+      return messages.stream().map(gson::toJson).collect(Collectors.joining("\n"));
+    } else {
+      return messages.subList(0,numMessages).stream().map(gson::toJson).collect(Collectors.joining("\n"));
+    }
   }
 
   @TRADEService
