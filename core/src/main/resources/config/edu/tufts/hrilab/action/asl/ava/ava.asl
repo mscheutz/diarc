@@ -18,44 +18,101 @@ import edu.tufts.hrilab.action.goal.Goal;
 
 /******************************** Move Escort Deliver Scripts ********************************/
 
-() = escortToLocation(Symbol ?escortee, Symbol ?dstLoc) {
-    edu.tufts.hrilab.fol.Predicate !waitForAckForm = "val(X)";
-    String !locName = tsc:getMapReferenceName(?dstLoc);
+() = escortToLocation(Symbol ?name, Symbol ?dest) {
+    Symbol !current;
 
-    op:log(debug, "[escortToLocation] escorting to location named !locName");
+    !current = act:getCurrentLocation();
 
-//    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
-//    async {
-//        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-//    }
-//    act:waitForReadyAck();
-
-    //TODO: what if val(no is returned??
-    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm, 1, 300);
-    act:say("Okay, please follow me");
-
-    act:goToLocation(?dstLoc);
-    act:say("Arrived at !locName");
-    //act:goHome();
+    act:escortFromLocationToLocation(?name, !current, ?dest);
 }
 
 () = escortFromLocationToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
+    Symbol !response;
+    Map !bindings;
     edu.tufts.hrilab.fol.Predicate !waitForAckForm = "val(X)";
-
+    Variable !x = "X";
+    Boolean !escortComplete = false;
     String !locName = tsc:getMapReferenceName(?dstLoc);
+    String !questionString;
+    !questionString = op:newObject("java.lang.String","Hello ?escortee. I am here to show you to !locName. Are you ready to go?");
 
+    //TODO: Should get standardized "local" addressee for question asking in some specific way other than hardcoding "local_user"
+
+    // Navigate to start location where ?escortee should be found
     act:goToLocation(?escorteeLoc);
-////    async {
-//        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-////    }
-////    act:waitForReadyAck();
-    act:askQuestionFromString("Hello ?escortee. Please come with me, I will show you to !locName. Please say Hey Ava, I'm Ready when you are ready to go", !waitForAckForm, 1, 300);
-    act:say("Okay, please follow me");
 
-    act:goToLocation(?dstLoc);
-    act:say("Arrived at !locName");
-    //op:sleep(10000);
-    //act:goToLocation(?escorteeLoc);
+    // Escort loop - attempt until success or explicit failure
+    while (op:equalsValue(!escortComplete,false)) {
+        // Ask escortee to come with you to the destination and wait for a response
+        // 1. WW based ack
+        ////    async {
+        //        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+        ////    }
+        ////    act:waitForReadyAck();
+        // 2. System QA based ack
+        !bindings = act:askQuestionFromString(local_user,!questionString, !waitForAckForm, 1, 300);
+
+        //// Blind escort on any response
+        //act:say("Okay, please follow me");
+        //act:goToLocation(?dstLoc);
+        //act:say("Arrived at !locName");
+
+        // TODO: how to handle cancellation or other requests at any intermediate points?
+        // Handle response based on answer
+        if (op:isNull(!bindings)) {
+            // Escortee ready acknowledgement was not answered - go to destination and ask anyone there if we should retry
+            act:goToLocation(?dstLoc);
+            if (op:equals(?escorteeLoc,unknown)) {
+                // Didn't start at a known location, cannot go back and retry.
+                act:say("Sorry I was supposed to escort ?escortee here, but could not find them. I did not come from a saved location so I cannot go back and retry");
+                //TODO: how to silently fail? Or fail with above justification?
+                return;
+            }
+            !questionString = op:newObject("java.lang.String","I was supposed to escort ?escortee here, but could not find them. Would you like me to go and try again?");
+            !bindings = act:askQuestionFromString(local_user,!questionString, !waitForAckForm, 1, 30);
+            if (op:isNull(!bindings)) {
+                // Retry question not answered, fail
+                //TODO: how to silently fail? or want to loudly fail in this case?
+                return;
+            } else {
+                if (op:invokeMethod(!bindings,"isEmpty")) {
+                    // Explicit denial to answer retry question, fail
+                    //TODO: what to do here? Fail at this point? How to silently fail
+                    !escortComplete = op:newObject("java.lang.Boolean","true");
+                    act:say("Okay, I will not look for ?escortee again");
+                } else {
+                    // Received a valid answer to the retry question
+                    !response = op:get(!bindings,!x);
+                    if (op:equalsValue(!response,yes)) {
+                        // Affirmative answer to request to retry - loop to top
+                        !questionString = op:newObject("java.lang.String","Hello ?escortee. I am here to show you to !locName. Are you ready to go?");
+                        op:log("info","[escort] asked to retry escort, returning to ?escorteeLoc and circling to top of loop");
+                        act:goToLocation(?escorteeLoc);
+                    } elseif (op:equalsValue(!response,no)) {
+                        // Negative answer to request to retry - fail out
+                        !escortComplete = op:newObject("java.lang.Boolean","true");
+                        act:say("Okay, I will not look for ?escortee again");
+                        //TODO: Should fail?
+                    }
+                }
+            }
+        } elseif (op:invokeMethod(!bindings, "isEmpty")) {
+            // Ready acknowledgement question was specifically aborted -> ?same as no case?
+            !questionString = op:newObject("java.lang.String","Okay, just let me know when you are ready to go?");
+        } else {
+            !response = op:get(!bindings,!x);
+            if (op:equalsValue(!response,yes)) {
+                // Ready acknowledgement question answered affirmatively - escort to destination
+                act:say("Okay, please follow me");
+                act:goToLocation(?dstLoc);
+                act:say("Arrived at !locName");
+                return;
+            } elseif (op:equalsValue(!response,no)) {
+                // Ready acknowledgement question answered negatively - ask again and loop to top
+                !questionString = op:newObject("java.lang.String","Okay, just let me know when you are ready to go?");
+            }
+        }
+    }
 }
 
 () = follow() {
