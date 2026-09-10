@@ -305,9 +305,6 @@ import java.util.Map;
   op:invokeMethod(!utterance, "setType", !type);
   op:invokeMethod(!utterance, "setWords", ?words);
 
-  // speak the question text before entering ask/wait loop (communicateUtterance with sayText=false from inside askQuestionFromUtterance won't speak with-words utterances post 5f8f6df24)
-  act:sayText(!utterance);
-
   // ask question and wait for response
   ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
 }
