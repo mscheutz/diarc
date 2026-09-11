@@ -87,7 +87,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: At least elements of this should exist per user/AgentTeam pair - include parallel notion in ChatCollections for specific information
   protected Map<String, String> promptVars = new LinkedHashMap<>();
   //// Revisit when making base/subclass distinction
-  protected abstract Map<String,String> initPromptVars();
+  protected abstract Map<String,String> initDomainPromptVars();
   protected abstract Map<String,String> updateDomainPromptVars(Utterance utterance, boolean parsing);
 
   /**
@@ -97,12 +97,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //TODO: pull from consultants automatically
   protected abstract List<String> getRefTypes();
 
-  protected abstract Prompt getNluSystemPrompt();
-  protected abstract Prompt getNlgSystemPrompt();
-  protected abstract Prompt getValidationNLUSystemPrompt();
-  protected abstract Prompt getValidationNLGSystemPrompt();
-  //TODO: remove socialava context when doing prompt templating refactor
-  protected Prompt getQuestionAnswerSystemPrompt() {return Prompts.getPrompt("socialava/questionAnswer");}
+  protected Prompt getNluSystemPrompt() { return Prompts.getPrompt("socialnlu");}
+  protected Prompt getNlgSystemPrompt() { return Prompts.getPrompt("socialnlg");}
+  protected Prompt getValidationNLUSystemPrompt() { return Prompts.getPrompt("socialvalidationnlu");}
+  protected Prompt getValidationNLGSystemPrompt() { return Prompts.getPrompt("socialvalidation");}
+  protected Prompt getQuestionAnswerSystemPrompt() {return Prompts.getPrompt("questionAnswer");}
   protected Prompt getGoalTranslationPrompt() {return Prompts.getPrompt("goalPredToString");}
 
   protected abstract List<Tool> generateInstructTools(boolean xml);
@@ -302,6 +301,20 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
+  protected Map<String,String> initPromptVars() {
+    Map<String, String> vars = new LinkedHashMap<>();
+    vars.put("%baseRoleDescription", getBaseRoleDescription());
+    vars.put("%baseContextualInformation", getBaseContextualInformation());
+    vars.put("%baseResponseConstraints", getBaseResponseConstraints());
+    vars.put("%baseResponseStyle", getBaseResponseStyle());
+    vars.put("%focusedResponseConstraints", getFocusedResponseConstraints());
+    vars.put("%focusedResponseStyle", getFocusedResponseStyle());
+    vars.put("%focusedResponsePolicy", getFocusedResponsePolicy());
+    vars.put("%focusedFinalInstruction", getFocusedFinalInstruction());
+    vars.putAll(initDomainPromptVars());
+    return vars;
+  }
+
   /**
    * Update prompt variables whose values need to be explicitly retrieved at call time
    * TODO: a lot of these can be updated to be held internally and updated on events
@@ -325,37 +338,55 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ChatCollection chatCollection = getChatCollection(user, agent);
     if (chatCollection != null) {
       ChatContext chatContext = chatCollection.currentChat;
-      if (chatContext != null && chatContext.chatState == ChatState.VALIDATION) {
-        if (parsing) {
-          //TODO: include tool information, not parsed semantics
-          Map<Variable, Symbol> varMap = new HashMap<>();
-          for (Term t : chatContext.utteranceUpForValidation.getSupplementalSemantics()) {
-            varMap.put((Variable) t.get(0), Factory.createSymbol(t.getName(), t.getType()));
-          }
-          promptVars.put("%toolUpForValidationDescription", replaceVarsWithDescriptors((Predicate) chatContext.utteranceUpForValidation.getSemantics(), varMap).toString());
-        } else {
-          // Sample validation question format - potentially based on previous filler phrase
-          String format;
-          if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("scheduled")) {
-            format = "I should";
-          } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition") || chatContext.utteranceUpForValidation.getSemantics().getName().equals("startMission")) {
-            format = "The task is";
-          } else {
-            //INSTRUCT
-            int option = new Random().nextInt(6);
-            switch (option) {
-              case 0 -> format = "Would you like me to";
-              case 1 -> format = "Should I";
-              case 2 -> format = "Did you mean for me to";
-              case 3 -> format = "Did I hear correctly that";
-              case 4 -> format = "Are you saying I should";
-              case 5 -> format = "Confirming I should";
-              default -> format = "Confirming I should";
+      if (chatContext != null) {
+        if (chatContext.chatState == ChatState.VALIDATION) {
+          if (parsing) {
+            //TODO: include tool information, not parsed semantics
+            Map<Variable, Symbol> varMap = new HashMap<>();
+            for (Term t : chatContext.utteranceUpForValidation.getSupplementalSemantics()) {
+              varMap.put((Variable) t.get(0), Factory.createSymbol(t.getName(), t.getType()));
             }
-            //REPLY
-            //  Did you mean, was it, did I hear correctly
+            promptVars.put("%toolUpForValidationDescription", replaceVarsWithDescriptors((Predicate) chatContext.utteranceUpForValidation.getSemantics(), varMap).toString());
+          } else {
+            // Sample validation question format - potentially based on previous filler phrase
+            String format;
+            if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("scheduled")) {
+              format = "I should";
+            } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition") || chatContext.utteranceUpForValidation.getSemantics().getName().equals("startMission")) {
+              format = "The task is";
+            } else {
+              //INSTRUCT
+              int option = new Random().nextInt(6);
+              switch (option) {
+                case 0 -> format = "Would you like me to";
+                case 1 -> format = "Should I";
+                case 2 -> format = "Did you mean for me to";
+                case 3 -> format = "Did I hear correctly that";
+                case 4 -> format = "Are you saying I should";
+                case 5 -> format = "Confirming I should";
+                default -> format = "Confirming I should";
+              }
+              //REPLY
+              //  Did you mean, was it, did I hear correctly
+            }
+            promptVars.put("%confirmationFormat", format);
+            promptVars.put("%goals", getCurrentGoalsSummary(utterance.getAddressee()));
           }
-          promptVars.put("%confirmationFormat", format);
+        } else if (chatContext.chatType == ChatType.FOCUSED && parsing) {
+          //TODO: should be done automatically and/or in subclass specifically. Easy to miss updating this
+          if (chatContext.contextID.equals("scheduleTask")) {
+            promptVars.put("%templateSubmissionTargetName", "submitScheduledTaskDefinition");
+            promptVars.put("%templateArgumentName", "currentScheduledDefinition");
+          } else if (chatContext.contextID.equals("learnTaskSequence")) {
+            promptVars.put("%templateSubmissionTargetName", "submitTaskSequenceDefinition");
+            promptVars.put("%templateArgumentName", "currentTaskSequenceDefinition");
+          } else if (chatContext.contextID.equals("learnMission")) {
+            promptVars.put("%templateSubmissionTargetName", "startMission");
+            promptVars.put("%templateArgumentName", "currentMissionDefinition");
+          } else if (chatContext.contextID.equals("modifyExistingTaskStatus")) {
+            promptVars.put("%templateSubmissionTargetName", "submitTaskStatusModificationDefinition");
+            promptVars.put("%templateArgumentName", "currentTaskStatusModificationDefinition");
+          }
         }
       }
     }
@@ -404,27 +435,27 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     String predDefinition = "";
     switch (pred.getName()) {
       case "mean" ->
-              predDefinition = "\nname: mean(X,Y)\ndescription: Represents a question asking X if they meant to instruct or specify Y.";
+              predDefinition = "name: mean(X,Y)\ndescription: Represents a question asking X if they meant to instruct or specify Y\n.";
       case "attempting" ->
-              predDefinition = "\nname: attempting(X,Y)\ndescription: Report that you are starting the task defined by Y";
+              predDefinition = "name: attempting(X,Y)\ndescription: Report that you are starting the task defined by Y\n";
       case "and" ->
-              predDefinition = "\nname: and(X,Y,...)\ndescription: Conjunctive form signalling desired translation consists of translating X and Y and ...";
+              predDefinition = "name: and(X,Y,...)\ndescription: Conjunctive form signalling desired translation consists of translating X and Y and ...\n";
       case "taskPredicate" ->
-              predDefinition = "\nname: taskPredicate(X)\ndescription: Specification of a task specified by X";
+              predDefinition = "name: taskPredicate(X)\ndescription: Specification of a task specified by X\n";
       case "timingOf" ->
-              predDefinition = "\nname: timingOf(X)\ndescription: Specification of the type of timing detail X. interval references the amount of time between occurrence and execution references the time of a specific occurrence";
+              predDefinition = "name: timingOf(X)\ndescription: Specification of the type of timing detail X. interval references the amount of time between occurrence and execution references the time of a specific occurrence\n";
       case "abort" ->
-              predDefinition = "\nname: abort(question)\ndescription: Conveyed intent to decline answering an asked question";
+              predDefinition = "name: abort(question)\ndescription: Conveyed intent to decline answering an asked question\n";
       case "taskName" ->
-              predDefinition = "\nname: taskName(X)\ndescription: The name of a task to be learned, X";
+              predDefinition = "name: taskName(X)\ndescription: The name of a task to be learned, X\n";
       case "not" ->
-              predDefinition = "\nname: not(X)\ndescription: Negation of the fact X";
+              predDefinition = "name: not(X)\ndescription: Negation of the fact X\n";
       case "ack" ->
-              predDefinition = "\nname: ack(X)\ndescription: Format as \"<acknowledgement_word_or_phrase_variation>,<translation_of_X>\".";
+              predDefinition = "name: ack(X)\ndescription: Format as \"<acknowledgement_word_or_phrase_variation>,<translation_of_X>\".\n";
       case "error" ->
-              predDefinition = "\nname: error(X)\ndescription: Signals X should be conveyed in the form of a failure message";
+              predDefinition = "name: error(X)\ndescription: Signals X should be conveyed in the form of a failure message\n";
       case "kioskGoal" ->
-        predDefinition = "\nname: kioskGoal(X,Y)\ndescription: Specification of a 'kiosk goal' (a goal which occurs automatically after a period of inactivity) configuration. X is a task to be performed after Y seconds of inactivity";
+        predDefinition = "name: kioskGoal(X,Y)\ndescription: Specification of a 'kiosk goal' (a goal which occurs automatically after a period of inactivity) configuration. X is a task to be performed after Y seconds of inactivity\n";
       default -> {
         //TODO: account for conversions in correctCommonNLUMistakes
         Tool correspondingTool = chatTemplates.get("nlu").tools.get(pred.getName());
@@ -2649,9 +2680,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 //            " current task should cause you to only begin listing your pending tasks. Do not list more than 5 tasks at once" +
 //            " without being asked to list more.");
 
-    stringBuilder.append("-------\nResponse Rules:\n" +
-            "- Only respond to the user with information relevant to what they actually asked about.\n" +
-            "- Do not list more than 5 tasks at once without explicitly being asked to list more.");
+//    stringBuilder.append("-------\nResponse Rules:\n" +
+//            "- Only respond to the user with information relevant to what they actually asked about.\n" +
+//            "- Do not list more than 5 tasks at once without explicitly being asked to list more.");
     return stringBuilder.toString();
   }
 
@@ -2731,7 +2762,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
       if (expectedResponseForms != null && !expectedResponseForms.isEmpty()) {
         //output = "Through previous interaction between the user and the back end system, the system has came up with its own question(s) for the user. The question(s) and their corresponding expected reply forms are presented below.";
-        output = "-- OUTSTANDING QUESTION: \"" + questionString + "\""+ "\n-- EXPECTED REPLY FORM:" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
+        output = "-- OUTSTANDING QUESTION: \"" + questionString + "\""+ "\n-- EXPECTED REPLY FORMS:" + String.join(", ",expectedResponseForms.stream().map(Term::toString).toList());
         output += "\n-- There should be function entries with name and arguments matching each of the expected reply forms. It is very likely that the most recent user input should be interpreted as a response to this question(s) as opposed to a separate instruction in the case where it may reasonably be interpreted as either.";
       } else {
         output += "<No questions have been asked by the back end system>";
@@ -3848,5 +3879,68 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         default -> "Okay";
       };
     }
+  }
+
+  //TODO: define in/load from external txt files?
+  //////////////////////////////////////////////////////////////////
+  /// Default prompt variable definitions shared across contexts ///
+  //////////////////////////////////////////////////////////////////
+  protected String getBaseRoleDescription() {
+    return "You are %addressee, the natural language surface of an assistive agent with an associated back-end system.\n";
+  }
+
+  //TODO: Don't believe questions need ot be included because should be in questionAnswer context
+  protected String getBaseContextualInformation() {
+    return "- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n%questionList";
+  }
+
+  protected String getBaseResponseConstraints() {
+    return "- Use only tool descriptions, tool arguments, and tool results for robot- or system-specific claims.\n" +
+            "- Respond to the user only by using the stillGatheringInformation tool.\n" +
+            "- Never make assumptions in order to answer any questions when you are missing context.\n" +
+            "- Never tell the user you can or will do something for them unless it is by making a specific tool call. The back-end controls all interactions with the real-world.\n" +
+            "- Do not use profanity or engage in controversial discussion.";
+  }
+
+  protected String getBaseResponseStyle() {
+    return "- Be concise, calm, and soft-spoken.\n" +
+            "- Respond with one short spoken sentence.\n" +
+            "- No newlines\n" +
+            "- No numbered lists\n" +
+            "- No quoted phrases\n" +
+            "- No unnecessary restatement of user input\n" +
+            "- No follow-up questions unless clarification is required.\n" +
+            "- Do not list more than 5 things at a time unless explicitly asked to.";
+  }
+
+  protected String getFocusedResponseConstraints() {
+    return "- Do not go off topic or attempt to help the user with anything other than the stated goal.\n" +
+            "- Do not invent missing values just to fill in the current template definition.";
+  }
+
+  protected String getFocusedResponseStyle() {
+    return "- Do not restate or confirm details you have just been told when asking for additional information.\n" +
+            "- Ask only for the next missing piece of information when leading the conversation.";
+  }
+
+  protected String getFocusedResponsePolicy() {
+    return "- If the user indicates they are finished and the definition is complete, call %templateSubmissionTargetName.\n" +
+            "- If the task status modification definition is fully filled out, call %templateSubmissionTargetName immediately.\n" +
+            "- If the user asks what you currently understand, answer based on the %templateArgumentName.\n" +
+            "- If the user does not want to modify a task's status or seems confused about what is happening, call endConversation.\n" +
+            "- If the user says bye, leaves, or no longer wants to continue, call endConversation.\n" +
+            "- If the user asks to pause this interaction, call suspendCurrentInteraction.\n" +
+            "- If the user asks to cancel this interaction, call cancelCurrentInteraction.\n" +
+            "- Otherwise, call stillGatheringInformation and include a sensible response which follows the Style guidelines" +
+            " and is aligned with your goal. Update %templateArgumentName as the user adds, corrects, removes, or replaces information.";
+  }
+
+  protected String getFocusedFinalInstruction() {
+    return "You will first be presented with a conversation history containing the instruction causing you to believe the " +
+            "user wanted to modify an assigned task's status. This history may contain pertinent information about what task" +
+            " should be modified and what modification to perform. Extract and include every single piece of information " +
+            "found in your initial response's scheduled task definition. If the definition is clear and complete immediately, " +
+            "you may call %templateSubmissionTargetName immediately without further conversation. If it seems that this " +
+            "context was triggered incorrectly based on the past history, you may call endConversation immediately without further conversation.";
   }
 }

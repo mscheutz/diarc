@@ -36,28 +36,6 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    // Temperature measurements and reporting
    private boolean includeDemoTargets = false;
 
-   // Revisit when making base/subclass distinction
-   protected Prompt getNluSystemPrompt() {
-      return Prompts.getPrompt("socialava/nlu");
-   }
-
-   protected Prompt getNlgSystemPrompt() {
-      return Prompts.getPrompt("socialava/nlg");
-   }
-
-   protected Prompt getValidationNLGSystemPrompt() {
-      return Prompts.getPrompt("socialava/validation");
-   }
-
-   protected Prompt getValidationNLUSystemPrompt() {
-      return Prompts.getPrompt("socialava/validationnlu");
-   }
-
-   @Override
-   protected Prompt getGoalTranslationPrompt() {
-      return Prompts.getPrompt("socialava/goalPredToString");
-   }
-
    @Override
    public void init() {
       super.init();
@@ -147,7 +125,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                                                    )),
                                                 UtteranceType.INSTRUCT);
       scheduleGoalTools.add(modifiedTextResponseTool1);
-      chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/focused/scheduleGoal"), scheduleGoalTools));
+      chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("focused/scheduleGoal"), scheduleGoalTools));
 
       // Tour Teaching
       // Using custom "stillGatheringInformation" tool which also explicitly keeps track of the "current template parse" at
@@ -172,7 +150,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                                                                    )),
                                                 UtteranceType.INSTRUCT);
       learnTourTools.add(modifiedTextResponseTool2);
-      chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/focused/learnTour"), learnTourTools));
+      chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("focused/learnTaskSequence"), learnTourTools));
 
       // Goal status modification
       List<Tool> modifyExistingTaskStatusTools = new ArrayList<>();
@@ -199,7 +177,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new ArrayList<>()),
               UtteranceType.INSTRUCT
       ));
-      chatTemplates.put("modifyExistingTaskStatus", new ChatTemplates(Prompts.getPrompt("socialava/focused/goalStatusManipulation"), modifyExistingTaskStatusTools));
+      chatTemplates.put("modifyExistingTaskStatus", new ChatTemplates(Prompts.getPrompt("focused/goalStatusManipulation"), modifyExistingTaskStatusTools));
 
       return chatTemplates;
    }
@@ -207,7 +185,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    /**
     * Initialize Prompt variables whose values are static during runtime or updated by event-based listeners
     */
-   protected Map<String, String> initPromptVars() {
+   protected Map<String, String> initDomainPromptVars() {
       Map<String, String> vars = new LinkedHashMap<>();
       // TODO: If Ava components are ever extended to allow runtime saving of these entities, make corresponding updates
       //    to allow for dynamic updating of prompt vars (ideally through subscriber/listener setup)
@@ -234,7 +212,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       vars.put("%exampleLocation", locations.isEmpty() ? "example_location:location" : locations.get(0));
       vars.put("%language", language);
 
-      vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. Values not present in the lists must be rejected\\n-- For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ".\\n- If asked to go to a location which does not exist, call the \"getAssistanceOnUsingSaveLocationAndGoToLocationProperly\" tool to learn how to save new locations.\\n- New videos and images can be added through the associated website.");
+      vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. Values not present in the lists must be rejected\n-- For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ".\n- If asked to go to a location which does not exist, call the \"getAssistanceOnUsingSaveLocationAndGoToLocationProperly\" tool to learn how to save new locations.\n- New videos and images can be added through the associated website.");
       return vars;
    }
 
@@ -254,6 +232,27 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //List<ChatContext> extendedHistory = chatContextHistories.get(Pair.of(user.toUntyped(),agent.toUntyped()));
       //vars.put("%lastConvoSummary", (extendedHistory == null || extendedHistory.isEmpty()) ? "- <No past chat histories>" : getChatHistoryAsString(extendedHistory.get(0).history));
       return vars;
+   }
+
+   @Override
+   protected String getBaseRoleDescription() {
+      return "You are Ava, a social autonomous mobile robot with an associated back-end system.";
+   }
+
+   @Override
+   protected String getBaseContextualInformation() {
+      return "- Current Location: %currentLocation\n" +
+              "- Current Battery Level: %batteryLevel\n" +
+              "- Current Video Volume: %videoVolume\n" +
+              "- Current Speaking Voice Volume: %voiceVolume\n" +
+              "- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
+              "%questionList\n" +
+              "- Location List:\n" +
+              "%locationList\n" +
+              "- Video List:\n" +
+              "%videoList\n" +
+              "- Image List\n" +
+              "%imageList";
    }
 
    //Failed attempt at including context to be used in the base prompt itself
