@@ -34,22 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
-  // Revisit when making base/subclass distinction
-  protected Prompt getNluSystemPrompt() {
-    return Prompts.getPrompt("socialspot/nlu");
-  }
-
-  protected Prompt getNlgSystemPrompt() {
-    return Prompts.getPrompt("socialava/nlg");
-  }
-
-  protected Prompt getValidationNLGSystemPrompt() {
-    return Prompts.getPrompt("socialava/validation");
-  }
-
-  protected Prompt getValidationNLUSystemPrompt() {
-    return Prompts.getPrompt("socialava/validationnlu");
-  }
 
   @Override
   public void init() {
@@ -98,14 +82,14 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
             )),
             UtteranceType.INSTRUCT);
     learnMissionTools.add(modifiedTextResponseTool2);
-    chatTemplates.put("learnMission", new ChatTemplates(Prompts.getPrompt("socialspot/focused/learnMission"), learnMissionTools));
+    chatTemplates.put("learnMission", new ChatTemplates(Prompts.getPrompt("focused/learnMission"), learnMissionTools));
     return chatTemplates;
   }
 
   /**
    * Initialize Prompt variables whose values are static during runtime or updated by event-based listeners
    */
-  protected Map<String, String> initPromptVars() {
+  protected Map<String, String> initDomainPromptVars() {
     Map<String, String> vars = new LinkedHashMap<>();
     // TODO: If Ava components are ever extended to allow runtime saving of these entities, make corresponding updates
     //    to allow for dynamic updating of prompt vars (ideally through subscriber/listener setup)
@@ -131,6 +115,13 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
   protected Map<String,String> updateDomainPromptVars(Utterance utterance, boolean parsing) {
     return new HashMap<>();
   }
+
+  @Override
+  protected String getBaseRoleDescription() {
+    return "You are Spot, a Boston Dynamics Spot robot with an associated back-end system.";
+  }
+
+  //TODO: believe getBaseContextualInformation should be overriden and include locations
 
   @Override
   protected List<String> getRefTypes() {
