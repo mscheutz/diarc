@@ -36,19 +36,19 @@ import java.util.stream.Collectors;
 public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
   // Revisit when making base/subclass distinction
   protected Prompt getNluSystemPrompt() {
-    return Prompts.getPrompt("socialspot/condensed/nlu");
+    return Prompts.getPrompt("socialspot/nlu");
   }
 
   protected Prompt getNlgSystemPrompt() {
-    return Prompts.getPrompt("socialava/condensed/nlg");
+    return Prompts.getPrompt("socialava/nlg");
   }
 
   protected Prompt getValidationNLGSystemPrompt() {
-    return Prompts.getPrompt("socialava/condensed/validation");
+    return Prompts.getPrompt("socialava/validation");
   }
 
   protected Prompt getValidationNLUSystemPrompt() {
-    return Prompts.getPrompt("socialava/condensed/validationnlu");
+    return Prompts.getPrompt("socialava/validationnlu");
   }
 
   @Override
@@ -98,7 +98,7 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
             )),
             UtteranceType.INSTRUCT);
     learnMissionTools.add(modifiedTextResponseTool2);
-    chatTemplates.put("learnMission", new ChatTemplates(Prompts.getPrompt("socialspot/condensed/learnMission"), learnMissionTools));
+    chatTemplates.put("learnMission", new ChatTemplates(Prompts.getPrompt("socialspot/focused/learnMission"), learnMissionTools));
     return chatTemplates;
   }
 

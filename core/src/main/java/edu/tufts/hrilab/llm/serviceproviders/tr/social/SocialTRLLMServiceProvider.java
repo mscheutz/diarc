@@ -59,18 +59,16 @@ import java.util.stream.Collectors;
 
 // Expansive higher level TODO list currently in personal notes
 public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
-  boolean useCondensedPrompts = true; //If setting this to false, still need to include location, video, image lists in prompt itself because was taken out of tool calls
-  boolean useCondensedTools = true; //Condensed Tools have not been maintained. Would need to be updated before use
   HashMap<String, Qwen3CoderToolParser> streamingResults = new HashMap<>();
   private final java.util.Set<String> ttsStreamedIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
   private volatile String currentStreamingResponseId;
   private volatile long currentStreamingUid = -1;
 
+  // TODO: extend all context/chat/related collections to be indexed by groups of interactors, similar to conversations
   /**
    * Maintained set of ChatCollections, split by user/AgentTeam pair
    * Contains all relevant conversation contexts and their managed histories between each pair
    */
-  // TODO: extend to groups of interactors, similar to conversations
   protected final Map<Pair<Symbol, Symbol>, ChatCollection> currentChatCollections = new HashMap<>();
 
   /**
@@ -104,11 +102,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   protected abstract Prompt getValidationNLUSystemPrompt();
   protected abstract Prompt getValidationNLGSystemPrompt();
   //TODO: remove socialava context when doing prompt templating refactor
-  protected Prompt getQuestionAnswerSystemPrompt() {return Prompts.getPrompt("socialava/condensed/questionAnswer");}
+  protected Prompt getQuestionAnswerSystemPrompt() {return Prompts.getPrompt("socialava/questionAnswer");}
   protected Prompt getGoalTranslationPrompt() {return Prompts.getPrompt("goalPredToString");}
 
   protected abstract List<Tool> generateInstructTools(boolean xml);
-  //TODO: remove xml arg?
   protected abstract List<Tool> generateITKTools();
   protected abstract Map<String,Tool> generateReplyTools();
   protected abstract Map<String,ChatTemplates> generateFocusedContextChatTemplates();
@@ -125,7 +122,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * "validationnlu" - used when making calls from parseUtteranceLLMService while validating a parse result
    * Available core, general:
    * "scheduleTask" - Social LLM alternative to templated turn-based scheduleGoal script
-   *      TODO: learnAction, reorderGoals, handleHigherPriorityConflictingGoal, modifyScheduledGoal, ...
+   * "learnTaskSequence" (though flavored differently in subclasses - variation on general action learning, learn sequence of action/location pairs
+   * "modifyExistingtaskStatus" (currently just in SocialAva subcalls TODO - pull to base) - more flexible cancel/suspend/resuming of tasks
+   *      TODO: reorderGoals, handleHigherPriorityConflictingGoal, modifyScheduledGoal, ...
    *    Domain specific optional:
    *      Any "template targeting dialogue interactions" you wish to implement for your specific domain should be added
    *        as seen fit from a subclass. The current convention is that the key of the chatTemplates entry is the name
@@ -139,8 +138,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * TODO: make these mostly hardcoded and only have subclass fill in certain fields (e.g. domain summary)
    */
   Map<String, ChatTemplates> chatTemplates;
-  //protected abstract List<ToolDefinition> getBaseNLUToolDefinitions();
-  //protected abstract void addContextSpecificChatTemplates();
   Map<String, Tool> universalFocusedToolset;
   List<ToolDefinition> universalFocusedToolDefinitions;
 
@@ -200,52 +197,26 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //// Generate universal Tools ////
     Tool focusedEndConversationTool;
     Tool defaultGoalInfoTool;
-    if (useCondensedTools) {
-      focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
-              "End the conversation with the user and discard the current in progress definition.",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
-      );
-      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
-              "Use this to ask the system for up to date information about your current list of tasks. Call this" +
-                      "tool in order to get relevant information to help answer user questions about what you are currently" +
-                      " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
-                      "perform in the future",
-              new ArrayList<>()),
-              UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
-    } else {
-      focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
-              "End the conversation with the user. This is usually desired in two main cases. 1. The user no" +
-                      " longer wants to perform your shared task. Or 2. The user has said goodbye or needs to leave.",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
-      );
-      defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
-              "Use this to ask the system for up to date information about your current list of tasks. Call this" +
-                      "tool in order to get relevant information to help answer user questions about what you are currently" +
-                      " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
-                      "perform in the future",
-              new ArrayList<>()),
-              UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
-    }
+    focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
+            "End the conversation with the user and discard the current in progress definition.",
+            new ArrayList<>()),
+            UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
+    );
+    defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
+            "Use this to ask the system for up to date information about your current list of tasks. Call this" +
+                    "tool in order to get relevant information to help answer user questions about what you are currently" +
+                    " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
+                    "perform in the future",
+            new ArrayList<>()),
+            UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     itkActionNames.add("getCurrentPendingScheduledTaskInformation");
 
-    if (useCondensedTools) {
-      textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
-              "You are still gathering information before being able to submit an accurate, fully defined " +
-                      "instruction and need to speak with the user to gather missing information.",
-              List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                      "What you want to say to the user", true))),
-              UtteranceType.INSTRUCT);
-    } else {
-      //TODO: add current "best guess parse" field similar to what is done now in some "focused" template targeting contexts?
-      textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
-              "You are still gathering information before being able to submit an accurate, fully defined " +
-                      "instruction and need to speak with the user to gather missing information.",
-              List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                      "What you want to say to the user", true))),
-              UtteranceType.INSTRUCT);
-    }
+    textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
+            "You are still gathering information before being able to submit an accurate, fully defined " +
+                    "instruction and need to speak with the user to gather missing information.",
+            List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                    "What you want to say to the user", true))),
+            UtteranceType.INSTRUCT);
 
     itkTools.add(defaultGoalInfoTool);
     //// Gather Tool Sets and System Prompts ////
@@ -267,32 +238,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     universalFocusedToolset = new HashMap<>();
     universalFocusedToolDefinitions = new ArrayList<>();
     universalFocusedToolset.put("endConversation", focusedEndConversationTool);
-    if (useCondensedTools) {
-      universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition("suspendCurrentInteraction",
-              "Pause your current task, which can be later resumed.",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
-              "Stop and fully discard your current task.",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      for (Tool itkTool : itkTools) {
-        universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
-      }
-    } else {
-      universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition("suspendCurrentInteraction",
-              "You pause your current task, which can be later resumed. " +
-                      "This may be instructed directly as shown in the example, or could be intended when the user wants to temporarily have a separate conversation on a different topic.\n" +
-                      "Example Instruction: \"pause what you're doing.\", \"Suspend current task\"",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
-              "You stop and fully discard your current task. \nExample Instruction: \"stop what you're doing.\", \"cancel current task\"",
-              new ArrayList<>()),
-              UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-      for (Tool itkTool : itkTools) {
-        universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
-      }
+    universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition("suspendCurrentInteraction",
+            "Pause your current task, which can be later resumed.",
+            new ArrayList<>()),
+            UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
+    universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
+            "Stop and fully discard your current task.",
+            new ArrayList<>()),
+            UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
+    for (Tool itkTool : itkTools) {
+      universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
     }
     for (Tool universalTool : universalFocusedToolset.values()) {
       universalFocusedToolDefinitions.add(universalTool.toolDefinition);
@@ -320,7 +275,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Focused context toolsets:
     chatTemplates.putAll(generateFocusedContextChatTemplates());
 
-    //TODO: apply promptVars to Tool definitions/examples and most importantly possible_values sets as well
+    // TODO: apply promptVars to Tool definitions/examples and most importantly possible_values sets as well
     // init prompt vars
     promptVars.putAll(initPromptVars());
 
@@ -719,7 +674,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
       errorResponseBuilder = new StringBuilder();
 
-      // Re-call completion for text response //TODO: pass in tool list? allow for more than just text response?
+      // Re-call completion for text response
       Completion retryResponse;
       if (useStreaming) {
         retryResponse = callChatCompletionStreaming(chatContext.history, toolList, utterance.getUid());
@@ -876,28 +831,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (chatContext.chatType != ChatType.BASE) {
         if (toolName.equals("endConversation") || toolName.equals("cancelCurrentInteraction")) {
           outputUtterance.setSemantics(Factory.createPredicate("cancelCurrentTask", inputUtterance.getAddressee()));
-          //toolName = "cancelCurrentTask";
         } else if (toolName.equals("suspendCurrentInteraction")) {
           outputUtterance.setSemantics(Factory.createPredicate("suspendCurrentTask", inputUtterance.getAddressee()));
-          //toolName = "suspendCurrentTask";
         }
       }
-      //if (toolName.equals("suspendCurrentTask") || toolName.equals("cancelCurrentTask")) {
-      //  List<Long> gids = null;
-      //  try {
-      //    gids = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSystemGoalsIds").argTypes(Symbol.class)).call(List.class, inputUtterance.getAddressee());
-      //  } catch (TRADEException e) {
-      //    log.error("[handleToolResponse] exception getting current system goal ID for agentTeam: {}", inputUtterance.getAddressee(), e);
-      //  }
-      //  if (gids != null && !gids.isEmpty()) {
-      //    Long gid = gids.get(0);
-      //    if (toolName.equals("suspendCurrentTask")) {
-      //      outputUtterance.setSemantics(Factory.createPredicate("suspendGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-      //    } else {
-      //      outputUtterance.setSemantics(Factory.createPredicate("cancelGoal", inputUtterance.getAddressee(), Factory.createSymbol(String.valueOf(gid))));
-      //    }
-      //  }
-      //}
 
       // Proceed to validation if not architecture ITK call
       if (outputUtterance.getType() == UtteranceType.QUESTION) {
@@ -1069,7 +1006,6 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /**
    * Method for handling Completion responses containing during validation.
    * <p>
-   * TODO: currently not validating validation responses - change if problematic
    */
   public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
     if (llmResponse.toolCalls.size() > 1) {
@@ -2847,11 +2783,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private void addLearnedActionToCollections(ActionDBEntry dbEntry) {
     Predicate signature = dbEntry.getSignature(false);
     Tool correspondingTool;
-    if (useCondensedTools) {
-      correspondingTool = new Tool(new ToolDefinition(signature.getName(), "An action previously taught by the user. Call this if the user asks you to perform something referring to the supplied name.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
-    } else {
-      correspondingTool = new Tool(new ToolDefinition(signature.getName(), "This is an action which was previously taught to you by a human user. It was given the name \"" + signature.getName() + "\" during instruction. You may use the getActionSteps function to get a description of the steps contained within this action if desired.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
-    }
+    correspondingTool = new Tool(new ToolDefinition(signature.getName(), "An action previously taught by the user. Call this if the user asks you to perform something referring to the supplied name.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
     String nluString = toolToDescString(correspondingTool, false);//true);
     String nlgString = toolToDescString(correspondingTool, false);
 

@@ -38,36 +38,19 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
    // Revisit when making base/subclass distinction
    protected Prompt getNluSystemPrompt() {
-      if (useCondensedPrompts) {
-         return Prompts.getPrompt("socialava/condensed/nlu");
-      } else {
-         return Prompts.getPrompt("socialava/nlu");
-         //    return Prompts.getPrompt("socialava/nlu_toolcalls_and_content");
-      }
+      return Prompts.getPrompt("socialava/nlu");
    }
 
    protected Prompt getNlgSystemPrompt() {
-      if (useCondensedPrompts) {
-         return Prompts.getPrompt("socialava/condensed/nlg");
-      } else {
-         return Prompts.getPrompt("socialava/nlg");
-      }
+      return Prompts.getPrompt("socialava/nlg");
    }
 
    protected Prompt getValidationNLGSystemPrompt() {
-      if (useCondensedPrompts) {
-         return Prompts.getPrompt("socialava/condensed/validation");
-      } else {
-         return Prompts.getPrompt("socialava/validation");
-      }
+      return Prompts.getPrompt("socialava/validation");
    }
 
    protected Prompt getValidationNLUSystemPrompt() {
-      if (useCondensedPrompts) {
-         return Prompts.getPrompt("socialava/condensed/validationnlu");
-      } else {
-         return Prompts.getPrompt("socialava/validationnlu");
-      }
+      return Prompts.getPrompt("socialava/validationnlu");
    }
 
    @Override
@@ -91,53 +74,24 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       List<Tool> instructTools = generateInstructTools(false);
       //TODO: need general way to provide instruct versions of actions for teaching, scheduling, etc vs ITK versions of
       //  actions for general interaction to populate corresponding toolsets effectively
-      if (!useCondensedTools) {
-         ToolDefinition definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfLocations",
-                 "You report the wifi signal strength you had previously measured at each of the supplied locations in the list. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at "+promptVars.get("%exampleLocation")+", example_location_2, and example_location_3?\"",
-                 List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfCurrentLocation",
-                 "You report the the wifi signal strength of your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
-                 new ArrayList<>());
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         if (includeDemoTargets) {
-            definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfLocations",
-                    "You report the temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at "+promptVars.get("%exampleLocation")+"?, example_location_2, and example_location_3?\"",
-                    List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-            instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-            definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfCurrentLocation",
-                    "You report the the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
-                    new ArrayList<>());
-            instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         }
-         definition = new ToolDefinition("sayLocally",
-                 "The speaker on the robot will emit the supplied phrase. Do not use this when you want to respond to the user. This should be targeted when a user is explicitly instructing you to say something out loud in person, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: <function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>\"" ,
-                 List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         definition = new ToolDefinition("stopFollowing",
-                                         "You stop following the user. \nExample Instruction: \"stop following me.\"",
-                                         new ArrayList());
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      } else {
-         ToolDefinition definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfLocations",
-                 "You report the wifi signal strength you had previously measured at certain :locations",
-                 List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The list of :locations to report the wifi signal of. Empty if the current location at the time of this goal being performed", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         if (includeDemoTargets) {
-            definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfLocations",
-                    "You report the temperature you had previously measured at certain :locations",
-                    List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The list of :locations to report the temperature of. Empty if the current location at the time of this goal being performed", true)));
-            instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         }
-         definition = new ToolDefinition("sayLocally",
-                 "The speaker on the robot will emit the supplied phrase",
-                 List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The exact phrase instructed to be said", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         definition = new ToolDefinition("stopFollowing",
-                 "You stop following the user",
-                 new ArrayList());
+      ToolDefinition definition = new ToolDefinition("reportPreviouslyMeasuredWifiOfLocations",
+              "You report the wifi signal strength you had previously measured at certain :locations",
+              List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The list of :locations to report the wifi signal of. Empty if the current location at the time of this goal being performed", true)));
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      if (includeDemoTargets) {
+         definition = new ToolDefinition("reportPreviouslyMeasuredTemperatureOfLocations",
+                 "You report the temperature you had previously measured at certain :locations",
+                 List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The list of :locations to report the temperature of. Empty if the current location at the time of this goal being performed", true)));
          instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       }
+      definition = new ToolDefinition("sayLocally",
+              "The speaker on the robot will emit the supplied phrase",
+              List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The exact phrase instructed to be said", true)));
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition("stopFollowing",
+              "You stop following the user",
+              new ArrayList());
+      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       chatTemplates.put("nluextended", new ChatTemplates(getNluSystemPrompt(), instructTools));
 
@@ -174,102 +128,51 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       // Focused context toolsets:
       // Goal Scheduling
       List<Tool> scheduleGoalTools = new ArrayList<>();
-      //if (useCondensedTools) {
-      //   scheduleGoalTools.add(new Tool(new ToolDefinition("submitScheduledTaskDefinition",
-      //                                                     "Save a fully defined scheduled task.", List.of(
-      //         new ToolParameterHelper("action", "object", new ArrayList<>(), "The action to be performed. Must be a JSON definition with name and arguments itself.", true, true, "nluextended"),
-      //         new ToolParameterHelper("start", "string", new ArrayList<>(), "When to first execute the task. Valid forms are a relative time represented by start(<number>,<timeunit>) or an absolute time represented by start(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss).", true),
-      //         new ToolParameterHelper("repeat", "string", new ArrayList<>(), "On what interval to repeat execution of the task. Valid forms are a relative time represented by repeat(<number>,<timeunit>). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. If the task should only be performed once and not repeated, supply a value of repeat(nonrepeating).", true),
-      //         new ToolParameterHelper("end", "string", new ArrayList<>(), "When to stop repeating execution of the task. If this task is not repeating (meaning repeat is defined as repeat(nonrepeating)), you must supply the value end(nonrepeating). Otherwise, valid forms are a relative time represented by end(<number>,<timeunit>) or an absolute time represented by end(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss).", true)
-      //   )),
-      //                                  UtteranceType.INSTRUCT
-      //   ));
-      //   Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition("stillGatheringInformation",
-      //                                                                "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
-      //                                                                "the user to acknowledge reception of their most recent command, answer questions they have, or continue" +
-      //                                                                "to gather missing information in order to define the scheduled task.",
-      //                                                                List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-      //                                                                                                "What you want to say to the user", true),
-      //                                                                        new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
-      //                                                                                                "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
-      //                                                                )),
-      //                                             UtteranceType.INSTRUCT);
-      //   scheduleGoalTools.add(modifiedTextResponseTool1);
-      //} else {
-         scheduleGoalTools.add(new Tool(new ToolDefinition("submitScheduledTaskDefinition",
-                                                           "Submit the details of the fully defined scheduled task for execution. Call this when you believe you have all information about the scheduled task finalized and are ready to save.", List.of(
-               new ToolParameterHelper("action", "object", new ArrayList<>(), "The action to be performed. Please refer to the Action List in order to understand acceptable values and forms.", true, true, "nluextended"),
-               new ToolParameterHelper("start", "string", new ArrayList<>(), "When to first execute the task. Valid forms are a relative time represented by start(<number>,<timeunit>) or an absolute time represented by start(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of 2 hours from now == start(2,HOURS). The absolute time of noon == start(12-00-00). Being told to perform the first execution immediately == start(0,SECONDS).", true),
-               new ToolParameterHelper("repeat", "string", new ArrayList<>(), "On what interval to repeat execution of the task. Valid forms are a relative time represented by repeat(<number>,<timeunit>). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. For example, the relative time of 30 minutes from now == repeat(30,MINUTES). If the task should only be performed once and not repeated, supply a value of repeat(nonrepeating).", true),
-               new ToolParameterHelper("end", "string", new ArrayList<>(), "When to stop repeating execution of the task. If this task is not repeating (meaning repeat is defined as repeat(nonrepeating)), you must supply the value end(nonrepeating). If end(indefinitely) is provided as the value, that means the task will continue repeating execution on the defined repeat until it is explicitly canceled by the user. Otherwise, valid forms are a relative time represented by end(<number>,<timeunit>) or an absolute time represented by end(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of in a quarter of an hour == end(15,MINUTES). The absolute time of 5:30pm == end(17-30-00).", true)
-         )),
-                                        UtteranceType.INSTRUCT
-         ));
-         Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition("stillGatheringInformation",
-                                                                      "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
-                                                                      "the user while following the Response Rules and Style Requirements.",
-                                                                      List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                                                                                                      "What you want to say to the user", true),
-                                                                              new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
-                                                                                                      "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
-                                                                      )),
-                                                   UtteranceType.INSTRUCT);
-         scheduleGoalTools.add(modifiedTextResponseTool1);
-      //}
-      if (useCondensedPrompts) {
-         chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/condensed/scheduleGoal"), scheduleGoalTools));
-      } else {
-         chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/scheduleGoal"), scheduleGoalTools));
-         //    chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/schedulegoal_splitresponse"), scheduleGoalTools));
-      }
+      scheduleGoalTools.add(new Tool(new ToolDefinition("submitScheduledTaskDefinition",
+                                                        "Submit the details of the fully defined scheduled task for execution. Call this when you believe you have all information about the scheduled task finalized and are ready to save.", List.of(
+            new ToolParameterHelper("action", "object", new ArrayList<>(), "The action to be performed. Please refer to the Action List in order to understand acceptable values and forms.", true, true, "nluextended"),
+            new ToolParameterHelper("start", "string", new ArrayList<>(), "When to first execute the task. Valid forms are a relative time represented by start(<number>,<timeunit>) or an absolute time represented by start(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of 2 hours from now == start(2,HOURS). The absolute time of noon == start(12-00-00). Being told to perform the first execution immediately == start(0,SECONDS).", true),
+            new ToolParameterHelper("repeat", "string", new ArrayList<>(), "On what interval to repeat execution of the task. Valid forms are a relative time represented by repeat(<number>,<timeunit>). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. For example, the relative time of 30 minutes from now == repeat(30,MINUTES). If the task should only be performed once and not repeated, supply a value of repeat(nonrepeating).", true),
+            new ToolParameterHelper("end", "string", new ArrayList<>(), "When to stop repeating execution of the task. If this task is not repeating (meaning repeat is defined as repeat(nonrepeating)), you must supply the value end(nonrepeating). If end(indefinitely) is provided as the value, that means the task will continue repeating execution on the defined repeat until it is explicitly canceled by the user. Otherwise, valid forms are a relative time represented by end(<number>,<timeunit>) or an absolute time represented by end(date-format). <number> must take an Integer value. <timeunit> must be a value of the Java TimeUnit enum. <date-format> must be a DateFormat following HH-mm-ss or MM-dd-yyyy HH-mm-ss (military time for HH-mm-ss). For example, the relative time of in a quarter of an hour == end(15,MINUTES). The absolute time of 5:30pm == end(17-30-00).", true)
+      )),
+                                     UtteranceType.INSTRUCT
+      ));
+      Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition("stillGatheringInformation",
+                                                                   "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
+                                                                   "the user while following the Response Rules and Style Requirements.",
+                                                                   List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                                                                                                   "What you want to say to the user", true),
+                                                                           new ToolParameterHelper("currentScheduledDefinition", "object", new ArrayList<>(),
+                                                                                                   "Your current understanding of the scheduled task being instructed to you. The expected format is json matching the submitScheduledTaskDefinition function described above.", true)
+                                                                   )),
+                                                UtteranceType.INSTRUCT);
+      scheduleGoalTools.add(modifiedTextResponseTool1);
+      chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("socialava/focused/scheduleGoal"), scheduleGoalTools));
+
       // Tour Teaching
       // Using custom "stillGatheringInformation" tool which also explicitly keeps track of the "current template parse" at
       //  each step. The idea is that writing it down each step provides something concretely to validate each step and
       //  better context for incremental LLM population. This could be first application/attempt of "general template
       //  population" structure, which we may want to use for at least general action learning if not every context.
       List<Tool> learnTourTools = new ArrayList<>();
-      //if (useCondensedTools) {
-      //   learnTourTools.add(new Tool(new ToolDefinition("submitTaskSequenceDefinition",
-      //                                                  "Save a compelted task sequence definition", List.of(
-      //         new ToolParameterHelper("taskName", "string", new ArrayList<>(), "Task name", true),
-      //         new ToolParameterHelper("locationActionPairs", "array", new ArrayList<>(), "Ordered location-action pairs", true, true, "nluextended")
-      //   )),
-      //                               UtteranceType.INSTRUCT
-      //   ));
-      //   Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
-      //                                                                "Reply briefly while gathering missing information.",
-      //                                                                List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-      //                                                                                                "Short spoken reply", true),
-      //                                                                        new ToolParameterHelper("currentTaskSequenceDefinition", "object", new ArrayList<>(),
-      //                                                                                                "Your current understanding of the steps of the task being taught to you, same format as locationActionPairs.", true)
-      //                                                                )),
-      //                                             UtteranceType.INSTRUCT);
-      //   learnTourTools.add(modifiedTextResponseTool2);
-      //} else {
-         learnTourTools.add(new Tool(new ToolDefinition("submitTaskSequenceDefinition",
-                                                        "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", List.of(
-               new ToolParameterHelper("taskName", "string", new ArrayList<>(), "The name this task should be saved under and later instructed as", true),
-               new ToolParameterHelper("locationActionPairs", "array", new ArrayList<>(), "The list of action/location pairs defining this task sequence. Execution of this task will consist of iterating over the pairs in this list, visiting each location in sequence, and then performing the corresponding task at that location. Each individual value in this list should be a json object following the form {\"location\":<location_name_here>, \"action\":<tool_call_definition_here>}, where the location field must contain a saved location and the action field must contain a valid tool call definition matching a form in the supplied actionList.", true, true, "nluextended")
-         )),
-                                     UtteranceType.INSTRUCT
-         ));
-         Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
-                                                                      "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to" +
-                                                                      "the user while following the Response Rules and Style Requirements.",
-                                                                      List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                                                                                                      "What you want to say to the user. Generate this argument first.", true),
-                                                                              new ToolParameterHelper("currentTaskSequenceDefinition", "object", new ArrayList<>(),
-                                                                                                      "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above. Generate this argument after your response.", true)
-                                                                      )),
-                                                   UtteranceType.INSTRUCT);
-         learnTourTools.add(modifiedTextResponseTool2);
-      //}
-      if (useCondensedPrompts) {
-         chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/condensed/learnTour"), learnTourTools));
-      } else {
-         chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/learnTour"), learnTourTools));
-         //chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/learntour_splitresponse"), learnTourTools));
-      }
+      learnTourTools.add(new Tool(new ToolDefinition("submitTaskSequenceDefinition",
+                                                     "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", List.of(
+            new ToolParameterHelper("taskName", "string", new ArrayList<>(), "The name this task should be saved under and later instructed as", true),
+            new ToolParameterHelper("locationActionPairs", "array", new ArrayList<>(), "The list of action/location pairs defining this task sequence. Execution of this task will consist of iterating over the pairs in this list, visiting each location in sequence, and then performing the corresponding task at that location. Each individual value in this list should be a json object following the form {\"location\":<location_name_here>, \"action\":<tool_call_definition_here>}, where the location field must contain a saved location and the action field must contain a valid tool call definition matching a form in the supplied actionList.", true, true, "nluextended")
+      )),
+                                  UtteranceType.INSTRUCT
+      ));
+      Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition("stillGatheringInformation",
+                                                                   "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to" +
+                                                                   "the user while following the Response Rules and Style Requirements.",
+                                                                   List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
+                                                                                                   "What you want to say to the user. Generate this argument first.", true),
+                                                                           new ToolParameterHelper("currentTaskSequenceDefinition", "object", new ArrayList<>(),
+                                                                                                   "Your current understanding of the steps of the task being taught to you. The expected format is json matching the submitTaskSequenceDefinition function described above. Generate this argument after your response.", true)
+                                                                   )),
+                                                UtteranceType.INSTRUCT);
+      learnTourTools.add(modifiedTextResponseTool2);
+      chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("socialava/focused/learnTour"), learnTourTools));
 
       // Goal status modification
       List<Tool> modifyExistingTaskStatusTools = new ArrayList<>();
@@ -296,7 +199,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new ArrayList<>()),
               UtteranceType.INSTRUCT
       ));
-      chatTemplates.put("modifyExistingTaskStatus", new ChatTemplates(Prompts.getPrompt("socialava/condensed/focused/goalStatusManipulation"), modifyExistingTaskStatusTools));
+      chatTemplates.put("modifyExistingTaskStatus", new ChatTemplates(Prompts.getPrompt("socialava/focused/goalStatusManipulation"), modifyExistingTaskStatusTools));
 
       return chatTemplates;
    }
@@ -331,11 +234,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       vars.put("%exampleLocation", locations.isEmpty() ? "example_location:location" : locations.get(0));
       vars.put("%language", language);
 
-      if (useCondensedTools) {
-         vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. Values not present in the lists must be rejected\\n-- For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ".\\n- If asked to go to a location which does not exist, call the \"getAssistanceOnUsingSaveLocationAndGoToLocationProperly\" tool to learn how to save new locations.\\n- New videos and images can be added through the associated website.");
-      } else {
-         vars.put("%toolArgumentTypeDescription","");
-      }
+      vars.put("%toolArgumentTypeDescription","- Any tool call parameter below which references a :location, :video, or :image can ONLY take values from the corresponding Location List, Video List, or Image List above. Values not present in the lists must be rejected\\n-- For locations specifically, the values MUST include the :location suffix. For example, " + vars.get("%exampleLocation") + ".\\n- If asked to go to a location which does not exist, call the \"getAssistanceOnUsingSaveLocationAndGoToLocationProperly\" tool to learn how to save new locations.\\n- New videos and images can be added through the associated website.");
       return vars;
    }
 
@@ -994,629 +893,9 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    //TODO: Apply prompt variables dynamically (e.g. update location lists)
    //TODO: Think of a better way to define / gather this information
    //TODO: rephrase descriptions to align better with final "social" system prompt
-   public List<Tool> generateInstructTools(boolean xml) {
-      if (useCondensedTools) {
-         return generateInstructToolsCondensed(xml);
-      }
-
-      List<Tool> instructTools = new ArrayList<>();
-      ToolDefinition definition;
-      List<String> locationNames = getLocations("self", true);
-
-      String exampleCallString = xml ?
-            "<function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function>." :
-            "{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}.";
-      definition = new ToolDefinition("goToLocation",
-                                      "You go to the supplied destination location.\n- Example instruction: \"please navigate to "+promptVars.get("%exampleLocation")+"\" \n- Example Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("destination", "string", locationNames, "The destination location to go to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true))
-      );
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("follow",
-                                      "You follow the user. \n- Example instruction: \"follow me.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //TODO: could also turn off validation for this? (only for local user?)
-      exampleCallString = xml ?
-            "<function=sayLocally><parameter=words>\"welcome to the event!\"</parameter></function>\"" :
-            "{\"name\":\"say\", \"arguments\":{\"words\":\"welcome to the event\"}}";
-      definition = new ToolDefinition("sayLocally",
-                                      "The speaker on the robot will emit the supplied phrase. Do not use this when you want to respond to the user. This should be targeted when a user is explicitly instructing you to say something out loud in person, most commonly in the context of another task, to another person who is not the user, or at a later time. \n- Example instruction: \"say to everyone: welcome to the event!.\" \n- Example Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("words", "string", new ArrayList(), "The phrase to be said. This should be exactly what the user instructed you to say, not paraphrasing.", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("stopFollowing",
-      //                                "You stop following the user. \nExample Instruction: \"stop following me.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=escortToLocation><parameter=name>owen</parameter><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function>" :
-            "{\"name\":\"escortToLocation\", \"arguments\":{\"name\":\"owen\",\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}";
-      definition = new ToolDefinition("escortToLocation",
-                                      "You lead someone from your current location to a different one. \nExample Instruction: \"bring Owen to "+promptVars.get("%exampleLocation")+".\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
-                                              new ToolParameterHelper("destination", "string", locationNames, "The destination location to escort to. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=escortFromLocationToLocation><parameter=name>guest</parameter><parameter=start>"+promptVars.get("%exampleLocation")+"</parameter><parameter=destination>dock:location</parameter></function>" :
-            "{\"name\":\"escortFromLocationToLocation\", \"arguments\":{\"name\":\"guest\",\"start\":\""+promptVars.get("%exampleLocation")+"\",\"destination\":\"dock:location\"}}";
-      definition = new ToolDefinition("escortFromLocationToLocation",
-                                      "You meet someone at the specific start location and then lead them to the destination location. \nExample Instruction: \"bring our guest from "+promptVars.get("%exampleLocation")+" to the dock.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("name", "string", new ArrayList(), "Name of the entity to escort", true),
-                                              new ToolParameterHelper("start", "location", locationNames, "The start location to escort from. This should be where ?name can be found", true),
-                                              new ToolParameterHelper("destination", "location", locationNames, "The destination location to escort to", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=saveLocation><parameter=name>location one</parameter></function>":
-            "{\"name\":\"saveLocation\", \"arguments\":{\"name\":\"location one\"}}";
-      definition = new ToolDefinition("saveLocation",
-                                      "You save your current location under the supplied name. \nExample Instruction: \"save this area as location one.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("name", "string", new ArrayList(), "the label for the location to save", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("goHome",
-                                      "You go to your default charging dock and charge. \nExample Instruction: \"go back to charge.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=measureWifiAtCurrentLocation></function>}" :
-            "{\"name\":\"measureWifiAtCurrentLocation\", \"arguments\":{}}";
-      definition = new ToolDefinition("measureWifiAtCurrentLocation",
-                                      "You measure the wifi signal strength at your current location when this task is performed. Use this when a user asks you to survey or check wifi without any additional specification. \nExample Instruction: \"check the wifi signal strength\" \nExample Call: " + exampleCallString,
-                                      new ArrayList<>());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=measureWifiAtLocations><parameter=locations>["+promptVars.get("%exampleLocation")+",dock:location]</parameter></function>" :
-            "{\"name\":\"measureWifiAtLocations\", \"arguments\":{\"locations\":[\""+promptVars.get("%exampleLocation")+"\",\"dock:location\"]}}";
-      definition = new ToolDefinition("measureWifiAtLocations",
-                                      "You drive to each of the supplied locations in order and measure wifi signal strength at each one. Use this when a user asks you to survey or check wifi at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"check the wifi at "+promptVars.get("%exampleLocation")+" and the dock\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("measureWifiAtLocationsAndReportAt",
-                                      "You drive to each of the supplied locations in order, measure wifi at each one, then drive to reportLocation and summarize the findings. Use this when the user asks to measure and report wifi at the same time.",
-                                      List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
-                                              new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      // Hard to accurately target, biased to prefer measure rather than report
-      // Bad for NLG
-      //definition = new ToolDefinition("measureAndOrReportWifiStrengths",
-      //        "You measure and/or report the wifi signal strength for any number of locations.\n" +
-      //                "Possible variations -> Example:\n" +
-      //                "- Measure the wifi strength at your current location -> <tool_call><function=measureAndOrReportWifiStrengths></function></tool_call>" +
-      //                "- Measure the wifi strength at exampleLocation1 and exampleLocation2 -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=measuredLocations>[exampleLocation1, exampleLocation2]</parameter></function></tool_call>\n" +
-      //                "- Report previously measured wifi strengths of exampleLocation1 and exampleLocation3. This is done where you are located when executed. -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=reportedLocations>[exampleLocation1, exampleLocation3]</parameter></function></tool_call>\n" +
-      //                "- Measure wifi strength at exampleLocation2 and exampleLocation5. Then report both measured values where you are located when finished. -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=measuredLocations>[exampleLocation2, exampleLocation5]</parameter><parameter=reportedLocations>[exampleLocation2, exampleLocation5]</parameter></function></tool_call>\n" +
-      //                "- Measure wifi strength at exampleLocation2 and exampleLocation5. Then return to exampleLocation1 and report both measured values -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=measuredLocations>[exampleLocation2, exampleLocation5]</parameter><parameter=reportedLocations>[exampleLocation2, exampleLocation5]</parameter><parameter=reportAtLocation>exampleLocation1</parameter></function></tool_call>\n" +
-      //                "- Measure wifi strength at exampleLocation2 and exampleLocation5. Then return to exampleLocation1 and report both measured values -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=measuredLocations>[exampleLocation2, exampleLocation5]</parameter><parameter=reportAtLocation>exampleLocation1</parameter></function></tool_call>\n" +
-      //                "- Report previously measured wifi strengths of exampleLocation5 and exampleLocation6. This is dont at exampleLocation3 -> <tool_call><function=measureAndOrReportWifiStrengths><parameter=reportedLocations>[exampleLocation5, exampleLocation6]</parameter><parameter=reportAtLocation>exampleLocation3</parameter></function></tool_call>\n" +
-      //                "",
-      //        List.of(new ToolParameterHelper("measuredLocations", "array", new ArrayList<>(), "The ordered list of saved locations to visit and measure.", false),
-      //                new ToolParameterHelper("reportedLocations", "string", new ArrayList<>(), "The ordered list of saved locations to report measured wifi for.", false),
-      //                new ToolParameterHelper("reportAtLocation", "string", new ArrayList<>(), "Where to report all measured results.", false)));
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      //"- <tool_call><function=measureAndOrReportWifiStrengths><parameter=measuredLocations>[]</parameter></function></tool_call>",
-
-
-      if (includeDemoTargets) {
-         exampleCallString = xml ?
-                 "<function=measureTemperatureAtCurrentLocation></function>" :
-                 "{\"name\":\"measureTemperatureAtCurrentLocation\", \"arguments\":{}}";
-         definition = new ToolDefinition("measureTemperatureAtCurrentLocation",
-                 "You measure the temperature in degrees Fahrenheit at your current location when this task is performed. Use this when a user asks you to check temperature without any additional specification. \nExample Instruction: \"check the temperature\" \nExample Call: " + exampleCallString,
-                 new ArrayList<>());
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         exampleCallString = xml ?
-                 "<function=measureTemperatureAtLocations><parameter=locations>["+promptVars.get("%exampleLocation")+"]</parameter></function>" :
-                 "{\"name\":\"measureTemperatureAtLocations\", \"arguments\":{\"locations\":[\""+promptVars.get("%exampleLocation")+"\"]}}";
-         definition = new ToolDefinition("measureTemperatureAtLocations",
-                 "You drive to each of the supplied locations in order and measure temperature in degrees Fahrenheit at each one. Use this when a user asks you to survey or check temperature at a set of places. For a single location, still supply a one-element list. \nExample Instruction: \"take the temperature at "+promptVars.get("%exampleLocation")+"\" \nExample Call: " + exampleCallString,
-                 List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-         definition = new ToolDefinition("measureTemperatureAtLocationsAndReportAt",
-                 "You drive to each of the supplied locations in order, measure temperature at each one, then drive to reportLocation and summarize te findings. Use this when the user wants to take and report temperature at the samge time",
-                 List.of(new ToolParameterHelper("locations", "array", locationNames, "The ordered list of saved locations to visit and measure. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true),
-                         new ToolParameterHelper("reportLocation", "string", locationNames, "The saved location to return to before speaking the summary. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)));
-         instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      }
-
-      //Temporarily removed in focused context attempt
-      //definition = new ToolDefinition("cancelAllQueuedTasks",
-      //                                "You cancel all goals currently in the pending queue. This does not include separately scheduled goals. \nExample Instruction: \"cancel all upcoming tasks.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("cancelAllCurrentAndQueuedTasks",
-      //                                "You cancel all currently assigned goals. This includes the current active goal and all pending goals which have yet to begin execution. \nExample Instruction: \"cancel all tasks.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //exampleCallString = xml ?
-      //      "<function=cancelSingleTaskInQueue><parameter=index>0</parameter></function>" :
-      //      "{\"name\":\"cancelSingleTaskInQueue\", \"arguments\":{\"index\":0}}";
-      //definition = new ToolDefinition("cancelSingleTaskInQueue",
-      //                                "You cancel and remove a task in the task queue specified by its index. \nExample Instruction: \"Remove the first task from the queue.\" \nExample Call: " + exampleCallString,
-      //                                List.of(new ToolParameterHelper("index", "integer", new ArrayList(), "The 0-based index of the task in the queue to remove", true)));
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("cancelAllScheduledGoals",
-      //                                "You cancel all scheduled goals, meaning all tasks which have been scheduled to occur at a specific time in the future. \nExample Instruction: \"cancel all scheduled tasks.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("cancelCurrentTask",
-      //        "You stop and fully discard your current task, whether active or suspended. \nExample Instruction: \"cancel\" or \"stop pursuing your current task\"",
-      //        new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("suspendCurrentTask",
-      //                                "You pause your current task, which can be later resumed or canceled. \nExample Instruction: \"stop\" or \"pause what you're doing.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("resumeCurrentTask",
-      //                                "You resume your current task if it is paused. \nExample Instruction: \"resume\" or \"continue your previous task.\"",
-      //                                new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      exampleCallString = xml ?
-            "<function=forgetTaughtAction><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
-            "{\"name\":\"forgetTaughtAction\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
-      definition = new ToolDefinition("forgetTaughtAction",
-                                      "You forget/delete a previously taught action. \nExample Instruction: \"forget how to go to "+promptVars.get("%exampleLocation")+".\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON representing the tool call to forget. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=setKioskTimeout><parameter=duration>30</parameter><parameter=timeunit>MINUTES</parameter></function>" :
-            "{\"name\":\"setKioskTimeout\", \"arguments\":{\"duration\":\"30\",\"timeunit\":\"MINUTES\"}}";
-      definition = new ToolDefinition("setKioskTimeout",
-                                      "You update the configured kiosk timeout. \nExample Instruction: \"Set the kiosk timeout to 30 minutes.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("duration", "integer", new ArrayList(), "The number of timeunits defining the timeout", true),
-                                              new ToolParameterHelper("timeunit", "string", Arrays.stream(TimeUnit.values()).map(Objects::toString).toList(), "The timeunit of the duration to set ", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=setKioskModeEnabled><parameter=enabled>true</parameter></function>" :
-            "{\"name\":\"setKioskModeEnabled\", \"arguments\":{\"enabled\":\"true\"}}";
-      definition = new ToolDefinition("setKioskModeEnabled",
-                                      "You set whether or not kiosk mode is enabled. \nExample Instruction: \"turn on kiosk mode.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("enabled", "boolean", new ArrayList<>(), "the truth value of kiosk mode being enabled", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      exampleCallString = xml ?
-            "<function=setVideoVolume><parameter=volume>100</parameter></function>" :
-            "{\"name\":\"setVideoVolume\", \"arguments\":{\"volume\":\"100\"}}";
-      definition = new ToolDefinition("setVideoVolume",
-                                      "You set the volume of videos played on your screen. \nExample Instruction: \"Set the video volume to max.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The volume to set the video media player to. Acceptable values are whole numbers between 0 and 100", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("lowerVideoVolume",
-                                      "You lower the volume of videos played on your screen by one step. \nExample Instruction: \"turn it down.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVideoVolume",
-                                      "You raise the volume of videos played on your screen by one step. \nExample Instruction: \"turn it up.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=setVoiceVolume><parameter=volume>50</parameter></function>" :
-            "{\"name\":\"setVoiceVolume\", \"arguments\":{\"volume\":\"50\"}}";
-      definition = new ToolDefinition("setVoiceVolume",
-                                      "You set the volume of your own speaking voice. \nExample Instruction: \"Set your voice volume to half.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("volume", "integer", new ArrayList(), "The voice volume as a percentage. Acceptable values are whole numbers between 0 and 100", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("lowerVoiceVolume",
-                                      "You lower the volume of your own speaking voice by one step. \nExample Instruction: \"speak more quietly.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("raiseVoiceVolume",
-                                      "You raise the volume of your own speaking voice by one step. \nExample Instruction: \"speak louder.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=waitForDuration><parameter=seconds>60</parameter></function>":
-            "{\"name\":\"waitForDuration\", \"arguments\":{\"seconds\":\"60\"}}";
-      definition = new ToolDefinition("waitForDuration",
-                                      "You wait idly for a number of seconds. \nExample Instruction: \"Then wait for a minute.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("seconds", "integer", new ArrayList(), "The amount of seconds to wait. Must be a positive whole number", true)));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //TODO: Test that postprocessing of all forms of this action works correctly
-      ////Experimenting with new format for video/image actions
-      //List<String> videoInstructions = new ArrayList<>();
-      //List<String> videoTranslations = new ArrayList<>();
-      //videoInstructions.add("play video");
-      //videoTranslations.add("playVideo(default,default)");
-      //videoInstructions.add("Show the "+promptVars.get("%exampleVideo")+" video");
-      //videoTranslations.add("playVideo("+promptVars.get("%exampleVideo")+":video,default)");
-      //videoInstructions.add("Play videos at "+promptVars.get("%exampleLocation")+"");
-      //videoTranslations.add("playVideo(default,"+promptVars.get("%exampleLocation")+")");
-      //videoInstructions.add("Go to "+promptVars.get("%exampleLocation")+" then play the "+promptVars.get("%exampleVideo")+" video");
-      //videoTranslations.add("playVideo("+promptVars.get("%exampleVideo")+":video,"+promptVars.get("%exampleLocation")+")");
-      definition = new ToolDefinition("playNextVideo",
-                                      "You begin playback of the next video from your saved collection on your built-in screen display at your current location. An example of instructing this would be \"play any video\".",
-                                      new ArrayList<>());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("playNextVideoAtLocation",
-                                      "You begin playback of the next video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the next video at "+promptVars.get("%exampleLocation")+"\".",
-                                      List.of(new ToolParameterHelper("location", "string", new ArrayList<>(), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("playSpecificVideo",
-                                      "You begin playback of a specific video from your saved collection on your built-in screen display at your current location. An example of instructing this would be \"play the "+promptVars.get("%exampleVideo")+"\".",
-                                      List.of(new ToolParameterHelper("videoName", "string", getVideoNames(), "The specific video to play. Accepted values are only those found in the Video List", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("playSpecificVideoAtLocation",
-                                      "You begin playback of a specific video from your saved collection on your built-in screen display at the specified location. An example of instructing this would be \"play the "+promptVars.get("%exampleVideo")+" at the "+promptVars.get("%exampleLocation")+"\".",
-                                      List.of(new ToolParameterHelper("videoName", "string", getVideoNames(), "The specific video to play. Accepted values are only those found in the Video List", true),
-                                              new ToolParameterHelper("location", "string", getLocations("self",true), "The specific location at which to play the video. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //TODO: Test that postprocessing of all forms of this action works correctly
-      //List<String> imageInstructions = new ArrayList<>();
-      //List<String> imageTranslations = new ArrayList<>();
-      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image");
-      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,default,default)");
-      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image at the "+promptVars.get("%exampleLocation")+" location");
-      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,"+promptVars.get("%exampleLocation")+",default)");
-      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image for a minute");
-      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,default,60)");
-      //imageInstructions.add("Display the "+promptVars.get("%exampleImage")+" image at the "+promptVars.get("%exampleLocation")+" location for 45 seconds");
-      //imageTranslations.add("displayImage("+promptVars.get("%exampleImage")+":image,"+promptVars.get("%exampleLocation")+",45)");
-      definition = new ToolDefinition("displayNamedImage",
-                                      "You display an image from your saved collection on your built-in display at your current location indefinitely.",
-                                      List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display. Accepted values are only those found in the Image List", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("displayNamedImageAtLocation",
-                                      "You display an image from your saved collection on your built-in display at a specified location indefinitely.",
-                                      List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display. Accepted values are only those found in the Image List", true),
-                                              new ToolParameterHelper("location", "string", locationNames, "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("displayNamedImageForDuration",
-                                      "You display an image from your saved collection on your built-in display at your current location for a certain duration.",
-                                      List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display. Accepted values are only those found in the Image List", true),
-                                              new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("displayNamedImageForDurationAtLocation",
-                                      "You display an image from your saved collection on your built-in display at a specified location for a certain duration.",
-                                      List.of(new ToolParameterHelper("imageName", "string", getImageNames(), "The image to display. Accepted values are only those found in the Image List", true),
-                                              new ToolParameterHelper("duration", "integer", new ArrayList<>(), "How long to display the image for in seconds.", true),
-                                              new ToolParameterHelper("location", "string", locationNames, "The location at which to display the image. Accepted values are only those found in the Location List. Location values must keep the :location suffix", true)
-                                      ));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      exampleCallString = xml ?
-            "<function=urgentPriority><parameter=actionPredicate>{\"name\":\"goToLocation\",\"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}</parameter></function>" :
-            "{\"name\":\"urgentPriority\", \"arguments\":{\"actionPredicate\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
-      definition = new ToolDefinition("urgentPriority",
-                                      "You submit an action with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. \nExample Instruction: \"go to "+promptVars.get("%exampleLocation")+" right now.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "Populated JSON of another tool call representing the action to submit with urgent priority. This json minimally needs \"name\" and \"argument\" fields, like shown in the example.", true, true, "nlu")));
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      definition = new ToolDefinition("dontRespond",
-                                      "The user has asked you to not verbally respond. \nExample Instruction: \"shut up.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      definition = new ToolDefinition("scheduleTask",
-                                      "You begin a dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("learnTaskSequence",
-                                      "You begin a dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("modifyExistingTaskStatus",
-              "You begin a dialogue interaction with the user to pause, cancel, or resume existing assigned tasks.",
-              new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-      ////TODO: need to update this with new social extended interaction structure - Do we still even need this as an action? Or should be rephrased to repeatSystemQuestion
-      //definition = new ToolDefinition("repeatLastQuestion",
-      //        "You repeat the last question you asked, which the human still needs to answer. examples of instructing this could be \"could you repeat that\" or \"what is the question\"",
-      //        new ArrayList());
-      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-
-      //Temporarily removed or hardware specific
-      //definition = new ToolDefinition("saveLocationsToFile()",
-      //        "You backup all your currently saved locations",
-      //        "backup your current locations",
-      //        "saveLocationsToFile()", 10);
-      //toolDefinitions.add(definition);
-      definition = new ToolDefinition("sit",
-                                      "You lower your screen. \nExample Instruction: \"sit down.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition("stand",
-                                      "You raise your screen. \nExample Instruction: \"stand up.\"",
-                                      new ArrayList());
-      instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //definition = new ToolDefinition("deliver(?objectName, ?location:location)",
-      //        "You deliver ?objectName to location ?location:location",
-      //        "bring the mug to "+promptVars.get("%exampleLocation")+"",
-      //        "deliver(mug,"+promptVars.get("%exampleLocation")+")", 10);
-      //toolDefinitions.add(definition);
-      //    definition = new ToolDefinition("enableAdminMode",
-      //            "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.. \nExample Instruction: \"enable admin mode.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("disableAdminMode",
-      //            "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.. \nExample Instruction: \"disable admin mode.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("switchDisplayToTelepresence",
-      //            "Change the output on your display to the telepresence stream. \nExample Instruction: \"start telepresence.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("switchDisplayToTRACS",
-      //            "Change the output on your display to what is shown by TRACS, the default setting. \nExample Instruction: \"return to TRACS.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("cancelScheduledGoal",
-      //            "You begin a dialogue interaction with the user to cancel a particular scheduled goal. \nExample Instruction: \"I want to cancel a scheduled task.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("learnNewTask",
-      //            "You begin a dialogue interaction with the user to learn the steps of a new instructable action. \nExample Instruction: \"i will teach you a new task.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("endActionLearning",
-      //            "You conclude learning the steps of a new instructable action. Examples of instructing this could be \"those are the steps of the task\" or \"im done\".",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("updateKioskTimeout",
-      //            "You begin a dialogue interaction with the user to update the configured kiosk timeout. \nExample Instruction: \"I would like to update the kiosk timeout.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("updateKioskAction",
-      //            "You begin a dialogue interaction with the user to update the configured kiosk action. \nExample Instruction: \"I want to change the kiosk action.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      //    definition = new ToolDefinition("modifyScheduledGoal",
-      //            "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. \nExample Instruction: \"I want to change the timing of an action.\"",
-      //            new ArrayList());
-      //    instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-
-
-      return instructTools;
-   }
-
-   /**
-    * Generate the base QUESTION UtteranceType toolset available for this domain.
-    * TODO: Currently a stand-in to define DIARC-LLM ITK tools, not user-DIARC ITK. Need to update how we're defining
-    *        this once the ITK pipeline is safe to use
-    */
-   //TODO: add more itk tools
-   //  - extended dialogue history
-   //  - other agent dialogue history
-   //  - goal state rather than put directly in prompts?
-   //  - ...
-   //TODO: need to force the LLM to call these tools to get an updated notion of dynamic information when relevant (rather than use old results)
-   //TODO: Rewrite Action related ITK - have a lot of the information in the system prompt already + don't have learned actions integrated yet
-   public List<Tool> generateITKTools() {
-      if (useCondensedTools) {
-         return generateITKToolsCondensed();
-      }
-
-      List<Tool> itkTools = new ArrayList<>();
-      ToolDefinition definition;
-
-      definition = new ToolDefinition("getBatteryLevelString",
-                                      "Use this to ask the system what the current battery level of the robot as a percentage is. An example of when you may need this information is when a user asks \"how much charge do you have.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getCurrentLocationString",
-                                      "Use this to ask the system what saved location on your map you believe you are currently at. You may not be localized and not know where you are. An example of when you may need this information is when a user asks \"what is your current location.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getAllKnownLocations",
-                                      "Use this to ask the system for a list of all currently saved locations. An example of when you may need this information is when a user asks \"what are your saved locations.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getVideoVolume",
-                                      "Use this to ask the system for the current volume videos are set to play at. An example of when you may need this information is when a user asks \"what is the video volume set to.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition("getIsVideoSaved",
-      //        "Use this to ask the system whether you have a video saved under the supplied name. An example of when you may need this information is when a user asks \"Do you have the "+promptVars.get("%exampleVideo")+" video saved.\" \nExample Call: reportIsVideoSaved(?videoName)",
-      //        List.of(new ToolParameterHelper("videoName", "string", new ArrayList<>(), "The video being queried about", true)));
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
-      definition = new ToolDefinition("getSavedVideos",
-                                      "Use this to ask the system to list out the collection of videos you currently have saved. An example of when you may need this information is when a user asks \"what videos can you play.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getSavedImages",
-                                      "Use this to ask the system to list out the collection of images you currently have saved. An example of when you may need this information is when a user asks \"what images can you display.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getPreviouslyMeasuredWifiAtLocationsString",
-                                      "Use this to ask the system what wifi signal strength you previously measured at each of the supplied locations in the list is. Only returns a useful value for each value after wifi has been measured for that location. An example of when you may need this information is when a user asks \"how was the signal at "+promptVars.get("%exampleLocation")+", example_location_2, and example_location_3?\"",
-                                      List.of(new ToolParameterHelper("locations", "array", getLocations("self",true), "The ordered list of saved locations to report the wifi signal for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      if (includeDemoTargets) {
-         definition = new ToolDefinition("getPreviouslyMeasuredTemperatureAtLocationsString",
-                 "Use this to ask the system what temperature (in degrees Fahrenheit) you previously measured at each of the supplied locations in the list. Only returns a useful value after measureTemperatureAtLocations has been run for those location. An example of when you may need this information is when a user asks \"how warm was it at "+promptVars.get("%exampleLocation")+"?, example_location_2, and example_location_3?\"",
-                 List.of(new ToolParameterHelper("locations", "array", getLocations("self", true), "The ordered list of saved locations to report the temperature for. Accepted values are only those found in the Location List. Location values must keep the :location suffix.", true)));
-         itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-         definition = new ToolDefinition("getPreviouslyMeasuredWifiAtCurrentLocationString",
-                 "Use this to ask the system what the wifi signal strength is at your current location. An example of when you may need this information is when a user asks \"how is the signal where you are now\"",
-                 new ArrayList<>());
-         itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-         definition = new ToolDefinition("getPreviouslyMeasuredTemperatureAtCurrentLocationString",
-                 "Use this to ask the system what the temperature is at your current location. An example of when you may need this information is when a user asks \"what is the temperature where you are now\"",
-                 new ArrayList<>());
-         itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      }
-
-      // General ITK
-      definition = new ToolDefinition("getInformationAroundTeachingNewActions",
-                                      "Use this to get information from the system about how a user can start teaching you new tasks, the process of teaching a new task, and what actions can be taught as part of a new task. This information could be used to answer questions from the user. An example of when this may be useful to call is when a user asks things like \"how do I teach you a new task\", \"what information do I need to teach a new task\", \"how do I instruct something I've taught you\", or \"what can I tell you to do while teaching a new task\".",
-                                      new ArrayList<>());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-
-      //definition = new ToolDefinition("getInformationAroundHowToTeachATask",
-      //        "Use this to get an explanation from the system on how a user can teach you new tasks, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"how do I teach you a new task\".",
-      //        new ArrayList<>());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition("getInformationAroundWhatALearnedTaskIs",
-      //        "Use this to get an explanation from the system on what a taught task consists of, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"what information do I need to teach a new task\" or \"how do I instruct something I've taught you\".",
-      //        new ArrayList<>());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition("getInformationAroundWhatActionsCanBePerformedAlongALearnedTask",
-      //        "Use this to get an explanation from the system on what actions you can be asked to perform as part of a taught task, which you could use to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"what can I tell you to do while teaching a new task\".",
-      //        new ArrayList<>());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //String exampleCallString = xml ?
-      //      "<function=getActionSteps><parameter=action>escort</parameter></function>" :
-      //      "{\"name\":\"getActionSteps\", \"arguments\":{\"action\":\"escort\"}}";
-      String exampleCallString = "<function=getActionSteps><parameter=action>escort</parameter></function>";
-      definition = new ToolDefinition("getActionSteps",
-                                      "Use this to ask the system for a description of an action, in the form of the list the steps which would be performed when it is executed. ?action can be replaced by populated JSON representing another tool OR be just the name of another tool if no specific arguments are supplied. An example of when you may need this information is when a user asks \"How would you escort someone.\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("action", "string", new ArrayList(), "The tool whose execution steps to describe", true)));
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getKioskSettings",
-                                      "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
-                                      "Use this to get information from the system around the concepts of saved locations, navigating between them, and how to save new ones. The provided information may be helpful to answer questions from the user. If the supplied information is not relevant to the user's question, you do not need to address it. An example of when this may be useful to call is when a user asks \"Can I teach you how to go to X\".",
-                                      new ArrayList<>());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      definition = new ToolDefinition("checkPastInteractionHistoryForMissingInformation",
-                                      "Use this when you believe you are missing important context necessary to understand user input. For example, when the user explicitly references a past conversation or says something implying common ground you have no memory of.",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-
-      //Prevent the LLM from just regurgitating the history directly
-      //    definition = new ToolDefinition("checkPastInteractionHistoryForMissingInformation",
-      //            "Use this to ask the system for the extended conversation history between you and the user. In other words, call this to get information about past interactions with the user in case it seems they are referring back to something they discussed with you which you do not have memory of.",
-      //            new ArrayList());
-      //    itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-
-
-      //// Removed ITK targets
-      // Made irrelevant by instruct list present in basically all contexts' system prompts. Can reintroduce if we find we
-      //  want a more formal representation or rigid relationship between itk tool responses and LLM text output. Seems to
-      //  handle information directly from the prompt fairly well though
-      //definition = new ToolDefinition("getIfCanPerform",
-      //        "Use this to ask the system whether you know how to perform the action represented by the supplied actionPredicate. actionPredicate should be assigned a populated instance of another tool call. An example of when you may need this information is when a user asks \"do you know how to escort a patient from "+promptVars.get("%exampleLocation")+" to the dock.\" \nExample Call: getIfCanPerform(escortFromLocationToLocation(guest,"+promptVars.get("%exampleLocation")+",dock:location))",
-      //        List.of(new ToolParameterHelper("actionPredicate", "string", new ArrayList(), "The populated tool call representing the action queried about", true)));
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
-
-      //// Present in prompt
-      //definition = new ToolDefinition("reportInstructableActions",
-      //        "You report the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
-      //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt
-      definition = new ToolDefinition("getTaughtActionsList",
-                                      "Use this to ask the system for a list of all of the actions which have been taught to you by a user. An example of when you may need this information is when a user asks \"What actions have you been taught.\"",
-                                      new ArrayList());
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition("getPredefinedActions",
-      //        "Use this to ask the system for the list of actions a user is able to instruct you through natural language to perform. An example of when you may need this information is when a user asks \"what can you be instructed to do.\"",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
-      return itkTools;
-   }
-
-   /**
-    * Generate all possible REPLY UtteranceType tools available for this domain. Will be included in any LLM Completion
-    * request dynamically based on matching expected response forms for current system questions.
-    */
-   public Map<String,Tool> generateReplyTools() {
-      if (useCondensedTools) {
-         return generateReplyToolsCondensed();
-      }
-
-      Map<String,Tool> replyTools = new HashMap();
-      ToolDefinition definition;
-      List<String> locationNames = new ArrayList<>(getLocations("self", true));
-      locationNames.add("none");
-
-      definition = new ToolDefinition("abort",
-                                      "You inform the system that the user is explicitly abandoning answering its current OUTSTANDING QUESTION. Examples of instructing this could be saying \"nevermind\" immediately after a question has been asked.",
-                                      List.of(new ToolParameterHelper("target","string",List.of("question"),"",true)));
-      replyTools.put("abort",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("abort()"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("val",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION with a yes/no answer.",
-                                      List.of(new ToolParameterHelper("response","string",List.of("yes","no"),"Whether the user answered affirmatively or negatively",true)));
-      replyTools.put("val",new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("validated",
-                                      "You inform the system that the user has answered its current outstanding validation question.",
-                                      List.of(new ToolParameterHelper("response","string",List.of("yes","no"),"The response value should be yes when the user has validated your interpretation of the their instruction, the response value should be no when the user denies your interpretation of their instruction or adds clarifying or additional details to your interpretation",true)));
-      replyTools.put("validated",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("val(X)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("location",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION by specifying a certain saved location",
-                                      List.of(new ToolParameterHelper("name","string",locationNames,"The specified location. \"none\" is the one special value, indicating the user is done supplying location names.",true)));
-      replyTools.put("location",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("location(X:location)"), new Tool(definition,UtteranceType.REPLY));
-      //String exampleCallString = xml ?
-      //      "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>" :
-      //      "{\"name\":\"taskPredicate\", \"arguments\":{\"toolCall\":{\"name\":\"goToLocation\", \"arguments\":{\"destination\":\""+promptVars.get("%exampleLocation")+"\"}}}}";
-      String exampleCallString = "<function=taskPredicate><parameter=toolCall><function=goToLocation><parameter=destination>"+promptVars.get("%exampleLocation")+"</parameter></function></parameter></function>";
-      definition = new ToolDefinition("taskPredicate",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of another tool call. \nExample Instruction: \"the task is to go to "+promptVars.get("%exampleLocation")+"\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("toolCall","string",new ArrayList<>(),"This argument should be replaced by definition of another tool call and populated arguments from the previous examples",true, true, "nlu")));
-      replyTools.put("taskPredicate",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("taskPredicate(X)"), new Tool(definition,UtteranceType.REPLY));
-      //exampleCallString = xml ?
-      //      "<function=relativeTime><parameter=duration>2</parameter><parameter=timeunit>HOURS</parameter></function>" :
-      //      "{\"name\":\"relativeTime\", \"arguments\":{\"duration\":\"2\",\"timeunit\":\"HOURS\"}}";
-      exampleCallString = "<function=relativeTime><parameter=duration>2</parameter><parameter=timeunit>HOURS</parameter></function>";
-      definition = new ToolDefinition("relativeTime",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of a time relative to now. \nExample Instruction: \"in two hours\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("duration","number",List.of(),"an integer, the duration of the specified time",true),
-                                              new ToolParameterHelper("timeUnit","string", Arrays.stream(TimeUnit.values()).map(TimeUnit::toString).toList(),"the duration's corresponding timeunit",true)
-                                      ));
-      replyTools.put("relativeTime",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("relativeTime(X,Y)"), new Tool(definition,UtteranceType.REPLY));
-      //exampleCallString = xml ?
-      //      "<function=absoluteTime><parameter=timeOfDay>12:30</parameter><parameter=partOfDay>pm</parameter></function>" :
-      //      "{\"name\":\"absoluteTime\", \"arguments\":{\"timeOfDay\":\"12:30\",\"partOfDay\":\"pm\"}}";
-      exampleCallString = "<function=absoluteTime><parameter=timeOfDay>12:30</parameter><parameter=partOfDay>pm</parameter></function>";
-      definition = new ToolDefinition("absoluteTime",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of an absolute time. \nExample Instruction: \"half past noon\" \nExample Call: " + exampleCallString,
-                                      List.of(new ToolParameterHelper("timeOfDay","string",List.of(),"The time of day in the format hour:minute",true),
-                                              new ToolParameterHelper("partOfDay","string", List.of("am","pm"),"",true)
-                                      ));
-      replyTools.put("absoluteTime",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("absoluteTime(X,Y)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("timingOf",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of one of the aspects of execution timing of a repeated task. Example instructions and corresponding argument values could be \"when it first happens\" -> timingOf(execution) or \"the duration between when it happens\" -> timingOf(interval)",
-                                      List.of(new ToolParameterHelper("timingType","string",List.of("execution","interval"),"execution references when something occurs and interval references the amount of time between something occurring ",true)));
-      replyTools.put("timingOf",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("timingOf(X)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("taskName",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of the name of a task to be learned",
-                                      List.of(new ToolParameterHelper("name","string",List.of(),"",true)));
-      replyTools.put("taskName",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("taskName(X)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("option",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through selection of a presented option.",
-                                      List.of(new ToolParameterHelper("number","number",List.of(),"the number of the chosen option from the previously presented list",true)));
-      replyTools.put("option",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("option(X)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("actionType",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through selection of a type of action. Example instructions and corresponding argument values could be \"the taught actions\" -> actionType(taught) or \"the ones you already knew\" -> actionType(predefined) or \"all of them\" -> actionType(both)",
-                                      List.of(new ToolParameterHelper("type","string",List.of("taught","predefined","both"),"How the system came to know about the discussed action. Taught references actions tuaght by the user, predefined references actions known automatically by the system on startup, and both references all actions.",true)));
-      replyTools.put("actionType",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("actionType(X)"), new Tool(definition,UtteranceType.REPLY));
-      definition = new ToolDefinition("amount",
-                                      "You inform the system that the user has answered its current OUTSTANDING QUESTION through specification of an amount.",
-                                      List.of(new ToolParameterHelper("number","number",List.of(),"The only acceptable value is either an integer or \"all\". Where \"all\" is referring the maximum amount of something",true)));
-      replyTools.put("amount",new Tool(definition,UtteranceType.REPLY));
-      //replyTools.put(Factory.createPredicate("amount(X)"), new Tool(definition,UtteranceType.REPLY));
-
-      return replyTools;
-   }
-
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-   /// "Condensed" versions of prompts
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
    //TODO: add example instruction fields to ToolDefinitions and conditionally add to output placed in prompt if desired
    //TODO: somehow clearly label this section of tools as 'Action tools' with an associated description in the overall prompt (hard to do because of current model side templating)
-   public List<Tool> generateInstructToolsCondensed(boolean xml) {
+   public List<Tool> generateInstructTools(boolean xml) {
       List<Tool> instructTools = new ArrayList<>();
       ToolDefinition definition;
       List<String> locationNames = getLocations("self", true);
@@ -1837,9 +1116,15 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
     * TODO: Currently a stand-in to define DIARC-LLM ITK tools, not user-DIARC ITK. Need to update how we're defining
     *        this once the ITK pipeline is safe to use
     */
+   //TODO: add more itk tools
+   //  - extended dialogue history
+   //  - other agent dialogue history
+   //  - goal state rather than put directly in prompts?
+   //  - ...
    //TODO: need to force the LLM to call these tools to get an updated notion of dynamic information when relevant (rather than use old results)
+   //TODO: Rewrite Action related ITK - have a lot of the information in the system prompt already + don't have learned actions integrated yet
    //TODO: somehow clearly label this section of tools as ITK tools
-   public List<Tool> generateITKToolsCondensed() {
+   public List<Tool> generateITKTools() {
       List<Tool> itkTools = new ArrayList<>();
       ToolDefinition definition;
 
@@ -1941,7 +1226,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
     * Generate all possible REPLY UtteranceType tools available for this domain. Will be included in any LLM Completion
     * request dynamically based on matching expected response forms for current system questions.
     */
-   public Map<String,Tool> generateReplyToolsCondensed() {
+   public Map<String,Tool> generateReplyTools() {
       Map<String,Tool> replyTools = new HashMap();
       ToolDefinition definition;
       List<String> locationNames = new ArrayList<>(getLocations("self", true));
