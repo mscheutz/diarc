@@ -45,7 +45,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     private static String refsDirectoryPath = "config/edu/tufts/hrilab/map";
     Pattern agentPattern = Pattern.compile("agent:");
     Matcher agentMatcher = agentPattern.matcher("");
-    Prompt nluPrompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt nluPrompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
 
     private String refsFile;
     HashMap<String, Symbol> locationRefs;
@@ -234,7 +234,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     @TRADEService
     @Action
     public void stylizeUnitySpeak (Symbol original) {
-        Prompt prompt = Prompts.getPrompt("spaceStationSpeechStyle");
+        Prompt prompt = Prompts.getPrompt("lab/spaceStationSpeechStyle");
         String model = "gpt-3.5-turbo";
         Symbol actor = Factory.createSymbol("robot1");
         Chat chat = new Chat(prompt);

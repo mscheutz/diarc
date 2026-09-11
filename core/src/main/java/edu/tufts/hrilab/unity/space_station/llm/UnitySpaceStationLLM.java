@@ -113,7 +113,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   public void LLMListenSpaceStationFinetune (String message) {
     log.warn("Deprecated for new NLU pipeline");
     /*
-    Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Object oResponse = null;
     String jsonString = "";
@@ -160,7 +160,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
 
   @TRADEService
   public AlternateResponse spaceStationLLMParser (String utterance) {
-    Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
     String jsonString = "";
@@ -238,7 +238,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   @TRADEService
   @Action
   public void stylizeUnitySpeak (Symbol original) {
-    Prompt prompt = Prompts.getPrompt("spaceStationSpeechStyle");
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationSpeechStyle");
     String model = "gpt-3.5-turbo";
     Symbol actor = Factory.createSymbol("robot1");
     Chat chat = new Chat(prompt);
