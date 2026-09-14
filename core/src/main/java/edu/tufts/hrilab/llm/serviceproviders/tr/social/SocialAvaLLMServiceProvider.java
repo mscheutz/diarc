@@ -5,6 +5,7 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.action.db.DBEntry;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.fol.Factory;
@@ -12,7 +13,6 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.gson.tool.ToolParameter;
@@ -757,6 +757,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
          } else if (command.equals("urgentPriority") || command.equals("forgetTaughtAction")) {
             Predicate transformedArg = correctCommonNLUMistakesHelper((Predicate)semantics.get(1), actor, instructor, errorStringBuilder);
             if (transformedArg != null) {
+               if (command.equals("forgetTaughtAction")) {
+                  List<String> taughtActionNames = learnedActions.stream().map(DBEntry::getType).toList();
+                  if (!taughtActionNames.contains(transformedArg.getName())) {
+                     errorStringBuilder.append("- the supplied actionPredicate argument does not match an action previously taught by the user. Only user taught actions can be forgotten, not predefined ones; the current list of known taught action names are ").append(taughtActionNames);
+                  }
+               }
                return Factory.createPredicate(command,semantics.get(0),transformedArg);
             }
          }
