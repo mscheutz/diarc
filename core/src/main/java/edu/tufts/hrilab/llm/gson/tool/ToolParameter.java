@@ -53,4 +53,8 @@ public class ToolParameter {
   public String getToolChatTemplateContextId() {
     return toolChatTemplateContextId;
   }
+
+  public void setPossible_values(List<String> possibleValues) {
+    possible_values = possibleValues.toArray(new String[0]);
+  }
 }

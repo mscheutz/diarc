@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
@@ -320,6 +322,26 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
    @TRADEService
    public void newConsultantPropertyCallback() {
       promptVars.putAll(initPromptVars());
+      //TODO: incredibly inefficient. Figure out better way to update all tool definitions dealing with references
+      //TODO: need similar notifications for images and videos
+      List<String> locationList = getLocations("self",true);
+      Pattern pattern = Pattern.compile(".*:(.+)");
+      Matcher matcher;
+      for (ChatTemplates templates : chatTemplates.values()) {
+         for (ToolDefinition toolDefinition : templates.toolDefinitions) {
+            for (ToolParameter toolParameter : toolDefinition.function.parameters.getProperties().values()) {
+               if (!toolParameter.getPossible_values().isEmpty()) {
+                  matcher = pattern.matcher(toolParameter.getPossible_values().get(0));
+                  if (matcher.matches() && matcher.group(1) != null) {
+                     String type = matcher.group(1);
+                     if (type.equals("location")) {
+                        toolParameter.setPossible_values(locationList);
+                     }
+                  }
+               }
+            }
+         }
+      }
    }
 
    private String getBatteryLevel() {
