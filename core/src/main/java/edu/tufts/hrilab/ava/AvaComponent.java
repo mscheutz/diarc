@@ -1594,6 +1594,47 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return toReturn;
   }
 
+  // a saved location only survives a bounce if it is a tag on the base with tracs=true, same as the ones init loads
+  @TRADEService
+  public Justification saveLocationTag(Symbol location) {
+    String name = location.getName();
+    RMSPositionResponse res = api.getPosition();
+    double x = Double.valueOf(res.response.x);
+    double y = Double.valueOf(res.response.y);
+    double theta = Double.valueOf(res.response.theta);
+    Tag existing = null;
+    String mapId = "1";
+    List<RMSListTagsResponse> resList = api.getAllTags();
+    if (resList != null) {
+      for (RMSListTagsResponse tagsRes : resList) {
+        for (Tag tag : tagsRes.response.tags.values()) {
+          if ("Dock".equals(tag.attributes.get("TagType"))) {
+            mapId = tag.mapId;
+          }
+          if (name.equals(tag.name)) {
+            existing = tag;
+          }
+        }
+      }
+    }
+    if (existing != null && "Dock".equals(existing.attributes.get("TagType"))) {
+      log.warn("[saveLocationTag] {} is the dock tag, not touching it", name);
+      return new ConditionJustification(false, Factory.createPredicate("saved", location));
+    }
+    if (existing != null && "true".equals(existing.attributes.get("tracs"))) {
+      log.info("[saveLocationTag] tag {} already on map {} as id {}, moving it to {}, {} theta {}", name, existing.mapId, existing.id, x, y, theta);
+      boolean updated = api.updateTag(existing.mapId, existing.id, x, y, theta);
+      return new ConditionJustification(updated, Factory.createPredicate("saved", location));
+    }
+    String id = api.createTag(mapId, name, x, y, theta, Map.of("tracs", "true"));
+    if (id == null) {
+      log.warn("[saveLocationTag] base did not create a tag for {}", name);
+      return new ConditionJustification(false, Factory.createPredicate("saved", location));
+    }
+    log.info("[saveLocationTag] created tag {} id {} on map {} at {}, {} theta {}", name, id, mapId, x, y, theta);
+    return new ConditionJustification(true);
+  }
+
   @Override
   public Justification stopFollowing() {
     if (shouldFollow) {

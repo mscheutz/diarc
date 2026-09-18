@@ -289,6 +289,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         success infer : at(?actor, ?location);
     }
     tsc:saveLocation(?location);
+    tsc:saveLocationTag(?location);
 }
 
 () = saveLocationsToFile() {

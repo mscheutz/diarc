@@ -278,6 +278,12 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);
   }
 
+  @TRADEService
+  public Justification saveLocationTag(Symbol location) {
+    log.info("[saveLocationTag] " + location.getName());
+    return new ConditionJustification(true);
+  }
+
   @Override
   public Justification goHomePrimitive() {
     log.info("[goHome] called.");

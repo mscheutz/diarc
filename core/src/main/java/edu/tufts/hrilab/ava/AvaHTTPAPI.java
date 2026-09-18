@@ -680,6 +680,39 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     return listTagsResponses;
   }
 
+  public String createTag(String mapId, String name, double x, double y, double theta, Map<String, String> attributes) {
+    String uri = baseUrl + "/robot/annotation/createTag/" + mapId;
+    TagArguments args = new TagArguments(name, x, y, theta, attributes);
+    String res = null;
+    log.debug("Sending createTag request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    if (res == null) {
+      return null;
+    }
+    Gson gson = new Gson();
+    CreateTagResponse resObj = gson.fromJson(res, CreateTagResponse.class);
+    return resObj.id;
+  }
+
+  public boolean updateTag(String mapId, String tagId, double x, double y, double theta) {
+    String uri = baseUrl + "/robot/annotation/updatetag/" + mapId + "/" + tagId;
+    UpdateTagArguments args = new UpdateTagArguments(Integer.parseInt(tagId), x, y, theta);
+    String res = null;
+    log.debug("Sending updateTag request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    return res != null;
+  }
+
   /**
    * Gets drive status
    *
