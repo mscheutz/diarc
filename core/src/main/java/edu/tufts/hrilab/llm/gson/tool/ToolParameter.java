@@ -19,16 +19,25 @@ public class ToolParameter {
   //ServiceProvider only <- split json and java reps?
   transient boolean processAsTool = false;
   transient String toolChatTemplateContextId = "";
+  transient boolean advertisePossibleValues = false;
 
-  public ToolParameter(String type, List<String> possible_values, String description) {
+  public ToolParameter(String type, List<String> possible_values, boolean advertisePossibleValues, String description) {
     this.type = type;
     this.possible_values = possible_values.toArray(new String[0]);
+    if (advertisePossibleValues) {
+      this.advertisePossibleValues = advertisePossibleValues;
+      dummy = possible_values.toArray(new String[0]);
+    }
     this.description = description;
   }
 
-  public ToolParameter(String type, List<String> possible_values, String description, boolean processAsTool, String toolChatTemplateContextId) {
+  public ToolParameter(String type, List<String> possible_values, boolean advertisePossibleValues, String description, boolean processAsTool, String toolChatTemplateContextId) {
     this.type = type;
     this.possible_values = possible_values.toArray(new String[0]);
+    if (advertisePossibleValues) {
+      this.advertisePossibleValues = advertisePossibleValues;
+      dummy = possible_values.toArray(new String[0]);
+    }
     this.description = description;
     this.processAsTool = processAsTool;
     this.toolChatTemplateContextId = toolChatTemplateContextId;
@@ -56,5 +65,8 @@ public class ToolParameter {
 
   public void setPossible_values(List<String> possibleValues) {
     possible_values = possibleValues.toArray(new String[0]);
+    if (advertisePossibleValues) {
+      dummy = possibleValues.toArray(new String[0]);
+    }
   }
 }

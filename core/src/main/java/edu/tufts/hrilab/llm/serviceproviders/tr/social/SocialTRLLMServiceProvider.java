@@ -28,12 +28,11 @@ import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
-import edu.tufts.hrilab.llm.gson.tool.ToolParameter;
-import edu.tufts.hrilab.llm.gson.tool.ToolParameters;
+import edu.tufts.hrilab.llm.gson.tool.ToolFunction;
+import edu.tufts.hrilab.llm.gson.tool.ToolParameterV2;
 import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
-import edu.tufts.hrilab.llm.gson.tool.response.ToolFunction;
+import edu.tufts.hrilab.llm.gson.tool.response.ToolCallFunction;
 import edu.tufts.hrilab.llm.openai.Qwen3CoderToolParser;
-import edu.tufts.hrilab.llm.openai.ToolParameterHelper;
 import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -196,25 +195,31 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     //// Generate universal Tools ////
     Tool focusedEndConversationTool;
     Tool defaultGoalInfoTool;
-    focusedEndConversationTool = new Tool(new ToolDefinition("endConversation",
-            "End the conversation with the user and discard the current in progress definition.",
-            new ArrayList<>()),
+    focusedEndConversationTool = new Tool(new ToolDefinition(new ToolFunction("endConversation",
+            "End the conversation with the user and discard the current in progress definition.")),
             UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
     );
-    defaultGoalInfoTool = new Tool(new ToolDefinition("getCurrentPendingScheduledTaskInformation",
+    defaultGoalInfoTool = new Tool(new ToolDefinition(new ToolFunction("getCurrentPendingScheduledTaskInformation",
             "Use this to ask the system for up to date information about your current list of tasks. Call this" +
                     "tool in order to get relevant information to help answer user questions about what you are currently" +
                     " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
-                    "perform in the future",
-            new ArrayList<>()),
+                    "perform in the future")),
             UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
     itkActionNames.add("getCurrentPendingScheduledTaskInformation");
 
-    textResponseTool = new Tool(new ToolDefinition("stillGatheringInformation",
-            "You are still gathering information before being able to submit an accurate, fully defined " +
-                    "instruction and need to speak with the user to gather missing information.",
-            List.of(new ToolParameterHelper("response", "string", new ArrayList<>(),
-                    "What you want to say to the user", true))),
+    textResponseTool = new Tool(
+            new ToolDefinition(
+                    new ToolFunction("stillGatheringInformation",
+                            "You are still gathering information before being able to submit an accurate, fully defined " +
+                                    "instruction and need to speak with the user to gather missing information.",
+                                    new LinkedHashMap<>(
+                                            Map.of(
+                                                    "response",
+                                                    new ToolParameterV2(
+                                                            "string",
+                                                            "What you want to say to the user"))),
+                                    new String[]{"response"})
+                    ),
             UtteranceType.INSTRUCT);
 
     itkTools.add(defaultGoalInfoTool);
@@ -237,13 +242,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     universalFocusedToolset = new HashMap<>();
     universalFocusedToolDefinitions = new ArrayList<>();
     universalFocusedToolset.put("endConversation", focusedEndConversationTool);
-    universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition("suspendCurrentInteraction",
-            "Pause your current task, which can be later resumed.",
-            new ArrayList<>()),
+    universalFocusedToolset.put("suspendCurrentInteraction", new Tool(new ToolDefinition(new ToolFunction("suspendCurrentInteraction",
+            "Pause your current task, which can be later resumed.")),
             UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
-    universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition("cancelCurrentInteraction",
-            "Stop and fully discard your current task.",
-            new ArrayList<>()),
+    universalFocusedToolset.put("cancelCurrentInteraction", new Tool(new ToolDefinition(new ToolFunction("cancelCurrentInteraction",
+            "Stop and fully discard your current task.")),
             UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY));
     for (Tool itkTool : itkTools) {
       universalFocusedToolset.put(itkTool.toolDefinition.function.name, itkTool);
@@ -259,12 +262,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     //TODO: Only conditionally add cancel/suspend if there is actually an underlying task present?
     List<Tool> questionAnswerToolList = new ArrayList<>(itkTools);
-    questionAnswerToolList.add(new Tool(new ToolDefinition("cancelCurrentTask",
-            "You cancel and fully discard your current goal, whether it is active or suspended.",
-            new ArrayList()),UtteranceType.INSTRUCT));
-    questionAnswerToolList.add(new Tool(new ToolDefinition("suspendCurrentTask",
-            "You pause your current goal, which can be later resumed or canceled",
-            new ArrayList()),UtteranceType.INSTRUCT));
+    questionAnswerToolList.add(new Tool(new ToolDefinition(new ToolFunction("cancelCurrentTask",
+            "You cancel and fully discard your current goal, whether it is active or suspended.")),UtteranceType.INSTRUCT));
+    questionAnswerToolList.add(new Tool(new ToolDefinition(new ToolFunction("suspendCurrentTask",
+            "You pause your current goal, which can be later resumed or canceled")),UtteranceType.INSTRUCT));
     chatTemplates.put("questionAnswer", new ChatTemplates(getQuestionAnswerSystemPrompt(), questionAnswerToolList));
 
     // NLG tool sets: none
@@ -763,7 +764,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ChatContext chatContext = chatCollection.currentChat;
 
     //// Check that tool response is valid
-    ToolFunction functionCall = toolCall.function;
+    ToolCallFunction functionCall = toolCall.function;
     Tool correspondingTool = null;
     try {
       if (chatContext.chatType == ChatType.FOCUSED) {
@@ -965,7 +966,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         for (int i = history.size()-2; i >= 0; i--) {
           Message m = history.remove(i);
           if (m.tool_calls != null && m.tool_calls.length > 0) {
-            ToolFunction tf = m.tool_calls[0].function;
+            ToolCallFunction tf = m.tool_calls[0].function;
             if (tf.name.equals(textResponseTool.toolDefinition.function.name) && tf.arguments.contains(responseString)) {
               responsesFound += 1;
               if (responsesFound == 2) {
@@ -1001,6 +1002,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       chatContext.identicalResponses = 0;
     }
     chatContext.lastResponseString = responseString;
+    if (llmResponse.toolCalls != null && !llmResponse.toolCalls.isEmpty()) {
+      chatContext.lastResponseToolCallId = llmResponse.toolCalls.get(0).id;
+    }
 
     // newlines, backslashes, or nested quotes in the reply were blowing up the belief
     // asserts that read this text back out of a term -- nothing escapes it on the way in.
@@ -1852,7 +1856,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
           Object converted_value = null;
           if (matchingTool != null) {
-            ToolParameter matchingParam = matchingTool.function.parameters.getProperties().get(param_name);
+            ToolParameterV2 matchingParam = matchingTool.function.parameters.getProperties().get(param_name);
             if (matchingParam != null) {
               String type = matchingParam.getType();
               if (type.equals("array")) {
@@ -1879,7 +1883,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
         ToolCall toolCall = new ToolCall();
         toolCall.type = "function";
-        toolCall.function = new ToolFunction();
+        toolCall.function = new ToolCallFunction();
         toolCall.function.name = function_name;
         toolCall.function.arguments = gson.toJson(parameterMap);
         toolCall.id = "call_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
@@ -2814,7 +2818,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   private void addLearnedActionToCollections(ActionDBEntry dbEntry) {
     Predicate signature = dbEntry.getSignature(false);
     Tool correspondingTool;
-    correspondingTool = new Tool(new ToolDefinition(signature.getName(), "An action previously taught by the user. Call this if the user asks you to perform something referring to the supplied name.",new ToolParameters(new ArrayList<>())),UtteranceType.INSTRUCT);
+    correspondingTool = new Tool(new ToolDefinition(new ToolFunction(signature.getName(), "An action previously taught by the user. Call this if the user asks you to perform something referring to the supplied name.")),UtteranceType.INSTRUCT);
     String nluString = toolToDescString(correspondingTool, false);//true);
     String nlgString = toolToDescString(correspondingTool, false);
 
@@ -2987,30 +2991,30 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           ToolCall toolCall = new ToolCall();
           toolCall.id = "";
           toolCall.type = "function";
-          ToolFunction toolFunction = new ToolFunction();
-          toolFunction.name = "validatingToolSubmission";
+          ToolCallFunction toolCallFunction = new ToolCallFunction();
+          toolCallFunction.name = "validatingToolSubmission";
           Map<String, Object> responseArguments = new HashMap<>();
           responseArguments.put("response", utterance.getWordsAsString());
-          toolFunction.arguments = new Gson().toJson(responseArguments);
-          toolCall.function = toolFunction;
+          toolCallFunction.arguments = new Gson().toJson(responseArguments);
+          toolCall.function = toolCallFunction;
           chatContext.history.addRobotMessage("", List.of(toolCall));
         } else {
           // TODO: Keep an eye on this, make sure it's okay that these seemingly unprompted assistant messages are present.
           Tool textResponseTool = chatTemplates.get(chatContext.contextID).tools.get(this.textResponseTool.toolDefinition.function.name);
           if (textResponseTool != null) {
             ToolCall toolCall = new ToolCall();
-            toolCall.id = "";
+            toolCall.id = chatContext.lastResponseToolCallId;
             toolCall.type = "function";
-            ToolFunction toolFunction = new ToolFunction();
-            toolFunction.name = this.textResponseTool.toolDefinition.function.name;
+            ToolCallFunction toolCallFunction = new ToolCallFunction();
+            toolCallFunction.name = this.textResponseTool.toolDefinition.function.name;
             Map<String, Object> responseArguments = new LinkedTreeMap<>();
             //TODO: this argument order needs to align with how it is defined on init - automatically enforce this
             responseArguments.put("response", utterance.getWordsAsString());
             if (!chatContext.lastTemplateName.isEmpty() && textResponseTool.toolDefinition.function.parameters.getProperties().containsKey(chatContext.lastTemplateName)) {
               responseArguments.put(chatContext.lastTemplateName, chatContext.lastTemplateValue);
             }
-            toolFunction.arguments = new Gson().toJson(responseArguments);
-            toolCall.function = toolFunction;
+            toolCallFunction.arguments = new Gson().toJson(responseArguments);
+            toolCall.function = toolCallFunction;
             chatContext.history.addRobotMessage("", List.of(toolCall));
           }
         }
@@ -3106,11 +3110,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    *   Fully populated utterance with information extracted from functionCall
    *   Null on any error case - errorMessage should be updated in this case
    */
-  private Utterance processToolCall(ToolFunction functionCall, Tool tool, Utterance inputUtterance, StringBuilder errorMessage) {
+  private Utterance processToolCall(ToolCallFunction functionCall, Tool tool, Utterance inputUtterance, StringBuilder errorMessage) {
     Utterance.Builder builder = new Utterance.Builder(inputUtterance);
     Symbol actor = inputUtterance.getAddressee();
     Map<Symbol,Variable> varMap = new HashMap<>();
-    Symbol semantics = processToolArgument(functionCall.name, functionCall.arguments, tool, actor, builder, varMap, errorMessage, false);
+    boolean includeActor = tool.utteranceType == UtteranceType.INSTRUCT || tool.utteranceType == UtteranceType.QUESTION;
+    Symbol semantics = processMapArgument(functionCall.name, functionCall.arguments, tool.toolDefinition.function.parameters, includeActor, actor, builder, varMap, errorMessage, false, false);
     if (semantics != null) {
       builder.setSemantics(semantics);
       builder.setUtteranceType(tool.utteranceType);
@@ -3123,16 +3128,16 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //  List -> Converts each element into a Symbol independently and wraps in an "and" predicate
   //  Map or json string -> Corresponding Tool parameter must have processAsTool flag and associated toolChatTemplateContextId set. Will be processed as a Tool call, converted into the corresponding action predicate
   //  String/Number -> Factory.createFoL(arg)
-  private Symbol processArgument(String parameterName, Object parameterValue, ToolParameter parameterDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+  private Symbol processArgument(String parameterName, Object parameterValue, ToolParameterV2 parameterDefinition, String parentArgumentName, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe, boolean emptyArgAllowed) {
     Symbol processedArg = null;
     boolean argValid = true;
-    unpopulatedArgSafe = unpopulatedArgSafe || parentTool.function.name.equals("getIfCanPerform"); //TODO; revisit this and associated cases
+    unpopulatedArgSafe = unpopulatedArgSafe || parentArgumentName.equals("getIfCanPerform"); //TODO; revisit this and associated cases
     if (parameterValue instanceof List<?>) {
       //// Handle List
         List<Object> argObjectList = (List<Object>) parameterValue; //Can you actually have a ClassCastException here? Catch and handle if so
         List<Symbol> innerArgs = new ArrayList<>();
         for (Object argValue : argObjectList) {
-          Symbol innerArg = processArgument(parameterName, argValue, parameterDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+          Symbol innerArg = processArgument(parameterName, argValue, parameterDefinition, parentArgumentName, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
           if (innerArg == null) {
             argValid = false;
             continue;
@@ -3142,31 +3147,29 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         processedArg = Factory.createPredicate("and",innerArgs);
     } else if (parameterValue instanceof Map<?,?>) {
       //// Handle Map (Tool)
-      if (!parameterDefinition.getProcessAsTool()) {
-        log.error("[processArgument] have argument value json without flag set to process as tool: {}", parameterValue);
-        //TODO: is this just developer error or can it actually also be LLM error?
-        errorMessage.append("- You supplied a JSON object for the \"").append(parameterName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was not signaled to be parsed as a tool call. Please adapt this argument to a string or number. Do not speak to the user about this.\n");
-        return null;
+      if (parameterDefinition.getProcessAsTool()) {
+        processedArg = processArbitraryToolArgument(parameterName, parameterValue, parameterDefinition, parentArgumentName, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
+      } else {
+        processedArg = processMapArgument(parameterName, parameterValue, parameterDefinition, true, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
       }
-      processedArg = processToolArgument(parameterName, parameterValue, parameterDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
     } else if (parameterValue instanceof String) {
       if (parameterDefinition.getProcessAsTool()) {
         //// Handle Tool Json String
-        processedArg = processToolArgument(parameterName, parameterValue, parameterDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+        processedArg = processArbitraryToolArgument(parameterName, parameterValue, parameterDefinition, parentArgumentName, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
       } else {
         //// Handle General String (Symbol/Predicate)
         String stringValue = (String) parameterValue;
-        if (parentTool.function.name.equals(textResponseTool.toolDefinition.function.name) || parentTool.function.name.equals("sayLocally")) {
+        if (parentArgumentName.equals(textResponseTool.toolDefinition.function.name) || parentArgumentName.equals("sayLocally")) {
           if (!(stringValue.startsWith("\"") && stringValue.endsWith("\""))) {
             stringValue = "\"" + stringValue + "\"";
           }
         }
-        processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe);
+        processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe, emptyArgAllowed);
       }
     } else {
       //// Handle Number - anything else possible?
       String stringValue = String.valueOf(parameterValue);
-      processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe);
+      processedArg = processSymbolArgument(parameterName, stringValue, parameterDefinition.getPossible_values(), errorMessage, varMap, builder, false, unpopulatedArgSafe, emptyArgAllowed);
     }
 
     if (argValid) {
@@ -3176,7 +3179,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
   // Process an inner argument which has the flag set to be processed as a tool call
-  protected Symbol processToolArgument(String argumentName, Object argumentValue, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
+  protected Symbol processArbitraryToolArgument(String argumentName, Object argumentValue, ToolParameterV2 argumentDefinition, String parentArgumentName, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe, boolean emptyArgAllowed) {
     Map<String,Object> toolDefinitionMap;
     boolean validToolDefinition = true;
     if (argumentValue instanceof String) {
@@ -3202,7 +3205,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }.getType());
           List<Symbol> innerArgs = new ArrayList<>();
           for (Object argValue : argObjectList) {
-            Symbol innerArg = processToolArgument(argumentName, argValue, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+            Symbol innerArg = processArbitraryToolArgument(argumentName, argValue, argumentDefinition, parentArgumentName, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
             if (innerArg == null) {
               return null;
             }
@@ -3211,7 +3214,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return Factory.createPredicate("and", innerArgs);
         } catch (JsonSyntaxException e2) {
           //TODO: this error message doesn't actually cause the LLM to fix itself all the time - manually inspect what type of object it is and try to process as such manually?
-          errorMessage.append("- The supplied definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. Make sure all brackets, parentheses, and quotes are matched up properly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. \n");
+          errorMessage.append("- The supplied definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentArgumentName).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. Make sure all brackets, parentheses, and quotes are matched up properly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. Respond with the updated call. \n");
           log.error("[processToolCall] malformed json present in functionCall", e2);
           return null;
         }
@@ -3224,7 +3227,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       List<Object> argObjectList = (List<Object>) argumentValue; //Can you actually have a ClassCastException here? Catch and handle if so
       List<Symbol> innerArgs = new ArrayList<>();
       for (Object argValue : argObjectList) {
-        Symbol innerArg = processToolArgument(argumentName, argValue, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+        Symbol innerArg = processArbitraryToolArgument(argumentName, argValue, argumentDefinition, parentArgumentName, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
         if (innerArg == null) {
           return null;
         }
@@ -3232,7 +3235,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
       return Factory.createPredicate("and", innerArgs);
     } else {
-      errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentTool.function.name).append("\" call could not be parsed as json. Please reformat your call to supply a valid json string or object. You do not need to speak with the user about this.\n");
+      errorMessage.append("- The supplied tool call definition for the \"").append(argumentName).append("\" parameter of the \"").append(parentArgumentName).append("\" call could not be parsed as json. Please reformat your call to supply a valid json string or object. You do not need to speak with the user about this.\n");
       log.error("[processToolArgument] unhandled {}", argumentValue);
       return null;
     }
@@ -3251,46 +3254,38 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     toolDefinitionMap.values().removeIf(Objects::isNull);
 
-    //TODO: move to domain specific processing
-    ////TODO: remove this block and extend framework to allow for arbitrary definition of specific json object forms without necessarily being tool calls
-    if (argumentName.equals("locationActionPairs")) {
-      return handleLocationActionPairs(argumentName, toolDefinitionMap, argumentDefinition, parentTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
-    }
-
     String toolName = (String)toolDefinitionMap.get("name");
     Object innerArguments = toolDefinitionMap.get("arguments");
-    if (toolName == null) {
+    if (toolName == null || toolName.isEmpty()) {
+      if (emptyArgAllowed) {
+        return Factory.createSymbol("empty");
+      }
       log.warn("[processArgument] inner tool call does not have name field present: {}", argumentValue);
-      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing a \"name\" field. Please include the proper name of this action.\n");
+      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(parentArgumentName).append("\" call, but it was missing a \"name\" field. Please include the proper name of this action.\n");
       validToolDefinition = false;
     }
-    if (innerArguments == null) {
-      log.warn("[processArgument] inner tool call does not have arguments field present, assuming no arguments: {}", argumentValue);
-      innerArguments = new HashMap<>();
-      //log.warn("[processArgument] inner tool call does not have arguments field present: {}", argumentValue);
-      //errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but it was missing an \"arguments\" field. Please restructure your json to properly include an arguments field for this action, even if an empty map. You do not need to speak to the user about this.\n");
-      //validToolDefinition = false;
+    if (innerArguments == null && !unpopulatedArgSafe) {
+      log.warn("[processArgument] inner tool call does not have arguments field present: {}", argumentValue);
+      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(toolName).append("\" call, but it was missing an \"arguments\" field. Please restructure your json to properly include an arguments field for this action, even if an empty map. You do not need to speak to the user about this.\n");
+      validToolDefinition = false;
     }
     Tool innerTool = innerToolChatTemplates.tools.get(toolName);
     if (innerTool == null) {
       log.warn("[processArgument] inner tool call's name does not match a Tool in the corresponding ChatTemplates: {}", toolName);
-      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(parentTool.function.name).append("\" call, but the supplied name \"").append(toolName).append("\" does not correspond to the name of a valid action. Please remove this entry and replace it with a valid action, work with the user if necessary.\n");
+      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(parentArgumentName).append("\" call, but the supplied name \"").append(toolName).append("\" does not correspond to the name of a valid action. If you misspelled an existing valid action, then correct the spelling. If there is no such action, then remove the entry and inform the user that you do not know how to perform that action. Generate a new response string in your next call focusing on resolving this fact.\n");
       validToolDefinition = false;
     }
 
     if (validToolDefinition) {
-      return processToolArgument(toolName, innerArguments, innerTool, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
+      return processMapArgument(toolName, innerArguments, innerTool.toolDefinition.function.parameters, true, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed);
     } else {
       return null;
     }
   }
-  //TODO: remove
-  protected Symbol handleLocationActionPairs(String argumentName, Map<String,Object> toolDefinitionMap, ToolParameter argumentDefinition, ToolDefinition parentTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
-    return null;
-  }
+
   // Process extracted tool call information
-  protected Symbol processToolArgument(String name, Object arguments, Tool intendedTool, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe) {
-    boolean validParse;
+  protected Symbol processMapArgument(String name, Object arguments, ToolParameterV2 parameterDefinition, boolean includeActor, Symbol actor, Utterance.Builder builder, Map<Symbol,Variable> varMap, StringBuilder errorMessage, boolean unpopulatedArgSafe, boolean emptyArgAllowed) {
+    boolean validParse = true;
     Map<String, Object> calledArguments;
     if (arguments instanceof String) {
       try {
@@ -3311,67 +3306,72 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
 
     // Check all required arguments exist
-    ToolDefinition toolDefinition = intendedTool.toolDefinition;
-    validParse = checkRequiredArgsExist(calledArguments.keySet(), toolDefinition.function.parameters, errorMessage);
+    if (!emptyArgAllowed) {
+      validParse = checkRequiredArgsExist(name, calledArguments.keySet(), parameterDefinition, errorMessage);
+    }
 
     // Add actor to output semantics
     List<Symbol> processedArguments = new ArrayList<>();
     //TODO: QUESTION should not be in this case once ITK pipeline is fixed - and/or make distinction between going through
     //      the itk pipeline to have it generate its own response vs calling the underlying action to populate a tool response
-    if (intendedTool.utteranceType == UtteranceType.INSTRUCT || intendedTool.utteranceType == UtteranceType.QUESTION) {
+    if (includeActor) {
       String actorName = actor.getName();
       processedArguments.add(Factory.createSymbol(actorName));
     }
 
     // Validate Tool call's supplied arguments
-    for (String argName : calledArguments.keySet()) {
+    //TODO: Swapped direction we check matching arguments in - add check back in for a supplied argument which doesn't exist?
+    for (String argName : parameterDefinition.getProperties().keySet()) {
       Symbol processedArg;
-      ToolParameter targetParam = toolDefinition.function.parameters.getProperties().get(argName);
-      if (targetParam == null) {
-        // An argument was supplied which isn't present in the target set
-        //  (This is more just an LLM issue? Do we do anything in this case, or just discard the information?)
-        // TODO: Count as internal error?
-        log.warn("[processToolArgument] argument supplied by LLM in tool call which doesn't exist in tool definition. Discarding.");
-      } else {
-        //TODO: general mechanism to ignore fields when extracting final result? E.g. want the llm to keep track of the
-        // template during the extended dialogue, but don't care if it's fully valid yet.
-        if (intendedTool.toolDefinition.function.name.equals(textResponseTool.toolDefinition.function.name) && !argName.equals("response")) {
-          //TODO: Revisit where to best detect and address this in general when transitioning to collapse focused
-          //  cases into standardized representation/dynamic gen of tool targets and prompts. On transition, if
-          //  text response target is called but the template is fully defined, instruct LLM to try calling
-          //  template submission tool directly. Currently using a lot of duplicate code.
-          Utterance temp = builder.build();
-          ChatCollection collection = getChatCollection(temp.getSpeaker().toUntyped(), temp.getAddressee().toUntyped());
-          if (collection != null) {
-            ChatContext context = collection.currentChat;
-            if (context!= null) {
-              context.lastTemplateName = argName;
-              context.lastTemplateValue = calledArguments.get(argName);
-            }
+      ToolParameterV2 targetParam = parameterDefinition.getProperties().get(argName);
+      Object argValue = calledArguments.get(argName);
+      boolean emptyInnerArgAllowed = false;
+      //TODO: general mechanism to ignore fields when extracting final result? E.g. want the llm to keep track of the
+      // template during the extended dialogue, but don't care if it's fully valid yet.
+      if (name.equals(textResponseTool.toolDefinition.function.name) && !argName.equals("response")) {
+        //TODO: Revisit where to best detect and address this in general when transitioning to collapse focused
+        //  cases into standardized representation/dynamic gen of tool targets and prompts. On transition, if
+        //  text response target is called but the template is fully defined, instruct LLM to try calling
+        //  template submission tool directly. Currently using a lot of duplicate code.
+        Utterance temp = builder.build();
+        ChatCollection collection = getChatCollection(temp.getSpeaker().toUntyped(), temp.getAddressee().toUntyped());
+        if (collection != null) {
+          ChatContext context = collection.currentChat;
+          if (context!= null) {
+            context.lastTemplateName = argName;
+            context.lastTemplateValue = calledArguments.get(argName);
           }
-          validParse = validParse && !checkForFullyPopulatedTemplate(argName, calledArguments.get(argName), temp.getSpeaker(), temp.getAddressee(), errorMessage);
-          continue;
         }
-        Object argValue = calledArguments.get(argName);
-        processedArg = processArgument(argName, argValue, targetParam, toolDefinition, actor, builder, varMap, errorMessage, unpopulatedArgSafe);
-        if (processedArg == null) {
-          validParse = false;
-          continue;
-        }
-        processedArguments.add(processedArg);
+        validParse = validParse && processFocusedTemplate(argName, calledArguments.get(argName), temp.getSpeaker(), temp.getAddressee(), errorMessage);
+        emptyInnerArgAllowed = true;
       }
+      processedArg = processArgument(argName, argValue, targetParam, name, actor, builder, varMap, errorMessage, unpopulatedArgSafe, emptyArgAllowed || emptyInnerArgAllowed);
+      if (processedArg == null) {
+        validParse = false;
+        continue;
+      }
+      processedArguments.add(processedArg);
     }
 
     // Return appropriate object
     if (validParse) {
-      return Factory.createPredicate(toolDefinition.function.name, processedArguments);
+      //TODO: remove when changing task teaching format (otherwise if keeping any version of this, the actual action and
+      //  associated NLG needs to be updated from expecting "and" to "locationActionPairs"
+      if (name.equals("locationActionPairs")) {
+        processedArguments.remove(0);
+        return Factory.createPredicate("and", processedArguments);
+      }
+      return Factory.createPredicate(name, processedArguments);
     } else {
       return null;
     }
   }
   // TODO: Do we need to check for unintended JSON strings and reject here?
   // Process a "leaf" (i.e. maximally a Predicate, not list or map) tool call argument
-  protected Symbol processSymbolArgument(String argName, String argString, List<String> possible_values, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder builder, boolean inner, boolean unpopulatedArgSafe) {
+  protected Symbol processSymbolArgument(String argName, String argString, List<String> possible_values, StringBuilder errorMessage, Map<Symbol,Variable> varMap, Utterance.Builder builder, boolean inner, boolean unpopulatedArgSafe, boolean emptyArgAllowed) {
+    if (argString.isEmpty() && emptyArgAllowed) {
+      return Factory.createSymbol("empty");
+    }
     Symbol processedArg;
     Symbol argValue = Factory.createFOL(argString);
     // If there is an explicit possible_values set, make sure the argument is present
@@ -3410,7 +3410,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           unpopulatedArgSafe = true;
         }
         for (Symbol innerArg : ((Predicate) argValue).getArgs()) {
-          Symbol processedInnerArg = processSymbolArgument(argName, innerArg.toString(), new ArrayList<>(), errorMessage, varMap, builder, true, unpopulatedArgSafe);
+          Symbol processedInnerArg = processSymbolArgument(argName, innerArg.toString(), new ArrayList<>(), errorMessage, varMap, builder, true, unpopulatedArgSafe, emptyArgAllowed);
           processedInnerArguments.add(processedInnerArg);
         }
         if (processedInnerArguments.contains(null)) {
@@ -3471,13 +3471,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
   }
-  private boolean checkRequiredArgsExist(Set<String> calledArgumentKeys, ToolParameters targetParameters, StringBuilder currentErrorMessage) {
+  private boolean checkRequiredArgsExist(String outerArgName, Set<String> calledArgumentKeys, ToolParameterV2 targetParameters, StringBuilder currentErrorMessage) {
     boolean valid = true;
     for (String paramName : targetParameters.getProperties().keySet()) {
       if (targetParameters.getRequired().contains(paramName)) {
         if (!calledArgumentKeys.contains(paramName)) {
           valid = false;
-          currentErrorMessage.append("- The tool call was missing a value for a required \"").append(paramName).append("\" argument\n");
+          currentErrorMessage.append("- One of the ").append(outerArgName).append(" fields was missing an entry value for the required \"").append(paramName).append("\" argument\n");
         }
       }
     }
@@ -3485,30 +3485,32 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   //TODO: in subclass?
-  private boolean checkForFullyPopulatedTemplate(String templateArgName, Object templateValue, Symbol user, Symbol agentTeam, StringBuilder errorMessage) {
+  private boolean processFocusedTemplate(String templateArgName, Object templateValue, Symbol user, Symbol agentTeam, StringBuilder errorMessage) {
     ChatCollection collection = getChatCollection(user,agentTeam);
     if (collection != null) {
       ChatContext context = collection.currentChat;
-      if (context.history.messages.size() == 1) {
-        //If template is fully populated -> add tool response indicating to call submission directly, set output to null, and loop
-        Map<String,Object> templateMap = null;
-        if (templateValue instanceof String) {
-          try {
-            templateMap = new Gson().fromJson((String)templateValue, new TypeToken<LinkedTreeMap<String, Object>>() {
-            }.getType());
-            templateMap.values().removeIf(Objects::isNull);
-          } catch (JsonSyntaxException e) {
-            log.error("[processToolCall] malformed json present in functionCall", e);
-          }
-        } else if (templateValue instanceof Map<?,?>) {
-          templateMap = (Map<String, Object>) templateValue; //Catch and handle ClassCastException if ever encountered
+      Map<String, Object> templateMap = null;
+      if (templateValue instanceof String) {
+        try {
+          templateMap = new Gson().fromJson((String) templateValue, new TypeToken<LinkedTreeMap<String, Object>>() {
+          }.getType());
+          templateMap.values().removeIf(Objects::isNull);
+        } catch (JsonSyntaxException e) {
+          errorMessage.append("- The supplied definition for the \"").append(templateArgName).append("\" parameter of the \"").append(textResponseTool.toolDefinition.type).append("\" call could not be parsed as a valid json string. Please reformat your call to supply a valid json string or supply an object directly. Make sure all brackets, parentheses, and quotes are matched up properly. If you are supplying an array, do not supply it as a string; supply the object directly. You do not need to speak with the user about this. Respond with the updated call.\n");
+          log.error("[processToolCall] malformed json present in functionCall", e);
+          return false;
         }
-        if (templateMap != null) {
+      } else if (templateValue instanceof Map<?, ?>) {
+        templateMap = (Map<String, Object>) templateValue; //Catch and handle ClassCastException if ever encountered
+      }
+      if (templateMap != null) {
+        // If template is fully populated on first turn -> add tool response indicating to call submission directly, set output to null, and loop
+        if (context.history.messages.size() == 1) {
           int expectedSize = -1;
           //A bit more nuance necessary for task modification output - allowed to have empty or missing taskIndex list if directed at the current goal
           if (templateArgName.equals("currentTaskStatusModificationDefinition")) {
             Object taskType = templateMap.get("taskType");
-            if (taskType != null && ((String)taskType).equals("current") && templateMap.containsKey("modification")) {
+            if (taskType != null && taskType.equals("current") && templateMap.containsKey("modification")) {
               return true;
             }
           }
@@ -3522,28 +3524,28 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             expectedSize = 1;
           } else {
             log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
-            return false;
+            return true;
           }
           if (templateMap.size() == expectedSize) {
             for (Object templateInnerArg : templateMap.values()) {
               if (templateInnerArg instanceof String) {
-                if (((String)templateInnerArg).isEmpty()) {
-                  return false;
+                if (((String) templateInnerArg).isEmpty()) {
+                  return true;
                 }
               } else if (templateInnerArg instanceof Map) {
-                if (((Map)templateInnerArg).isEmpty()) {
-                  return false;
+                if (((Map) templateInnerArg).isEmpty()) {
+                  return true;
                 }
               } else if (templateInnerArg instanceof List) {
-                if (((List)templateInnerArg).isEmpty()) {
-                  return false;
+                if (((List) templateInnerArg).isEmpty()) {
+                  return true;
                 }
               } else {
-                return false;
+                return true;
               }
             }
           } else {
-            return false;
+            return true;
           }
           log.info("[checkForFullyPopulatedTemplate] detected full template definition in first response after a " +
                   "transfer to a focused context - recommending the LLM to directly submit the template definition.");
@@ -3551,11 +3553,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           errorMessage.append("- It looks like your current definition of the target to be submitted is fully filled " +
                   "out. If this seems to be the case, try submitting the target submission tool call directly instead" +
                   "of responding to the user.");
-          return true;
+          return false;
         }
       }
     }
-    return false;
+    return true;
   }
 
   Predicate replaceReferencesInSemantics(Predicate semantics) {
