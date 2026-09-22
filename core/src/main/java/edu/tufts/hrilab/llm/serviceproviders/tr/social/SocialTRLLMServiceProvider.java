@@ -523,6 +523,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
 
+    // Prepare Chat to send to completion endpoint: sort out system message, tool list, and any desired contextual history manipulation
     try {
       List<ToolDefinition> tools;
       synchronized (currentChatCollections) {
@@ -550,6 +551,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return utterance;
         }
 
+        // Higher level interaction decision: Question asking (including validation) strongly gates response instructions/possibilities
         boolean hasQuestions = false;
         try {
           hasQuestions = TRADE.getAvailableService(new TRADEServiceConstraints().name("isAgentWaitingForResponse").argTypes(Symbol.class)).call(Boolean.class, agentTeam);
@@ -590,8 +592,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             chatTemplates = this.chatTemplates.get("validationnlu");
           } else {
             chatTemplates = this.chatTemplates.get("questionAnswer");
-            chatContext.history.addUserMessage(utterance.getWordsAsString()); // Also add message to actual history in this case, because conversation will inevitably continue
           }
+          chatContext.history.addUserMessage(utterance.getWordsAsString()); // Also add message to actual history in case the conversation extends
           tools.addAll(chatTemplates.toolDefinitions);
           systemTemplate = new Prompt(chatTemplates.systemMessageTemplate.getText());
           // Add relevant response form tools based on question
@@ -658,10 +660,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           if (chatContext.chatState == ChatState.VALIDATION) {
             // Validation Tool Call - return appropriate reply semantics and modify chatCollection state as needed (possible
             //  to terminate and/or transfer between base and focused contexts in this case)
-            output = handleValidationResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+            output = handleValidationResponse(response, utterance, chatCollection, tools, errorResponseBuilder, useStreaming);
           } else {
             // Tool Call - extended parse recovery on invalid parse, or enter validation of valid parse
-            output = handleToolResponse(response, utterance, chatCollection, errorResponseBuilder, useStreaming);
+            output = handleToolResponse(response, utterance, chatCollection, tools, errorResponseBuilder, useStreaming);
           }
         }
 
@@ -725,7 +727,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder, useStreaming);
         } else {
           lastToolCall = retryResponse.toolCalls.get(0);
-          output = handleToolResponse(retryResponse, utterance, chatCollection, errorResponseBuilder, useStreaming);
+          output = handleToolResponse(retryResponse, utterance, chatCollection, toolList, errorResponseBuilder, useStreaming);
         }
         if (output != null) {
           return output;
@@ -751,7 +753,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder) {
   //  return handleToolResponse(llmResponse,inputUtterance,chatCollection,errorResponseBuilder,false);
   //}
-  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
+  public Utterance handleToolResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, List<ToolDefinition> advertisedToolList, StringBuilder errorResponseBuilder, boolean useStreaming) {
     if (llmResponse.toolCalls.size() > 1) {
       //TODO
       log.warn("[handleToolResponse] Multiple tool calls returned -> TODO handle both. Only using first...");
@@ -767,20 +769,24 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     ToolCallFunction functionCall = toolCall.function;
     Tool correspondingTool = null;
     try {
-      if (chatContext.chatType == ChatType.FOCUSED) {
-        correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
-        if (correspondingTool == null) {
-          correspondingTool = universalFocusedToolset.get(functionCall.name);
-        }
+      if (advertisedToolList.stream().filter(td -> td.function.name.equals(functionCall.name)).toList().isEmpty()) {
+        log.warn("[handleToolResponse] called tool not present in advertised list, rejecting");
       } else {
-        correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
-        if (correspondingTool == null) {
-          correspondingTool = replyToolset.get(functionCall.name);
+        if (chatContext.chatType == ChatType.FOCUSED) {
+          correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
+          if (correspondingTool == null) {
+            correspondingTool = universalFocusedToolset.get(functionCall.name);
+          }
+        } else {
+          correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
+          if (correspondingTool == null) {
+            correspondingTool = replyToolset.get(functionCall.name);
+          }
         }
-      }
-      //TODO: more formally define and integrate how this is done. Don't want this inefficient block here
-      if (correspondingTool == null) {
-        correspondingTool = getContextDependentTools(inputUtterance.getAddressee()).get(functionCall.name);
+        //TODO: more formally define and integrate how this is done. Don't want this inefficient block here
+        if (correspondingTool == null) {
+          correspondingTool = getContextDependentTools(inputUtterance.getAddressee()).get(functionCall.name);
+        }
       }
     } catch (NullPointerException e) {
       log.error("[handleToolResponse] error finding Tool definition for called tool found in Completion response", e);
@@ -788,7 +794,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Internal LLM error - should there be LLM specific error responses in this case?
     if (correspondingTool == null) {
-      errorResponseBuilder.append("- Your chosen tool \"").append(toolCall.function.name).append("\" is no longer available for you to call in your current context. Please find an alternate specific tool call to use which is explicitly present in the tool list, or respond using the " + textResponseTool.toolDefinition.function.name + " tool");
+      errorResponseBuilder.append("- Your chosen tool \"").append(toolCall.function.name).append("\" is no longer available for you to call in your current context. Please find an alternate specific tool call to use which is explicitly present in the tool list, or respond using the ").append(textResponseTool.toolDefinition.function.name).append(" tool");
       if (!toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
         chatContext.history.addRobotMessage("", List.of(toolCall));
       }
@@ -1042,7 +1048,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Method for handling Completion responses containing during validation.
    * <p>
    */
-  public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
+  public Utterance handleValidationResponse(Completion llmResponse, Utterance inputUtterance, ChatCollection chatCollection, List<ToolDefinition> advertisedToolList, StringBuilder errorResponseBuilder, boolean useStreaming) {
     if (llmResponse.toolCalls.size() > 1) {
       log.warn("[handleValidationResponse] Multiple tool calls returned -> TODO handle both. Currently only using first...");
     }
@@ -1059,7 +1065,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     // Experimental text response tool stand-in (described above)
     if (toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
-      return handleToolResponse(llmResponse, inputUtterance, chatCollection, errorResponseBuilder, useStreaming);
+      return handleToolResponse(llmResponse, inputUtterance, chatContext, advertisedToolList, errorResponseBuilder, useStreaming);
     }
 
     // Handle expected validation question yes/no response semantics
@@ -1074,6 +1080,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       output.setSemantics(Factory.createPredicate("abort(question)"));
       output.setNeedsValidation(false);
       output.setUtteranceType(UtteranceType.REPLY);
+    } else {
+      // Be careful here if ever changing accepted/possible behavior around ITK calls or exposing additional tools in a validation context
+      log.debug("[handleValidationResponse] received tool call which is not a validation response or text response, assuming ITK call");
+      return handleToolResponse(llmResponse,inputUtterance,chatContext,advertisedToolList,errorResponseBuilder,useStreaming);
     }
     return output.build();
   }
@@ -1614,7 +1624,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             } else {
               // Direct tool call on transfer
               lastToolCall = response.toolCalls.get(0);
-              output = handleToolResponse(response, originalUtterance, collection, errorResponseBuilder, false);
+              output = handleToolResponse(response, originalUtterance, collection,contextSpecificTemplate.toolDefinitions, errorResponseBuilder, false);
               //(Old note - not sure if still valid) if this call returns the utterance unmodified, needs to be an error case
             }
 
@@ -1723,9 +1733,21 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * of the input under the focused context
    */
   //TODO: does this need to check for resume?
-  //TODO: Revisit impl of this - should this be using conversation history or ChatContext? Also, do we now just
-  //        explicitly store something holding this information?
   private Utterance getOriginalContextSpecificUtterance(Symbol user, Symbol agentTeam, String contextIdentifier) {
+    // Method 1: Works if engaging in (extended) LLM validation - check in appropriate ChatContext
+    user = getUntypedSymbol(user);
+    agentTeam = getUntypedSymbol(agentTeam);
+    synchronized (currentChatCollections) {
+      ChatCollection chatCollection = getChatCollection(user.toUntyped(), agentTeam.toUntyped());
+      if (chatCollection != null) {
+        ChatContext pendingContext = chatCollection.pendingFocusedChats.get(contextIdentifier);
+        if (pendingContext != null) {
+          return pendingContext.utteranceUpForValidation;
+        }
+      }
+    }
+    // Backup Method: Old impl checking dialogue history - covers external parser case (which shouldn't actually be possible unless domain is misconfigured)
+    // (Added above method because this worked well other than a recently found issue where culling history interfered with properly being able to find the original utterance)
     user = getUntypedSymbol(user);
     agentTeam = getUntypedSymbol(agentTeam);
     List<Utterance> conversationHistory = getConversationHistory(user, agentTeam);
@@ -2248,24 +2270,52 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatContext.history.addToolMessage(toolResponse, toolCallId);
         }
 
-        // Want to be able to point LLM towards making certain tool calls appropriately from ITK responses, adding tool list in here as well
+        // TODO: merge code here and in parseUtteranceLLMService in some way. Easy to update one while missing the other
+        boolean hasQuestions = false;
+        try {
+          hasQuestions = TRADE.getAvailableService(new TRADEServiceConstraints().name("isAgentWaitingForResponse").argTypes(Symbol.class)).call(Boolean.class, agentTeam);
+        } catch (TRADEException e) {
+          log.error("[parseUtteranceLLMService] unable to query agents QA status");
+        }
+        if (chatContext.chatState == ChatState.VALIDATION && !hasQuestions) {
+          log.error("[parseUtteranceLLMService] mismatched states - in VALIDATION but agentTeam has no system questions");
+        }
         ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
         if (chatTemplates != null) {
-          tools = new ArrayList<>(chatTemplates.toolDefinitions);
+          if (hasQuestions) {
+            tools = new ArrayList<>();
+            Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+            if (focusedTextResponseTool != null) {
+              tools.add(focusedTextResponseTool.toolDefinition);
+            } else {
+              tools.add(textResponseTool.toolDefinition);
+            }
+            // Add appropriate QA tool list
+            if (chatContext.chatState == ChatState.VALIDATION) {
+              chatTemplates = this.chatTemplates.get("validationnlu");
+            } else {
+              chatTemplates = this.chatTemplates.get("questionAnswer");
+            }
+            tools.addAll(chatTemplates.toolDefinitions);
+            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+          } else {
+            // Want to be able to point LLM towards making certain tool calls appropriately from ITK responses, adding tool list in here as well
+            tools = new ArrayList<>(chatTemplates.toolDefinitions);
+            if (chatContext.chatType == ChatType.FOCUSED) {
+              tools.addAll(universalFocusedToolDefinitions);
+              // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
+              if (chatContext.chatState == ChatState.VALIDATION) {
+                tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+              }
+            } else {
+              // Add all matching system question response tools based off of expected reply semantics
+              tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
+            }
+            tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
+          }
         } else {
           tools = new ArrayList<>(List.of(textResponseTool.toolDefinition));
         }
-        if (chatContext.chatType == ChatType.FOCUSED) {
-          tools.addAll(universalFocusedToolDefinitions);
-          // TODO: Had written this way, but is there a reason to explicitly hide these tools when in a focused context?
-          if (chatContext.chatState == ChatState.VALIDATION) {
-            tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
-          }
-        } else {
-          // Add all matching system question response tools based off of expected reply semantics
-          tools.addAll(getQuestionResponseToolDefinitions(agentTeam));
-        }
-        tools.addAll(getContextDependentTools(agentTeam).values().stream().map(t -> t.toolDefinition).toList());
       }
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
@@ -2321,12 +2371,23 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
 
         log.info("[addToolResponse] Trying again with added guidance before failing");
-        if (toolCallId.isEmpty()) {
-          chatContext.history.addMessage("tool", "Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
-        } else {
-          chatContext.history.addToolMessage("Please respond using the " + textResponseTool.toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
+        ToolDefinition toolDefinition = null;
+        ChatTemplates chatTemplates = this.chatTemplates.get(chatContext.contextID);
+        if (chatTemplates != null) {
+          Tool tool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+          if (tool != null) {
+            toolDefinition = tool.toolDefinition;
+          }
         }
-        out = runCompletionRetryLoop(null, List.of(textResponseTool.toolDefinition), dummy, collection, new StringBuilder(), false);
+        if (toolDefinition == null) {
+          toolDefinition = textResponseTool.toolDefinition;
+        }
+        if (toolCallId.isEmpty()) {
+          chatContext.history.addMessage("tool", "Please respond using the " + toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.");
+        } else {
+          chatContext.history.addToolMessage("Please respond using the " + toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
+        }
+        out = runCompletionRetryLoop(null, List.of(toolDefinition), dummy, collection, new StringBuilder(), false);
         if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
           collection.grabInputLock(out, true);
           return out;
@@ -2931,7 +2992,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             if ((semantics.getName().equals("val") || semantics.getName().equals("validated"))) {
               //// Synchronize history update before question answer response callback side effects (new because external parsers can handle validation responses now)
               //chatContext.signalValidationResponseHistoryUpdate();
-              chatContext.history.addUserMessage(utterance.getWordsAsString());
+              //chatContext.history.addUserMessage(utterance.getWordsAsString()); //Removed with recent update: adding to separate QA chat which is merged back in if the interaction continues
               if (semantics.get(0).getName().equals("no")) {
                 return;
               }
