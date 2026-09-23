@@ -236,7 +236,7 @@ is like; (ADV/C)\C ; #x#y.like($x,$y)
 
 i; AGENT ; ?INTERACTOR
 
-in ; PPadv/C; #x.$x
+in; PPadv/C; #x.$x
 
 in front of; Prep/AGENT; #a.inFrontOf($a)
 

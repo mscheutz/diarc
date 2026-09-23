@@ -318,6 +318,7 @@ thanks ; G ; thank_you
 
 the; REF/RN ; #x.$x ; DEFINITE
 
+the; C/C; #x.$x
 then; C/C; #x.$x
 
 this; REF ; ACTIVATED

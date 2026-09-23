@@ -55,7 +55,11 @@ public class MiscSceneGenerator extends SceneGenerator {
                 PredicateHelper.createPredicate("smallgear(X)"),
                 PredicateHelper.createPredicate("largegear(X)"),
                 PredicateHelper.createPredicate("gearboxtop(X)"),
-                PredicateHelper.createPredicate("gearboxbottom(X)")
+                PredicateHelper.createPredicate("gearboxbottom(X)"),
+                PredicateHelper.createPredicate("mug(X)"),
+                PredicateHelper.createPredicate("table(X)")
+
+
         );
         float noise = 0.0f;
         SceneCollection sceneCollection = new SceneCollection(knownProperties, noise);
@@ -64,12 +68,9 @@ public class MiscSceneGenerator extends SceneGenerator {
         Scene scene0 = new Scene("0");
 
         // scene  1
-        scene0.addDetectionResult(getKnife());
-        scene0.addDetectionResult(getRedTeaBox());
-        scene0.addDetectionResult(getGreenTeaBox());
-        scene0.addDetectionResult(getPlate());
-        scene0.addDetectionResult(getFridge());
-        scene0.addDetectionResult(getMagnet());
+        scene0.addDetectionResult(getMug());
+        scene0.addDetectionResult(getTable());
+
         sceneCollection.addScene(scene0);
 
         return sceneCollection;
@@ -225,6 +226,60 @@ public class MiscSceneGenerator extends SceneGenerator {
 
 
     private MemoryObject getMug() {
+        MemoryObject mo = new MemoryObject();
+
+        // instantiate Test MemoryObject
+        mo.setTokenId(tokenIdGenerator.getNext());
+        mo.setVariable("X");
+        mo.setDetectionConfidence(0.8f);
+        mo.addDescriptor(PredicateHelper.createPredicate("mug(X)"), 0.9f);
+        mo.addDescriptor(PredicateHelper.createPredicate("object(X)"), 0.9f);
+
+        //////////////////////
+
+        // add handle of object
+        MemoryObject mo_handle = new MemoryObject();
+        mo_handle.setTokenId(tokenIdGenerator.getNext());
+        mo_handle.setVariable("Y");
+        mo_handle.setDetectionConfidence(0.9f);
+        mo_handle.addDescriptor(PredicateHelper.createPredicate("handle(Y)"), 0.9f);
+        mo.addChild(mo_handle);
+
+        // add handle relation to knife
+        Term relation_term = PredicateHelper.createPredicate("on(Y,X)");
+        mo.addRelation(0.85f, relation_term, mo_handle, true);
+
+        //////////////////////
+
+        // add grasp point on handle
+        MemoryObject mo_grasp_point = new MemoryObject();
+        mo_grasp_point.setTokenId(tokenIdGenerator.getNext());
+        mo_grasp_point.setVariable("W");
+        mo_grasp_point.setDetectionConfidence(0.9f);
+        mo_grasp_point.addDescriptor(PredicateHelper.createPredicate("grasp_point(W)"), 0.9f);
+        mo.addChild(mo_grasp_point);
+
+        // add grasp point relations
+        relation_term = PredicateHelper.createPredicate("on(W,Y)");
+        mo_handle.addRelation(0.8f, relation_term, mo_grasp_point, true);
+
+        //////////////////////
+
+        // add grasp point on the whole mug
+        mo_grasp_point = new MemoryObject();
+        mo_grasp_point.setTokenId(tokenIdGenerator.getNext());
+        mo_grasp_point.setVariable("W");
+        mo_grasp_point.setDetectionConfidence(0.9f);
+        mo_grasp_point.addDescriptor(PredicateHelper.createPredicate("grasp_point(W)"), 0.9f);
+        mo.addChild(mo_grasp_point);
+
+        // add grasp point relations
+        relation_term = PredicateHelper.createPredicate("on(W,X)");
+        mo_handle.addRelation(0.85f, relation_term, mo_grasp_point, true);
+        return mo;
+    }
+
+    private MemoryObject getTable() {
         MemoryObject mo = new MemoryObject();
 
         // instantiate Test MemoryObject

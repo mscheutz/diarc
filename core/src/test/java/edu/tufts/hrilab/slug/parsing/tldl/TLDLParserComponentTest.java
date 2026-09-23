@@ -41,13 +41,21 @@ public class TLDLParserComponentTest {
 
     //brad this is like this so I don't have to change a bunch of old tests, it should probably be updated at some point
     private boolean testUtterance(String utterance, String desired, String speaker, String addressee) {
+        return testUtterance(utterance, desired, speaker, addressee, false);
+    }
+
+    private boolean testUtterance(String utterance, String desired, String speaker, String addressee, boolean partialUtterance) {
         Utterance.Builder inputUtterance = new Utterance.Builder()
                 .setSpeaker(Factory.createSymbol(speaker))
                 .setAddressee(Factory.createSymbol(addressee))
                 .setWords(Arrays.asList(utterance.split(" ")));
 
-
-        Utterance parseResult = component.parseUtterance(inputUtterance.build());
+        Utterance parseResult;
+        if (partialUtterance) {
+            parseResult = component.parsePartialUtterance(inputUtterance.build());
+        } else {
+            parseResult = component.parseUtterance(inputUtterance.build());
+        }
 
         String outcome = parseResult.toString();
         if (outcome.equals(desired)) {
@@ -2393,6 +2401,7 @@ public class TLDLParserComponentTest {
         log.info("multiRobotMedkitTest");
         component.addDictionary("multiRobotMedkit.dict");
         component.addDictionary("poc4.dict");
+        component.setUseAddressHistory(false);
 
 //        Medkit/Package teaching:
 
@@ -3199,6 +3208,7 @@ public class TLDLParserComponentTest {
         component.addDictionary("templatedict.dict");
         component.addDictionary("multiRobotCaddy.dict");
         component.addDictionary("multiRobotCaddyGenerated.dict");
+        component.setUseAddressHistory(false);
 
         assertTrue(testUtterance("setup demo",
                 "INSTRUCT(brad,self,setupscene(self),{})",
@@ -4024,11 +4034,17 @@ public class TLDLParserComponentTest {
             "self"
     ));
 
-    assertTrue(testUtterance("can you bring me a bottle from the table",
-            "INSTRUCT(eric,self,deliver(self,VAR1:physobj,VAR0:location),{me(VAR0:location),bottle(VAR1:physobj),table(VAR2:location),DEFINITE(VAR0:location),INDEFINITE(VAR1:physobj),DEFINITE(VAR2:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("bring me a bottle from the table",
+                "INSTRUCT(eric,self,deliver(self,VAR1:physobj,VAR0:location),{me(VAR0:location),bottle(VAR1:physobj),table(VAR2:location),DEFINITE(VAR0:location),INDEFINITE(VAR1:physobj),DEFINITE(VAR2:location)})",
+                "eric",
+                "self"
+        ));
+
+        assertTrue(testUtterance("can you bring me a bottle from the table",
+                "QUESTION(eric,self,can(deliver(self,VAR1:physobj,VAR0:location)),{me(VAR0:location),bottle(VAR1:physobj),table(VAR2:location),DEFINITE(VAR0:location),INDEFINITE(VAR1:physobj),DEFINITE(VAR2:location)})",
+                "eric",
+                "self"
+        ));
 
     assertTrue(testUtterance("get a bottle to the table",
             "INSTRUCT(eric,self,getTo(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
@@ -4042,17 +4058,17 @@ public class TLDLParserComponentTest {
             "self"
     ));
 
-    assertTrue(testUtterance("could you please bring a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("could you please bring a bottle to the table",
+                "QUESTION(eric,self,can(deliver(self,VAR0:physobj,VAR1:location)),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("can you deliver a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("can you deliver a bottle to the table",
+                "QUESTION(eric,self,can(deliver(self,VAR0:physobj,VAR1:location)),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
     assertTrue(testUtterance("spot deliver a bottle to the table",
             "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
@@ -4060,11 +4076,11 @@ public class TLDLParserComponentTest {
             "self"
     ));
 
-    assertTrue(testUtterance("would spot deliver a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("would you deliver a bottle to the table",
+                "QUESTION(eric,self,can(deliver(self,VAR0:physobj,VAR1:location)),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
     assertTrue(testUtterance("look for a bottle",
             "INSTRUCT(eric,self,perceiveEntity(self,VAR0:physobj),{bottle(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
@@ -4423,5 +4439,48 @@ public class TLDLParserComponentTest {
                 "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
                 speaker, "self"));
 
+    }
+
+    @Test
+    public void incrementalParsingTest() {
+        // Add dictionary containing necessary rules
+        component.addDictionary("incrementalTesting.dict");
+
+        assertTrue(testUtterance("put the apple",
+                "INSTRUCT(speaker,listener,placeObject(listener,apple),{})",
+                "speaker",
+                "listener",
+                true
+        ));
+
+        assertTrue(testUtterance("on the towel",
+                "INSTRUCT(speaker,listener,placeObject(listener,apple),{on(apple,towel)})",
+                "speaker",
+                "listener",
+                true
+        ));
+
+        assertTrue(testUtterance("in the box",
+                "INSTRUCT(speaker,listener,placeObject(listener,apple),{in(towel,box),on(apple,towel)})",
+                "speaker",
+                "listener",
+                true
+        ));
+
+        assertTrue(testUtterance("that is red",
+                "INSTRUCT(speaker,listener,placeObject(listener,apple),{is(box,red),in(towel,box),on(apple,towel)})",
+                "speaker",
+                "listener",
+                true
+        ));
+
+        component.resetParser();
+
+        assertTrue(testUtterance("grab the mug by the handle",
+                "INSTRUCT(speaker,listener,graspObject(listener,mug),{by(mug,handle)})",
+                "speaker",
+                "listener",
+                false
+        ));
     }
 }

@@ -18,6 +18,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
+import edu.tufts.hrilab.slug.parsing.tldl.chart.ChartParser;
+import edu.tufts.hrilab.slug.parsing.tldl.parse.*;
 import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -34,40 +36,41 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    */
   private Map<Symbol, Symbol> addressHistory;
   /**
-   * The addressee for the utterance being parsed. This is cleared and updated for every utterance.
-   */
-  private Symbol currentAddressee;
-  /**
    * If true, use the addressHistory to keep track of most recent (speaker,addressee) pairs, in order to
    * track addressee across utterances that don't contain explicit direct address. This is true by default.
    */
   private boolean useAddressHistory = true;
   /**
-   * (speaker -> current parse if it exists), only exists in cases of incremental input
+   * A static dictionary used for storing and managing linguistic data
+   * such as morphemes, semantics, and associated attributes for processing
+   * and interpreting utterances within the natural language understanding component.
    */
-  private Map<Symbol, Parse> parses;
-
   static Dictionary dictionary;
   /**
    * List of .dict files currently in use by dictionary, including resource config path.
    */
   private List<String> dictionaryFiles;
+  /**
+   * Default directory for dictionary files.
+   */
   private String resourceConfigPath = "config/edu/tufts/hrilab/slug/parsing/tldl";
-  //the set of CCG types which denote the end of an utterance, and their corresponding slug.common.UtteranceType
+  /**
+   * The set of CCG types which denote the end of an utterance, and their corresponding slug.common.UtteranceType
+   */
   private Map<String, UtteranceType> terminalCategories;
-
-  // ADDED FOR GUI
-  private boolean usingGUI = false;
-  private int guiWidth = 1265;
-  private int guiHeight = 645;
-  private String corpusFile;
-
+  /**
+   * Chart parser for parsing utterances.
+   */
+  private ChartParser chartParser = new ChartParser();
+  /**
+   * A list that stores pairs of homophones. Each pair is (base, homophone), where existing base parse rules
+   * will be created for the homophone.
+   */
   private List<Pair<String, String>> homophones = new ArrayList<>();
 
   public TLDLParserComponent() {
     super();
     addressHistory = new HashMap<>();
-    parses = new HashMap<>();
     dictionary = new Dictionary();
     try {
       TRADE.registerAllServices(dictionary, this.getMyGroups());
@@ -84,20 +87,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     terminalCategories.put("ACK", UtteranceType.ACK);
     //TODO:brad:added this for question answering, we might want to consider a more generalized framework?
     terminalCategories.put("VAL", UtteranceType.REPLY);
-  }
-
-  @Override
-  protected void shutdownComponent() {
-    deregisterDictionary();
-    parses.clear();
-  }
-
-  public void deregisterDictionary() {
-    try {
-      TRADE.deregister(dictionary);
-    } catch (TRADEException e) {
-      log.error("[TLDLParserComponent] exception deregistering dictionary", e);
-    }
   }
 
   @Override
@@ -143,6 +132,109 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
   }
 
+  /**
+   * Main entry point for non-incremental parsing. The chart parser is reset before parsing.
+   * @param input
+   * @return
+   */
+  @Override
+  public Utterance parseUtterance(Utterance input) {
+    chartParser.resetChart();
+
+    return parsePartialUtterance(input);
+  }
+
+  /**
+   * Parses a (potentially partial) input Utterance and generates an Utterance containing
+   * the parsed semantics, error semantics, or return the input as is (when there are no words to parse).
+   *
+   * This method does not reset the chart parser, and will add the incoming utterance to the previously
+   * processed Utterance. Use the parseUtterance method for full, independent parses.
+   *
+   * NOTE: this is experimental. There is currently no mechansim to automaticlly detect the end of
+   * an utternacee and reset the chart parser.
+   *
+   * @param input The input Utterance to be parsed. It should contain a list of words
+   *              and other relevant metadata required for processing. If the input is
+   *              null or contains no words, it will be returned as is.
+   *
+   * @return An updated Utterance constructed from the results of the parsing process.
+   */
+  public Utterance parsePartialUtterance(Utterance input) {
+    if (input == null || input.getWords() == null || input.getWords().isEmpty()) {
+      log.warn("[parseUtterance] Null or empty input utterance.");
+      return input;
+    }
+
+    // Perform incremental parsing
+    List<Node> finalParses = chartParser.parseIncrementally(input, dictionary);
+
+    // Build output utterance from final parses
+    Utterance output = buildPartialUtterance(input, finalParses);
+
+    // use addressee history when there's no parse so the correct address generates the failure explanation
+    if (output.getSemantics() == null && useAddressHistory && addressHistory.containsKey(input.getSpeaker())) {
+      output = new Utterance.Builder(output).setAddressee(addressHistory.get(input.getSpeaker())).build();
+    }
+    log.info("[parseUtterance] Words: {} Result: {}", input.getWordsAsString(), output);
+    return output;
+  }
+
+  /**
+   * Temporary method to manually reset the chart parser if using the parsePartialUtterance method.
+   */
+  public void resetParser() {
+    chartParser.resetChart();
+  }
+
+  /**
+   * Constructs a partial Utterance by processing the input Utterance and a list of possible
+   * parses. If a valid parse exists in the provided list, a new Utterance is created
+   * based on the top-ranked parse. Otherwise, it handles the case of empty or invalid
+   * parses by generating error semantics or returning the input as is.
+   *
+   * @param input The input Utterance to be processed.
+   * @param finalParses A list of Node objects representing potential parses for the utterance.
+   *                     This can be empty or null if no valid parses are produced.
+   * @return A new Utterance built from the best parse in the list, or an Utterance with
+   *         error semantics if no valid parses are available. Returns the original input
+   *         Utterance if no modifications are required.
+   */
+  public Utterance buildPartialUtterance(Utterance input, List<Node> finalParses) {
+
+    Symbol speaker = input.getSpeaker();
+    Symbol addressee = input.getAddressee();
+
+    // generate Utterances for all valid parses
+    List<Utterance> utterances = new ArrayList<>();
+    if (finalParses != null) {
+      for (Node parse : finalParses) {
+        utterances.addAll(createUtterances(parse, speaker, addressee));
+      }
+    }
+
+    if (utterances.isEmpty()) {
+      log.warn("[buildPartialUtterance] No valid parses found.");
+      if (chartParser.hasUnkownTokens()) {
+        Utterance errorSemantics = generateErrorSemantics(speaker, addressee, chartParser.getFirstUnknownTokens());
+        errorSemantics.setWords(input.getWords());
+        return errorSemantics;
+      } else {
+        // no specific unknown tokens, just couldn't parse
+        return input;
+      }
+    }
+
+    // TODO: perform reasoning on multiple parses here if needed
+    // List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
+    // List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
+
+    // Finally, return only the best parse's utterance
+    Utterance finalUtterance = utterances.get(0);
+    updateAddresseeHistory(finalUtterance.getSpeaker(), finalUtterance.getAddressee());
+    return utterances.get(0);
+  }
+
   //replaces current dictionary with one found at path
   public void addDictionary(String newDict) {
     String newDictWithPath = Resources.createFilepath(resourceConfigPath, newDict);
@@ -152,71 +244,181 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   /**
-   * Replaces current Dictionary with new empty dictionary. Also replaces dictionaryFiles with an empty list/
+   * Constructs an Utterance object based on the provided finalNode's rules and given speaker
+   * and addressee symbols. The method processes semantic and syntactic information from the node's
+   * rules to generate a structured Utterance.
+   *
+   * @param finalNode The Node object containing the rules from which the utterance is generated.
+   * @param speaker   The Symbol representing the speaker of the input utterance.
+   * @param addressee The Symbol representing the addressee of the input utterance (often unknown).
+   * @return An Utterance object constructed based on the rules, semantics, and other properties of the node.
+   * Returns null if no valid Utterance could be created from the node's rules.
    */
-  public void clearDictionary() {
-    dictionary = new Dictionary();
-    try {
-      TRADE.registerAllServices(dictionary, this.getMyGroups());
-    } catch (TRADEException e) {
-      log.error("[TLDLParserComponent] exception registering dictionary", e);
+  public List<Utterance> createUtterances(Node finalNode, Symbol speaker, Symbol addressee) {
+    List<Utterance> utterances = new ArrayList<>();
+    for (NodeEntry nodeRule : finalNode.getRules()) {
+
+      UtteranceType utteranceType = terminalCategories.get(nodeRule.getSyntacticRule().getType());
+      if (utteranceType == null) {
+        log.warn("Skipping nodeRule with unknown terminal category: {}", nodeRule.getSyntacticRule().getType());
+        continue;
+      }
+      // reset variable names for each utterance
+      VariableFactory.getInstance().reset();
+
+      Pair<List<Symbol>, Map<Variable, Symbol>> diarcSemantics = nodeRule.getSemanticRule().getDIARCSemantics();
+      List<Symbol> fullSemantics = diarcSemantics.getLeft();
+      log.debug("full semantics: " + fullSemantics);
+
+      Symbol mainSemantics = fullSemantics.remove(0);
+
+      // get intended addressee based on semantics, direct address, and addressee history
+      Symbol intendedAddressee = getAddressee(mainSemantics, speaker, addressee, utteranceType);
+
+      // remove explicit directAddress semantics
+      mainSemantics = stripDirectAddressSemantics(mainSemantics);
+
+      // update semantics with intended addressee
+      mainSemantics = updateSpeakerNames(mainSemantics, intendedAddressee, speaker);
+      List<Term> supplementalSemanticsTest = new ArrayList<>();
+      for (Symbol semTest : fullSemantics) {
+        if (semTest.isTerm()) {
+          //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
+          supplementalSemanticsTest.add((Term) updateSpeakerNames(semTest, intendedAddressee, speaker));
+        } else {
+          log.warn("badly formatted supplemental semantics: " + semTest + " . Still added though");
+          supplementalSemanticsTest.add((Term) semTest);
+        }
+      }
+      log.debug("Bindings: " + diarcSemantics);
+
+      // build utterance
+      Utterance utterance = new Utterance.Builder()
+              .setSpeaker(speaker)
+              .setAddressee(intendedAddressee)
+              .setSemantics(mainSemantics)
+              .setSupplementalSemantics(supplementalSemanticsTest)
+              .setTierAssignments(diarcSemantics.getRight())
+              .setIsInputUtterance(true)
+              .setUtteranceType(utteranceType)
+              .setWords(Arrays.asList(nodeRule.getMorpheme().split(" ")))
+              .build();
+
+      utterances.add(utterance);
     }
-    dictionaryFiles = new ArrayList<>();
-  }
 
-  // ADDED FOR GUI
-  public List<String> getDictionaryFiles() {
-    return dictionaryFiles;
-  }
-
-  //used to update word learning component, from 2019 ICRA paper
-  @TRADEService
-  public Pair<List<String>, List<String>> getLex() {
-    return dictionary.getLex();
+    return utterances;
   }
 
   /**
-   * Updates currentAddressee and addressee history (if enabled) based on utterance semantics.
-   * Also removes direct address wrappers from generated semantics.
+   * Determines the addressee of an utterance based on the provided semantics, speaker,
+   * addressee, and utterance type. It first attempts to extract a direct addressee
+   * from the semantics. If no direct addressee can be determined, it uses the
+   * address history (if enabled) or defaults to the addressee from the incoming
+   * utterance.
    *
-   * @param semantics current utterance semantics
-   * @param speaker utterance speaker
-   * @param addressee utterance addressee
-   * @param type utterance type
-   * @return updated semantics with direct address wrapper removed
+   * @param semantics The semantic representation of the utterance, which may contain
+   *                  information about a direct addressee.
+   * @param speaker   The Symbol representing the speaker of the utterance.
+   * @param addressee The Symbol representing the original addressee of the utterance,
+   *                  typically from incoming context.
+   * @param type      The type of utterance (e.g., INSTRUCT), which may affect the determination
+   *                  of the addressee.
+   * @return A Symbol representing the determined addressee. This will be the direct
+   *         addressee extracted from the semantics if available, the addressee based
+   *         on history if enabled, or the incoming addressee if no other information
+   *         is available.
    */
-  private Symbol updateDirectAddress(Symbol semantics, Symbol speaker, Symbol addressee, UtteranceType type) {
-    Symbol returnSemantics = semantics;
+  private Symbol getAddressee(Symbol semantics, Symbol speaker, Symbol addressee, UtteranceType type) {
+    Symbol returnAddressee = null;
 
     // try to extract direct address from semantics
     if (semantics.isTerm()) {
       if (semantics.getName().equals("directAddress")) {
-        currentAddressee = ((Term) semantics).getArgs().get(0);
-        returnSemantics = ((Term) semantics).get(1);
+        returnAddressee = ((Term) semantics).getArgs().get(0);
       } else if (type.equals(UtteranceType.INSTRUCT)
               && !((Term) semantics).getArgs().isEmpty()
               && !((Term) semantics).getArgs().get(0).getName().equals("?ADDRESSEE")) {
-        currentAddressee = ((Term) semantics).getArgs().get(0);
+        returnAddressee = ((Term) semantics).getArgs().get(0);
       }
     }
 
     // if no direct address found in semantics, first try to use the addressee history, otherwise finally use the addressee from incoming Utterance
-    if (currentAddressee == null) {
+    if (returnAddressee == null) {
       if (useAddressHistory && addressHistory.containsKey(speaker)) {
-        currentAddressee = addressHistory.get(speaker);
+        returnAddressee = addressHistory.get(speaker);
       } else {
-        currentAddressee = addressee;
-      }
-    } else {
-      if (useAddressHistory) {
-        addressHistory.put(speaker, currentAddressee);
+        returnAddressee = addressee;
       }
     }
+
+    return returnAddressee;
+  }
+
+  /**
+   * Updates the addressee history by associating the given speaker with the given addressee,
+   * if the address history functionality is enabled.
+   *
+   * @param speaker   The Symbol representing the speaker of the utterance.
+   * @param addressee The Symbol representing the addressee of the utterance.
+   */
+  private void updateAddresseeHistory(Symbol speaker, Symbol addressee) {
+    if (useAddressHistory) {
+      addressHistory.put(speaker, addressee);
+    }
+  }
+
+  /**
+   * Removes the "directAddress" wrapper from the given semantic representation, if present.
+   * If the input semantic contains "directAddress", the method extracts and returns the
+   * nested semantics; otherwise, it returns the original semantic as is.
+   *
+   * @param semantics The semantic representation to be processed. It may or may not
+   *                  contain a "directAddress" wrapper.
+   * @return The processed semantic representation with the "directAddress" wrapper removed
+   *         if it was present. Returns the original semantic representation if no such
+   *         wrapper exists.
+   */
+  private Symbol stripDirectAddressSemantics(Symbol semantics) {
+    Symbol returnSemantics = semantics;
+
+    if (semantics.getName().equals("directAddress")) {
+      returnSemantics = ((Term) semantics).get(1);
+    }
+
     return returnSemantics;
   }
 
   /**
-   * replaces all instances of target in base with replacement
+   * Updates the semantic representation by replacing placeholders for the addressee and
+   * speaker with the corresponding actual symbols. The method ensures that the provided
+   * semantics reflect the correct speaker and addressee information.
+   *
+   * @param semantics The initial semantic representation to be updated.
+   * @param addressee The Symbol representing the addressee to replace in the semantics.
+   * @param speaker   The Symbol representing the speaker to replace in the semantics.
+   * @return A new Symbol containing the updated semantic representation with the specified
+   *         speaker and addressee incorporated.
+   */
+  private Symbol updateSpeakerNames(Symbol semantics, Symbol addressee, Symbol speaker) {
+    Symbol groundedSemantics = updateSpeakerNamesHelper(semantics, new Variable("?ADDRESSEE"), addressee);
+    return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
+  }
+
+  /**
+   * Recursively updates a semantic representation by replacing all occurrences of a target symbol
+   * with a replacement symbol. This method traverses the structure of the given base symbol, which
+   * may be either a term or a non-term symbol, and applies the replacement where applicable.
+   *
+   * @param base The Symbol to be processed and potentially updated. This can represent either a
+   *             term with arguments or a non-term symbol.
+   * @param target The Symbol to be replaced during the traversal. If any part of the `base` matches
+   *               this target, it will be substituted with the replacement symbol.
+   * @param replacement The Symbol to be substituted for occurrences of the target symbol within the
+   *                    base.
+   * @return A new Symbol containing the updated semantic representation with all instances of
+   *         the target symbol replaced by the replacement symbol. If no replacement occurs, the
+   *         original base symbol is returned.
    */
   private Symbol updateSpeakerNamesHelper(Symbol base, Symbol target, Symbol replacement) {
     if (base.isTerm()) {
@@ -239,186 +441,18 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
   }
 
-  private Symbol updateSpeakerNames(Symbol semantics, Symbol addressee, Symbol speaker) {
-    Symbol groundedSemantics = updateSpeakerNamesHelper(semantics, new Variable("?ADDRESSEE"), addressee);
-    return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
-  }
-
-  @Override
-  public Utterance parseUtterance(Utterance input) {
-    Utterance output = parseUtteranceHelper(input);
-    // use addressee history when there's no parse so the correct address generates the failure explanation
-    if (output.getSemantics() == null && useAddressHistory && addressHistory.containsKey(input.getSpeaker())) {
-      output = new Utterance.Builder(output).setAddressee(addressHistory.get(input.getSpeaker())).build();
-    }
-    log.info("[parseUtterance] Words: {} Result: {}", input.getWordsAsString(), output);
-    return output;
-  }
-
   /**
-   * First step of Utterance Processing, updates address history and passes utterance to
-   * addWords. This allows for parallelization across incoming utterances, while still preserving
-   * incremental processing to some degree.
-   * <p>
-   * Tokenizes the text of the utterance and updates the parse with each token in order.
+   * Generates an Utterance object with error semantics when the input cannot be understood or
+   * specific unknown words are encountered. The generated error message includes appropriate semantics
+   * depending on whether the `unknownWords` parameter is empty or non-empty.
    *
-   * @param input utterance to be parsed
-   * @return parsed Utterance (or Utterance with failure semantics)
+   * @param speaker       The Symbol representing the speaker of the error utterance.
+   * @param addressee     The Symbol representing the intended recipient or addressee of the error utterance.
+   * @param unknownWords  A string containing the unknown words that could not be understood. If empty,
+   *                      the generated semantics will not reference specific unknown words.
+   * @return An Utterance object containing the error message along with the appropriate semantics and addressee.
    */
-  private Utterance parseUtteranceHelper(Utterance input) {
-    // clear addressee from previous utterance
-    currentAddressee = null;
-
-    Symbol speaker = input.getSpeaker();
-    Symbol addressee = input.getAddressee();
-    if (addressee == null) {
-      log.warn("addressee not set in incoming utterance. Setting to \"unknown\" unless direct address overrides this value.");
-    }
-
-    //Make sure there is a Parse object for the speaker of the current Utterance
-    if (!parses.containsKey(speaker)) {
-      parses.put(speaker, new Parse(terminalCategories.keySet()));
-    }
-    Parse currentParse = parses.get(speaker);
-
-    List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
-
-    Utterance output;
-    for (ListIterator<Pair<String, List<Entry>>> tokensIterator = tokens.listIterator(); tokensIterator.hasNext(); ) {
-      Pair<String, List<Entry>> nextToken = tokensIterator.next();
-      String token = nextToken.getLeft();
-      List<Entry> entries = nextToken.getRight();
-      if (entries.isEmpty()) {
-        log.warn("[parseUtterance] unknown token: " + token);
-        log.debug("current interactor: " + speaker);
-        parses.put(speaker, new Parse(terminalCategories.keySet()));
-        // TODO: this should be handled in the NLU scripts
-
-        output = generateErrorSemantics(speaker, addressee, token);
-        output.setWords(input.getWords());
-        return output;
-      }
-      currentParse = addEntriesForToken(entries, speaker);
-      //this occurs if we're in not in learning mode and we get a morpheme that's not in the dict
-      if (currentParse == null) {
-        parses.put(speaker, new Parse(terminalCategories.keySet()));
-        log.debug("parse tree reset");
-        return input;
-      }
-
-      if (currentParse.isLiteral()) {
-        StringBuilder newToken = new StringBuilder();
-        while (tokensIterator.hasNext()) {
-          newToken.append(tokensIterator.next().getLeft()).append(" ");
-        }
-        //convert all of the rest of they keys into a new token
-        //TODO:brad check if this is empty
-        if (!newToken.toString().isEmpty()) {
-          Entry e = currentParse.generateLiteralEntry(newToken.toString());
-          //add the new entry to the parse
-          addWord(e, speaker);
-          //we're done and the utterance is complete
-          break;
-        } else {
-          log.warn("expecting literal args at the end of utterance, getting ignored: " + token);
-        }
-      }
-
-
-      //TODO:brad: do we actually want this behavior?
-      //utterance ends in the middle of tokens
-      //if the utterance ends in the middle of tokens, we want to send it on the complete utterance,
-      // but also keep the remainder of tokens
-//      if (currentParse.verifyParseCompletion()) {
-////        log.debug("Addition of \"" + token + "\" verifies the previous utterance was over");
-//        Node previousParse = currentParse.popPreviousParse();
-//        log.debug("previous parse: " + previousParse);
-//        sendParse(previousParse, currentInteractor,currentListener);
-//
-//        //reset parse tree once utterance has been set, but re add the word we just added
-//        parses.put(u.getSpeaker(), new Parse(terminalCategories.keySet()));
-//        addEntriesForToken(entries, currentInteractor);
-//      }
-    }
-
-    //Once we've heard all of the words in the utterance:
-    //if the current parse is a terminal case
-    if (currentParse.checkTerminal()) {
-      //currentParse.pruneNonTerminal();
-      log.debug("terminal condition found");
-      output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-
-      //reset parse tree once utterance has been sent
-      //TODO: in the future we might want to keep track of the set of all previous parses somewhere
-      parses.put(input.getSpeaker(), new Parse(terminalCategories.keySet()));
-    } else {
-      //otherwise check to see if we can make it a terminal case...
-      log.debug("no valid parse and no more input in time.");
-      log.debug("current parse: " + currentParse);
-      //if we don't have parse rules for a word try to figure them out
-      //TODO:brad: make a separate pipeline that results in in infer unknowns getting called.
-      if (!currentParse.checkAllDefinitionsExist() && false) {
-        log.debug("inferring new definitions ");
-        dictionary.addEntries(currentParse.inferUnknowns());
-        log.debug("sending inferred parse");
-        output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-      } else if (currentParse.checkComplete()) {
-        //try to rebuild the tree because the current parsing algorithm is too greedy and might be wrong
-        log.debug("parse might be fixable");
-        currentParse.reviseParse();
-        //now check if it's complete
-        if (currentParse.checkTerminal()) {
-          log.debug("sending revised parse");
-          output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
-        } else {
-          log.debug("it wasn't...");
-          return input;
-        }
-      } else {
-        //otherwise let the system no that we couldn't find a parse
-        return input;
-      }
-
-      log.debug("currentInteractor " + speaker);
-      parses.put(speaker, new Parse(terminalCategories.keySet()));
-      log.debug("parse tree reset");
-    }
-
-    return output;
-  }
-
-  private Parse addEntriesForToken(List<Entry> entries, Symbol speaker) {
-    Parse currentParse = parses.get(speaker);
-    log.debug("\nadding: " + entries);
-    if (!entries.isEmpty()) {
-      log.debug("possible foundEntries size: " + entries.size());
-      //initialize new Node in the Parse space
-      Node found = new Node(entries);
-      //Try to combine the new Node with the rest of the current parse
-      currentParse.addNode(found);
-    }
-    return currentParse;
-  }
-
-
-  //Update parse for given speaker with given entry
-  private Parse addWord(Entry incoming, Symbol speaker) {
-    Parse currentParse = parses.get(speaker);
-
-    log.debug("\nadding entry: " + incoming);
-    List<Entry> foundEntries = new ArrayList<>();
-    foundEntries.add(incoming);
-
-    //initialize new Node in the Parse space
-    Node found = new Node(foundEntries);
-    //Try to combine the new Node with the rest of the current parse
-    currentParse.addNode(found);
-
-    return currentParse;
-  }
-
-  //sends error message which indicates that the utterance wasn't parsed
-  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String reason) {
+  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String unknownWords) {
     log.debug("sending error message");
 
     Utterance.Builder utterance = new Utterance.Builder();
@@ -430,71 +464,15 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
 
     Predicate failureSemantics;
-    if (reason.isEmpty()) {
+    if (unknownWords.isEmpty()) {
       failureSemantics = Factory.createPredicate("not(understand(" + addressee + ",that))");
     } else {
-      failureSemantics = Factory.createPredicate("error(" + addressee + ",doNotKnowWhat(" + addressee + "," + reason + ",means))");
+      failureSemantics = Factory.createPredicate("error(" + addressee + ",doNotKnowWhat(" + addressee + "," + unknownWords + ",means))");
     }
     utterance.setSemantics(failureSemantics);
 
     log.debug("utterance generated: " + utterance);
     return utterance.build();
-  }
-
-  //Pass along new utterance with updated semantics to another NLPComponent
-  private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
-    log.debug("sending semantics");
-    log.trace("number of parses found: " + possibleSemantics.rules.size());
-
-    //iterat over possible parses at terminal Node
-    for (NodeEntry rule : possibleSemantics.rules) {
-      log.trace("complete? " + rule.semantics.isComplete());
-      //if the semantics are complete, meaning there are no unbound lambda args
-      if (rule.semantics.isComplete() && terminalCategories.get(rule.syntax.type) != null) {
-        Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.semantics.getDIARCSemantics();
-        List<Symbol> fullSemantics = DIARCSemantics.getLeft();
-        log.debug("full semantics: " + fullSemantics);
-
-        // start building utterance and set utterance type
-        Utterance.Builder builder = new Utterance.Builder();
-        UtteranceType type = terminalCategories.get(rule.syntax.type);
-        builder.setUtteranceType(type);
-
-        // set utterance semantics
-        Symbol mainSemantics = fullSemantics.remove(0);
-        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, type);
-        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
-        builder.setSemantics(mainSemantics);
-
-        // set utterance supplemental semantics
-        for (Symbol sem : fullSemantics) {
-          if (sem.isTerm()) {
-            //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
-            builder.addSupplementalSemantics((Term) updateSpeakerNames(sem, currentAddressee, speaker));
-          } else {
-            log.error("Badly formatted supplemental semantics: " + sem);
-          }
-        }
-        // set remaining utterance info
-        log.debug("Bindings: " + DIARCSemantics);
-        builder.setSpeaker(speaker);
-        builder.setAddressee(currentAddressee);
-        builder.setTierAssignments(DIARCSemantics.getRight());
-        builder.setIsInputUtterance(true);
-        builder.setWords(Arrays.asList(rule.morpheme.split(" ")));
-
-
-        Utterance utterance = builder.build();
-        log.debug("utterance generated: " + utterance);
-        log.debug("utterance words: " + utterance.getWordsAsString());
-
-        // NOTE: if we want to support multiple parse options, we should process
-        // the rest of the parse options and add them to the Utterance before returning
-        return utterance;
-      }
-    }
-    log.warn("tried to send incomplete semantics, nothing sent... " + possibleSemantics);
-    return null;
   }
 
   /**
@@ -518,29 +496,11 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   @TRADEService
   @Action
   public void injectDictionaryEntry(String morpheme, String type, String semantics, String cognitiveStatus) {
-    //TODO: probably don't want this here permanently
-    // EAK: causes issues if FirebaseComponent isn't fully initialized yet
-//    if (TRADE.isAvailable("writeDictionaryKey")) {
-//      try {
-//        TRADE.callThe("writeDictionaryKey", morpheme);
-//      } catch (TRADEException e) {
-//        log.error("[injectDictionaryEntry] unable to write dictionary keys to firebase", e);
-//      }
-//    }
     morpheme = morpheme.toLowerCase();
     log.debug("[injectDictionaryEntry] injecting entry for: " + morpheme + " type: " + type + " semantics: " + semantics + " cs: " + cognitiveStatus);
     Entry e = new Entry(morpheme, new SyntacticRule(type), new SemanticRule(semantics), cognitiveStatus);
     log.debug("[injectDictionaryEntry] entry: " + e);
     dictionary.addEntry(e);
-  }
-
-  //TODO:brad: move these to Dictionary
-  //Function used in FirebaseConnectionComponent to list dictionary keys on webapp for
-  //  homophone definitions
-  @TRADEService
-  @Action
-  public Set<String> getDictionaryEntries() {
-    return dictionary.getKeySet();
   }
 
   @TRADEService
@@ -549,13 +509,19 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     addHomophone(base, homophone, false);
   }
 
-  //Given a base morpheme and homophone, create and add all duplicate entries with homophone as new morpheme
+  /**
+   * Given a base morpheme and homophone, create and add all duplicate entries with homophone as new morpheme
+   *
+   * @param base
+   * @param homophone
+   * @param writeToFile
+   */
   @TRADEService
   public void addHomophone(String base, String homophone, boolean writeToFile) {
     log.info("[addHomophone] have base: " + base + " and homophone: " + homophone);
     List<Entry> entries = dictionary.lookUpEntries(base);
     for (Entry entry : entries) {
-      injectDictionaryEntry(homophone, entry.getSyntax(), entry.getSemantics().getSemantics(), entry.getCognitiveStatus());
+      injectDictionaryEntry(homophone, entry.getSyntacticRule().getType(), entry.getSemanticRule().getSemantics(), entry.getCognitiveStatus());
       if (writeToFile) {
         //TODO: make output file configurable (through webapp)
         File tempASLFile = new File("resources/config/edu/tufts/hrilab/slug/parsing/tldl/assemblyHomophones.dict");
@@ -563,13 +529,26 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
           tempASLFile.getParentFile().mkdirs();
           tempASLFile.createNewFile();
           FileOutputStream outputStream = new FileOutputStream(tempASLFile, true);
-          byte[] strToBytes = ("\n%" + base + "\n" + homophone + "; " + entry.getSyntax() + "; " + entry.getSemantics().getDefinition()).getBytes();
+          byte[] strToBytes = ("\n%" + base + "\n" + homophone + "; " + entry.getSyntacticRule().getType() + "; " + entry.getSemanticRule().getDefinition()).getBytes();
           outputStream.write(strToBytes);
           outputStream.close();
         } catch (IOException e) {
           log.error("Unable to to modify homophone file: ", e);
         }
       }
+    }
+  }
+
+  @Override
+  protected void shutdownComponent() {
+    deregisterDictionary();
+  }
+
+  public void deregisterDictionary() {
+    try {
+      TRADE.deregister(dictionary);
+    } catch (TRADEException e) {
+      log.error("[TLDLParserComponent] exception deregistering dictionary", e);
     }
   }
 

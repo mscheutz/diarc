@@ -394,6 +394,11 @@ every; PP/LREF; #x.$x
 a.m.; VAL\NUM; #x.absoluteTime($x, am)
 p.m.; VAL\NUM; #x.absoluteTime($x, pm)
 
+%% "pass-through" for timing replies
+every; VAL/VAL; #x.$x
+in; VAL/VAL; #x.$x
+at; VAL/VAL; #x.$x
+
 testtest; C; testtest(?ADDRESSEE)
 
 perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
