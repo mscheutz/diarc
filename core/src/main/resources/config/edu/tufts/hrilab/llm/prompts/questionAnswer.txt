@@ -37,6 +37,6 @@ Response Policy:
     - Respond using the stillGatheringInformation tool as appropriate, but nudge the user towards answering the outstanding question
 
 Previous chat history leading up to the asked question:
-  %chatHistoryAsString
+  %QAChatHistoryAsString
 
 Respond to the user's most recent input by following the Response Policy and keeping Response Style and Constraints in mind.

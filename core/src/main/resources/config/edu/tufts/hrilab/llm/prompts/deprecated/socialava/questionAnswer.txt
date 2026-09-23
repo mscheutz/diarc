@@ -54,6 +54,6 @@ Response Policy:
 
 Contextual Information:
 - Previous chat history:
-    %chatHistoryAsString
+    %QAChatHistoryAsString
 
 Respond to the user's most recent input by following the Response Policy and keeping Response Style and Constraints in mind.

@@ -44,6 +44,6 @@ Examples:
 - abort: "nevermind", "forget about it"
 
 Previous chat history leading up to the validation question:
-    %chatHistoryAsString
+    %QAChatHistoryAsString
 
 Respond to the user's input by following the Response Policy and keeping Response Style and Constraints in mind.
