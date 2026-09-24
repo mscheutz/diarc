@@ -261,8 +261,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "- Current Battery Level: %batteryLevel\n" +
               "- Current Video Volume: %videoVolume\n" +
               "- Current Speaking Voice Volume: %voiceVolume\n" +
-              "- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
-              "%questionList\n" +
+              ////"- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
+              ////"%questionList\n" +
               "- Location List:\n" +
               "%locationList\n" +
               "- Video List:\n" +
