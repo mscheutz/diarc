@@ -25,7 +25,7 @@ public class AvaStatisticsEvent implements Serializable {
   }
 
   /** Goal name used for urgent go-home / low-battery return-to-dock identification. */
-  public static final String URGENT_GO_HOME_GOAL_NAME = "urgentGoHomeAndChargeToPercent";
+  public static final String URGENT_GO_HOME_GOAL_NAME = "urgentChargeAtHomeToPercent";
 
   private final Kind kind;
   private final long timestampMs;

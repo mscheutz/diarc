@@ -31,8 +31,8 @@ Output:{"translation":"Scheduled to dock in 5 minutes and then every day at 5:00
 Input:scheduled(goHome(%addressee),start(23-07-58),period(2,hours))
 Output:{"translation":"Scheduled to dock at around 11:08 p.m., and every 2 hours thereafter"}
 #
-Input:goHomeAndChargeToPercent(%addressee,50.0)
-Output:{"translation":"Go home to charge until 50 percent battery"}
+Input:chargeAtHomeToPercent(%addressee,50.0)
+Output:{"translation":"Charge at my dock until 50 percent battery"}
 #
 Input:goToLocation(%addressee,reception:location)
 Output:{"translation":"Go to reception."}

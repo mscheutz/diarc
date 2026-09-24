@@ -48,7 +48,7 @@ public class KioskGoalManager extends DiarcComponent {
    */
   private static final Object kioskGoalAccessLock = new Object();
   private boolean kioskModeEnabled;
-  private Predicate kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
+  private Predicate kioskGoalPredicate = Factory.createPredicate("chargeAtHome","ava");
   private long kioskTimeout = 2700; //seconds
   private TimerTask kioskTimerTask;
   private Timer kioskTimer;

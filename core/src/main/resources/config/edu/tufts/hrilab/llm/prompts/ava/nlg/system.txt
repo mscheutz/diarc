@@ -166,13 +166,13 @@ Output:{"translation":"returning to my dock is scheduled to next occur at around
 Input:REPLY(ava,%addressee,batteryLevel(50),{})
 Output:{"translation":"My battery level is at 50 percent"}
 #
-Input:REPLY(ava,%addressee,[currentGoals(are(ava,active(goHomeAndChargeToPercent(ava,50.0))))],{})
+Input:REPLY(ava,%addressee,[currentGoals(are(ava,active(chargeAtHomeToPercent(ava,50.0))))],{})
 Output:{"translation":"My current goal is to go home and charge until my battery has reached 50 percent"}
 #
 Input:REPLY(ava,person,how(ava,perform(greet people)),{})
 Output:{"translation":"How do I perform the \"greet people\" action?"}
 #
-Input:REPLY(ava,person,kioskGoal(goHomeAndCharge(ava),2700),{})
+Input:REPLY(ava,person,kioskGoal(chargeAtHome(ava),2700),{})
 Output:{"translation":"The kiosk goal is to return to my dock and charge, after 45 minutes of inactivity"}
 #
 Input:REPLY(ava,person,and(learnedTourSequence(introductionguideexampletour),canAskToPerformBySaying(pleasePerform,introductionguideexampletour)),{})

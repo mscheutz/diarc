@@ -212,8 +212,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
     boolean !sentUrgentGoalHome = false;
-    Predicate !goHomeGoalPred = op:createPredicate("goHomeAndChargeToPercent(?actor, !enoughChargeLevel)");
-    Predicate !urgentGoHomeGoalPred = op:createPredicate("urgentGoHomeAndChargeToPercent(?actor, !enoughChargeLevel)");
+    Predicate !goHomeGoalPred = op:createPredicate("chargeAtHomeToPercent(?actor, !enoughChargeLevel)");
+    Predicate !urgentGoHomeGoalPred = op:createPredicate("urgentChargeAtHomeToPercent(?actor, !enoughChargeLevel)");
     Long !goHomeGoalID = -1;
 
     // TODO;daniel; try catch the failure of going home or cancels
@@ -251,13 +251,13 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-// Wraps goHomeAndChargeToPercent but is marked with SKIPPENDING/URGENT bypassing the queue
-() = urgentGoHomeAndChargeToPercent(double ?enoughChargeLevel) {
-    act:goHomeAndChargeToPercent(?enoughChargeLevel);
+// Wraps chargeAtHomeToPercent but is marked with SKIPPENDING/URGENT bypassing the queue
+() = urgentChargeAtHomeToPercent(double ?enoughChargeLevel) {
+    act:chargeAtHomeToPercent(?enoughChargeLevel);
 }
 
 // Persistent goal until charged to certain threshold
-() = goHomeAndChargeToPercent(double ?enoughChargeLevel) {
+() = chargeAtHomeToPercent(double ?enoughChargeLevel) {
     int !sleepTime = 30000;
     double !currBatteryLevel;
     !currBatteryLevel = act:getBatteryLevel();
@@ -270,8 +270,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-//Indefinitely blocking, but interruptible version of goHomeAndCharge. Used for Kiosk action
-() = goHomeAndCharge() {
+//Indefinitely blocking, but interruptible version of chargeAtHome. Used for Kiosk action
+() = chargeAtHome() {
     java.lang.Boolean !docked = False;
 
     !docked = act:isDocked();
