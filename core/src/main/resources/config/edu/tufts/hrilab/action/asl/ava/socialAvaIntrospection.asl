@@ -376,6 +376,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     Boolean !enabled;
     java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
 
+    //TODO: Remove if reintroducing kiosk modification
+    op:invokeMethod(!sb,"append","Users are currently unable to enable, disable or modify kiosk task details. The static configuration is as follows: ");
+
     !enabled = tsc:getKioskModeEnabled();
     if (op:equals(!enabled,true)) {
         op:invokeMethod(!sb,"append","Kiosk mode is currently enabled.");
@@ -685,7 +688,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     //    }
     }
 }
-() = getKioskSettings() {
+() = getKioskGoalSettings() {
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Long !priority;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
@@ -805,7 +808,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     //    }
     }
 }
-() = getCurrentPendingScheduledTaskInformation() {
+() = getAssignedTasks() {
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Long !priority;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;

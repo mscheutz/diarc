@@ -251,7 +251,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getKioskSettings":  {
+  "getKioskGoalSettings":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -271,7 +271,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getCurrentPendingScheduledTaskInformation": {
+  "getAssignedTasks": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

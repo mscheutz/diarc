@@ -184,7 +184,7 @@
         "id" : "call_f9f6294ac5464b2882b1f47b",
         "type" : "function",
         "function" : {
-          "name" : "getCurrentPendingScheduledTaskInformation",
+          "name" : "getAssignedTasks",
           "arguments" : "{}"
         },
         "index" : 0

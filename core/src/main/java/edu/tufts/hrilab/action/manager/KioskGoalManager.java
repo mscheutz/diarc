@@ -325,6 +325,13 @@ public class KioskGoalManager extends DiarcComponent {
     return Factory.createPredicate("kioskGoal",kioskGoalPredicate,Factory.createSymbol(String.valueOf(kioskTimeout)));
   }
 
+  //TODO: kiosk goals should be expanded to per-agentTeam?
+  //      If so, match to supplied agent here (and include argument to all above methods)
+  @TRADEService
+  public long getKioskGoalGid(Symbol agentTeam) {
+    return kioskGoalGid;
+  }
+
   @TRADEService
   public void goalStatusChangedCallback(GoalInfo goalInfo) {
     log.debug("[goalStatusChangedCallback] in method {}, {}, {}", goalInfo.gid, goalInfo.unboundGoal, goalInfo.status);

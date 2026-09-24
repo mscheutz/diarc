@@ -199,13 +199,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "End the conversation with the user and discard the current in progress definition.")),
             UtteranceType.INSTRUCT, Tool.PostCallBehavior.KEEP_HISTORY
     );
-    defaultGoalInfoTool = new Tool(new ToolDefinition(new ToolFunction("getCurrentPendingScheduledTaskInformation",
+    defaultGoalInfoTool = new Tool(new ToolDefinition(new ToolFunction("getAssignedTasks",
             "Use this to ask the system for up to date information about your current list of tasks. Call this" +
                     "tool in order to get relevant information to help answer user questions about what you are currently" +
                     " doing, what you will be doing after your current task is complete, or what you are scheduled to" +
                     "perform in the future")),
             UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY);
-    itkActionNames.add("getCurrentPendingScheduledTaskInformation");
+    itkActionNames.add("getAssignedTasks");
 
     textResponseTool = new Tool(
             new ToolDefinition(
@@ -2593,6 +2593,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   @TRADEService
   public String getFullGoalsSummary(Symbol agent) {
     List<Predicate> currentGoalPredicates = getCurrentGoals(agent);
+    long kioskGoalGid = -1;
     List<Predicate> pendingGoalPredicates = getPendingGoals(agent);
     List<Predicate> scheduledGoals = getScheduledGoals(agent);
     //TODO: call endpoint to transform all of the predicates to String descs
@@ -2606,6 +2607,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       StringBuilder goalListString = new StringBuilder();
 
       if (numCurrent != 0) {
+        try {
+          kioskGoalGid = TRADE.getAvailableService(new TRADEServiceConstraints().name("getKioskGoalGid").argTypes(Symbol.class)).call(Long.class,agent);
+        } catch (TRADEException e) {
+          log.debug("[getFullGoalsSummary] Kiosk goal manager not in system or otherwise unable to get kiosk goal gid", e);
+        }
         String goalString;
         if (currentGoalPredicates.get(0).hasArgs()) {
           goalString = currentGoalPredicates.get(0).get(0).isPredicate() ?
@@ -2694,6 +2700,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         } else {
           stringBuilder.append("- 0: Description: ").append(translatedGoalList.get(0)).append("\n");
         }
+      if (kioskGoalGid != -1) {
+        stringBuilder.append("This is a kiosk task which you defaulted to performing due to not receiving instructions for an extended amount of time. This task will be canceled and overwritten by any subsequent task instruction. If asked about this task, make sure to include that it is a kiosk task triggered due to inactivity and that you are ready to move on at any time.\n");
+      }
     } else {
       stringBuilder.append(" - <You have no current task>\n");
     }
@@ -2717,7 +2726,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
     //Doesn't seem to do anything - may need to just split calls for retrieving current vs pending vs scheduled vs all tasks
 //    stringBuilder.append("-------\nOnly respond to the user with information relevant to what they actually asked about " +
-//            "which caused you to trigger the getCurrentPendingScheduledTaskInformation tool call. For example: asking what" +
+//            "which caused you to trigger the getAssignedTasks tool call. For example: asking what" +
 //            " you are doing should cause you to only say what your current task is, being asked how many scheduled goals you have" +
 //            " should cause you to only answer with the number of scheduled goals, and being asked what you have to do after your" +
 //            " current task should cause you to only begin listing your pending tasks. Do not list more than 5 tasks at once" +

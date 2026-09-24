@@ -1205,10 +1205,9 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
       //TODO: keep aligned with above whether including kiosk in language or not.
       //      Revisit when focused context implemented - include in system prompt vs only as focused vs as separate itk tool here
-      //definition = new ToolDefinition(new ToolFunction("getKioskSettings",
-              //        "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. An example of when you may need this information is when a user asks \"what is your kiosk configuration.\"",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getKioskGoalSettings",
+                      "Use this to ask the system for the current configuration of kiosk mode; Whether it is enabled, the currently configured kiosk timeout, and the kiosk action. Kiosk mode refers to default tasks to perform after periods of inactivity."));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
       //// Removed
       //TODO: make sure this distinction is possible to tease out from the LLM just from information in the prompt

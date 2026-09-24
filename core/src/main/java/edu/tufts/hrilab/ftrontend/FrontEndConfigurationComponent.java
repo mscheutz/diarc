@@ -322,14 +322,14 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getIfCanPerform":
             case "getPredefinedActions":
             case "getActionSteps":
-            case "getKioskSettings":
+            case "getKioskGoalSettings":
             case "getVideoVolume":
             case "getIsVideoSaved":
             case "getSavedVideos":
             case "getSavedImages":
             case "getPreviouslyMeasuredWifiAtLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationString":
-            case "getCurrentPendingScheduledTaskInformation":
+            case "getAssignedTasks":
             case "resetConversation":
             case "learnTaskSequence":
             case "scheduleTask":
