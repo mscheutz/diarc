@@ -658,7 +658,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatContext.onQuestionAskedHistorySize = currentHistorySize;
         historySizeBeforeQA = currentHistorySize;
         // (Make sure this entry never gets erased/overwritten and doesn't exist when it should)
-        promptVars.put("%QAChatHistoryAsString", getChatHistoryAsString(chatContext.history.messages, historySizeBeforeQA));
+        promptVars.put("%QAChatHistoryAsString", getChatHistoryAsString(new ArrayList<>(chatContext.history.messages), historySizeBeforeQA));
+      }
+      if (historySizeBeforeQA > currentHistorySize) {
+        log.warn("[prepChatAndToolList] onQuestionAskedHistorySize somehow larger than current history size, not updated properly somewhere");
+        chatContext.onQuestionAskedHistorySize = 0;
+        historySizeBeforeQA = 0;
       }
       chat.messages = new ArrayList<>(chatContext.history.messages).subList(historySizeBeforeQA,currentHistorySize);
 
@@ -997,6 +1002,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         //  (Could also try less drastic clearing of history first like for base context, but I'm worried that it will
         //    result in a different phrasing of a response while still not breaking out of the same reasoning loop)
         chatContext.history.messages.clear();
+        chatContext.onQuestionAskedHistorySize = 0;
         if (!chatContext.lastTemplateName.isEmpty() && chatContext.lastTemplateValue != null) {
           chatContext.history.addMessage("user",""); //Safe? Seems to be okay
           chatContext.history.addMessage("tool", "You have already had an extended conversation with the user, but got confused and needed to clear some history. The progress of your previous conversation which you were able to retain is" + chatContext.lastTemplateName + ": " + chatContext.lastTemplateValue + ". Please respond to the user by saying \"Sorry, I got confused and had to clear some of my history.\", then let the user know what you remember based on the current definition you retained (in natural language), and finally continue with your task as instructed.");
@@ -1044,6 +1050,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         ttsCancel(inputUtterance.getUid());
         // 4th identical response - inform user and more drastically reset context
         chatContext.history.messages.clear();
+        chatContext.onQuestionAskedHistorySize = 0;
         responseString = "Sorry, I got confused and had to clear some of my history, can we start from the top please?";
         regenerated = true;
         chatContext.identicalResponses = 0;
@@ -1282,6 +1289,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (mostLikelyOffender != null) {
         while (maxLength > 10) {
           mostLikelyOffender.currentChat.history.messages.remove(0);
+          if (mostLikelyOffender.currentChat.onQuestionAskedHistorySize > 0) {
+            mostLikelyOffender.currentChat.onQuestionAskedHistorySize -= 1;
+          }
           maxLength--;
         }
       }
@@ -2217,6 +2227,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (chatCollection.currentChat != null && chatCollection.currentChat.chatState == ChatState.VALIDATION) {
           log.warn("[endChatContext] called during validation, not currently equipped to cancel validation question and clean up side effects. Just clearing history...");
           chatCollection.currentChat.history = new Chat(user.getName(), agentTeam.getName());
+          chatCollection.currentChat.onQuestionAskedHistorySize = 0;
         } else {
           chatCollection.releaseLocks();
           // This method is only currently called during error cases - make sure all relevant error messages make it
@@ -3824,12 +3835,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     if (chat == null) {
       return "";
     }
-    return getChatHistoryAsString(chat.messages, -1);
+    return getChatHistoryAsString(new ArrayList<>(chat.messages), -1);
   }
   public String getChatHistoryAsString(List<Message> messages, int numMessages) {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     //return chat.getMessages().stream().map(m -> m.role + ": " + ((m.tool_calls == null || m.tool_calls.length < 1) ? m.content : gson.toJson(m.tool_calls[0]))).collect(Collectors.joining("\n"));
-    if (numMessages == -1) {
+    if (numMessages == -1 || numMessages > messages.size()) {
       return messages.stream().map(gson::toJson).collect(Collectors.joining("\n"));
     } else {
       return messages.subList(0,numMessages).stream().map(gson::toJson).collect(Collectors.joining("\n"));
