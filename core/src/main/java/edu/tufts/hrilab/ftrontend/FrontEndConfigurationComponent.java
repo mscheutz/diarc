@@ -278,6 +278,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "resumeCurrentTask":
             case "suspendGoal":
             case "cancelCurrentTask":
+            case "endConversation":
             case "cancelGoal":
             case "dontRespond":
             //case "modifyExistingTaskStatus":
@@ -424,6 +425,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "forgetAllTaughtActions":
             case "modifyExistingTaskStatus":
             case "submitTaskSequenceDefinition":
+            case "endConversation":
                return true;
             default:
                return false;

@@ -178,6 +178,17 @@ import java.lang.String;
     op:log(info,"[endConversation]");
 
     //TODO: prompt the system to say something in this case? goodbye?
+    Symbol !user = this:getOriginalSubmitter();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    String !contextId = this:getCommand();
+
+    !response = tsc:addToolResponse(!user,?actor,"The user just ended your previous interaction. If any lingering concerns from that conversation exist, then please address them. If nothing outstanding remains, please let the user know you have moved on and continue with your original task.",!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+
+    //act:generateResponseFromString(?user,!response);
+    //act:listenPostCommunicateUtterance(?user);
 }
 
 () = dontRespond() {

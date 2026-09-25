@@ -709,6 +709,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       if (chatContext.chatType == ChatType.FOCUSED) {
         tools.addAll(universalFocusedToolDefinitions);
+        // TODO: modifyExistingTaskStatus is a unique case as of now because it is the only FOCUSED context which does
+        //  not correspond to a goal on the queue. Implement a general way of handling SKIPPENDING focused goals.
+        // Cannot suspend an interaction which does not correspond to a blocking goal (at least in this way)
+        if (chatContext.contextID != null && chatContext.contextID.equals("modifyExistingTaskStatus")) {
+          tools.remove(universalFocusedToolset.get("suspendCurrentInteraction").toolDefinition);
+        }
       }
 
       // Apply input as user message
@@ -917,7 +923,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Temporary special wrappers - revisit if ever reintroducing "offContext" functionality
       if (chatContext.chatType != ChatType.BASE) {
         if (toolName.equals("endConversation") || toolName.equals("cancelCurrentInteraction")) {
-          outputUtterance.setSemantics(Factory.createPredicate("cancelCurrentTask", inputUtterance.getAddressee()));
+          //TODO: modifyExistingTaskStatus is a unique case as of now because it is the only FOCUSED context which does
+          //  not correspond to a goal on the queue. Just allow it to hit endConversation in this case so it terminates naturally.
+          if (!(chatContext.chatType == ChatType.FOCUSED && chatContext.contextID != null && chatContext.contextID.equals("modifyExistingTaskStatus"))) {
+            outputUtterance.setSemantics(Factory.createPredicate("cancelCurrentTask", inputUtterance.getAddressee()));
+          }
         } else if (toolName.equals("suspendCurrentInteraction")) {
           outputUtterance.setSemantics(Factory.createPredicate("suspendCurrentTask", inputUtterance.getAddressee()));
         }
@@ -1216,6 +1226,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatCollection.currentChat.toolCallIdUpForValidation = "";
         chatCollection.currentChat.utteranceUpForValidation = null;
         chatCollection.currentChat.lastToolCallName = "";
+
+        // TODO: Need to expand postCallBehavior to differentiate affects on the context history and the context state?
+        if (toolName.equals("endConversation")) {
+          chatCollection.currentChat.chatType = ChatType.BASE;
+          chatCollection.currentChat.contextID = "nlu";
+          chatCollection.currentChat.lastTemplateName = "";
+          chatCollection.currentChat.lastTemplateValue = "";
+          chatCollection.currentChat.signalCompletion();
+        }
     }
   }
 
