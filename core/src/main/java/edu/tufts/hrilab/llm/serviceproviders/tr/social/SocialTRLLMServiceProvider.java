@@ -874,7 +874,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     boolean error = false;
     if (outputUtterance != null && outputUtterance.getSemantics() != null) {
       //// Domain specific postprocessing to correct common mistakes
-      String errorResponse = correctCommonNLUMistakes(outputUtterance);
+      String errorResponse = correctCommonNLUMistakesOuter(outputUtterance);
       if (!errorResponse.isEmpty()) {
         error = true;
         errorResponseBuilder.append(errorResponse);
@@ -962,6 +962,24 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       // Invalid parse - engage in recovery in the form of an extended dialogue interaction
       return null;
     }
+  }
+
+  private String correctCommonNLUMistakesOuter(Utterance utterance) {
+    String errorString = correctCommonNLUMistakes(utterance);
+    if (!errorString.isEmpty()) {
+      return errorString;
+    }
+    Predicate semantics = (Predicate) utterance.getSemantics();
+    if (semantics.getName().equals("modifyExistingTaskStatus")) {
+      List<Predicate> currentGoals = getCurrentGoals(utterance.getAddressee().toUntyped());
+      if (currentGoals.isEmpty()) {
+        List<Predicate> getScheduledGoals = getScheduledGoals(utterance.getAddressee().toUntyped());
+        if (getScheduledGoals.isEmpty()) {
+          return "- You have no existing tasks, current or scheduled, so there is nothing to cancel, suspend, or resume.";
+        }
+      }
+    }
+    return "";
   }
 
   /**
