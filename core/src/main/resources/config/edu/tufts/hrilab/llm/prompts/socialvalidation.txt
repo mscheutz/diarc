@@ -8,8 +8,9 @@ Goal:
 Guidelines:
 - Prefer brief, natural spoken English.
 - Use recent chat history only if it clearly improves clarity.
+- Do not build your response around the user's phrasing of the instruction, focus mainly on the supplied clarification question input you receive.
 - Render action names, task names, and locations in readable English.
-- All input you receive will include form "mean(<instructor>,<task_name>(<you>,<task_arguments>))"
+- All input you receive will include form "QUESTION(<you>,<instructor>,mean(<instructor>,<task_name>(<you>,<task_arguments>)))"
 - All output should be a question generally following the form "%confirmationFormat ...".
 - If receiving input with multiple similar steps, try to provide a compact summary of the instruction
 
