@@ -3569,45 +3569,50 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         // If template is fully populated on first turn -> add tool response indicating to call submission directly, set output to null, and loop
         if (context.history.messages.size() == 1) {
           int expectedSize = -1;
+          boolean overrideCheckArguments = false;
+
+          //// Special cases
           //A bit more nuance necessary for task modification output - allowed to have empty or missing taskIndex list if directed at the current goal
           if (templateArgName.equals("currentTaskStatusModificationDefinition")) {
             Object taskType = templateMap.get("taskType");
             if (taskType != null && taskType.equals("current") && templateMap.containsKey("modification")) {
-              return true;
+              overrideCheckArguments = true;
             }
           }
-          if (templateArgName.equals("currentScheduledDefinition")) {
-            expectedSize = 4;
-          } else if (templateArgName.equals("currentTaskSequenceDefinition")) {
-            expectedSize = 2;
-          } else if (templateArgName.equals("currentMissionDefinition")) {
-            expectedSize = 1;
-          } else if (templateArgName.equals("currentTaskStatusModificationDefinition")) {
-            expectedSize = 1;
-          } else {
-            log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
-            return true;
-          }
-          if (templateMap.size() == expectedSize) {
-            for (Object templateInnerArg : templateMap.values()) {
-              if (templateInnerArg instanceof String) {
-                if (((String) templateInnerArg).isEmpty()) {
-                  return true;
-                }
-              } else if (templateInnerArg instanceof Map) {
-                if (((Map) templateInnerArg).isEmpty()) {
-                  return true;
-                }
-              } else if (templateInnerArg instanceof List) {
-                if (((List) templateInnerArg).isEmpty()) {
-                  return true;
-                }
-              } else {
+
+          //// General case
+          if (!overrideCheckArguments) {
+            switch (templateArgName) {
+              case "currentScheduledDefinition" -> expectedSize = 4;
+              case "currentTaskSequenceDefinition" -> expectedSize = 2;
+              case "currentMissionDefinition" -> expectedSize = 1;
+              case "currentTaskStatusModificationDefinition" -> expectedSize = 3;
+              default -> {
+                log.warn("[checkForFullyPopulatedTemplate] unexpected in-progress template argument name {}", templateArgName);
                 return true;
               }
             }
-          } else {
-            return true;
+            if (templateMap.size() == expectedSize) {
+              for (Object templateInnerArg : templateMap.values()) {
+                if (templateInnerArg instanceof String) {
+                  if (((String) templateInnerArg).isEmpty()) {
+                    return true;
+                  }
+                } else if (templateInnerArg instanceof Map) {
+                  if (((Map) templateInnerArg).isEmpty()) {
+                    return true;
+                  }
+                } else if (templateInnerArg instanceof List) {
+                  if (((List) templateInnerArg).isEmpty()) {
+                    return true;
+                  }
+                } else {
+                  return true;
+                }
+              }
+            } else {
+              return true;
+            }
           }
           log.info("[checkForFullyPopulatedTemplate] detected full template definition in first response after a " +
                   "transfer to a focused context - recommending the LLM to directly submit the template definition.");
