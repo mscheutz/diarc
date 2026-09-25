@@ -3381,9 +3381,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // Validate Tool call's supplied arguments
     //TODO: Swapped direction we check matching arguments in - add check back in for a supplied argument which doesn't exist?
     for (String argName : parameterDefinition.getProperties().keySet()) {
+      Object argValue = calledArguments.get(argName);
+      if (argValue == null) {
+        continue;
+      }
       Symbol processedArg;
       ToolParameterV2 targetParam = parameterDefinition.getProperties().get(argName);
-      Object argValue = calledArguments.get(argName);
       boolean emptyInnerArgAllowed = false;
       //TODO: general mechanism to ignore fields when extracting final result? E.g. want the llm to keep track of the
       // template during the extended dialogue, but don't care if it's fully valid yet.
