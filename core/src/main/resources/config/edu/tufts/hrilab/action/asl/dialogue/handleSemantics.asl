@@ -245,7 +245,9 @@ import java.lang.Boolean;
 
     if (op:equals(?addressee, ?actor)) {
       try {
-        if (op:equals(?validated,true)) {
+        if (~tsc:usingLLM()) {
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
+        } elseif (op:equals(?validated,true)) {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
         } else {
             !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
@@ -398,6 +400,7 @@ import java.lang.Boolean;
     java.lang.Long !currentGoalId;
     java.lang.String !currentStatus;
     java.lang.Boolean !goalPlacedInQueue = false;
+    java.lang.Boolean !madeTentativeAccept = false;
     java.lang.Boolean !currentGoalActive = true;
     Predicate !goalSubmittedPred;
     edu.tufts.hrilab.slug.common.Utterance !utterance;
@@ -447,17 +450,25 @@ import java.lang.Boolean;
       }
     }
 
+    // no llm: plain okay before the goal starts, the attempting/achieved forms are for the llm nlg
+    if (~tsc:usingLLM()) {
+      if (~tsc:ignoreTentativeAccept(?state)) {
+        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+      }
+      !madeTentativeAccept = op:newObject("java.lang.Boolean", true);
+    }
+
     // Submit goal
     !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
 
     // Perform acknowledgement
-    if (op:equals(!goalPlacedInQueue,true)) {
+    if (op:equals(!madeTentativeAccept,false) && op:equals(!goalPlacedInQueue,true)) {
         // Goal placed in the queue, notify the user of the fact rather than using default tentative accept semantics
         !ackString = tsc:sampleGoalPlacedInQueueAcknowledgement(?state);
         async {
             act:generateResponseFromString(?speaker,!ackString);
         }
-    } else {
+    } elseif (op:equals(!madeTentativeAccept,false)) {
         // Goal beginning execution immediately, respond based on domain-specific ignoreTentativeAccept configuration and if validation for this utterance already occurred
         //    (If validation already/just occurred, we don't need to be as descriptive)
         if(~tsc:ignoreTentativeAccept(?state)) {
