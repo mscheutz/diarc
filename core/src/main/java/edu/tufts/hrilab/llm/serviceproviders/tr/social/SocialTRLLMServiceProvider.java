@@ -3652,19 +3652,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             }
             if (templateMap.size() == expectedSize) {
               for (Object templateInnerArg : templateMap.values()) {
-                if (templateInnerArg instanceof String) {
-                  if (((String) templateInnerArg).isEmpty()) {
-                    return true;
-                  }
-                } else if (templateInnerArg instanceof Map) {
-                  if (((Map) templateInnerArg).isEmpty()) {
-                    return true;
-                  }
-                } else if (templateInnerArg instanceof List) {
-                  if (((List) templateInnerArg).isEmpty()) {
-                    return true;
-                  }
-                } else {
+                if (checkTemplateArg(templateInnerArg)) {
                   return true;
                 }
               }
@@ -3683,6 +3671,31 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     }
     return true;
+  }
+
+  private boolean checkTemplateArg(Object templateArg) {
+    if (templateArg instanceof String) {
+      return ((String) templateArg).isEmpty();
+    } else if (templateArg instanceof Map) {
+      for (Object templateInnerArg : ((Map) templateArg).values()) {
+        if (checkTemplateArg(templateInnerArg)) {
+          return true;
+        }
+      }
+    } else if (templateArg instanceof List) {
+      if (((List) templateArg).isEmpty()) {
+        return true;
+      } else {
+        for (Object templateInnerArg : ((List)templateArg)) {
+          if (checkTemplateArg(templateInnerArg)) {
+            return true;
+          }
+        }
+      }
+    } else {
+      return true;
+    }
+    return false;
   }
 
   Predicate replaceReferencesInSemantics(Predicate semantics) {
