@@ -603,7 +603,21 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
 
         if (output == null) {
-          output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, useStreaming, chat);
+          // Optional fix for error handling during template introspection - interrupt previous response and return
+          //  updated response.
+          // TODO: This is generally good for cases where the template has invalid contents, but not really in the case
+          //  of just malformed json or something like that which doesn't affect the output response.
+          //  Can handle cases like the above smarter, and can be in general more intricate with recovery behavior here
+          try {
+            boolean isSpeaking = TRADE.getAvailableService(new TRADEServiceConstraints().name("isStreamingSpeech").argTypes(Long.class)).call(Boolean.class, utterance.getUid());
+            if (isSpeaking) {
+              ttsCancel(utterance.getUid());
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(void.class, "Sorry, one second");
+            }
+          } catch (TRADEException e) {
+            log.error("[parseUtteranceLLMService] unable to call sayText after detecting ");
+          }
+          output = runCompletionRetryLoop(response, tools, utterance, chatCollection, errorResponseBuilder, chat);
         }
         return output;
       }
@@ -669,10 +683,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       // Pull correct text response tool first based on whether in focused context with associated template or not
       tools = new ArrayList<>();
-      Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
-      if (focusedTextResponseTool != null) {
-        tools.add(focusedTextResponseTool.toolDefinition);
+      if (chatContext.chatState != ChatState.VALIDATION) {
+        Tool focusedTextResponseTool = chatTemplates.tools.get(textResponseTool.toolDefinition.function.name);
+        if (focusedTextResponseTool != null) {
+          tools.add(focusedTextResponseTool.toolDefinition);
+        } else {
+          tools.add(textResponseTool.toolDefinition);
+        }
       } else {
+        // Not requiring the template to be tracked in text responses during validation chit-chat
         tools.add(textResponseTool.toolDefinition);
       }
 
@@ -729,12 +748,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return new ChatToolList(chat, tools);
   }
 
-  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming) {
-    return runCompletionRetryLoop(lastResponse, toolList, utterance, chatCollection, errorResponseBuilder, useStreaming, null);
-  }
-
   //TODO: revisit - only add calls to this if in synchronized block and understand what you're doing
-  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, boolean useStreaming, Chat completionChat) {
+  private Utterance runCompletionRetryLoop(Completion lastResponse, List<ToolDefinition> toolList, Utterance utterance, ChatCollection chatCollection, StringBuilder errorResponseBuilder, Chat completionChat) {
     Symbol user = utterance.getAddressee().toUntyped();
     Symbol agentTeam = utterance.getSpeaker().toUntyped();
     ChatContext chatContext = chatCollection.currentChat;
@@ -765,11 +780,12 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       // Re-call completion for text response
       Completion retryResponse;
-      if (useStreaming) {
-        retryResponse = callChatCompletionStreaming(completionChat, toolList, utterance.getUid());
-      } else {
-        retryResponse = callChatCompletion(completionChat, toolList);
-      }
+      //if (useStreaming) {
+      //  retryResponse = callChatCompletionStreaming(completionChat, toolList, utterance.getUid());
+      //} else {
+      retryResponse = callChatCompletion(completionChat, toolList);
+      //}
+      //useStreaming = false;
 
       if (retryResponse == null) {
         handleErrorResponse(utterance, true, false);
@@ -779,10 +795,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (retryResponse.toolCalls.isEmpty()) {
           lastToolCall = null;
           resetErrorCount(true, utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
-          output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder, useStreaming);
+          output = handleTextResponse(retryResponse, utterance, chatContext, errorResponseBuilder, false);
         } else {
           lastToolCall = retryResponse.toolCalls.get(0);
-          output = handleToolResponse(retryResponse, utterance, chatCollection, toolList, errorResponseBuilder, useStreaming);
+          output = handleToolResponse(retryResponse, utterance, chatCollection, toolList, errorResponseBuilder, false);
         }
         if (output != null) {
           return output;
@@ -828,9 +844,14 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         log.warn("[handleToolResponse] called tool not present in advertised list, rejecting");
       } else {
         if (chatContext.chatType == ChatType.FOCUSED) {
-          correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
-          if (correspondingTool == null) {
-            correspondingTool = universalFocusedToolset.get(functionCall.name);
+          // No longer requiring template tracking during validation
+          if (chatContext.chatState == ChatState.VALIDATION && toolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+            correspondingTool = textResponseTool;
+          } else {
+            correspondingTool = chatTemplates.get(chatContext.contextID).tools.get(functionCall.name);
+            if (correspondingTool == null) {
+              correspondingTool = universalFocusedToolset.get(functionCall.name);
+            }
           }
         } else {
           correspondingTool = chatTemplates.get("nlu").tools.get(functionCall.name);
@@ -2322,7 +2343,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       Utterance dummy = new Utterance.Builder().setSpeaker(user).setAddressee(agentTeam).build();
       ToolDefinition td = collection.currentChat.chatType == ChatType.FOCUSED ? chatTemplates.get(collection.currentChat.contextID).tools.get(textResponseTool.toolDefinition.function.name).toolDefinition : textResponseTool.toolDefinition;
-      Utterance out = runCompletionRetryLoop(null, List.of(td), dummy, collection, new StringBuilder(), false);
+      Utterance out = runCompletionRetryLoop(null, List.of(td), dummy, collection, new StringBuilder(), null);
       if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate)out.getSemantics()).getArgs().size() > 2) {
         return ((Predicate)out.getSemantics()).get(2).toString();
       } else {
@@ -2392,7 +2413,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         log.error("[addToolResponse] error reaching out to FrontEndConfigurationComponent for validation setting");
       }
       dummy.setNeedsValidation(useValidation);
-      Utterance out = runCompletionRetryLoop(null, tools, dummy, collection, new StringBuilder(), false, chat);
+      Utterance out = runCompletionRetryLoop(null, tools, dummy, collection, new StringBuilder(), chat);
 
       // TODO: quick band-aid fix, revisit - Removing retrieved past conversation history from the current history as it
       //    can get very large very quickly. Can more safely leave in if proper history trimming and request token length
@@ -2453,7 +2474,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatContext.history.addToolMessage("Please respond using the " + toolDefinition.function.name + "tool call, you cannot call any other tools at this moment.", toolCallId);
         }
         //TODO: should this use the same gen chat or not?
-        out = runCompletionRetryLoop(null, List.of(toolDefinition), dummy, collection, new StringBuilder(), false);
+        out = runCompletionRetryLoop(null, List.of(toolDefinition), dummy, collection, new StringBuilder(), null);
         if (out.getSemantics() != null && (out.getSemantics().getName().equals("generateResponseFromString") || out.getSemantics().getName().equals("updateDialogueHistoryFromString")) && out.getSemantics().isPredicate() && ((Predicate) out.getSemantics()).getArgs().size() > 2) {
           collection.grabInputLock(out, true);
           return out;
