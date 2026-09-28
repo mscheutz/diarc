@@ -2730,12 +2730,6 @@ public class ExecutionManager implements GoalListener {
   }
 
   @TRADEService
-  public List<Predicate> getLearnedActionPredicates() {
-    List<ActionDBEntry> learnedActions = loadLearnedActions(false);
-    return new ArrayList<>(learnedActions.stream().map(dbEntry -> dbEntry.getSignature(false)).toList());
-  }
-
-  @TRADEService
   public boolean isLearnedAction(Predicate actionSignature) {
     try {
       List<ActionDBEntry> actions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActionsBySignature").argTypes(Predicate.class)).call(List.class, actionSignature);

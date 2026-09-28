@@ -978,6 +978,21 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return "- You have no existing tasks, current or scheduled, so there is nothing to cancel, suspend, or resume.";
         }
       }
+    } else if (semantics.getName().equals("submitTaskSequenceDefinition")) {
+      //TODO: Replace ^ with general action learning target
+      String actionName = semantics.get(1).getName();
+      if (learnedActions.stream().anyMatch(dbe -> dbe.getType().equals(actionName))) {
+        ChatCollection chatCollection = getChatCollection(utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
+        if (chatCollection != null) {
+          ChatContext chatContext = chatCollection.currentChat;
+          String warningString = "- The supplied action name \"" + actionName + "\" matches the name of a previously taught action. Warn the user that saving an action under this name will overwrite the existing action under the same name.";
+          if (chatContext.history.messages.stream().anyMatch(m -> m.role.equals("tool") && m.content.contains(warningString))) {
+            return "";
+          } else {
+            return warningString;
+          }
+        }
+      }
     }
     return "";
   }
@@ -2885,12 +2900,17 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return builder.toString();
   }
 
+  @TRADEService
+  public List<Predicate> getLearnedActionPredicates() {
+    return new ArrayList<>(learnedActions.stream().map(dbEntry -> dbEntry.getSignature(false)).toList());
+  }
+
   //TODO: all taught action support
   @Override
   protected void initLearnedActions() {
     super.initLearnedActions();
     synchronized (currentChatCollections) {
-      for (ActionDBEntry entry : learnedActions) {
+      for (ActionDBEntry entry : new ArrayList<>(learnedActions)) {
         addLearnedActionToCollections(entry);
       }
     }
@@ -2924,6 +2944,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (chatTemplates.get("nlu").tools.get(signature.getName()) != null) {
         log.error("[addLearnedActionToCollections] have multiple taught actions with the same name {}. Overwriting existing entry.", signature.getName());
         removeLearnedActionFromCollections(signature.getName());
+        learnedActions.remove(dbEntry);
       }
       // Add to "instructable actions" list for focused contexts
       promptVars.put("%instructNLGList", promptVars.get("%instructNLGList") + String.format("\n%s\n#", nlgString));
