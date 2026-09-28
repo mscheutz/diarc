@@ -142,9 +142,9 @@ public class GenerativeDiarcConfigTester extends DiarcConfigTester {
       if (serviceProvider != null && speaker != null && agentTeam != null) {
         chatHistories = new SocialChatHistories(testName);
         List<ChatContext> histories = serviceProvider.getExtendedConversationHistories(speaker, agentTeam);
-        for (ChatContext history : histories.reversed()) {
+        for (int i = histories.size() - 1; i >= 0; i--) {
           chatHistories.startNextUtterance();
-          chatHistories.addChatHistory(history.getHistory().messages);
+          chatHistories.addChatHistory(histories.get(i).getHistory().messages);
         }
         List<Message> currentHistory = serviceProvider.getChatHistory(speaker, agentTeam);
         if (currentHistory != null) {
