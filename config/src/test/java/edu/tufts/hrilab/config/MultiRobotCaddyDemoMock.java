@@ -31,6 +31,8 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
     public void runConfiguration() {
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
+        createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees evan");
+
         createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict multiRobotCaddy.dict -dict multiRobotCaddyHomophones.dict");
 
         createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

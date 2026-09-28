@@ -45,6 +45,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees front brad");
 
     leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
     rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");

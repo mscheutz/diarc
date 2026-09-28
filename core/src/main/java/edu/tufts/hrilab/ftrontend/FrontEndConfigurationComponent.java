@@ -38,6 +38,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    // Addressees the robot is physically co-present with: their replies are spoken aloud. Replies to
    // any other addressee (webapp, remote/text channels) are delivered via dialogue history only.
    public final Set<String> LOCAL_ADDRESSEES = Set.of("local_user", "local_visitor", "operator");
+   private Set<String> localAddressees = LOCAL_ADDRESSEES;
 
    @Override
    protected List<Option> additionalUsageInfo() {
@@ -46,6 +47,10 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       List<Option> options = new ArrayList<>();
       options.add(Option.builder("streamingTTS").desc("stream llm replies to the tts as they generate").build());
       options.add(Option.builder("wwBasedASR").desc("listening is wake word driven, rearm after replies").build());
+      // TODO (pete): temporary, so configs without the ava setup can load the dialogue scripts.
+      // revisit with the rest of the flags after the merge
+      options.add(Option.builder("noLLM").desc("no llm in the system").build());
+      options.add(Option.builder("localAddressees").hasArgs().argName("name").desc("speakers in the room with the robot").build());
       return options;
    }
 
@@ -56,6 +61,12 @@ public class FrontEndConfigurationComponent extends DiarcComponent
       }
       if (cmdLine.hasOption("wwBasedASR")) {
          useWWBasedASR = true;
+      }
+      if (cmdLine.hasOption("noLLM")) {
+         usingLLM = false;
+      }
+      if (cmdLine.hasOption("localAddressees")) {
+         localAddressees = Set.of(cmdLine.getOptionValues("localAddressees"));
       }
    }
 
@@ -68,12 +79,12 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    //      original input is from the webapp or not. Naming of everything is misleading
    @TRADEService
    public boolean isLocalAddressee(Symbol addressee) {
-      return addressee != null && LOCAL_ADDRESSEES.contains(addressee.getName());
+      return addressee != null && localAddressees.contains(addressee.getName());
    }
 
    @TRADEService
    public boolean isLocalAddressee(String addresseeName) {
-      return addresseeName != null && LOCAL_ADDRESSEES.contains(addresseeName);
+      return addresseeName != null && localAddressees.contains(addresseeName);
    }
 
    @TRADEService
