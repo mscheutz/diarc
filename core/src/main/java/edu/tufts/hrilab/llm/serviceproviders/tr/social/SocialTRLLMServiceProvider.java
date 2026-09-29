@@ -779,16 +779,20 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       //  tools which didn't exist anymore in different contexts but were present in the history. Have more safeguards
       //  in place now so that it should be safe
       if (!errorResponseBuilder.isEmpty()) {
-        if (lastToolCall != null && lastToolCall.function.name.equals(textResponseTool.toolDefinition.function.name)) {
+        if (lastToolCall != null) {
           // Need to add errant tool call so that added error message actually references something?
-          //TODO: also mirror message in context history, or should these failures be hidden?
           completionChat.addRobotMessage("", List.of(lastToolCall));
         }
         String errorString = errorResponseBuilder.toString();
         log.info("[runCompletionRetryLoop] running extra chatCompletion request with additional error message: {}", errorString);
         tool_call_id = lastToolCall == null ? "" : lastToolCall.id;
-        //TODO: also mirror message in context history, or should these failures be hidden?
         completionChat.addToolMessage(errorString, tool_call_id);
+        // Side effect of another change is that the original robot tool calls are making it into the persistent chat
+        //  history (not just the validation specific chat). As long as this is the case, the error message responses
+        //  must be added as well.
+        // TODO: determine whether we want 1. all of this present 2. none of these present or 3. just the first turn invalid
+        //    call and error response, followed by the first valid 'fixed' robot role response
+        chatContext.history.addToolMessage(errorString, tool_call_id);
       }
       errorResponseBuilder = new StringBuilder();
 
