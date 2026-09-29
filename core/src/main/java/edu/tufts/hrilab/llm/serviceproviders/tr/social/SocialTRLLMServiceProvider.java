@@ -179,6 +179,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //Temporary list holding itk action names to detect in dialogue history callback whether UtteranceType Question
   //  was overwritten with INSTRUCT due to ITK / QueueEM incompatibility workarounds.
   List<String> itkActionNames = new ArrayList<>();
+  //TODO: Should have some more formal definition of a "focused context trigger". There is some special logic required associated with these sorts of actions.
+  List<String> focusedContextTransferActionNames = List.of("scheduleTask", "learnTaskSequence", "learnMission", "modifyExistingTaskStatus");
 
   private int externalErrorCount = 0;
   private boolean restrictedMode = false;
@@ -345,7 +347,15 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       ChatContext chatContext = chatCollection.currentChat;
       if (chatContext != null) {
         if (chatContext.chatState == ChatState.VALIDATION) {
+          String command = chatContext.utteranceUpForValidation.getSemantics().getName();
           if (parsing) {
+            if (focusedContextTransferActionNames.contains(command)) {
+              promptVars.put("%validationNLUResponsePolicyForNo", "If the user rejects it");
+              promptVars.put("%validationNLUExamplesForNo","\"no, i meant...\"");
+            } else {
+              promptVars.put("%validationNLUResponsePolicyForNo", "If the user rejects it, corrects it, modifies it, or adds details");
+              promptVars.put("%validationNLUExamplesForNo", "\"no, i meant...\", \"yes, but instead of...\", \"yes, but could you change...\", \"and I also want you to...\"");
+            }
             //TODO: include tool information, not parsed semantics
             Map<Variable, Symbol> varMap = new HashMap<>();
             for (Term t : chatContext.utteranceUpForValidation.getSupplementalSemantics()) {
@@ -355,9 +365,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           } else {
             // Sample validation question format - potentially based on previous filler phrase
             String format;
-            if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("scheduled")) {
+            if (command.equals("scheduled")) {
               format = "I should";
-            } else if (chatContext.utteranceUpForValidation.getSemantics().getName().equals("submitTaskSequenceDefinition") || chatContext.utteranceUpForValidation.getSemantics().getName().equals("startMission")) {
+            } else if (command.equals("submitTaskSequenceDefinition") || command.equals("startMission") || command.equals("submitTaskDefinition")) {
               format = "The task is";
             } else {
               //INSTRUCT
@@ -4143,9 +4153,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   protected String getFocusedResponsePolicy() {
     return "- If the user indicates they are finished and the definition is complete, call %templateSubmissionTargetName.\n" +
-            "- If the task status modification definition is fully filled out, call %templateSubmissionTargetName immediately.\n" +
+            "- If the %templateArgumentName is fully filled out, call %templateSubmissionTargetName immediately.\n" +
             "- If the user asks what you currently understand, answer based on the %templateArgumentName.\n" +
-            "- If the user does not want to modify a task's status or seems confused about what is happening, call endConversation.\n" +
+            "- If the user does not want to perform the shared task anymore or seems confused about what is happening, call endConversation.\n" +
             "- If the user says bye, leaves, or no longer wants to continue, call endConversation.\n" +
             "- If the user asks to pause this interaction, call suspendCurrentInteraction.\n" +
             "- If the user asks to cancel this interaction, call cancelCurrentInteraction.\n" +
