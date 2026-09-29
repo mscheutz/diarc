@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -69,6 +71,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * Contains all relevant conversation contexts and their managed histories between each pair
    */
   protected final Map<Pair<Symbol, Symbol>, ChatCollection> currentChatCollections = new HashMap<>();
+  record TimerAndTask(Timer timer, TimerTask timerTask) {}
+  private final Map<Pair<Symbol, Symbol>, TimerAndTask> chatCollectionInactivityTimers = new HashMap<>();
 
   /**
    * Extended History of chat contexts, stored for reference from ITK actions for the LLM to conditionally
@@ -1268,6 +1272,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatCollection.currentChat.signalCompletion();
         saveContextHistory(user, agentTeam, chatCollection.currentChat);
         chatCollection.currentChat = null;
+        cancelInactivityTimer(user, agentTeam);
         break;
       case CLEAR_HISTORY:
         saveContextHistory(user, agentTeam, chatCollection.currentChat);
@@ -2307,6 +2312,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           //  into the appropriate Chat stored in the extended history
           saveContextHistory(user, agentTeam, chatCollection.currentChat);
           chatCollection.currentChat = null;
+          cancelInactivityTimer(user, agentTeam);
         }
       }
     }
@@ -2516,6 +2522,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
       collection.suspendedChats.add(0, chatContext);
       collection.currentChat = null;
+      cancelInactivityTimer(user, agentTeam);
     }
 
     return new ConditionJustification(true);
@@ -2586,6 +2593,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         //TODO: add explicit message indicating chat was canceled? Or indication should probably already exist
         saveContextHistory(user, agentTeam, collection.currentChat);
         collection.currentChat = null;
+        cancelInactivityTimer(user, agentTeam);
       } else {
         int index = -1;
         for (int i = 0; i < collection.suspendedChats.size(); i++) {
@@ -3055,6 +3063,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       synchronized (currentChatCollections) {
         if (chatCollection.currentChat != null) {
           ChatContext chatContext = chatCollection.currentChat;
+          resetInactivityTimer(user, agentTeam);
 
           // Reset validation Question timeout on any user input
           if (chatContext.chatState == ChatState.VALIDATION) {
@@ -3118,6 +3127,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           chatContext = new ChatContext(chat);
           chatCollection.currentChat = chatContext;
         }
+
+        //// Reset context timeout timer
+        resetInactivityTimer(user, agentTeam);
+
         //// Add as assistant message "content" string
         //chatContext.history.addRobotMessage(utterance.getWordsAsString());
 
@@ -3204,6 +3217,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
                 chatContext.history.addToolMessage("Your last validation question was not answered after a long duration and timed out from the perspective of the system", chatContext.toolCallIdUpForValidation);
                 saveContextHistory(user, agentTeam, chatCollection.currentChat);
                 chatCollection.currentChat = null;
+                cancelInactivityTimer(user, agentTeam);
               }
             } else {
               // TODO: block reattemptParse call until this (and dialogue history update) happens
@@ -3228,6 +3242,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
                   chatCollection.currentChat.signalCompletion();
                   saveContextHistory(user, agentTeam, chatCollection.currentChat);
                   chatCollection.currentChat = null;
+                  cancelInactivityTimer(user, agentTeam);
                 }
               }
             }
@@ -3895,6 +3910,48 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           log.error("[resetErrorCount] could not reach Hybrid parser to unset restricted mode.", e);
         }
       }
+    }
+  }
+
+  private void cancelInactivityTimer(Symbol user, Symbol agentTeam) {
+    synchronized (currentChatCollections) {
+      TimerAndTask timerAndTask = chatCollectionInactivityTimers.remove(Pair.of(user,agentTeam));
+      log.debug("[cancelInactivityTimer] in method");
+      if (timerAndTask != null) {
+        log.debug("[cancelInactivityTimer] canceling timer and task");
+        timerAndTask.timerTask.cancel();
+        timerAndTask.timer.cancel();
+      }
+    }
+  }
+
+  private void resetInactivityTimer(Symbol user, Symbol agentTeam) {
+    synchronized (currentChatCollections) {
+      log.debug("[resetInactivityTimer] resetting inactivity timer");
+      cancelInactivityTimer(user, agentTeam);
+      ChatCollection targetChatCollection = getChatCollection(user, agentTeam);
+      long cid = targetChatCollection.currentChat.cid;
+
+      TimerTask inactivityTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+          synchronized (currentChatCollections) {
+              ChatCollection currentChatCollection = getChatCollection(user, agentTeam);
+              if (currentChatCollection == null || currentChatCollection.currentChat == null || currentChatCollection.currentChat.cid != cid) {
+                log.warn("[inactivityTask] Timer has triggered, but original ChatContext no longer exists");
+                return;
+              }
+              log.info("[inactivityTask] clearing context due to inactivity");
+              endChatContext(user,agentTeam);
+          }
+        }
+      };
+
+      Timer inactivityTimer = new Timer(true);
+      //TODO: needs to be longer than validation Q timeout
+      inactivityTimer.schedule(inactivityTimerTask, 120 * 1000);
+      TimerAndTask timerAndTask = new TimerAndTask(inactivityTimer, inactivityTimerTask);
+      chatCollectionInactivityTimers.put(Pair.of(user,agentTeam), timerAndTask);
     }
   }
 
