@@ -185,9 +185,12 @@ public final class AllDocumentExamplesRegression {
             new Example("validation-mission",
                 "mean(local_user,startMission(alex,and(goToRoom(alex,main_lab_space),searchRoomForPeople(alex,main_lab_space),goToRoom(alex,experiment_room),searchRoomForPeople(alex,experiment_room),goToLocationWrapper(alex,building entrance:location))))",
                 "mission", "main lab space", "experiment room", "people", "building entrance"),
-            new Example("validation-task-definition",
+            new Example("validation-task-sequence-definition",
                 "mean(webapp,submitTaskSequenceDefinition(ava,patient_survey_round,and(and(\"chair 1\",presentSurvey(ava,"+survey+")),and(\"chair 2\",presentSurvey(ava,"+survey+")),and(\"chair 3\",presentSurvey(ava,"+survey+")))))",
                 "patient survey round", "chair", "survey", "do you have time"),
+            new Example("validation-task-definition",
+                    "mean(webapp,submitTaskDefinition(ava,patient_survey_round,and(and(\"chair 1\",presentSurvey(ava,"+survey+")),and(\"chair 2\",presentSurvey(ava,"+survey+")),and(\"chair 3\",presentSurvey(ava,"+survey+")))))",
+                    "patient survey round", "chair", "survey", "do you have time"),
             new Example("validation-schedule-repeating",
                 "mean(webapp,scheduled(measureWifiAtLocations(ava,and(location_5:location,location_13:location,location_6:location)),start(10,MINUTES),period(30,MINUTES)))",
                 "wifi", "pavilion", "cardiology check in", "reception", "10 minute", "30 minute"),
@@ -287,7 +290,8 @@ public final class AllDocumentExamplesRegression {
             new Example("display-duration-location", "displayNamedImageForDurationAtLocation(ava,infographic.png,60,chair_one:location)", "display named image for duration at location", "60", "chair one"),
             new Example("stop-talking", "dontRespond(ava)", "stop talking"),
             new Example("schedule-task", "scheduleTask(ava)", "schedule task"),
-            new Example("learn-task", "learnTaskSequence(ava)", "learn task sequence"),
+            new Example("learn-task-sequence", "learnTaskSequence(ava)", "learn task sequence"),
+            new Example("learn-task", "learnTask(ava)", "learn task sequence"),
             new Example("sit", "sit(ava)", "sit"),
             new Example("stand", "stand(ava)", "stand")
         );

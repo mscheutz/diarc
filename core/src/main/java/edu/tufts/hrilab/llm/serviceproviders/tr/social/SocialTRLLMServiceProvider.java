@@ -395,6 +395,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           } else if (chatContext.contextID.equals("learnTaskSequence")) {
             promptVars.put("%templateSubmissionTargetName", "submitTaskSequenceDefinition");
             promptVars.put("%templateArgumentName", "currentTaskSequenceDefinition");
+          } else if (chatContext.contextID.equals("learnTask")) {
+            promptVars.put("%templateSubmissionTargetName", "submitTaskDefinition");
+            promptVars.put("%templateArgumentName", "currentTaskDefinition");
           } else if (chatContext.contextID.equals("learnMission")) {
             promptVars.put("%templateSubmissionTargetName", "startMission");
             promptVars.put("%templateArgumentName", "currentMissionDefinition");
@@ -1017,8 +1020,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           return "- You have no existing tasks, current or scheduled, so there is nothing to cancel, suspend, or resume.";
         }
       }
-    } else if (semantics.getName().equals("submitTaskSequenceDefinition")) {
-      //TODO: Replace ^ with general action learning target
+    } else if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("submitTaskDefinition")) {
       String actionName = semantics.get(1).getName();
       if (learnedActions.stream().anyMatch(dbe -> dbe.getType().equals(actionName))) {
         ChatCollection chatCollection = getChatCollection(utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
@@ -3693,6 +3695,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             switch (templateArgName) {
               case "currentScheduledDefinition" -> expectedSize = 4;
               case "currentTaskSequenceDefinition" -> expectedSize = 2;
+              case "currentTaskDefinition" -> expectedSize = 2;
               case "currentMissionDefinition" -> expectedSize = 1;
               case "currentTaskStatusModificationDefinition" -> expectedSize = 3;
               default -> {

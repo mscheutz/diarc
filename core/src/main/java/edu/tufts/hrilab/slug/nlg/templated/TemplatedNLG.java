@@ -88,7 +88,8 @@ public final class TemplatedNLG extends DiarcComponent {
         if (content instanceof Call c) {
             text = switch (c.name()) {
                 case "startMission" -> realizeMission(c);
-                case "submitTaskSequenceDefinition" -> realizeTaskDefinition(c);
+                case "submitTaskSequenceDefinition" -> realizeTaskSequenceDefinition(c);
+                case "submitTaskDefinition" -> realizeTaskDefinition(c);
                 case "scheduled" -> realizeScheduledValidation(c);
                 default -> {
                     String realization = realize(c, Form.INFINITIVE);
@@ -166,7 +167,7 @@ public final class TemplatedNLG extends DiarcComponent {
         }
     }
 
-    private String realizeTaskDefinition(Call def) {
+    private String realizeTaskSequenceDefinition(Call def) {
         requireArity(def, 3);
         String name = entities.quotedLabel(def.args().get(1));
         List<Term> pairs = topLevelAndArgs(def.args().get(2));
@@ -188,6 +189,36 @@ public final class TemplatedNLG extends DiarcComponent {
                         String realization = realize(p.action(), Form.INFINITIVE);
                         return  realization == null ? null : realization + " at " + p.location();
                     })
+                    .toList();
+            if (steps.contains(null)) return null;
+            description = English.join(steps);
+        }
+        return choose("task-definition-frame",
+                "Let me make sure I understood. You want to save a new task sequence definition called ",
+                "Just to confirm, you want to save a new task sequence named ",
+                "Checking my understanding: you want to create and save a task sequence called ") +
+                name + choose("task-definition-link", " where you ", " in which you ", " that has me ") + description;
+    }
+
+    // TODO: update this to work well for non-locationActionPair structure
+    private String realizeTaskDefinition(Call def) {
+        requireArity(def, 3);
+        String name = entities.quotedLabel(def.args().get(1));
+        List<Term> actions = topLevelAndArgs(def.args().get(2));
+
+        boolean allSameAction = !actions.isEmpty() && actions.stream()
+                .map(Term::renderSource)
+                .distinct().count() == 1;
+
+        String description;
+        if (allSameAction) {
+            String action = realize(actions.get(0), Form.INFINITIVE);
+            if (action == null) return null;
+            description = action + " " + actions.size() + " times";
+        } else {
+            List<String> steps = actions.stream()
+                    .map(p -> realize(p, Form.INFINITIVE)
+                    )
                     .toList();
             if (steps.contains(null)) return null;
             description = English.join(steps);

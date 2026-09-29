@@ -144,29 +144,51 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //  each step. The idea is that writing it down each step provides something concretely to validate each step and
       //  better context for incremental LLM population. This could be first application/attempt of "general template
       //  population" structure, which we may want to use for at least general action learning if not every context.
-      List<Tool> learnTourTools = new ArrayList<>();
+      //List<Tool> learnTourTools = new ArrayList<>();
+      //argMap = new LinkedHashMap<>();
+      //LinkedHashMap<String,ToolParameterV2> innerArgMap = new LinkedHashMap<>();
+      //innerArgMap.put("location", new ToolParameterV2("string","saved :location to visit when performing this step in the sequence", getLocations("self",true).toArray(new String[0]),false));
+      //innerArgMap.put("action",new ToolParameterV2("object", "The action to be performed during this step in the sequence. Please refer to the Action List in order to understand acceptable values and forms.","nluextended"));
+      //argMap.put("taskName", new ToolParameterV2("string","The name this task should be saved under and later instructed as"));
+      //argMap.put("locationActionPairs", new ToolParameterV2("array","The list of action/location pairs defining this task sequence. Execution of this task will consist of iterating over the pairs in this list, visiting each location in sequence, and then performing the corresponding task at that location.",innerArgMap,new String[]{"location","action"}));
+      //learnTourTools.add(new Tool(new ToolDefinition(new ToolFunction("submitTaskSequenceDefinition",
+      //        "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.",
+      //        argMap,
+      //        new String[]{"taskName","locationActionPairs"})),
+      //        UtteranceType.INSTRUCT
+      //));
+      //stillGatheringInformationArgMap = new LinkedHashMap<>();
+      //stillGatheringInformationArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
+      //stillGatheringInformationArgMap.put("currentTaskSequenceDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","locationActionPairs"}));
+      //Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+      //        "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to the user while following the Response Rules and Style Requirements.",
+      //        stillGatheringInformationArgMap,
+      //        new String[]{"response","currentTaskSequenceDefinition"})),
+      //        UtteranceType.INSTRUCT);
+      //learnTourTools.add(modifiedTextResponseTool2);
+      //chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("focused/learnTaskSequence"), learnTourTools));
+
+      // More General Task Teaching Template
+      List<Tool> learnTaskTools = new ArrayList<>();
       argMap = new LinkedHashMap<>();
-      LinkedHashMap<String,ToolParameterV2> innerArgMap = new LinkedHashMap<>();
-      innerArgMap.put("location", new ToolParameterV2("string","saved :location to visit when performing this step in the sequence", getLocations("self",true).toArray(new String[0]),false));
-      innerArgMap.put("action",new ToolParameterV2("object", "The action to be performed during this step in the sequence. Please refer to the Action List in order to understand acceptable values and forms.","nluextended"));
       argMap.put("taskName", new ToolParameterV2("string","The name this task should be saved under and later instructed as"));
-      argMap.put("locationActionPairs", new ToolParameterV2("array","The list of action/location pairs defining this task sequence. Execution of this task will consist of iterating over the pairs in this list, visiting each location in sequence, and then performing the corresponding task at that location.",innerArgMap,new String[]{"location","action"}));
-      learnTourTools.add(new Tool(new ToolDefinition(new ToolFunction("submitTaskSequenceDefinition",
-              "Submit the details of the fully defined task sequence sequence for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.", 
+      argMap.put("actionList", new ToolParameterV2("array","The list of actions to be performed as substeps of the learned task. Execution of this task will consist of performing this list of tasks in order. Please refer to the Action List in order to understand acceptable values and forms.","nluextended"));
+      learnTaskTools.add(new Tool(new ToolDefinition(new ToolFunction("submitTaskDefinition",
+              "Submit the details of the fully defined task for storage and future use. Call this when you believe you have all information about the task finalized and are ready to save.",
               argMap,
-              new String[]{"taskName","locationActionPairs"})), 
+              new String[]{"taskName","actionList"})),
               UtteranceType.INSTRUCT
       ));
       stillGatheringInformationArgMap = new LinkedHashMap<>();
       stillGatheringInformationArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
-      stillGatheringInformationArgMap.put("currentTaskSequenceDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","locationActionPairs"}));
+      stillGatheringInformationArgMap.put("currentTaskDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","actionList"}));
       Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
-              "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to the user while following the Response Rules and Style Requirements.", 
+              "You are still being taught new or modifying existing details of the task by the user. You will respond to the user while following the Response Rules and Style Requirements.",
               stillGatheringInformationArgMap,
-              new String[]{"response","currentTaskSequenceDefinition"})),
+              new String[]{"response","currentTaskDefinition"})),
               UtteranceType.INSTRUCT);
-      learnTourTools.add(modifiedTextResponseTool2);
-      chatTemplates.put("learnTaskSequence", new ChatTemplates(Prompts.getPrompt("focused/learnTaskSequence"), learnTourTools));
+      learnTaskTools.add(modifiedTextResponseTool2);
+      chatTemplates.put("learnTask", new ChatTemplates(Prompts.getPrompt("focused/learnTask"), learnTaskTools));
 
       // Goal status modification
       argMap = new LinkedHashMap<>();
@@ -624,6 +646,34 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
                   return null;
                }
             }
+         } else if (command.equals("submitTaskDefinition")) {
+            List<Symbol> args = semantics.getArgs();
+            if (args.size() != 3) {
+               log.error("[correctCommonNLUMistakes] taught action definition has unexpected number of arguments, this should have been caught in tool processing?");
+            } else {
+               String taskName = args.get(1).toString();
+               if (!taskName.matches("[A-Za-z0-9_]+")) {
+                  Symbol cleanedName = Factory.createSymbol(taskName.trim().replaceAll("\\s+", "_").replaceAll("[^a-zA-Z0-9_]", ""));
+                  args.remove(1);
+                  args.add(1, cleanedName);
+               }
+
+               Predicate andPred = (Predicate) args.get(2);
+               List<Predicate> transformedSteps = new ArrayList<>();
+               for (Symbol step : andPred.getArgs()) {
+                  Predicate stepPred = (Predicate)step;
+                  Predicate transformedPred = correctCommonNLUMistakesHelper(stepPred, actor, instructor, errorStringBuilder);
+                  transformedSteps.add(transformedPred);
+               }
+               args.remove(2);
+               args.add(Factory.createPredicate("and",transformedSteps));
+
+               if (errorStringBuilder.isEmpty()) {
+                  return Factory.createPredicate(semantics.getName(), args);
+               } else {
+                  return null;
+               }
+            }
          } else if (command.equals("checkPastInteractionHistoryForMissingInformation")) {
             List<Symbol> args = semantics.getArgs();
             args.add(instructor);
@@ -1073,8 +1123,11 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       definition = new ToolDefinition(new ToolFunction("scheduleTask",
               "You begin a more focused dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval"));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition(new ToolFunction("learnTaskSequence",
-              "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save"));
+      //definition = new ToolDefinition(new ToolFunction("learnTaskSequence",
+      //        "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save"));
+      //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
+      definition = new ToolDefinition(new ToolFunction("learnTask",
+              "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\" or \"action\" The learned task will consist of performing a specific sequence of actions in order. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save"));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition(new ToolFunction("modifyExistingTaskStatus",
               "You begin a dialogue interaction with the user to pause, cancel, or resume existing assigned tasks. Examples of when this is relevant could be when a user tells you to forget about, stop, or pick back up with what you are doing."));

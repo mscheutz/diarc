@@ -176,7 +176,7 @@ public class AvaHybridParserComponent extends HybridParserComponent {
       String command = utterance.getSemantics().getName();
       if (command.equals("taskName")) {
         return;
-      } else if (command.equals("learnTaskSequence") || command.equals("scheduleTask") || command.equals("scheduled") || command.equals("submitTaskSequenceDefinition") || command.equals("modifyExistingTaskStatus")) {
+      } else if (command.equals("learnTaskSequence") || command.equals("scheduleTask") || command.equals("scheduled") || command.equals("submitTaskSequenceDefinition") || command.equals("modifyExistingTaskStatus") || command.equals("learnTask") || command.equals("submitTaskDefinition")) {
         // TODO: where should general mechanism for this live? "Social" LLM version - do not want to cache any parses
         //  targeting "focused context template population" scripts. Currently, doing so and hitting these cache targets
         //  would discard relevant pre-validation conversation history which may include relevant information about target

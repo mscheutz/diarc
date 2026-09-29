@@ -142,7 +142,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    public String samplePreValidationFillerPhrase(Utterance unvalidatedUtterance, boolean revalidating) {
       Symbol semantics = unvalidatedUtterance.getSemantics();
       //TODO: should generally match any "focusedContext" id
-      if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("scheduled")) {
+      if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("scheduled") || semantics.getName().equals("submitTaskDefinition")) {
          int option = new Random().nextInt(2);
          return switch (option) {
             case 0 -> "Let me make sure I understand";
@@ -333,6 +333,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getAssignedTasks":
             case "resetConversation":
             case "learnTaskSequence":
+            case "learnTask":
             case "scheduleTask":
             case "getInformationAroundTeachingNewActions":
             case "getInformationAroundHowToTeachATask":
@@ -425,6 +426,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "forgetAllTaughtActions":
             case "modifyExistingTaskStatus":
             case "submitTaskSequenceDefinition":
+            case "submitTaskDefinition":
             case "endConversation":
                return true;
             default:

@@ -145,6 +145,20 @@ import java.lang.String;
     op:log("info", "[learnTour] out");
 }
 
+() = learnTask() {
+    Symbol !submitter;
+    java.lang.Long !cid;
+    String !contextId;
+
+    !submitter = this:getOriginalSubmitter();
+    !cid = this:getId();
+    !contextId = this:getCommand();
+
+    act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
+
+    op:log("info", "[learnTour] out");
+}
+
 () = learnMission() {
     Symbol !submitter;
     java.lang.Long !cid;
@@ -251,6 +265,31 @@ import java.lang.String;
             act:submitGoal(!actionPred);
         }
         !action = op:get(!pairArgs,1);
+        act:submitGoal(!action);
+    }
+
+    act:endActionLearning(!actionSignature);
+
+    // TODO: if this instruction doesn't require validation, then we want a longer-form response listing learned steps? (Otherwise we should have already listed each step in the validation question)
+    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
+    act:generateResponse(!actionPred);
+}
+() = submitTaskDefinition(Symbol ?actionName, Predicate ?actionList) {
+    java.util.List !actions;
+    Predicate !actionPred;
+    Predicate !actionSignature;
+    Symbol !action;
+
+    op:log(info,"[submitTaskDefinition] ?actionName: ?actionList");
+
+    !actionSignature = op:createPredicate(?actionName);
+    async {
+        act:learnAction(!actionSignature);
+    }
+    act:waitForActionLearningStart(!actionSignature);
+
+    !actions = op:invokeMethod(?actionList, "getArgs");
+    foreach (!action : !actions) {
         act:submitGoal(!action);
     }
 
