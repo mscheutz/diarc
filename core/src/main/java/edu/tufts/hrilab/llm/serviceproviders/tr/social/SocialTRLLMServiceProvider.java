@@ -3443,9 +3443,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       validToolDefinition = false;
     }
     if (innerArguments == null && !unpopulatedArgSafe) {
-      log.warn("[processArgument] inner tool call does not have arguments field present: {}", argumentValue);
-      errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(toolName).append("\" call, but it was missing an \"arguments\" field. Please restructure your json to properly include an arguments field for this action, even if an empty map. You do not need to speak to the user about this.\n");
-      validToolDefinition = false;
+      log.warn("[processArgument] inner tool call does not have arguments field present: {}. Including empty map", argumentValue);
+      innerArguments = new HashMap<>();
+      //errorMessage.append("- You supplied action json for the \"").append(argumentName).append("\" argument of the \"").append(toolName).append("\" call, but it was missing an \"arguments\" field. Please restructure your json to properly include an arguments field for this action, even if an empty map. You do not need to speak to the user about this.\n");
+      //validToolDefinition = false;
     }
     Tool innerTool = innerToolChatTemplates.tools.get(toolName);
     if (innerTool == null) {
