@@ -4163,8 +4163,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   protected String getFocusedResponseStyle() {
-    return "- Do not restate or confirm details you have just been told when asking for additional information.\n" +
-            "- Ask only for the next missing piece of information when leading the conversation.";
+    return "- Do not restate or confirm details you have just been told.\n" +
+            "- Ask only for the next missing piece of information when leading the conversation.\n" +
+            "- Never say you will update the %templateArgumentName, just do it.\n" +
+            "- Never say you will check for information, just make the corresponding tool call to retrieve it or use the values found in the Contextual Information.\n" +
+            "- The user cannot see the %templateArgumentName, do not refer to it passively.";
   }
 
   protected String getFocusedResponsePolicy() {
