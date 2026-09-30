@@ -285,13 +285,13 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
              // "- Current Speaking Voice Volume: %voiceVolume\n" +
              // ////"- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
              // ////"%questionList\n" +
-             // "- Location List:\n" +
-             // "%locationList\n" +
-             // "- Video List:\n" +
-             // "%videoList\n" +
-             // "- Image List\n" +
-             // "%imageList";
-             "Use getBatteryLevelString, getCurrentLocationString, getAllKnownLocations, getVideoVolume, getSpeakingVolume, getSavedVideos, or getSavedImages tool calls to get the corresponding information if necessary.";
+              "- Location List:\n" +
+              "%locationList\n" +
+              "- Video List:\n" +
+              "%videoList\n" +
+              "- Image List\n" +
+              "%imageList\n" +
+             "- Use one of the following" + itkActionNames + " tool calls to get any other corresponding information if necessary.";
    }
 
    //Failed attempt at including context to be used in the base prompt itself
