@@ -395,7 +395,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       try {
          Double batteryLevelDouble = TRADE.getAvailableService(new TRADEServiceConstraints().name("getBatteryLevel").argTypes()).call(Double.class);
          if (batteryLevelDouble != null) {
-            batteryLevel = String.valueOf(batteryLevelDouble);
+            batteryLevel = String.valueOf(batteryLevelDouble.longValue());
          }
       } catch (TRADEException e) {
          log.error("[getBatteryLevel] error getting Ava battery level");
