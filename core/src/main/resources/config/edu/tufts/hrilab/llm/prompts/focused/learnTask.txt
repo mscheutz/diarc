@@ -14,6 +14,14 @@ Task Definition:
   - actionList = Steps of the task being taught.
 - Execution of the taught task sequence would result in iterating over the actionList and performing each action in order.
 
+Task Definition Progression Example:
+- "I will teach you how to perform a building sweep"
+   - {"taskName":"building sweep","actionList":[]}
+- "It involves performing an operation at every example location"
+   - {"taskName":"building sweep","actionList":[{"name":"goToLocation","arguments":{"destination":"example_location_0:location"}},{"name":"goToLocation","arguments":{"destination":"example_location_1:location"}},{"name":"goToLocation","arguments":{"destination":"example_location_2:location"}}]}
+- "At each location, you should perform the example action"
+   - {"taskName":"building sweep","actionList":[{"name":"goToLocation","arguments":{"destination":"example_location_0:location"}},{"name":"exampleAction","arguments":{}},{"name":"goToLocation","arguments":{"destination":"example_location_1:location"}},{"name":"exampleAction","arguments":{}},{"name":"goToLocation","arguments":{"destination":"example_location_2:location"}},{"name":"exampleAction","arguments":{}}]}
+
 Action Parameter Constraints:
 - Only use actions that match the allowed action forms from the Action List above.
 - Action definitions must be JSON objects with "name" and "arguments" fields. "arguments" must be its own fully populated map. Example format template: {"action": {"name":"example_name", "arguments":{"innerKey1":"innerValue1"}}}
