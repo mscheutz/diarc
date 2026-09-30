@@ -51,7 +51,7 @@ Output:{"translation":"Confirming I should return to the dock to charge?"}
 Input:QUESTION(ava,%user,mean(%user,dock(ava,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Confirming I should dock at ?destination?"}
 #
-Input:QUESTION(ava,%user,mean(%user,scheduleTask(ava)),{})
+Input:QUESTION(ava,%user,mean(%user,startSchedulingTask(ava)),{})
 Output:{"translation":"Confirming you want to schedule a new task?"}
 #
 Input:QUESTION(ava,%user,mean(%user,modifyScheduledGoal(ava)),{})
@@ -203,7 +203,7 @@ Output:{"translation":"Confirming I should save a new task sequence under the na
 Input:QUESTION(ava,%user,[mean(%user,submitTaskSequenceDefinition(ava,example_task,and(example_location_a:location,example_location_b:location,example_location_c:location,example_location_d:location),and(say(ava,"phrase 1"),sit(ava),sit(ava),say(ava,"phrase 2"))))],{})
 Output:{"translation":"Confirming I should save a new task sequence under the name example task where I say "phrase 1" at example location A, then sit at both example location B and example location C, and finally I will say "phrase 2" at example location D?"}
 #
-Input:QUESTION(ava,%user,[mean(%user,cancelGoal(%addressee,scheduleTask(%addressee)))],{})
+Input:QUESTION(ava,%user,[mean(%user,cancelGoal(%addressee,startSchedulingTask(%addressee)))],{})
 Output:{"translation":"Confirming I should stop scheduling this task?"}
 ##
 The interaction history between the system \"assistant\" and the human \"user\" leading up to this output request is contained below. You may use the history to modify and contextualize your translation of the supplied form. CHAT HISTORY:

@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I do not have information about the wifi signal strength at reception.\"}"
         },
         "index" : 0
@@ -132,7 +132,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The wifi signal strength at reception is strong.\"}"
         },
         "index" : 0
@@ -176,7 +176,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The wifi signal strength where I am right now is weak.\"}"
         },
         "index" : 0
@@ -220,7 +220,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The temperature where I am right now is 70 degrees.\"}"
         },
         "index" : 0

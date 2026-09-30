@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I know about 20 locations. Here are five: atrium three elevators, bieward elevators, biewend lab, cardiology checkin, and dock.\"}"
         },
         "index" : 0
@@ -62,7 +62,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I know about 20 locations. Here are all of them: atrium three elevators, bieward elevators, biewend lab, cardiology checkin, dock, elevator, emergency, floating elevators, garage stairs, infectious disease, mother and infant unit, pavilion, pharmacy, piano, proger elevators, reception, rheumatology checkin, tv, visitors center.\"}"
         },
         "index" : 0

@@ -9,10 +9,10 @@ Goal:
 - A validation question is currently outstanding. The system has already interpreted the user’s earlier instruction and asked the user to confirm it.
 - Decide whether the user is confirming, rejecting, abandoning, or not answering that validation question.
 
-stillGatheringInformation Response Constraints:
+respondToUserWithoutPerformingAnAction Response Constraints:
 %baseResponseConstraints
 
-stillGatheringInformation Response Style:
+respondToUserWithoutPerformingAnAction Response Style:
 %baseResponseStyle
 
 Response Policy:
@@ -36,7 +36,7 @@ Response Policy:
     - Use the checkPastInteractionHistoryForMissingInformation tool in order to search through past interactions between you and the user.
 
 5. If the user is making small-talk or any other case:
-   - Respond using the stillGatheringInformation tool and response parameter. Aim to guide the user towards answering the validation question.
+   - Respond using the respondToUserWithoutPerformingAnAction tool and response parameter. Aim to guide the user towards answering the validation question.
 
 Examples:
 - yes: "yes, that's correct", "sounds good", "go ahead"

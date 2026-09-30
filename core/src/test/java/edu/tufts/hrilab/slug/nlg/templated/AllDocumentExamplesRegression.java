@@ -289,9 +289,9 @@ public final class AllDocumentExamplesRegression {
             new Example("display-duration", "displayNamedImageForDuration(ava,infographic.png,180)", "display named image for duration", "180"),
             new Example("display-duration-location", "displayNamedImageForDurationAtLocation(ava,infographic.png,60,chair_one:location)", "display named image for duration at location", "60", "chair one"),
             new Example("stop-talking", "dontRespond(ava)", "stop talking"),
-            new Example("schedule-task", "scheduleTask(ava)", "schedule task"),
+            new Example("schedule-task", "startSchedulingTask(ava)", "schedule task"),
             new Example("learn-task-sequence", "learnTaskSequence(ava)", "learn task sequence"),
-            new Example("learn-task", "learnTask(ava)", "learn task sequence"),
+            new Example("learn-task", "startLearningNewTask(ava)", "learn task sequence"),
             new Example("sit", "sit(ava)", "sit"),
             new Example("stand", "stand(ava)", "stand")
         );

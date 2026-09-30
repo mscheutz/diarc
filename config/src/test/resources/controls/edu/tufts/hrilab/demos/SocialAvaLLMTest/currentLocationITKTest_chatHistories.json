@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I don\\u0027t know where I am right now.\"}"
         },
         "index" : 0
@@ -132,7 +132,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I am currently at the reception.\"}"
         },
         "index" : 0

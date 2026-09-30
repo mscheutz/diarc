@@ -117,7 +117,7 @@ import java.lang.String;
 }
 
 // General Focused Context Methods
-() = scheduleTask() {
+() = startSchedulingTask() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -128,7 +128,7 @@ import java.lang.String;
 
     act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
 
-    op:log("info", "[scheduleTask] out");
+    op:log("info", "[startSchedulingTask] out");
 }
 
 () = learnTaskSequence() {
@@ -145,7 +145,7 @@ import java.lang.String;
     op:log("info", "[learnTour] out");
 }
 
-() = learnTask() {
+() = startLearningNewTask() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;

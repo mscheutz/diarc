@@ -13,7 +13,7 @@ Output:{"translation":"escorting the patient from reception to chair 1 is schedu
 Input:learnNewTask(%addressee)
 Output:{"translation":"Learning how to perform a new task"}
 #
-Input:learnTask(%addressee)
+Input:startLearningNewTask(%addressee)
 Output:{"translation":"Learning a new task sequence"}
 #
 Input:escortFromLocationToLocation(%addressee,%addressee,coffee maker:location,desk a:location)

@@ -88,7 +88,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I understand you want to learn a task sequence called \\\"measurement patrol\\\" where I measure both wifi signal and temperature at all specified locations. Please tell me which locations should be included in this patrol.\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[]}}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Got it. Should I measure wifi and temperature at reception, pavilion, and elevator in that order?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"elevator:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"elevator:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}}]}}"
         },
         "index" : 0

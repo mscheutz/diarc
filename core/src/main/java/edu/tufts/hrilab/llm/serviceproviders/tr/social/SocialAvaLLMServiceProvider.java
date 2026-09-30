@@ -49,7 +49,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       }
 
       //// init prompt vars
-      // Generating string representations of toolset as reference for NLG and scheduleTask (want to present them, but not actually supply them as targets)
+      // Generating string representations of toolset as reference for NLG and startSchedulingTask (want to present them, but not actually supply them as targets)
       // TODO: move into initPromptVars
       List<Tool> instructTools = generateInstructTools(false);
       //TODO: need general way to provide instruct versions of actions for teaching, scheduling, etc vs ITK versions of
@@ -127,20 +127,20 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new String[]{"action","start","repeat","end"})),
               UtteranceType.INSTRUCT
       ));
-      LinkedHashMap<String,ToolParameterV2> stillGatheringInformationArgMap = new LinkedHashMap<>();
-      stillGatheringInformationArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user"));
-      stillGatheringInformationArgMap.put("currentScheduledDefinition",new ToolParameterV2("object", "Your current understanding of the scheduled task being instructed to you.", argMap, new String[]{"action","start","repeat","end"}));
-      Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+      LinkedHashMap<String,ToolParameterV2> respondToUserWithoutPerformingAnActionArgMap = new LinkedHashMap<>();
+      respondToUserWithoutPerformingAnActionArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user"));
+      respondToUserWithoutPerformingAnActionArgMap.put("currentScheduledDefinition",new ToolParameterV2("object", "Your current understanding of the scheduled task being instructed to you.", argMap, new String[]{"action","start","repeat","end"}));
+      Tool modifiedTextResponseTool1 = new Tool(new ToolDefinition(new ToolFunction("respondToUserWithoutPerformingAnAction",
                                                                    "You are still being taught new or modifying existing details of the scheduled task by the user. You will respond to" +
                                                                    "the user while following the Response Rules and Style Requirements.",
-                                                                   stillGatheringInformationArgMap,
+                                                                   respondToUserWithoutPerformingAnActionArgMap,
                                                 new String[]{"response","currentScheduledDefinition"})),
                                                 UtteranceType.INSTRUCT);
       scheduleGoalTools.add(modifiedTextResponseTool1);
-      chatTemplates.put("scheduleTask", new ChatTemplates(Prompts.getPrompt("focused/scheduleGoal"), scheduleGoalTools));
+      chatTemplates.put("startSchedulingTask", new ChatTemplates(Prompts.getPrompt("focused/scheduleGoal"), scheduleGoalTools));
 
       // Tour Teaching
-      // Using custom "stillGatheringInformation" tool which also explicitly keeps track of the "current template parse" at
+      // Using custom "respondToUserWithoutPerformingAnAction" tool which also explicitly keeps track of the "current template parse" at
       //  each step. The idea is that writing it down each step provides something concretely to validate each step and
       //  better context for incremental LLM population. This could be first application/attempt of "general template
       //  population" structure, which we may want to use for at least general action learning if not every context.
@@ -157,12 +157,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //        new String[]{"taskName","locationActionPairs"})),
       //        UtteranceType.INSTRUCT
       //));
-      //stillGatheringInformationArgMap = new LinkedHashMap<>();
-      //stillGatheringInformationArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
-      //stillGatheringInformationArgMap.put("currentTaskSequenceDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","locationActionPairs"}));
-      //Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+      //respondToUserWithoutPerformingAnActionArgMap = new LinkedHashMap<>();
+      //respondToUserWithoutPerformingAnActionArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
+      //respondToUserWithoutPerformingAnActionArgMap.put("currentTaskSequenceDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","locationActionPairs"}));
+      //Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("respondToUserWithoutPerformingAnAction",
       //        "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to the user while following the Response Rules and Style Requirements.",
-      //        stillGatheringInformationArgMap,
+      //        respondToUserWithoutPerformingAnActionArgMap,
       //        new String[]{"response","currentTaskSequenceDefinition"})),
       //        UtteranceType.INSTRUCT);
       //learnTourTools.add(modifiedTextResponseTool2);
@@ -179,16 +179,16 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new String[]{"taskName","actionList"})),
               UtteranceType.INSTRUCT
       ));
-      stillGatheringInformationArgMap = new LinkedHashMap<>();
-      stillGatheringInformationArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
-      stillGatheringInformationArgMap.put("currentTaskDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","actionList"}));
-      Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+      respondToUserWithoutPerformingAnActionArgMap = new LinkedHashMap<>();
+      respondToUserWithoutPerformingAnActionArgMap.put("response",new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
+      respondToUserWithoutPerformingAnActionArgMap.put("currentTaskDefinition", new ToolParameterV2("object", "Your current understanding of the steps of the task being taught to you", argMap, new String[]{"taskName","actionList"}));
+      Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("respondToUserWithoutPerformingAnAction",
               "You are still being taught new or modifying existing details of the task by the user. You will respond to the user while following the Response Rules and Style Requirements.",
-              stillGatheringInformationArgMap,
+              respondToUserWithoutPerformingAnActionArgMap,
               new String[]{"response","currentTaskDefinition"})),
               UtteranceType.INSTRUCT);
       learnTaskTools.add(modifiedTextResponseTool2);
-      chatTemplates.put("learnTask", new ChatTemplates(Prompts.getPrompt("focused/learnTask"), learnTaskTools));
+      chatTemplates.put("startLearningNewTask", new ChatTemplates(Prompts.getPrompt("focused/learnTask"), learnTaskTools));
 
       // Goal status modification
       argMap = new LinkedHashMap<>();
@@ -202,12 +202,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               new String[]{"modification", "taskType", "taskIndex"})),
               UtteranceType.INSTRUCT
       ));
-      stillGatheringInformationArgMap = new LinkedHashMap<>();
-      stillGatheringInformationArgMap.put("response", new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
-      stillGatheringInformationArgMap.put("currentTaskStatusModificationDefinition", new ToolParameterV2("object", "Your current understanding of the task status modification being instructed to you.", argMap,new String[]{"modification", "taskType", "taskIndex"}));
-      modifyExistingTaskStatusTools.add(new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+      respondToUserWithoutPerformingAnActionArgMap = new LinkedHashMap<>();
+      respondToUserWithoutPerformingAnActionArgMap.put("response", new ToolParameterV2("string", "What you want to say to the user. Generate this argument first."));
+      respondToUserWithoutPerformingAnActionArgMap.put("currentTaskStatusModificationDefinition", new ToolParameterV2("object", "Your current understanding of the task status modification being instructed to you.", argMap,new String[]{"modification", "taskType", "taskIndex"}));
+      modifyExistingTaskStatusTools.add(new Tool(new ToolDefinition(new ToolFunction("respondToUserWithoutPerformingAnAction",
               "You are still being told new or modifying existing details of the task status modification by the user. You will respond to the user while following the Response Rules and Style Requirements.",
-              stillGatheringInformationArgMap,
+              respondToUserWithoutPerformingAnActionArgMap,
               new String[]{"response","currentTaskStatusModificationDefinition"})),
               UtteranceType.INSTRUCT));
       //TODO: when we have more time - modify the template to allow for these behaviors
@@ -1121,14 +1121,14 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
       //// Focused contexts
-      definition = new ToolDefinition(new ToolFunction("scheduleTask",
+      definition = new ToolDefinition(new ToolFunction("startSchedulingTask",
               "You begin a more focused dialogue interaction with the user to schedule future or regularly repeating execution of a task. \nExample Instruction: direct like \"I want to schedule a goal\", or indirect like saying they want you to perform a certain action in the future or on an interval"));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       //definition = new ToolDefinition(new ToolFunction("learnTaskSequence",
       //        "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\", \"action\", or \"tour\" sequence. The learned task sequence will consist of navigating between a set of saved locations while performing actions at each location. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save"));
       //instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
-      definition = new ToolDefinition(new ToolFunction("learnTask",
-              "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\" or \"action\" The learned task will consist of performing a specific sequence of actions in order. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action sequence for you to save"));
+      definition = new ToolDefinition(new ToolFunction("startLearningNewTask",
+              "You begin a more focused dialogue interaction with the user to learn how to perform a new \"task\" or \"action\" The learned task will consist of performing a specific sequence of actions in order. \nExample Instruction: \"Let me tell you how to perform a new task\" or the user beginning to define an action for you to save."));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
       definition = new ToolDefinition(new ToolFunction("modifyExistingTaskStatus",
               "You begin a dialogue interaction with the user to pause, cancel, or resume existing assigned tasks. Examples of when this is relevant could be when a user tells you to forget about, stop, or pick back up with what you are doing."));

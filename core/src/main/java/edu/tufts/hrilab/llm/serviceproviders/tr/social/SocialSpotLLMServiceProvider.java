@@ -42,7 +42,7 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
     super.init();
 
     //// init prompt vars
-    // Generating string representations of toolset as reference for NLG and scheduleTask (want to present them, but not actually supply them as targets)
+    // Generating string representations of toolset as reference for NLG and startSchedulingTask (want to present them, but not actually supply them as targets)
     // TODO: move into initPromptVars
     List<Tool> instructTools = generateTaskableInstructTools(false);
     chatTemplates.put("nluextended", new ChatTemplates(getNluSystemPrompt(), instructTools));
@@ -59,7 +59,7 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
     Map<String,ChatTemplates> chatTemplates = new HashMap<>();
     // Focused context toolsets:
     // Tour Teaching
-    // Using custom "stillGatheringInformation" tool which also explicitly keeps track of the "current template parse" at
+    // Using custom "respondToUserWithoutPerformingAnAction" tool which also explicitly keeps track of the "current template parse" at
     //  each step. The idea is that writing it down each step provides something concretely to validate each step and
     //  better context for incremental LLM population. This could be first application/attempt of "general template
     //  population" structure, which we may want to use for at least general action learning if not every context.
@@ -75,7 +75,7 @@ public class SocialSpotLLMServiceProvider extends SocialTRLLMServiceProvider {
     LinkedHashMap<String,ToolParameterV2> textResponseArgMap = new LinkedHashMap<>();
     textResponseArgMap.put("response",new ToolParameterV2("string","What you want to say to the user. Generate this argument first."));
     textResponseArgMap.put("currentMissionDefinition",new ToolParameterV2("object","Your current understanding of the steps of the task being taught to you.", argMap,new String[]{"actionSequence"}));
-    Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("stillGatheringInformation",
+    Tool modifiedTextResponseTool2 = new Tool(new ToolDefinition(new ToolFunction("respondToUserWithoutPerformingAnAction",
             "You are still being taught new or modifying existing details of the task sequence by the user. You will respond to" +
                     "the user while following the Response Rules and Style Requirements.",
             textResponseArgMap,

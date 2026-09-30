@@ -18,7 +18,7 @@
         "id" : "call_69860872c8bf42df90b30e44",
         "type" : "function",
         "function" : {
-          "name" : "scheduleTask",
+          "name" : "startSchedulingTask",
           "arguments" : "{}"
         },
         "index" : 0
@@ -52,7 +52,7 @@
     "systemPrompt" : null,
     "chatHistory" : [ {
       "role" : "user",
-      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want to schedule the task to play the test video\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_69860872c8bf42df90b30e44\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want to schedule the task to play the test video\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_69860872c8bf42df90b30e44\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"startSchedulingTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
       "function_call" : null,
       "reasoning" : null,
       "tool_calls" : null,
@@ -66,7 +66,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I understand you want to schedule playing the test video. When would you like this task to start?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}}}}"
         },
         "index" : 0
@@ -88,7 +88,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Should this task repeat, or should it only happen once?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"\",\"end\":\"\"}}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Should I set an end time for this task, or leave it nonrepeating?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"playSpecificVideo\",\"arguments\":{\"videoName\":\"test video.mp4\"}},\"start\":\"start(3,HOURS)\",\"repeat\":\"nonrepeating\",\"end\":\"\"}}"
         },
         "index" : 0
@@ -155,7 +155,7 @@
       "tool_call_id" : null
     }, {
       "role" : "tool",
-      "content" : "Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"scheduleTask\" and will need to call your target tool call again if they try answering your question affirmatively.",
+      "content" : "Your last validation question was not answered after a long duration and timed out from the perspective of the system. You may need to remind the user of your task if they seem unaware of your current task of \"startSchedulingTask\" and will need to call your target tool call again if they try answering your question affirmatively.",
       "function_call" : null,
       "reasoning" : null,
       "tool_calls" : null,

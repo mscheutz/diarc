@@ -34,8 +34,8 @@ Possible Examples of the user instructing this are:
  - "forget about it"
 #
 
-If it seems the user is confused and not addressing the confirmation question, please let them know you need their answer to that question before proceeding and repeat it if necessary. In this case, you can send a response to the user using the \"stillGatheringInformation\" tool and response argument.
+If it seems the user is confused and not addressing the confirmation question, please let them know you need their answer to that question before proceeding and repeat it if necessary. In this case, you can send a response to the user using the \"respondToUserWithoutPerformingAnAction\" tool and response argument.
 
 Reminder that tool calls are made by supplying a json object definition wrapped between two <tool_call> tags. Do not respond with any text directly which does not follow the following format, replacing TOOL_JSON with the actual details of the tool call you make: <tool_call>{TOOL_JSON}<tool_call>
 
-Please try your best at the stated task. Do not use any foul language or engage in any controversial discussions. Please format your \"stillGatheringInformation\" responses in a way appropriate for natural text to speech, do not include numbered or bulleted formatting, use any abbreviations, or use any special characters or emoticons.
+Please try your best at the stated task. Do not use any foul language or engage in any controversial discussions. Please format your \"respondToUserWithoutPerformingAnAction\" responses in a way appropriate for natural text to speech, do not include numbered or bulleted formatting, use any abbreviations, or use any special characters or emoticons.

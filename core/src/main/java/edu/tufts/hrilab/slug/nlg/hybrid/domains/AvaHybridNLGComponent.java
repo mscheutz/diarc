@@ -20,7 +20,7 @@ public class AvaHybridNLGComponent extends HybridNLGComponent {
           List<Symbol> args = pred.getArgs();
           if (args.size() > 1) {
            String name = args.get(1).getName();
-           if (name.equals("modifyExistingTaskStatus") || name.equals("learnTaskSequence") || name.equals("scheduleTask") || name.equals("scheduled") || name.equals("submitTaskSequenceDefinition") || name.equals("learnTask") || name.equals("submitTaskDefinition")) {
+           if (name.equals("modifyExistingTaskStatus") || name.equals("learnTaskSequence") || name.equals("startSchedulingTask") || name.equals("scheduled") || name.equals("submitTaskSequenceDefinition") || name.equals("startLearningNewTask") || name.equals("submitTaskDefinition")) {
              //Know this is definitely desired for modifyExistingTaskStatus, is this similarly desired for all focused contexts?
              return;
            }

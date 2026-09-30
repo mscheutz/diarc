@@ -123,7 +123,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    * "validationnlg" - used when making calls from convertSemanticsToTextLLMService while validating a parse result
    * "validationnlu" - used when making calls from parseUtteranceLLMService while validating a parse result
    * Available core, general:
-   * "scheduleTask" - Social LLM alternative to templated turn-based scheduleGoal script
+   * "startSchedulingTask" - Social LLM alternative to templated turn-based scheduleGoal script
    * "learnTaskSequence" (though flavored differently in subclasses - variation on general action learning, learn sequence of action/location pairs
    * "modifyExistingtaskStatus" (currently just in SocialAva subcalls TODO - pull to base) - more flexible cancel/suspend/resuming of tasks
    *      TODO: reorderGoals, handleHigherPriorityConflictingGoal, modifyScheduledGoal, ...
@@ -132,7 +132,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    *        as seen fit from a subclass. The current convention is that the key of the chatTemplates entry is the name
    *        of the corresponding action which calls the runContextSpecificChat asl action defined in nlu.asl (which ends
    *        up calling {@link SocialTRLLMServiceProvider#focusDialogueChat(Symbol, Symbol, String, long)}). See
-   *        the action scheduleTask for an example. These sorts of chatTemplates allow you to temporarily modify
+   *        the action startSchedulingTask for an example. These sorts of chatTemplates allow you to temporarily modify
    *        prompting and tool targets in order to have a focused interaction to gather information to make a specific
    *        tool call (e.g. correctly fully populate more complex target semantics with complex parameterization).
    * TODO: ToolDefinitions per ChatTemplate should be updated with updated system information dynamically - add logic to
@@ -161,7 +161,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   /**
    * Collection currently necessary to handle double side effects of calling a "focused" dialogue script action.
    * Utterances instructing something relevant to a focused dialogue context will always have two effects:
-   * 1. The call itself to the method leading to runContextSpecificChat/focusDialogieChat (e.g. scheduleTask)
+   * 1. The call itself to the method leading to runContextSpecificChat/focusDialogieChat (e.g. startSchedulingTask)
    * 2. Needing to call the completion again under that specific context/ChatTemplate for the same input and handling
    * the result.
    * a) generateResponse - The system also responding to the instruction (prompting the user for necessary information, etc.)
@@ -180,7 +180,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //  was overwritten with INSTRUCT due to ITK / QueueEM incompatibility workarounds.
   List<String> itkActionNames = new ArrayList<>();
   //TODO: Should have some more formal definition of a "focused context trigger". There is some special logic required associated with these sorts of actions.
-  List<String> focusedContextTransferActionNames = List.of("scheduleTask", "learnTaskSequence", "learnMission", "modifyExistingTaskStatus");
+  List<String> focusedContextTransferActionNames = List.of("startSchedulingTask", "learnTaskSequence", "learnMission", "modifyExistingTaskStatus", "startLearningNewTask");
 
   private int externalErrorCount = 0;
   private boolean restrictedMode = false;
@@ -215,9 +215,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
     textResponseTool = new Tool(
             new ToolDefinition(
-                    new ToolFunction("stillGatheringInformation",
-                            "You are still gathering information before being able to submit an accurate, fully defined " +
-                                    "instruction and need to speak with the user to gather missing information.",
+                    new ToolFunction("respondToUserWithoutPerformingAnAction",
+                            "You want to respond to the user without explicitly performing any action because you have not been " +
+                                    " instructed anything relating to a provided function call.",
                                     new LinkedHashMap<>(
                                             Map.of(
                                                     "response",
@@ -285,7 +285,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     // init prompt vars
     promptVars.putAll(initPromptVars());
 
-    // Generating string representations of toolset as reference for NLG and scheduleTask (want to present them, but not actually supply them as targets)
+    // Generating string representations of toolset as reference for NLG and startSchedulingTask (want to present them, but not actually supply them as targets)
     // TODO: move into initPromptVars
     instructTools = generateInstructTools(false);
     promptVars.put("%instructNLGList", instructTools.stream().map(t -> toolToDescString(t, false)).collect(Collectors.joining("\n#\n")));
@@ -389,13 +389,13 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
           }
         } else if (chatContext.chatType == ChatType.FOCUSED && parsing) {
           //TODO: should be done automatically and/or in subclass specifically. Easy to miss updating this
-          if (chatContext.contextID.equals("scheduleTask")) {
+          if (chatContext.contextID.equals("startSchedulingTask")) {
             promptVars.put("%templateSubmissionTargetName", "submitScheduledTaskDefinition");
             promptVars.put("%templateArgumentName", "currentScheduledDefinition");
           } else if (chatContext.contextID.equals("learnTaskSequence")) {
             promptVars.put("%templateSubmissionTargetName", "submitTaskSequenceDefinition");
             promptVars.put("%templateArgumentName", "currentTaskSequenceDefinition");
-          } else if (chatContext.contextID.equals("learnTask")) {
+          } else if (chatContext.contextID.equals("startLearningNewTask")) {
             promptVars.put("%templateSubmissionTargetName", "submitTaskDefinition");
             promptVars.put("%templateArgumentName", "currentTaskDefinition");
           } else if (chatContext.contextID.equals("learnMission")) {
@@ -4140,7 +4140,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   protected String getBaseResponseConstraints() {
     return "- Use only tool descriptions, tool arguments, and tool results for robot- or system-specific claims.\n" +
-            "- Respond to the user only by using the stillGatheringInformation tool.\n" +
+            "- Respond to the user only by using the respondToUserWithoutPerformingAnAction tool.\n" +
             "- Never make assumptions in order to answer any questions when you are missing context.\n" +
             "- Never tell the user you can or will do something for them unless it is by making a specific tool call. The back-end controls all interactions with the real-world.\n" +
             "- Do not use profanity or engage in controversial discussion.";
@@ -4178,7 +4178,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
             "- If the user says bye, leaves, or no longer wants to continue, call endConversation.\n" +
             "- If the user asks to pause this interaction, call suspendCurrentInteraction.\n" +
             "- If the user asks to cancel this interaction, call cancelCurrentInteraction.\n" +
-            "- Otherwise, call stillGatheringInformation and include a sensible response which follows the Style guidelines" +
+            "- Otherwise, call respondToUserWithoutPerformingAnAction and include a sensible response which follows the Style guidelines" +
             " and is aligned with your goal. Update %templateArgumentName as the user adds, corrects, removes, or replaces information.";
   }
 

@@ -28,12 +28,12 @@ Action Parameter Constraints:
 - Tip: If the user says a specific step must be performed at a specific location, insert a goToLocation step in the actionList before the specific step.
 %toolArgumentTypeDescription
 
-stillGatheringInformation Response Constraints:
+respondToUserWithoutPerformingAnAction Response Constraints:
 %baseResponseConstraints
 %focusedResponseConstraints
 - currentTaskDefinition may contain incomplete action definitions in the actionList while you are still gathering or clarifying information. Include as much information in the template as possible so you can continuously build off of it.
 
-stillGatheringInformation Response Style:
+respondToUserWithoutPerformingAnAction Response Style:
 %baseResponseStyle
 %focusedResponseStyle
 

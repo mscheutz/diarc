@@ -333,8 +333,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getAssignedTasks":
             case "resetConversation":
             case "learnTaskSequence":
-            case "learnTask":
-            case "scheduleTask":
+            case "startLearningNewTask":
+            case "startSchedulingTask":
             case "getInformationAroundTeachingNewActions":
             case "getInformationAroundHowToTeachATask":
             case "getInformationAroundWhatALearnedTaskIs":
