@@ -3128,21 +3128,30 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         chatCollection.signalInputProcessed(utterance);
       }
     } else {
+      if (utterance.getWordsAsString().equals("Conversation has been reset")) {
+        // This utterance specifically starting a new Chat history after "resetConversation" call seems to throw off future parses
+        return;
+      }
       synchronized (currentChatCollections) {
         //NLG - add to current context if exists
         user = utterance.getAddressee().toUntyped();
         agentTeam = utterance.getSpeaker().toUntyped();
         chatCollection = getChatCollection(user, agentTeam);
         if (chatCollection == null) {
+          //return;
           chatCollection = new ChatCollection(new Chat(user.getName(), agentTeam.getName()));
           currentChatCollections.put(Pair.of(user.toUntyped(), agentTeam.toUntyped()), chatCollection);
         }
         ChatContext chatContext = chatCollection.currentChat;
         if (chatContext == null) {
+          //return;
           Chat chat = new Chat(user.getName(), agentTeam.getName());
           chatContext = new ChatContext(chat);
           chatCollection.currentChat = chatContext;
         }
+        //if (chatContext.history.messages.isEmpty()) {
+        //  return;
+        //}
 
         //// Reset context timeout timer
         resetInactivityTimer(user, agentTeam);
