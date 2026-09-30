@@ -4124,9 +4124,8 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     return "You are %addressee, the natural language surface of an assistive agent with an associated back-end system.\n";
   }
 
-  //TODO: Don't believe questions need ot be included because should be in questionAnswer context
   protected String getBaseContextualInformation() {
-    return "- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n%questionList";
+    return "<none>";
   }
 
   protected String getBaseResponseConstraints() {

@@ -279,18 +279,19 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
 
    @Override
    protected String getBaseContextualInformation() {
-      return "- Current Location: %currentLocation\n" +
-              "- Current Battery Level: %batteryLevel\n" +
-              "- Current Video Volume: %videoVolume\n" +
-              "- Current Speaking Voice Volume: %voiceVolume\n" +
-              ////"- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
-              ////"%questionList\n" +
-              "- Location List:\n" +
-              "%locationList\n" +
-              "- Video List:\n" +
-              "%videoList\n" +
-              "- Image List\n" +
-              "%imageList";
+      return //"- Current Location: %currentLocation\n" +
+             // "- Current Battery Level: %batteryLevel\n" +
+             // "- Current Video Volume: %videoVolume\n" +
+             // "- Current Speaking Voice Volume: %voiceVolume\n" +
+             // ////"- OUTSTANDING QUESTIONs the back-end is awaiting a response for:\n" +
+             // ////"%questionList\n" +
+             // "- Location List:\n" +
+             // "%locationList\n" +
+             // "- Video List:\n" +
+             // "%videoList\n" +
+             // "- Image List\n" +
+             // "%imageList";
+             "Use getBatteryLevelString, getCurrentLocationString, getAllKnownLocations, getVideoVolume, getSpeakingVolume, getSavedVideos, or getSavedImages tool calls to get the corresponding information if necessary.";
    }
 
    //Failed attempt at including context to be used in the base prompt itself
@@ -1270,30 +1271,27 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //itkTools.add(new Tool(definition, UtteranceType.QUESTION));
 
       //// Info moved to be included in system message automatically
-      //definition = new ToolDefinition(new ToolFunction("getBatteryLevelString",
-      //        "Get the current battery level percent of the robot",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition(new ToolFunction("getCurrentLocationString",
-      //        "Get the current location you believe you are at",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition(new ToolFunction("getAllKnownLocations",
-      //        "Get a list of all of your currently saved locations",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition(new ToolFunction("getVideoVolume",
-      //        "Get the current volume videos are set to play at",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition(new ToolFunction("getSavedVideos",
-      //        "Get the list of saved videos in your collection which you are able to play",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
-      //definition = new ToolDefinition(new ToolFunction("getSavedImages",
-      //        "Get the list of saved images in your collection which you are able to display",
-      //        new ArrayList());
-      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getBatteryLevelString",
+              "Get the current battery level percent of the robot"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getCurrentLocationString",
+              "Get the current location you believe you are at"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getAllKnownLocations",
+              "Get a list of all of your currently saved locations"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getVideoVolume",
+              "Get the current volume videos are set to play at"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getSpeakingVolume",
+              "Get the current volume videos are set to play at"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getSavedVideos",
+              "Get the list of saved videos in your collection which you are able to play"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getSavedImages",
+              "Get the list of saved images in your collection which you are able to display"));
+      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       return itkTools;
    }
 
