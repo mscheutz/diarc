@@ -422,6 +422,13 @@ import edu.tufts.hrilab.action.goal.Goal;
      ?output = op:newObject("java.lang.String","video volume is currently set to !volume percent");
 }
 
+(String ?output) = generateSpeakingVolumeString() {
+    Integer !volume;
+
+    !volume = tsc:getVoiceVolume();
+     ?output = op:newObject("java.lang.String","voice volume is currently set to !volume percent");
+}
+
 (String ?output) = generateIsVideoSavedString(Symbol ?videoName) {
     Boolean !match;
     String !name;
@@ -486,14 +493,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getCurrentLocationString() {
@@ -510,14 +509,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllKnownLocations() {
@@ -534,14 +525,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllKnownPatrolPaths() {
@@ -558,14 +541,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllLocationsOnPatrolPath(Symbol ?pathName) {
@@ -582,14 +557,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getTaughtActionsList() {
@@ -606,14 +573,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getPredefinedActions() {
@@ -630,14 +589,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getActionSteps(Predicate ?action) {
@@ -654,14 +605,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getIfCanPerform(Predicate ?actionPredicate) {
@@ -678,14 +621,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getKioskGoalSettings() {
@@ -702,14 +637,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getSavedVideos() {
@@ -726,14 +653,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getVideoVolume() {
@@ -750,14 +669,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
+    }
+}
+() = getSpeakingVolume() {
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
+    !output = act:generateSpeakingVolumeString();
+    String !contextId = this:getCommand();
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
     }
 }
 () = getIsVideoSaved(Symbol ?videoName) {
@@ -774,14 +701,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getSavedImages() {
@@ -798,14 +717,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAssignedTasks() {
@@ -822,14 +733,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -847,14 +750,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -872,14 +767,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -897,14 +784,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -923,14 +802,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -950,14 +821,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
