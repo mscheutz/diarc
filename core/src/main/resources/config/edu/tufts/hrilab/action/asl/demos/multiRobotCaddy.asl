@@ -270,12 +270,12 @@ import java.util.List;
 
     op:log(info, "[receiveitem] ?actor picking up ?item from ?area at ?location");
     //how do we handle instantiating the objects that we will want at these locations? do we have the same objectAt preconditions? isn't that an issue since we don't do direct perception with the spot?
-    act:moveArmToCarryPosition();
-    act:openGripper();
+    act:goToPose(carry);
+    act:openGripper(arm);
     ?self.act:askQuestionFromString("Can I please have ?item", val(X));
-    act:closeGripper();
+    act:closeGripper(arm);
     op:sleep(1000);
-    act:moveArmOverBody();
+    act:goToPose(overBody);
 }
 
 () = putdownspot["a spot-specific action without perception where the ?spot will place an item it is carrying on an interactable area bound to a specific arm pose."] (Symbol ?actor:spot, Symbol ?item:physobj, Symbol ?objectType:property, Symbol ?area:area, Symbol ?location:location) {
@@ -296,12 +296,12 @@ import java.util.List;
         success : actorAt(?actor, !finalLocation); //todo: same as above
     }
     op:log(info, "[putdownspot] ?actor putting down ?item from ?area at ?location");
-    act:moveArmOverTable();
-    act:openGripper();
-    act:moveArmOverBody();
-    act:closeGripper();
+    act:goToPose(overTable);
+    act:openGripper(arm);
+    act:goToPose(overBody);
+    act:closeGripper(arm);
     act:goToLocation(!finalLocation); //todo: see comments in effects. this should be done by the planner with addl domain info.
-    act:stowArm();
+    act:goToPose(stow);
 }
 
 () = deliverkit["?actor delivers an ?item to ?destination"](Symbol ?actor:agent, Symbol ?item:physobj, Symbol ?destination:location) {
@@ -346,7 +346,20 @@ import java.util.List;
     op:log(info, "[opendoor] ?actor moving out of the doorway to ?destinationLocation in ?destinationRoom");
 }
 
+() = detectAndOpenDoor() {
+    // search for handle
+    Symbol !doorRef;
+    Predicate !doorProps = op:createPredicate("and(door(X:spotphysobj))");
+    !doorRef = act:positReference(!doorProps);
 
+    // search for handle
+    Symbol !handleRef;
+    Predicate !handleProps = op:createPredicate("and(handle(X:spotphysobj))");
+    !handleRef = act:positReference(!handleProps);
+
+    // call primitive openDoor
+    act:openDoor(!doorRef, !handleRef);
+}
 
 
 () = perceiveobjectatlocation[""](Symbol ?actor:fetch, Symbol ?objectRef:physobj, Symbol ?location:location, Symbol ?area:area, Symbol ?propertyType:property){

@@ -319,7 +319,7 @@
       "serviceArgs" : [ "REPLY(self:agent,evan,[I, have, found, a, plan, to, recover],\"I have found a plan to recover\",{})", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,will(it,take(time(26.778189999999988))),\"it will take about 26 seconds\",{})", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,will(it,take(time(27.439799999999998))),\"it will take about 27 seconds\",{})", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "QUESTION(self:agent,evan,[Do, you, want, me, to, execute, it?],\"Do you want me to execute it?\",{})", "true" ]
@@ -359,19 +359,19 @@
       "serviceArgs" : [ "Do you want me to execute it?", "[val(X)]", "self:agent", "evan", "-1", "{X=yes}" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "planned(self:agent)", "216" ]
+      "serviceArgs" : [ "planned(self:agent)", "ACT", "SKIPPENDING", "1", "evan", "216" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_5:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmToCarryPosition",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
     }, {
       "serviceName" : "openGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,unknown,[Can, I, please, have, physobj_4:physobj],\"Can I please have physobj_4:physobj\",{})", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[Can, I, please, have, physobj_4:physobj],\"Can I please have physobj_4:physobj\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -382,31 +382,31 @@
       "serviceArgs" : [ "Can I please have physobj_4:physobj", "[val(X)]", "self:agent", "evan", "-1", "{X=ready}" ]
     }, {
       "serviceName" : "closeGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverBody",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody", "justification(true)" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_1:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverTable",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overTable", "justification(true)" ]
     }, {
       "serviceName" : "openGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
-      "serviceName" : "moveArmOverBody",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody", "justification(true)" ]
     }, {
       "serviceName" : "closeGripper",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_7:spotlocation", "justification(true)" ]
     }, {
-      "serviceName" : "stowArm",
-      "serviceArgs" : [ "justification(true)" ]
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "stow", "justification(true)" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_6:movebaselocation", "justification(true)" ]
@@ -702,8 +702,14 @@
       "serviceName" : "goToLoc",
       "serviceArgs" : [ "temilocation_2:temilocation", "false", "true" ]
     }, {
-      "serviceName" : "detectAndOpenDoor",
-      "serviceArgs" : [ "true" ]
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:spotphysobj=spotphysobj_0:spotphysobj}", "1.0", "[door(X:spotphysobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:spotphysobj=spotphysobj_1:spotphysobj}", "1.0", "[handle(X:spotphysobj)]", "true" ]
+    }, {
+      "serviceName" : "openDoor",
+      "serviceArgs" : [ "spotphysobj_0:spotphysobj", "spotphysobj_1:spotphysobj", "justification(true)" ]
     }, {
       "serviceName" : "initLocation",
       "serviceArgs" : [ "spotlocation_6:spotlocation", "justification(true)" ]
