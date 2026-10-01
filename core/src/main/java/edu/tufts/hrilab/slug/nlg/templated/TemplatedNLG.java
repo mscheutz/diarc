@@ -200,21 +200,61 @@ public final class TemplatedNLG extends DiarcComponent {
                 name + choose("task-definition-link", " where you ", " in which you ", " that has me ") + description;
     }
 
-    // TODO: update this to work well for non-locationActionPair structure
     private String realizeTaskDefinition(Call def) {
         requireArity(def, 3);
         String name = entities.quotedLabel(def.args().get(1));
         List<Term> actions = topLevelAndArgs(def.args().get(2));
 
-        boolean allSameAction = !actions.isEmpty() && actions.stream()
-                .map(Term::renderSource)
-                .distinct().count() == 1;
+        boolean allSameAction = false;
+        boolean allSameActionAlternatingLocations = false;
+        List<String> locations = new ArrayList<>();
+        if (!actions.isEmpty()) {
+            allSameAction = true;
+            allSameActionAlternatingLocations = true;
+            String sameActionSource = actions.get(0).renderSource();
+            String sameActionAlternatingLocationSource = "";
+            if (actions.size() > 1) {
+                sameActionAlternatingLocationSource = actions.get(1).renderSource();
+            } else {
+                allSameActionAlternatingLocations = false;
+            }
+
+            int i = 0;
+            while ((allSameAction || allSameActionAlternatingLocations) && i < actions.size()) {
+                String actionSource = actions.get(i).renderSource();
+                if (allSameAction && !actionSource.equals(sameActionSource)) {
+                    allSameAction = false;
+                }
+                if (allSameActionAlternatingLocations) {
+                    if (i % 2 == 0) {
+                        if (actions.get(i) instanceof Call c && c.name().equals("goToLocation")) {
+                            locations.add(entities.resolve(c.args().get(1)));
+                        } else {
+                            allSameActionAlternatingLocations = false;
+                        }
+                    } else {
+                        if (!actionSource.equals(sameActionAlternatingLocationSource)) {
+                            allSameActionAlternatingLocations = false;
+                        }
+                    }
+                }
+                i++;
+            }
+        }
+
+        //boolean allSameAction = !actions.isEmpty() && actions.stream()
+        //        .map(Term::renderSource)
+        //        .distinct().count() == 1;
 
         String description;
         if (allSameAction) {
             String action = realize(actions.get(0), Form.INFINITIVE);
             if (action == null) return null;
             description = action + " " + actions.size() + " times";
+        } else if (allSameActionAlternatingLocations) {
+            String action = realize(actions.get(1), Form.INFINITIVE);
+            if (action == null) return null;
+            description = injectLocations(action, locations);
         } else {
             List<String> steps = actions.stream()
                     .map(p -> realize(p, Form.INFINITIVE)
