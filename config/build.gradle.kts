@@ -64,10 +64,8 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  if(project.hasProperty("diarc.enableMtracs") && project.property("diarc.enableMtracs").toString().toBoolean()) {
-    testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55-SNAPSHOT") {
-      exclude(group = "edu.tufts.hrilab", module = "diarc-core")
-    }
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55") {
+    exclude(group = "edu.tufts.hrilab", module = "diarc-core")
   }
 
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
