@@ -13,22 +13,14 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
-import edu.tufts.hrilab.llm.VisionMessage;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.gson.tool.ToolFunction;
 import edu.tufts.hrilab.llm.gson.tool.ToolParameterV2;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1302,11 +1294,6 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "Get the list of saved images in your collection which you are able to display"));
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
-
-      //// Experimental
-      definition = new ToolDefinition(new ToolFunction("getCurrentViewDescription",
-              "Use this to ask the system for a description of your current camera view."));
-      itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       return itkTools;
    }
 
@@ -1457,43 +1444,5 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //replyTools.put(Factory.createPredicate("amount(X)"), new Tool(definition,UtteranceType.REPLY));
 
       return replyTools;
-   }
-
-   //Experimental
-   @TRADEService
-   public Completion visionCompletionTest(Prompt prompt) {
-      Dimension imageSize = new Dimension(640,480);
-      BufferedImage image;
-      //byte[] bytes;
-      URL url;
-      try {
-         File file = new File("/home/eric/Downloads/image.png");
-         image = ImageIO.read(file);
-         url = file.toURI().toURL();
-         //ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-         //ImageIO.write(image, "png", byteStream);
-         //bytes = byteStream.toByteArray();
-      } catch (IOException e) {
-         log.error("[visionCompletionTest] unable to load image", e);
-         return null;
-      }
-
-     //try {
-     //  bytes = CompressionUtil.compress(bytes);
-     //} catch (IOException e) {
-     //  log.error("[visionCompletionTest] unable to compress loaded bytes", e);
-     //}
-
-      List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
-      vmessages.add(new VisionMessage("user", prompt.toString(), url));
-      Completion response;
-      try {
-         //response = TRADE.getAvailableService(new TRADEServiceConstraints().name("visionCompletion").argTypes(Prompt.class, byte[].class, Dimension.class)).call(Completion.class, prompt, bytes, imageSize);
-         response = TRADE.getAvailableService(new TRADEServiceConstraints().name("visionCompletion").argTypes(List.class)).call(Completion.class, vmessages);
-      } catch (TRADEException e) {
-         log.error("[visionCompletionTest] exception during vision completion call", e);
-         return null;
-      }
-      return response;
    }
 }
