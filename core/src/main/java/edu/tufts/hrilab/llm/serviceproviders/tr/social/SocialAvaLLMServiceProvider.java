@@ -57,8 +57,8 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //  actions for general interaction to populate corresponding toolsets effectively
       LinkedHashMap<String,ToolParameterV2> argMap = new LinkedHashMap<>();
       argMap.put("locations", new ToolParameterV2("array","The list of :locations to report the wifi signal of. Empty if the current location at the time of this goal being performed",getLocations("self",true).toArray(new String[0]),false));
-      ToolDefinition definition = new ToolDefinition(new ToolFunction("reportPreviouslyMeasuredWifiOfLocations",
-              "You report the wifi signal strength you had previously measured at certain :locations",
+      ToolDefinition definition = new ToolDefinition(new ToolFunction("reportPreviouslyMeasuredWifiStrengthsOfLocations",
+              "You report the wifi signal strengths you had previously measured at certain :locations",
               argMap,
               new String[]{"locations"}));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
@@ -691,14 +691,27 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             }
          } else if (command.equals("measureWifiSignal")) {
             List<Symbol> args = semantics.getArgs();
+            boolean shouldReport = false;
+            ChatCollection collection  = getChatCollection(instructor, actor);
+            if (collection != null && collection.currentChat != null) {
+               shouldReport = collection.currentChat.chatType != ChatType.FOCUSED;
+            }
             if (args.size() == 1) {
-               return Factory.createPredicate("measureWifiAtCurrentLocation",args);
+               if (shouldReport) {
+                  return Factory.createPredicate("measureWifiAtCurrentLocationAndReport",args);
+               } else {
+                  return Factory.createPredicate("measureWifiAtCurrentLocation",args);
+               }
             } else if (args.size() == 2) {
                if (args.get(1).isPredicate()) {
                   if (args.get(1).hasArgs()) {
                      return Factory.createPredicate("measureWifiAtLocations", args);
                   } else {
-                     return Factory.createPredicate("measureWifiAtCurrentLocation",args.get(0));
+                     if (shouldReport) {
+                        return Factory.createPredicate("measureWifiAtCurrentLocationAndReport", args.get(0));
+                     } else {
+                        return Factory.createPredicate("measureWifiAtCurrentLocation", args.get(0));
+                     }
                   }
                } else {
                   return Factory.createPredicate("measureWifiAtCurrentLocationAndReportAt",args);
@@ -757,12 +770,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             } else if (args.size() == 4) {
                return Factory.createPredicate("displayNamedImageForDurationAtLocation",args);
             }
-         } else if (command.equals("getPreviouslyMeasuredWifiAtLocationsString")) {
+         } else if (command.equals("getPreviouslyMeasuredWifiStrengthsAtLocationsString")) {
             List<Symbol> args = semantics.getArgs();
             if (args.size() == 1) {
-               return Factory.createPredicate("getPreviouslyMeasuredWifiAtCurrentLocationString",args);
+               return Factory.createPredicate("getPreviouslyMeasuredWifiStrengthAtCurrentLocationString",args);
             } else if (args.size() == 2 && !args.get(1).hasArgs()) {
-               return Factory.createPredicate("getPreviouslyMeasuredWifiAtCurrentLocationString",args.get(0));
+               return Factory.createPredicate("getPreviouslyMeasuredWifiStrengthAtCurrentLocationString",args.get(0));
             }
          } else if (command.equals("getPreviouslyMeasuredTemperatureAtLocationsString")) {
             List<Symbol> args = semantics.getArgs();
@@ -771,12 +784,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             } else if (args.size() == 2 && !args.get(1).hasArgs()) {
                return Factory.createPredicate("getPreviouslyMeasuredTemperatureAtCurrentLocationString", args.get(0));
             }
-         } else if (command.equals("reportPreviouslyMeasuredWifiAtLocations")) {
+         } else if (command.equals("reportPreviouslyMeasuredWifiStrengthsOfLocations")) {
             List<Symbol> args = semantics.getArgs();
             if (args.size() == 1) {
-               return Factory.createPredicate("reportPreviouslyMeasuredWifiAtCurrentLocation",args);
+               return Factory.createPredicate("reportPreviouslyMeasuredWifiOfCurrentLocation",args);
             } else if (args.size() == 2 && !args.get(1).hasArgs()) {
-               return Factory.createPredicate("reportPreviouslyMeasuredWifiAtCurrentLocation",args.get(0));
+               return Factory.createPredicate("reportPreviouslyMeasuredWifiOfCurrentLocation",args.get(0));
             }
          } else if (command.equals("reportPreviouslyMeasuredTemperatureAtLocations")) {
             List<Symbol> args = semantics.getArgs();
@@ -1015,7 +1028,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       argMap.put("locations",new ToolParameterV2("array","The ordered list of saved :locations to visit and measure wifi at. Empty if only measuring at your current position",locationNames,false));
       argMap.put("reportLocation",new ToolParameterV2("string","The saved :location to go to and give a summary of the results. Don't supply if not reporting a summary of the results",locationNames,false));
       definition = new ToolDefinition(new ToolFunction("measureWifiSignal",
-              "You measure wifi signal strength at certain :locations",
+              "You measure wifi signal strength at every :location included in location and then report the findings at reportLocation if it is supplied.",
               argMap));
       instructTools.add(new Tool(definition, UtteranceType.INSTRUCT));
 
@@ -1211,9 +1224,12 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       ToolDefinition definition;
 
       //// Domain specific ITK
-      definition = new ToolDefinition(new ToolFunction("getPreviouslyMeasuredWifiAtLocationsString",
-              "Get previously measured wifi signal strengths of a set of supplied :locations",
-              new LinkedHashMap<>(Map.of("locations",new ToolParameterV2("array","The list of saved :locations to report wifi signals for. Empty if the current location only",getLocations("self",true).toArray(new String[0]),false)))));
+      //definition = new ToolDefinition(new ToolFunction("getPreviouslyMeasuredWifiStrengthsAtLocationsString",
+      //        "Get previously measured wifi signal strengths of a set of supplied :locations",
+      //        new LinkedHashMap<>(Map.of("locations",new ToolParameterV2("array","The list of saved :locations to report wifi signals for. Empty if the current location only",getLocations("self",true).toArray(new String[0]),false)))));
+      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
+      definition = new ToolDefinition(new ToolFunction("getPreviouslyMeasuredWifiStrengths",
+              "Get any previously measured wifi signal strengths at all known :locations"));
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       if (includeDemoTargets) {
          definition = new ToolDefinition(new ToolFunction("getPreviouslyMeasuredTemperatureAtLocationsString",

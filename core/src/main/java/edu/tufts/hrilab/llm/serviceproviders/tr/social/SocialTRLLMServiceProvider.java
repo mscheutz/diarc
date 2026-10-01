@@ -354,7 +354,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
               promptVars.put("%validationNLUExamplesForNo","\"no, i meant...\"");
             } else {
               promptVars.put("%validationNLUResponsePolicyForNo", "If the user rejects it, corrects it, modifies it, or adds details");
-              promptVars.put("%validationNLUExamplesForNo", "\"no, i meant...\", \"yes, but instead of...\", \"yes, but could you change...\", \"and I also want you to...\"");
+              promptVars.put("%validationNLUExamplesForNo", "\"no, i meant...\", \"yes, but instead of...\", \"yes, but could you change...\", \"yes, and...\"");
             }
             //TODO: include tool information, not parsed semantics
             Map<Variable, Symbol> varMap = new HashMap<>();

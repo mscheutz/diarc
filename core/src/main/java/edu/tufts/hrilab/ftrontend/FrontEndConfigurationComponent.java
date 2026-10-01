@@ -328,7 +328,6 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getIsVideoSaved":
             case "getSavedVideos":
             case "getSavedImages":
-            case "getPreviouslyMeasuredWifiAtLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationString":
             case "getAssignedTasks":
             case "resetConversation":
@@ -340,8 +339,10 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getInformationAroundWhatALearnedTaskIs":
             case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
             case "getAssistanceOnUsingSaveLocationAndGoToLocationProperly":
-            case "getPreviouslyMeasuredWifiAtLocationsString":
-            case "getPreviouslyMeasuredWifiAtCurrentLocationString":
+            case "getPreviouslyMeasuredWifiStrengthsAtLocationsString":
+            case "measureWifiAtCurrentLocationAndReport":
+            case "getPreviouslyMeasuredWifiStrengths":
+            case "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationsString":
             case "getPreviouslyMeasuredTemperatureAtCurrentLocationString":
             case "updateDialogueHistoryFromString":
