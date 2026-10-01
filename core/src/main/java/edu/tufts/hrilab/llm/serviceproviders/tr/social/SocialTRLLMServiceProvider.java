@@ -4184,10 +4184,11 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   protected String getFocusedFinalInstruction() {
     return "You will first be presented with a conversation history containing the instruction causing you to believe the " +
-            "user wanted to modify an assigned task's status. This history may contain pertinent information about what task" +
-            " should be modified and what modification to perform. Extract and include every single piece of information " +
-            "found in your initial response's scheduled task definition. If the definition is clear and complete immediately, " +
+            "user wanted achieve the stated Goal. This history may contain pertinent information about details of the" +
+            " %templateArgumentName. Extract and include every single piece of information " +
+            "found in your initial response's %templateArgumentName. If %templateArgumentName is clear and complete, " +
             "you may call %templateSubmissionTargetName immediately without further conversation. If it seems that this " +
-            "context was triggered incorrectly based on the past history, you may call endConversation immediately without further conversation.";
+            "context was triggered incorrectly based on the past history, you may call endConversation immediately without further conversation.\n" +
+            "Otherwise, respond to the user's input by following the Response Policy and keeping Response Style and Constraints in mind";
   }
 }
