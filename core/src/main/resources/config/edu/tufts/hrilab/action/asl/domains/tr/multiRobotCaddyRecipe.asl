@@ -393,6 +393,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     java.util.Map !bindings;
     Predicate !shouldExecuteResponse;
 
+    // for submitting the planned action on behalf of whoever asked for the original goal
+    Symbol !submitter = this:getOriginalSubmitter();
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
+    java.lang.Long !priority;
+
     op:log(debug, "[generateRecoveryPlanAndAssess] generated goal predicate !goalPred");
 
     //Generate failure response so it can be said if need be.
@@ -452,7 +458,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
@@ -490,7 +498,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
