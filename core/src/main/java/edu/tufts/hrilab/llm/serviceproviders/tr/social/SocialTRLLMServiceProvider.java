@@ -4158,28 +4158,41 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   }
 
   protected String getFocusedResponseConstraints() {
-    return "- Do not go off topic or attempt to help the user with anything other than the stated goal.\n" +
-            "- Do not invent missing values just to fill in the current template definition.";
+    return "- Do not restate or ask to confirm information you have just been told.\n" +
+            "- Ask only for the next missing piece of information when leading the conversation.\n" +
+            "- Never say you are updating the %templateArgumentName, just do it.\n" +
+            "- Never say you are checking for information, just make the corresponding tool call to retrieve it or use the values found in the Contextual Information.\n" +
+            "- The user cannot see the %templateArgumentName, do not refer to it as if they can.\n" +
+            "- Do not go off topic or attempt to help the user with anything other than the stated goal.\n" +
+            "- Do not invent missing values just to fill in the current %templateArgumentName definition.";
   }
 
   protected String getFocusedResponseStyle() {
-    return "- Do not restate or confirm details you have just been told.\n" +
-            "- Ask only for the next missing piece of information when leading the conversation.\n" +
-            "- Never say you will update the %templateArgumentName, just do it.\n" +
-            "- Never say you will check for information, just make the corresponding tool call to retrieve it or use the values found in the Contextual Information.\n" +
-            "- The user cannot see the %templateArgumentName, do not refer to it passively.";
+    return "";
   }
 
   protected String getFocusedResponsePolicy() {
-    return "- If the user indicates they are finished and the definition is complete, call %templateSubmissionTargetName.\n" +
-            "- If the %templateArgumentName is fully filled out, call %templateSubmissionTargetName immediately.\n" +
-            "- If the user asks what you currently understand, answer based on the %templateArgumentName.\n" +
-            "- If the user does not want to perform the shared task anymore or seems confused about what is happening, call endConversation.\n" +
-            "- If the user says bye, leaves, or no longer wants to continue, call endConversation.\n" +
-            "- If the user asks to pause this interaction, call suspendCurrentInteraction.\n" +
-            "- If the user asks to cancel this interaction, call cancelCurrentInteraction.\n" +
-            "- Otherwise, call respondToUserWithoutPerformingAnAction and include a sensible response which follows the Style guidelines" +
-            " and is aligned with your goal. Update %templateArgumentName as the user adds, corrects, removes, or replaces information.";
+    return "1. Check if you are ready to call %templateSubmissionTargetName. If so, do it immediately.\n" +
+            "a. The user explicitly indicates they are finished defining %templateArgumentName.\n" +
+            "b. The user tells you the last piece of missing information you need.\n" +
+            "c. The user tells you all information you need in one go.\n" +
+            "2. Check if the user no longer wants to perform the stated Goal\n"+
+            "a. If the user says bye, leaves, or no longer wants to continue, call endConversation.\n" +
+            "b. If the user asks to pause this interaction, call suspendCurrentInteraction.\n" +
+            "c. If the user asks to cancel this interaction, call cancelCurrentInteraction.\n" +
+            "d. If the user otherwise does not want to perform the shared task anymore or seems confused about what is happening, call endConversation.\n" +
+            "3. The user asks you a questions.\n"+
+            "a. If the user asks about information they've supplied towards the Goal, answer based on the %templateArgumentName.\n" +
+            "b. If it is about the robot, backend, your environment, or your current tasking state:\n" +
+            "i. If a tool can give you relevant information, then call that tool for updated information and answer using the result.\n"+
+            "ii. If it is about any information provided in the Contextual Information section above, then use the corresponding contextual information to provide a relevant answer.\n"+
+            "iii. If no tool can answer it, then say you do not know and don't have access to that information directly. Do not make up information.\n"+
+            "c. Otherwise, answer normally using the respondToUserWithoutPerformingAnAction tool's response field. Adhere your response to the Response Style and Response Constraints above.\n"+
+            "4. The user supplies relevant information for the %templateArgumentName:\n"+
+            "a. As per #1, if this information completes the definition, immediately call %templateSubmissionTargetName.\n"+
+            "b. Otherwise, ask for the next piece of information while adding this information to the existing %templateArgumentName definition.\n"+
+            "5. In any other case, call respondToUserWithoutPerformingAnAction and include a sensible response which follows the Style guidelines" +
+            " and is aligned with your goal.";
   }
 
   protected String getFocusedFinalInstruction() {

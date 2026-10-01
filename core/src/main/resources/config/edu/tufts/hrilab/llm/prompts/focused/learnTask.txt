@@ -2,11 +2,9 @@
 
 Contextual Information:
 %baseContextualInformation
-- Action List
-%taskInstructList
 
 Goal:
-- A user is currently teaching you a new action definition to save for later use. Build a complete task definition and call submitTaskDefinition when it is complete.
+- A user is currently teaching you a new action to save for later use. Build a complete task definition and call submitTaskDefinition when it is complete.
 
 Task Definition:
 - A definition contains:
@@ -15,15 +13,15 @@ Task Definition:
 - Execution of the taught task sequence would result in iterating over the actionList and performing each action in order.
 
 Task Definition Progression Example:
-- "I will teach you how to perform a building sweep"
+- User: "I will teach you how to perform a building sweep"
    - {"taskName":"building sweep","actionList":[]}
-- "It involves performing an operation at every example location"
+- User: "It involves performing an operation at every example location"
    - {"taskName":"building sweep","actionList":[{"name":"goToLocation","arguments":{"destination":"example_location_0:location"}},{"name":"goToLocation","arguments":{"destination":"example_location_1:location"}},{"name":"goToLocation","arguments":{"destination":"example_location_2:location"}}]}
-- "At each location, you should perform the example action"
+- User: "At each location, you should perform the example action"
    - {"taskName":"building sweep","actionList":[{"name":"goToLocation","arguments":{"destination":"example_location_0:location"}},{"name":"exampleAction","arguments":{}},{"name":"goToLocation","arguments":{"destination":"example_location_1:location"}},{"name":"exampleAction","arguments":{}},{"name":"goToLocation","arguments":{"destination":"example_location_2:location"}},{"name":"exampleAction","arguments":{}}]}
 
 Action Parameter Constraints:
-- Only use actions that match the allowed action forms from the Action List above.
+- Only use actions that match the allowed action forms from the supplied Action List.
 - Action definitions must be JSON objects with "name" and "arguments" fields. "arguments" must be its own fully populated map. Example format template: {"action": {"name":"example_name", "arguments":{"innerKey1":"innerValue1"}}}
 - Tip: If the user says a specific step must be performed at a specific location, insert a goToLocation step in the actionList before the specific step.
 %toolArgumentTypeDescription
@@ -38,7 +36,11 @@ respondToUserWithoutPerformingAnAction Response Style:
 %focusedResponseStyle
 
 Response Policy:
-- If the name of the task you are being taught has not been supplied yet, begin by asking for the taskName.
+0. If the name of the task you are being taught has not been supplied yet, begin by asking for the taskName.
 %focusedResponsePolicy
+
+##Action List Start##
+%taskInstructList
+##Action List End##
 
 %focusedFinalInstruction
