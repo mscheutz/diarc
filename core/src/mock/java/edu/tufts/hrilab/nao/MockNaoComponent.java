@@ -57,11 +57,11 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
   }
 
   public boolean sayText(Utterance utterance, boolean bool) {
-    return bool;
+    return sayText(utterance.getWordsAsString(), bool);
   }
 
   public boolean sayText(Utterance utterance) {
-    return false;
+    return sayText(utterance.getWordsAsString(), true);
   }
 
   @Override
