@@ -275,7 +275,9 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
           args.add(replaceVarsInSemantics((Predicate) arg, bindings));
         } else {
           for (Variable var : bindings.keySet()) {
-            arg = Factory.createSymbol(arg.getName().replace(bindings.get(var).toString(), var.toString()), arg.getType());
+            if (arg.getName().equals(bindings.get(var).getName())) {
+              arg = var;
+            }
           }
           args.add(arg);
         }
@@ -283,7 +285,9 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
       return Factory.createPredicate(name, args);
     } else {
       for (Variable var : bindings.keySet()) {
-        semantics = Factory.createSymbol(semantics.getName().replace(bindings.get(var).toString(), var.toString()), semantics.getType());
+        if (semantics.getName().equals(bindings.get(var).getName())) {
+          semantics = var;
+        }
       }
       return semantics;
     }
