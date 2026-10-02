@@ -116,10 +116,10 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
   @Override
   public void shutdownDiarc() {
     log.debug("[shutdownDiarc] started");
+    config.shutdownConfiguration();
     tester.shutdown();
     tester = null;
     log.debug("[shutdownConfig] tester shutdown");
-    config.shutdownConfiguration();
     log.debug("[shutdownDiarc] completed");
   }
 
