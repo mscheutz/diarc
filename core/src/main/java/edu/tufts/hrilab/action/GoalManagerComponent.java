@@ -309,6 +309,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     initializeDB();
     notifier = new GoalManagerNotifier();
     Database.getInstance().addListener(notifier);
+    em.setGoalManagerNotifier(notifier);
 
     //Load goal priorities
     loadGoalPriorities();

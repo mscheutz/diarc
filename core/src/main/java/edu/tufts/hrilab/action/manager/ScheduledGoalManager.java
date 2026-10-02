@@ -49,6 +49,8 @@ public class ScheduledGoalManager {
 
   private String scheduledGoalsFile = null;
 
+  private GoalManagerNotifier notifier;
+
   public ScheduledGoalManager(ExecutionManager executionManager) {
     this.em = executionManager;
 
@@ -90,7 +92,6 @@ public class ScheduledGoalManager {
                               priorityTier = PriorityTier.LOW;
                             }
                             long priority = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
-                            GoalManagerNotifier notifier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalManagerNotifier")).call(GoalManagerNotifier.class);
                             newGoal.addListener(notifier);
                             newGoal.setPriority(priority);
                             newGoal.setPriorityTier(priorityTier);
@@ -394,6 +395,10 @@ public class ScheduledGoalManager {
 
   public void setScheduledGoalsFile(String filepath) {
     scheduledGoalsFile = filepath;
+  }
+
+  public void setGoalManagerNotifier(GoalManagerNotifier notifier) {
+    this.notifier = notifier;
   }
 
   public void writeScheduledGoalsToFile() {

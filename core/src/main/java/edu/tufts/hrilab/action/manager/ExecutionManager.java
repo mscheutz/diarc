@@ -20,6 +20,7 @@ import edu.tufts.hrilab.action.listener.ActionListener;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.listener.GoalListener;
+import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.Context;
@@ -2981,6 +2982,10 @@ public class ExecutionManager implements GoalListener {
 
   public void setScheduledGoalsFile(String filename) {
     scheduledGoalManager.setScheduledGoalsFile(filename);
+  }
+
+  public void setGoalManagerNotifier(GoalManagerNotifier notifier) {
+    scheduledGoalManager.setGoalManagerNotifier(notifier);
   }
 
   public void setLearnedActionsFile(String filename) {
