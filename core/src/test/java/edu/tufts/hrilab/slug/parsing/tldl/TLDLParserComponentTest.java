@@ -49,7 +49,8 @@ public class TLDLParserComponentTest {
 
         Utterance parseResult = component.parseUtterance(inputUtterance.build());
 
-        String outcome = parseResult.toString();
+        // the expected strings don't have the words in them, toString does
+        String outcome = parseResult.toString().replace(",\"" + parseResult.getWordsAsString() + "\"", "");
         if (outcome.equals(desired)) {
             log.info("outcome: " + outcome);
             log.info("desired: " + desired + "\n");
