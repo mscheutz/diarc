@@ -797,12 +797,8 @@ public final class Utterance implements Serializable {
     // add speaker info
     sb.append(speaker != null ? speaker.toString() : "_").append(",");
 
-    // add listener info
-    if (listeners != null && !listeners.isEmpty() && listeners.get(0) != null) {
-      sb.append(listeners.get(0).toString()).append(",");
-    } else {
-      sb.append("_").append(",");
-    }
+    // add addressee info
+    sb.append(addressee != null ? addressee.toString() : "_").append(",");
 
     // add semantics (or words if semantics is null or "null")
     if (semantics == null) {
