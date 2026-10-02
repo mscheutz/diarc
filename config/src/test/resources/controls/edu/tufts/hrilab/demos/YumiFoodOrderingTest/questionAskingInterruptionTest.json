@@ -36,16 +36,10 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
-    }, {
-      "serviceName" : "sayText",
       "serviceArgs" : [ "REPLY(self:agent,brad,[hello],\"hello\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
-    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "REPLY(self:agent,brad,goal(status(suspended),predicate(defineItem(self:agent,southwest bowl))),\"suspended statuses goals I define Item southwest bowl predicates\",{})", "true" ]
     } ]
