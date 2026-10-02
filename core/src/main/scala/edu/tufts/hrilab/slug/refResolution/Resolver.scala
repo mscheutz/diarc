@@ -27,7 +27,9 @@ class Resolver(groups: java.util.List[String]) {
     groups.asScala.foreach(additionalConstraints.inGroups(_))
   }
 
-  class ConsultantInfo(val kbName: String, val tsi: TRADEServiceInfo, val tsc: TRADEServiceConstraints) {
+  class ConsultantInfo(val kbName: String, val tsi: TRADEServiceInfo, val groups: Array[String]) {
+    // a fresh one per lookup, the setters on it mutate in place and lookups run on several threads
+    def tsc: TRADEServiceConstraints = new TRADEServiceConstraints().inGroups(groups: _*)
     override def toString: String = kbName + "Info"
   }
 
@@ -41,7 +43,7 @@ class Resolver(groups: java.util.List[String]) {
     if (actor == null) {
       // use all available consultants
       consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName").argTypes()).asScala.map(
-        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+        c => new ConsultantInfo(c.call(classOf[String]), c, c.getGroups.toArray(new Array[String](0)))
       )
     } else {
       // filter available consultants based on group information
@@ -64,16 +66,17 @@ class Resolver(groups: java.util.List[String]) {
         .filter(c => c.getGroups.isEmpty || c.getGroups.stream().noneMatch(g => g.startsWith("agent:"))
           || c.getGroups.stream().anyMatch(g => untypedActors.contains(g) || typedActors.contains(g)))
         .map(
-        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+        c => new ConsultantInfo(c.call(classOf[String]), c, c.getGroups.toArray(new Array[String](0)))
       )
     }
     updatePropertyCache();
   }
 
   def updatePropertyCache(): Unit = {
-    propertyCache = new mutable.HashMap[ConsultantInfo, mutable.Buffer[Property]]()
-    consultants.map(c => propertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
+    val newPropertyCache = new mutable.HashMap[ConsultantInfo, mutable.Buffer[Property]]()
+    consultants.map(c => newPropertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
       .call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
+    propertyCache = newPropertyCache
   }
 
   def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E]): E = {
