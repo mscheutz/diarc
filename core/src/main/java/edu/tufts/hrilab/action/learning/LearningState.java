@@ -388,14 +388,20 @@ public class LearningState {
   private int getEventStepLocation(List<EventSpec> steps, Predicate reference) {
     // find actionStep matching reference step
     int currentLoc = 0;
-    Predicate groundedReference = groundArgs(reference);
+    String groundedReference = unquoted(groundArgs(reference));
     for (EventSpec step : steps) {
-      if (groundArgs(step.getPredicateForm()).equals(groundedReference)) {
+      if (unquoted(groundArgs(step.getPredicateForm())).equals(groundedReference)) {
         return currentLoc;
       }
       currentLoc++;
     }
     return -1;
+  }
+
+  // the stored steps carry quotes around names with spaces in them (processEventArgument), the
+  // modifications asking for those steps do not, so compare without them
+  private String unquoted(Predicate step) {
+    return step.toString().replace("\"", "");
   }
 
   /**

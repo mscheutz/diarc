@@ -1294,7 +1294,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,isComplete(\"southwest bowl\"),\"\"southwest bowl\" is Complete\",{})", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,brad,isComplete(\"puerto rican bowl\"),\"\"puerto rican bowl\" is Complete\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
