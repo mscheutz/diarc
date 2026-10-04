@@ -57,7 +57,7 @@ public class GoalManagerAdapter extends GuiAdapter {
   /**
    * List of actions in the database.
    */
-  private List<ActionDBEntry> actionList;
+  private List<ActionDBEntry> actionList = new ArrayList<>();
 
   /**
    * Utility object to write actions to an ASL file.

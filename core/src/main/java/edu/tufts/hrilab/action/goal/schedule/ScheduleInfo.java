@@ -4,9 +4,10 @@
 
 package edu.tufts.hrilab.action.goal.schedule;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class ScheduleInfo {
+public class ScheduleInfo implements Serializable {
   /**
    * Time to start executing the first scheduled goal. null meaning, do it right now.
    */

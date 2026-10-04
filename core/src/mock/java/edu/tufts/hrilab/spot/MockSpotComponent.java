@@ -235,6 +235,11 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
+  public Justification goToSpecificPose(double x, double y, double z, double qx, double qy, double qz, double qw) {
+    return new ConditionJustification(true);
+  }
+
+  @Override
   public void startRecordingTrajectory(String trajectoryName) {
 
   }
@@ -332,13 +337,13 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   }
 
   @Override
-  public Pair<Point3d, Quat4d> getPose() {
-    return moveBase.getPose();
+  public double[] getPoseGlobalQuat() {
+    return moveBase.getPoseGlobalQuat();
   }
 
   @Override
-  public void setPose(Point3d location, Quat4d orientation) {
-    moveBase.setPose(location, orientation);
+  public void setPoseGlobal(double x, double y, double theta) {
+    moveBase.setPoseGlobal(x, y, theta);
   }
 
   @Override
@@ -354,11 +359,6 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
   @Override
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
     return moveBase.goToLocation(desiredLocation, initialLocation);
-  }
-
-  @Override
-  public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
-    return moveBase.goToLocation(location, orientation, wait);
   }
 
   @Override

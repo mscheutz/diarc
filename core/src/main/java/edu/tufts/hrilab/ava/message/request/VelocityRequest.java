@@ -20,6 +20,11 @@ public class VelocityRequest {
     this.sidestep = sidestep;
   }
 
+  public VelocityRequest(float translate, float rotate, float sidestep, boolean nudge) {
+    this(translate, rotate, sidestep);
+    this.nudge = nudge;
+  }
+
   float translate;
   float sidestep;
   float rotate;

@@ -6,6 +6,8 @@ package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.ava.message.response.*;
 
+import java.util.List;
+
 /**
  * Represents the API of the Ava robot. Abstracts the
  * cloud-based RMS websocket API and the local HTTP APIs.
@@ -17,6 +19,8 @@ public interface AvaAPIInterface {
   void end();
 
   RMSResponse setVelocity(float transVel, float rotVel, float stepVel);
+
+  RMSResponse setVelocity(float transVel, float rotVel, float stepVel, boolean nudge);
 
   RMSResponse goToArbitrary(double x, double y);
 
@@ -35,6 +39,8 @@ public interface AvaAPIInterface {
   RMSHealthResponse getHealth();
 
   RMSMapMetadataResponse getMapMetadata();
+  RMSMapMetadataResponse getMapMetadata(String mapName);
+  List<RMSMapMetadataResponse> getMapMetadatas();
 
   RMSZLiftCameraTiltResponse getZLiftCameraTilt();
 

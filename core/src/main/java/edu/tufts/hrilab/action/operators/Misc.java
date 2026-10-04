@@ -112,4 +112,8 @@ public final class Misc {
   public static String bind (String input) {
     return input + "";
   }
+
+  public static long parseLong(String s) {
+    return Long.parseLong(s);
+  }
 }

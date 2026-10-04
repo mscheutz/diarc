@@ -11,6 +11,7 @@ vision/data/
 vision/src/swig/
 .idea/
 .vscode/
+.settings/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
@@ -29,3 +30,9 @@ vision/bin/
 **/.venv/
 /core/src/main/python/spot/spot_phi.yaml
 **/__pycache__/
+logs
+*.workspace
+*code-workspace
+*.log
+*.lock
+*.workspace

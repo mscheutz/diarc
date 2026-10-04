@@ -363,6 +363,7 @@ public class Recovery {
         }
     }
 
+    //TODO: this does not interact well with BlockContexts
     /**
      * Helper method to find the failed action in the context tree, and return
      * the Predicate form of the failed action.
@@ -376,6 +377,12 @@ public class Recovery {
         if (childContext.isAction()) {
             List<Predicate> childFailedActionsList = ((ActionContext)childContext).getRecovery().failedActionsList;
             if (childFailedActionsList != null) {
+                //TODO: revisit - failedActionIsChild should be true if parent of lowest level failed action context, even if not the leaf?
+                //      Seemingly at least one problematic case is fail_preconditions
+                if (childFailedActionsList.isEmpty() && failureStatus != ActionStatus.FAIL_PRECONDITIONS) {
+                    failedActionIsChild = true;
+                }
+                failedChildContext = (ActionContext) childContext;
                 failedActionsList = new ArrayList<>(childFailedActionsList);
                 failedActionsList.add(childContext.getSignatureInPredicateForm());
                 return failedActionsList;
@@ -414,6 +421,9 @@ public class Recovery {
                 failedContext = failedContext.getParentContext();
             }
         }
+
+        ////TODO: double check this - hastily made change
+        //failedActionIsChild = failedActionIsChild || failedActionsList.size() == 1;
 
         return failedActionsList;
     }

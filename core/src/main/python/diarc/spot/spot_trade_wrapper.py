@@ -437,6 +437,12 @@ class SpotTRADEWrapper:
 
     @handle_return
     @JOverride
+    def goToSpecificPose(self, x, y, z, qx, qy, qz, qw):
+       logging.info(f"goToSpecific pose (3d point and 4d quat) called")
+       return self.spot.spot_arm.hand_pose(x=x, y=y, z=z, qx=qx, qy=qy, qz=qz, qw=qw)
+
+    @handle_return
+    @JOverride
     def goToPose(self, *args):
         logging.info(f"goToPose dispatch method called")
         # always use the wild card args when implementing a dispatch
@@ -584,11 +590,11 @@ class SpotTRADEWrapper:
 
     ### Move Base Interface
     @JOverride
-    def getPose(self):
+    def getPoseGlobalQuat(self):
         pass
 
     @JOverride
-    def setPose(self, location, orientation):
+    def setPoseGlobal(self, x, y, theta):
         pass
 
     ###################### goToLocation overloaded method handling

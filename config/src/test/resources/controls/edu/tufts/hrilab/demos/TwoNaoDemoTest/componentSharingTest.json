@@ -3,43 +3,43 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1704827087239" ]
+      "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1", "ravenna", "404" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "1704827087241" ]
+      "serviceArgs" : [ "stand(dempster)", "405" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704827087239", "SUCCEEDED" ]
+      "serviceArgs" : [ "404", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(yes),\"yes\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1704827097071" ]
+      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1", "ravenna", "416" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "1704827097072" ]
+      "serviceArgs" : [ "move(dempster,forward)", "417" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704827097071", "FAILED" ]
+      "serviceArgs" : [ "416", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not tell dempster to move forward because dempster sees obstacle", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,cannot(tell(shafer,move(dempster,forward)),because(see(dempster,obstacle))),\"I can not tell dempster to move forward because dempster sees obstacle\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "no", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(no),\"no\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -47,13 +47,13 @@
       "serviceArgs" : [ "capableOf(look(dempster,up))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(yes),\"yes\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1704827107095" ]
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1", "ravenna", "436" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704827107095", "SUCCEEDED" ]
+      "serviceArgs" : [ "436", "SUCCEEDED" ]
     } ]
   } ]
 }

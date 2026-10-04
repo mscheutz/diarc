@@ -4,19 +4,25 @@
 
 package edu.tufts.hrilab.llm.openai.response;
 
-public class OpenaiChatCompletionResponse {
-  public String id;
-  public long created;
-  public String object;
-  public String model;
-  public OpenaiChatCompletionChoice[] choices;
-  public OpenaiUsage usage;
+import java.util.Arrays;
 
-  public String toString () {
-    if (choices.length > 0) {
-      return choices[0].message.content.toString();
-    } else {
-      return null;
-    }
+public class OpenaiChatCompletionResponse {
+  public String id = null;
+  public long created = -1;
+  public String object = null;
+  public String model = null;
+  public OpenaiChatCompletionChoice[] choices = null;
+  public OpenaiUsage usage = null;
+
+  @Override
+  public String toString() {
+    return "OpenaiChatCompletionResponse{" +
+            "id='" + id + '\'' +
+            ", created=" + created +
+            ", object='" + object + '\'' +
+            ", model='" + model + '\'' +
+            ", choices=" + Arrays.toString(choices) +
+            ", usage=" + usage +
+            '}';
   }
 }

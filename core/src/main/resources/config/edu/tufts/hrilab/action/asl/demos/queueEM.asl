@@ -3,6 +3,36 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.Justification;
 
+() = resumeCurrentTask() {
+    act:resumeSystemGoals();
+    //act:generateResponseFromString("Resumed");
+}
+
+() = suspendCurrentTask() {
+    act:suspendSystemGoalsBlocking();
+    //act:generateResponseFromString("Suspended");
+}
+
+() = cancelCurrentTask() {
+    act:cancelSystemGoalsWrapper();
+    //act:generateResponseFromString("Current task has been canceled");
+}
+
+() = cancelAllQueuedTasks() {
+    act:cancelAllPendingGoals();
+    //act:generateResponseFromString("Queued tasks have been canceled");
+}
+
+() = cancelAllCurrentAndQueuedTasks() {
+    act:cancelAllPendingGoals();
+    act:cancelSystemGoalsWrapper();
+    //act:generateResponseFromString("Existing tasks have been canceled");
+}
+
+() = cancelQueuedTasks(Predicate ?indices) {
+    tsc:cancelPendingGoalsByIndices(?indices);
+}
+
 () = suspendSystemGoalsBlocking() {
     java.util.List !goalIds;
     java.lang.Long !goalId;
@@ -17,6 +47,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !freezeGoal;
     Justification !failureConditions;
     GoalStatus !status;
+    java.lang.Long !timeout = 0;
 
     //Suspend system goal for agent
     !goalIds = tsc:suspendSystemGoals(?actor);
@@ -31,8 +62,12 @@ import edu.tufts.hrilab.action.justification.Justification;
         //Should never return more than one goalId in the queue case.
         //Wait for goal to be suspended
         !goalId = op:get(!goalIds,0);
-        !status = tsc:waitForNextGoalStatusUpdate(!goalId);
-        op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
+        !status = tsc:getGoalStatus(!goalId);
+        op:log("debug","[suspendSystemGoalsBlocking] have initial status for goal to suspend: !status");
+        if (~op:equalsValue(!status,SUSPENDED)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+            op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
+        }
         //Need to write this way because we can't short circuit ||, throws exception when comparing null
         if (~op:isNull(!status)) {
             if (op:equalsValue(!status,SUSPENDED)) {
@@ -55,7 +90,7 @@ import edu.tufts.hrilab.action.justification.Justification;
                     //More than one goal started execution as a result, freeze and ask if desired to remain frozen
                     !freezeGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "freeze",?actor,?actor);
                     act:submitGoal(!freezeGoal);
-                    !bindings = act:askQuestionFromString(?actor,"I have frozen execution because I could not suspend the desired task in time and multiple other tasks have started. Would you like me to keep execution frozen?", val(X));
+                    !bindings = act:askQuestionFromString("I have frozen execution because I could not suspend the desired task in time and multiple other tasks have started. Would you like me to keep execution frozen?", val(X));
                     if (op:invokeMethod(!bindings,"isEmpty")) {
                         //Question ignored, just end freeze and fail
                         act:endFreeze(?actor);
@@ -85,7 +120,7 @@ import edu.tufts.hrilab.action.justification.Justification;
                     }
                     if (op:equals(!success,true)) {
                         op:log("debug","[suspendSystemGoalsBlocking] Suspend of new goal succeeded, asking for desired state");
-                        !bindings = act:askQuestionFromString(?actor,"I could not suspend the desired task in time, but have suspended the next one. Would you like me to keep this task suspended?", val(X));
+                        !bindings = act:askQuestionFromString("I could not suspend the desired task in time, but have suspended the next one. Would you like me to keep this task suspended?", val(X));
                         if (op:invokeMethod(!bindings,"isEmpty")) {
                             //Question ignored, just end freeze and fail
                             act:resumeGoal(!pred);
@@ -113,6 +148,57 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 }
 
+() = cancelSystemGoalsWrapper() {
+    java.util.List !goalIds;
+    java.lang.Long !goalId;
+    java.util.List !systemGoalPredicates;
+    java.lang.Integer !numGoals;
+    java.lang.Boolean !success = false;
+    Predicate !pred;
+    java.util.Map !bindings;
+    java.util.List !bindingArgs;
+    Variable !x = "X";
+    Predicate !response;
+    Predicate !freezeGoal;
+    Justification !failureConditions;
+    GoalStatus !status;
+    java.lang.Long !timeout = 0;
+
+    //cancel system goal for agent
+    !goalIds = tsc:cancelSystemGoals(?actor);
+    op:log("debug","[cancelSystemGoalsBlocking] canceled goalIds: !goalIds");
+    if (op:isNull(!goalIds)) {
+        //Returning null means multiple disjoint children have goals
+        exit(FAIL,not(know(?actor,whichGoalToCancel)));
+    } elseif (op:isEmpty(!goalIds)) {
+        //No valid goal to cancel was found (whether already canceled or none exist)
+        exit(FAIL,not(found(activeGoalToCancel)));
+    } else {
+        //Should never return more than one goalId in the queue case.
+        //Wait for goal to be canceled
+        !goalId = op:get(!goalIds,0);
+        !status = tsc:getGoalStatus(!goalId);
+        op:log("debug","[cancelSystemGoalsBlocking] have initial status for goal to cancel: !status");
+        if (~op:equalsValue(!status,CANCELED)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+            op:log("debug","[cancelSystemGoalsBlocking] have status update for canceled goal: !status");
+        }
+        //Need to write this way because we can't short circuit ||, throws exception when comparing null
+        if (~op:isNull(!status)) {
+            if (op:equalsValue(!status,CANCELED)) {
+                !success = op:newObject("java.lang.Boolean", "true");
+            }
+        }
+
+        if (op:equalsValue(!success,false)) {
+            //Goal meant to be canceled has already terminated.
+            !systemGoalPredicates = tsc:getSystemGoals(?actor);
+            op:log("debug","[cancelSystemGoalsBlocking] Cancel failed, current goals now: !systemGoalPredicates");
+            exit(FAIL,alreadyComplete(taskToCancel));
+        }
+    }
+}
+
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
     java.util.List !goalPreds;
     java.lang.Integer !resultsSize=0;
@@ -120,16 +206,17 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPred;
 
     !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:invokeMethod(!goalPreds, "size");
+    !resultsSize = op:size(!goalPreds);
     if(op:gt(!resultsSize,0)){
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
-            act:generateResponse(!goalPred);
+            act:generateResponse(goal(status(!status),predicate(!goalPred)));
+            //act:reportGoalStatus(!status);
+            //act:generateResponse(!goalPred);
         }
     } else {
-        act:generateResponseFromString("no current task");
+        act:generateResponse(report(not(have(?actor, currentGoal))));
     }
 }
 
@@ -167,7 +254,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Variable !tmpVar;
     Predicate !oldGoalsPred;
 
-    op:log("info","[checkKnowsActiveGoals]");
+    op:log("debug","[checkKnowsActiveGoals]");
 
     // construct and retract a generic predicate from belief to clear previous entries
     !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
@@ -192,5 +279,5 @@ import edu.tufts.hrilab.action.justification.Justification;
     } else {
         !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","doing(nothing)");
     }
-    op:log("info","[checkKnowsActiveGoals] !currentGoalsPred");
+    op:log("debug","[checkKnowsActiveGoals] !currentGoalsPred");
 }

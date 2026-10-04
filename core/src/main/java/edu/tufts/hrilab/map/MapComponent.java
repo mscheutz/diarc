@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import com.google.common.graph.EndpointPair;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -15,9 +16,15 @@ import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.*;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.map.gui.AvaMapAdapter;
 import edu.tufts.hrilab.map.gui.MapAdapter;
+import edu.tufts.hrilab.map.util.Pose;
+import edu.tufts.hrilab.map.util.Utils;
 import edu.tufts.hrilab.util.Convert;
 import edu.tufts.hrilab.util.RosPackPathHelper;
 import edu.tufts.hrilab.util.resource.Resources;
@@ -40,6 +47,10 @@ import java.util.stream.Stream;
 
 
 public class MapComponent extends DiarcComponent implements GuiProvider {
+  /**
+   * Robot's current pose on the current map.
+   */
+  private Pose currRobotPose = new Pose(new Point3d(0, 0, 0), new Quat4d(0, 0, 0, 1));
   /**
    * Floor number to FloorMap.
    */
@@ -71,7 +82,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
   private String refsConfigDir = "config/edu/tufts/hrilab/map";
 
-  private ElevatorNavigation elevator;
+  private boolean avaGui = false;
 
   public MapComponent() {
     super();
@@ -86,6 +97,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     options.add(Option.builder("start_floor").hasArg().argName("number").desc("floor the robot is starting on at launch").build());
     options.add(Option.builder("refs").longOpt("references").hasArg().argName("file").desc("load pre-defined object references and their properties").build());
     options.add(Option.builder("kb_name").hasArg().argName("file").desc("consultant kbName (default: location)").build());
+    options.add(Option.builder("ava_gui").desc("serve the map tab from the ava base maps instead of the ros map files").build());
     return options;
   }
 
@@ -106,6 +118,9 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     }
     if (cmdLine.hasOption("kb_name")) {
       poseKBName = cmdLine.getOptionValue("kb_name");
+    }
+    if (cmdLine.hasOption("ava_gui")) {
+      avaGui = true;
     }
   }
 
@@ -135,12 +150,91 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
     // add all map reference to consultant
     addReferencesFromMaps();
+  }
 
-    // instantiate elevator navigation helper (if more than one floor)
-    if (floorMaps.size() > 1) {
-      elevator = new ElevatorNavigation();
-      elevator.registerWithTrade(this.getMyGroups());
-      elevator.setCurrentFloorMap(currFloorMap);
+  // spot's mapcomponent (the one i pulled over) is missing a pile of the ava location stuff. re-adding it, starting here -- llm grounding calls this one
+  /**
+   * Gets all known map references as a map of refId -> PoseReference.
+   *
+   * @return a map of known PoseReferences keyed by Symbol
+   */
+  @TRADEService
+  public Map<Symbol, PoseReference> getMapReferences() {
+    Map<Symbol, PoseReference> refs = new HashMap<>();
+    consultant.getAllReferences().forEach(ref -> refs.put(ref.refId, ref));
+    return refs;
+  }
+
+  // ava -- getAllKnownLocations wants this
+  @TRADEService
+  public List<String> getMapLocationNames() {
+    List<String> locationNames = new ArrayList<>();
+    Map<Symbol, PoseReference> refs = getMapReferences();
+    for (PoseReference ref : refs.values()) {
+      if (!ref.properties.isEmpty()) {
+        locationNames.add(ref.properties.get(0).getName());
+      }
+    }
+    locationNames.sort(String::compareTo);
+    return locationNames;
+  }
+
+  // ava -- ava.asl nav uses it
+  @TRADEService
+  public String getMapReferenceName(Symbol refId) {
+    PoseReference ref = consultant.getReference(refId);
+    if (ref != null) {
+      if (!ref.properties.isEmpty()) {
+        return ref.properties.get(0).getName();
+      }
+    }
+    return refId.getName();
+  }
+
+  // ava -- avacomponent calls this (only matters on the real robot)
+  @TRADEService
+  public PoseReference getMapReference(Symbol refId) {
+    return consultant.getReference(refId);
+  }
+
+  // ava -- the "save location" tool + ava.asl. leans on getPose being a service
+  @TRADEService
+  public Justification saveLocation(Symbol locationName) {
+    Variable var = Factory.createVariable("X");
+    List<Term> properties = new ArrayList<>();
+    properties.add(Factory.createPredicate(locationName.getName(), var));
+    PoseReference ref = consultant.createReference(var, properties);
+
+    try {
+      Pair<Point3d, Quat4d> pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPose").argTypes()).call(Pair.class);
+      ref.setPose(pose.getLeft(), pose.getRight());
+    } catch (TRADEException e) {
+      log.error("Unable to get robot pose", e);
+      consultant.removeReference(ref.refId);
+      return new ConditionJustification(false, Factory.createPredicate("known(pose)"));
+    }
+
+    return new ConditionJustification(true);
+  }
+
+  // ava -- ava.asl writes the refs back out after a save
+  @TRADEService
+  public Justification saveLocationsToFile() {
+    String path = System.getProperty("user.dir") + "/../core/src/main/resources/" + refsConfigDir + "/" + refsConfigFile;
+    boolean result = consultant.writeReferencesToFile(path);
+    return new ConditionJustification(result);
+  }
+
+  // ava -- mockava dumps its saved poses in through here at startup
+  @TRADEService
+  public void addReferencesDirectly(Map<String, Pair<Point3d, Quat4d>> mapLocations) {
+    Variable var = Factory.createVariable("VAR0");
+    for (String name : mapLocations.keySet()) {
+      Pair<Point3d, Quat4d> pose = mapLocations.get(name);
+      List<Term> properties = new ArrayList<>();
+      properties.add(Factory.createPredicate(name, var));
+      PoseReference ref = consultant.createReference(var, properties);
+      ref.setPose(pose.getLeft(), pose.getRight());
     }
   }
 
@@ -220,11 +314,6 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
       currFloor = newFloor;
       currFloorMap = floorMaps.get(newFloor);
 
-      // update elevator helper
-      if (elevator != null) {
-        elevator.setCurrentFloorMap(currFloorMap);
-      }
-
       // set ROS map
       try {
         if (!rosPackage.isEmpty()) {
@@ -237,10 +326,9 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
       }
 
       // TODO: set robot pose in new map
-//      Point3d location = new Point3d();
-//      Quat4d orientation = currPose.getRight();
+//      Pose newPose = new Pose();
 //      try {
-//        TRADE.callThe("setPose", location, orientation);
+//        TRADE.callThe("setPoseGlobal", newPose.getPosition().x, newPose.getPosition().y, Utils.quat4dToEuler(newPose.getOrientation())[2]);
 //      } catch (TRADEException e) {
 //        log.error("Error setting global pose after switching floors.", e);
 //      }
@@ -255,7 +343,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
    * @return the current floor of the robot
    */
   @TRADEService
-  public int getCurrentFloor() {
+  public int getCurrFloor() {
     return currFloor;
   }
 
@@ -296,7 +384,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     }
 
     // plan a path
-    MapObject startMapObject = currFloorMap.getMapObjectAt(Convert.convertToPair(curr).getLeft());
+    MapObject startMapObject = currFloorMap.getMapObjectAt(Utils.convertToPose(curr).getPosition());
     List<MapObject> mapObjectPath = PathPlanner.getRoomPath(currFloorMap, startMapObject, dstMapObject);
     List<PathAction> path = PathPlanner.convertRoomPathToPathActions(currFloorMap, mapObjectPath, canOpenDoors, padding);
     if (appendDestPose) {
@@ -314,6 +402,20 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   @TRADEService
   public void markDoor(Symbol portal, boolean closed) {
     currFloorMap.markDoor(portal, closed);
+  }
+
+  /**
+   * Gets the pose of the robot and sets the local pose .
+   */
+  @TRADEService
+  public void updateRobotPose() {
+
+    try {
+      double[] poseQuat = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseGlobalQuat")).call(double[].class);
+      currRobotPose = new Pose(new Point3d(poseQuat[0], poseQuat[1], 0.0), new Quat4d(poseQuat[2], poseQuat[3], poseQuat[4], poseQuat[5]));
+    } catch (TRADEException e) {
+      log.error("Unable to set robot pose", e);
+    }
   }
 
   /**
@@ -362,32 +464,206 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     return out;
   }
 
+  /****************************************************************************
+   *         ELEVATOR SPECIFIC METHODS
+   *         TODO: can these be generalized?
+   ***************************************************************************/
+
+  /**
+   * TODO: HACK: remove this method once we use the planner for multi-floor navigation
+   *
+   * @return
+   */
   @TRADEService
-  public Justification saveLocation(Symbol locationName) {
-    Variable var = Factory.createVariable("X");
-    List<Predicate> properties = new ArrayList<>();
-    properties.add(Factory.createPredicate(locationName.getName(), var));
-    PoseReference ref = consultant.createReference(var, properties);
-
-    // set reference pose
-    try {
-      Pair<Point3d, Quat4d> pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPose").argTypes()).call(Pair.class);
-      ref.setPose(pose.getLeft(), pose.getRight());
-    } catch (TRADEException e) {
-      log.error("Unable to get robot pose", e);
-      consultant.removeReference(ref.refId);
-      return new ConditionJustification(false, Factory.createPredicate("known(pose)"));
+  @Action
+  public Justification goToNearestElevator() {
+    List<Symbol> doors = getNearestElevatorDoors();
+    if (doors.size() < 1) {
+      log.error("No elevator door found");
+      return new ConditionJustification(false);
     }
-
-    return new ConditionJustification(true);
+    Matrix4d transform = getElevatorButtonPose(doors.get(0), 0.5);
+    Pose pose = Utils.convertToPose(transform);
+    try {
+      //double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait
+      return  TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(double.class,double.class,double.class,double.class,double.class,double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
+              pose.getOrientation().x, pose.getOrientation().y, pose.getOrientation().z, pose.getOrientation().w,
+              true);
+    } catch (TRADEException e) {
+      log.error("Error calling goToLocation.", e);
+      return new ConditionJustification(false);
+    }
   }
 
+  @Action
   @TRADEService
-  public Justification saveLocationsToFile() {
-    //todo: should this just be written somewhere more reasonable? something like the user.home/.diarc? we lose references from the git repo then, but it feels bad to load from the classpath and then write to the file in the source.
-    String path  = System.getProperty("user.dir") + "/../core/src/main/resources/" + refsConfigDir + "/" + refsConfigFile;
-    boolean result = consultant.writeReferencesToFile(path);
-    return new ConditionJustification(result);
+  public List<Matrix4d> getElevatorEnterPosePath(Symbol elevatorDoor, double padding) {
+    // get relevant map objects
+    MapObject door = currFloorMap.getMapObjectFromReferenceId(elevatorDoor);
+    MapObject elevator = getElevatorFromDoor(door);
+    MapObject lobby = getLobbyFromDoor(door);
+
+    List<Matrix4d> path = new ArrayList<>();
+    path.add(currFloorMap.getPortalFromRoomPose(door, lobby, true, padding));
+    path.add(currFloorMap.getPortalFromRoomPose(door, elevator, false, padding));
+    path.add(getElevatorPanelPose(door, padding));
+    return path;
+  }
+
+  @Action
+  @TRADEService
+  public List<Matrix4d> getElevatorExitPosePath(Symbol elevatorDoor, double padding) {
+    // get relevant map objects
+    MapObject door = currFloorMap.getMapObjectFromReferenceId(elevatorDoor);
+    MapObject elevator = getElevatorFromDoor(door);
+
+    List<Matrix4d> path = new ArrayList<>();
+    path.add(currFloorMap.getPortalFromRoomPose(door, elevator, true, padding));
+    path.add(getElevatorExitPose(door, padding));
+    return path;
+  }
+
+  /**
+   * Gets pose of robot on the elevator facing the inside button panel.
+   *
+   * @param elevatorDoor reference of elevator door
+   * @param padding      how far pose should be from panel
+   * @return Pose of robot if it were to be standing in front the elevator panel.
+   */
+  @Action
+  @TRADEService
+  public Matrix4d getElevatorPanelPose(Symbol elevatorDoor, double padding) {
+    return getElevatorPanelPose(currFloorMap.getMapObjectFromReferenceId(elevatorDoor), padding);
+  }
+
+  /**
+   * Gets pose of robot on the elevator facing the inside button panel.
+   *
+   * @param elevatorDoor elevator door MapObject
+   * @param padding      how far pose should be from panel
+   * @return Pose of robot if it were to be standing in front the elevator panel.
+   */
+  private Matrix4d getElevatorPanelPose(MapObject elevatorDoor, double padding) {
+    MapObject elevator = getElevatorFromDoor(elevatorDoor);
+    MapObject panel = currFloorMap.getPanelInElevator(elevator);
+    return currFloorMap.getPortalFromRoomPose(panel, elevator, true, padding);
+  }
+
+  /**
+   * Get the pose needed to exit the elevator into the elevator lobby.
+   *
+   * @param elevatorDoor reference to elevator door
+   * @return
+   */
+  @Action
+  @TRADEService
+  public Matrix4d getElevatorExitPose(Symbol elevatorDoor, double padding) {
+    return getElevatorExitPose(currFloorMap.getMapObjectFromReferenceId(elevatorDoor), padding);
+  }
+
+  /**
+   * Get the pose needed to exit the elevator into the elevator lobby.
+   *
+   * @param elevatorDoor elevator door MapObject
+   * @return
+   */
+  private Matrix4d getElevatorExitPose(MapObject elevatorDoor, double padding) {
+    MapObject lobby = getLobbyFromDoor(elevatorDoor);
+    return currFloorMap.getPortalFromRoomPose(elevatorDoor, lobby, false, padding);
+  }
+
+  /**
+   * Get the pose needed to press the up/down button for the elevator door.
+   *
+   * @param elevatorDoor reference to elevator door
+   * @return
+   */
+  @Action
+  @TRADEService
+  public Matrix4d getElevatorButtonPose(Symbol elevatorDoor, double padding) {
+    return getElevatorButtonPose(currFloorMap.getMapObjectFromReferenceId(elevatorDoor), padding);
+  }
+
+  /**
+   * Get the pose needed to press the up/down button for the elevator door.
+   *
+   * @param elevatorDoor elevator door MapObject
+   * @return
+   */
+  private Matrix4d getElevatorButtonPose(MapObject elevatorDoor, double padding) {
+    MapObject lobby = getLobbyFromDoor(elevatorDoor);
+    MapObject button = currFloorMap.getButtonFromDoor(elevatorDoor);
+    return currFloorMap.getPortalFromRoomPose(button, lobby, true, padding);
+  }
+
+  /**
+   * gets a list of the MapObjects of the nearest elevator doors
+   *
+   * @return a list of MapObjects representing the elevator doors
+   */
+  private List<MapObject> getNearestElevatorDoorObjects() {
+    MapObject nearestButton = currFloorMap.getNearestElevatorButton(currRobotPose.getPosition());
+    log.debug("nearest button: " + String.valueOf(nearestButton.getPosition().x) + ", " + String.valueOf(nearestButton.getPosition().x));
+    List<MapObject> doors = currFloorMap.getElevatorDoors(nearestButton);
+    return doors;
+  }
+
+  /**
+   * gets a list of the symbolic representations of the nearest elevator doors
+   *
+   * @return a list of Symbols representing the elevator doors
+   */
+  @Action
+  @TRADEService
+  public List<Symbol> getNearestElevatorDoors() {
+    List<Symbol> out = new ArrayList<>();
+    List<MapObject> ms = getNearestElevatorDoorObjects();
+    for (MapObject m : ms) {
+      out.add(m.getReferenceId());
+    }
+    return out;
+  }
+
+  /**
+   * Get the lobby associated with the elevator door.
+   *
+   * @param door the MapObject of the elevator door
+   * @return the MapObject of the lobby connected to provided door
+   */
+  private MapObject getLobbyFromDoor(MapObject door) {
+    if (!door.isA("elevator-door")) {
+      log.error("Can't get elevator lobby from non-elevator-door " + door);
+      return null;
+    }
+    EndpointPair<MapObject> rooms = currFloorMap.getRoomsFromPortal(door);
+    if (rooms.nodeU().isA("elevator")) {
+      return rooms.nodeV();
+    } else if (rooms.nodeV().isA("elevator")) {
+      return rooms.nodeU();
+    }
+    log.error("Something went wrong with map parsing to get here");
+    return null;
+  }
+
+  /**
+   * gets the elevator room associated with the elevator-door
+   *
+   * @param door the MapObject of the elevator door
+   * @return the MapObject of the elevator connected to provided door
+   */
+  private MapObject getElevatorFromDoor(MapObject door) {
+    if (!door.isA("elevator-door")) {
+      log.error("Can't get elevator room from non-elevator-door " + door);
+      return null;
+    }
+    EndpointPair<MapObject> rooms = currFloorMap.getRoomsFromPortal(door);
+    if (rooms.nodeU().isA("elevator")) {
+      return rooms.nodeU();
+    } else if (rooms.nodeV().isA("elevator")) {
+      return rooms.nodeV();
+    }
+    log.error("Something went wrong with map parsing to get here");
+    return null;
   }
 
   // TODO: EAK: it's not clear how learning/unlearning should be done in general. Commenting this
@@ -436,57 +712,11 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 //
 //    return new ConditionJustification(true);
 //  }
-
-
-  /**
-   * Get current floor map.
-   *
-   * @return
-   */
-  @TRADEService
-  public FloorMap getCurrentFloorMap() {
-    return currFloorMap;
-  }
-
-  /**
-   * Gets all known map references as a map of refId -> PoseReference.
-   *
-   * @return a map of known PoseReferences keyed by Symbol
-   */
-  @TRADEService
-  public Map<Symbol, PoseReference> getMapReferences() {
-    Map<Symbol, PoseReference> refs = new HashMap<>();
-    consultant.getAllReferences().forEach(ref -> refs.put(ref.refId, ref));
-    return refs;
-  }
-
-  @TRADEService
-  public PoseReference getMapReference(Symbol refId) {
-    return consultant.getReference(refId);
-  }
-
-  @TRADEService
-  public String getMapReferenceName(Symbol refId) {
-    PoseReference ref = consultant.getReference(refId);
-    if (ref != null) {
-      if (!ref.properties.isEmpty()) {
-        return ref.properties.get(0).getName();
-      }
-    }
-    return "location";
-  }
-
-  @TRADEService
-  public List<String> getMapLocationNames() {
-    List<String> locationNames = new ArrayList<>();
-    Map<Symbol,PoseReference> refs = getMapReferences();
-    for (PoseReference ref : refs.values()) {
-      if (!ref.properties.isEmpty()) {
-        locationNames.add(ref.properties.get(0).getName());
-      }
-    }
-    return locationNames;
-  }
+//
+//  @Override
+//  public Justification unlearn(Term learningTerm) {
+//    throw new UnsupportedOperationException("[unlearn] is not yet supported.");
+//  }
 
   @Override
   protected void shutdownComponent() {
@@ -498,6 +728,60 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     floorMaps.clear();
   }
 
+  ////////////////////////////////// START GUI methods /////////////////////////////////////////////////////
+
+  // Getter method for currRobotPose
+  @TRADEService
+  public Pose getCurrRobotPose() {
+    return currRobotPose;
+  }
+
+  // Getter method for floorMaps
+  @TRADEService
+  public Map<Integer, FloorMap> getFloorMaps() {
+    return floorMaps;
+  }
+
+  // Getter method for currFloorMap
+  @TRADEService
+  public FloorMap getCurrFloorMap() {
+    return currFloorMap;
+  }
+
+  /**
+   * Records a new location using a 3D point and a default orientation quaternion.
+   * Stores the pose in `storedPoses` with a reference created by the TRADE consultant.
+   *
+   * @param meterPosition The 3D coordinate of the new location.
+   */
+  @TRADEService
+  public void recordLocation(Point3d meterPosition) {
+    Variable var = Factory.createVariable("VAR0", poseKBName);
+    List<Term> properties = new ArrayList<>();
+    PoseReference ref = consultant.createReference(var, properties);
+
+    // Create a pose pair with a meterPosition and a simple default quaternion
+    Pair<Point3d, Quat4d> currPose = Pair.of(meterPosition, new Quat4d(0,0,0,1));
+    ref.setPose(currPose.getLeft(), currPose.getRight());
+  }
+
+  /**
+   * Gets all stored map locations as a map of refId -> (position,orientation)
+   * @return an unmodifiable map of stored poses keyed by Symbol.
+   */
+  @TRADEService
+  public Map<Symbol, Pair<Point3d, Quat4d>> getStoredPoses() {
+    Map<Symbol, Pair<Point3d, Quat4d>> refs = new HashMap<>();
+    consultant.getAllReferences().forEach(ref -> refs.put(ref.refId, ref.getPose()));
+    return refs;
+  }
+
+  @TRADEService
+  public String getRefs() {
+    return consultant.getReferenceSummaries();
+  }
+  ///////////////////////////////// END GUI methods //////////////////////////////////////////
+
   /**
    * {@inheritDoc}
    * @return {@inheritDoc}
@@ -505,6 +789,11 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   @Override
   public String[] getAdapterClassNames() {
     log.info("getting classname from map");
+    if (avaGui) {
+      return new String[]{
+              AvaMapAdapter.class.getName()
+      };
+    }
     return new String[]{
             MapAdapter.class.getName()
     };

@@ -6,6 +6,7 @@ import edu.tufts.hrilab.util.Http;
 
 import java.awt.image.BufferedImage;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -14,13 +15,12 @@ import org.slf4j.LoggerFactory;
 
 public class AvaHTTPAPI implements AvaAPIInterface {
   private Logger log = LoggerFactory.getLogger(AvaHTTPAPI.class);
-  private String mapName = "1";
-  private String baseUrl = "http://172.18.0.1";
+  private final String baseUrl;
   private Map<String, String> headers = null;
+  private int numMaps = 0;
 
-  public AvaHTTPAPI(URI avaUri, String mapName) {
+  public AvaHTTPAPI(URI avaUri) {
     baseUrl = avaUri.toString();
-    this.mapName = mapName;
   }
 
   /**
@@ -39,7 +39,12 @@ public class AvaHTTPAPI implements AvaAPIInterface {
    */
   @Override
   public RMSMapMetadataResponse getMapMetadata() {
-    String uri = baseUrl + "/robot/mapping/maps";
+    ArrayList<RMSMapMetadataResponse> metadatas = getMapMetadatas();
+    return metadatas == null ? null : metadatas.get(0);
+  }
+  @Override
+  public RMSMapMetadataResponse getMapMetadata(String mapName) {
+    String uri = baseUrl + "/robot/mapping/maps/";
     String res = null;
     log.debug("Sending getMapMetadata request");
     try {
@@ -54,6 +59,7 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     Gson gson = new Gson();
     HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
     RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
+    numMaps = mapsResponse.maps.size();
     for (var entry : mapsResponse.maps.entrySet()) {
       if (entry.getKey().equals(mapName)) {
         metadataResponse.response = new MapMetadataResponse();
@@ -64,17 +70,72 @@ public class AvaHTTPAPI implements AvaAPIInterface {
         double mapScaleY = m.dimensions.height / m.dimensions.rows;
         metadataResponse.response.mapScaleX = mapScaleX;
         metadataResponse.response.mapScaleY = mapScaleY;
-        break;
+        return metadataResponse;
       }
     }
 
-    return metadataResponse;
+    log.warn("[getMapMetadata] no matching map found for name {}", mapName);
+    return null;
+  }
+  @Override
+  public ArrayList<RMSMapMetadataResponse> getMapMetadatas() {
+    String uri = baseUrl + "/robot/mapping/maps";
+    String res = null;
+    log.debug("Sending getMapMetadata request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    if (res == null) {
+      return null;
+    }
+    ArrayList<RMSMapMetadataResponse> metadataResponses = new ArrayList<>();
+    Gson gson = new Gson();
+    HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
+    numMaps = mapsResponse.maps.size();
+    for (var entry : mapsResponse.maps.entrySet()) {
+      RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
+      metadataResponse.response = new MapMetadataResponse();
+      HTTPMapResponse m = entry.getValue();
+      metadataResponse.response.width = m.dimensions.cols;
+      metadataResponse.response.height = m.dimensions.rows;
+      double mapScaleX = m.dimensions.width / m.dimensions.cols;
+      double mapScaleY = m.dimensions.height / m.dimensions.rows;
+      metadataResponse.response.mapScaleX = mapScaleX;
+      metadataResponse.response.mapScaleY = mapScaleY;
+      metadataResponse.response.originX = m.position.x;
+      metadataResponse.response.originY = m.position.y;
+      metadataResponses.add(metadataResponse);
+    }
+
+    return metadataResponses;
   }
 
   @Override
   public RMSResponse setVelocity(float translation, float rotation, float sidestep) {
     String uri = baseUrl + "/robot/drive/velocity";
     VelocityRequest request = new VelocityRequest(translation, rotation, sidestep);
+    String res = null;
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending setVelocity request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, request, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    log.debug("RMSResponse: {}", res);
+
+    return resObj;
+  }
+
+  @Override
+  public RMSResponse setVelocity(float translation, float rotation, float sidestep, boolean nudge) {
+    String uri = baseUrl + "/robot/drive/velocity";
+    VelocityRequest request = new VelocityRequest(translation, rotation, sidestep, nudge);
     String res = null;
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending setVelocity request");
@@ -513,16 +574,143 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     return resObj;
   }
 
+
+  /**
+   * Set the localization information for the robot. Forces expected localization.
+   *
+   * Lets the robot figure out theta based on sensor information.
+   *
+   * @param x x position in global coordinates
+   * @param y y position in global coordinates
+   * @return response object
+   */
+  public RMSResponse localize(double x, double y) {
+    String uri = baseUrl + "/robot/mapping/localize";
+    LocalizeArgs args = new LocalizeArgs(1, x, y);
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending localize request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      log.info(httpResponse.responseString);
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    return resObj;
+  }
+
+  /**
+   * Set the localization information for the robot with orientation.
+   *
+   * @param x x position in global coordinates
+   * @param y y position in global coordinates
+   * @param theta orientation in radians
+   * @return response object
+   */
+  public RMSResponse localize(double x, double y, double theta) {
+    String uri = baseUrl + "/robot/mapping/localize";
+    LocalizeArgs args = new LocalizeArgs(1, x, y, theta);
+    RMSResponse resObj = new RMSResponse();
+    log.debug("Sending localize request with theta");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      log.info(httpResponse.responseString);
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+      resObj.errorMessage = "Error making request to HTTP server";
+    }
+    return resObj;
+  }
+
   /**
    * Get the map as image data (PNG). Only available on local
    * HTTP API.
    *
    * @return map data as image
    */
-  public BufferedImage getMap() {
+  public BufferedImage getMap(String mapName) {
     String uri = baseUrl + "/robot/mapping/map/" + mapName;
-    log.debug("Sending getMap request");
     return Http.sendGetImage(uri);
+  }
+
+  public ArrayList<BufferedImage> getMaps() {
+    ArrayList<BufferedImage> mapImages = new ArrayList<>();
+    for (int i=1; i<=numMaps; i++) {
+      String uri = baseUrl + "/robot/mapping/map/" + String.valueOf(i);
+      mapImages.add(Http.sendGetImage(uri));
+    }
+    if (mapImages.isEmpty()) {
+      log.warn("[getMap] unable to get maps, make sure getMapMetadata has been called");
+      return null;
+    }
+    log.debug("Sending getMap request");
+    return mapImages;
+  }
+
+  public ArrayList<RMSListTagsResponse> getAllTags() {
+    ArrayList<RMSListTagsResponse> listTagsResponses = new ArrayList<>();
+    for (int i=1; i<=numMaps; i++) {
+      String uri = baseUrl + "/robot/annotation/tags/" + String.valueOf(i);
+      String res = null;
+      log.debug("Sending get tags request");
+      try {
+        Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+        res = httpResponse == null ? null : httpResponse.responseString;
+      } catch (Exception ex) {
+        log.error("Error making request to " + uri, ex);
+      }
+      if (res == null) {
+        return null;
+      }
+      Gson gson = new Gson();
+      RMSListTagsResponse resObj = new RMSListTagsResponse();
+      try {
+        resObj.response = gson.fromJson(res, ListTagsResponse.class);
+        listTagsResponses.add(resObj);
+      } catch (Exception ex) {
+        log.warn("Error making request to " + uri, ex);
+        log.warn("json respoonse: " + res);
+      }
+    }
+
+    if (listTagsResponses.isEmpty()) {
+      log.warn("[getAllTags] unable to get maps, make sure getMapMetadata has been called");
+      return null;
+    }
+    return listTagsResponses;
+  }
+
+  public String createTag(String mapId, String name, double x, double y, double theta, Map<String, String> attributes) {
+    String uri = baseUrl + "/robot/annotation/createTag/" + mapId;
+    TagArguments args = new TagArguments(name, x, y, theta, attributes);
+    String res = null;
+    log.debug("Sending createTag request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    if (res == null) {
+      return null;
+    }
+    Gson gson = new Gson();
+    CreateTagResponse resObj = gson.fromJson(res, CreateTagResponse.class);
+    return resObj.id;
+  }
+
+  public boolean updateTag(String mapId, String tagId, double x, double y, double theta) {
+    String uri = baseUrl + "/robot/annotation/updatetag/" + mapId + "/" + tagId;
+    UpdateTagArguments args = new UpdateTagArguments(Integer.parseInt(tagId), x, y, theta);
+    String res = null;
+    log.debug("Sending updateTag request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    return res != null;
   }
 
   /**

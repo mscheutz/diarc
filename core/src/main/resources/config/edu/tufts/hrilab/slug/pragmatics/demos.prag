@@ -4,6 +4,19 @@ STATEMENT(A,B,if(X,Y),Z) := want(A,goal(B,if(X,Y)))
 STATEMENT(A,B,else(X),Z) := want(A,goal(B,else(X)))
 END-SET
 
+#PickAndPlace2024 -> for the LLM (can't handle the hack that what should be a STATEMENT is implemented as an action/INSTRUCT)
+NEW-SET
+RULES
+STATEMENT(A,B,at(X,Y),Z) := want(A,believeObjectAt(B,X,Y))
+STATEMENT(A,B,believeObjectAt(B,X,Y),Z) := want(A,believeObjectAt(B,X,Y))
+STATEMENT(A,B,believeObjectAt(C,X,Y),Z) := want(A,believeObjectAt(C,X,Y))
+QUESTION(A,B,knowHowTo(B,X),Z) := itk(A,capableOf(X))
+QUESTION(A,B,knowHowTo(X),Z) := itk(A,capableOf(X))
+QUESTION(A,B,know(B,supervisor(X)),Z) := itk(A,supervisor(X))
+QUESTION(A,B,know(B,admin(X)),Z) := itk(A,admin(X))
+
+END-SET
+
 ##temi 'representational workarounds'
 #TODO:brad: now that we don't have did, can this be generalize into a "then" action that handles any two goals?
 #how does that work with action learning? perhaps another prag rule to check if we're currently learning?
@@ -216,8 +229,8 @@ END-SET
 
 NEW-SET
 RULES
-INSTRUCT(A,B,urgentPriority(B,X),Z) := want(A,X,urgent)
-INSTRUCT(A,B,urgentPriority(C,X),Z) := want(A,X,urgent)
+INSTRUCT(A,B,urgentPriority(B,X),Z) := want(A,X,URGENT)
+INSTRUCT(A,B,urgentPriority(C,X),Z) := want(A,X,URGENT)
 END-SET
 
 # general cases of utterances which result in goal submission

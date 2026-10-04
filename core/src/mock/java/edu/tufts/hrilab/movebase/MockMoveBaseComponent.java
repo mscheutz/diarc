@@ -16,15 +16,17 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
+import edu.tufts.hrilab.map.util.Pose;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInterface {
   boolean shouldSimExecTime = false; // should the primitive actions simulate execution times
@@ -33,7 +35,7 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   //used to manage the previous and current location, since checkAt doesn't have outside information to handle this. important since checkAt observes facts used in preconditions and effects of asl actions as well
   private Symbol currentLocation = Factory.createSymbol("location_0", "location");
 
-  private Pair<Point3d, Quat4d> currRobotPose;
+  private Pose currRobotPose;
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -62,12 +64,12 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   ///////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public void setPose(Point3d location, Quat4d orientation) {
+  public void setPoseGlobal(double x, double y, double theta) {
     simExecTime();
   }
 
   @Override
-  public Pair<Point3d, Quat4d> getPose() {
+  public double[] getPoseGlobalQuat() {
     simExecTime();
 //    return new double[0];
     // Mock data for demonstration purposes
@@ -76,8 +78,8 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
 
     if (currRobotPose != null) {
       // If currRobotPose is not null, use its position and orientation
-      meterPosition = currRobotPose.getLeft();
-      orientationResult = currRobotPose.getRight();
+      meterPosition = currRobotPose.getPosition();
+      orientationResult = currRobotPose.getOrientation();
 
       log.info("orientationResult from getPoseGlobalQuat is {}", orientationResult);
     } else {
@@ -87,7 +89,14 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
       orientationResult = positionResult.getOrientation();
     }
 
-    return new MutablePair<>(meterPosition, orientationResult);
+    double mockX = meterPosition.getX();
+    double mockY = meterPosition.getY();
+    double mockOrientationX = orientationResult.getX();
+    double mockOrientationY = orientationResult.getY();
+    double mockOrientationZ = orientationResult.getZ();
+    double mockOrientationW = orientationResult.getW();
+
+    return new double[] {mockX, mockY, mockOrientationX, mockOrientationY, mockOrientationZ, mockOrientationW};
   }
 
   @Override
@@ -102,7 +111,7 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
     return new ConditionJustification(true);
   }
 
-//  @Override
+  @Override
   public Justification goToLocation(Symbol location) {
     return goToLocation(location, true);
   }
@@ -115,16 +124,9 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   }
 
   @Override
-  public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
-    simExecTime();
-    currRobotPose = new MutablePair<>(location, orientation);
-    return new ConditionJustification(true);
-  }
-
-  @Override
   public Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait) {
     simExecTime();
-    currRobotPose = new MutablePair<>(new Point3d(xdest, ydest, 0.0), new Quat4d(quat_x, quat_y, quat_z, quat_w));
+    currRobotPose = new Pose(new Point3d(xdest, ydest, 0.0), new Quat4d(quat_x, quat_y, quat_z, quat_w));
     return new ConditionJustification(true);
   }
 

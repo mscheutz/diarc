@@ -63,7 +63,8 @@ public class ContextUtils {
 
     // search up the tree to find the closest ActionContext script to the matching Context.
     Context matchingActionContext = matchingContext;
-    while (matchingActionContext != null && !isActionScript(matchingActionContext)) {
+    //TODO: (relating to above TODO) swapping from option (2) to (1). Allows for more precise recovery definition through failed primitives
+    while (matchingActionContext != null && !matchingActionContext.isAction()) {//!isActionScript(matchingActionContext)) {
       matchingActionContext = matchingActionContext.getParentContext();
     }
 

@@ -14,6 +14,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,6 +61,8 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
 
     // Add buttons from config file
     sConfigs.forEach(config -> parseConfigFile(config));
+
+    //addDemoButtons();
 
     if (useCommand) {
       // Add text field and button
@@ -114,7 +117,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     }
 
     int i = sConfigs.get(0).lastIndexOf(File.separator);
-    this.setTitle(sConfigs.get(0).substring(i + 1));
+    this.setTitle(sConfigs.get(0).substring(i + 1) + " | Addressee: " + component.getAddressee());
     this.setSize(scrollPane.getPreferredSize());
     this.setVisible(true);
   }
@@ -266,7 +269,63 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     }
   }
 
-  public void shutdown() {
-    this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+  private class DemoInputListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      String Command = null;
+      if (!event.getActionCommand().equals("Command") &&
+              !event.getActionCommand().equals("setAddressee") &&
+              !event.getActionCommand().equals("setSpeaker") &&
+              !event.getActionCommand().equals("<unk>")) {
+        long now = System.currentTimeMillis();
+        long elapsed = now - prevClick;
+        prevClick = now;
+        if (elapsed < 100) {
+          return;
+        }
+        Command = event.getActionCommand();
+        log.debug("Button " + Command);
+        if (Command.equals("set number of items in crate (put number in command entry)")) {
+          if (useCommand) {
+            String numString = sCommandText.getText();
+            sCommandText.setText("");
+            int num;
+            try {
+              num = Integer.parseInt(numString);
+              Command = "setNumItemsPerCrate(robotone,"+num+")";
+            } catch (NumberFormatException ignored) {
+              log.error("[DemoInputListener] invalid number supplied for setting crate content amount");
+              return;
+            }
+          }
+        }
+      }
+
+      if (Command == null) {
+        return;
+      }
+      component.callDemoAction(Command);
+    }
+  }
+
+  private void addDemoButtons() {
+    List<String> demoButtonStrings = new ArrayList<>();
+    demoButtonStrings.add("resetDemo(robotone)");
+    demoButtonStrings.add("clearPackingParams(robotone)");
+    demoButtonStrings.add("clearCurrentCrate(robotone)");
+    demoButtonStrings.add("clearQuestions(robotone)");
+    demoButtonStrings.add("runSolver(robotone)");
+    demoButtonStrings.add("set number of items in crate (put number in command entry)");
+
+    for (String str : demoButtonStrings) {
+      JButton TmpButton;
+      TmpButton = new JButton(str);
+      TmpButton.setForeground(textColor);
+      TmpButton.setMaximumSize(new Dimension(1000, 30));
+      TmpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+      TmpButton.addActionListener(new DemoInputListener());
+      TmpButton.addMouseListener(new MouseInputListener());
+      sPanel.add(TmpButton);
+    }
   }
 }

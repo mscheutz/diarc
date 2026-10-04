@@ -37,6 +37,8 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees evan ravenna");
+
     createInstance(TLDLParserComponent.class, "-dict templatedict.dict templatedictLearned.dict");
 
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

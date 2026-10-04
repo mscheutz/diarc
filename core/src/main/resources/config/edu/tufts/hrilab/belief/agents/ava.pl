@@ -2,9 +2,10 @@
 name(self,ava). %% we might want this to be dynamic too
 name(ava,ava).
 
-actor(user).
-actor(evan).
-actor(patient).
+actor(webapp).
+actor(asrapp).
+actor(local_user).
+actor(local_visitor).
 
 diarcAgent(self).
 diarcAgent(ava).
@@ -17,13 +18,15 @@ object(self, agent).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-supervisor(evan).
-supervisor(patient).
-supervisor(user).
+supervisor(webapp).
+supervisor(asrapp).
+supervisor(local_user).
+supervisor(local_visitor).
 
 %% admin
-admin(evan).
+admin(webapp).
+admin(asrapp).
+admin(local_user).
 
 %% Specific beliefs to ava
 alwaysAt(patient,robot).
-at(ava,unknown).

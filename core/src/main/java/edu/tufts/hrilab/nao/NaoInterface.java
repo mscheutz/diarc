@@ -3,14 +3,13 @@
  */
 package edu.tufts.hrilab.nao;
 
+import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
 import edu.tufts.hrilab.interfaces.VelocityInterface;
 
 import javax.vecmath.Point3d;
 import java.util.List;
-
-import ai.thinkingrobots.trade.TRADEService;
 
 /**
  * The <code>NaoComponent</code> interface.

@@ -4,12 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import javax.swing.JPanel;
 import java.util.List;
 
 /**
  * Class representing the canvas object used to render image, text and other graphical elements for the display.
  */
-public class DisplayCanvas extends Canvas {
+public class DisplayCanvas extends JPanel {
   private final int w; // Width
   private final int h; // And height of the canvas
   private int screenPad = 20;
@@ -22,6 +23,11 @@ public class DisplayCanvas extends Canvas {
   private final SimpleTextElement simpleTextElement;
   private DialogueManager dialogueManager;
 
+  private String currentTextString = "";
+  private long currentTextTimeout = -1;
+  private long currentTextStartTime = System.currentTimeMillis();
+
+
   private boolean isIdle = false;
 
   private Logger log = LoggerFactory.getLogger(DisplayCanvas.class);
@@ -33,8 +39,10 @@ public class DisplayCanvas extends Canvas {
    * @param height Height of the display canvas.
    */
   public DisplayCanvas(int width, int height) {
+    setOpaque(true);
     setBackground(bg);
     setSize(width, height);
+    setPreferredSize(new Dimension(width, height));
     w = width;
     h = height;
     int fontSize = (int) ((float) height * .07222f);
@@ -42,6 +50,7 @@ public class DisplayCanvas extends Canvas {
     Font font = new Font("Arial", Font.PLAIN, fontSize);
 
     simpleImageElement = new SimpleImageElement();
+    simpleImageElement.setRepaint(this::repaint);
     simpleTextElement = new SimpleTextElement(font, fg, fgRobot);
   }
 
@@ -49,23 +58,37 @@ public class DisplayCanvas extends Canvas {
     this.dialogueManager = dialogueManager;
   }
 
-  /**
-   * Sets an image to the background of the display.
-   *
-   * @param img Image object to display in background
-   */
   public void setImage(Image img) {
     setImage(img, -1);
   }
 
-  /**
-   * Sets an image to the background of the display.
-   *
-   * @param img Image object to display in background
-   */
   public void setImage(Image img, long timeout) {
-    simpleImageElement.setImage(img, timeout);
+    setImage(img, timeout, false, bg);
+  }
+
+  public void setImage(Image img, long timeout, boolean scaleToFit) {
+    setImage(img, timeout, scaleToFit, bg);
+  }
+
+  public void setImage(Image img, long timeout, boolean scaleToFit, Color backgroundColor) {
+    simpleImageElement.setImage(img, timeout, scaleToFit, backgroundColor);
     repaint();
+  }
+
+  public void setImageBlocking(Image img, long timeout) {
+    setImageBlocking(img, timeout, false, bg);
+  }
+
+  public void setImageBlocking(Image img, long timeout, boolean scaleToFit) {
+    setImageBlocking(img, timeout, scaleToFit, bg);
+  }
+
+  public void setImageBlocking(Image img, long timeout, boolean scaleToFit, Color backgroundColor) {
+    simpleImageElement.setImageBlocking(img, timeout, scaleToFit, backgroundColor);
+    repaint();
+  }
+  public void cancelSetImage() {
+    simpleImageElement.cancelSetImage();
   }
 
   /**
@@ -91,8 +114,35 @@ public class DisplayCanvas extends Canvas {
    * @param text      String to print on screen
    */
   public void setText(String text, long textTimeout) {
-    simpleTextElement.setText(text, textTimeout);
+    simpleTextElement.setText(text, textTimeout, this::clearText);
+    currentTextString = text;
+    currentTextTimeout = textTimeout;
+    currentTextStartTime = System.currentTimeMillis();
     repaint();
+  }
+
+  /**
+   * Refresh most recently displayed text for the remainder of its originally intended duration (if overwritten by
+   *  canvas redraw due to image, video, ...)
+   */
+  public void refreshText() {
+    if (!currentTextString.isEmpty()) {
+      if (currentTextTimeout <= 0) {
+        setText(currentTextString);
+      } else {
+        long remainingTimeout = currentTextTimeout - (System.currentTimeMillis() - currentTextStartTime);
+        if (remainingTimeout > 0) {
+          setText(currentTextString, remainingTimeout);
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the currently displayed text
+   */
+  public String getText() {
+    return simpleTextElement.getText();
   }
 
   /**
@@ -100,6 +150,7 @@ public class DisplayCanvas extends Canvas {
    */
   public void clearText() {
     simpleTextElement.clearText();
+    currentTextString = "";
     repaint();
   }
 
@@ -113,31 +164,30 @@ public class DisplayCanvas extends Canvas {
     repaint();
   }
 
+  public void setIdleNoRepaint(boolean idle) {
+    isIdle = idle;
+  }
+
   /**
    * Renders the Canvas with the current state of the DisplayCanvas class.
    *
    * @param g Graphics object from Canvas class
    */
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    Graphics2D g2d = (Graphics2D) g;
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    Graphics2D g2d = (Graphics2D) g.create();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2d.setColor(bg);
 
     if (!isIdle) {
+      simpleImageElement.paint(g2d, getWidth(), getHeight());
       List<DialogueMessage> messages = dialogueManager.getMessages();
-      if (messages.isEmpty()) {
-        simpleImageElement.paint(g2d);
-      }
       Rectangle baseTestFootPrint = simpleTextElement.paint(g2d, screenPad);
       if (baseTestFootPrint.height == 0) {
         simpleTextElement.paintDialogue(g2d, messages, getHeight() - screenPad, screenPad, !dialogueManager.isUseChat());
       } else {
         simpleTextElement.paintDialogue(g2d, messages, baseTestFootPrint.y - screenPad, screenPad, !dialogueManager.isUseChat());
       }
-    } else {
-      g2d.fillRect(0, 0, w, h);
     }
 
     g2d.dispose();

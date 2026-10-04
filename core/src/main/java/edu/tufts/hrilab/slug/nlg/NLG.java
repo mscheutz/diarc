@@ -890,7 +890,12 @@ public class NLG {
       argument.setFeature(Feature.MODAL, "would");
       return argument;
     } else if (predicateName.equals("report")) {
-      Symbol symbol = semantics.get(1);
+      Symbol symbol;
+      if (semantics.size() > 1) {
+         symbol = semantics.get(1);
+      } else {
+        symbol = semantics.get(0);
+      }
       if (symbol.isTerm()) {
         SPhraseSpec argument = buildPhrase((Term) symbol);
         argument.setFeature(Feature.MODAL, "do");

@@ -4,7 +4,9 @@
 
 package edu.tufts.hrilab.asr;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import javax.sound.sampled.*;
 
 import org.slf4j.Logger;
@@ -50,6 +52,16 @@ public class ConfigurableMicrophone {
     return line.read(buffer, i, buffer.length);
   }
 
+  public void close() {
+    try {
+      this.inputStream.close();
+    } catch (IOException e) {
+      log.error("[close] error closing mic inputStream", e);
+    }
+
+    this.line.close();
+  }
+
   public static void showMixers () {
     int i = 0;
     Mixer.Info[] mixers = AudioSystem.getMixerInfo();
@@ -89,6 +101,7 @@ public class ConfigurableMicrophone {
         return i;
       }
     }
+    log.warn("[matchMixer] nothing matched \"{}\", falling back to the default mixer. available: {}", match, Arrays.toString(mixers));
     return -1; // Return -1 if no match is found
   }
 }

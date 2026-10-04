@@ -265,6 +265,9 @@ public class Util {
    */
   public static List<String> tokenizeArgs(String s) {
     List<String> tokens = tokenizeArgs(s,',');
+    if (tokens == null) {
+      return new ArrayList<>();
+    }
     tokens=tokens.stream().map(String::trim).collect(Collectors.toList());
     return tokens;
   }

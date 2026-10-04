@@ -557,6 +557,9 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         //Get the failed action which caused recovery and add a reinitialized copy as the next child
         setStatus(ActionStatus.PROGRESS);
         ActionContext copiedChildContext = recovery.getContextToRetry().copy(this);
+        //TODO: done in demo crunch, revisit.
+        copiedChildContext.childContexts.clear();
+        copiedChildContext.parser = new ScriptParser(copiedChildContext.getDBE().getEventSpecs());
         copiedChildContext.resetContext();
         childContexts.add(copiedChildContext);
         break;
@@ -1106,5 +1109,19 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   public Recovery getRecovery() {
     return recovery;
+  }
+
+  public Symbol getOriginalSubmitter() {
+    Context context = this;
+    while (context != null) {
+      if (context instanceof GoalContext) {
+        Symbol submitter = ((GoalContext) context).getGoal().getSubmitter();
+        if (!submitter.equals(Factory.createSymbol("unknown"))) {
+          return submitter;
+        }
+      }
+      context = context.getParentContext();
+    }
+    return Factory.createSymbol("unknown");
   }
 }

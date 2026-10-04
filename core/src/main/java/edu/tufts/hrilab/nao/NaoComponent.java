@@ -3,45 +3,41 @@
  */
 package edu.tufts.hrilab.nao;
 
-import com.aldebaran.qimessaging.Application;
+import com.aldebaran.qimessaging.*;
 import com.aldebaran.qimessaging.Object;
-import com.aldebaran.qimessaging.CallError;
-import com.aldebaran.qimessaging.Future;
-import com.aldebaran.qimessaging.Session;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-
-import java.util.ArrayList;
-import java.util.List;
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-
-
+import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
+import java.util.ArrayList;
+import java.util.List;
+
 public class NaoComponent extends DiarcComponent implements NaoInterface {
 
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
-  protected com.aldebaran.qimessaging.Object asr;
-  protected com.aldebaran.qimessaging.Object audioPlayer;
-  protected com.aldebaran.qimessaging.Object soundDetect;
-  protected com.aldebaran.qimessaging.Object memory;
-  protected com.aldebaran.qimessaging.Object tts;
-  protected com.aldebaran.qimessaging.Object sonar;
-  protected com.aldebaran.qimessaging.Object motion;
-  protected com.aldebaran.qimessaging.Object posture;
-  protected com.aldebaran.qimessaging.Object battery;
-  protected com.aldebaran.qimessaging.Object world;
+  protected Object asr;
+  protected Object audioPlayer;
+  protected Object soundDetect;
+  protected Object memory;
+  protected Object tts;
+  protected Object sonar;
+  protected Object motion;
+  protected Object posture;
+  protected Object battery;
+  protected Object world;
   private com.aldebaran.qimessaging.Tuple tuple;
 
-  private com.aldebaran.qimessaging.Object animSpeech;
-  private com.aldebaran.qimessaging.Object leds;
+  private Object animSpeech;
+  private Object leds;
   private CallBack callback;
 
   private Application application;
@@ -421,6 +417,14 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     return true;
   }
 
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return false;
+  }
+
+  public boolean sayText(Utterance utterance) {
+    return false;
+  }
+
   @Override
   public boolean sayText(String text) {
     return sayText(text, true);
@@ -510,7 +514,7 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
       motion.call("moveInit");
       Future<Void> future = motion.call("moveTo", x, y, theta);
       future.get();
-    } catch (CallError | java.lang.InterruptedException e) {
+    } catch (CallError | InterruptedException e) {
       throw new RuntimeException("moveToBlocking failed: ", e);
     }
     return true;
@@ -523,7 +527,7 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     try {
       Future<Void> future = motion.call("angleInterpolation", name, angle, time, isAbsolute);
       future.get();
-    } catch (CallError | java.lang.InterruptedException e) {
+    } catch (CallError | InterruptedException e) {
       throw new RuntimeException("angleInterpolation failed: ", e);
     }
   }
@@ -534,7 +538,7 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     try {
       Future<Void> future = motion.call("angleInterpolation", names, angles, time, isAbsolute);
       future.get();
-    } catch (CallError | java.lang.InterruptedException e) {
+    } catch (CallError | InterruptedException e) {
       throw new RuntimeException("angleInterpolation failed: ", e);
     }
   }
@@ -545,7 +549,7 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     try {
       Future<Void> future = motion.call("angleInterpolation", names, angles, times, isAbsolute);
       future.get();
-    } catch (CallError | java.lang.InterruptedException e) {
+    } catch (CallError | InterruptedException e) {
       throw new RuntimeException("angleInterpolation failed: ", e);
     }
   }

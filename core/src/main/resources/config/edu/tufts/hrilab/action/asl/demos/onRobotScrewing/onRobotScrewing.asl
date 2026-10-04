@@ -12,19 +12,19 @@
   edu.tufts.hrilab.fol.Symbol !addressee ="james";
 
 //TODO:brad: nee to assert screwtype if we remove this, otherwise I'm not sure how we want to handle the binding between the hole detection job and the screwtype defined here
-//  (!bindings) = act:askQuestionFromString(!addressee,"which Cognex job is used to detect its hole", job(X));
+//  (!bindings) = act:askQuestionFromString("which Cognex job is used to detect its hole", job(X));
 //  (!jobID) = op:get(!bindings, !x);
 //  tsc:addDetectionType(?screwType,!jobID);
 
-  (!bindings) = act:askQuestionFromString(!addressee,"what is its screwing length", val(X,Y));
+  (!bindings) = act:askQuestionFromString("what is its screwing length", val(X,Y));
   (!screwLength) = op:get(!bindings, !x);
 
-  (!bindings) = act:askQuestionFromString(!addressee,"what is its target torque in millinewton meters", val(X,Y));
+  (!bindings) = act:askQuestionFromString("what is its target torque in millinewton meters", val(X,Y));
   (!targetTorque) = op:get(!bindings, !x);
 
   tsc:configureScrewdriverProgram(?screwType, !screwLength, !targetTorque);
 
-  (!bindings) = act:askQuestionFromString(!addressee,"at which pose can I find ?screwType screws", pose(X));
+  (!bindings) = act:askQuestionFromString("at which pose can I find ?screwType screws", pose(X));
   (!poseRef) = op:get(!bindings, !x);
   (!posePred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "foundAt(?screwType,!poseRef)");
   act:assertBelief(!posePred);

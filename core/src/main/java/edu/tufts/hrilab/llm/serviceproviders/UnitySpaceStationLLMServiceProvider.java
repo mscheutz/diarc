@@ -45,7 +45,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     private static String refsDirectoryPath = "config/edu/tufts/hrilab/map";
     Pattern agentPattern = Pattern.compile("agent:");
     Matcher agentMatcher = agentPattern.matcher("");
-    Prompt nluPrompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt nluPrompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
 
     private String refsFile;
     HashMap<String, Symbol> locationRefs;
@@ -84,25 +84,36 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     }
 
     @Override
-    protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
+    public Utterance convertSemanticsToTextLLMService(Utterance utterance, boolean streamingGeneration) {
+        log.warn("[parseUtteranceLLMService] UnitySpaceStationLLMServiceProvider does not implement streaming generation, please update your config to disable streamingTTS");
+        return convertSemanticsToTextLLMService(utterance);
+    }
+
+    @Override
+    public Utterance convertSemanticsToTextLLMService(Utterance utterance) {
         //TODO: when looking back at lab branch, set this up correctly if exists (assuming stylizeUnitySpeak is filling in for this some way)
         log.warn("NLG for UnitySpaceStation not set up through LLMServiceProvider");
         return null;
     }
 
     @Override
-    protected Chat generateNLUChat(Utterance utterance, Chat currentChat, List<Utterance> conversationHistory) {
-        if (currentChat == null) {
-            currentChat = new Chat(nluPrompt);
-        }
-        currentChat.addUserMessage(utterance.getWordsAsString());
-
-        Chat chat = new Chat(nluPrompt);
-        return chat;
+    public boolean inExtendedParseLoop(Symbol user, Symbol agentTeam) {
+        return false;
     }
 
     @Override
-    protected Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
+    public Utterance parseUtteranceLLMService(Utterance utterance, boolean streamingGeneration) {
+        log.warn("[parseUtteranceLLMService] UnitySpaceStationLLMServiceProvider does not implement streaming generation, please update your config to disable streamingTTS");
+        return parseUtteranceLLMService(utterance);
+    }
+
+    @Override
+    public Utterance parseUtteranceLLMService(Utterance utterance) {
+        Chat chat = new Chat(nluPrompt);
+        chat.addUserMessage(utterance.getWordsAsString());
+
+        Completion llmResponse = callChatEndpoint(chat);
+
         String jsonString = llmResponse.toString();
         LlamaSpaceStationResponse lssRes = null;
         if (!jsonString.contains("}")) {
@@ -131,7 +142,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
             log.info("Got response: " + response.toString());
         }
 
-        Utterance.Builder output = new Utterance.Builder(incomingUtterance);
+        Utterance.Builder output = new Utterance.Builder(utterance);
         output.setUtteranceType(UtteranceType.valueOf(response.intention.intent.toUpperCase()));
 
         // collect referent info by variable name
@@ -151,8 +162,8 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
                 args.add(addressee);
                 output.setAddressee(addressee);
             } else {
-                args.add(incomingUtterance.getAddressee());
-                output.setAddressee(incomingUtterance.getAddressee());
+                args.add(utterance.getAddressee());
+                output.setAddressee(utterance.getAddressee());
             }
             Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
             semantics = Factory.createPredicate(prop.text, args);
@@ -172,11 +183,6 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
         //    variables.forEach(var -> output.addTierAssignment(var, Factory.createSymbol(referentMap.get(var.getName()).cognitive_status.toUpperCase())));
 
         return output.build();
-    }
-
-    @Override
-    protected Utterance parseNLGCompletionResponse(Utterance outgoingUtterance, Completion llmResponse) {
-        return null;
     }
 
     private String getAgent () {
@@ -228,8 +234,8 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
     @TRADEService
     @Action
     public void stylizeUnitySpeak (Symbol original) {
-        Prompt prompt = Prompts.getPrompt("spaceStationSpeechStyle");
-        Symbol model = Factory.createSymbol("gpt-3.5-turbo");
+        Prompt prompt = Prompts.getPrompt("lab/spaceStationSpeechStyle");
+        String model = "gpt-3.5-turbo";
         Symbol actor = Factory.createSymbol("robot1");
         Chat chat = new Chat(prompt);
         Completion oResponse = null;
@@ -237,7 +243,7 @@ public class UnitySpaceStationLLMServiceProvider extends LLMServiceProvider {
         chat.addUserMessage(original.toString());
 
         try {
-            oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, model, chat);
+            oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, chat, model);
         } catch (TRADEException e) {
             log.error("Error getting a completion.", e);
         }

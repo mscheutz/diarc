@@ -4,14 +4,18 @@
 
 package edu.tufts.hrilab.slug.parsing.hybrid;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
@@ -21,7 +25,6 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.fol.util.Utilities;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,14 +35,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.HashMap;
 
-public class HybridParserComponent extends DiarcComponent implements NLUInterface {
+public class HybridParserComponent extends DiarcComponent {
 
   private boolean useLLM = false;
-  private NLUInterface llmParser;
+  private LLMParserComponent llmParser;
   private boolean useTLDL = false;
-  private NLUInterface tldlParser;
+  private TLDLParserComponent tldlParser;
   private boolean usePMP = false;
-  private NLUInterface patternMatchingParser;
+  private PatternMatchingParser patternMatchingParser;
   private boolean useCache = false;
   private CachedParserComponent cacheParser;
 
@@ -51,15 +54,19 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String[] cacheLoads = null;
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
+  protected boolean cacheLLM = true;
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = Factory.createSymbol("unknown");
   private Class matcherclass = PatternMatchingParser.class;
-
-  // we have four parsers for now
-  private String[] sequence;
-
   private boolean confirmation = true;
+  // Intended sequences:
+  // "Social LLM Service Provider": Cache -> TLDL -> PMP -> LLM if first input (or really whatever the user desires). But if in an extended interaction, override LLM -> rest.
+  // "Basic LLM Service Provider": Always Cache -> TLDL -> PMP -> LLM
+  private String[] sequence;
+  private boolean restrictedMode = false;
+  private String[] cachedSequence = null;
+  private boolean registeredActionListener = false;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -73,11 +80,13 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
+    options.add(Option.builder("noCacheLLM").desc("Do not cache LLM parses directly in this component when confirmation is turned off").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").argName("boolean").desc("use pattern matching parser").build());
     options.add(Option.builder("matcher").hasArg().argName("string").desc("Optional name of Pattern Matcher Component to be used").build());
     options.add(Option.builder("noUpdateAddressee").desc("do not update addressee after direct address (TLDL and PM)").build());
     options.add(Option.builder("parsingSequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
+    options.add(Option.builder("sequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
     return options;
   }
 
@@ -116,6 +125,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       cacheTldl = true;
       log.debug("Cache TLDL parses");
     }
+    if (useCache && cmdLine.hasOption("noCacheLLM")) {
+      cacheLLM = false;
+      log.debug("Not caching LLM parses here (may still occur in nlu.asl)");
+    }
     if (cmdLine.hasOption("noConfirmation")) {
       confirmation = false;
       log.debug("Do not require confirmation from LLM parser before storing in cache");
@@ -134,8 +147,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
 
     // generate the sequence information
-    if (cmdLine.hasOption("parsingSequence")) {
-      sequence = cmdLine.getOptionValues("parsingSequence");
+    if (cmdLine.hasOption("sequence")) {
+      sequence = cmdLine.getOptionValues("sequence");
     } else {
       sequence = new String[]{"cache", "tldl", "pattern", "llm"};
     }
@@ -184,6 +197,64 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
     unknownListener = Factory.createSymbol("unknown");
+
+    shouldRunExecutionLoop = true;
+  }
+
+  // TODO: This new API currently assumes streaming TTS and filler phrases are only associated with the LLMParser/ServiceProvider (if a social subclass), could be generalized
+  //    to any component(s) if that functionality is implemented. Also could generally change details about what components are triggered/checked synchronously vs async.
+  // Just calling parseUtterance generally, no associated filler/llm streaming response. Prevent streaming output.
+  @TRADEService
+  @Action
+  public Utterance parseUtterance(Utterance incoming) {
+    Utterance output = parseUtterance(incoming, false, false);
+    return output == null ? incoming : output;
+  }
+
+  // TODO: Depending on desired implementation, this method can trigger the LLM component to start running asynchronously or just only run the non-llm components first. (Or make that behavior configurable)
+  //  (The callStreaming argument is only actually necessary if the LLM request is made asynchronously from this method rather than synchronously from getLLMParseResult)
+  // Call parseUtterance for any valid non-LLM output. This should be used when the result is possibly tied to speech output and streaming TTS or filler utterances are associated.
+  //  Need to run for non-llm result first to know if streaming TTS or filler phrases should be produced.
+  @TRADEService
+  public Utterance parseUtteranceForNonLLMResult(Utterance incoming, boolean callStreaming) {
+    return parseUtterance(incoming, true, callStreaming);
+  }
+
+  // Associated with parseUtteranceForNonLLMResult - Get Trailing LLM result after checking non-llm success
+  @TRADEService
+  public Utterance getLLMParseResult(Utterance incoming, boolean callStreaming) {
+    log.info("[getLLMParseResult] in method");
+
+    // If starting the LLM asynchronously
+    //*TODO: Would need to store futures and index on utteranceID to retrieve here(and probably move unblock/cancelTTSOutputForUID to this component and rename)
+
+    // If only running the LLM synchronously
+    Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
+    if (confirmation) {
+      llmInputUtterance.setNeedsValidation(true);
+    }
+    Utterance output = llmParser.parseUtterance(llmInputUtterance, callStreaming);
+
+    //Copying missed control flow from below sequence handling, revisit
+    if (output != null) {
+      if (output.getType() == UtteranceType.UNKNOWN) {
+        //TODO: revisit, using a hack to allow for LLM to return error responses as strings. A better way is
+        //  to just return semantics but populate the cache or make sure SimpleNLG can handle them properly
+        //Use LLM UNKNOWN parse in case all other parsers fail
+        output.setType(UtteranceType.INSTRUCT);
+      } else {
+        if (!confirmation && cacheLLM && !output.getWordsAsString().isEmpty()) {
+          cacheParse(output);
+        }
+
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("usedLLMParse").argTypes(Symbol.class, Symbol.class)).call(void.class, incoming.getSpeaker(), incoming.getAddressee());
+        } catch (TRADEException ex) {
+          log.error("Error calling usedLLMParse service", ex);
+        }
+      }
+    }
+    return output;
   }
 
   /**
@@ -195,38 +266,57 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
    * @param incoming The incoming Utterance to parse.
    * @return The parsed Utterance.
    */
-  @Override
-  public Utterance parseUtterance(Utterance incoming) {
-
+  private Utterance parseUtterance(Utterance incoming, boolean returnNonLLM, boolean callStreamingMethod) {
     Future<Utterance> llmFuture = null;
     Future<Utterance> tldlFuture = null;
     Future<Utterance> cachedFuture = null;
     Future<Utterance> pmpFuture = null;
 
+    String[] parseSequence = sequence;
+    boolean inExtendedParseLoop = false;
+
+    // If LLM spawned async
+    //if (useLLM) {
+    // If LLM synchronously only after other components fail
     if (useLLM) {
-      llmFuture = executor.submit(() -> llmParser.parseUtterance(new Utterance.Builder(incoming).build()));
-    }
-    if (useTLDL) {
-      tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
-    }
-    if (useCache) {
-      cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
-    }
-    if (usePMP) {
-      pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      try {
+         inExtendedParseLoop = TRADE.getAvailableService(new TRADEServiceConstraints().name("inExtendedParseLoop").argTypes(Symbol.class, Symbol.class)).call(boolean.class, incoming.getSpeaker(), incoming.getAddressee());
+      } catch (TRADEException ex) {
+        log.error("Error calling inExtendedParseLoop service", ex);
+      }
+
+      if (!returnNonLLM) {
+        Utterance llmInputUtterance = new Utterance.Builder(incoming).build();
+        if (confirmation) {
+          llmInputUtterance.setNeedsValidation(true);
+        }
+        llmFuture = executor.submit(() -> llmParser.parseUtterance(llmInputUtterance, callStreamingMethod));
+      }
     }
 
-    Utterance output = incoming;
+    // If in an extended Social LLM parse loop, temporarily ignore other parsers
+    if (!inExtendedParseLoop) {
+      if (useTLDL) {
+        tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
+      if (useCache) {
+        cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
+      if (usePMP) {
+        pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
+      }
+    }
+
+    //Utterance output = incoming;
+    Utterance output = null;
     Utterance cachedOutput = null;
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
 
-    // 
-    for (int i = 0; i < sequence.length; i++) {
-      switch (sequence[i]) {
+    for (int i = 0; i < parseSequence.length; i++) {
+      switch (parseSequence[i]) {
         case "cache":
-          //Check cache first
           if (cachedFuture != null) {
             try {
               cachedOutput = cachedFuture.get();
@@ -236,13 +326,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
             if (cachedOutput != null && cachedOutput.getSemantics() != null) {
               output = applyAddressee(incoming, cachedOutput);
-              log.debug("[parseUtterance] Using cached parser response: {}", output);
+              log.info("[parseUtterance] Using cached parser response: {}", output);
               return output;
             }
           }
           break;
         case "pattern":
-          //Try patternmatching parser
           if (pmpFuture != null) {
             try {
               pmpOutput = pmpFuture.get();
@@ -252,13 +341,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
             //TODO:brad: what should this return in the no match case?
             if (pmpOutput != null && pmpOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
+              log.info("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
               return pmpOutput;
             }
           }
           break;
         case "tldl":
-          //Try TLDLParser, return if not null or UNKNOWN
           if (tldlFuture != null) {
             try {
               tldlOutput = tldlFuture.get();
@@ -273,18 +361,19 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
                   cacheParse(tldlOutput);
                 }
                 output = applyAddressee(incoming, tldlOutput);
-                log.debug("[parseUtterance] Using tldl parser response: {}", output);
+                log.info("[parseUtterance] Using tldl parser response: {}", output);
                 return output;
               } else {
-                //Use TLDL UNKNOWN parse in case LLM parse fails
-                output = tldlOutput;
+                if (output == null && !useLLM) {
+                  //Use TLDL UNKNOWN parse in case LLM parse fails
+                  output = tldlOutput;
+                }
               }
             }
           }
           break;
         case "llm":
-          //Try LLMParser last
-          if (llmFuture != null) {
+          if (llmFuture != null && !returnNonLLM) {
             try {
               llmOutput = llmFuture.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -292,20 +381,39 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
             }
 
             if (llmOutput != null && llmOutput.getSemantics() != null) {
-              preserveAddressee(llmOutput);
-              output = llmOutput;
-              if (confirmation) {
-                output.setNeedsValidation(true);
-              } else if (useCache) {
-                cacheParse(output);
+              if (llmOutput.getType() != UtteranceType.UNKNOWN) {
+                log.info("[parseUtterance] Using llm parser response");
+                preserveAddressee(llmOutput);
+                output = llmOutput;
+                //TODO: inExtendedParseLoop may be incorrect to use here - may have to revert to explicitly checking Chat context message length again
+                if (!inExtendedParseLoop && !confirmation && useCache && cacheLLM) {
+                  cacheParse(output);
+                }
+                // Same as above comment - in a crunch, redo
+                try {
+                  TRADE.getAvailableService(new TRADEServiceConstraints().name("usedLLMParse").argTypes(Symbol.class, Symbol.class)).call(void.class, incoming.getSpeaker(), incoming.getAddressee());
+                } catch (TRADEException ex) {
+                  log.error("Error calling usedLLMParse service", ex);
+                }
+                return output;
+              } else {
+                if (output == null) {
+                  //TODO: revisit, using a hack to allow for LLM to return error responses as strings. A better way is
+                  //  to just return semantics but populate the cache or make sure SimpleNLG can handle them properly
+                  llmOutput.setType(UtteranceType.INSTRUCT);
+                  //Use LLM UNKNOWN parse in case all other parsers fail
+                  output = llmOutput;
+                }
               }
-              log.debug("[parseUtterance] Using llm parser response: {}", output);
-              return output;
             }
           }
+          break;
         default:
           break;
       }
+    }
+    if (output == null) {
+      return null;
     }
     return applyAddressee(incoming, output);
   }
@@ -319,7 +427,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private void preserveAddressee(Utterance parsedUtterance) {
     Symbol semantics = parsedUtterance.getSemantics();
     Symbol addressee = null;
-    if (semantics != null && semantics.isTerm()) {
+    if (semantics != null && semantics.isTerm() && semantics.hasArgs()) {
       log.debug("[preserveAddressee] addressee = " + parsedUtterance.getAddressee().toString());
       //addressee = parsedUtterance.getAddressee();
       //until TLDLParserComponent consistently sets listener check first argument in semantics
@@ -364,7 +472,24 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @Action
   public void cacheParse(Utterance utterance) {
     log.debug("[cacheParse] Caching parsed utterance");
-    cacheParser.addEntryToCache(utterance);
+    if (useCache) {
+      cacheParser.addEntryToCache(utterance);
+    } else {
+      log.warn("[cacheParse] attempting to add utterance to cache but parser cache is disabled");
+    }
+  }
+
+  @TRADEService
+  @Action
+  public void cacheLLMParse(Utterance utterance) {
+    if (cacheLLM) {
+      if (useCache) {
+        log.debug("[cacheLLMParse] Caching parsed utterance");
+        cacheParser.addEntryToCache(utterance);
+      } else {
+        log.warn("[cacheLLMParse] attempting to add utterance to cache but parser cache is disabled");
+      }
+    }
   }
 
   @TRADEService
@@ -373,7 +498,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (useTLDL) {
       ((TLDLParserComponent) tldlParser).injectDictionaryEntry(morpheme, type, semantics, cognitiveStatus);
     } else {
-      log.warn("[injectDictionaryEntry] trying to update TLDL parser dictionary when not using TLDL parser");
+      log.debug("[injectDictionaryEntry] trying to update TLDL parser dictionary when not using TLDL parser");
     }
   }
 
@@ -388,5 +513,77 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
     executor.shutdownNow();
+  }
+
+  public CachedParserComponent getCacheParser() {
+    return cacheParser;
+  }
+
+  @TRADEService
+  public void setHybridParserRestrictedMode(boolean enabled) {
+    if (!useLLM) {
+      log.warn("[setHybridParserRestrictedMode] Cannot toggle restricted mode without being configured to use the LLM");
+      return;
+    }
+
+    if (enabled) {
+      if (restrictedMode) {
+        log.warn("[setHybridParserRestrictedMode] already enabled");
+        return;
+      }
+      cachedSequence = sequence;
+      // Put LLM at the back of the order
+      String[] restrictedSequence = new String[sequence.length];
+      restrictedSequence[sequence.length-1] = "llm";
+      int offset = 0;
+      for (int i=0;i<sequence.length;i++) {
+        if (sequence[i].equals("llm")) {
+          offset = 1;
+          continue;
+        }
+        restrictedSequence[i-offset] = sequence[i];
+      }
+      sequence = restrictedSequence;
+      restrictedMode = true;
+    } else {
+      if (!restrictedMode) {
+        log.warn("[setHybridParserRestrictedMode] already disabled");
+        return;
+      } else if (cachedSequence == null) {
+        log.error("[setHybridParserRestrictedMode] cannot find original cached sequence to reset to");
+        return;
+      }
+      sequence = cachedSequence;
+      cachedSequence = null;
+      restrictedMode = false;
+    }
+  }
+
+  @TRADEService
+  public boolean getHybridParserRestrictedMode() {
+    return restrictedMode;
+  }
+
+  @Override
+  protected void executionLoop() {
+    if (!registeredActionListener) {
+      try {
+        TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+        TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("removeDeletedActionParserCacheEntries").argTypes(ActionDBEntry.class));
+        registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
+        registeredActionListener = true;
+        shouldRunExecutionLoop = false;
+        log.info("[registerForNotifications] successfully registered for database removals");
+      } catch (TRADEException e) {
+        log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+      }
+    }
+  }
+
+  @TRADEService
+  public void removeDeletedActionParserCacheEntries(ActionDBEntry entry) {
+    if (cacheParser != null) {
+      cacheParser.removeDeletedActionCacheEntries(entry);
+    }
   }
 }

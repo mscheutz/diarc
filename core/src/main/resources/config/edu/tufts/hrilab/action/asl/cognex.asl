@@ -19,8 +19,11 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     (!cameraResults) = tsc:getCameraData(!jobName);
     if (op:isEmpty(!cameraResults)) {
         op:log("info","[perceiveEntityFromSymbol] failed to get cognex results");
+        exit(FAIL_RETURNVALUE);
     } else {
         (!result) = tsc:getMatchingResult(!ref,!cameraResults);
+        //this will fail if result doesn't have confidence > 50
+        act:checkIfPositive(!result);
         //bind reference to the result that it matches
         tsc:bindCognexResult(!ref, !result, 0);
         op:log("info","[perceiveEntityFromSymbol] Bound !result to !ref");

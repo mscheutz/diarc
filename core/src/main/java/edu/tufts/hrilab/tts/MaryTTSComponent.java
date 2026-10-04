@@ -17,6 +17,7 @@ import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
 import edu.tufts.hrilab.interfaces.VoiceProsodyInterface;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import marytts.util.MaryUtils;
@@ -24,6 +25,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.io.IOUtils;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,6 +35,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.sound.sampled.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -52,7 +56,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-public final class MaryTTSComponent extends DiarcComponent implements SpeechProductionInterface, VoiceProsodyInterface {
+public class MaryTTSComponent extends DiarcComponent implements SpeechProductionInterface, VoiceProsodyInterface {
 
   private MaryDataType inputType;//.TEXT or .RAWMARYXML
   private MaryDataType outputType;
@@ -93,6 +97,12 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   private int mixerID = -1;
   private boolean muteMics;
 
+  // Termux on Android has no javax.sound.sampled provider. Detect and route
+  // playback through paplay (pulseaudio CLI) instead.
+  private static final boolean IS_TERMUX =
+          System.getenv("PREFIX") != null
+          && System.getenv("PREFIX").startsWith("/data/data/com.termux");
+
   // boolean markers set by args flags
   private boolean saveToWav;
   private String markup;
@@ -101,6 +111,10 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   private String wavFilename;
   private String xmlFilename;
   private boolean speaking;
+
+  // Hold playback clips to potentially interrupt
+  private List<Clip> currentPlaybackClips;
+  private Lock clipLock;
 
   /**
    * Map from unknown token (i.e., newly learned word) to wave file of the word.
@@ -167,6 +181,8 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     wavFilename = tempWavFile.getPath();
     xmlFilename = tempXmlFile.getPath();
     speaking = false;
+    currentPlaybackClips = new ArrayList<>();
+    clipLock = new ReentrantLock();
 
     // default to male voice
     //voiceStr = "cmu-rms=hsmm"
@@ -216,8 +232,15 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
    */
   @Override
   public boolean stopUtterance() {
-    ap.interrupt();
-    return ap.isInterrupted();
+    clipLock.lock();
+    for (Clip clip : currentPlaybackClips) {
+      clip.stop();
+    }
+    clipLock.unlock();
+    return true;
+    //Doesn't seem to work?
+    //ap.interrupt();
+    //return ap.isInterrupted();
   }
 
   /**
@@ -281,11 +304,21 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   }
 
   @Override
+  public boolean sayText(Utterance utterance) {
+    return sayText(utterance.getWordsAsString(), true);
+  }
+
+  @Override
   public boolean sayText(String text) {
-    if (this.enabled) {
-      sayText(text, true);
-    }
+//    if (this.enabled) {
+    sayText(text, true);
+//    }
       return true;
+  }
+
+  @Override
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return sayText(utterance.getWordsAsString(), wait);
   }
 
   /**
@@ -357,6 +390,8 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   }
 
   private boolean textToSpeech(String text, boolean wait) {
+    long tRequest = System.nanoTime();
+    log.debug("[lat] tts_request_send kind=mary text_len={}", text != null ? text.length() : 0);
     speaking = true;
     doc = db.newDocument();
     AtomicBoolean isDone = new AtomicBoolean(false);
@@ -382,13 +417,18 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
               audioFileFormat);
 
       request.readInputData(br);
+      long tSynthStart = System.nanoTime();
       request.process();
+      long tSynthDone = System.nanoTime();
+      log.debug("[lat] tts_synth_done kind=mary synth_ms={}", (tSynthDone - tSynthStart) / 1_000_000);
       ais = request.getOutputData().getAudio();
 
       // either save the audio to .wav or output it as audio
       if (saveToWav) {
         File f = new File(wavFilename);
         AudioSystem.write(ais, audioFileFormat.getType(), f);
+      } else if (IS_TERMUX) {
+        playViaShell(ais, audioFileFormat.getType(), wait);
       } else {
         Clip playbackClip = null;
 
@@ -408,10 +448,17 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
               isDone.set(true);
             }
           });
+          clipLock.lock();
+          currentPlaybackClips.add(playbackClip);
+          clipLock.unlock();
         } catch (LineUnavailableException ex) {
           log.error("line unavailable", ex);
+          speaking = false;
+          return false;
         } catch (IOException ex) {
           log.error("io exception reading file", ex);
+          speaking = false;
+          return false;
         }
 
         if (volume < 1.0f) {
@@ -421,10 +468,17 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
         playbackClip.loop(0);
         playbackClip.start();
+        long tFirstAudio = System.nanoTime();
+        log.debug("[lat] tts_first_audio kind=mary ttfa={}ms", (tFirstAudio - tRequest) / 1_000_000);
 
         while (wait && !isDone.get()) {
-          Util.Sleep(1);
+          Util.Sleep(100);
         }
+        long tDrainDone = System.nanoTime();
+        log.debug("[lat] tts_done kind=mary total={}ms", (tDrainDone - tRequest) / 1_000_000);
+        clipLock.lock();
+        currentPlaybackClips.remove(playbackClip);
+        clipLock.unlock();
       }
       log.debug("Exiting textToSpeech");
       speaking = false;
@@ -434,6 +488,127 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
       log.error("exception in textToSpeech", ex);
       speaking = false;
       return false;
+    }
+  }
+
+  // paplay volume: 0..65536 = 0..100%. Mirrors Clip MASTER_GAIN behavior at init.
+  private int paplayVolume() {
+    return (int) Math.round(65536 * Math.max(0f, Math.min(1f, volume)));
+  }
+
+  /**
+   * Write an AudioInputStream to a temp WAV, play it via paplay, optionally wait.
+   * Used on Termux where javax.sound.sampled has no output provider.
+   */
+  private boolean playViaShell(AudioInputStream src, AudioFileFormat.Type type, boolean wait) {
+    File tmp = null;
+    try {
+      tmp = File.createTempFile("diarc-tts-", ".wav");
+      AudioSystem.write(src, type, tmp);
+      ProcessBuilder pb = new ProcessBuilder("paplay", "--volume=" + paplayVolume(), tmp.getAbsolutePath());
+      pb.redirectErrorStream(true);
+      Process p = pb.start();
+      if (wait) {
+        p.waitFor();
+      }
+      return true;
+    } catch (Exception e) {
+      log.error("paplay shell playback failed", e);
+      return false;
+    } finally {
+      if (tmp != null && wait) {
+        tmp.delete();
+      }
+    }
+  }
+
+  @TRADEService
+  public void playAudioClip(String path) {
+    speaking = true;
+    AtomicBoolean isDone = new AtomicBoolean(false);
+
+    try {
+      log.info("[playAudioClip] playing audio clip at path: " + path);
+      File audioFile = new File(path);
+      ais = AudioSystem.getAudioInputStream(audioFile);
+
+      if (IS_TERMUX) {
+        playViaShell(ais, AudioFileFormat.Type.WAVE, true);
+        speaking = false;
+        return;
+      }
+
+      Clip playbackClip = null;
+
+      try {
+        if (mixerID == -1) {
+          playbackClip = AudioSystem.getClip();
+        } else {
+          playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        playbackClip.open(ais);
+
+        // LineListener to close the clip when done
+        Clip finalPlaybackClip = playbackClip;
+        playbackClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        clipLock.lock();
+        currentPlaybackClips.add(playbackClip);
+        clipLock.unlock();
+      } catch (LineUnavailableException ex) {
+        log.error("line unavailable", ex);
+        speaking = false;
+        return;
+      } catch (IOException ex) {
+        log.error("io exception reading file", ex);
+        speaking = false;
+        return;
+      }
+
+      if (volume < 1.0f) {
+        FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(10f * (float) Math.log10(volume * 0.1));
+      }
+
+      playbackClip.loop(0);
+      playbackClip.start();
+
+      while (!isDone.get()) {
+        Util.Sleep(100);
+      }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
+      log.debug("Exiting textToSpeech");
+      speaking = false;
+    } catch (Exception ex) {
+      log.error("exception in textToSpeech", ex);
+      speaking = false;
+    }
+  }
+
+  @TRADEService
+  @Action
+  public void setMaryTTSVolume(String volumeStr) {
+    try {
+      if (volumeStr.startsWith("\"") && volumeStr.endsWith("\"")) {
+        volumeStr = volumeStr.substring(1,volumeStr.length()-1);
+      }
+      volume = Float.parseFloat(volumeStr);
+      if (volume < 0.0f) {
+        volume = 0.0f;
+        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
+      } else if (volume > 1.0f) {
+        volume = 1.0f;
+        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
+      }
+      log.debug("setting volume " + volume);
+    } catch (NumberFormatException e) {
+      log.error("[setMaryTTSVolume] cannot parse volume string {}", volumeStr, e);
     }
   }
 
@@ -525,6 +700,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
           isDone.set(true);
         }
       });
+      clipLock.lock();
+      currentPlaybackClips.add(playbackClip);
+      clipLock.unlock();
       if (volume < 1.0f) {
         FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
         gainControl.setValue(20f * (float) Math.log10(volume));
@@ -534,6 +712,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
       while (!isDone.get()) {
         Util.Sleep(1);
       }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
     } catch (LineUnavailableException e1) {
       throw new RuntimeException("[playWavFile] LineUnavailableException", e1);
     }
@@ -692,6 +873,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
    * @return true or false
    */
   private boolean isAllUppercase(String s) {
+    if (s.length() <= 1) {
+      return false;
+    }
     boolean allUpper = true;
     for (int i = 0; i < s.length(); i++) {
       if (Character.isLowerCase(s.charAt(i))) {
@@ -768,15 +952,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     }
     if (cmdLine.hasOption("volume")) {
       volumeStr = cmdLine.getOptionValue("volume");
-      volume = Float.parseFloat(volumeStr);
-      if (volume < 0.0f) {
-        volume = 0.0f;
-        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
-      } else if (volume > 1.0f) {
-        volume = 1.0f;
-        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
-      }
-      log.debug("setting volume " + volume);
+      setMaryTTSVolume(volumeStr);
     }
     if (cmdLine.hasOption("showMixers")) {
       ConfigurableMicrophone.showMixers();

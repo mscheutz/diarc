@@ -6,6 +6,7 @@ package edu.tufts.hrilab.slug.pragmatics;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
@@ -261,12 +262,37 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
       semantics = new ArrayList<>(newDirectMeaning).get(0);
     }
     if (!utterance.getBindings().isEmpty()) {
-      for (Variable var : utterance.getBindings().get(0).keySet()) {
-        semantics = Factory.createPredicate(semantics.toString().replace(utterance.getBindings().get(0).get(var).toString(), var.toString()));
-      }
+      semantics = replaceVarsInSemantics(semantics, utterance.getBindings().get(0));
     }
     utterance.setSemantics(semantics);
     utterance.setIndirectSemantics(indirectMeaning);
+  }
+
+  private Symbol replaceVarsInSemantics(Symbol semantics, Map<Variable,Symbol> bindings) {
+    if (semantics.isPredicate()) {
+      String name = semantics.getName();
+      List<Symbol> args = new ArrayList<>();
+      for (Symbol arg : ((Predicate)semantics).getArgs()) {
+        if (arg.isPredicate()) {
+          args.add(replaceVarsInSemantics((Predicate) arg, bindings));
+        } else {
+          for (Variable var : bindings.keySet()) {
+            if (arg.getName().equals(bindings.get(var).getName())) {
+              arg = var;
+            }
+          }
+          args.add(arg);
+        }
+      }
+      return Factory.createPredicate(name, args);
+    } else {
+      for (Variable var : bindings.keySet()) {
+        if (semantics.getName().equals(bindings.get(var).getName())) {
+          semantics = var;
+        }
+      }
+      return semantics;
+    }
   }
 
   private void applyOutputPragmaticMeaning(Utterance utterance) {

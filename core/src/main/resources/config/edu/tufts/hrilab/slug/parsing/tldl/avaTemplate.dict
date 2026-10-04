@@ -133,7 +133,7 @@ did ; C/C ; #x.$x
 do not ; C/C ; #x.modify(delete($x))
 do not ;(((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT) ; #x.modify(delete($x))
 %"do you trust me"
-do; Q/ C; #x.$x
+%do; Q/ C; #x.$x
 %do; (Q \ WHO)/(Q \ WHO); #x.$x
 %do; (Q/WHO)/(C / AGENT) ; #x.$x
 
@@ -186,9 +186,10 @@ fourth; NUM; fourth
 
 fridge ; THING
 
-from ; PPadv/C ; #x.from($x)
-from; LOC/LOC; #x.$x
+%from ; PPadv/C ; #x.from($x)
+%from; LOC/LOC; #x.$x
 from; REF/REF; #x.$x
+from; RN/RN; #x.$x
 
 %%%%%%%%%%%  G  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -216,6 +217,8 @@ holding; (V/REF)\AGENT; #a#r.holding($a,$r,arm)
 %
 %how would; (Q/C)/AGENT ; #a#c.how($a,$c)
 %how do; (Q/C)/AGENT ; #a#c.how($a,$c)
+how would; (C/C)/AGENT ; #a#c.describeActionSteps(?ADDRESSEE,$c)
+how do; (C/C)/AGENT ; #a#c.describeActionSteps(?ADDRESSEE,$c)
 
 %%%%%%%%%%%  I  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -262,7 +265,8 @@ kokomo; PROPLOC; kokomo
 
 knife; THING; knife
 
-know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+%know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know how; (C/INF)\AGENT ; #a#i.reportIfCanPerform(?ADDRESSEE,$i)
 know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
 
 %%%%%%%%%%%  L  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -508,15 +512,16 @@ this; LREF/LN ; #x.$x ; REFACTIVATED
 %this; REF ; ACTIVATED
 
 %TODO;brad; what is the to for, do we need it?
-to; PPadv/C; #x.$x
-to; PP/AGENT ; #x.$x
-to; INF/C; #x.to($x)
+%to; PPadv/C; #x.$x
+%to; PP/AGENT ; #x.$x
+%to; INF/C; #x.to($x)
 to; REF/REF; #x.$x
-to; PP/LREF; #x.$x
+to; RN/RN; #x.$x
+%to; PP/LREF; #x.$x
 
 
 
-to; (C\AGENT)/(C\AGENT); #x.to($x)
+%to; (C\AGENT)/(C\AGENT); #x.to($x)
 
 tomato; THING
 

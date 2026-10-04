@@ -4,10 +4,11 @@
 package edu.tufts.hrilab.interfaces;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
+
 import java.util.List;
 
 /**

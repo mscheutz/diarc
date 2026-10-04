@@ -57,7 +57,8 @@ public class TLDLParserComponentTest {
             parseResult = component.parseUtterance(inputUtterance.build());
         }
 
-        String outcome = parseResult.toString();
+        // the expected strings don't have the words in them, toString does
+        String outcome = parseResult.toString().replace(",\"" + parseResult.getWordsAsString() + "\"", "");
         if (outcome.equals(desired)) {
             log.info("outcome: " + outcome);
             log.info("desired: " + desired + "\n");
@@ -4202,6 +4203,7 @@ public class TLDLParserComponentTest {
     public void avaTowerTest() {
         component.addDictionary("avaTemplate.dict");
         component.addDictionary("avadict.dict");
+        component.addDictionary("avaTower.dict");
 
         String speaker = "brad";
 
@@ -4245,17 +4247,19 @@ public class TLDLParserComponentTest {
                 "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("take me to the arena",
-                "INSTRUCT(brad,self,escortToLocation(self,brad,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
-                speaker, "self"));
+        // take * to is a wildcard rule in the ava dict now and wants the location as a runtime reference
+//        assertTrue(testUtterance("take me to the arena",
+//                "INSTRUCT(brad,self,escortToLocation(self,brad,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
 
         assertTrue(testUtterance("show andy the arena",
                 "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("robot take andy to the arena",
-                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
-                speaker, "self"));
+        // take * to is a wildcard rule in the ava dict now and wants the location as a runtime reference
+//        assertTrue(testUtterance("robot take andy to the arena",
+//                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
 
         assertTrue(testUtterance("deliver this box to the arena",
                 "INSTRUCT(brad,self,deliverToLocation(self,VAR0,VAR1),{box(VAR0),arena(VAR1),REFACTIVATED(VAR0),DEFINITE(VAR1)})",
@@ -4375,6 +4379,7 @@ public class TLDLParserComponentTest {
     public void avaDemoTest() {
         component.addDictionary("avaTemplate.dict");
         component.addDictionary("avadict.dict");
+        component.addDictionary("avaGenerated.dict");
 
         String speaker = "brad";
 
@@ -4383,23 +4388,23 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minutes",
-                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,minutes),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minute",
-                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,minutes),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 seconds",
-                "REPLY(brad,self,relativeTime(10,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(10,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 second",
-                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("in 1 second",
-                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("add a new scheduled task",
@@ -4411,7 +4416,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("every 1 hour",
-                "REPLY(brad,self,relativeTime(1,HOURS),{})",
+                "REPLY(brad,self,relativeTime(1,hours),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 p.m. ",
@@ -4431,14 +4436,29 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
 
-        assertTrue(testUtterance("perform lab patrol with wifi evaluation",
-                "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
+        //assertTrue(testUtterance("perform lab patrol with wifi evaluation",
+        //        "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
+        //        speaker, "self"));
+
+        //assertTrue(testUtterance("add a new patrol path demo path",
+        //        "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
+        //        speaker, "self"));
+
+        assertTrue(testUtterance("escort mark from the dock to the elevator",
+                "INSTRUCT(brad,self,escortFromLocationToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("add a new patrol path demo path",
-                "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
+        assertTrue(testUtterance("escort mark to the elevator",
+                "INSTRUCT(brad,self,escortToLocation(self,mark,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
+        assertTrue(testUtterance("take mark from the dock to the elevator",
+                "INSTRUCT(brad,self,escortFromLocationToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("take mark to the elevator",
+                "INSTRUCT(brad,self,escortToLocation(self,mark,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
     }
 
     @Test

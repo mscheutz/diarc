@@ -3,13 +3,13 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[setup, demo],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[setup, demo],\"setup demo\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "setupscene(self:agent)", "ACT", "NORMAL", "3" ]
+      "serviceArgs" : [ "setupscene(self:agent)", "ACT", "NORMAL", "1", "evan", "3" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "fluent_equals(amount(tableA:area,medicalcaddy:property),0)", "null" ]
@@ -113,35 +113,35 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[define, new, kit, medkit],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[define, new, kit, medkit],\"define new kit medkit\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "defineRecipe(self:agent,medkit)", "ACT", "NORMAL", "12" ]
+      "serviceArgs" : [ "defineRecipe(self:agent,medkit)", "ACT", "NORMAL", "1", "evan", "12" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "What container does it use?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[What, container, does, it, use?],\"What container does it use?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, uses, a, medical, caddy],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, uses, a, medical, caddy],\"it uses a medical caddy\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "What container does it use?", "[val(X)]", "self:agent", "-1", "{X=medicalcaddy:physobj}" ]
+      "serviceArgs" : [ "What container does it use?", "[val(X)]", "self:agent", "evan", "-1", "{X=medicalcaddy:physobj}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "where is there a medicalcaddy", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,where(is(there,num(1,medicalcaddy:physobj))),\"where is there a medicalcaddy\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, medical, caddy, at, table, a],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, medical, caddy, at, table, a],\"there is 1 medical caddy at table a\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "where is there a medicalcaddy", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,medicalcaddy:physobj,tableA:area)}" ]
+      "serviceArgs" : [ "where is there a medicalcaddy", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,medicalcaddy:physobj,tableA:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(medicalcaddy,tableA:area)", "null" ]
@@ -162,26 +162,26 @@
       "serviceArgs" : [ "containerArea(physobj_0Area:area)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Okay. What does a medkit contain?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[Okay., What, does, a, medkit, contain?],\"Okay. What does a medkit contain?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, 2, painkillers],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, 2, painkillers],\"it contains 2 painkillers\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "Okay. What does a medkit contain?", "[val(X)]", "self:agent", "-1", "{X=contains(2,painkiller:property)}" ]
+      "serviceArgs" : [ "Okay. What does a medkit contain?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(2,painkiller:property)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "where are there painkillers", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(2,painkiller:property))),\"where are there painkillers\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, are, 2, painkillers, at, table, b],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, are, 2, painkillers, at, table, b],\"there are 2 painkillers at table b\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "where are there painkillers", "[val(X)]", "self:agent", "-1", "{X=observableAt(2,painkiller:property,tableB:area)}" ]
+      "serviceArgs" : [ "where are there painkillers", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(2,painkiller:property,tableB:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(painkiller,tableB:area)", "null" ]
@@ -193,26 +193,26 @@
       "serviceArgs" : [ "{X:physobj=physobj_2:physobj}", "1.0", "[painkiller(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "does it contain anything else?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, antiseptic],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, antiseptic],\"it contains one antiseptic\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=contains(1,antiseptic:physobj)}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,antiseptic:physobj)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "where is there an antiseptic", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(1,antiseptic:physobj))),\"where is there an antiseptic\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, antiseptic, at, table, c],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, antiseptic, at, table, c],\"there is 1 antiseptic at table c\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "where is there an antiseptic", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,antiseptic:physobj,tableC:area)}" ]
+      "serviceArgs" : [ "where is there an antiseptic", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,antiseptic:physobj,tableC:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(antiseptic,tableC:area)", "null" ]
@@ -221,26 +221,26 @@
       "serviceArgs" : [ "{X:physobj=physobj_3:physobj}", "1.0", "[antiseptic(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "does it contain anything else?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, bandage, box],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, bandage, box],\"it contains one bandage box\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=contains(1,bandagebox:physobj)}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,bandagebox:physobj)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "where is there a bandagebox", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(1,bandagebox:physobj))),\"where is there a bandagebox\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, bandage, box, at, table, e],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, bandage, box, at, table, e],\"there is 1 bandage box at table e\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "where is there a bandagebox", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,bandagebox:physobj,tableE:area)}" ]
+      "serviceArgs" : [ "where is there a bandagebox", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,bandagebox:physobj,tableE:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(bandagebox,tableE:area)", "null" ]
@@ -249,32 +249,32 @@
       "serviceArgs" : [ "{X:physobj=physobj_4:physobj}", "1.0", "[bandagebox(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "does it contain anything else?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[that, is, all],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[that, is, all],\"that is all\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=none}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=none}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "recipe(medkit,container(medicalcaddy:physobj),contents(contains(2,painkiller:property),contains(1,antiseptic:physobj),contains(1,bandagebox:physobj)))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,[okay],\"okay\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[deliver, a, medkit, to, alpha],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[deliver, a, medkit, to, alpha],\"deliver a medkit to alpha\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "deliver(self:agent,medkit,temilocation_0:temilocation)", "ACT", "NORMAL", "33" ]
+      "serviceArgs" : [ "deliver(self:agent,medkit,temilocation_0:temilocation)", "ACT", "NORMAL", "1", "evan", "33" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justification(true)" ]
@@ -313,27 +313,27 @@
       "serviceArgs" : [ "observableAt(bandagebox:property,tableE:area)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I failed execution because the bandagebox objects not At table E", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,failed(execution(self:agent),because(and(not(objectAt(physobj_4:physobj,tableE:area))))),\"I failed execution because the bandagebox objects not At table E\",{})", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I have found a plan to recover", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,[I, have, found, a, plan, to, recover],\"I have found a plan to recover\",{})", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "it will take about 23 seconds", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,will(it,take(time(27.439799999999998))),\"it will take about 27 seconds\",{})", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Do you want me to execute it?", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[Do, you, want, me, to, execute, it?],\"Do you want me to execute it?\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[describe, your, plan],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[describe, your, plan],\"describe your plan\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "describeYourPlan(self:agent)", "ACT", "NORMAL", "212" ]
+      "serviceArgs" : [ "describeYourPlan(self:agent)", "ACT", "NORMAL", "1", "evan", "212" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "knows(self:agent,actionDescription(planned(self:agent),Y))", "null" ]
@@ -348,18 +348,18 @@
       "serviceArgs" : [ "probabilityOf(planned(self:agent),X)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "to execute The Plan spot goes To the betaLocation, then spot receives the bandagebox at pharmacy, then spot goes To the tableGLocation, then spot puts Down the bandagebox on table G, then fetch goes To the tableGLocation, then fetch picks Up the bandagebox from table G, then fetch goes To the tableELocation and then fetch putdowns", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,actionDescription(executeThePlan(self:agent),steps(goTo(spot:spot,spotlocation_5:spotlocation),receive(spot:spot,prep(physobj_4:physobj,at(pharmacy:area))),goTo(spot:spot,spotlocation_1:spotlocation),putDown(spot:spot,prep(physobj_4:physobj,on(tableG:area))),goTo(fetch:fetch,movebaselocation_6:movebaselocation),pickUp(fetch:fetch,prep(physobj_4:physobj,from(tableG:area))),goTo(fetch:fetch,movebaselocation_4:movebaselocation),putdown(fetch:fetch,physobj_4:physobj,bandagebox:property,tableE:area,movebaselocation_4:movebaselocation))),\"to execute The Plan spot goes To the betaLocation, then spot receives the bandagebox at pharmacy, then spot goes To the tableGLocation, then spot puts Down the bandagebox on table G, then fetch goes To the tableGLocation, then fetch picks Up the bandagebox from table G, then fetch goes To the tableELocation and then fetch putdowns\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[yes],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[yes],\"yes\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "Do you want me to execute it?", "[val(X)]", "self:agent", "-1", "{X=yes}" ]
+      "serviceArgs" : [ "Do you want me to execute it?", "[val(X)]", "self:agent", "evan", "-1", "{X=yes}" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "planned(self:agent)", "216" ]
+      "serviceArgs" : [ "planned(self:agent)", "ACT", "SKIPPENDING", "1", "evan", "216" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_5:spotlocation", "justification(true)" ]
@@ -371,27 +371,27 @@
       "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Can I please have physobj_4:physobj", "true" ]
+      "serviceArgs" : [ "QUESTION(self:agent,evan,[Can, I, please, have, physobj_4:physobj],\"Can I please have physobj_4:physobj\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[ready],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[ready],\"ready\",{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "Can I please have physobj_4:physobj", "[val(X)]", "self:agent", "-1", "{X=ready}" ]
+      "serviceArgs" : [ "Can I please have physobj_4:physobj", "[val(X)]", "self:agent", "evan", "-1", "{X=ready}" ]
     }, {
       "serviceName" : "closeGripper",
       "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "overBody","justification(true)" ]
+      "serviceArgs" : [ "overBody", "justification(true)" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_1:spotlocation", "justification(true)" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "overTable","justification(true)" ]
+      "serviceArgs" : [ "overTable", "justification(true)" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "arm", "justification(true)" ]
@@ -457,7 +457,7 @@
       "serviceArgs" : [ "carry", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Recovery completed resuming original goal", "true" ]
+      "serviceArgs" : [ "REPLY(self:agent,evan,[Recovery, completed, resuming, original, goal],\"Recovery completed resuming original goal\",{})", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_4:physobj", "2" ]

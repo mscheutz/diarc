@@ -390,7 +390,12 @@ public class ParameterizedAction {
     List<Predicate> predicateSteps = new ArrayList<>();
     Map<String, String> localRoles = new HashMap();
     for(ActionBinding localRole : entry.getLocalRoles()) {
-      localRoles.put(localRole.getName(), localRole.getBinding().toString());
+      if (localRole.getBinding() == null) {
+        //TODO: how to actually resolve local roles getting populated internally in script? Just need to be named sanely?
+        localRoles.put(localRole.getName(), localRole.name.substring(1));
+      } else {
+        localRoles.put(localRole.getName(), localRole.getBinding().toString());
+      }
     }
 
     // iterate through actionDBEntry's eventSpecs

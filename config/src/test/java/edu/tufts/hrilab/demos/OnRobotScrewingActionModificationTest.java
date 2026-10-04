@@ -5,11 +5,13 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.slf4j.Logger;
@@ -42,14 +44,17 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("retractBelief", Term.class);
 //    addServiceToObserve("runScrewdriverProgram", Integer.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
     addServiceToObserve("openGripper");
     addServiceToObserve("closeGripper");
     addServiceToObserve("getCameraData", String.class);
     addServiceToObserve("moveToCognexTarget", List.class, Integer.class);
     addServiceToObserve("moveToCognexTarget", Symbol.class);
     addServiceToObserve("getDescriptorForID", Symbol.class);
+    addServiceToObserve("sayText", Utterance.class);
     addServiceToObserve("sayText", String.class);
+    addServiceToObserve("sayText", Utterance.class, Boolean.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);
     addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
     tester.setTimeoutDuration(6, TimeUnit.SECONDS);
   }

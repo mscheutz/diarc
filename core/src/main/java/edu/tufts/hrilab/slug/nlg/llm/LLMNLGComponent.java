@@ -4,27 +4,35 @@
 
 package edu.tufts.hrilab.slug.nlg.llm;
 
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 
-public class LLMNLGComponent extends DiarcComponent implements NLGInterface {
+public class LLMNLGComponent extends DiarcComponent {
 
     public LLMNLGComponent() {
         super();
     }
 
-    @Override
+    @TRADEService
+    @Action
     public Utterance convertSemanticsToText(Utterance input) {
+        return convertSemanticsToText(input, false);
+    }
+
+    @TRADEService
+    @Action
+    public Utterance convertSemanticsToText(Utterance input, boolean callStreaming) {
         Utterance output;
 
-        log.info("parseUtterance: " + input.getWordsAsString());
+        log.info("convertSemanticsToText: " + input.getWordsAsString());
 
         try {
-            output = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToTextLLMService").argTypes(Utterance.class)).call(Utterance.class, input);
+            output = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToTextLLMService").argTypes(Utterance.class, Boolean.class)).call(Utterance.class, input, callStreaming);
         } catch (TRADEException ex) {
             log.error("Error calling convertSemanticsToTextLLMService.", ex);
             output = input;

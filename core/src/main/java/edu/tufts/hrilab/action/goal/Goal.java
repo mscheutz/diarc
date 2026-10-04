@@ -88,7 +88,13 @@ public class Goal {
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
-  private boolean isLearningGoal = false;
+  /**
+   * What this goal's relationship with scheduling is
+   * 0 - no interaction with the scheduler
+   * 1 - a "scheduling" goal. I.e. ScheduledGoal which is doing the scheduling
+   * 2 - a "scheduled" goal. I.e. Goal which is a submitted execution of a scheduled goal
+   */
+  private int scheduledState = 0;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -326,6 +332,14 @@ public class Goal {
     return false;
   }
 
+  public void setScheduledState(int scheduledState) {
+    this.scheduledState = scheduledState;
+  }
+
+  public int getScheduledState() {
+    return scheduledState;
+  }
+
   public Symbol getActor() {
     return info.actor;
   }
@@ -481,6 +495,14 @@ public class Goal {
     return info.priorityTier;
   }
 
+  public void setSubmitter(Symbol submitter) {
+    info.submitter = submitter;
+  }
+
+  public Symbol getSubmitter() {
+    return info.submitter;
+  }
+
   /**
    * Get the set of resources necessary to be available in order to execute this goal.
    * Note: This set is specific to the subclass of ExecutionManager being used in the system and requires
@@ -522,14 +544,14 @@ public class Goal {
    * ExecutionManager about whether the goal conflicts with active learning.
    */
   public void setIsLearningGoal(boolean isLearningGoal) {
-    this.isLearningGoal = isLearningGoal;
+    info.isLearningGoal = isLearningGoal;
   }
 
   /**
    * Returns true if this goal was submitted as part of an action learning process
    */
   public boolean isLearningGoal() {
-    return isLearningGoal;
+    return info.isLearningGoal;
   }
 
   /**

@@ -4,19 +4,30 @@
 
 package edu.tufts.hrilab.action.manager;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.schedule.JoinOnGoalListener;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalJob;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalListener;
+import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.*;
+import java.util.Calendar;
 
 public class ScheduledGoalManager {
   private final Logger log = LoggerFactory.getLogger(ScheduledGoalManager.class);
@@ -32,9 +43,13 @@ public class ScheduledGoalManager {
    * TODO: move this into AgentTeam?
    * TODO: should active goals include scheduled goals? currently they do not
    */
-  private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
+  private final Map<ScheduledGoal, JobKey> scheduledGoals = new LinkedHashMap<>();
 
   private final ExecutionManager em;
+
+  private String scheduledGoalsFile = null;
+
+  private GoalManagerNotifier notifier;
 
   public ScheduledGoalManager(ExecutionManager executionManager) {
     this.em = executionManager;
@@ -65,6 +80,32 @@ public class ScheduledGoalManager {
                     (Runnable) () -> {
                       Goal newGoal = goal.getNextGoalToSubmit();
                       if (newGoal != null) {
+                        // Issue with scheduled goals triggering instantly on startup - GM is not registered with TRADE yet
+                        int numAttempts = 0;
+                        while (numAttempts < 3) {
+                          //TODO: issue with submitting goals through the EM directly rather than the GM. Skips attaching
+                          // goalStatus listeners, all priority calculations, etc.
+                          try {
+                            PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getPredicate());
+                            //TODO: discussion to be had about whether we want this to be something standard, configurable, at all, ...
+                            if (priorityTier != PriorityTier.SKIPPENDING && goal.isPeriodic()) {
+                              priorityTier = PriorityTier.LOW;
+                            }
+                            long priority = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
+                            newGoal.addListener(notifier);
+                            newGoal.setPriority(priority);
+                            newGoal.setPriorityTier(priorityTier);
+                            newGoal.setScheduledState(2);
+                            break;
+                          } catch (TRADEException e) {
+                            log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted. Trying again...", e);
+                            numAttempts += 1;
+                            try {
+                              Thread.sleep(5000);
+                            } catch (InterruptedException ignored) {
+                            }
+                          }
+                        }
                         em.submitGoal(newGoal);
                       }
                     })));
@@ -106,6 +147,29 @@ public class ScheduledGoalManager {
     // set end time
     if (goal.hasEndDate()) {
       triggerBuilder.endAt(goal.getEndDate());
+    }
+
+    //TODO: discuss before merging what the accepted behavior here should be
+    //Periodic goal is scheduled with a start time in the past. Moving new start time to the next future time matching
+    // the periodic interval. Doing this now mainly alongside persisting scheduled tasks across diarc shutdown/startup
+    // so things don't always occur immediately on startup (ideally configure timings through calendar function)
+    if (goal.isPeriodic() && goal.hasStartDate()) {
+      Date startDate = goal.getStartDate();
+      Date currentDate = new Date();
+      //Find first matching future start date on periodic interval
+      if (startDate.before(currentDate)) {
+        log.warn("[createTrigger] scheduled goal's start date is in the past. Finding first matching future time based on periodic interval");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startDate);
+        while (calendar.getTime().before(currentDate)) {
+          calendar.add(Calendar.MILLISECOND, (int)goal.getScheduledPeriod());
+        }
+        if (goal.hasEndDate() && calendar.getTime().after(goal.getEndDate())) {
+          log.warn("[createTrigger] next matching scheduled interval time is past the configured end date");
+        } else {
+          triggerBuilder.startAt(calendar.getTime());
+        }
+      }
     }
 
     triggerBuilder.forJob(jobKey);
@@ -160,7 +224,9 @@ public class ScheduledGoalManager {
       goalScheduler.getListenerManager().addSchedulerListener(listener);
       if (listener.joinOnGoal()) {
         Goal lastGoal = goal.getLastSubmittedGoal();
-        em.joinOnGoal(lastGoal.getId());
+        if (lastGoal != null) {
+          em.joinOnGoal(lastGoal.getId());
+        }
       }
       goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {
@@ -185,7 +251,9 @@ public class ScheduledGoalManager {
       if (listener.joinOnGoal(millis)) {
         millis = millis - (System.currentTimeMillis() - startTime);
         Goal lastGoal = goal.getLastSubmittedGoal();
-        em.joinOnGoal(lastGoal.getId(), millis);
+        if (lastGoal != null) {
+          em.joinOnGoal(lastGoal.getId(), millis);
+        }
       }
       goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {
@@ -214,6 +282,22 @@ public class ScheduledGoalManager {
   public List<ScheduledGoal> getScheduledGoals() {
     synchronized (scheduledGoals) {
       return new ArrayList<>(scheduledGoals.keySet());
+    }
+  }
+
+  /**
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing.
+   *
+   * @return shallow copy of scheduled goals
+   */
+  public List<ScheduledGoal> getScheduledGoals(Symbol actor) {
+    AgentTeam agentTeam = em.getAgentTeam(actor);
+    if (agentTeam == null) {
+      return new ArrayList<>();
+    }
+
+    synchronized (scheduledGoals) {
+      return new ArrayList<>(scheduledGoals.keySet()).stream().filter(sg -> agentTeam.getMember(sg.getActor()) != null).toList();
     }
   }
 
@@ -306,6 +390,48 @@ public class ScheduledGoalManager {
   public boolean removeGoal(ScheduledGoal goal) {
     synchronized (scheduledGoals) {
       return scheduledGoals.remove(goal) != null;
+    }
+  }
+
+  public void setScheduledGoalsFile(String filepath) {
+    scheduledGoalsFile = filepath;
+  }
+
+  public void setGoalManagerNotifier(GoalManagerNotifier notifier) {
+    this.notifier = notifier;
+  }
+
+  public void writeScheduledGoalsToFile() {
+    if (scheduledGoalsFile != null) {
+      List<Predicate> goalPredicates = new ArrayList<>();
+      synchronized (scheduledGoals) {
+        for (ScheduledGoal sg : scheduledGoals.keySet()) {
+          goalPredicates.add(sg.getPredicate(true));
+        }
+      }
+
+      //Same TODO as MapComponent read/write of location references
+      File f = new File(scheduledGoalsFile);
+      try {
+        if (!f.exists()) {
+          f.getParentFile().mkdirs();
+          f.createNewFile();
+        }
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(f));
+        os.writeObject(goalPredicates);
+        os.flush();
+        os.close();
+      } catch (IOException e) {
+        log.error("[writeScheduledGoalsToFile] error caching current scheduled goals", e);
+      }
+    }
+  }
+
+  public void shutdown() {
+    try {
+      goalScheduler.shutdown();
+    } catch (SchedulerException e) {
+      log.error("[shutdown] a scheduled goal was not correctly canceled during shutdown", e);
     }
   }
 }

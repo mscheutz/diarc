@@ -72,11 +72,12 @@ sourceSets {
           "edu/tufts/hrilab/action/ConditionType.java",
           "edu/tufts/hrilab/action/util/Utilities.java",
           "edu/tufts/hrilab/action/ActionBinding.java",
-          "edu/tufts/hrilab/action/justification/Justification.java",
+          "edu/tufts/hrilab/action/justification/**",
           "edu/tufts/hrilab/action/notification/NotificationType.java",
           "edu/tufts/hrilab/action/goal/GoalStatus.java",
           "edu/tufts/hrilab/action/goal/GoalInfo.java",
-          "edu/tufts/hrilab/action/goal/PriorityTier.java"
+          "edu/tufts/hrilab/action/goal/PriorityTier.java",
+          "edu/tufts/hrilab/action/goal/schedule/ScheduleInfo.java"
         )
       )
       exclude(listOf("edu/tufts/hrilab/slug/common/UtteranceUtil.java"))
@@ -175,7 +176,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.1.2")
+  api("ai.thinkingrobots:trade:1.1.3")
 
   //junit
   testImplementation("junit:junit:4.13.1")
@@ -210,6 +211,7 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+  implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -251,6 +253,11 @@ dependencies {
 
   //gui
   implementation("org.apache.commons:commons-imaging:1.0-alpha3") // MapAdapter
+
+
+  //todo: unsafe to include? vlc wrapper library for playing videos
+  implementation("uk.co.caprica:vlcj:4.10.1")
+
 
 }
 

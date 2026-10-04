@@ -7,40 +7,32 @@ package edu.tufts.hrilab.interfaces;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
-import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.annotations.Condition;
-import edu.tufts.hrilab.action.annotations.Effect;
-import edu.tufts.hrilab.action.annotations.Observes;
-import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.annotations.*;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import org.apache.commons.lang3.tuple.Pair;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Provides simplified DIARC API to the ROS move base node.
+ * Provides simplified access to the ROS move base component on the PR2.
  *
  * This interface is convenient when you want to be able to send
  * navigation goals without tracking their progress.
+ *
+ * @author Jeremiah Via jeremiah.via@gmail.com
  */
 public interface MoveBaseInterface {
-  /**
-   * Get pose as array of doubles [x,y,z,rot_x,rot_y,rot_z,rot_w].
-   *
-   * @return array of doubles
-   */
-  @TRADEService
-  Pair<Point3d, Quat4d> getPose();
 
   @TRADEService
   @Action
-  void setPose(Point3d location, Quat4d orientation);
+  double[] getPoseGlobalQuat();
+
+  @TRADEService
+  @Action
+  void setPoseGlobal(double x, double y, double theta);
 
   /**
    * Attempt to reach a named goal location.
@@ -49,6 +41,11 @@ public interface MoveBaseInterface {
    */
   @TRADEService
   @Action
+  @Effect(
+    effect={"at(?actor,?location)"},
+    type = EffectType.SUCCESS,
+    observable = {"at(?actor,?location"}
+  )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location, boolean wait);
 
@@ -60,6 +57,11 @@ public interface MoveBaseInterface {
    */
   @TRADEService
   @Action
+  @Effect(
+      effect={"at(?actor,?location)"},
+      type = EffectType.SUCCESS,
+      observable = {"at(?actor,?location)"}
+  )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location);
 
@@ -72,24 +74,22 @@ public interface MoveBaseInterface {
    */
   @TRADEService
   @Action
+  @Condition(
+      condition={"at(?actor,?initialLocation)"},
+      type= ConditionType.PRE,
+      observable={"at(?actor,?initialLocation)"}
+  )
+  @Effect(
+      effect={"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"},
+      type = EffectType.SUCCESS,
+      observable = {"at(?actor,?desiredLocation)"},
+      infer = {"not(at(?actor,?initialLocation))"}
+  )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol desiredLocation, Symbol initialLocation);
 
   /**
-   * Go to the location and orientation.
-   *
-   * @param location  x,y,z location
-   * @param orientation  x,y,z,w orientation
-   * @param wait   should robot wait until reached desired point and orientation
-   * @return justification if the robot reach the desired point and orientation
-   */
-  @TRADEService
-  @Action
-  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goToLocation(Point3d location, Quat4d orientation, boolean wait);
-
-  /**
-   * Go to the point and orientation.
+   * go to the point and orientation
    *
    * @param xdest  x point
    * @param ydest  y point

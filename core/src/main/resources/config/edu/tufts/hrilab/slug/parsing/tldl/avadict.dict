@@ -39,6 +39,7 @@ the location of; NP/LREF;#x.$x
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HARD CODED COMMANDS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 go home; C; goHome(?ADDRESSEE)
+dock; VERBT; dock
 
 hey av; C; heyAva(?ADDRESSEE)
 hey ava; C; heyAva(?ADDRESSEE)
@@ -78,7 +79,7 @@ describe what you see; C; describe(?ADDRESSEE)
 %from; (NP/LREF)\AGENT; #x#y.at($x,$y)
 %in front of; (NP/LREF)\AGENT; #x#y.at($x,$y)
 
-to; PP/LREF; #x.$x
+%to; PP/LREF; #x.$x
 in; PP/LREF; #x.$x
 around; PP/LREF; #x.$x
 near; PP/LREF; #x.$x
@@ -87,7 +88,7 @@ at; PP/LREF; #x.$x
 inside; PP/LREF; #x.$x
 besides; PP/LREF; #x.$x
 adjacent; PP/LREF; #x.$x
-from; PP/LREF; #x.$x
+%from; PP/LREF; #x.$x
 in front of; PP/LREF; #x.$x
 
 
@@ -127,27 +128,39 @@ move; VERBT; goToLocation
 
 follow; C; follow(?ADDRESSEE)
 follow me; C; follow(?ADDRESSEE)
-stop following; C; stopFollow(?ADDRESSEE)
+stop following; C; stopFollowing(?ADDRESSEE)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ESCORTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-bring; VERBDT; escortToLocation
-escort; VERBDT; escortToLocation
-guide; VERBDT; escortToLocation
-get; VERBDT; escortToLocation
-lead; VERBDT; escortToLocation
-take; VERBDT; escortToLocation
-transport; VERBDT; escortToLocation
-show; VERBDT; escortToLocation
+to; REF/REF; #x.$x
+to; RN/RN; #x.$x
 
-bring; VERBDTCOMPLEX; escortToLocation
-escort; VERBDTCOMPLEX; escortToLocation
-guide; VERBDTCOMPLEX; escortToLocation
-get; VERBDTCOMPLEX; escortToLocation
-lead; VERBDTCOMPLEX; escortToLocation
-take; VERBDTCOMPLEX; escortToLocation
-transport; VERBDTCOMPLEX; escortToLocation
-show; VERBDTCOMPLEX; escortToLocation
+%escort to; ESCORTTO
+%escort the patient to; ESCORTTO
+%escort from; ESCORT
+%escort the patient from; ESCORT
+escort * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+escort * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+take * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+take * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+
+%bring; VERBDT; escortToLocation
+%escort; VERBDT; escortToLocation
+%guide; VERBDT; escortToLocation
+%get; VERBDT; escortToLocation
+%lead; VERBDT; escortToLocation
+%take; VERBDT; escortToLocation
+%transport; VERBDT; escortToLocation
+%show; VERBDT; escortToLocation
+%
+%bring; VERBDTCOMPLEX; escortToLocation
+%escort; VERBDTCOMPLEX; escortToLocation
+%guide; VERBDTCOMPLEX; escortToLocation
+%get; VERBDTCOMPLEX; escortToLocation
+%lead; VERBDTCOMPLEX; escortToLocation
+%take; VERBDTCOMPLEX; escortToLocation
+%transport; VERBDTCOMPLEX; escortToLocation
+%show; VERBDTCOMPLEX; escortToLocation
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DELIVERING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -177,217 +190,220 @@ stand; C; stand(?ADDRESSEE)
 
 %NP
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOCATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Lab specific locations
-arena; LOC; arena
-bullpen; LOC; bullpen
-
-% 4th floor specific
-lab space; LOC; lab space
-
-elevator in the back; LOC; back elevator
-back elevator; LOC; back elevator
-rear elevator; LOC; back elevator
-stairs in the back; LOC; stair b
-back stairs; LOC; stair b
-rear stairs; LOC; stair b
-stairs b; LREF; stair b
-main stairs a; LOC; stair a
-front stairs a; LOC; stair a
-stairs a; LREF; stair a
-stairs; LOC; stair a
-
-
-kitchenette; LOC; 430 kitchenette
-kitchen; LOC; 430 kitchenette
-kitchen area; LOC; 430 kitchenette
-sink; LOC; 430 kitchenette
-
-conference room; LOC; 475 conference room
-meeting room; LOC; 475 conference room
-construction; LOC; 457 construction
-construction zone; LOC; 457 construction
-construction site; LOC; 457 construction
-construction area; LOC; 457 construction
-huddle room; LOC; 449 huddle room
-
-utility corridor; LOC; 405 utility corridor
-storage; LOC; 440l storage
-
-h r i lab; LOC; 481b hri lab; DEFINITE
-hri lab; LOC; 481b hri lab; DEFINITE
-matthias lab; LREF; 481b hri lab; DEFINITE
-professor scheutzs lab; LREF; 481b hri lab; DEFINITE
-nat lab; LOC; 440g nat lab
-fahads lab; LREF; 440g nat lab; DEFINITE
-professor dogars lab; LREF; 440g nat lab; DEFINITE
-mulip lab; LOC; 474 mulip
-mu lip lab; LOC; 474 mulip
-jivkos lab; LREF; 474 mulip; DEFINITE
-professor sinapovs lab; LREF; 474 mulip; DEFINITE
-able lab; LOC; 472 aabl
-aabl lab; LOC; 472 aabl
-elaines lab; LREF; 472 aabl
-professor shorts lab; LREF; 472 aabl
-robotics lab; LOC; 435 robotics lab
-
-bathroom; LOC; bathroom
-elevator; LOC; elevator
-coffee maker; LOC; coffee maker
-back door; LOC; back door
-restroom; LOC; bathroom
-loo; LOC; bathroom
-admin office; LOC; 420 cs admin office
-c s admin office; LOC; 420 cs admin office
-cs admin office; LOC; 420 cs admin office
-admin offices; LOC; 420 cs admin office
-
-levy family seminar room; LOC; 402 levy family seminar room
-seminar room; LOC; 402 levy family seminar room
-
-%phd student offices; LOC; 440h phd student offices
-%phd student offices; LOC; 440k phd student offices
-%phd student offices; LOC; 454 phd student offices
-%phd student offices; LOC; 481f phd student offices
-
-comp 111 office hours; LREF; 442 huddle room; DEFINITE
-comp 111 office hours; LOC; 442 huddle room
-comp 160 office hours; LREF; 442 huddle room; DEFINITE
-comp 160 office hours; LOC; 442 huddle room
-comp 11 office hours; LREF; 401 collaborative; DEFINITE
-comp 11 office hours; LOC; 401 collaborative
-c s 111 office hours; LREF; 442 huddle room; DEFINITE
-c s 111 office hours; LOC; 442 huddle room
-c s 160 office hours; LREF; 442 huddle room; DEFINITE
-c s 160 office hours; LOC; 442 huddle room
-c s 11 office hours; LREF; 401 collaborative; DEFINITE
-c s 11 office hours; LOC; 401 collaborative
-cs 111 office hours; LREF; 442 huddle room; DEFINITE
-cs 111 office hours; LOC; 442 huddle room
-cs 160 office hours; LREF; 442 huddle room; DEFINITE
-cs 160 office hours; LOC; 442 huddle room
-cs 11 office hours; LREF; 401 collaborative; DEFINITE
-cs 11 office hours; LOC; 401 collaborative
-
-% Decided to make these LREFS since you dont say the milods office (since milods office is definite and singular)
-matthias office; LREF; 471 matthias scheutz; DEFINITE
-milods office; LREF; 469 milod kazerounian; DEFINITE
-jivkos office; LREF; 467 jivko sinapov; DEFINITE
-saeeds office; LREF; 465 saeed mehraban; DEFINITE
-vladimirs office; LREF; 463 vladimir podolskii; DEFINITE
-martys office; LREF; 461 marty allen; DEFINITE
-normans office; LREF; 459 norman ramsey; DEFINITE
-karens office; LREF; 455 karen edwards; DEFINITE
-rajas office; LREF; 453 raja sambasivan; DEFINITE
-elaines office; LREF; 451 elaine short; DEFINITE
-fahads office; LREF; 440f fahad dogar; DEFINITE
-megans office; LREF; 440i megan monaghan; DEFINITE
-dianes office; LREF; 440e diane souvaine; DEFINITE
-noahs office; LREF; 440j noah mendelsohn; DEFINITE
-megans office; LREF; 440d megan monroe; DEFINITE
-marks office; LREF; 440c mark sheldon; DEFINITE
-davids office; LREF; 440b david lillethun; DEFINITE
-richards office; LREF; 440a richard townsend; DEFINITE
-
-professor scheutzs office; LREF; 471 matthias scheutz; DEFINITE
-professor kazerounians office; LREF; 469 milod kazerounian; DEFINITE
-professor sinapovs office; LREF; 467 jivko sinapov; DEFINITE
-professor mehrabans office; LREF; 465 saeed mehraban; DEFINITE
-professor podolskiis office; LREF; 463 vladimir podolskii; DEFINITE
-professor allens office; LREF; 461 marty allen; DEFINITE
-professor ramseys office; LREF; 459 norman ramsey; DEFINITE
-professor edwards office; LREF; 455 karen edwards; DEFINITE
-professor sambasivans office; LREF; 453 raja sambasivan; DEFINITE
-professor shorts office; LREF; 451 elaine short; DEFINITE
-professor dogars office; LREF; 440f fahad dogar; DEFINITE
-professor monaghans office; LREF; 440i megan monaghan; DEFINITE
-professor souvaines office; LREF; 440e diane souvaine; DEFINITE
-professor mendelsohns office; LREF; 440j noah mendelsohn; DEFINITE
-professor monroes office; LREF; 440d megan monroe; DEFINITE
-professor sheldons office; LREF; 440c mark sheldon; DEFINITE
-professor lillethuns office; LREF; 440b david lillethun; DEFINITE
-professor townsends office; LREF; 440a richard townsend; DEFINITE
-
-room 475; LREF; 475 conference room; DEFINITE
-room 471; LREF; 471 matthias scheutz; DEFINITE
-room 469; LREF; 469 milod kazerounian; DEFINITE
-room 467; LREF; 467 jivko sinapov; DEFINITE
-room 478; LREF; 478 room; DEFINITE
-room 470; LREF; 470 room; DEFINITE
-room 465; LREF; 465 saeed mehraban; DEFINITE
-room 463; LREF; 463 vladimir podolskii; DEFINITE
-room 461; LREF; 461 marty allen; DEFINITE
-room 459; LREF; 459 norman ramsey; DEFINITE
-room 454; LREF; 454 phd student offices
-room 455; LREF; 455 karen edwards; DEFINITE
-room 453; LREF; 453 raja sambasivan; DEFINITE
-room 451; LREF; 451 elaine short; DEFINITE
-room 449; LREF; 449 huddle room; DEFINITE
-room 442; LREF; 442 huddle room; DEFINITE
-room 440h; LREF; 440h phd student offices; DEFINITE
-room 440g; LREF; 440g nat lab; DEFINITE
-room 440f; LREF; 440f fahad dogar; DEFINITE
-room 440i; LREF; 440i megan monaghan; DEFINITE
-room 440e; LREF; 440e diane souvaine; DEFINITE
-room 440j; LREF; 440j noah mendelsohn; DEFINITE
-room 440d; LREF; 440d megan monroe; DEFINITE
-room 440c; LREF; 440c mark sheldon; DEFINITE
-room 440b; LREF; 440b david lillethun; DEFINITE
-room 440k; LREF; 440k phd student offices; DEFINITE
-room 440a; LREF; 440a richard townsend; DEFINITE
-room 440l; LREF; 440l storage; DEFINITE
-room 435; LREF; 435 robotics lab; DEFINITE
-room 430; LREF; 430 kitchenette; DEFINITE
-room 474; LREF; 474 mulip; DEFINITE
-room 472; LREF; 472 aabl; DEFINITE
-room 420; LREF; 420 cs admin office; DEFINITE
-room 405; LREF; 405 utility corridor; DEFINITE
-room 402; LREF; 402 levy family seminar room; DEFINITE
-room 481; LREF; 481f phd student offices; DEFINITE
-room 481f; LREF; 481f phd student offices; DEFINITE
-room 481b; LREF; 481b phd student offices; DEFINITE
-room 401; LREF; 401 collaborative; DEFINITE
-
-room 440 h; LREF; 440h phd student offices; DEFINITE
-room 440 g; LREF; 440g nat lab; DEFINITE
-room 440 f; LREF; 440f fahad dogar; DEFINITE
-room 440 i; LREF; 440i megan monaghan; DEFINITE
-room 440 e; LREF; 440e diane souvaine; DEFINITE
-room 440 j; LREF; 440j noah mendelsohn; DEFINITE
-room 440 d; LREF; 440d megan monroe; DEFINITE
-room 440 c; LREF; 440c mark sheldon; DEFINITE
-room 440 b; LREF; 440b david lillethun; DEFINITE
-room 440 k; LREF; 440k phd student offices; DEFINITE
-room 440 a; LREF; 440a richard townsend; DEFINITE
-room 440 l; LREF; 440l storage; DEFINITE
-room 481 f; LREF; 481f phd student offices; DEFINITE
-room 481 b; LREF; 481b phd student offices; DEFINITE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOCATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%% Lab specific locations
+%arena; LOC; arena
+%bullpen; LOC; bullpen
+%
+%% 4th floor specific
+%lab space; LOC; lab space
+%
+%elevator in the back; LOC; back elevator
+%back elevator; LOC; back elevator
+%rear elevator; LOC; back elevator
+%stairs in the back; LOC; stair b
+%back stairs; LOC; stair b
+%rear stairs; LOC; stair b
+%stairs b; LREF; stair b
+%main stairs a; LOC; stair a
+%front stairs a; LOC; stair a
+%stairs a; LREF; stair a
+%stairs; LOC; stair a
+%
+%
+%kitchenette; LOC; 430 kitchenette
+%kitchen; LOC; 430 kitchenette
+%kitchen area; LOC; 430 kitchenette
+%sink; LOC; 430 kitchenette
+%
+%conference room; LOC; 475 conference room
+%meeting room; LOC; 475 conference room
+%construction; LOC; 457 construction
+%construction zone; LOC; 457 construction
+%construction site; LOC; 457 construction
+%construction area; LOC; 457 construction
+%huddle room; LOC; 449 huddle room
+%
+%utility corridor; LOC; 405 utility corridor
+%storage; LOC; 440l storage
+%
+%h r i lab; LOC; 481b hri lab; DEFINITE
+%hri lab; LOC; 481b hri lab; DEFINITE
+%matthias lab; LREF; 481b hri lab; DEFINITE
+%professor scheutzs lab; LREF; 481b hri lab; DEFINITE
+%nat lab; LOC; 440g nat lab
+%fahads lab; LREF; 440g nat lab; DEFINITE
+%professor dogars lab; LREF; 440g nat lab; DEFINITE
+%mulip lab; LOC; 474 mulip
+%mu lip lab; LOC; 474 mulip
+%jivkos lab; LREF; 474 mulip; DEFINITE
+%professor sinapovs lab; LREF; 474 mulip; DEFINITE
+%able lab; LOC; 472 aabl
+%aabl lab; LOC; 472 aabl
+%elaines lab; LREF; 472 aabl
+%professor shorts lab; LREF; 472 aabl
+%robotics lab; LOC; 435 robotics lab
+%
+%bathroom; LOC; bathroom
+%elevator; LOC; elevator
+%coffee maker; LOC; coffee maker
+%back door; LOC; back door
+%restroom; LOC; bathroom
+%loo; LOC; bathroom
+%admin office; LOC; 420 cs admin office
+%c s admin office; LOC; 420 cs admin office
+%cs admin office; LOC; 420 cs admin office
+%admin offices; LOC; 420 cs admin office
+%
+%levy family seminar room; LOC; 402 levy family seminar room
+%seminar room; LOC; 402 levy family seminar room
+%
+%%phd student offices; LOC; 440h phd student offices
+%%phd student offices; LOC; 440k phd student offices
+%%phd student offices; LOC; 454 phd student offices
+%%phd student offices; LOC; 481f phd student offices
+%
+%comp 111 office hours; LREF; 442 huddle room; DEFINITE
+%comp 111 office hours; LOC; 442 huddle room
+%comp 160 office hours; LREF; 442 huddle room; DEFINITE
+%comp 160 office hours; LOC; 442 huddle room
+%comp 11 office hours; LREF; 401 collaborative; DEFINITE
+%comp 11 office hours; LOC; 401 collaborative
+%c s 111 office hours; LREF; 442 huddle room; DEFINITE
+%c s 111 office hours; LOC; 442 huddle room
+%c s 160 office hours; LREF; 442 huddle room; DEFINITE
+%c s 160 office hours; LOC; 442 huddle room
+%c s 11 office hours; LREF; 401 collaborative; DEFINITE
+%c s 11 office hours; LOC; 401 collaborative
+%cs 111 office hours; LREF; 442 huddle room; DEFINITE
+%cs 111 office hours; LOC; 442 huddle room
+%cs 160 office hours; LREF; 442 huddle room; DEFINITE
+%cs 160 office hours; LOC; 442 huddle room
+%cs 11 office hours; LREF; 401 collaborative; DEFINITE
+%cs 11 office hours; LOC; 401 collaborative
+%
+%% Decided to make these LREFS since you dont say the milods office (since milods office is definite and singular)
+%matthias office; LREF; 471 matthias scheutz; DEFINITE
+%milods office; LREF; 469 milod kazerounian; DEFINITE
+%jivkos office; LREF; 467 jivko sinapov; DEFINITE
+%saeeds office; LREF; 465 saeed mehraban; DEFINITE
+%vladimirs office; LREF; 463 vladimir podolskii; DEFINITE
+%martys office; LREF; 461 marty allen; DEFINITE
+%normans office; LREF; 459 norman ramsey; DEFINITE
+%karens office; LREF; 455 karen edwards; DEFINITE
+%rajas office; LREF; 453 raja sambasivan; DEFINITE
+%elaines office; LREF; 451 elaine short; DEFINITE
+%fahads office; LREF; 440f fahad dogar; DEFINITE
+%megans office; LREF; 440i megan monaghan; DEFINITE
+%dianes office; LREF; 440e diane souvaine; DEFINITE
+%noahs office; LREF; 440j noah mendelsohn; DEFINITE
+%megans office; LREF; 440d megan monroe; DEFINITE
+%marks office; LREF; 440c mark sheldon; DEFINITE
+%davids office; LREF; 440b david lillethun; DEFINITE
+%richards office; LREF; 440a richard townsend; DEFINITE
+%
+%professor scheutzs office; LREF; 471 matthias scheutz; DEFINITE
+%professor kazerounians office; LREF; 469 milod kazerounian; DEFINITE
+%professor sinapovs office; LREF; 467 jivko sinapov; DEFINITE
+%professor mehrabans office; LREF; 465 saeed mehraban; DEFINITE
+%professor podolskiis office; LREF; 463 vladimir podolskii; DEFINITE
+%professor allens office; LREF; 461 marty allen; DEFINITE
+%professor ramseys office; LREF; 459 norman ramsey; DEFINITE
+%professor edwards office; LREF; 455 karen edwards; DEFINITE
+%professor sambasivans office; LREF; 453 raja sambasivan; DEFINITE
+%professor shorts office; LREF; 451 elaine short; DEFINITE
+%professor dogars office; LREF; 440f fahad dogar; DEFINITE
+%professor monaghans office; LREF; 440i megan monaghan; DEFINITE
+%professor souvaines office; LREF; 440e diane souvaine; DEFINITE
+%professor mendelsohns office; LREF; 440j noah mendelsohn; DEFINITE
+%professor monroes office; LREF; 440d megan monroe; DEFINITE
+%professor sheldons office; LREF; 440c mark sheldon; DEFINITE
+%professor lillethuns office; LREF; 440b david lillethun; DEFINITE
+%professor townsends office; LREF; 440a richard townsend; DEFINITE
+%
+%room 475; LREF; 475 conference room; DEFINITE
+%room 471; LREF; 471 matthias scheutz; DEFINITE
+%room 469; LREF; 469 milod kazerounian; DEFINITE
+%room 467; LREF; 467 jivko sinapov; DEFINITE
+%room 478; LREF; 478 room; DEFINITE
+%room 470; LREF; 470 room; DEFINITE
+%room 465; LREF; 465 saeed mehraban; DEFINITE
+%room 463; LREF; 463 vladimir podolskii; DEFINITE
+%room 461; LREF; 461 marty allen; DEFINITE
+%room 459; LREF; 459 norman ramsey; DEFINITE
+%room 454; LREF; 454 phd student offices
+%room 455; LREF; 455 karen edwards; DEFINITE
+%room 453; LREF; 453 raja sambasivan; DEFINITE
+%room 451; LREF; 451 elaine short; DEFINITE
+%room 449; LREF; 449 huddle room; DEFINITE
+%room 442; LREF; 442 huddle room; DEFINITE
+%room 440h; LREF; 440h phd student offices; DEFINITE
+%room 440g; LREF; 440g nat lab; DEFINITE
+%room 440f; LREF; 440f fahad dogar; DEFINITE
+%room 440i; LREF; 440i megan monaghan; DEFINITE
+%room 440e; LREF; 440e diane souvaine; DEFINITE
+%room 440j; LREF; 440j noah mendelsohn; DEFINITE
+%room 440d; LREF; 440d megan monroe; DEFINITE
+%room 440c; LREF; 440c mark sheldon; DEFINITE
+%room 440b; LREF; 440b david lillethun; DEFINITE
+%room 440k; LREF; 440k phd student offices; DEFINITE
+%room 440a; LREF; 440a richard townsend; DEFINITE
+%room 440l; LREF; 440l storage; DEFINITE
+%room 435; LREF; 435 robotics lab; DEFINITE
+%room 430; LREF; 430 kitchenette; DEFINITE
+%room 474; LREF; 474 mulip; DEFINITE
+%room 472; LREF; 472 aabl; DEFINITE
+%room 420; LREF; 420 cs admin office; DEFINITE
+%room 405; LREF; 405 utility corridor; DEFINITE
+%room 402; LREF; 402 levy family seminar room; DEFINITE
+%room 481; LREF; 481f phd student offices; DEFINITE
+%room 481f; LREF; 481f phd student offices; DEFINITE
+%room 481b; LREF; 481b phd student offices; DEFINITE
+%room 401; LREF; 401 collaborative; DEFINITE
+%
+%room 440 h; LREF; 440h phd student offices; DEFINITE
+%room 440 g; LREF; 440g nat lab; DEFINITE
+%room 440 f; LREF; 440f fahad dogar; DEFINITE
+%room 440 i; LREF; 440i megan monaghan; DEFINITE
+%room 440 e; LREF; 440e diane souvaine; DEFINITE
+%room 440 j; LREF; 440j noah mendelsohn; DEFINITE
+%room 440 d; LREF; 440d megan monroe; DEFINITE
+%room 440 c; LREF; 440c mark sheldon; DEFINITE
+%room 440 b; LREF; 440b david lillethun; DEFINITE
+%room 440 k; LREF; 440k phd student offices; DEFINITE
+%room 440 a; LREF; 440a richard townsend; DEFINITE
+%room 440 l; LREF; 440l storage; DEFINITE
+%room 481 f; LREF; 481f phd student offices; DEFINITE
+%room 481 b; LREF; 481b phd student offices; DEFINITE
 
 % Scheduled (run init in 10 seconds, run init at 11:54:00)
-%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),10,SECONDS)
+%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),10,seconds)
 %test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),11-54-00)
 % Scheduled persistent (in 10 seconds, run init as a persistent goal)
-%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,init(?ADDRESSEE)),10,SECONDS)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,init(?ADDRESSEE)),10,seconds)
 % Persistent scheduled (every 10 seconds run init)
-%test; C; persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,SECONDS))
+%test; C; persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,seconds))
 % Scheduled Persistent Scheduled (starting at noon, run init every 10 seconds)
 % (I think this case might actually not have expected behavior right now. First execution doesn't happen at noon, but 10 seconds after noon)
-%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,SECONDS)),12-00-00)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,seconds)),12-00-00)
 
 noon; VAL; absoluteTime(12-00-00)
 
-minute; VAL\NUM ; #x.relativeTime($x,MINUTES)
-minutes; VAL\NUM ; #x.relativeTime($x,MINUTES)
-second; VAL\NUM ; #x.relativeTime($x,SECONDS)
-seconds; VAL\NUM ; #x.relativeTime($x,SECONDS)
-hour; VAL\NUM ; #x.relativeTime($x,HOURS)
-hours; VAL\NUM ; #x.relativeTime($x,HOURS)
+minute; VAL\NUM ; #x.relativeTime($x,minutes)
+minutes; VAL\NUM ; #x.relativeTime($x,minutes)
+second; VAL\NUM ; #x.relativeTime($x,seconds)
+seconds; VAL\NUM ; #x.relativeTime($x,seconds)
+hour; VAL\NUM ; #x.relativeTime($x,hours)
+hours; VAL\NUM ; #x.relativeTime($x,hours)
 
 the task is; VAL/C; #x.taskPredicate($x)
 the task is; VAL/VERBT; #x.taskPredicate($x)
 
 add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
+
+i want to discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
 
 every; PP/LREF; #x.$x
 
@@ -401,24 +417,24 @@ at; VAL/VAL; #x.$x
 
 testtest; C; testtest(?ADDRESSEE)
 
-perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
+#perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
 
-perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
-perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
-perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
-add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
+#perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+#perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
+#perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+%add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 %the name is; VAL/LIT*; #x.name($x)
 that is all; VAL; location(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
 the interval; VAL; timingOf(interval)
 
-location; VAL/REF; #x.location($x)
+%location; VAL/REF; #x.location($x)
 
 execution; VAL; timingOf(execution)
 first execution; VAL; timingOf(execution)
 interval; VAL; timingOf(interval)
 
-what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
+what are your scheduled tasks; C; describeScheduledGoals(?ADDRESSEE)
 
 %num is special term
 %TODO: generalize
@@ -438,11 +454,13 @@ where are you now; C; describeCurrentLocation(?ADDRESSEE)
 i will teach you a new task; C; learnNewTask(?ADDRESSEE)
 
 the task name is; VAL/LIT*; #x.taskName($x)
+it will be called; VAL/LIT*; #x.taskName($x)
 task greet; VAL; taskName(greet)
-i am done teaching; C; endTaskLearning(?ADDRESSEE)
+i am done teaching; C; endActionLearning(?ADDRESSEE)
 
+%skippending say; C/LIT*; #x.skippendingsay(?ADDRESSEE, $x)
 say; C/LIT*; #x.say(?ADDRESSEE, $x)
-greet; C; greet(?ADDRESSEE)
+%greet; C; greet(?ADDRESSEE)
 
 option; VAL/NUM; #x.option($x)
 
@@ -469,12 +487,69 @@ the path name is; VAL/LIT*; #x.pathName($x)
 what did you ask me; VERBI; repeatLastQuestion
 
 what locations do you have saved; VERBI; describeAllKnownLocations
-what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
+%what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
 
 %Start of itk ('correct') versions of describe actions
 what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
 what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
 %what are you doing;  Q; whatAre(?ADDRESSEE,goals)
 
-now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+show demo video; VERBI; playNextVideo
+enable microphone; VERBI; enableMic
+disable microphone; VERBI; disableMic
+
+now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+start demo; VERBI; startDemo
+stop demo; VERBI; stopDemo
+
+%enable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,false)
+%disable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,true)
+
+ww; VERBI; triggerWW
+ready; VERBI; interruptWaitForReadyAck
+
+forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
+
+%what actions have you been taught; VERBI; reportTaughtActions
+%what actions can you be instructed to perform; VERBI; reportInstructableActions
+%taught actions; VAL; actionType(taught)
+%predefined actions; VAL; actionType(predefined)
+%both; VAL; actionType(both)
+%at a time; VAL\NUM; #x.amount($x)
+
+learn new tour sequence; VERBI; learnTourAction
+remove the task from the queue at position; C/LIT* ; #x.cancelSingleTaskInQueue(?ADDRESSEE,$x)
+
+enable admin mode; VERBI; enableAdminMode
+disable admin mode; VERBI; disableAdminMode
+
+disable_ww_listen; VERBI; interruptListenForWWandASR
+enable_ww_listen; VERBI; listenForWWandASR
+set output volume to; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set output volume; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set video volume to; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+set video volume; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+lower the volume; VERBI; lowerVideoVolume
+lower volume; VERBI; lowerVideoVolume
+lower media volume; VERBI; lowerVideoVolume
+turn down the volume; VERBI; lowerVideoVolume
+turn down volume; VERBI; lowerVideoVolume
+turn it down; VERBI; lowerVideoVolume
+lower video volume; VERBI; lowerVideoVolume
+turn down video volume; VERBI; lowerVideoVolume
+raise the volume; VERBI; raiseVideoVolume
+raise volume; VERBI; raiseVideoVolume
+raise media volume; VERBI; raiseVideoVolume
+turn up the volume; VERBI; raiseVideoVolume
+turn up volume; VERBI; raiseVideoVolume
+turn it up; VERBI; raiseVideoVolume
+raise video volume; VERBI; raiseVideoVolume
+turn up video volume; VERBI; raiseVideoVolume
+start idle image cycle; VERBI; startIdleImageCycle
+stop idle image cycle; VERBI; stopIdleImageCycle
+
+play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)
+primary dock; C; setAtPrimaryDock(?ADDRESSEE)
+secondary dock; C; setAtSecondaryDock(?ADDRESSEE)

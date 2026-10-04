@@ -58,7 +58,7 @@ import edu.tufts.hrilab.llm.Prompt;
 	Prompt !actionSystem;
   Chat !actionChat;
 
-  !actionSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "actionExample");
+  !actionSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "lab/actionExample");
   !actionChat = op:newObject("edu.tufts.hrilab.llm.Chat", !actionSystem);
 
 	op:invokeMethod(!actionChat, "addContext", !additionalContext);

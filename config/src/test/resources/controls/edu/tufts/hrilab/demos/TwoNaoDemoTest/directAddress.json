@@ -3,29 +3,29 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "hello evan", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824975545" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "13" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824975545", "SUCCEEDED" ]
+      "serviceArgs" : [ "13", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "okay", "true" ]
+      "serviceArgs" : [ "REPLY(shafer,evan,ack(okay),\"okay\",{})", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "crouch(shafer)", "ACT", "NORMAL", "1704824980550" ]
+      "serviceArgs" : [ "crouch(shafer)", "ACT", "NORMAL", "1", "evan", "16" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824980550", "SUCCEEDED" ]
+      "serviceArgs" : [ "16", "SUCCEEDED" ]
     } ]
   } ]
 }

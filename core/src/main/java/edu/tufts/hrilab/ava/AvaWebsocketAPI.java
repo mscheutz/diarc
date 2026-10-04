@@ -8,6 +8,7 @@ import edu.tufts.hrilab.ava.message.request.*;
 import edu.tufts.hrilab.ava.message.response.*;
 
 import java.lang.Thread;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -76,6 +77,15 @@ public class AvaWebsocketAPI implements AvaAPIInterface {
   public RMSResponse setVelocity(float translation, float rotation, float sidestep) {
     String uri = "/robot/drive/velocity";
     VelocityRequest request = new VelocityRequest(translation, rotation, sidestep);
+    RMSRequest velMsg = new RMSRequest(uri, request);
+    log.debug("Sending velocity message");
+    return send(velMsg);
+  }
+
+  @Override
+  public RMSResponse setVelocity(float translation, float rotation, float sidestep, boolean nudge) {
+    String uri = "/robot/drive/velocity";
+    VelocityRequest request = new VelocityRequest(translation, rotation, sidestep, nudge);
     RMSRequest velMsg = new RMSRequest(uri, request);
     log.debug("Sending velocity message");
     return send(velMsg);
@@ -220,6 +230,18 @@ public class AvaWebsocketAPI implements AvaAPIInterface {
     RMSRequest mapMsg = new RMSRequest(uri, args);
     log.debug("Sending get map metadata message");
     return sendMapMetadata(mapMsg);
+  }
+  @Override
+  public RMSMapMetadataResponse getMapMetadata(String mapName) {
+    String uri = "/rms/layoutMapMetadata";
+    MapArguments args = new MapArguments(mapName);
+    RMSRequest mapMsg = new RMSRequest(uri, args);
+    log.debug("Sending get map metadata message");
+    return sendMapMetadata(mapMsg);
+  }
+  @Override
+  public List<RMSMapMetadataResponse> getMapMetadatas() {
+    return List.of(getMapMetadata());
   }
 
   /**

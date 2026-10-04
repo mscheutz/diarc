@@ -999,6 +999,10 @@ public abstract class Context {
         c = new ThisConext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor);
         break;
 
+      case THIS:
+        c = new ThisContext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor);
+        break;
+
       case CONTROL:
         log.error("Error: addEvent is not compatible with controls");
         break;

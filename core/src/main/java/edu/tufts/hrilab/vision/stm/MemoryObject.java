@@ -11,23 +11,19 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.fol.util.Utilities;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
-import java.awt.Rectangle;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.awt.*;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * MemoryObject - A Java class-wrapper for the data to be passed between the

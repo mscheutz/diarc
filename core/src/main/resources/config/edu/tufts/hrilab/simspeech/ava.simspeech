@@ -27,20 +27,21 @@ go to the dock
 ---------
 where are you right now
 what locations do you have saved
-what patrol paths do you have saved
+#what patrol paths do you have saved
 ---------
-add a new patrol path demo path
-coffee maker
-desk alpha
-that is all
+#add a new patrol path demo path
+#coffee maker
+#desk alpha
+#that is all
 ----------
-perform demo path patrol with wifi evaluation
-report the wifi quality for demo path
-what is the wifi quality at the coffee maker
-what is the wifi quality at desk beta
+#perform demo path patrol with wifi evaluation
+#report the wifi quality for demo path
+#what is the wifi quality at the coffee maker
+#what is the wifi quality at desk beta
 ---------
 add a new scheduled task
-the task is perform demo path patrol with wifi evaluation
+the task is to stand
+#the task is perform demo path patrol with wifi evaluation
 in 30 minutes
 yes
 every 2 hours
@@ -57,3 +58,27 @@ deliver coffee to the coffee maker
 --------
 go home
 --------
+show demo video
+enable microphone
+--------
+#add a new patrol path lobby patrol
+#the coffee maker
+#desk alpha
+#desk beta
+#waiting room
+#dock
+#that is all
+-----------
+#perform patrol path lobby patrol with action show video
+-----------
+add a new scheduled task
+#the task is to perform patrol path lobby patrol with action show video
+in 1 minute
+yes
+every 10 minutes
+----------
+show demo video
+---------
+what is your current task
+what are your scheduled tasks
+what are your pending tasks

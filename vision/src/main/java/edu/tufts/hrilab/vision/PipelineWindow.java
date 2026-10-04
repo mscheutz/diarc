@@ -26,7 +26,7 @@ import java.util.List;
  * class so that it can display the information properly .
  * @author nbarris
  */
-public class PipelineWindow extends javax.swing.JFrame {
+public class PipelineWindow extends JFrame {
 
     // Every VisionProcess in the Pipeline, including duplicates
     private List<VisionProcess> fullPipelineList = new ArrayList();
@@ -111,22 +111,22 @@ public class PipelineWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel6 = new javax.swing.JLabel();
-        jScrollPane17 = new javax.swing.JScrollPane();
-        availSearchManagers_list = new javax.swing.JList();
-        addSearchManagerButton = new javax.swing.JButton();
-        stopSearchManagerButton = new javax.swing.JButton();
-        clearSearchManagerButton = new javax.swing.JButton();
-        highlightButton = new javax.swing.JButton();
-        pipelinePanel = new javax.swing.JPanel();
+        jSplitPane1 = new JSplitPane();
+        jPanel1 = new JPanel();
+        jLabel6 = new JLabel();
+        jScrollPane17 = new JScrollPane();
+        availSearchManagers_list = new JList();
+        addSearchManagerButton = new JButton();
+        stopSearchManagerButton = new JButton();
+        clearSearchManagerButton = new JButton();
+        highlightButton = new JButton();
+        pipelinePanel = new JPanel();
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel1.setBorder(BorderFactory.createEtchedBorder());
 
         jLabel6.setText("Search Managers");
 
-        availSearchManagers_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availSearchManagers_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availSearchManagers_list.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 availSearchManagers_listMouseClicked(evt);
@@ -167,42 +167,42 @@ public class PipelineWindow extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
-                    .addComponent(jScrollPane17, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(addSearchManagerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(stopSearchManagerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(clearSearchManagerButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(highlightButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel6, GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
+                    .addComponent(jScrollPane17, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(addSearchManagerButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(stopSearchManagerButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(clearSearchManagerButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(highlightButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane17)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(addSearchManagerButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(stopSearchManagerButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(clearSearchManagerButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(highlightButton)
                 .addGap(23, 23, 23))
         );
 
         jSplitPane1.setLeftComponent(jPanel1);
 
-        pipelinePanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        pipelinePanel.setBorder(BorderFactory.createEtchedBorder());
         pipelinePanel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent evt) {
                 pipelinePanelMouseDragged(evt);
@@ -221,18 +221,18 @@ public class PipelineWindow extends javax.swing.JFrame {
                 pipelinePanelComponentResized(evt);
             }
         });
-        pipelinePanel.setLayout(new java.awt.BorderLayout());
+        pipelinePanel.setLayout(new BorderLayout());
         jSplitPane1.setRightComponent(pipelinePanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1146, Short.MAX_VALUE)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(jSplitPane1, GroupLayout.DEFAULT_SIZE, 1146, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 594, Short.MAX_VALUE)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(jSplitPane1, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 594, Short.MAX_VALUE)
         );
 
         pack();
@@ -528,9 +528,9 @@ public class PipelineWindow extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
             }
@@ -540,13 +540,13 @@ public class PipelineWindow extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(PipelineWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
             java.util.logging.Logger.getLogger(PipelineWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(PipelineWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new PipelineWindow().setVisible(true);
             }
@@ -554,15 +554,15 @@ public class PipelineWindow extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addSearchManagerButton;
-    private javax.swing.JList availSearchManagers_list;
-    private javax.swing.JButton clearSearchManagerButton;
-    private javax.swing.JButton highlightButton;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane17;
-    private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JPanel pipelinePanel;
-    private javax.swing.JButton stopSearchManagerButton;
+    private JButton addSearchManagerButton;
+    private JList availSearchManagers_list;
+    private JButton clearSearchManagerButton;
+    private JButton highlightButton;
+    private JLabel jLabel6;
+    private JPanel jPanel1;
+    private JScrollPane jScrollPane17;
+    private JSplitPane jSplitPane1;
+    private JPanel pipelinePanel;
+    private JButton stopSearchManagerButton;
     // End of variables declaration//GEN-END:variables
 }

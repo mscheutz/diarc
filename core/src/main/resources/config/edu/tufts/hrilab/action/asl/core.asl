@@ -8,14 +8,18 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 () = checkCapableOf["checks if post condition is capable of bing reached by ?actor"](Predicate ?goal) {
     Term !capableOf;
     Term !otherActor;
+    Predicate !response;
 
     effects : {
       success : knowsIf(?actor,capableOf(?goal));
     }
 
     !capableOf = op:createPredicate("capableOf(?goal)");
-    if (tsc:actionExists(?goal)) {
+    if (tsc:actionExecutable(?goal)) {
       act:assertBelief(!capableOf);
+      ////TODO: pull out - pickAndPlace2024 hack to get around itk pipeline not submitting goals through ExecutionManager
+      //!response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes)");
+      //act:generateResponse(?actor,!response,direct);
     } else {
       act:retractBelief(!capableOf);
     }
@@ -385,15 +389,17 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     java.lang.Long !goalId;
     java.lang.Boolean !suspended;
     GoalStatus !status;
+    java.lang.Long !timeout = 0;
 
     !goals = act:getGoal(?goalPredicate);
     if (~op:isEmpty(!goals)) {
         !goal = op:get(!goals,0);
         op:log("debug", "[suspendGoal] suspending goal: !goal.");
         !goalId =  op:invokeMethod(!goal, "getId");
+        !status = tsc:getGoalStatus(!goalId);
         !suspended = act:suspendGoal(!goalId);
         if (op:equals(!suspended,true)) {
-            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
             if (op:isNull(!status)) {
                 exit(FAIL,alreadyComplete(goalToSuspend));
             } elseif (~op:equalsValue(!status,SUSPENDED)) {

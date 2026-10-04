@@ -33,7 +33,9 @@ public class SpotSceneGenerator extends SceneGenerator {
             Factory.createPredicate("handle", x),
             Factory.createPredicate("human", x),
             Factory.createPredicate("button", x),
-            Factory.createPredicate("unknown", x),
+            Factory.createPredicate("person", x),
+            Factory.createPredicate("door", x),
+            Factory.createPredicate("doorhandle", x),
             Factory.createPredicate("unknown", x),
             Factory.createPredicate("object", x)
     );

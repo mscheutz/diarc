@@ -3,8 +3,10 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.slug.dialogue.Question;
 import java.lang.Integer;
+import edu.tufts.hrilab.action.goal.PriorityTier;
+import java.lang.Boolean;
 
-() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType) {
+() = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType, Boolean ?validated) {
     // ?semanticType: either direct or indirect   not sure if this is the best variable name
 
     Term !currSemantics;
@@ -54,10 +56,10 @@ import java.lang.Integer;
         //      Ideally we could move this logic into an action selector, so we can
         //      remove the if else and have it  just be the one state spec
         if (op:invokeMethod(!matchingQuestions,"isEmpty")) {
-          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
+          goal:handled(?actor, ?addressee, !currSemantics, ?semanticType, ?validated);
         } else{
             op:log("debug", "have matching questions, !matchingQuestions");
-            !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions);
+            !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions, ?speaker);
             if (op:isNull(!matchingQuestion)) {
                 op:log("debug", "No matching question was selected to answer");
                 return;
@@ -74,28 +76,28 @@ import java.lang.Integer;
     }
 }
 
-() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType) {
+() = handleError["Handle error semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?errorSemantics, Symbol ?semanticType, Boolean ?validated=false) {
     Predicate !response;
 
     effects : {
-      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType);
+      success infer : handled(?actor,?addressee,error(?speaker,?errorSemantics),?semanticType,?validated);
     }
 
     !response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(sorry,?errorSemantics)");
     act:generateResponse(?speaker, !response, ?semanticType);
 }
 
-() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType) {
+() = handleAck["Handle ack semantics"](Symbol ?speaker, Symbol ?addressee, Symbol  ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType);
+      success infer : handled(?actor,?addressee,ack(?speaker,okay(?speaker,?actor)),?semanticType,?validated);
     }
 }
 
-() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType) {
+() = handleGreeting["Handle greeting semantics"](Symbol ?speaker, Symbol ?addressee, Symbol ?greeting, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !greetingResponse;
 
     effects : {
-      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType);
+      success infer : handled(?actor,?addressee,greeting(?speaker,?addressee,?greeting),?semanticType,?validated);
     }
 
     op:log("debug", "handleGreeting: ?actor ?speaker ?addressee ?greeting");
@@ -106,11 +108,11 @@ import java.lang.Integer;
     }
 }
 
-() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType) {
+() = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !state;
 
     effects : {
-      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType);
+      success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType,?validated);
     }
 
     try {
@@ -126,12 +128,12 @@ import java.lang.Integer;
     }
 }
 
-() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType) {
+() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !knowsQuery;
     Symbol !queryActor;
 
     effects : {
-      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType);
+      success infer : handled(?actor,?addressee,itk(?speaker,?query),?semanticType,?validated);
     }
 
     if (op:equals(?addressee, ?actor)) {
@@ -216,42 +218,52 @@ import java.lang.Integer;
         } else {
           act:generateResponse(?speaker, ?query, !beliefs, direct);
       }
+      act:listenPostCommunicateUtterance(?speaker);
     }
 }
 
-() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {
+() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType);
+      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType,?validated);
     }
 
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = act:getPriorityTierForGoal(?state);
-    java.lang.String !priorityString = op:invokeMethod(!priorityTier,"name");
-    Symbol !priority = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !priorityString);
-    act:handleWant(?speaker,?addressee,?state,?semanticType,!priority);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
 }
 
-() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priority, Symbol ?semanticType) {
+() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priorityTierSymbol, Symbol ?semanticType, Boolean ?validated) {
     effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state,?priority),?semanticType);
+      success infer : handled(?actor,?addressee,want(?speaker,?state,?priorityTierSymbol),?semanticType,?validated);
     }
 
-    act:handleWant(?speaker,?addressee,?state,?semanticType,?priority);
+    java.lang.String !priorityString = op:getName(?priorityTierSymbol);
+    PriorityTier !priorityTier = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.PriorityTier", "fromString", !priorityString);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priorityTier,?validated);
 }
 
-() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Symbol ?priority = uninitialized) {
+() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED, Boolean ?validated = false) {
     Predicate !defaultResponse;
+    Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
     edu.tufts.hrilab.action.ActionStatus !status;
     Predicate !becausePredicate;
     Predicate !failureReasonPredicate;
+    java.lang.String !stateName;
+    java.util.Set !keepHeadPreds;
 
     if (op:equals(?addressee, ?actor)) {
-
       try {
-        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType, ?priority);
+        if (~tsc:usingLLM()) {
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
+        } elseif (op:equals(?validated,true)) {
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
+        } else {
+            !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(attempting(?actor,?state))");
+        }
+        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(achieved(?actor,?state))");
+        act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType, ?priorityTier);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
         !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
         !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -278,8 +290,9 @@ import java.lang.Integer;
     }
 }
 
-() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType) {
+() = handleRecovery["reply to recovery semantics"](Symbol ?speaker, Predicate ?state, Predicate ?recovery, Symbol  ?semanticType, Boolean ?validated) {
     Predicate !defaultResponse;
+    Predicate !defaultTentativeResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
@@ -289,31 +302,17 @@ import java.lang.Integer;
     Predicate !recoveryPred;
 
     effects : {
-      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType);
+      success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType,?validated);
     }
 
     try {
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-      act:achieveState(?speaker, ?recovery, !defaultResponse, !defaultResponse, indirect);
-    } catch(FAIL_PRECONDITONS, !failureConditions) {
-      op:log("debug", "catching recovery before the new state is handled");
-      !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "willnot(?state,!becausePredicate)");
-      act:generateResponse(?speaker, !failureEffects, direct);
-      op:log("debug", "exiting itkL");
-      return;
-    } catch(!failureConditions) {
-      op:log("debug", "catching recovery before the new state is handled");
-      !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(?state,!becausePredicate)");
-      act:generateResponse(?speaker, !failureEffects, direct);
-      op:log("debug", "exiting itkL");
-      return;
-    }
-
-    try {
-      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-      act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType);
+      if (op:equals(?validated,true)) {
+          !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(understood)");
+      } else {
+          !defaultTentativeResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay,attempting(?actor,?state))");
+      }
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(achieved(?actor,?state))");
+      act:achieveState(?speaker, ?state, !defaultTentativeResponse, !defaultResponse, ?semanticType);
     } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
       !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
       !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -329,6 +328,7 @@ import java.lang.Integer;
 
 }
 
+//TODO: update default response semantics to something along the lines of ack(okay,believeFact(?actor,?fact)) for an LLM to target
 () = believeFact["believe that ?fact is true from agent ?speaker"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol ?semanticType, Predicate ?responseSemantics = ack(okay)) {
     conditions : {
       pre : trust(?addressee,?speaker);
@@ -371,6 +371,7 @@ import java.lang.Integer;
     }
 }
 
+//TODO: update default response semantics to something along the lines of ack(okay,believeRule(?actor,?head,?body)) for an LLM to target
 () = believeRule["believe that ?rule is true from agent ?speaker"](Symbol ?speaker, Predicate ?head, Predicate ?body, Symbol ?semanticType, Predicate ?responseSemantics = ack(okay)) {
     conditions : {
       pre : trust(?actor,?speaker);
@@ -389,11 +390,11 @@ import java.lang.Integer;
     } else {
       op:invokeMethod(!bodySet, "add", ?body);
     }
-    act:assertSimpleRule(!head, !bodySet);
+    act:assertSimpleRule(?head, !bodySet);
     act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
 }
 
-() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType, Symbol ?priority = uninitialized) {
+() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType, PriorityTier ?priorityTier = UNINITIALIZED) {
     Predicate !defaultResponse;
     Predicate !failureEffects;
     java.lang.Long !goalID;
@@ -401,8 +402,19 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.ActionStatus !actionStatus;
     edu.tufts.hrilab.action.justification.Justification !failureConditions;
     Predicate !becausePredicate;
-    java.lang.Boolean !madeTentativeAccept = false;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    java.util.List !currentGoalIds;
+    java.lang.Long !currentGoalId;
+    java.lang.String !currentStatus;
+    java.lang.Boolean !goalPlacedInQueue = false;
+    java.lang.Boolean !madeTentativeAccept = false;
+    java.lang.Boolean !currentGoalActive = true;
+    Predicate !goalSubmittedPred;
+    edu.tufts.hrilab.slug.common.Utterance !utterance;
+    edu.tufts.hrilab.slug.common.UtteranceType !type;
+    java.lang.String !ackString;
+    java.lang.String !lastQuestion;
 
     conditions : {
       or : {
@@ -424,34 +436,103 @@ import java.lang.Integer;
       //obligation infer : not(isForbidden(?state));
     }
 
-    // Q: The motivation behind using SKIPPENDING (i.e. lack of resource conflict) to be the conditional here was to still
-    //  allow the user to do things like ask the system for relevant information to inform question answers, modify task
-    //  execution, or supply information to the system. Should there be a different check made?
-    //      handleITK and handleWantBel go through separate pipelines, so maybe this is an accurate check.
-    // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
-    //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
-    //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
-    if (~op:equalsValue(?priority,SKIPPENDING)) {
-        if (tsc:isAgentWaitingForResponse(?actor)) {
-            act:generateResponseFromString("Please answer my question before sending further instructions");
-            return;
+    // TODO: this should be per speaker/agent pair or conversation group
+    // Reject any goal submission until the agentTeam's outstanding question has been answered
+    if (~op:equalsValue(?priorityTier,SKIPPENDING) && ~op:equalsValue(?priorityTier,URGENT) && tsc:isAgentWaitingForResponse(?actor)) {
+        !lastQuestion = tsc:getLastQuestion(?actor);
+        act:generateResponseFromString(?speaker, "Sorry, please answer my previous question before sending further instructions. I had asked you the following: !lastQuestion");
+        act:listenPostCommunicateUtterance(?speaker);
+        //act:generateResponseFromString(?speaker, "Please answer my previous question before sending further instructions");
+        return;
+    }
+
+    // Check if the goal was placed in the queue - if so, override tentative accept
+    if (tsc:usingQueueEM()) {
+      // Compare goal priorities
+      !priority = act:getPriorityForGoal(?state);
+      !currentGoalIds = tsc:getSystemGoalsIds(?actor);
+      foreach (!currentGoalId : !currentGoalIds) {
+          if (tsc:hasGreaterPriority(!currentGoalId, ?priorityTier, !priority)) {
+              !goalPlacedInQueue = op:newObject("java.lang.Boolean", true);
+          }
+      }
+    }
+
+    // no llm: plain okay before the goal starts, the attempting/achieved forms are for the llm nlg
+    if (~tsc:usingLLM()) {
+      if (~tsc:ignoreTentativeAccept(?state)) {
+        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+      }
+      !madeTentativeAccept = op:newObject("java.lang.Boolean", true);
+    }
+
+    // Submit goal
+    !goalID = act:submitGoal(?state,!execType,?priorityTier,!priority,?speaker);
+
+    // Perform acknowledgement
+    if (op:equals(!madeTentativeAccept,false) && op:equals(!goalPlacedInQueue,true)) {
+        // Goal placed in the queue, notify the user of the fact rather than using default tentative accept semantics
+        !ackString = tsc:sampleGoalPlacedInQueueAcknowledgement(?state);
+        async {
+            act:generateResponseFromString(?speaker,!ackString);
+        }
+    } elseif (op:equals(!madeTentativeAccept,false)) {
+        // Goal beginning execution immediately, respond based on domain-specific ignoreTentativeAccept configuration and if validation for this utterance already occurred
+        //    (If validation already/just occurred, we don't need to be as descriptive)
+        if(~tsc:ignoreTentativeAccept(?state)) {
+          // TODO: tune timeout duration empirically
+          // If goal immediately terminates, use acceptSemantics rather than tentativeAcceptSemantics
+          !goalStatus = act:joinOnGoal(!goalID,500);
+          if (op:invokeMethod(!goalStatus, "isTerminated")) {
+            if (~op:invokeMethod(!goalStatus, "isFailure")) {
+              // Goal terminated successfully, use accept semantics
+              if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+                // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood.
+                !ackString = tsc:sampleGoalAchievedPhrase(?state);
+                async {
+                    act:generateResponseFromString(?speaker,!ackString);
+                }
+              } else {
+                // Validation did not occur, giving descriptive acknowledgement restating the understood parse
+                if (tsc:useTentativeAcceptFiller()) {
+                  // CommunicateUtterance with specific filler phrase case (can change this API)
+                  !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?speaker);
+                  !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+                  op:invokeMethod(!utterance, "setType", !type);
+                  op:invokeMethod(!utterance, "setSemantics", ?acceptSemantics);
+                  act:communicateUtterance(!utterance, 4);
+                } else {
+                  // General communicateUtterance call
+                  act:generateResponse(?speaker, ?acceptSemantics, ?semanticType);
+                }
+              }
+            }
+            // Else exit fail below
+          } else {
+            // Goal did not immediately terminate, use tentative accept semantics
+            if (op:equalsValue(?tentativeAcceptSemantics,ack(understood))) {
+              // Utterance was recently validated, don't need to give descriptive acknowledgement relaying what was understood
+              !ackString = tsc:sampleTentativeAcceptPhrase(?state);
+              async {
+                  act:generateResponseFromString(?speaker,!ackString);
+              }
+            } else {
+              // Validation did not occur, giving descriptive acknowledgement restating the understood parse
+              if (tsc:useTentativeAcceptFiller()) {
+                // CommunicateUtterance with specific filler phrase case (can change this API)
+                !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?speaker);
+                !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+                op:invokeMethod(!utterance, "setType", !type);
+                op:invokeMethod(!utterance, "setSemantics", ?tentativeAcceptSemantics);
+                act:communicateUtterance(!utterance, 1);
+              } else {
+                // General communicateUtterance call
+                act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
+              }
+            }
+          }
         }
     }
-
-    //Can also reimplement ignoreTentativeAccept filter if desired
-    if(~act:checkIgnoreTentativeAccept(?state)){
-        act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-    }
-    !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
-
-
-    !goalID = act:submitGoal(?state,!execType,?priority);
-    !goalStatus = act:joinOnGoal(!goalID, 1000);
-//    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
-//      op:log("debug", "tentative accept for ?state with status !goalStatus");
-//      act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
-//      !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
-//    }
 
     op:log("debug", "waiting to get into state: ?state goalId: !goalID");
     !goalStatus = act:joinOnGoal(!goalID);
@@ -462,13 +543,10 @@ import java.lang.Integer;
       !actionStatus = act:getActionStatus(!goalID);
       op:log("debug", "action status: !actionStatus");
       exit(!actionStatus, !failureConditions);
-    } elseif (op:==(!madeTentativeAccept, false)) {
-      op:log("debug", "?state achieved with status !goalStatus");
-      act:generateResponse(?speaker, ?acceptSemantics, ?semanticType);
     }
 }
 
-(Question ?matchingQuestion) = selectQuestionToAnswer(java.util.Map ?questions) {
+(Question ?matchingQuestion) = selectQuestionToAnswer(java.util.Map ?questions, Symbol ?speaker) {
     java.util.List !agentQuestions;
     java.lang.Integer !numAgents = 0;
     java.util.Set !agentSet;
@@ -483,7 +561,7 @@ import java.lang.Integer;
 
     //Check ?actor first
     !agentQuestions = op:invokeMethod(?questions,"get",?actor);
-    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
     if (~op:isNull(?matchingQuestion)) {
         op:log("debug", "[selectQuestionToAnswer] single matching question for actor, returning");
         //Have disambiguous question for direct ?actor
@@ -501,7 +579,7 @@ import java.lang.Integer;
             //Only one agent has asked questions, disambiguate for that agent
             foreach(!agent : !agentSet) {
                 !agentQuestions = op:invokeMethod(?questions,"get",!agent);
-                ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
                 if (~op:isNull(?matchingQuestion)) {
                     return;
                 }
@@ -509,21 +587,22 @@ import java.lang.Integer;
         } else {
             //Multiple agents have asked questions, determine which agent the user is meaning to address
             op:log("debug", "[selectQuestionToAnswer] multiple team members have matching questions, selecting amongst them");
-            act:generateResponseFromString("Multiple agents have asked questions relevant to your response. Possible candidates are:");
+            act:generateResponseFromString(?speaker, "Multiple agents have asked questions relevant to your response. Possible candidates are:");
             foreach(!agent : !agentSet) {
-                act:generateResponseFromString(!agent);
+                act:generateResponseFromString(?speaker, !agent);
             }
+            //TODO: should be updated to handle potential question overlap properly
             act:suspendWaitForResponse(agent(X),?actor,false);
-            !bindings = act:askQuestionFromString(?actor, "Which one did you mean to address?", agent(X));
+            !bindings = act:askQuestionFromString(?speaker,"Which one did you mean to address?", agent(X));
             act:resumeWaitForResponse(agent(X),?actor);
             if (~op:invokeMethod(!bindings,"isEmpty")) {
                 !response = op:get(!bindings,!x);
                 !response = op:invokeMethod(!response,"toUntyped");
                 !agentQuestions = op:invokeMethod(?questions,"get",!response);
                 if (op:isNull(!agentQuestions)) {
-                    act:generateResponseFromString("agent !response was not a valid option");
+                    act:generateResponseFromString(?speaker, "agent !response was not a valid option");
                 } else {
-                    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions, ?speaker);
                     return;
                 }
             }
@@ -533,7 +612,7 @@ import java.lang.Integer;
     exit(FAIL,not(know(?actor,whichQuestionYouAreAnswering)));
 }
 
-(Question ?matchingQuestion) = selectQuestionToAnswerHelper(java.util.List ?agentQuestions) {
+(Question ?matchingQuestion) = selectQuestionToAnswerHelper(java.util.List ?agentQuestions, Symbol ?speaker) {
     Symbol !agent;
     java.lang.Integer !numQuestions = 0;
     Predicate !errorPred;
@@ -568,15 +647,18 @@ import java.lang.Integer;
     } elseif (op:gt(!numQuestions,1)) {
         op:log("debug", "[selectQuestionToAnswerHelper] multiple matching question, asking disambiguation question");
         //Multiple matching questions for direct agent, disambiguate between them
-        act:generateResponseFromString("It is unclear which question you are answering. Possible candidates are:");
+        //act:generateResponseFromString(?speaker, "It is unclear which question you are answering. Possible candidates are:");
+        act:generateResponse(?speaker, and(report(itIsUnclearWhichQuestionYouAreAnswering),promptList(possibleCandidatesAre)));
         for (!questionIndex=0; !questionIndex lt !numQuestions; !questionIndex ++) {
             !question = op:get(?agentQuestions,!questionIndex);
             !questionString = op:invokeMethod(!question,"getQuestionString");
             !spokenIndex = op:++(!questionIndex);
-            act:generateResponseFromString("Option !spokenIndex: !questionString");
+            act:generateResponseFromString(?speaker, "Option !spokenIndex: !questionString");
         }
+        //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
+        //!bindings = act:askQuestionFromString(?speaker, "Which question did you mean to answer?", option(X));
+        !bindings = act:askQuestion(?speaker, meanToAnswer(which(question)), option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
@@ -587,7 +669,8 @@ import java.lang.Integer;
                 ?matchingQuestion = op:get(?agentQuestions,!questionNumber);
                 return;
             } else {
-                act:generateResponseFromString("Question !questionNumber was not a valid option");
+                //act:generateResponseFromString(?speaker, "Question !questionNumber was not a valid option");
+                act:generateResponse(?speaker, not(validOption(question(!questionNumber))));
             }
         }
     }

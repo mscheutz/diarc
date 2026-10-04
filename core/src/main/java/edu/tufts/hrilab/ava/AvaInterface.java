@@ -39,12 +39,22 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
           type = EffectType.ALWAYS,
           infer = {"at(?actor,unknown)"}
   )
-  Justification stopFollow();
+  Justification stopFollowing();
 
   @TRADEService
   @Action
-  @OnInterrupt(onCancelServiceCall = "stopFollow()", onSuspendServiceCall = "stopFollow()")
-  Justification follow();
+  @OnInterrupt(onCancelServiceCall = "stopFollowing()", onSuspendServiceCall = "stopFollowing()")
+  Justification avaFollow();
+
+  /**
+   * Drive straight forward along the robot's current heading using direct velocity
+   * commands until odometry shows the requested distance has been covered.
+   *
+   * @param distance meters to travel forward
+   */
+  @TRADEService
+  @Action
+  Justification moveForward(double distance);
 
   /**
    * Close an RMS session with the robot.
@@ -152,4 +162,64 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   public Integer getWifiSignalStrength();
 
+  @TRADEService
+  @Action
+  public Integer measureWifiRssi();
+
+  @TRADEService
+  @Action
+  public String rssiQualityLabel(edu.tufts.hrilab.fol.Symbol rssi);
+
+  @TRADEService
+  @Action
+  public Integer measureTemperatureDegrees();
+
+  @TRADEService
+  @Action
+  public String locationRefToName(edu.tufts.hrilab.fol.Symbol ref);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptChargingBlock()", onSuspendServiceCall = "interruptChargingBlock()")
+  public void blockToCharge();
+
+  @TRADEService
+  @Action
+  public void interruptChargingBlock();
+
+  @OnInterrupt(onCancelServiceCall = "interruptListenForWWandASR()", onSuspendServiceCall = "interruptListenForWWandASR()")
+  @TRADEService
+  @Action
+  public void listenForWWandASR();
+  @TRADEService
+  @Action
+  public void interruptListenForWWandASR();
+
+  @TRADEService
+  @Action
+  public Symbol getDockRefId();
+
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForReadyAck()", onSuspendServiceCall = "interruptWaitForReadyAck()")
+  public void waitForReadyAck();
+  @TRADEService
+  @Action
+  public void interruptWaitForReadyAck();
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForDuration()", onSuspendServiceCall = "interruptWaitForDuration()")
+  public void waitForDuration(long seconds);
+  @TRADEService
+  @Action
+  public void interruptWaitForDuration();
+
+  @TRADEService
+  @Action
+  public void enableAdminMode();
+  @TRADEService
+  @Action
+  public void disableAdminMode();
 }

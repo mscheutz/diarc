@@ -3,37 +3,37 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "hello ravenna", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,greeting(dempster,ravenna,hello),\"hello ravenna\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(yes),\"yes\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "no", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(no),\"no\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(yes),\"yes\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "no", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(no),\"no\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I trust evan", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,[trust(dempster,evan)],\"I trust evan\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "yes", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,evan,ack(yes),\"yes\",{})", "true" ]
     } ]
   } ]
 }

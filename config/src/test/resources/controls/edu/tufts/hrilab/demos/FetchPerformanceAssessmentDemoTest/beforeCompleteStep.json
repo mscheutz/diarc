@@ -3,26 +3,26 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[what, is, the, probability, that, you, can, assemble, the, caddy, if, you, successfully, fetch, the, small, gear, from, the, small, gear, location],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[what, is, the, probability, that, you, can, assemble, the, caddy, if, you, successfully, fetch, the, small, gear, from, the, small, gear, location],\"what is the probability that you can assemble the caddy if you successfully fetch the small gear from the small gear location\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "the Probability is 0.51", "true" ]
+      "serviceArgs" : [ "REPLY(andy:agent,tyler,[probabilityOf(0.51)],\"the Probability is 0.51\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[how, long, will, it, take, to, do, that],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[how, long, will, it, take, to, do, that],\"how long will it take to do that\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "it will take about 7 minutes", "true" ]
+      "serviceArgs" : [ "REPLY(andy:agent,tyler,[will(it,take(time(414.8754509803921)))],\"it will take about 6 minutes and 54 seconds\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "reportRecognizedSpeech",
-      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[where, do, you, foresee, issues],{})", "null" ]
+      "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[where, do, you, foresee, issues],\"where do you foresee issues\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I fetch the largegear the largegearlocation is most Likely To Fail", "true" ]
+      "serviceArgs" : [ "REPLY(andy:agent,tyler,[propertyOf(fetch(andy:agent,physobj_3:physobj,location_3:location),mostLikelyToFail)],\"I fetch the largegear the largegearlocation is most Likely To Fail\",{})", "true" ]
     } ]
   } ]
 }

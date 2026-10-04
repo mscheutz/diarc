@@ -202,6 +202,14 @@ public class AgentTeam {
         actionLearning.addGoal(g);
     }
 
+    protected boolean waitForLearningStateUpdate(Predicate action) {
+        return actionLearning.waitForLearningStateUpdate(action);
+    }
+
+    protected void interruptWaitForLearningStateUpdate(Predicate action) {
+        actionLearning.interruptWaitForLearningStateUpdate(action);
+    }
+
     protected boolean shouldExecute() {
         return actionLearning.shouldExecute();
     }

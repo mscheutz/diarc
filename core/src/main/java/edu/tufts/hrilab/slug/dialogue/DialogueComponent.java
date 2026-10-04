@@ -18,7 +18,9 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.dialogue.gui.DialogueGui;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,10 +44,13 @@ public class DialogueComponent extends DiarcComponent {
   private final DiaLog diaLog = new DiaLog();
 
   private DialogueConsultant consultant;
-  private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
+  private Set<TRADEServiceInfo> dialogueHistorySubscribers = new HashSet<>();
+  private Set<TRADEServiceInfo> questionAskingSubscribers = new HashSet<>();
   //I believe this should live at the level of AgentTeams.
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
+  private List<Symbol> allowGoalsWithOpenQuestionsFor = new ArrayList<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
+  private static final IdGenerator idGenerator = new IdGenerator();
 
   private boolean showDialogueGui = false;
   private DialogueGui dialogueGui;
@@ -158,13 +164,32 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   @Action
-  public void updateDialogueHistory(Utterance utt) {
-    updateDialogueHistory(utt,true);
+  public void updateDialogueHistoryFromString(Symbol actor, Symbol addressee, String words) {
+    log.debug("[updateDialogueHistoryFromString] addressee: {} words: {}", addressee, words);
+    Utterance utterance = Utterance.createOutputUtterance(actor, addressee);
+    utterance.setType(UtteranceType.REPLY);
+    utterance.setWords(words);
+    updateDialogueHistory(utterance);
   }
 
   @TRADEService
   @Action
-  public void updateDialogueHistory(Utterance utt, boolean newUtterance) {
+  public void updateDialogueHistory(Utterance utt) {
+    boolean newUtterance = true;
+    // TODO: is dialogue history not trimmed? Is this problematic for long term deployments?
+    // (SocialLLM) Can now use Utterance ID to detect whether the input is actually new or post-(re)validation
+    List<Utterance> history = diaLog.getDialogueHistory();
+    for (int i = history.size()-1;i>=0;i--) {
+      // With unbound dialogue history size, don't want to traverse entire history? What's a safe number of messages
+      //  to check back through?
+      if (history.get(i).getUid() == utt.getUid()) {
+        newUtterance = false;
+        break;
+      } else if (i < history.size()-50) {
+        break;
+      }
+    }
+
     if (newUtterance) {
       diaLog.addHistory(utt);
     } else {
@@ -186,7 +211,7 @@ public class DialogueComponent extends DiarcComponent {
       } catch (Exception e) {
         log.error("Could not make callback to: " + subscriber, e);
         //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
-        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+        if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
           servicesToRemove.add(subscriber);
         }
       }
@@ -200,14 +225,55 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  //TODO: temp: Added for kioskGoalManager functionality - can remove if reimplemented
   @TRADEService
   public void registerForDialogueHistoryNotifications(TRADEServiceInfo callback) {
-    dialogueHistorySubscribers.add(callback);
+    if (dialogueHistorySubscribers.stream().anyMatch(c-> c.matches(callback))) {
+      log.warn("[registerForDialogueHistoryNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      dialogueHistorySubscribers.add(callback);
+    }
   }
 
   @TRADEService
   public void unregisterForDialogueHistoryNotifications(TRADEServiceInfo callback) {
     dialogueHistorySubscribers.remove(callback);
+  }
+
+  private void notifyQuestionAskingSubscribers(Symbol agent, boolean active, Question question) {
+    List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
+    for (TRADEServiceInfo subscriber : questionAskingSubscribers) {
+      try {
+        subscriber.call(void.class, agent, active, question);
+      } catch (Exception e) {
+        log.error("Could not make callback to: " + subscriber, e);
+        //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+          servicesToRemove.add(subscriber);
+        }
+      }
+    }
+
+    //If a remote container has gone down without unregistering for notifications,
+    // then remove the service rather than continuously log errors.
+    for (TRADEServiceInfo service: servicesToRemove) {
+      log.info("[notifyQuestionAskingSubscribers] unregistering unavailable service from question asking notifications ");
+      unregisterForQuestionAskingNotifications(service);
+    }
+  }
+
+  @TRADEService
+  public void registerForQuestionAskingNotifications(TRADEServiceInfo callback) {
+    if (questionAskingSubscribers.stream().anyMatch(c-> c.matches(callback))) {
+      log.warn("[registerForQuestionAskingNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      questionAskingSubscribers.add(callback);
+    }
+  }
+
+  @TRADEService
+  public void unregisterForQuestionAskingNotifications(TRADEServiceInfo callback) {
+    questionAskingSubscribers.remove(callback);
   }
 
   @TRADEService
@@ -244,30 +310,42 @@ public class DialogueComponent extends DiarcComponent {
           onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
   )
   public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker) {
-    return waitForResponse(questionString, responseForms, speaker,-1);
+    return waitForResponse(questionString, responseForms, speaker,Factory.createSymbol("any"));
+  }
+
+  @TRADEService
+  @Action
+  @OnInterrupt(
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)"
+  )
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, Symbol addressee) {
+    return waitForResponse(questionString, responseForms, speaker,addressee, -1);
   }
 
   /**
    * @param questionString String corresponding to question which was asked
    * @param responseForms List of possible semantic forms which are considered answers to the question
    * @param speaker The agent which had asked the question
+   * @param addressee The user able to answer the question. A value of 'any' allows any user to answer the question
    * @param waitDuration duration this method will block until giving up. If a negative number, will block indefinitely
    * @return Bindings from the answer, or an empty map if no answer was received in time or the question was overwritten/canceled
    */
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)",
-          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker,?addressee)"
   )
   @TRADEService
   @Action
-  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, long waitDuration) {
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, Symbol addressee, long waitDuration) {
     if (responseForms.isEmpty()) {
       log.warn("[waitForOneOfResponses] empty form list supplied");
       return new HashMap<>();
     }
 
     speaker = speaker.toUntyped();
-    Question question = new Question(questionString, responseForms);
+    addressee = addressee.toUntyped();
+    Question question = new Question(questionString, responseForms, addressee, idGenerator.getNext());
     Set<Question> currentQuestions = questionsPerAgent.get(speaker);
     if (currentQuestions == null) {
       log.warn("[waitForResponse] unexpected speaker encountered {}", speaker);
@@ -277,8 +355,10 @@ public class DialogueComponent extends DiarcComponent {
       currentQuestions.add(question);
     }
 
+    notifyQuestionAskingSubscribers(speaker,true, question);
     Map<Variable,Symbol> bindings = question.waitForResponse(waitDuration);
     currentQuestions.remove(question);
+    notifyQuestionAskingSubscribers(speaker,false, question);
     return bindings;
   }
 
@@ -296,29 +376,22 @@ public class DialogueComponent extends DiarcComponent {
     speaker = speaker.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
+    Symbol finalSpeaker = speaker;
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.isMatchingAnswerSemantics(answerSemantics))
+            .filter(q -> q.isActive() && q.isMatchingAnswerSemantics(answerSemantics) && q.isMatchingAddressee(finalSpeaker))
             .toList();
 
     //Bind response
     if (matchingQuestions.isEmpty()) {
       //No direct match
       if (answerSemantics.getName().equals("abort")) {
-        //If universal exit semantics, then 'cancel' question with the most recent timestamp
+        //If universal exit semantics, then 'cancel' question with the most recent qid
         //TODO: should this case just act as a match to any/all? If multiple current questions then ask to disambiguate?
         //TODO: allow inner semantics to either match specific question or be general "most recent" symbol?
-        AtomicReference<Question> question = new AtomicReference<>();
-        long maxTimestamp = -1;
-        currentQuestions.forEach(q -> {
-          if (q.getTimestamp() > maxTimestamp) {
-            question.set(q);
-          }
-        });
-        if (question.get() != null) {
-          Question mostRecent = question.get();
-          if (mostRecent != null) {
-            matchingQuestionPerAgent.put(listener,List.of(mostRecent));
-          }
+        Optional<Question> opt = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid));
+        if (opt.isPresent()) {
+          Question mostRecent = opt.get();
+          matchingQuestionPerAgent.put(listener,List.of(mostRecent));
         }
       } else {
         //Check children if no matching question is found
@@ -349,6 +422,12 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener) {
+    cancelWaitForResponse(questionString, responseForms, listener, Factory.createSymbol("any"));
+  }
+  //TODO: extend signature variations this method can be called with
   /**
    * Remove the question corresponding to the provided string and response semantics from the current question
    * collection and signal the answer condition without setting response bindings
@@ -359,12 +438,12 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener) {
+  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener, Symbol speaker) {
     listener = listener.toUntyped();
     Set<Question> currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isMatchingQuestion(questionString) && q.hasMatchingResponseForms(responseForms))
+            .filter(q -> q.isMatchingQuestion(questionString) && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
     for (Question q : matchingQuestions) {
@@ -372,6 +451,13 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+    return suspendWaitForResponse(responseForm, listener, unlock, Factory.createSymbol("any"));
+  }
+  //TODO: Extend signature variations this method can be called with
+  //      Also, more explicitly define "exactMatch" vs "anyMatch" variations of response forms
   /**
    * Suspend the question(s) corresponding to the provided response semantics. Optionally unlock the answer to
    *  unblock waitForResponse call(s).
@@ -381,26 +467,57 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock, Symbol speaker) {
+    log.debug("[suspendWaitForResponse] suspending responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
-
-    if (matchingQuestions.size() > 1) {
-      log.warn("[suspendWaitForResponse] suspending multiple questions");
-    }
-
-    for (Question question : matchingQuestions) {
-      question.suspend();
-      if (unlock) {
-        question.endWaitForResponse();
-      }
-    }
+    return suspendQuestions(matchingQuestions, unlock);
   }
 
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(List<Term> responseForms, Symbol listener, boolean unlock) {
+    return suspendWaitForResponse(responseForms, listener, unlock, Factory.createSymbol("any"));
+  }
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(List<Term> responseForms, Symbol listener, boolean unlock, Symbol speaker) {
+    log.debug("[suspendWaitForResponse] suspending responseForms {}", responseForms);
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
+            .toList();
+
+    return suspendQuestions(matchingQuestions, unlock);
+  }
+
+  private List<Long> suspendQuestions(List<Question> questions, boolean unlock) {
+    log.debug("[suspendQuestions] suspending questions: {}", questions);
+    List<Long> matchingQids = new ArrayList<>();
+    if (questions != null) {
+      for (Question question : questions) {
+        question.suspend();
+        if (unlock) {
+          question.endWaitForResponse();
+        }
+        matchingQids.add(question.getQid());
+      }
+    }
+    log.debug("[suspendQuestions] suspended qids: {}", matchingQids);
+    return matchingQids;
+  }
+
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener) {
+    return resumeWaitForResponse(responseForm, listener, Factory.createSymbol("any"));
+  }
   /**
    * Resume the previously suspended question(s) to allow them to match future question responses
    *
@@ -410,28 +527,82 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void resumeWaitForResponse(Term responseForm, Symbol listener) {
+  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener, Symbol speaker) {
+    log.debug("[resumeWaitForResponse] resuming responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm) && q.isMatchingAddressee(speaker.toUntyped()))
             .toList();
 
-    if (matchingQuestions.size() > 1) {
-      log.warn("[resumeWaitForResponse] suspending multiple questions");
-    }
+    return resumeQuestions(matchingQuestions);
+  }
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(List<Term> responseForms, Symbol listener) {
+    return resumeWaitForResponse(responseForms, listener, Factory.createSymbol("any"));
+  }
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(List<Term> responseForms, Symbol listener, Symbol speaker) {
+    log.debug("[resumeWaitForResponse] resuming responseForms {}", responseForms);
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(speaker.toUntyped()))
+            .toList();
 
-    for (Question question : matchingQuestions) {
-      question.resume();
+    return resumeQuestions(matchingQuestions);
+  }
+  @TRADEService
+  @Action
+  public boolean resumeWaitForResponse(long qid, Symbol listener) {
+    log.debug("[resumeWaitForResponse] resuming qid: {}", qid);
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    Optional<Question> matchingQuestion = currentQuestions.stream().filter(q->q.getQid() == qid).findFirst();
+    boolean found = matchingQuestion.isPresent();
+    if (found) {
+      matchingQuestion.get().resume();
     }
+    log.debug("[resumeWaitForResponse] returning: {}", found);
+    return found;
+  }
+
+  private List<Long> resumeQuestions(List<Question> questions) {
+    log.debug("[resumeQuestions] resuming questions: {}", questions);
+    List<Long> matchingQids = new ArrayList<>();
+    if (questions != null) {
+      for (Question question : questions) {
+        question.resume();
+        matchingQids.add(question.getQid());
+      }
+    }
+    log.debug("[resumeQuestions] resuming qids: {}", matchingQids);
+    return matchingQids;
   }
 
   @TRADEService
   public boolean isAgentWaitingForResponse(Symbol agent) {
+    if (allowGoalsWithOpenQuestionsFor.contains(agent)) {
+      return false;
+    }
     Set<Question> currentQuestions = questionsPerAgent.get(agent);
     return !(currentQuestions == null || currentQuestions.stream().noneMatch(Question::isActive));
   }
+
+  //TODO: Hack to get around allowing direct action submission during interactive action learning including question asking
+  //      Real root of the issue is language constraints
+  @TRADEService
+  public void allowInstructionsDuringQAForAgent(Symbol agent) {
+    allowGoalsWithOpenQuestionsFor.add(agent);
+  }
+  @TRADEService
+  public void removeAllowInstructionsDuringQAForAgent(Symbol agent) {
+    allowGoalsWithOpenQuestionsFor.remove(agent);
+  }
+
 
   @TRADEService
   public String getLastQuestion(Symbol agent) {
@@ -440,8 +611,49 @@ public class DialogueComponent extends DiarcComponent {
     if (currentQuestions.isEmpty()) {
       return "";
     } else {
-      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid)).get();
       return mostRecentQuestion.getQuestionString();
+    }
+  }
+
+  @TRADEService
+  public List<String> getAllQuestions(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getQid)).map(Question::getQuestionString).toList();
+  }
+
+  @TRADEService
+  public List<Term> getLastQuestionResponseForm(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    if (currentQuestions.isEmpty()) {
+      return new ArrayList<>();
+    } else {
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid)).get();
+      return mostRecentQuestion.getResponseForms();
+    }
+  }
+
+  @TRADEService
+  public List<List<Term>> getAllQuestionResponseForms(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getQid)).map(Question::getResponseForms).toList();
+  }
+
+  @TRADEService
+  public void resetQuestionTimeout(List<Term> responseForms, Symbol speaker, Symbol addressee) {
+    log.debug("[resetQuestionTimeout] resetting question timeout for {}/{}: {}", speaker, addressee, responseForms);
+    speaker = speaker.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(speaker);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms) && q.isMatchingAddressee(addressee.toUntyped()))
+            .toList();
+
+    for (Question q: matchingQuestions) {
+      q.resetWaitTimer();
     }
   }
 }

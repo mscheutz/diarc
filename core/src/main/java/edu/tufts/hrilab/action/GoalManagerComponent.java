@@ -10,9 +10,11 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
@@ -35,7 +37,12 @@ import edu.tufts.hrilab.gui.GuiProvider;
 import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +111,18 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   private Map<String, PriorityInfo> goalPriorities = new HashMap<>();
   /**
+   * Path to the file containing the set of persisted scheduled goals to load from on startup and write to on shutdown
+   * (root will be user.home/.diarc)
+   */
+  private String scheduledGoalsFile = null;
+  /**
+   * Path to the file which will have asl for all newly taught actions written to it (can be loaded on startup
+   * separately for persistence of taught actions)
+   * (root will be user.home/.diarc)
+   */
+  private String learnedActionsFile = null;
+
+  /**
    * Action learning gui flag.
    */
   private boolean displayActionLearningGui = false;
@@ -156,6 +175,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file(s)").build());
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
+    options.add(Option.builder("scheduledGoalsFile").hasArg().argName("file").desc("File containing the set of persisted scheduled goals to load from on startup and write to on shutdown").build());
+    options.add(Option.builder("learnedActionsFile").hasArg().argName("file").desc("File to write newly learned asl scripts to").build());
 
     // local belief component options
     options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
@@ -221,6 +242,26 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     if (cmdLine.hasOption("historylength")) {
       historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
     }
+    if (cmdLine.hasOption("scheduledGoalsFile")) {
+      String filename = cmdLine.getOptionValue("scheduledGoalsFile");
+      String homeDir = System.getProperty("user.home");
+      String scheduledGoalsDir = Paths.get(homeDir, ".diarc","scheduledGoals").toString();
+      scheduledGoalsFile = scheduledGoalsDir + File.separator + filename;
+    }
+    if (cmdLine.hasOption("learnedActionsFile")) {
+      String filename = cmdLine.getOptionValue("learnedActionsFile");
+      String homeDir = System.getProperty("user.home");
+      String learnedActionsDir = Paths.get(homeDir, ".diarc","learnedActions").toString();
+      learnedActionsFile = learnedActionsDir + File.separator + filename;
+      try {
+        File f = new File(learnedActionsFile);
+        f.getParentFile().mkdirs();
+        f.createNewFile();
+      } catch (IOException e) {
+        log.error("[GoalManagerComponent] couldn't create learned actions file in home directory");
+        learnedActionsFile = null;
+      }
+    }
 
     /////////////////////////////////
     // local belief component options
@@ -268,6 +309,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     initializeDB();
     notifier = new GoalManagerNotifier();
     Database.getInstance().addListener(notifier);
+    em.setGoalManagerNotifier(notifier);
 
     //Load goal priorities
     loadGoalPriorities();
@@ -288,6 +330,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     //TODO:brad: do we actually need to sleep?
     Util.Sleep(2000);
     submitInitGoals();
+    if (scheduledGoalsFile != null) {
+      loadScheduledGoals(scheduledGoalsFile);
+    }
   }
 
   // Methods calls during construction
@@ -303,12 +348,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
     em.setActionLearningGuiFlag(displayActionLearningGui);
+    em.setScheduledGoalsFile(scheduledGoalsFile);
+    em.setLearnedActionsFile(learnedActionsFile);
   }
 
   private void initializeDB() {
 
     // Add ASL files to database
     Database.getInstance().loadDatabaseFiles(dbFileDir, dbFiles);
+    em.loadLearnedActions(true);
 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
@@ -347,6 +395,22 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   private void submitInitGoals() {
     // create goal for all command line goals
     initGoals.forEach(goal -> submitGoal(goal));
+  }
+
+  private void loadScheduledGoals(String filepath) {
+    File f = new File(filepath);
+    if (!f.exists()) {
+      log.warn("[loadScheduledGoals] file not found: " + filepath);
+      return;
+    }
+    try {
+      ObjectInputStream is = new ObjectInputStream(new FileInputStream(f));
+      List<Predicate> goalPredicates = (List<Predicate>) is.readObject();
+      goalPredicates.forEach(this::submitGoal);
+      is.close();
+    } catch (IOException | ClassNotFoundException e) {
+      log.error("[loadScheduledGoals] error loading cached scheduled goals on startup", e);
+    }
   }
 
   /**
@@ -525,14 +589,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @param g            the goal in goal(actor,state) or action(actor,args) form
    * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
+   * @param priority     priority value for the submitted goal (overrides default value)
    * @return the goal ID (for checking status)
    */
   @TRADEService
   @Action
-  public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
-    return submitGoal(g, type, PriorityTier.fromString(priorityTier.toString()));
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
+    return submitGoal(g, type, priorityTier, priority, Factory.createSymbol("unknown"));
   }
-
 
   /**
    * Submit a goal to be achieved.
@@ -541,11 +605,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
    * @param priority     priority value for the submitted goal (overrides default value)
+   * @param submitter    the entity (currently only the speaker if a dialogue goal) triggering this goal submission
+   *
    * @return the goal ID (for checking status)
    */
   @TRADEService
   @Action
-  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority, Symbol submitter) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
 
     Goal goal = Goal.createGoal(g);
@@ -553,6 +619,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     goal.setPriority(priority);
     goal.setPriorityTier(priorityTier);
     goal.setExecutionType(type);
+    goal.setSubmitter(submitter);
     goal = em.submitGoal(goal);
     if (goal != null) {
       return goal.getId();
@@ -657,6 +724,24 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.cancelPendingGoalByIndex(index);
   }
 
+  /**
+   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  @TRADEService
+  @Action
+  public boolean cancelPendingGoalsByIndices(Predicate indices) {
+    return em.cancelPendingGoalsByIndices(indices);
+  }
+
+  //TODO: when having the time, implement this method body in asl and remove this
+  /**
+   * Cancels scheduled goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   */
+  @TRADEService
+  @Action
+  public boolean cancelScheduledGoalsByIndices(Predicate indices) {
+    return em.cancelScheduledGoalsByIndices(indices);
+  }
 
   /**
    * Searches pending and active goals to suspend the goal corresponding to the supplied goalId
@@ -738,10 +823,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getCurrentGoals(Symbol actor) {
+  public List<Predicate> getCurrentGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getCurrentGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getGoalPredicate());
       }
     }
@@ -803,10 +888,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getActiveGoals(Symbol actor) {
+  public List<Predicate> getActiveGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getGoalPredicate());
       }
     }
@@ -822,8 +907,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<Predicate> getScheduledGoals() {
     List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      result.add(g.getGoalPredicate());
+    for (ScheduledGoal sg : em.getScheduledGoals()) {
+      result.add(sg.getDisplayPredicate());
     }
     return result;
   }
@@ -831,15 +916,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing.
    *
-   * @param actor the actor to filter the scheduled goals list by
+   * @param agentTeam the actor to filter the scheduled goals list by
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  public List<Predicate> getScheduledGoals(Symbol actor) {
+  public List<Predicate> getScheduledGoals(Symbol agentTeam) {
     List<Predicate> pg = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(actor)) {
-        pg.add(g.getGoalPredicate());
+    for (ScheduledGoal sg : em.getScheduledGoals()) {
+      if (sg.getActor().equals(agentTeam)) {
+        pg.add(sg.getDisplayPredicate());
       }
     }
     return pg;
@@ -862,14 +947,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently.
    *
-   * @param actor the actor to filter the scheduled goals list by
+   * @param agentTeam the actor to filter the scheduled goals list by
    * @return a list of scheduled goals' ids
    */
   @TRADEService
-  public List<Long> getScheduledGoalIds(Symbol actor) {
+  public List<Long> getScheduledGoalIds(Symbol agentTeam) {
     List<Long> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(actor)) {
+      if (g.getActor().equals(agentTeam)) {
         pg.add(g.getId());
       }
     }
@@ -925,7 +1010,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<GoalInfo> getAllGoals() {
     List<GoalInfo> goals = new ArrayList<>();
-    em.getActiveGoals().forEach(g -> goals.add(g.getInfo()));
     em.getCurrentGoals().forEach(g -> goals.add(g.getInfo()));
     em.getPastGoals().forEach(g -> goals.add(g.getInfo()));
     return goals;
@@ -948,8 +1032,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
-  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
-    return em.getSystemGoalsPredicates(actor,true);
+  public List<Predicate> getSystemGoalsPredicates(Symbol agentTeam) {
+    return em.getSystemGoalsPredicates(agentTeam,true);
   }
 
   /**
@@ -970,6 +1054,27 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.getSystemGoalsPredicates(agentTeam,false);
   }
 
+  /**
+   * Get a list of goalIds of all active goals for the supplied agentTeam and all members. This method does not
+   * include PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Long> getSystemGoalsIds(Symbol agentTeam) {
+    return em.getSystemGoalsIds(agentTeam);
+  }
+
+  /**
+   * Determine whether the existing goal has higher priority than the supplied priorityTier and priority values
+   *  (This method is used speculatively before goal submission to know how to format tentativeAccept responses, it
+   *    is assumed that the goal associated with priorityTier/priority will have a higher goalId and therefore lose ties)
+   * @param goalId - id of the existing goal being compared
+   * @param priorityTier - priorityTier of the speculative goal being compared to
+   * @param priority - priority of the speculative goal being compared to
+   */
+  @TRADEService
+  public boolean hasGreaterPriority(long goalId, PriorityTier priorityTier, long priority) {
+    return em.hasGreaterPriority(goalId,priorityTier,priority);
+  }
 
   /**
    * Get a list of predicates of all pending goals
@@ -978,6 +1083,16 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public List<Predicate> getPendingGoals() {
     return em.getPendingGoalsPredicates();
+  }
+
+
+  /**
+   * Get a list of predicates of all pending goals for the supplied agentTeam and all members
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getPendingGoals(Symbol agentTeam) {
+    return em.getPendingGoalsPredicates(agentTeam);
   }
 
   /**
@@ -997,6 +1112,25 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public Predicate getNextGoal(Symbol agent) {
     return em.getNextGoalPredicate(agent);
   }
+
+  /**
+   * Get the gid of the pending goal currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public long getNextGoalId() {
+    return em.getNextGoalId();
+  }
+
+  /**
+   * Get the gid of the pending goal for a specific agentTeam currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public long getNextGoalId(Symbol agent) {
+    return em.getNextGoalId(agent);
+  }
+
 
   /**
    * Get the goal ID for a goal predicate. Checks current and
@@ -1027,6 +1161,18 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public List<Long> getGoalIds(Predicate goalPredicate) {
     List<Goal> goals = em.getAllGoals(goalPredicate);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
+  }
+
+  /**
+   * Get the GoalInfo for all goals matching the supplied predicate. Checks all goal collections.
+   *
+   * @param goal
+   * @return
+   */
+  @TRADEService
+  public List<GoalInfo> getGoalInfos(Predicate goal) {
+    List<Goal> goals = em.getAllGoals(goal);
+    return goals.stream().map(Goal::getInfo).collect(Collectors.toList());
   }
 
   /**
@@ -1061,6 +1207,30 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Get the PriorityTier of a particular goal.
+   *
+   * @param gid the goal to check on
+   * @return the PriorityTier
+   */
+  @TRADEService
+  @Action
+  public PriorityTier getGoalPriorityTier(long gid) {
+    return em.getGoalPriorityTier(gid);
+  }
+
+  /**
+   * Get the priority of a particular goal.
+   *
+   * @param gid the goal to check on
+   * @return the priority
+   */
+  @TRADEService
+  @Action
+  public long getGoalPriority(long gid) {
+    return em.getGoalPriority(gid);
+  }
+
+  /**
    * Wait until a particular goal has its goal status updated to any new value.
    *
    * @param gid the goal id to check on
@@ -1068,6 +1238,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    *          already terminated
    */
   @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
   public GoalStatus waitForNextGoalStatusUpdate(long gid) {
     return waitForNextGoalStatusUpdate(gid,0);
   }
@@ -1081,8 +1253,31 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    *          already terminated, or if the timeout duration elapses without an updated
    */
   @TRADEService
-  protected GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
     return em.waitForNextGoalStatusUpdate(gid,timeout);
+  }
+
+  /**
+   * Wait until a particular goal has its goal status updated to any new value.
+   *
+   * @param gid the goal id to check on
+   * @param timeout max amount of time to wait. 0 == indefinite
+   * @param startStatus the initial status of the supplied goal - supply if worried about synchronization between checks and calls to this method
+   * @return The GoalStatus after the soonest update occurred. Returns null if the goal is not found, the goal is
+   *          already terminated, or if the timeout duration elapses without an updated
+   */
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
+    return em.waitForNextGoalStatusUpdate(gid,timeout, startStatus);
+  }
+
+  @TRADEService
+  public void interruptWaitForNextGoalStatusUpdate(long gid) {
+    em.interruptWaitForNextGoalStatusUpdate(gid);
   }
 
   /**
@@ -1158,6 +1353,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     notifier.unregisterNotification(callback, type);
   }
 
+  //TODO: Look at issue in ScheduledGoalManager executeScheduledGoal - solve differently and remove this
+  @TRADEService
+  public GoalManagerNotifier getGoalManagerNotifier() {
+    return notifier;
+  }
+
   /**
    * Utility method mainly used for testing.
    *
@@ -1170,12 +1371,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Override
   public void shutdownComponent() {
     if (this.em != null) {
-      // cancel all scheduled and pending and active goals and wait for them to terminate
-      em.getScheduledGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      List<Goal> activeGoals = em.getActiveGoals();
-      activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
-      activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
+      em.shutdown();
 
       try {
         TRADE.deregister(contextConsultant);
@@ -1183,7 +1379,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       } catch (Exception e) {
         log.error("[shutdown]", e);
       }
-      em.shutdown();
     }
     Database.destroyInstance();
     ActionSelector.destroyInstance();

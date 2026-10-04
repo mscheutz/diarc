@@ -127,9 +127,9 @@ public class PoseConsultant extends Consultant<PoseReference> {
                       ref.getPosition(), ref.getOrientation())
       );
 
-      //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
-      this.refNumber = ++maxRefNumber;
     }
+    //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
+    this.refNumber = ++maxRefNumber;
   }
 
   /**
@@ -144,7 +144,13 @@ public class PoseConsultant extends Consultant<PoseReference> {
 
       PoseRefJson jsonClass = new PoseRefJson();
       jsonClass.poseReferences = new ArrayList<>();
-      jsonClass.poseReferences.addAll(getAllReferences().stream().map(PoseReferenceJson::new).collect(Collectors.toList()));
+      for (PoseReference ref : getAllReferences()) {
+        try {
+          jsonClass.poseReferences.add(new PoseReferenceJson(ref));
+        } catch (Exception e) {
+          log.error("[writeReferencesToFile] issue writing reference " + ref + " to file. Skipping");
+        }
+      }
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {

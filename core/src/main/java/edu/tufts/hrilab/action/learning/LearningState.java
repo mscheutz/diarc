@@ -58,7 +58,7 @@ public class LearningState {
   private Map<List<Term>,String> localVariableProperties = new HashMap<>();
 
   //TODO:brad: get these values from the currently active consultants
-  private Set<String> consultantTypes = Set.of(new String[]{"physobj"});//,"gofapose","yumipose","mobileyumipose","location"});
+  private Set<String> consultantTypes = Set.of(new String[]{"physobj", "cognexobj"});//, "pose"});//,"gofapose","yumipose","mobileyumipose","location"});
   private int localVariableCounter=0;
   private int roleNameCounter = 0;
 
@@ -388,14 +388,20 @@ public class LearningState {
   private int getEventStepLocation(List<EventSpec> steps, Predicate reference) {
     // find actionStep matching reference step
     int currentLoc = 0;
-    Predicate groundedReference = groundArgs(reference);
+    String groundedReference = unquoted(groundArgs(reference));
     for (EventSpec step : steps) {
-      if (groundArgs(step.getPredicateForm()).equals(groundedReference)) {
+      if (unquoted(groundArgs(step.getPredicateForm())).equals(groundedReference)) {
         return currentLoc;
       }
       currentLoc++;
     }
     return -1;
+  }
+
+  // the stored steps carry quotes around names with spaces in them (processEventArgument), the
+  // modifications asking for those steps do not, so compare without them
+  private String unquoted(Predicate step) {
+    return step.toString().replace("\"", "");
   }
 
   /**
@@ -577,7 +583,13 @@ public class LearningState {
             name = getRoleNameForValue(value);
           }
         } else {
-          name = value.toString();
+          name = value.getName();
+          //TODO: Need to tell at this point whether the argument is a string or some other type in order to properly
+          //      escape it if necessary. Otherwise ASL writer/parser can break or have incorrect types supplied
+          if (needsEscaping(name)) {
+            name = "\"" + name + "\"";
+          }
+          name = value.hasType() ? name + ":" + value.getType() : name;
         }
       }
       param.append(name);
@@ -585,7 +597,25 @@ public class LearningState {
     return param.toString();
   }
 
+  private boolean needsEscaping(String s) {
+    //Already escaped
+    if (s.startsWith("\"") && s.endsWith("\"")) {
+      return false;
+    }
 
+    //Word or digit without special characters
+    if (s.matches("\\w+") || s.matches("[\\x00-\\x20]*[-]?((\\p{Digit}+)(\\.)?((\\p{Digit}+)?))[\\x00-\\x20]*")) {
+      return false;
+    }
+
+    //Reference symbol
+    if (s.matches(".*(.+)_\\d+:\\1")) {
+      return false;
+    }
+
+    //Otherwise contains a special character and is not detected to be a reference, escape
+    return true;
+  }
 
   /**
    *
@@ -671,7 +701,7 @@ public class LearningState {
    * Iterates through the learning queue and creates events and roles for new action
    *
    */
-  public void generateActionDBEntry() {
+  public ActionDBEntry generateActionDBEntry() {
     ActionDBEntry.Builder newDBEntry = new ActionDBEntry.Builder(name);
     // roles -- learning state creates new generic symbol action binding before returning if non exists
     newDBEntry.addRoles(new ArrayList<>(valueActBindingMap.values()));
@@ -706,6 +736,7 @@ public class LearningState {
     ActionDBEntry x = newDBEntry.build(true);
     ActionScriptLanguageWriter writer= new ActionScriptLanguageWriter();
     log.debug("Built new action:\n" + writer.writeAction(x));
+    return x;
   }
 
 
