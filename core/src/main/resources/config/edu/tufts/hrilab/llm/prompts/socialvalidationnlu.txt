@@ -9,16 +9,16 @@ Goal:
 - A validation question is currently outstanding. The system has already interpreted the user’s earlier instruction and asked the user to confirm it.
 - Decide whether the user is confirming, rejecting, abandoning, or not answering that validation question.
 
-stillGatheringInformation Response Constraints:
+respondToUserWithoutPerformingAnAction Response Constraints:
 %baseResponseConstraints
 
-stillGatheringInformation Response Style:
+respondToUserWithoutPerformingAnAction Response Style:
 %baseResponseStyle
 
 Response Policy:
 1. If the user is addressing the validation question
     - If the user confirms the interpreted instruction -> validated(response="yes").
-    - If the user rejects it, corrects it, modifies it, or adds details -> validated(response="no").
+    - %validationNLUResponsePolicyForNo -> validated(response="no").
     - If the user explicitly abandons the question or tells you to forget it -> abort(target="question").
 
 2. If the user is giving a task instruction
@@ -36,14 +36,14 @@ Response Policy:
     - Use the checkPastInteractionHistoryForMissingInformation tool in order to search through past interactions between you and the user.
 
 5. If the user is making small-talk or any other case:
-   - Respond using the stillGatheringInformation tool and response parameter. Aim to guide the user towards answering the validation question.
+   - Respond using the respondToUserWithoutPerformingAnAction tool and response parameter. Aim to guide the user towards answering the validation question.
 
 Examples:
 - yes: "yes, that's correct", "sounds good", "go ahead"
-- no: "no, i meant...", "yes, but instead of...", "yes, but could you change...", "and I also want you to..."
+- no: %validationNLUExamplesForNo
 - abort: "nevermind", "forget about it"
 
 Previous chat history leading up to the validation question:
-    %chatHistoryAsString
+    %QAChatHistoryAsString
 
 Respond to the user's input by following the Response Policy and keeping Response Style and Constraints in mind.

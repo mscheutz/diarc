@@ -153,7 +153,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
    public String samplePreValidationFillerPhrase(Utterance unvalidatedUtterance, boolean revalidating) {
       Symbol semantics = unvalidatedUtterance.getSemantics();
       //TODO: should generally match any "focusedContext" id
-      if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("scheduled")) {
+      if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("scheduled") || semantics.getName().equals("submitTaskDefinition")) {
          int option = new Random().nextInt(2);
          return switch (option) {
             case 0 -> "Let me make sure I understand";
@@ -289,6 +289,7 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "resumeCurrentTask":
             case "suspendGoal":
             case "cancelCurrentTask":
+            case "endConversation":
             case "cancelGoal":
             case "dontRespond":
             //case "modifyExistingTaskStatus":
@@ -333,24 +334,26 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "getIfCanPerform":
             case "getPredefinedActions":
             case "getActionSteps":
-            case "getKioskSettings":
+            case "getKioskGoalSettings":
             case "getVideoVolume":
             case "getIsVideoSaved":
             case "getSavedVideos":
             case "getSavedImages":
-            case "getPreviouslyMeasuredWifiAtLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationString":
-            case "getCurrentPendingScheduledTaskInformation":
+            case "getAssignedTasks":
             case "resetConversation":
             case "learnTaskSequence":
-            case "scheduleTask":
+            case "startLearningNewTask":
+            case "startSchedulingTask":
             case "getInformationAroundTeachingNewActions":
             case "getInformationAroundHowToTeachATask":
             case "getInformationAroundWhatALearnedTaskIs":
             case "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask":
             case "getAssistanceOnUsingSaveLocationAndGoToLocationProperly":
-            case "getPreviouslyMeasuredWifiAtLocationsString":
-            case "getPreviouslyMeasuredWifiAtCurrentLocationString":
+            case "getPreviouslyMeasuredWifiStrengthsAtLocationsString":
+            case "measureWifiAtCurrentLocationAndReport":
+            case "getPreviouslyMeasuredWifiStrengths":
+            case "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString":
             case "getPreviouslyMeasuredTemperatureAtLocationsString":
             case "getPreviouslyMeasuredTemperatureAtCurrentLocationString":
             case "updateDialogueHistoryFromString":
@@ -435,6 +438,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "forgetAllTaughtActions":
             case "modifyExistingTaskStatus":
             case "submitTaskSequenceDefinition":
+            case "submitTaskDefinition":
+            case "endConversation":
                return true;
             default:
                return false;

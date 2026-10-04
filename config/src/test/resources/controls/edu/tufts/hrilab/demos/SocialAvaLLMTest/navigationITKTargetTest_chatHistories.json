@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I can only navigate to saved locations, and the front door isn\\u0027t one of them. Would you like me to follow you there so I can save it?\"}"
         },
         "index" : 0
@@ -132,7 +132,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I can\\u0027t see your office, but if you tell me where it is, I\\u0027ll try to find it.\"}"
         },
         "index" : 0
@@ -224,7 +224,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"To teach me a new location, please follow me to the place you want me to remember and then instruct me to save it.\"}"
         },
         "index" : 0
@@ -316,7 +316,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I cannot navigate to the basement as it is not a saved location. Would you like me to follow you there?\"}"
         },
         "index" : 0
@@ -338,7 +338,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Yes, I would be happy to learn how to navigate to the basement. Please guide me there.\"}"
         },
         "index" : 0
@@ -360,7 +360,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"No problem. Is there anything else you would like me to help with?\"}"
         },
         "index" : 0

@@ -48,7 +48,7 @@ public class KioskGoalManager extends DiarcComponent {
    */
   private static final Object kioskGoalAccessLock = new Object();
   private boolean kioskModeEnabled;
-  private Predicate kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
+  private Predicate kioskGoalPredicate = Factory.createPredicate("chargeAtHome","ava");
   private long kioskTimeout = 2700; //seconds
   private TimerTask kioskTimerTask;
   private Timer kioskTimer;
@@ -323,6 +323,13 @@ public class KioskGoalManager extends DiarcComponent {
   @Action
   public Predicate getWrappedKioskGoalPredicate() {
     return Factory.createPredicate("kioskGoal",kioskGoalPredicate,Factory.createSymbol(String.valueOf(kioskTimeout)));
+  }
+
+  //TODO: kiosk goals should be expanded to per-agentTeam?
+  //      If so, match to supplied agent here (and include argument to all above methods)
+  @TRADEService
+  public long getKioskGoalGid(Symbol agentTeam) {
+    return kioskGoalGid;
   }
 
   @TRADEService

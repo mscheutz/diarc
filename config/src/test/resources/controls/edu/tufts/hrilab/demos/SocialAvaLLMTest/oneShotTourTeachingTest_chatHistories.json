@@ -66,7 +66,7 @@
         "id" : "call_b7ece49e6a524139b878ea0c",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I understand you want to teach me a task called measurement patrol. Let me confirm the details: start at dock, say \\\"starting the measurement patrol\\\", then measure wifi and temperature at reception and pavilion, and finally return to dock saying \\\"done measuring\\\". Is that correct?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"starting the measurement patrol\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"done measuring\"}}}]}}"
         },
         "index" : 0
@@ -173,7 +173,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The steps for the measurement patrol are to go to the dock, say starting the measurement patrol, go to reception and measure WiFi and temperature there, then go to the pavilion and measure WiFi and temperature there, return to the dock, and say done measuring.\"}"
         },
         "index" : 0

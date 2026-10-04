@@ -1118,6 +1118,18 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
     }
   }
 
+  @TRADEService
+  public boolean isStreamingSpeech(long uid) {
+    SpeechStream stream = null;
+    if (speaking) {
+      synchronized (streamingLock) {
+        removeStaleStreams();
+        stream = streams.get(uid);
+      }
+    }
+    return stream != null;
+  }
+
   @Override
   public boolean isSpeaking() {
     return speaking;

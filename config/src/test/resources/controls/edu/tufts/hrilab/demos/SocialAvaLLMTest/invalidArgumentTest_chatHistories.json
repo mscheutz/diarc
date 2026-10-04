@@ -18,7 +18,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I don\\u0027t have a location named nurse\\u0027s office in my saved locations. Could you clarify which location you\\u0027d like me to go to?\"}"
         },
         "index" : 0

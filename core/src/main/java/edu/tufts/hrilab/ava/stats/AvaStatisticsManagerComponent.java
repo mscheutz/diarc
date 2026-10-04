@@ -113,8 +113,8 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
   private static final String ESCORT_GOAL_NAME_SUBSTRING = "escort";
   /** Delivery goal names contain this (case-insensitive) for deliveries_completed. */
   private static final String DELIVERY_GOAL_NAME_SUBSTRING = "delivery";
-  /** Default kiosk goal name (KioskGoalManager default is goHomeAndCharge). Exact match so we don't count goHomeAndChargeToPercent (battery monitor). TODO: generalize to count any kiosk-submitted goal (e.g. flag in CSV or match configured kiosk action). */
-  private static final String KIOSK_GOAL_NAME_EXACT = "goHomeAndCharge";
+  /** Default kiosk goal name (KioskGoalManager default is chargeAtHome). Exact match so we don't count chargeAtHomeToPercent (battery monitor). TODO: generalize to count any kiosk-submitted goal (e.g. flag in CSV or match configured kiosk action). */
+  private static final String KIOSK_GOAL_NAME_EXACT = "chargeAtHome";
 
   private Path statisticsDir;
   private Path statisticsFile;
@@ -746,7 +746,7 @@ public class AvaStatisticsManagerComponent extends DiarcComponent {
     return count;
   }
 
-  /** Count of distinct goals (by goal_gid) whose goal_name equals exactName. Used for kiosk trigger count (default goHomeAndCharge; excludes goHomeAndChargeToPercent). */
+  /** Count of distinct goals (by goal_gid) whose goal_name equals exactName. Used for kiosk trigger count (default chargeAtHome; excludes chargeAtHomeToPercent). */
   private double queryDistinctGoalCountByExactName(long startMs, long endMs, String exactName) {
     java.util.Set<Long> gids = new java.util.HashSet<>();
     if (exactName == null) return 0;

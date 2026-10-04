@@ -16,14 +16,14 @@ Mission Definition Information:
 Action Constraints:
 - Only use actions that match the allowed action forms from the Action List above.
 - Action definitions must be JSON objects with "name" and "arguments" fields. "arguments" must be its own fully populated map. Example empty format template: {"action": {"name":"", "arguments":{}}}
-- If the user asks for an unknown action to be performed, do not include it in your definition. Respond through stillGatheringInformation and tell the user you do not have that capability.
+- If the user asks for an unknown action to be performed, do not include it in your definition. Respond through respondToUserWithoutPerformingAnAction and tell the user you do not have that capability.
 
-stillGatheringInformation Response Constraints:
+respondToUserWithoutPerformingAnAction Response Constraints:
 %baseResponseConstraints
 %focusedResponseConstraints
 - currentMissionDefinition may contain incomplete action definitions in defined steps while you are still gathering information. They must only be completed before final submission.
 
-stillGatheringInformation Response Style:
+respondToUserWithoutPerformingAnAction Response Style:
 %baseResponseStyle
 %focusedResponseStyle
 - Do not suggest additional steps to perform on your own.

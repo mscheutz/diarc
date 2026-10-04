@@ -27,7 +27,7 @@ public class ToolParameters {
     List<String> req_params = new ArrayList<>();
     properties = new LinkedHashMap<>();
     for (ToolParameterHelper parameter : params) {
-      properties.put(parameter.getName(), new ToolParameter(parameter.getType(), parameter.getPossible_values(), parameter.getDescription(), parameter.getProcessAsTool(), parameter.getToolChatTemplateContextId()));
+      properties.put(parameter.getName(), new ToolParameter(parameter.getType(), parameter.getPossible_values(), parameter.getAdvertisePossibleValues(), parameter.getDescription(), parameter.getProcessAsTool(), parameter.getToolChatTemplateContextId()));
       if (parameter.isRequired()) {
         req_params.add(parameter.getName());
       }

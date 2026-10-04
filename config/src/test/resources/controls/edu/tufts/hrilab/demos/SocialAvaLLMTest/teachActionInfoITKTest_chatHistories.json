@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Yes, you can teach me new things! Just say \\\"please learn a new task sequence!\\\" and we\\u0027ll get started.\"}"
         },
         "index" : 0
@@ -62,7 +62,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"You\\u0027ll need to provide a label for the task, a sequence of actions you want me to perform, and the locations where each action should happen.\"}"
         },
         "index" : 0
@@ -84,7 +84,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Great! Please say \\\"please learn a new task sequence!\\\" and we can begin.\"}"
         },
         "index" : 0

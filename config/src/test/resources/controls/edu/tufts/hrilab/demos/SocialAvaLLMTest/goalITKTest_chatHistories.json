@@ -18,7 +18,7 @@
         "id" : "call_e1ee810a6d2f400cbd0f70b2",
         "type" : "function",
         "function" : {
-          "name" : "scheduleTask",
+          "name" : "startSchedulingTask",
           "arguments" : "{}"
         },
         "index" : 0
@@ -66,7 +66,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I\\u0027m here to help. What would you like me to do?\"}"
         },
         "index" : 0
@@ -184,7 +184,7 @@
         "id" : "call_f9f6294ac5464b2882b1f47b",
         "type" : "function",
         "function" : {
-          "name" : "getCurrentPendingScheduledTaskInformation",
+          "name" : "getAssignedTasks",
           "arguments" : "{}"
         },
         "index" : 0
@@ -206,7 +206,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I am currently suspended, waiting to begin a dialogue to schedule a future task.\"}"
         },
         "index" : 0
@@ -228,7 +228,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"After scheduling the task, I will go to reception next.\"}"
         },
         "index" : 0
@@ -250,7 +250,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"After going to reception, I will escort Eric from reception to cardiology checkin.\"}"
         },
         "index" : 0
@@ -272,7 +272,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"After escorting Eric, I will measure the temperature at my current location every 2 hours as scheduled.\"}"
         },
         "index" : 0
@@ -294,7 +294,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I have one scheduled task to measure the temperature at my current location every 2 hours.\"}"
         },
         "index" : 0
@@ -316,7 +316,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"You can resume by telling me to resume the previous task.\"}"
         },
         "index" : 0

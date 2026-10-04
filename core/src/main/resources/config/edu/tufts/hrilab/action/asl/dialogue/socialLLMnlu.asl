@@ -117,7 +117,7 @@ import java.lang.String;
 }
 
 // General Focused Context Methods
-() = scheduleTask() {
+() = startSchedulingTask() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -128,10 +128,24 @@ import java.lang.String;
 
     act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
 
-    op:log("info", "[scheduleTask] out");
+    op:log("info", "[startSchedulingTask] out");
 }
 
 () = learnTaskSequence() {
+    Symbol !submitter;
+    java.lang.Long !cid;
+    String !contextId;
+
+    !submitter = this:getOriginalSubmitter();
+    !cid = this:getId();
+    !contextId = this:getCommand();
+
+    act:runContextSpecificChat(!submitter, ?actor, !contextId, !cid);
+
+    op:log("info", "[learnTour] out");
+}
+
+() = startLearningNewTask() {
     Symbol !submitter;
     java.lang.Long !cid;
     String !contextId;
@@ -178,6 +192,17 @@ import java.lang.String;
     op:log(info,"[endConversation]");
 
     //TODO: prompt the system to say something in this case? goodbye?
+    Symbol !user = this:getOriginalSubmitter();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    String !contextId = this:getCommand();
+
+    !response = tsc:addToolResponse(!user,?actor,"The user just ended your previous interaction. If any lingering concerns from that conversation exist, then please address them. If nothing outstanding remains, please let the user know you have moved on and continue with your original task.",!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+
+    //act:generateResponseFromString(?user,!response);
+    //act:listenPostCommunicateUtterance(?user);
 }
 
 () = dontRespond() {
@@ -240,6 +265,31 @@ import java.lang.String;
             act:submitGoal(!actionPred);
         }
         !action = op:get(!pairArgs,1);
+        act:submitGoal(!action);
+    }
+
+    act:endActionLearning(!actionSignature);
+
+    // TODO: if this instruction doesn't require validation, then we want a longer-form response listing learned steps? (Otherwise we should have already listed each step in the validation question)
+    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "learnedHowTo(?actor,performTask(?actionName))");
+    act:generateResponse(!actionPred);
+}
+() = submitTaskDefinition(Symbol ?actionName, Predicate ?actionList) {
+    java.util.List !actions;
+    Predicate !actionPred;
+    Predicate !actionSignature;
+    Symbol !action;
+
+    op:log(info,"[submitTaskDefinition] ?actionName: ?actionList");
+
+    !actionSignature = op:createPredicate(?actionName);
+    async {
+        act:learnAction(!actionSignature);
+    }
+    act:waitForActionLearningStart(!actionSignature);
+
+    !actions = op:invokeMethod(?actionList, "getArgs");
+    foreach (!action : !actions) {
         act:submitGoal(!action);
     }
 

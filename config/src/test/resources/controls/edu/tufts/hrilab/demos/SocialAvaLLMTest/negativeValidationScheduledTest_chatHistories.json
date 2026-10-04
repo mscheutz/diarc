@@ -18,7 +18,7 @@
         "id" : "call_74fb804eae754c0ba8214e30",
         "type" : "function",
         "function" : {
-          "name" : "scheduleTask",
+          "name" : "startSchedulingTask",
           "arguments" : "{}"
         },
         "index" : 0
@@ -52,7 +52,7 @@
     "systemPrompt" : null,
     "chatHistory" : [ {
       "role" : "user",
-      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to measure the temperature at reception every hour starting now indefinitely\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_74fb804eae754c0ba8214e30\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"scheduleTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"I want you to measure the temperature at reception every hour starting now indefinitely\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_74fb804eae754c0ba8214e30\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"startSchedulingTask\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should schedule a new task?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
       "function_call" : null,
       "reasoning" : null,
       "tool_calls" : null,
@@ -66,7 +66,7 @@
         "id" : "call_7a0cbc86714b45299f336487",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I understand you want to measure the temperature at reception every hour starting now indefinitely. I have all the information needed to schedule this task. Would you like me to proceed?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(60,MINUTES)\",\"end\":\"end(indefinitely)\"}}"
         },
         "index" : 0
@@ -147,7 +147,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Got it. I\\u0027ll update the schedule to measure temperature at reception every two hours instead of every hour. Is that correct?\",\"currentScheduledDefinition\":{\"action\":{\"name\":\"measureTemperatureAtLocations\",\"arguments\":{\"locations\":[\"reception:location\"]}},\"start\":\"start(0,SECONDS)\",\"repeat\":\"repeat(120,MINUTES)\",\"end\":\"end(indefinitely)\"}}"
         },
         "index" : 0

@@ -66,7 +66,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"What would you like to name this task sequence?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"\",\"locationActionPairs\":[]}}"
         },
         "index" : 0
@@ -88,7 +88,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Great, I\\u0027ll call it \\\"measurement patrol\\\". What is the first location and action for this task?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[]}}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Got it. What action should be performed at reception:location?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{}}]}}"
         },
         "index" : 0
@@ -132,7 +132,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Understood. At reception:location, I\\u0027ll measure temperature and wifi. What should be done at pavilion:location?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{}}]}}"
         },
         "index" : 0
@@ -154,7 +154,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"Got it. At the dock, I\\u0027ll report wifi and temperature for reception, pavilion, and elevator. What action should be performed at the elevator:location?\",\"currentTaskSequenceDefinition\":\"{\\\"taskName\\\": \\\"measurement patrol\\\", \\\"locationActionPairs\\\": [{\\\"location\\\": \\\"reception:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureTemperatureAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"reception:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureWifiAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"pavilion:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureTemperatureAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"pavilion:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureWifiAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"elevator:location\\\", \\\"action\\\": {}}, {\\\"location\\\": \\\"dock:location\\\", \\\"action\\\": {\\\"name\\\": \\\"reportPreviouslyMeasuredWifiOfLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\", \\\"pavilion:location\\\", \\\"elevator:location\\\"]}}}, {\\\"location\\\": \\\"dock:location\\\", \\\"action\\\": {\\\"name\\\": \\\"reportPreviouslyMeasuredTemperatureOfLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\", \\\"pavilion:location\\\", \\\"elevator:location\\\"]}}}]}}\"}"
         },
         "index" : 0

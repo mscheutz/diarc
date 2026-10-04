@@ -1,5 +1,5 @@
 {
-  "urgentGoHomeAndChargeToPercent": {
+  "urgentChargeAtHomeToPercent": {
     "priority": 1,
     "priorityTier": "URGENT"
   },
@@ -227,11 +227,27 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getPreviouslyMeasuredWifiAtLocationString":  {
+  "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getPreviouslyMeasuredTemperatureAtLocationString":  {
+  "getPreviouslyMeasuredWifiStrengths":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredWifiStrengthsAtLocationsString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "measureWifiAtCurrentLocationAndReport":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "measureWifiAtCurrentLocation":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredTemperaturesAtLocationsString":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -251,7 +267,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getKioskSettings":  {
+  "getKioskGoalSettings":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -271,7 +287,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "getCurrentPendingScheduledTaskInformation": {
+  "getAssignedTasks": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

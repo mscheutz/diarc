@@ -114,7 +114,48 @@ import edu.tufts.hrilab.action.goal.Goal;
      ?output = op:newObject("java.lang.String","I don't have a patrol path saved under the name ?pathName");
     }
 }
-(String ?output) = generateWifiAtLocationString(Symbol ?location) {
+() = getPreviouslyMeasuredWifiStrengths() {
+    String !output;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+
+    !output = act:generateWifiSummaryString();
+    Symbol !user = this:getOriginalSubmitter();
+    String !contextId = this:getCommand();
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+}
+() = getPreviouslyMeasuredWifiStrengthsAtLocationsString(Predicate ?locations) {
+    List !locList;
+    String !output;
+    edu.tufts.hrilab.slug.common.Utterance !response;
+
+    !locList = op:invokeMethod(?locations, "getArgs");
+    !output = act:generateWifiAtLocationsString(!locList);
+    Symbol !user = this:getOriginalSubmitter();
+    String !contextId = this:getCommand();
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+}
+() = getPreviouslyMeasuredWifiStrengthAtCurrentLocationString() {
+    act:measureWifiAtCurrentLocation();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+
+    Symbol !currentLocation;
+    String !output;
+    !currentLocation = act:getCurrentLocation();
+    Symbol !user = this:getOriginalSubmitter();
+    !output = act:generateWifiAtLocationString(!currentLocation);
+    String !contextId = this:getCommand();
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+}
+(String ?output) = generateWifiAtLocationString(Symbol ?wifiLocation) {
     Predicate !queryPred;
     Variable !x = "X";
     Map !elem;
@@ -124,60 +165,86 @@ import edu.tufts.hrilab.action.goal.Goal;
     java.lang.String !labelStr;
     java.lang.String !locName;
 
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(?location,X)");
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(?wifiLocation,X)");
     !bindings = act:queryBelief(!queryPred);
     if (~op:isEmpty(!bindings)) {
         !elem = op:get(!bindings, 0);
         !rssi = op:get(!elem,!x);
         !labelStr = act:rssiQualityLabel(!rssi);
         !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
-        ?output = act:generateOutputStringFromSemantics(wifiStrength(?location, !rssi, !label));
+        ?output = act:generateOutputStringFromSemantics(wifiStrength(?wifiLocation, !rssi, !label));
     } else {
-        !locName = act:locationRefToName(?location);
+        !locName = act:locationRefToName(?wifiLocation);
         ?output = op:invokeStaticMethod("java.lang.String", "format", "I have not measured wifi at %s", !locName);
     }
 }
-
-(String ?output) = generateWifiSummaryString(Symbol ?reportLocation) {
+(String ?output) = generateWifiAtLocationsString(List ?wifiLocations) {
     Predicate !queryPred;
-    Predicate !reading;
+    Variable !x = "X";
+    Map !elem;
+    List !bindings;
+    Symbol !rssi;
+    Symbol !label;
+    java.lang.String !labelStr;
+    java.lang.String !locName;
+    Symbol !wifiLocation;
+    String !locationWifiString;
+    java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
     Predicate !summaryPred;
+
+    List !predList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    Predicate !locPred;
+    foreach (!wifiLocation : ?wifiLocations) {
+        !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(!wifiLocation,X)");
+        !bindings = act:queryBelief(!queryPred);
+        if (~op:isEmpty(!bindings)) {
+            !elem = op:get(!bindings, 0);
+            !rssi = op:get(!elem,!x);
+            !labelStr = act:rssiQualityLabel(!rssi);
+            !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
+            !locName = act:locationRefToName(!wifiLocation);
+            !locPred = op:createPredicate("wifiStrength(!locName, !rssi, !label)");
+            op:add(!predList,!locPred);
+            //!locationWifiString = act:generateOutputStringFromSemantics(wifiStrength(!wifiLocation, !rssi, !label));
+            //op:invokeMethod(!sb,"append",!locationWifiString);
+
+        } else {
+            !locName = act:locationRefToName(!wifiLocation);
+            !locPred = op:createPredicate("wifiStrength(!locName, notMeasured, unknown");
+            op:add(!predList,!locPred);
+            //!locationWifiString = op:invokeStaticMethod("java.lang.String", "format", "I have not measured wifi at %s.", !locName);
+            //op:invokeMethod(!sb,"append",!locationWifiString);
+        }
+    }
+    !summaryPred = op:createPredicate("wifiMeasurements",!predList);
+    ?output = act:generateOutputStringFromSemantics(!summaryPred);
+    //?output = op:invokeMethod(!sb,"toString");
+
+}
+
+(String ?output) = generateWifiSummaryString() {
+    Predicate !queryPred;
     Variable !loc = "L";
     Variable !rssiVar = "R";
     Map !elem;
     List !bindings;
+    List !locations = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     Symbol !location;
-    Symbol !rssi;
-    Symbol !label;
-    java.lang.String !labelStr;
-    java.util.List !readings = op:newObject("java.util.ArrayList");
-    java.util.List !readingArgs;
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength(L,R)");
     !bindings = act:queryBelief(!queryPred);
     foreach(!elem : !bindings) {
         !location = op:get(!elem,!loc);
-        if (~op:equals(!location, ?reportLocation)) {
-            !rssi = op:get(!elem,!rssiVar);
-            !labelStr = act:rssiQualityLabel(!rssi);
-            !label = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !labelStr);
-            !readingArgs = op:newObject("java.util.ArrayList");
-            op:invokeMethod(!readingArgs, "add", !location);
-            op:invokeMethod(!readingArgs, "add", !rssi);
-            op:invokeMethod(!readingArgs, "add", !label);
-            !reading = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiStrength", !readingArgs);
-            op:invokeMethod(!readings, "add", !reading);
-        }
+        op:add(!locations,!location);
     }
-    if (op:isEmpty(!readings)) {
+    if (op:isEmpty(!locations)) {
         ?output = op:newObject("java.lang.String","I have not measured wifi anywhere");
     } else {
-        !summaryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifiMeasurements", !readings);
-        ?output = act:generateOutputStringFromSemantics(!summaryPred);
+        ?output = act:generateWifiAtLocationsString(!locations);
     }
-    act:generateResponseFromString(?output);
 }
 
+//TODO: update all temperature actions in line with wifi changes
 (String ?output) = generateTemperatureAtLocationString(Symbol ?location) {
     Predicate !queryPred;
     Variable !x = "X";
@@ -376,6 +443,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     Boolean !enabled;
     java.lang.StringBuilder !sb = op:newObject("java.lang.StringBuilder");
 
+    //TODO: Remove if reintroducing kiosk modification
+    op:invokeMethod(!sb,"append","Users are currently unable to enable, disable or modify kiosk task details. The static configuration is as follows: ");
+
     !enabled = tsc:getKioskModeEnabled();
     if (op:equals(!enabled,true)) {
         op:invokeMethod(!sb,"append","Kiosk mode is currently enabled.");
@@ -417,6 +487,13 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     !volume = tsc:getVideoVolume();
      ?output = op:newObject("java.lang.String","video volume is currently set to !volume percent");
+}
+
+(String ?output) = generateSpeakingVolumeString() {
+    Integer !volume;
+
+    !volume = tsc:getVoiceVolume();
+     ?output = op:newObject("java.lang.String","voice volume is currently set to !volume percent");
 }
 
 (String ?output) = generateIsVideoSavedString(Symbol ?videoName) {
@@ -483,14 +560,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getCurrentLocationString() {
@@ -507,14 +576,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllKnownLocations() {
@@ -531,14 +592,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllKnownPatrolPaths() {
@@ -555,14 +608,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getAllLocationsOnPatrolPath(Symbol ?pathName) {
@@ -579,14 +624,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getTaughtActionsList() {
@@ -603,14 +640,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getPredefinedActions() {
@@ -627,14 +656,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getActionSteps(Predicate ?action) {
@@ -651,14 +672,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getIfCanPerform(Predicate ?actionPredicate) {
@@ -675,17 +688,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
-() = getKioskSettings() {
+() = getKioskGoalSettings() {
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Long !priority;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
@@ -699,14 +704,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getSavedVideos() {
@@ -723,14 +720,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getVideoVolume() {
@@ -747,14 +736,22 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
+    }
+}
+() = getSpeakingVolume() {
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Long !priority;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
+    String !output;
+    Symbol !user = this:getOriginalSubmitter();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    //Predicate !response;
+    !output = act:generateSpeakingVolumeString();
+    String !contextId = this:getCommand();
+    java.lang.Long !goalID;
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
     }
 }
 () = getIsVideoSaved(Symbol ?videoName) {
@@ -771,14 +768,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 () = getSavedImages() {
@@ -795,17 +784,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
-() = getCurrentPendingScheduledTaskInformation() {
+() = getAssignedTasks() {
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     java.lang.Long !priority;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
@@ -819,14 +800,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -844,14 +817,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -869,14 +834,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -894,14 +851,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -913,22 +862,13 @@ import edu.tufts.hrilab.action.goal.Goal;
     Symbol !user = this:getOriginalSubmitter();
     edu.tufts.hrilab.slug.common.Utterance !response;
     //Predicate !response;
-    //!output = op:newObject("java.lang.String","- Teaching new actions: A user can begin teaching you how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\" (after which you will call the \"learnTaskSequence\" tool). You can take it from there and guide them through supplying all the information you need to learn the task. Alternatively, they can ask you for an explanation of what a taught task sequence consists of and then be able to supply all the necessary information themselves!\\n- Taught Task Components: Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action.Supplying this information will result in a task which is instructable through reference to the supplied label.\\n- Possible Taught Task Sequence Steps: Steps of a taught task sequence can include things like playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, and more.\\n- Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it");
-    //!output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new instructable task from a user, a user must simply ask you to learn a new task sequence or action which will cause you to enter an action teaching specific dialogue (by you calling the \"learnTaskSequence\" tool)\\n-- Doing so with no additional task sequence details will cause the system to prompt the user for all relevant pieces of information to define the new task.\\n-- The user may also supply additional task sequence information proactively, which the system will preload into the teaching dialogue.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more\\nResponse Instructions:\\n- If the user asked relevant questions around task sequence teaching, use information from the fact list above to answer them to the best of your ability\\n- If the user explicitly asked to teach you something new, call the \"learnTaskSequence\" tool\\n- If none of this information is relevant to user input causing you to call this tool, you may ignore it or say that you do not know the answer to their questions\\nExceptions:\\n- If the user has asked anything around saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.");
-    !output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new task, task sequence or action, you must call the \"learnTaskSequence\" function.\\n-- A user can instruct you to call this function by saying any variation of \"learn a new task\" or \"learn something new\".\\n-- Calling this function will trigger a task learning specific dialogue interaction.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name.\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one.\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence.\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more.\\nResponse Policy:\\n- a. If the user has asked to teach you something new, then call the \"learnTaskSequence\" tool immediately.\\n- b. If not and the user asked relevant questions around teaching, then use information from the fact list above to answer them to the best of your ability.\\n- c. If none of this information is relevant to user input, you may ignore it or say that you do not know the answer to their questions.\\nExceptions:\\n- If the user asked about saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.\\nAdditional Response Rules:\\n- Do not try to learn anything or gather any task sequence information before calling the learnTaskSequence function. You cannot learn things on your own.");
+    //!output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new task, task sequence or action, you must call the \"learnTaskSequence\" function.\\n-- A user can instruct you to call this function by saying any variation of \"learn a new task\" or \"learn something new\".\\n-- Calling this function will trigger a task learning specific dialogue interaction.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name.\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one.\\n-- Location sequence: a corresponding sequence of locations defining where to perform each sub-action from the Action Sequence.\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more.\\nResponse Policy:\\n- a. If the user has asked to teach you something new, then call the \"learnTaskSequence\" tool immediately.\\n- b. If not and the user asked relevant questions around teaching, then use information from the fact list above to answer them to the best of your ability.\\n- c. If none of this information is relevant to user input, you may ignore it or say that you do not know the answer to their questions.\\nExceptions:\\n- If the user asked about saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.\\nAdditional Response Rules:\\n- Do not try to learn anything or gather any task sequence information before calling the learnTaskSequence function. You cannot learn things on your own.");
+    !output = op:newObject("java.lang.String","Fact List:\\n- To learn how to perform a new task, task sequence or action, you must call the \"startLearningNewTask\" function.\\n-- A user can instruct you to call this function by saying any variation of \"learn a new task\" or \"learn something new\".\\n-- Calling this function will trigger a task learning specific dialogue interaction.\\n- Relevant task sequence details required during teaching:\\n-- Name: a label to save the task under. Future instruction of the learned task will be done through this name.\\n-- Action Sequence: a sequence of sub-actions to perform as part of the newly taught one.\\n- Possible task sequence sub-actions: playing a video, displaying an image, saying a phrase, taking a wi-fi measurement, other taught action sequences, and more.\\nResponse Policy:\\n- a. If the user has asked to teach you something new, then call the \"startLearningNewTask\" tool immediately.\\n- b. If not and the user asked relevant questions around teaching, then use information from the fact list above to answer them to the best of your ability.\\n- c. If none of this information is relevant to user input, you may ignore it or say that you do not know the answer to their questions.\\nExceptions:\\n- If the user asked about saving, teaching, or navigating between new locations or areas, then call the getAssistanceOnUsingSaveLocationAndGoToLocationProperly function for relevant information. Task sequence teaching is not used for teaching new locations or direct navigation.\\nAdditional Response Rules:\\n- Do not try to learn anything or gather any task sequence information before calling the learnTaskSequence function. You cannot learn things on your own.");
     String !contextId = this:getCommand();
     java.lang.Long !goalID;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 
@@ -948,14 +888,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-    //    !priorityTier = act:getPriorityTierForGoal(!response);
-    //    !priority = act:getPriorityForGoal(!response);
-    //    !goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!user);
-    //    act:joinOnGoal(!goalID);
-    //    !output = op:getName(!response);
-    //    if (op:equals(!output,"generateResponseFromString")) {
-    //      act:listenPostCommunicateUtterance(!user);
-    //    }
     }
 }
 

@@ -66,7 +66,7 @@
         "id" : "call_aeb7334b1d8045ecaaa9a399",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"starting the measurement patrol\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"done measuring\"}}}]},\"response\":\"I understand you want to teach me a task called \\\"measurement patrol\\\" with four steps. Let me confirm: start at the dock, say \\\"starting the measurement patrol\\\", then measure wifi at reception, measure wifi at pavilion, and finally return to dock saying \\\"done measuring\\\". Is this correct?\"}"
         },
         "index" : 0
@@ -147,7 +147,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I need to add a step at the elevator between reception and pavilion where you say something. What should I say at that location?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"starting the measurement patrol\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"done measuring\"}}}]}}"
         },
         "index" : 0

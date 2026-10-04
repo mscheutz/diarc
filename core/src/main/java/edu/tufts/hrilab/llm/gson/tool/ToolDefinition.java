@@ -8,11 +8,7 @@ public class ToolDefinition {
   public String type = "function";
   public ToolFunction function;
 
-  public ToolDefinition(String name, String description, ToolParameters parameters) {
-    this.function = new ToolFunction(name, description, parameters);
-  }
-
-  public ToolDefinition(String name, String description, List<ToolParameterHelper> parameters) {
-    this.function = new ToolFunction(name, description, parameters);
+  public ToolDefinition(ToolFunction toolFunction) {
+    this.function = toolFunction;
   }
 }

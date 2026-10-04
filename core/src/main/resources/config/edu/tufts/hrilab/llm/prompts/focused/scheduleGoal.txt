@@ -19,7 +19,7 @@ Scheduled Task Information:
 Action Constraints:
 - Only use actions that match the allowed action forms from the Action List above.
 - Action definitions must be JSON objects with "name" and "arguments" fields. "arguments" must be its own fully populated map. Example empty format template: {"action": {"name":"", "arguments":{}}}
-- If the user asks for an unknown action to be performed, do not include it in your definition. Respond through stillGatheringInformation and tell the user you do not have that capability.
+- If the user asks for an unknown action to be performed, do not include it in your definition. Respond through respondToUserWithoutPerformingAnAction and tell the user you do not have that capability.
 %toolArgumentTypeDescription
 
 Timing Constraints:
@@ -28,7 +28,7 @@ Timing Constraints:
 - If a task is nonrepeating, there is no end time. end may take the value "nonrepeating" as well.
 - Do not ask the user for an end time if the task is nonrepeating.
 
-stillGatheringInformation Response Constraints:
+respondToUserWithoutPerformingAnAction Response Constraints:
 %baseResponseConstraints
 %focusedResponseConstraints
 

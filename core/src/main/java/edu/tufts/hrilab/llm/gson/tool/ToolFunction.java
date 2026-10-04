@@ -1,23 +1,32 @@
 package edu.tufts.hrilab.llm.gson.tool;
 
-import edu.tufts.hrilab.llm.openai.ToolParameterHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.LinkedHashMap;
 
 public class ToolFunction {
+  protected static Logger log = LoggerFactory.getLogger(ToolFunction.class);
+
   public String name;
   public String description;
-  public ToolParameters parameters;
+  public ToolParameterV2 parameters;
 
-  public ToolFunction(String name, String description, ToolParameters parameters) {
+  public ToolFunction(String name, String description) {
     this.name = name;
     this.description = description;
-    this.parameters = parameters;
+    parameters = new ToolParameterV2("object",null, new LinkedHashMap<>(), new String[0]);
   }
 
-  public ToolFunction(String name, String description, List<ToolParameterHelper> parameters) {
+  public ToolFunction(String name, String description, LinkedHashMap<String,ToolParameterV2> parameters) {
     this.name = name;
     this.description = description;
-    this.parameters = new ToolParameters(parameters);
+    this.parameters = new ToolParameterV2("object",null,parameters, new String[0]);
+  }
+
+  public ToolFunction(String name, String description, LinkedHashMap<String,ToolParameterV2> parameters, String[] required) {
+    this.name = name;
+    this.description = description;
+    this.parameters = new ToolParameterV2("object",null,parameters, required);
   }
 }

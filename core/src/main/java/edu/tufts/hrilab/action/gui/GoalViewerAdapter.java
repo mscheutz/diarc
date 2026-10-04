@@ -186,9 +186,9 @@ public class GoalViewerAdapter extends GuiAdapter {
           return "Go to charging dock";
         case "learnNewTask":
           return "Learn a new action";
-        case "goHomeAndCharge":
+        case "chargeAtHome":
           return "Return to dock and charge";
-        case "scheduleTask":
+        case "startSchedulingTask":
         case "scheduleGoal":
           return "Schedule a new task";
         case "modifyScheduledGoal":

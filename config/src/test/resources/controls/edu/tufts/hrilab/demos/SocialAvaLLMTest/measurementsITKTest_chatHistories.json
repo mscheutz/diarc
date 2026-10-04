@@ -18,7 +18,7 @@
         "id" : "call_17f4fc9b415c45d4b8ec49f1",
         "type" : "function",
         "function" : {
-          "name" : "getPreviouslyMeasuredWifiAtLocationsString",
+          "name" : "getPreviouslyMeasuredWifiStrengthsAtLocationsString",
           "arguments" : "{\"locations\":[\"reception:location\"]}"
         },
         "index" : 0
@@ -40,7 +40,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"I do not have information about the wifi signal strength at reception.\"}"
         },
         "index" : 0
@@ -110,7 +110,7 @@
         "id" : "call_c606ed91df924fbaa28181af",
         "type" : "function",
         "function" : {
-          "name" : "getPreviouslyMeasuredWifiAtLocationsString",
+          "name" : "getPreviouslyMeasuredWifiStrengthsAtLocationsString",
           "arguments" : "{\"locations\":[\"reception:location\"]}"
         },
         "index" : 0
@@ -132,7 +132,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The wifi signal strength at reception is strong.\"}"
         },
         "index" : 0
@@ -154,7 +154,7 @@
         "id" : "call_289b8931aee14052a741d001",
         "type" : "function",
         "function" : {
-          "name" : "getPreviouslyMeasuredWifiAtCurrentLocationString",
+          "name" : "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString",
           "arguments" : "{}"
         },
         "index" : 0
@@ -176,7 +176,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The wifi signal strength where I am right now is weak.\"}"
         },
         "index" : 0
@@ -220,7 +220,7 @@
         "id" : "",
         "type" : "function",
         "function" : {
-          "name" : "stillGatheringInformation",
+          "name" : "respondToUserWithoutPerformingAnAction",
           "arguments" : "{\"response\":\"The temperature where I am right now is 70 degrees.\"}"
         },
         "index" : 0
