@@ -74,6 +74,8 @@ public class CachedParserComponent extends DiarcComponent {
       incoming.setSemantics(outgoing.getSemantics());
       incoming.setIndirectSemantics(outgoing.getIndirectSemantics());
       incoming.setBindings(outgoing.getBindings());
+      incoming.setSupplementalSemantics(outgoing.getSupplementalSemantics());
+      incoming.setTierAssignments(outgoing.getTierAssignments());
       incoming.setType(outgoing.getType());
     }
     return incoming;
