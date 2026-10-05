@@ -216,7 +216,7 @@ public class TLDLParserComponent extends DiarcComponent {
     if (utterances.isEmpty()) {
       log.warn("[buildPartialUtterance] No valid parses found.");
       if (chartParser.hasUnkownTokens()) {
-        Utterance errorSemantics = generateErrorSemantics(speaker, addressee, chartParser.getFirstUnknownTokens());
+        Utterance errorSemantics = generateErrorSemantics(input, speaker, addressee, chartParser.getFirstUnknownTokens());
         errorSemantics.setWords(input.getWords());
         return errorSemantics;
       } else {
@@ -452,7 +452,7 @@ public class TLDLParserComponent extends DiarcComponent {
    *                      the generated semantics will not reference specific unknown words.
    * @return An Utterance object containing the error message along with the appropriate semantics and addressee.
    */
-  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String unknownWords) {
+  private Utterance generateErrorSemantics(Utterance input, Symbol speaker, Symbol addressee, String unknownWords) {
     log.debug("sending error message");
 
     Utterance.Builder utterance = new Utterance.Builder(input);
