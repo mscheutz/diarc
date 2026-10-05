@@ -24,7 +24,7 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.llm.LLMServiceProvider;
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
@@ -1027,7 +1027,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         if (chatCollection != null) {
           ChatContext chatContext = chatCollection.currentChat;
           String warningString = "- The supplied action name \"" + actionName + "\" matches the name of a previously taught action. Warn the user that saving an action under this name will overwrite the existing action under the same name.";
-          if (chatContext.history.messages.stream().anyMatch(m -> m.role.equals("tool") && m.content.contains(warningString))) {
+          if (chatContext.history.messages.stream().anyMatch(m -> m.role.equals("tool") && m.getText().contains(warningString))) {
             return "";
           } else {
             return warningString;
@@ -1917,7 +1917,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
 
   /// / General Completion / ChatCollection Utilities ////
 
-  private Completion callChatCompletion(Chat chat, List<ToolDefinition> tools) {
+  protected Completion callChatCompletion(Chat chat, List<ToolDefinition> tools) {
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
     Future<Completion> future = endpointCallExecutor.submit(() -> {
       try {
@@ -2285,7 +2285,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
-  private Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools, long uid) {
+  protected Completion callChatCompletionStreaming(Chat chat, List<ToolDefinition> tools, long uid) {
     currentStreamingUid = uid;
     TRADEServiceInfo tsi = getMyService("streamingChunkHandler", OpenaiChatCompletionResponse.class, OpenaiChatCompletionResponse.class, Chat.class);
     ExecutorService endpointCallExecutor = Executors.newSingleThreadExecutor();
@@ -2375,6 +2375,10 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
     }
   }
 
+  @TRADEService
+  public Utterance addVisionResponse(Symbol user, Symbol agentTeam, String visionData, String toolCallName) {
+    return addToolResponse(user, agentTeam, visionData, toolCallName, true);
+  }
   //TODO: Should ITK calls be fully synchronized between instruction to this call here? Ideally, yes, but it would be
   //  very very hard to detect any exception in the external itk method which would cause this method to not be
   //  reached. For now, if a user submits another input which terminates the chat context before this method has a
@@ -2385,6 +2389,9 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
    */
   @TRADEService
   public Utterance addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName) {
+    return addToolResponse(user, agentTeam, toolResponse, toolCallName, false);
+  }
+  private Utterance addToolResponse(Symbol user, Symbol agentTeam, String toolResponse, String toolCallName, boolean visionMessage) {
     Symbol speaker = getUntypedSymbol(user);
     Symbol addressee = getUntypedSymbol(agentTeam);
     ChatCollection collection;
@@ -2416,9 +2423,17 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
         }
         if (toolCallId.isEmpty()) {
           log.warn("[addToolResponse] couldn't find matching original tool call {} prompting response {}", toolCallName, toolResponse);
-          chatContext.history.addMessage("tool", toolResponse);
+          if (visionMessage) {
+            chatContext.history.addToolVisionMessage("", toolResponse, "");
+          } else {
+            chatContext.history.addMessage("tool", toolResponse);
+          }
         } else {
-          chatContext.history.addToolMessage(toolResponse, toolCallId);
+          if (visionMessage) {
+            chatContext.history.addToolVisionMessage("", toolResponse, toolCallId);
+          } else {
+            chatContext.history.addToolMessage(toolResponse, toolCallId);
+          }
         }
 
         ChatToolList chatToolList = prepChatAndToolList(chatContext, agentTeam, user);
@@ -4100,7 +4115,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       if (chatContext != null) {
         int numMessages = chatContext.history.messages.size();
         if (numMessages > 3) {
-          int numWordsInLastMessage = chatContext.history.messages.get(chatContext.history.messages.size() - 4).content.length();
+          int numWordsInLastMessage = chatContext.history.messages.get(chatContext.history.messages.size() - 4).getText().length();
           if (numMessages > 6 || numWordsInLastMessage > 15) {
             additionalInformationHeuristic = true;
           }

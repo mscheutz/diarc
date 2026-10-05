@@ -905,13 +905,42 @@ import edu.tufts.hrilab.action.goal.Goal;
     !response = tsc:addToolResponse(!submitter,?actor,!output,!contextId);
     if (~op:isNull(!response)) {
         act:handleParsedUtterance(!response);
-        //!priorityTier = act:getPriorityTierForGoal(!response);
-        //!priority = act:getPriorityForGoal(!response);
-        //!goalID = act:submitGoal(!response,!execType,!priorityTier,!priority,!submitter);
-        //act:joinOnGoal(!goalID);
-        //!output = op:getName(!response);
-        //if (op:equals(!output,"generateResponseFromString")) {
-        //  act:listenPostCommunicateUtterance(!submitter);
-        //}
+    }
+}
+
+/////////////////////// Image Input Experimentation ///////////////////////
+
+() = getCurrentViewDescription() {
+    String !output;
+    String !systemMessage;
+    Symbol !user = this:getOriginalSubmitter();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+
+    !output = tsc:visionCompletionTest("Describe what you see in this image.");
+
+    if (op:isNull(!output)) {
+        !output = op:newObject("java.lang.String","There was an issue getting camera frame data.");
+    } elseif (op:invokeMethod(!output,"isEmpty")) {
+        !output = op:newObject("java.lang.String","There was an issue getting camera frame data.");
+    }
+
+    String !contextId = this:getCommand();
+    !response = tsc:addToolResponse(!user,?actor,!output,!contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
+    }
+}
+
+() = getCurrentView() {
+    String !contextId = this:getCommand();
+    Symbol !user = this:getOriginalSubmitter();
+    String !imageString = tsc:getMockImageData();
+    edu.tufts.hrilab.slug.common.Utterance !response;
+    if (op:isNull(!imageString)) {
+        !imageString = op:newObject("java.lang.String","There was an issue getting camera frame data.");
+    }
+    !response = tsc:addVisionResponse(!user, ?actor, !imageString, !contextId);
+    if (~op:isNull(!response)) {
+        act:handleParsedUtterance(!response);
     }
 }

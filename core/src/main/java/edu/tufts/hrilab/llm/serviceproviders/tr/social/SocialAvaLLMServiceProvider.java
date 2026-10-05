@@ -5,6 +5,7 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import com.google.gson.Gson;
 import edu.tufts.hrilab.action.db.DBEntry;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
@@ -13,6 +14,9 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.llm.Chat;
+import edu.tufts.hrilab.llm.Completion;
+import edu.tufts.hrilab.llm.message.MultiModalMessage;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.gson.tool.ToolFunction;
@@ -20,7 +24,6 @@ import edu.tufts.hrilab.llm.gson.tool.ToolParameterV2;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1310,6 +1313,13 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
               "Get the list of saved images in your collection which you are able to display"));
       itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
 
+
+      //// Experimental
+      //definition = new ToolDefinition(new ToolFunction("getCurrentViewDescription",
+      //        "Use this to ask the system for a description of your current camera view."));
+      //definition = new ToolDefinition(new ToolFunction("getCurrentView",
+      //        "Use this to ask the system for your current camera view."));
+      //itkTools.add(new Tool(definition, UtteranceType.QUESTION, Tool.PostCallBehavior.KEEP_HISTORY));
       return itkTools;
    }
 
@@ -1460,5 +1470,86 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
       //replyTools.put(Factory.createPredicate("amount(X)"), new Tool(definition,UtteranceType.REPLY));
 
       return replyTools;
+   }
+
+   @TRADEService
+   public String visionCompletionTest(String prompt) {
+      String urlString;
+
+      //// From local file / byte string
+      //String localFilePath = "/home/eric/Downloads/image.png";
+      //try {
+      //   Path path = Paths.get(localFilePath);
+      //   bytes = Files.readAllBytes(path);
+      //   String base64Data = Base64.getEncoder().encodeToString(bytes);
+      //   String mimeType = Files.probeContentType(path);
+      //   urlString = "data:"+mimeType+";base64,"+base64Data;
+      //} catch (IOException e) {
+      //   log.error("[visionCompletionTest] unable to load image", e);
+      //   return null;
+      //}
+
+      //// From remote URL
+      urlString = "https://qianwen-res.oss-accelerate.aliyuncs.com/Qwen3.5/demo/CI_Demo/mathv-1327.jpg";
+
+      //// Vision Completion standalone call
+      //List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
+      //vmessages.add(new VisionMessage("user", prompt.toString(), urlString));
+      //Completion response;
+      //try {
+      //   response = TRADE.getAvailableService(new TRADEServiceConstraints().name("visionCompletion").argTypes(List.class)).call(Completion.class, vmessages);
+      //} catch (TRADEException e) {
+      //   log.error("[visionCompletionTest] exception during vision completion call", e);
+      //   return null;
+      //}
+      //return response.text;
+
+      //// Mirroring general Chat format for testing
+      Chat chat = new Chat("webapp","ava");
+      List<ToolDefinition> tools = List.of(textResponseTool.toolDefinition);
+      chat.setSystem("You are Ava, a helpful robot assistant. Please assist the user interacting with you by responding using respondToUserWithoutPerformingAnAction.");
+      chat.addMessage(new MultiModalMessage("user",prompt, urlString));
+      Completion response;
+      response = callChatCompletion(chat, tools);
+
+      if (response == null) {
+         return "There was an issue getting camera frame data";
+      }
+      if (!response.toolCalls.isEmpty()) {
+         try {
+            Map<String,String> args = new Gson().fromJson(response.toolCalls.get(0).function.arguments, HashMap.class);
+            return args.get("response");
+         } catch (Exception e) {
+            log.error("[visionCompletionTest] error while extracting response");
+            return "There was an issue getting camera frame data";
+         }
+      } else {
+         if (response.text.isEmpty()) {
+            return "There was an issue getting camera frame data";
+         }
+         return response.text;
+      }
+   }
+
+   @TRADEService
+   public String getMockImageData() {
+
+      //// Remote URL
+      return "https://qianwen-res.oss-accelerate.aliyuncs.com/Qwen3.5/demo/CI_Demo/mathv-1327.jpg";
+
+      //// local file / byte string
+      //String urlString;
+      //String localFilePath = "/home/eric/Downloads/image.png";
+      //try {
+      //   Path path = Paths.get(localFilePath);
+      //   byte[] bytes = Files.readAllBytes(path);
+      //   String base64Data = Base64.getEncoder().encodeToString(bytes);
+      //   String mimeType = Files.probeContentType(path);
+      //   urlString = "data:"+mimeType+";base64,"+base64Data;
+      //} catch (IOException e) {
+      //   log.error("[visionCompletionTest] unable to load image", e);
+      //   return null;
+      //}
+      //return urlString;
    }
 }

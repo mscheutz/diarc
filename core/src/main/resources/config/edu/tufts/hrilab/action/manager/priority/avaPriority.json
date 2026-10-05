@@ -378,5 +378,13 @@
   "cancelScheduledTasks": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentView": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentViewDescription": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

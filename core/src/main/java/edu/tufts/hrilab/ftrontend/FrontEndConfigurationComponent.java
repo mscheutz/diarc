@@ -429,6 +429,8 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "submitTaskSequenceDefinition":
             case "submitTaskDefinition":
             case "endConversation":
+            case "getCurrentView":
+            case "getCurrentViewDescription":
                return true;
             default:
                return false;

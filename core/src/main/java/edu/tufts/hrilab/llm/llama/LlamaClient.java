@@ -5,12 +5,13 @@
 package edu.tufts.hrilab.llm.llama;
 
 import edu.tufts.hrilab.llm.LLMClient;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.llm.llama.request.*;
 import edu.tufts.hrilab.llm.llama.response.*;
 
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.util.Http;
 
 import java.util.ArrayList;
@@ -132,8 +133,8 @@ public class LlamaClient implements LLMClient {
     }
 
     List<Message> messages = new ArrayList<>();
-    messages.add(new Message("system", systemPrompt));
-    messages.add(new Message("user", userPrompt));
+    messages.add(new TextMessage("system", systemPrompt));
+    messages.add(new TextMessage("user", userPrompt));
     return chatCompletion(messages);
   }
 

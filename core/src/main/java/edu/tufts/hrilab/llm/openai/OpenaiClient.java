@@ -7,13 +7,14 @@ package edu.tufts.hrilab.llm.openai;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.llm.LLMClient;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
 import edu.tufts.hrilab.llm.openai.request.*;
 import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.llm.VisionMessage;
 import edu.tufts.hrilab.util.Http;
 
@@ -192,8 +193,8 @@ public class OpenaiClient implements LLMClient {
   @Override
   public Completion chatCompletion(String userPrompt, String model, String systemPrompt) {
       List<Message> messages = new ArrayList<>();
-      messages.add(new Message("system", systemPrompt));
-      messages.add(new Message("user", userPrompt));
+      messages.add(new TextMessage("system", systemPrompt));
+      messages.add(new TextMessage("user", userPrompt));
       return chatCompletion(messages);
   }
 
