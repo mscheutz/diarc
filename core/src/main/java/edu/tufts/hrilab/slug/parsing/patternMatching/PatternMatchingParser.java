@@ -13,6 +13,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -32,7 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class PatternMatchingParser extends DiarcComponent {
+public class PatternMatchingParser extends DiarcComponent implements NLUInterface {
     final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final Map<String,Class<? extends UtterancePattern>> knownPatterns= new HashMap<>();
