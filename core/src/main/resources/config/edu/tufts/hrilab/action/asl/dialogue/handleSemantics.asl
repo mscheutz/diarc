@@ -218,8 +218,8 @@ import java.lang.Boolean;
         } else {
           act:generateResponse(?speaker, ?query, !beliefs, direct);
       }
-      act:listenPostCommunicateUtterance(?speaker);
     }
+      act:listenPostCommunicateUtterance(?speaker);
 }
 
 () = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Boolean ?validated) {
