@@ -150,6 +150,8 @@ public class HybridParserComponent extends DiarcComponent {
     // generate the sequence information
     if (cmdLine.hasOption("sequence")) {
       sequence = cmdLine.getOptionValues("sequence");
+    } else if (cmdLine.hasOption("parsingSequence")) {
+      sequence = cmdLine.getOptionValues("parsingSequence");
     } else {
       sequence = new String[]{"cache", "tldl", "pattern", "llm"};
     }
