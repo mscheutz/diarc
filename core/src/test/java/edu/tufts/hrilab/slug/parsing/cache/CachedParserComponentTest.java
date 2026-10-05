@@ -53,7 +53,8 @@ public class CachedParserComponentTest {
         component.addEntryToCache(parseResult);
         Utterance cacheResult = component.parseUtterance(incoming);
 
-        String outcome = cacheResult.toString();
+        // the expected strings don't have the words in them, toString does
+        String outcome = cacheResult.toString().replace(",\"" + cacheResult.getWordsAsString() + "\"", "");
         if (outcome.equals(desired)) {
             log.info("outcome: " + outcome);
             log.info("desired: " + desired + "\n");
