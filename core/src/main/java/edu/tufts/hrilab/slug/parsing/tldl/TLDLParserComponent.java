@@ -136,7 +136,8 @@ public class TLDLParserComponent extends DiarcComponent {
    * @param input
    * @return
    */
-  @Override
+  @TRADEService
+  @Action
   public Utterance parseUtterance(Utterance input) {
     chartParser.resetChart();
 
