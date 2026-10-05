@@ -1937,7 +1937,7 @@ public class ExecutionManager implements GoalListener {
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pendingGoal = pendingGoalIterator.next();
         if (agentTeam.getName().getName().equals(pendingGoal.getGoal().getActor().getName()) || agentTeam.getMember(pendingGoal.getGoal().getActor()) != null) {
-          goalPreds.add(pendingGoal.getGoal().getPredicate());
+          goalPreds.add(pendingGoal.getGoal().getGoalStatePredicate());
         }
       }
     }

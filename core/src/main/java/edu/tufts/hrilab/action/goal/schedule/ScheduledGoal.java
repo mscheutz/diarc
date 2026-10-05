@@ -66,7 +66,7 @@ public class ScheduledGoal extends Goal {
 
   public Predicate getDisplayPredicate() {
     List<Symbol> args = new ArrayList<>();
-    args.add(super.getPredicate());
+    args.add(super.getGoalStatePredicate());
     if (start != null && scheduleInfo.startTime != null) {
       long nowMs = System.currentTimeMillis();
       long startMs = scheduleInfo.startTime.getTime();
@@ -130,13 +130,13 @@ public class ScheduledGoal extends Goal {
   }
 
   @Override
-  public Predicate getPredicate() {
-    return getPredicate(false);
+  public Predicate getGoalPredicate() {
+    return getGoalPredicate(false);
   }
 
-  public Predicate getPredicate(boolean reformatDateString) {
+  public Predicate getGoalPredicate(boolean reformatDateString) {
     List<Symbol> args = new ArrayList<>();
-    args.add(super.getPredicate()); // goal state
+    args.add(super.getGoalStatePredicate()); // goal state
     SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
     if (start != null) {
       // the start pred could be a relative time, so always return as a non-relative date string
@@ -187,7 +187,7 @@ public class ScheduledGoal extends Goal {
     if (submittedGoals.size() >= 50) {
       submittedGoals.remove(0);
     }
-    Goal nextGoal = createGoal(super.getPredicate());
+    Goal nextGoal = createGoal(super.getGoalPredicate());
     submittedGoals.add(nextGoal);
     return nextGoal;
   }
