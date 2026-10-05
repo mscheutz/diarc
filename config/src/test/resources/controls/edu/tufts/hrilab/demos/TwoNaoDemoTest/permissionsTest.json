@@ -33,7 +33,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,is(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,propertyOf(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -159,7 +159,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,is(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
+      "serviceArgs" : [ "REPLY(dempster,ravenna,cannot(know(dempster,propertyOf(prep(area,behind(dempster)),safe)),because(not(trust(dempster,ravenna)))),\"I can not know area behind me is safe because I do not trust you\",{})", "true" ]
     } ]
   } ]
 }
