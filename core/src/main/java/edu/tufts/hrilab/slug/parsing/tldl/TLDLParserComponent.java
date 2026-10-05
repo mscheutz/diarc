@@ -209,7 +209,7 @@ public class TLDLParserComponent extends DiarcComponent {
     List<Utterance> utterances = new ArrayList<>();
     if (finalParses != null) {
       for (Node parse : finalParses) {
-        utterances.addAll(createUtterances(parse, speaker, addressee));
+        utterances.addAll(createUtterances(input, parse, speaker, addressee));
       }
     }
 
@@ -254,7 +254,7 @@ public class TLDLParserComponent extends DiarcComponent {
    * @return An Utterance object constructed based on the rules, semantics, and other properties of the node.
    * Returns null if no valid Utterance could be created from the node's rules.
    */
-  public List<Utterance> createUtterances(Node finalNode, Symbol speaker, Symbol addressee) {
+  public List<Utterance> createUtterances(Utterance input, Node finalNode, Symbol speaker, Symbol addressee) {
     List<Utterance> utterances = new ArrayList<>();
     for (NodeEntry nodeRule : finalNode.getRules()) {
 
@@ -293,7 +293,7 @@ public class TLDLParserComponent extends DiarcComponent {
       log.debug("Bindings: " + diarcSemantics);
 
       // build utterance
-      Utterance utterance = new Utterance.Builder()
+      Utterance utterance = new Utterance.Builder(input)
               .setSpeaker(speaker)
               .setAddressee(intendedAddressee)
               .setSemantics(mainSemantics)
