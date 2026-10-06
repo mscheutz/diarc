@@ -7,7 +7,7 @@ package edu.tufts.hrilab.llm.openai.request;
 import java.util.List;
 import java.util.Map;
 
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 
 public class OpenaiChatRequestBody {

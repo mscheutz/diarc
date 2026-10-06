@@ -4,6 +4,8 @@
 
 package edu.tufts.hrilab.llm;
 
+import edu.tufts.hrilab.llm.message.Message;
+
 import java.util.List;
 
 public interface LLMClient {

@@ -8,18 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.tufts.hrilab.llm.gson.tool.response.ToolCall;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.MultiModalMessage;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.knuddels.jtokkit.*;
-
-import edu.tufts.hrilab.llm.openai.response.*;
 
 public class Chat {
   static private Logger log = LoggerFactory.getLogger(Chat.class);
 
   public int tokens = 0;
-  public List<Message> messages = new ArrayList<Message>();
+  public List<Message> messages = new ArrayList<>();
   public String userName = "user";
   public String robotName = "assistant";
   public String systemMessage = "";
@@ -27,8 +26,9 @@ public class Chat {
   public String service = "openai";
   public String model = "gpt-4";
 
-  public List<Integer> tokenCounts = new ArrayList<Integer>();
-  private Tokenizer tokenizer = new Tokenizer();
+  //TODO: reintroduce when having a formal tokenizer representation which words (or pulling data from completion responses)
+  //public List<Integer> tokenCounts = new ArrayList<Integer>();
+  //private Tokenizer tokenizer = new Tokenizer();
 
   public Chat () {
 
@@ -59,33 +59,22 @@ public class Chat {
 
   public Chat (Message message) {
     messages.add(message);
-    //updateTokenCounts();
   }
 
   public Chat (String systemText, List<Message> msgs) {
     systemMessage = systemText;
     messages = msgs;
-    //updateTokenCounts();
   }
 
   public Chat (Prompt systemPrompt, List<Message> msgs) {
     systemMessage = systemPrompt.toString();
     messages = msgs;
-    //updateTokenCounts();
-  }
-
-  public Chat (Completion a, Completion b) {
-    String str = a.toString();
-    str += "\n\n";
-    str += b.toString();
-    systemMessage = str;
-    //updateTokenCounts();
   }
 
   public Chat (Chat other) {
     messages = new ArrayList<>();
     for (Message msg : other.messages) {
-      messages.add(new Message(msg.role, msg.content, msg.tool_calls));
+      messages.add(new Message(msg.role, msg.content, msg.reasoning, msg.tool_calls, msg.tool_call_id));
     }
     tokens = other.tokens;
     userName = other.userName;
@@ -126,69 +115,49 @@ public class Chat {
    **/
 
   public void addMessage (String role, String content) {
-    messages.add(new Message(role, content));
-    //updateTokenCounts();
+    messages.add(new TextMessage(role, content));
   }
 
   public void addMessage (Message message) {
     messages.add(message);
-    //updateTokenCounts();
   }
 
   public void addMessages (List<Message> msgs) {
     for (Message message : msgs) {
       messages.add(message);
     }
-    //updateTokenCounts();
   }
 
   public void setMessages (List<Message> msgs) {
     messages = msgs;
-    //updateTokenCounts();
   }
 
   public void setMessages (Chat chat) {
     messages = chat.messages;
-    //updateTokenCounts();
   }
 
   public void addUserMessage (String content) {
-    messages.add(new Message("user", content));
-    //updateTokenCounts();
+    messages.add(new TextMessage("user", content));
   }
 
   public void addRobotMessage (String content) {
-    messages.add(new Message("assistant", content));
-    //updateTokenCounts();
+    messages.add(new TextMessage("assistant", content));
   }
 
   public void addRobotMessage (String content, List<ToolCall> toolCalls) {
-    messages.add(new Message("assistant", content, toolCalls.toArray(new ToolCall[]{})));
-    //updateTokenCounts();
+    messages.add(new TextMessage("assistant", content, toolCalls.toArray(new ToolCall[]{})));
   }
 
   public void addToolMessage (String content, String tool_call_id) {
-    messages.add(new Message("tool", content, tool_call_id));
-    //updateTokenCounts();
+    messages.add(new TextMessage("tool", content, tool_call_id));
   }
 
-  public void addInteraction (Message a, Message b) {
-    messages.add(a);
-    messages.add(b);
-    //updateTokenCounts();
+  public void addToolVisionMessage(String text, String imageUrl, String tool_call_id) {
+    messages.add(new MultiModalMessage("tool", text, imageUrl, tool_call_id));
   }
 
-  public void addCompletion (Completion completion) {
-    messages.add(new Message("assistant", completion.text));
-    //updateTokenCounts();
-  }
-
-  public void addCompletion (Completion completion, boolean updateTokens) {
-    if (updateTokens) {
-      tokens = completion.inputTokens;
-      tokens += completion.outputTokens;
-    }
-    messages.add(new Message("assistant", completion.text));
+  public void addUserVisionMessage(String text, String imageUrl) {
+    messages.add(new MultiModalMessage("user", text, imageUrl));
   }
 
   public List<Message> getMessages () {
@@ -235,26 +204,26 @@ public class Chat {
     return context;
   }
 
-  private void updateTokenCounts () {
-    int count;
-    tokens = 0;
-    tokenCounts = new ArrayList<Integer>();
-    Message systemMessage = toSystemMessage();
-    if (systemMessage != null) {
-      count = tokenizer.count(systemMessage.content.toString());
-      tokens += count;
-      log.debug(systemMessage.role + " tokens: " + count);
-    }
-    for (Message message : messages) {
-      count = tokenizer.count(message.content.toString());
-      tokenCounts.add(count);
-      tokens += count;
-      log.debug(message.role + " tokens: " + count);
-    }
-    log.debug("total tokens: " + tokens);
-  }
+  //private void updateTokenCounts () {
+  //  int count;
+  //  tokens = 0;
+  //  tokenCounts = new ArrayList<Integer>();
+  //  Message systemMessage = toSystemMessage();
+  //  if (systemMessage != null) {
+  //    count = tokenizer.count(systemMessage.content.toString());
+  //    tokens += count;
+  //    log.debug(systemMessage.role + " tokens: " + count);
+  //  }
+  //  for (Message message : messages) {
+  //    count = tokenizer.count(message.content.toString());
+  //    tokenCounts.add(count);
+  //    tokens += count;
+  //    log.debug(message.role + " tokens: " + count);
+  //  }
+  //  log.debug("total tokens: " + tokens);
+  //}
 
-  public Message toSystemMessage () {
+  public TextMessage toSystemMessage () {
     String systemContent = "";
     if (!systemMessage.equals("")) {
       systemContent += systemMessage + "\n\n";
@@ -263,7 +232,7 @@ public class Chat {
       systemContent += context + "\n\n";
     }
     if (!systemContent.equals("")) {
-      return new Message("system", systemContent);
+      return new TextMessage("system", systemContent);
     }
     return null;
   }
@@ -274,7 +243,7 @@ public class Chat {
 
   public List<Message> toPrompt () {
     List<Message> prompt = new ArrayList<Message>();
-    Message systemMessage = toSystemMessage();
+    TextMessage systemMessage = toSystemMessage();
     if (systemMessage != null) {
       prompt.add(systemMessage);
     }

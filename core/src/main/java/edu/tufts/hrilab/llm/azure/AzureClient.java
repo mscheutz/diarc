@@ -8,6 +8,8 @@ import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.llm.*;
 import edu.tufts.hrilab.llm.azure.request.LlamaAzureCompletionRequestBody;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
@@ -118,9 +120,9 @@ public class AzureClient implements LLMClient{
       return null;
     }
     List<Message> messages = new ArrayList<>();
-    messages.add(new Message("user", userPrompt));
+    messages.add(new TextMessage("user", userPrompt));
     if (!systemPrompt.isEmpty()) {
-      messages.add(new Message("system", systemPrompt));
+      messages.add(new TextMessage("system", systemPrompt));
     }
     return chatCompletion(messages);
   }

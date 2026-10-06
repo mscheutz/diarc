@@ -6,7 +6,7 @@ package edu.tufts.hrilab.test.framework.tester;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.llm.serviceproviders.tr.social.ChatContext;
 import edu.tufts.hrilab.llm.serviceproviders.tr.social.SocialTRLLMServiceProvider;
 import edu.tufts.hrilab.test.framework.gson.ServiceCallInstance;

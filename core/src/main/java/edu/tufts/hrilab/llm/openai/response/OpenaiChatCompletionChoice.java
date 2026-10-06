@@ -4,14 +4,14 @@
 
 package edu.tufts.hrilab.llm.openai.response;
 
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 
 public class OpenaiChatCompletionChoice {
-	public Message message = null;
+	public TextMessage message = null;
 	public int index = -1;
 	public float logprobs = -1;
 	public String finish_reason = null;
-	public Message delta = null; //streaming
+	public TextMessage delta = null; //streaming
 
 	@Override
 	public String toString() {
