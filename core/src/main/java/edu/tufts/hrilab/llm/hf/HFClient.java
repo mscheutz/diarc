@@ -8,16 +8,15 @@ import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.llm.*;
 import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBody;
-import edu.tufts.hrilab.llm.hf.request.T5BaseCompletionRequestBody;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
-import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.llm.openai.request.OpenaiChatRequestBody;
 import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -129,9 +128,9 @@ public class HFClient implements LLMClient {
     @Override
     public Completion chatCompletion(String userPrompt, String model, String systemPrompt) {
         List<Message> messages = new ArrayList<>();
-        messages.add(new Message("user", userPrompt));
+        messages.add(new TextMessage("user", userPrompt));
         if (!systemPrompt.isEmpty()) {
-            messages.add(new Message("system", systemPrompt));
+            messages.add(new TextMessage("system", systemPrompt));
         }
         return chatCompletion(new Chat(messages), model);
     }

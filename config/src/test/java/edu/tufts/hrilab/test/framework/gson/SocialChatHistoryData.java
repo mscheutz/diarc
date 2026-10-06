@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.test.framework.gson;
 
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
 
 import java.util.List;
 

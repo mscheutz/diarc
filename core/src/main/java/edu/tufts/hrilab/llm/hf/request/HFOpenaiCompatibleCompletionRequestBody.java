@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import edu.tufts.hrilab.llm.LlamaHFChat;
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 
 public class HFOpenaiCompatibleCompletionRequestBody {
   public String model;
@@ -42,7 +43,7 @@ public class HFOpenaiCompatibleCompletionRequestBody {
 
   public HFOpenaiCompatibleCompletionRequestBody(LlamaHFChat chat, String model) {
     init();
-    messages.add(new Message("system", chat.getSystem()));
+    messages.add(new TextMessage("system", chat.getSystem()));
     messages.addAll(chat.getMessages());
     this.model = model;
   }

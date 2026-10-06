@@ -7,6 +7,8 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.llm.*;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.NLG;
 import edu.tufts.hrilab.slug.parsing.llm.*;
@@ -67,7 +69,7 @@ public class PickAndPlaceLLM extends DiarcComponent {
     public ParserResponse pickAndPlaceLLMParser (String utterance) {
         String userMessage = nluPrompt.getText() + utterance;
         List<Message> chatInput = new ArrayList<>();
-        chatInput.add(new Message("user",userMessage));
+        chatInput.add(new TextMessage("user",userMessage));
         Chat chat = new Chat();
         chat.setMessages(chatInput);
 
@@ -187,7 +189,7 @@ public class PickAndPlaceLLM extends DiarcComponent {
 
         String userMessage = nlgPrompt.getText() + realization;
         List<Message> chatInput = new ArrayList<>();
-        chatInput.add(new Message("user",userMessage));
+        chatInput.add(new TextMessage("user",userMessage));
         Chat chat = new Chat();
         chat.setMessages(chatInput);
 

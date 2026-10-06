@@ -78,4 +78,4 @@ calibrate offset; C; runGraspCalibration(?ADDRESSEE)
 run grasp calibration; C; runGraspCalibration(?ADDRESSEE)
 run vision calibration; C; runFullCalibration(?ADDRESSEE)
 
-reset demo C; resetDemo(?ADDRESSEE)
+reset demo; C; resetDemo(?ADDRESSEE)
