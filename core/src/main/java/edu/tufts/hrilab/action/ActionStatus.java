@@ -39,10 +39,10 @@ public enum ActionStatus {
   SATISFYING_PRECONDITIONS(false, false),
   SATISFYING_OBLIGATIONS(false,false),
   CANCEL(true, false),
-  PARENT_CANCELED(true, false),
+  PARENT_CANCEL(true, false),
   EXIT_RECOVERY(true,true),
   SUSPEND(false, false),
-  PARENT_SUSPENDED(false, false),
+  PARENT_SUSPEND(false, false),
   RESUME(false, false),
   RETURN(false, false);
 

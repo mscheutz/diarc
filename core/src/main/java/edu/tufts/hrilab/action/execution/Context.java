@@ -236,14 +236,14 @@ public abstract class Context {
       // (2) when overall conditions fail
       if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.PARENT_CANCELED && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.PARENT_CANCEL && !child.isTerminated()) {
               child.setStatus(ActionStatus.CANCEL);
           }
         });
       } else if (actionStatus == ActionStatus.SUSPEND) {
         // propagate SUSPEND down the tree to any running children (e.g., async)
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && child.getStatus() != ActionStatus.PARENT_SUSPENDED && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && child.getStatus() != ActionStatus.PARENT_SUSPEND && !child.isTerminated()) {
               child.setStatus(ActionStatus.SUSPEND);
           }
         });
@@ -380,7 +380,7 @@ public abstract class Context {
     Context next = null;
     if (getStatus() == ActionStatus.RESUME) {
       // check if any child context(s) are suspended (and need to be resumed)
-      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND || child.getStatus() == ActionStatus.PARENT_SUSPENDED);
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND || child.getStatus() == ActionStatus.PARENT_SUSPEND);
       if (suspendedChildIdx >= 0) {
         Context childContext = childContexts.get(suspendedChildIdx);
         if (childContext.getStatus() == ActionStatus.SUSPEND) {
@@ -746,6 +746,20 @@ public abstract class Context {
       interruptible = !hasNoInterruptAncestor();
     }
     return interruptible;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting SUSPEND ActionStatus
+   */
+  public boolean canSuspend() {
+    return false;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting CANCEL ActionStatus
+   */
+  public boolean canCancel() {
+    return false;
   }
 
   /**

@@ -1104,6 +1104,16 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     return false;
   }
 
+  @Override
+  public boolean canSuspend() {
+    return isInterruptible() && (isScript() || getDBE().hasOnSuspendEvent());
+  }
+
+  @Override
+  public boolean canCancel() {
+    return isInterruptible() && (isScript() || getDBE().hasOnCancelEvent());
+  }
+
   /**
    * Get the Recovery instance corresponding to this context
    */

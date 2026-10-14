@@ -516,7 +516,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           // this should only happen when executing a finally block, which we want to execute before suspending
           alreadySuspended = true;
         } else {
-          nextStep.setStatus(ActionStatus.SUSPEND);
+          nextStep.setStatus(ActionStatus.PARENT_SUSPEND);
         }
         nextStep.setStatus(ActionStatus.SUSPEND);
       } else if (!alreadyCancelled && canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
@@ -524,7 +524,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           // this should only happen when executing a finally block, which we want to execute before cancelling
           alreadyCancelled = true;
         } else {
-          nextStep.setStatus(ActionStatus.CANCEL);
+          nextStep.setStatus(ActionStatus.PARENT_CANCEL);
         }
       }
 
@@ -564,7 +564,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspended.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.isInterruptible()) {
+        if (currentStep.canSuspend()) {
           currentStep.setStatus(ActionStatus.SUSPEND);
         }
       }
@@ -634,7 +634,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       if (currentStep == null) {
         // update the goal status if canceling from a suspend state
         if (suspended.get()) {
-          this.goal.setStatus(GoalStatus.CANCELED);
+          cancelFromSuspend();
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getGoalPredicate());
           return false;
@@ -647,7 +647,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         canceled.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.isInterruptible()) {
+        if (currentStep.canCancel()) {
           currentStep.setStatus(ActionStatus.CANCEL);
         }
       }
@@ -665,6 +665,49 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
     }
     return true;
+  }
+
+  private void cancelFromSuspend() {
+    //PickAndPlace2024 - Discussion to have in general, but needed for implementation of this domain
+    //  Want to execute onCancel behaviors even from a suspended state. E.g. if the suspend behavior caches some
+    //  relevant state but cancel needs to clear it, or if suspend is allowed in some subsymbolic intermediate state
+    //  but cancel needs to terminate in a 'safe' state.
+    Context c = rootStep;
+    Context leafToSet = null;
+    boolean suspended = true;
+    //Push suspended trace onto callStack so all relevant contexts' status can be set to CANCEL (and call relevant
+    //  interruption behaviors) in stepExecution finishStep status propagation.
+    while (c != null) {
+      if (c.getStatus() == ActionStatus.SUSPEND) {
+        callStack.before(c);
+        leafToSet = c;
+      } else if (c.getStatus() == ActionStatus.PARENT_SUSPEND) {
+        callStack.before(c);
+        leafToSet = c;
+        suspended = false;
+        break;
+      }
+      c = c.getChildContexts().getCurrent();
+    }
+    //Don't want leaf on stack, will be current step
+    callStack.next();
+
+    if (leafToSet == null) {
+      //Q: If there are no contexts which are suspended, this means we suspended after the last step of the goal. In this
+      //    case the "suspended state" is just a formality to prevent the next action from starting. Canceling at this
+      //    point should just allow the goal to terminate as it would've? Makes no sense to set canceled status and not
+      //    assert success effects or failure justifications at this point.
+      // This block can be removed if we are allowing suspend/cancel primitives to instead just fail in this case
+      resume();
+    } else {
+      if (suspended) {
+        leafToSet.setStatus(ActionStatus.CANCEL);
+      } else {
+        leafToSet.setStatus(ActionStatus.PARENT_CANCEL);
+      }
+      setCurrentStep(leafToSet);
+      shouldUpdate.set(true);
+    }
   }
 
   /**
