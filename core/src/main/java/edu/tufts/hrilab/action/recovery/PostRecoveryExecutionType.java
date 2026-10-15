@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * RETRY: Re-execute the failed context which triggered recovery.
  *  Example Use Case: Obstacle prevents action success but causes no side effects. Recovery removes obstacle and
  *  thereafter only the failed action needs to be re-executed.
- * SUCCESS: Continue execution as if the failed context triggering recovery has succeeded.
+ * CONTINUE: Continue execution as if the failed context triggering recovery has succeeded.
  *  Example Use Case: Recovery directly achieves goal state of failed action, planning around novel information which
  *  caused initial failure.
  */

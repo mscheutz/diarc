@@ -95,7 +95,7 @@ public class FailedPostConditionsPolicy {
         createNewAction = false;
       } else {
         // create new action --> change new action name to not conflict with existing action
-        fixedActionBuilder.setType(brokenAction.getType() + "_" + inputArg);
+        fixedActionBuilder.setMethodName(brokenAction.getMethodName() + "_" + inputArg);
         createNewAction = true;
       }
     } else {

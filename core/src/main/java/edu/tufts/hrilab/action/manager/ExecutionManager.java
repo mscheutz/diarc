@@ -8,7 +8,6 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
@@ -32,8 +31,6 @@ import edu.tufts.hrilab.action.learning.ActionLearningStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -2683,7 +2680,7 @@ public class ExecutionManager implements GoalListener {
           if (!removed) {
             //TODO: Look into - get two different ActionDBEntry objects when retrieving from DB vs from file if learned
             //  during this instance of TRACS. If present on startup, then the same object is returned and matches above
-            removed = learnedActions.removeIf(a -> a.getType().equals(action.getType()) && a.getRoles().size() == action.getRoles().size());
+            removed = learnedActions.removeIf(a -> a.getMethodName().equals(action.getMethodName()) && a.getRoles().size() == action.getRoles().size());
             if (!removed) {
               log.warn("action was not found in learned file");
             }

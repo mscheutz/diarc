@@ -1022,7 +1022,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
       }
     } else if (semantics.getName().equals("submitTaskSequenceDefinition") || semantics.getName().equals("submitTaskDefinition")) {
       String actionName = semantics.get(1).getName();
-      if (learnedActions.stream().anyMatch(dbe -> dbe.getType().equals(actionName))) {
+      if (learnedActions.stream().anyMatch(dbe -> dbe.getMethodName().equals(actionName))) {
         ChatCollection chatCollection = getChatCollection(utterance.getSpeaker().toUntyped(), utterance.getAddressee().toUntyped());
         if (chatCollection != null) {
           ChatContext chatContext = chatCollection.currentChat;

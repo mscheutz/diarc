@@ -18,122 +18,120 @@ public class FailureInformation {
 
   public Symbol actor;
   public RecoveryType contextType;
-  public Predicate catchingContext;
-  public boolean isCatchingContextParent = false;
   public Predicate goal;
   public List<Predicate> failedActions;
   public List<Predicate> failureReasons;
   public ActionStatus actionStatus;
   public List<String> excludedPolicies;
 
+  // only used for action recovery (not goal recovery)
+  public Predicate catchingContext;
+  public boolean isCatchingContextParent = false;
+
   /**
-   * Checks if the recovery policy constraints are applicable to this failure information.
+   * Get the match score for this FailureInformation compared against the PolicyConstraints.
+   * Any value >= 0 indicates a match. Negative values indicate no match.
    *
    * @param constraints
    * @return
    */
-  public boolean isApplicable(PolicyConstraints constraints) {
-    // if PolicyConstraints has no set requirements (i.e., always applicable)
-    if (constraints.isEmpty()) {
-      return true;
-    }
-
-    return (getNumberOfConstraintMatches(constraints) > 0);
-  }
-
   public int getNumberOfConstraintMatches(PolicyConstraints constraints) {
     int matches = 0;
 
     if (goal == null  || failureReasons == null || actionStatus == null) {
       log.warn("Incomplete failure information. Can not match against any policy constraints.");
-      return 0;
+      return -1;
     }
 
     //If supplied policy is present in the excludedList (has exhausted its attempt count without success), do not match again
-    if (excludedPolicies.contains(constraints.name)) {
-      return 0;
+    if (excludedPolicies.contains(constraints.methodName)) {
+      return -1;
     }
 
     //Recovery policy type and catching context type need to match (action vs goal)
     if (contextType == RecoveryType.ACTION && constraints.recoveryType != contextType) {
-      return 0;
+      return -1;
     }
 
     // if there are failedActions or excludedFailedActions constraints, and the failedAction is unknown, the policy can't be used
     if (failedActions.isEmpty() && (!constraints.failedActions.isEmpty() || !constraints.excludedFailedActions.isEmpty())) {
-      return 0;
+      return -1;
     }
 
-    //Additional action recovery only checks
+    // Additional action recovery only checks
     if (constraints.recoveryType.isAction()) {
-      //If an explicit catching action signature is defined, this context must match it
+      // If an explicit catching action signature is defined, this context must match it
       if (!constraints.catchingActions.isEmpty()) {
         if (catchingContext != null && constraints.catchingActions.stream().anyMatch(a -> catchingContext.instanceOf(a))) {
           ++matches;
         } else {
-          return 0;
+          return -1;
         }
-      }
-      //Otherwise, this context must be a direct parent of the failed context in order to match
-      else if (!isCatchingContextParent) {
-        return 0;
+      } else if (!isCatchingContextParent) {
+        // Otherwise, this context must be a direct parent of the failed context to match
+        return -1;
       }
     }
 
+    // if there are action statuses constraints, the failed action status must match one in the list
     if (!constraints.actionStatuses.isEmpty()) {
       if (!constraints.actionStatuses.contains(actionStatus)) {
-        return 0;
+        return -1;
       } else {
         ++matches;
       }
     }
 
+    // if there are goals constraints, the failed goal must match one in the list
     if (!constraints.goals.isEmpty()) {
       if (constraints.goals.stream().noneMatch(g -> goal.instanceOf(g))) {
-        return 0;
+        return -1;
       } else {
         ++matches;
       }
     }
 
+    // if there are excluded goals constraints, the failed goal must not match one in the list
+    // this does not add to the match score
     if (!constraints.excludedGoals.isEmpty()) {
       if (constraints.excludedGoals.stream().anyMatch(g -> goal.instanceOf(g))) {
-        return 0;
-      } else {
-        ++matches;
+        return -1;
       }
     }
 
+    // if there are failed actions constraints, at least one failed action must match one in the list
     if (!constraints.failedActions.isEmpty()) {
       if (constraints.failedActions.stream().noneMatch(action -> failedActions.stream().anyMatch(action2 -> action2.instanceOf(action)))) {
-        return 0;
+        return -1;
       } else {
         ++matches;
       }
     }
 
+    // if there are excluded failed actions constraints, none of the failed actions can match any in the constraint list
+    // excluded failed actions do not add to the match score
     if (!constraints.excludedFailedActions.isEmpty()) {
       if (constraints.excludedFailedActions.stream().anyMatch(action -> failedActions.stream().anyMatch(action2 -> action2.instanceOf(action)))) {
-        return 0;
-      } else {
-        ++matches;
+        return -1;
       }
     }
 
+    // if there are failure reason constraints, all the failed action's failure reasons must be contained in the constraint list
+    // if an action fails without failure reasons, it does not match
     if (!constraints.failureReasons.isEmpty()) {
       //TODO: change made in demo crunch - double check. Was it intended that a match would be made when a policy has explicit failure reasons but but the actual failure had no justification?
       if (failureReasons.isEmpty() || !failureReasons.stream().allMatch(reason -> constraints.failureReasons.stream().anyMatch(validReason -> reason.instanceOf(validReason)))) {
-        return 0;
+        return -1;
       } else {
         ++matches;
       }
     }
 
+    // if there are excluded failure reason constraints, none of the failed action's failure reasons can match any in the constraint list
+    // excluded failure reasons do not add to the match score
     if (!constraints.excludedFailureReasons.isEmpty()) {
       if (failureReasons.stream().anyMatch(reason -> constraints.excludedFailureReasons.stream().anyMatch(invalidReason -> reason.instanceOf(invalidReason)))) {
-        return 0;
-      } else {
-        ++matches;
+        return -1;
       }
     }
 

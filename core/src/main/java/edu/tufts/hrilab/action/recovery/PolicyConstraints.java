@@ -15,9 +15,9 @@ import java.util.Set;
  */
 public class PolicyConstraints {
   /**
-   * The DBEntry name of the action relating to this recovery policy
+   * The DBEntry method name containing the recovery policy specification.
    */
-  public String name = "";
+  public String methodName;
   /**
    * Type of recovery policy - one of Action or Goal.
    * The corresponding recovery policy can be caught in and applied under contexts of this type.
@@ -89,12 +89,4 @@ public class PolicyConstraints {
    * GaolRecovery: Attempt count always increments and never resets. TODO if also want to check for progress (see notes in Recovery.java)
    */
   public int maximumAttempts = 1;
-
-  /**
-   * Returns true if the corresponding recovery policy is empty (i.e., is always applicable).
-   * @return
-   */
-  public boolean isEmpty() {
-    return goals.isEmpty() && excludedGoals.isEmpty() && failedActions.isEmpty() && excludedFailedActions.isEmpty() && failureReasons.isEmpty() && excludedFailureReasons.isEmpty() && actionStatuses.isEmpty();
-  }
 }

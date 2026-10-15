@@ -850,7 +850,7 @@ public class SocialAvaLLMServiceProvider extends SocialTRLLMServiceProvider {
             Predicate transformedArg = correctCommonNLUMistakesHelper((Predicate)semantics.get(1), actor, instructor, errorStringBuilder);
             if (transformedArg != null) {
                if (command.equals("forgetTaughtAction")) {
-                  List<String> taughtActionNames = learnedActions.stream().map(DBEntry::getType).toList();
+                  List<String> taughtActionNames = learnedActions.stream().map(DBEntry::getMethodName).toList();
                   if (!taughtActionNames.contains(transformedArg.getName())) {
                      errorStringBuilder.append("- the supplied actionPredicate argument does not match an action previously taught by the user. Only user taught actions can be forgotten, not predefined ones; the current list of known taught action names are ").append(taughtActionNames);
                   }

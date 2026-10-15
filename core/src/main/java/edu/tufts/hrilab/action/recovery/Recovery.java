@@ -276,7 +276,7 @@ public class Recovery {
      */
     private boolean selectRecoveryPolicy(Context context, ActionStatus failureStatus, Justification failureJustification) {
       List<String> excludedPolicies = new ArrayList<>(failedPolicies);
-        while (hasRecoveryPolicy(context, failureStatus, failureJustification,excludedPolicies)) {
+        while (hasRecoveryPolicy(context, failureStatus, failureJustification, excludedPolicies)) {
             if (shouldTerminateRecovery(context, failureStatus, failureJustification)) {
                 excludedPolicies.add(selectedRecoveryAction.getName());
             } else {
@@ -334,9 +334,6 @@ public class Recovery {
         newFailureInfo.catchingContext = context.getChildContexts().getCurrent().getSignatureInPredicateForm();
         newFailureInfo.excludedPolicies = excludedPolicies;
 
-        // look up recovery policy options
-        List<PolicyConstraints> matchingConstraints = Database.getRecoveryPolicyDB().getMatchingPolicyConstraints(newFailureInfo);
-
         if (newFailureInfo.equals(failureInfo)) {
             repeatedIdenticalFailures += 1;
         } else {
@@ -344,13 +341,8 @@ public class Recovery {
         }
         failureInfo = newFailureInfo;
 
-        //Cannot have RETRY post recovery if no specific child action at this level failed (possible in the case of FAIL_OVERALLCONDITIONS, FAIL_POSTCONDITIONS)
-        //Is practically also an issue with FAIL_NOTFOUND because there is no current functionality to reattempt to parse the previous eventSpec.
-        // Q: should this ^ case be allowed? (recovery when an action isn't known/its service isn't available)
-        if (newFailureInfo.contextType.isAction() && newFailureInfo.failedActions.isEmpty()) {
-            matchingConstraints.removeIf(e -> e.postRecoveryExecutionType == PostRecoveryExecutionType.RETRY);
-        }
-
+        // look up recovery policy options
+        List<PolicyConstraints> matchingConstraints = Database.getRecoveryPolicyDB().getMatchingPolicyConstraints(newFailureInfo);
         if (matchingConstraints.isEmpty()) {
             return null;
         } else {

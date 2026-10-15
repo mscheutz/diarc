@@ -26,13 +26,9 @@ public abstract class DBEntry implements Serializable {
   private static final long serialVersionUID = 779232533378720982L;
 
   /**
-   * Each entry in the database has an associated type. The type may be a name
-   * of an action or an operator. For example, the type could be "liftup". The
-   * type is also used to define a type hierarchy. The action with
-   * a type "liftup" may have a parent type of "action". The type hierarchy is
-   * used by isA.
+   * The method name of the DBEntry (asl action/operator or java method)
    */
-  protected final String type;
+  protected final String methodName;
 
   /**
    * The description is human-readable text describing the entry. The
@@ -49,29 +45,29 @@ public abstract class DBEntry implements Serializable {
   
   protected final boolean isVarArgs;
 
-  protected DBEntry(String type, String description, List<ActionBinding> roles, boolean isVarArgs) {
-    this.type = type;
+  protected DBEntry(String methodName, String description, List<ActionBinding> roles, boolean isVarArgs) {
+    this.methodName = methodName;
     this.description = description;
     this.roles = roles;
     this.isVarArgs = isVarArgs;
   }
 
   /**
-   * Get the type of this entry.
+   * Get the method name of this entry.
    *
    * @return the type
    */
-  public String getType() {
-    return this.type;
+  public String getMethodName() {
+    return this.methodName;
   }
 
   /**
-   * Get the name of this entry (same as type)
+   * Get the name of this entry (same as method name)
    *
    * @return the name
    */
   public String getName() {
-    return this.type;
+    return this.methodName;
   }
 
 
@@ -271,7 +267,7 @@ public abstract class DBEntry implements Serializable {
   public String toString() {
     StringBuilder sb = new StringBuilder("DBEntry\n");
 
-    sb.append("\ttype: " + type + '\n');
+    sb.append("\tmethodName: " + methodName + '\n');
     sb.append("\tdescription: " + description + '\n');
     sb.append("\troles:\n");
     for (ActionBinding b : roles) {

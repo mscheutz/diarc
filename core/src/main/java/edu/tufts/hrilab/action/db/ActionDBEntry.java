@@ -118,7 +118,7 @@ public class ActionDBEntry extends DBEntry {
 
   public static class Builder {
     private final String defaultActorType = "agent";
-    private String type;
+    private String methodName;
     private String description = "";
     private List<EventSpec> eventSpecs = new ArrayList<>();
     private List<Condition> conditions = new ArrayList<>();
@@ -155,7 +155,7 @@ public class ActionDBEntry extends DBEntry {
       if (entryToCopy.tsi != null) {
         log.warn("Copying a primitive action. Primitives cannot be modified in any meaning way, so this is likely not want you want.");
       }
-      this.type = entryToCopy.type;
+      this.methodName = entryToCopy.methodName;
       this.description = entryToCopy.description;
       this.eventSpecs = new ArrayList<>(entryToCopy.eventSpecs);
       this.conditions = new ArrayList<>(entryToCopy.conditions);
@@ -180,8 +180,8 @@ public class ActionDBEntry extends DBEntry {
       this.dbfile = entryToCopy.dbfile;
     }
 
-    public Builder(String type) {
-      this.type = type;
+    public Builder(String methodName) {
+      this.methodName = methodName;
     }
 
     /**
@@ -194,13 +194,13 @@ public class ActionDBEntry extends DBEntry {
     }
 
     /**
-     * Set the action type (i.e., action method name).
+     * Set the action method name.
      *
-     * @param type
+     * @param methodName
      * @return
      */
-    public Builder setType(String type) {
-      this.type = type;
+    public Builder setMethodName(String methodName) {
+      this.methodName = methodName;
       return this;
     }
 
@@ -391,12 +391,13 @@ public class ActionDBEntry extends DBEntry {
     }
 
     /**
-     * Adds a recovery policy constraint.
+     * Adds a recovery policy constraint. Sets the name of the constraint to the method name.
      *
      * @param constraint policy constraint
      * @return this Builder instance
      */
     public Builder addRecoveryPolicyConstraint(PolicyConstraints constraint) {
+      constraint.methodName = this.methodName;
       policyConstraints.add(constraint);
       return this;
     }
@@ -637,7 +638,7 @@ public class ActionDBEntry extends DBEntry {
           argList.addAll(optionalArgs.subList(0, argCounter));
         }
         // actionName(?arg1, ?arg2, ...) -> no actor
-        Predicate innerPredicate = Factory.createPredicate(type, argList);
+        Predicate innerPredicate = Factory.createPredicate(methodName, argList);
         // successful execution: succeeded(?actor, actionName(?arg0, ?arg1, ...)
         // failed execution: failed(?actor, actionName(?arg0, ?arg1, ...)
         Predicate succeededPredicate = Factory.createPredicate("succeeded", innerPredicate);
@@ -672,7 +673,7 @@ public class ActionDBEntry extends DBEntry {
 
   protected ActionDBEntry(Builder builder) {
     // Build DBEntry with basic information
-    super(builder.type, builder.description, builder.roles, builder.isVarArgs);
+    super(builder.methodName, builder.description, builder.roles, builder.isVarArgs);
 
     // Build ActionDBEntry with action-specific information
     eventSpecs = builder.eventSpecs;
@@ -1146,7 +1147,7 @@ public class ActionDBEntry extends DBEntry {
         args.add(new Constant(name, role.getSemanticType()));
       }
     }
-    return Factory.createPredicate(this.type, args);
+    return Factory.createPredicate(this.methodName, args);
   }
 
   /**
@@ -1165,7 +1166,7 @@ public class ActionDBEntry extends DBEntry {
       } else {
         args.add(new Constant(name, role.getSemanticType()));
       }
-      signatures.add(Factory.createPredicate(this.type, args));
+      signatures.add(Factory.createPredicate(this.methodName, args));
     }
     return signatures;
   }
@@ -1221,7 +1222,7 @@ public class ActionDBEntry extends DBEntry {
         }
         executionJustification = new ConditionJustification(true);
       } catch (TRADEException e) {
-        log.error("Exception while calling " + tsi + " for action: " + type + " with args : " + args, e);
+        log.error("Exception while calling " + tsi + " for action: " + methodName + " with args : " + args, e);
 
         //TODO:brad: I think that this gets triggered incorrectly in some cases, and leads to unhelpful error messages
 
@@ -1238,7 +1239,7 @@ public class ActionDBEntry extends DBEntry {
             ActionBinding role = rit.next();
             ActionBinding arg = ait.next();
             if (!role.getBindingTypeDeep().equals(arg.getBindingTypeDeep())) {
-              log.error("[" + this.type + "] Type mismatch:");
+              log.error("[" + this.methodName + "] Type mismatch:");
               log.error("\tExpected (" + role.getBindingTypeDeep() + ") " + role.name + ", but received ("
                       + arg.getBindingTypeDeep() + ") " + arg.name);
             }
@@ -1341,7 +1342,7 @@ public class ActionDBEntry extends DBEntry {
       return false;
     }
     ActionDBEntry other = (ActionDBEntry) o;
-    if (!Objects.equals(other.type, this.type)) {
+    if (!Objects.equals(other.methodName, this.methodName)) {
       return false;
     }
     if (!Objects.equals(other.description, this.description)) {
@@ -1407,7 +1408,7 @@ public class ActionDBEntry extends DBEntry {
   @Override
   public int hashCode() {
     int result = 1;
-    result = 31 * result + Objects.hashCode(type);
+    result = 31 * result + Objects.hashCode(methodName);
     result = 31 * result + Objects.hashCode(description);
     result = 31 * result + Objects.hashCode(roles);
     result = 31 * result + Objects.hashCode(eventSpecs);

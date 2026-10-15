@@ -128,7 +128,7 @@ public class GSPChainPrompt extends DIARCPrompt {
             template_cpc_action_selector.append("\nLIST OF AVAILABLE ACTIONS: \n");
             for(ActionDBEntry a: actions){
                // template_cpc_action_selector.append(a.getSignature(true)).append(" ");
-                template_cpc_action_selector.append("{name: ").append(a.getType()).append(", ");
+                template_cpc_action_selector.append("{name: ").append(a.getMethodName()).append(", ");
                 template_cpc_action_selector.append("roles:[");
                 for(ActionBinding role:a.getInputRoles()) {
                     template_cpc_action_selector.append(role.name).append(",");

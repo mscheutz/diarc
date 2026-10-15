@@ -149,10 +149,10 @@ public class Utilities {
   public static <T extends DBEntry> void putEntry(Map<String, List<T>> db, T entry) {
     // add entry to DB
 
-    if (!db.containsKey(entry.getType())) {
-      db.put(entry.getType(), new ArrayList<>());
+    if (!db.containsKey(entry.getMethodName())) {
+      db.put(entry.getMethodName(), new ArrayList<>());
     }
-    db.get(entry.getType()).add(0, entry);
+    db.get(entry.getMethodName()).add(0, entry);
   }
 
   /**

@@ -165,7 +165,7 @@ public class FailedReturnValuePolicy {
 
             // make new action and add holding(novelObj) and object(type) pre-conditions
             ActionDBEntry.Builder newActionBuilder = new ActionDBEntry.Builder(brokenAction);
-            newActionBuilder.setType(brokenActionSignature + "_holding_" + novelObject.getName());
+            newActionBuilder.setMethodName(brokenActionSignature + "_holding_" + novelObject.getName());
             newActionBuilder.addCondition(new Condition(holdingPred, ConditionType.PRE, Observable.TRUE));
             newActionBuilder.addCondition(new Condition(typeConstraint, ConditionType.PRE, Observable.FALSE));
             newActionBuilder.build(true); // add modified action to DB

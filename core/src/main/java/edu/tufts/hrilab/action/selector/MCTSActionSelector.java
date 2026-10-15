@@ -402,7 +402,7 @@ public class MCTSActionSelector extends ActionSelector {
     List<ActionDBEntry> newEntries = new ArrayList<>();
     for (ActionDBEntry action : entries) {
       ActionDBEntry.Builder actionBuilder = new ActionDBEntry.Builder(action);
-      actionBuilder.setType("mcts" + action.getName());
+      actionBuilder.setMethodName("mcts" + action.getName());
       for (Effect e : action.getEffects()) {
         if (!isRelevant(relevantEffects, e.getPredicate())) {
           actionBuilder.removeEffect(e);

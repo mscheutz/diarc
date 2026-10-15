@@ -91,14 +91,13 @@ public class RecoveryPolicyDatabase {
    * @param entry the action for which the observations should be removed
    */
   protected synchronized void removeRecoveryPolicyFromDB(ActionDBEntry entry) {
+    if (!entry.isRecoveryPolicy()) {
+      log.warn("[removeRecoveryPolicyFromDB] supplied entry {} is not a recovery policy, not removing", entry);
+      return;
+    }
+
+    log.debug("Removing recovery policy from DB: " + entry);
     for (PolicyConstraints constraints : entry.getPolicyConstraints()) {
-      log.debug("Removing recovery policy from DB: " + entry);
-
-      if (!entry.isRecoveryPolicy()) {
-        log.warn("[removeRecoveryPolicyFromDB] supplied entry {} is not a recovery policy, not removing", entry);
-        return;
-      }
-
       List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
       if (policies != null && !policies.isEmpty()) {
         policies.remove(entry);
@@ -116,17 +115,19 @@ public class RecoveryPolicyDatabase {
   public final synchronized List<ActionDBEntry> getRecoveryPolicies(FailureInformation failureInformation) {
     return getRecoveryPolicies(getMatchingPolicyConstraints(failureInformation));
   }
+
   public final synchronized List<ActionDBEntry> getRecoveryPolicies(List<PolicyConstraints> orderedConstraintsList) {
     List<ActionDBEntry> applicablePolicies = new ArrayList<>();
     orderedConstraintsList.forEach(constraints -> applicablePolicies.addAll(recoveryPolicyDB.get(constraints)));
     return applicablePolicies;
   }
+
   public final synchronized List<PolicyConstraints> getMatchingPolicyConstraints(FailureInformation failureInformation) {
     Map<PolicyConstraints,Integer> applicableConstraintsScores = new HashMap<>();
 
     recoveryPolicyDB.forEach((constraints, policies) -> {
       int score = failureInformation.getNumberOfConstraintMatches(constraints);
-      if (score > 0) {
+      if (score >= 0) {
         applicableConstraintsScores.put(constraints, score);
       }
     });
@@ -138,6 +139,13 @@ public class RecoveryPolicyDatabase {
 
     List<PolicyConstraints> applicableConstraints = new ArrayList<>();
     sorted.forEach(entry -> applicableConstraints.add(entry.getKey()));
+
+    //Cannot have RETRY post recovery if no specific child action at this level failed (possible in the case of FAIL_OVERALLCONDITIONS, FAIL_POSTCONDITIONS)
+    //Is practically also an issue with FAIL_NOTFOUND because there is no current functionality to reattempt to parse the previous eventSpec.
+    // Q: should this ^ case be allowed? (recovery when an action isn't known/its service isn't available)
+    if (failureInformation.contextType.isAction() && failureInformation.failedActions.isEmpty()) {
+      applicableConstraints.removeIf(e -> e.postRecoveryExecutionType == PostRecoveryExecutionType.RETRY);
+    }
 
     return applicableConstraints;
   }

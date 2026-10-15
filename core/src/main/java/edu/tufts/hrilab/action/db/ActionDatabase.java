@@ -62,8 +62,8 @@ public class ActionDatabase {
   protected final synchronized void putAction(ActionDBEntry entry) {
 
     // remove entry from disabledActionDB (if it exists)
-    if (disabledActionDB.containsKey(entry.getType())) {
-      disabledActionDB.get(entry.getType()).remove(entry);
+    if (disabledActionDB.containsKey(entry.getMethodName())) {
+      disabledActionDB.get(entry.getMethodName()).remove(entry);
     }
 
     // check action for Strings and print deprecation warning.
@@ -219,10 +219,10 @@ public class ActionDatabase {
     }
 
     // remove entry all containers
-    if (actionDB.containsKey(entry.getType())) {
-      actionDB.get(entry.getType()).remove(entry);
-      if (actionDB.get(entry.getType()).isEmpty()) {
-        actionDB.remove(entry.getType());
+    if (actionDB.containsKey(entry.getMethodName())) {
+      actionDB.get(entry.getMethodName()).remove(entry);
+      if (actionDB.get(entry.getMethodName()).isEmpty()) {
+        actionDB.remove(entry.getMethodName());
       }
       // remove from postcond db
       removePostcondsFromDB(entry);
