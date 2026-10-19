@@ -3,7 +3,7 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "init(robotone:agent)", "ACT", "NORMAL", "1", "james", "3" ]
@@ -47,23 +47,23 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "defineScrewType(robotone:agent,deepM3)", "ACT", "NORMAL", "1", "james", "6" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robotone:agent,james,[what, is, its, screwing, length],\"what is its screwing length\",{})", "true" ]
+      "serviceArgs" : [ "what is its screwing length", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robotone:agent,james,[what, is, its, target, torque, in, millinewton, meters],\"what is its target torque in millinewton meters\",{})", "true" ]
+      "serviceArgs" : [ "what is its target torque in millinewton meters", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robotone:agent,james,[at, which, pose, can, I, find, deepM3, screws],\"at which pose can I find deepM3 screws\",{})", "true" ]
+      "serviceArgs" : [ "at which pose can I find deepM3 screws", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -71,28 +71,28 @@
       "serviceArgs" : [ "foundAt(deepM3,pose_2:pose)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "defineItem(robotone:agent,nv30fau)", "ACT", "NORMAL", "1", "james", "15" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robotone:agent,james,[which, Cognex, job, is, used, to, detect, it],\"which Cognex job is used to detect it\",{})", "true" ]
+      "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "startLearningAssembleScript(robotone:agent,robotonecognexobj_0:cognexobj)", "ACT", "NORMAL", "1", "james", "20" ]
@@ -106,7 +106,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_0:pose)", "ACT", "NORMAL", "1", "james", "25" ]
@@ -114,7 +114,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "perceiveEntity(robotone:agent,robotonecognexobj_0:cognexobj)", "ACT", "NORMAL", "1", "james", "28" ]
@@ -122,7 +122,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "getOn(robotone:agent,robotonecognexobj_0:cognexobj,pose_1:pose)", "ACT", "NORMAL", "1", "james", "31" ]
@@ -130,7 +130,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "observeDescriptor(robotone:agent,deepM3Hole,2)", "ACT", "NORMAL", "1", "james", "34" ]
@@ -138,7 +138,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonecognexobj_1:cognexobj)", "ACT", "NORMAL", "1", "james", "37" ]
@@ -146,7 +146,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_1:pose)", "ACT", "NORMAL", "1", "james", "40" ]
@@ -154,7 +154,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonecognexobj_2:cognexobj)", "ACT", "NORMAL", "1", "james", "43" ]
@@ -162,7 +162,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "getOn(robotone:agent,robotonecognexobj_0:cognexobj,pose_0:pose)", "ACT", "NORMAL", "1", "james", "46" ]
@@ -170,7 +170,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "moveConveyorForward(robotone:agent)", "ACT", "NORMAL", "1", "james", "49" ]
@@ -178,7 +178,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "endLearningAssembleScript(robotone:agent,robotonecognexobj_0:cognexobj)", "ACT", "NORMAL", "1", "james", "52" ]
@@ -189,7 +189,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "assemble(robotone:agent,robotonecognexobj_0:cognexobj)", "ACT", "NORMAL", "1", "james", "55" ]
@@ -302,7 +302,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "assemble(robottwo:agent,robottwocognexobj_0:cognexobj)", "ACT", "NORMAL", "1", "james", "125" ]
@@ -415,23 +415,23 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "defineScrewType(robottwo:agent,m3)", "ACT", "NORMAL", "1", "james", "195" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[what, is, its, screwing, length],\"what is its screwing length\",{})", "true" ]
+      "serviceArgs" : [ "what is its screwing length", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[what, is, its, target, torque, in, millinewton, meters],\"what is its target torque in millinewton meters\",{})", "true" ]
+      "serviceArgs" : [ "what is its target torque in millinewton meters", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[at, which, pose, can, I, find, m3, screws],\"at which pose can I find m3 screws\",{})", "true" ]
+      "serviceArgs" : [ "at which pose can I find m3 screws", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -439,28 +439,28 @@
       "serviceArgs" : [ "foundAt(m3,pose_2:pose)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "defineItem(robottwo:agent,nf32sv)", "ACT", "NORMAL", "1", "james", "204" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[which, Cognex, job, is, used, to, detect, it],\"which Cognex job is used to detect it\",{})", "true" ]
+      "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "modifyAssemble(robottwo:agent,assemble(robottwo:agent,robottwocognexobj_5:cognexobj),assemble(robottwo:agent,robottwocognexobj_6:cognexobj))", "ACT", "NORMAL", "1", "james", "209" ]
@@ -472,32 +472,32 @@
       "serviceArgs" : [ "robottwocognexobj_6:cognexobj", "nv30fau" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[what, are, the, differences],\"what are the differences\",{})", "true" ]
+      "serviceArgs" : [ "what are the differences", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[okay, are, there, any, more, differences],\"okay are there any more differences\",{})", "true" ]
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[okay, are, there, any, more, differences],\"okay are there any more differences\",{})", "true" ]
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(robottwo:agent,james,[okay, are, there, any, more, differences],\"okay are there any more differences\",{})", "true" ]
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robotone:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "assemble(robotone:agent,robotonecognexobj_7:cognexobj)", "ACT", "NORMAL", "1", "james", "220" ]
@@ -610,7 +610,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(robottwo:agent,james,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "assemble(robottwo:agent,robottwocognexobj_5:cognexobj)", "ACT", "NORMAL", "1", "james", "290" ]

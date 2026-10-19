@@ -96,7 +96,7 @@ import java.util.Map;
       op:invokeMethod(?utterance,"setWords",!text);
       op:log("debug", "done updating dialogue history with: !text");
       if (op:equals(!performSayText,true)) {
-        act:sayText(!outputUtterance);
+        act:sayText(!text);
       } else {
         tsc:waitForStreamingSpeechCompletion(!uttID);
       }
@@ -106,7 +106,7 @@ import java.util.Map;
       !text = op:invokeMethod(?utterance,"getWordsAsString");
       op:log("debug", "done updating dialogue history with: !text");
       if (op:equals(!performSayText,true)) {
-        act:sayText(?utterance);
+        act:sayText(!text);
       } else {
         tsc:waitForStreamingSpeechCompletion(!uttID);
       }

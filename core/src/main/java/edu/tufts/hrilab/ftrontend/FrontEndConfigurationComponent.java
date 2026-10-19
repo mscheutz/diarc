@@ -442,6 +442,14 @@ public class FrontEndConfigurationComponent extends DiarcComponent
             case "endConversation":
             case "getCurrentView":
             case "getCurrentViewDescription":
+            //mtracs
+            case "describeObjectPose":
+            case "describeObjectPoses":
+            case "describeObjectsAt":
+            case "describeNumberOfObjectsAt":
+            case "describeCurrentPose":
+            case "describeDetectableObjectNames":
+            case "describeKnownPoseNames":
                return true;
             default:
                return false;

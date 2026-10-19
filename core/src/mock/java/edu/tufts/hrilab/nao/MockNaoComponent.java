@@ -56,14 +56,6 @@ public class MockNaoComponent extends DiarcComponent implements MockNaoInterface
     isMoving = false;
   }
 
-  public boolean sayText(Utterance utterance, boolean bool) {
-    return sayText(utterance.getWordsAsString(), bool);
-  }
-
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance.getWordsAsString(), true);
-  }
-
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();

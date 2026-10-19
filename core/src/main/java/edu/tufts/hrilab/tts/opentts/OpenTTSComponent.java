@@ -193,11 +193,6 @@ public class OpenTTSComponent extends DiarcComponent implements SpeechProduction
   }
 
   @Override
-  public boolean sayText(Utterance utterance, boolean wait) {
-    return sayText(utterance.getWordsAsString(), wait);
-  }
-
-  @Override
   public boolean sayText(String text, boolean wait) {
     byte[] wav = null;
     speaking = true;
@@ -257,11 +252,6 @@ public class OpenTTSComponent extends DiarcComponent implements SpeechProduction
     }
 
     return future_result;
-  }
-
-  @Override
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance.getWordsAsString(), true);
   }
 
   @Override

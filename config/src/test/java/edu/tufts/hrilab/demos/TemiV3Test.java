@@ -67,7 +67,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     servicesToObserve.add(Pair.of("goToLoc", new Class<?>[]{Symbol.class, Boolean.class}));
     servicesToObserve.add(Pair.of("goToPos", new Class<?>[]{List.class, Symbol.class, Boolean.class}));
     servicesToObserve.add(Pair.of("knowsLocation", new Class<?>[]{Symbol.class}));
-    servicesToObserve.add(Pair.of("sayText", new Class<?>[]{Utterance.class}));
+    servicesToObserve.add(Pair.of("sayText", new Class<?>[]{String.class}));
     servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class}));
     servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class}));
     servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class, Long.class}));

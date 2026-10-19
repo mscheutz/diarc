@@ -3,35 +3,35 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "127" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "130" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "127", "FAILED" ]
+      "serviceArgs" : [ "130", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,cannot(move(dempster,forward),because(see(dempster,obstacle))),\"I can not move forward because I see obstacle\",{})", "true" ]
+      "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "135" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "138" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "135", "FAILED" ]
+      "serviceArgs" : [ "138", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,cannot(move(dempster,forward),because(not(see(dempster,support)))),\"I can not move forward because I do not see support\",{})", "true" ]
+      "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -39,7 +39,7 @@
       "serviceArgs" : [ "will(catch(evan,dempster))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "will(catch(evan,dempster))", "null" ]
@@ -47,32 +47,32 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "147" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "150" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "174" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "177" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "174", "SUCCEEDED" ]
+      "serviceArgs" : [ "177", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "147", "CANCELED" ]
+      "serviceArgs" : [ "150", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "ACT", "NORMAL", "1", "evan", "178" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "ACT", "NORMAL", "1", "evan", "181" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,will(catch(evan,dempster)))", "null" ]
@@ -84,21 +84,21 @@
       "serviceArgs" : [ "believes(shafer,will(catch(evan,dempster)))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "178", "SUCCEEDED" ]
+      "serviceArgs" : [ "181", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "183" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "186" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "183", "FAILED" ]
+      "serviceArgs" : [ "186", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,cannot(move(dempster,forward),because(not(see(dempster,support)))),\"I can not move forward because I do not see support\",{})", "true" ]
+      "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]
     } ]
   } ]
 }

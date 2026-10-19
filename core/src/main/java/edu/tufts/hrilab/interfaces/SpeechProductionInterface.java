@@ -24,26 +24,12 @@ public interface SpeechProductionInterface {
   @Action
   boolean sayText(String text);
 
-  /** Speaks appropriate text, blocking.
-   * @param utterance the utterance containing text to be spoken
-   */
-  @TRADEService
-  @Action
-  boolean sayText(Utterance utterance);
-
   /** Speaks appropriate text
    * @param text the text to be spoken
    * @param wait whether or not to block until speaking call returns
    */
   @TRADEService
   boolean sayText(String text, boolean wait);
-
-  /** Speaks appropriate text
-   * @param utterance the utterance containing text to be spoken
-   * @param wait whether or not to block until speaking call returns
-   */
-  @TRADEService
-  boolean sayText(Utterance utterance, boolean wait);
 
   /** Checks if speech is being produced.
    * @return {@code true} if speech is being produced, {@code false}

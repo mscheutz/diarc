@@ -417,14 +417,6 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     return true;
   }
 
-  public boolean sayText(Utterance utterance, boolean wait) {
-    return false;
-  }
-
-  public boolean sayText(Utterance utterance) {
-    return false;
-  }
-
   @Override
   public boolean sayText(String text) {
     return sayText(text, true);

@@ -3,17 +3,17 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,evan,greeting(shafer,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,greeting(shafer,ravenna,hello),\"hello ravenna\",{})", "true" ]
+      "serviceArgs" : [ "hello ravenna", "true" ]
     } ]
   } ]
 }

@@ -32,9 +32,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     simSpeechRec = diarcConfig.simSpeechRec;
     untrustedSimSpeechRec = diarcConfig.untrustedSimSpeechRec;
 
-    addServiceToObserve("sayText", Utterance.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("sayText", Utterance.class, Boolean.class);
     addServiceToObserve("sayText", String.class, Boolean.class);    addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
     addServiceToObserve("assertProperties", Symbol.class, List.class);
     addServiceToObserve("openGripperRapid");

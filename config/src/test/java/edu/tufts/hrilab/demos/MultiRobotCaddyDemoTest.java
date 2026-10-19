@@ -42,9 +42,7 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("reportRecognizedSpeech", Utterance.class);
         addServiceToObserve("submitGoal", Predicate.class);
         addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
-        addServiceToObserve("sayText", Utterance.class);
         addServiceToObserve("sayText", String.class);
-        addServiceToObserve("sayText", Utterance.class, Boolean.class);
         addServiceToObserve("sayText", String.class, Boolean.class);
         addServiceToObserve("assertBelief", Term.class);
         addServiceToObserve("retractBelief", Term.class);

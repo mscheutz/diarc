@@ -3,43 +3,43 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1", "ravenna", "404" ]
+      "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1", "ravenna", "405" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "405" ]
+      "serviceArgs" : [ "stand(dempster)", "406" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "404", "SUCCEEDED" ]
+      "serviceArgs" : [ "405", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(yes),\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1", "ravenna", "416" ]
+      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1", "ravenna", "418" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "417" ]
+      "serviceArgs" : [ "move(dempster,forward)", "419" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "416", "FAILED" ]
+      "serviceArgs" : [ "418", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,cannot(tell(shafer,move(dempster,forward)),because(see(dempster,obstacle))),\"I can not tell dempster to move forward because dempster sees obstacle\",{})", "true" ]
+      "serviceArgs" : [ "I can not tell dempster to move forward because dempster sees obstacle", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(no),\"no\",{})", "true" ]
+      "serviceArgs" : [ "no", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -47,13 +47,13 @@
       "serviceArgs" : [ "capableOf(look(dempster,up))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(yes),\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1", "ravenna", "436" ]
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1", "ravenna", "440" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "436", "SUCCEEDED" ]
+      "serviceArgs" : [ "440", "SUCCEEDED" ]
     } ]
   } ]
 }

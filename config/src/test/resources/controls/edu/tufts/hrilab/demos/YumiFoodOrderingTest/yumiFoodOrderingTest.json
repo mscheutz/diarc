@@ -3,7 +3,7 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
@@ -20,7 +20,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -52,7 +52,7 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_0:physobj", "false" ]
@@ -61,12 +61,12 @@
       "serviceArgs" : [ "noRapidError()", "[]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[no],\"no\",{})", "true" ]
+      "serviceArgs" : [ "no", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_0:physobj", "true" ]
@@ -75,12 +75,12 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[yes],\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(leftArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "leftArmpose_3:leftArmpose", "null" ]
@@ -112,7 +112,7 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(leftArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_1:physobj", "true" ]
@@ -121,12 +121,12 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(leftArm:yumi,brad,[yes],\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_0:physobj", "true" ]
@@ -149,7 +149,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -172,7 +172,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -181,12 +181,12 @@
       "serviceArgs" : [ "noRapidError()", "[]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(rightArm:yumi,brad,[A, motion, error, has, occurred, in, go, to, pose,, is, it, safe, to, proceed?],\"A motion error has occurred in go to pose, is it safe to proceed?\",{})", "true" ]
+      "serviceArgs" : [ "A motion error has occurred in go to pose, is it safe to proceed?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -195,28 +195,28 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(rightArm:yumi,brad,[A, motion, error, has, occurred, in, go, to, pose,, is, it, safe, to, proceed?],\"A motion error has occurred in go to pose, is it safe to proceed?\",{})", "true" ]
+      "serviceArgs" : [ "A motion error has occurred in go to pose, is it safe to proceed?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{X:item=item_0:item}", "1.0", "[southwest bowl(X:item)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[Okay., How, do, I, prepare, a, southwest, bowl, ?],\"Okay. How do I prepare a southwest bowl ?\",{})", "true" ]
+      "serviceArgs" : [ "Okay. How do I prepare a southwest bowl ?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -245,7 +245,7 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -274,17 +274,17 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -313,17 +313,17 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -352,17 +352,17 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_5:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -388,17 +388,17 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(leftArm:yumi,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_7:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
@@ -458,7 +458,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, bell, pepper, from, the, pantry, to, the, prep, area],\"Could you please bring a bell pepper from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a bell pepper from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -499,7 +499,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[sauteing],\"sauteing\",{})", "true" ]
+      "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
       "serviceArgs" : [ "physobj_8:physobj", "val(2,seconds)", "justification(true)" ]
@@ -553,7 +553,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, corn, from, the, pantry, to, the, prep, area],\"Could you please bring a corn from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a corn from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -594,7 +594,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[cooking],\"cooking\",{})", "true" ]
+      "serviceArgs" : [ "cooking", "true" ]
     }, {
       "serviceName" : "cookItem",
       "serviceArgs" : [ "physobj_9:physobj", "val(5,seconds)", "justification(true)" ]
@@ -648,7 +648,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, carrot, from, the, pantry, to, the, prep, area],\"Could you please bring a carrot from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a carrot from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -689,7 +689,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[sauteing],\"sauteing\",{})", "true" ]
+      "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
       "serviceArgs" : [ "physobj_10:physobj", "val(3,seconds)", "justification(true)" ]
@@ -785,20 +785,20 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,isComplete(\"southwest bowl\"),\"\"southwest bowl\" is Complete\",{})", "true" ]
+      "serviceArgs" : [ "\"southwest bowl\" is Complete", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[What, item, is, it, like?],\"What item is it like?\",{})", "true" ]
+      "serviceArgs" : [ "What item is it like?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[okay., what, are, the, differences],\"okay. what are the differences\",{})", "true" ]
+      "serviceArgs" : [ "okay. what are the differences", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -827,40 +827,40 @@
       "serviceArgs" : [ "{VAR1:physobj=physobj_12:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[okay., are, there, any, more, differences?],\"okay. are there any more differences?\",{})", "true" ]
+      "serviceArgs" : [ "okay. are there any more differences?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[okay., are, there, any, more, differences?],\"okay. are there any more differences?\",{})", "true" ]
+      "serviceArgs" : [ "okay. are there any more differences?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(sorry,error(self:agent,doNotKnowWhat(self:agent,plantain,means))),\"sorry, I error I do Not Know What plantain means\",{})", "true" ]
+      "serviceArgs" : [ "sorry, I error I do Not Know What plantain means", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[Where, is, it, located?],\"Where is it located?\",{})", "true" ]
+      "serviceArgs" : [ "Where is it located?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[Okay,, what, vision, job, is, used, to, detect, it?],\"Okay, what vision job is used to detect it?\",{})", "true" ]
+      "serviceArgs" : [ "Okay, what vision job is used to detect it?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[At, which, area, should, I, look, for, a, plantain?],\"At which area should I look for a plantain?\",{})", "true" ]
+      "serviceArgs" : [ "At which area should I look for a plantain?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -880,7 +880,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(rightArm:yumi,brad,[I, see, a, plantain,, can, you, show, me, how, to, grasp, it?],\"I see a plantain, can you show me how to grasp it?\",{})", "true" ]
+      "serviceArgs" : [ "I see a plantain, can you show me how to grasp it?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -888,7 +888,7 @@
       "serviceArgs" : [ "physobj_13:physobj", "plantain", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -897,20 +897,20 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,[Okay,, I, know, what, plantain, is],\"Okay, I know what plantain is\",{})", "true" ]
+      "serviceArgs" : [ "Okay, I know what plantain is", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,goal(status(suspended),predicate(defineItemByAnalogy(self:agent,puerto rican bowl))),\"suspended statuses goals I define Item By Analogy puerto rican bowl predicates\",{})", "true" ]
+      "serviceArgs" : [ "suspended statuses goals I define Item By Analogy puerto rican bowl predicates", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[okay., are, there, any, more, differences?],\"okay. are there any more differences?\",{})", "true" ]
+      "serviceArgs" : [ "okay. are there any more differences?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -939,17 +939,17 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_14:physobj}", "1.0", "[plantain(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,brad,[okay., are, there, any, more, differences?],\"okay. are there any more differences?\",{})", "true" ]
+      "serviceArgs" : [ "okay. are there any more differences?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_15:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
@@ -1015,7 +1015,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, corn, from, the, pantry, to, the, prep, area],\"Could you please bring a corn from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a corn from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1056,7 +1056,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[cooking],\"cooking\",{})", "true" ]
+      "serviceArgs" : [ "cooking", "true" ]
     }, {
       "serviceName" : "cookItem",
       "serviceArgs" : [ "physobj_16:physobj", "val(5,seconds)", "justification(true)" ]
@@ -1110,7 +1110,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, chicken, from, the, pantry, to, the, prep, area],\"Could you please bring a chicken from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a chicken from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1151,7 +1151,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,brad,[sauteing],\"sauteing\",{})", "true" ]
+      "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
       "serviceArgs" : [ "physobj_18:physobj", "val(4,seconds)", "justification(true)" ]
@@ -1205,7 +1205,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(human:mobileManipulator,brad,[Could, you, please, bring, a, plantain, from, the, pantry, to, the, prep, area],\"Could you please bring a plantain from the pantry to the prep area\",{})", "true" ]
+      "serviceArgs" : [ "Could you please bring a plantain from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1294,22 +1294,22 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,isComplete(\"puerto rican bowl\"),\"\"puerto rican bowl\" is Complete\",{})", "true" ]
+      "serviceArgs" : [ "\"puerto rican bowl\" is Complete", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,front,cannot(goTo(rightArm:yumi,area_5:area),because(not(is_supervisor(front,rightArm:yumi)))),\"I can not go To the prep area because you are not me supervisor\",{})", "true" ]
+      "serviceArgs" : [ "I can not go To the prep area because you are not me supervisor", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(rightArm:yumi,front,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
@@ -1320,28 +1320,28 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,front,cannot(defineItem(self:agent,puerto rican bowl),because(is(gerund(defineItem(self:agent,puerto rican bowl)),adminGoal))),\"I can not define Item puerto rican bowl because defining Item puerto rican bowl is admin Goal\",{})", "true" ]
+      "serviceArgs" : [ "I can not define Item puerto rican bowl because defining Item puerto rican bowl is admin Goal", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,brad,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,front,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{X:item=item_1:item}", "1.0", "[puerto rican bowl(X:item)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,front,[Okay., How, do, I, prepare, a, puerto, rican, bowl, ?],\"Okay. How do I prepare a puerto rican bowl ?\",{})", "true" ]
+      "serviceArgs" : [ "Okay. How do I prepare a puerto rican bowl ?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,front,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   } ]
 }

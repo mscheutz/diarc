@@ -304,21 +304,11 @@ public class MaryTTSComponent extends DiarcComponent implements SpeechProduction
   }
 
   @Override
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance.getWordsAsString(), true);
-  }
-
-  @Override
   public boolean sayText(String text) {
 //    if (this.enabled) {
     sayText(text, true);
 //    }
       return true;
-  }
-
-  @Override
-  public boolean sayText(Utterance utterance, boolean wait) {
-    return sayText(utterance.getWordsAsString(), wait);
   }
 
   /**

@@ -6,7 +6,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[what, is, the, probability, that, you, can, assemble, the, caddy, if, you, do, not, fetch, the, small, gear, from, the, small, gear, location],\"what is the probability that you can assemble the caddy if you do not fetch the small gear from the small gear location\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[probabilityOf(0.48)],\"the Probability is 0.48\",{})", "true" ]
+      "serviceArgs" : [ "the Probability is 0.48", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -14,7 +14,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[how, long, will, it, take, to, do, that],\"how long will it take to do that\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[will(it,take(time(528.703708333333)))],\"it will take about 8 minutes and 48 seconds\",{})", "true" ]
+      "serviceArgs" : [ "it will take about 8 minutes and 49 seconds", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,7 +22,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[where, do, you, foresee, issues],\"where do you foresee issues\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[propertyOf(fetch(andy:agent,physobj_3:physobj,location_3:location),mostLikelyToFail)],\"I fetch the largegear the largegearlocation is most Likely To Fail\",{})", "true" ]
+      "serviceArgs" : [ "I fetch the largegear the largegearlocation is most Likely To Fail", "true" ]
     } ]
   } ]
 }

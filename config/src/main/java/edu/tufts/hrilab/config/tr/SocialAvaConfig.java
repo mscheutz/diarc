@@ -253,7 +253,7 @@ public class SocialAvaConfig extends DiarcConfiguration {
       if (!speakerId.isEmpty()) {
         maryTTSArgs += " -matchMixer " + speakerId;
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);
+      createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);
     }
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");

@@ -6,7 +6,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[what, is, the, probability, that, you, can, assemble, the, caddy],\"what is the probability that you can assemble the caddy\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[probabilityOf(0.37)],\"the Probability is 0.37\",{})", "true" ]
+      "serviceArgs" : [ "the Probability is 0.37", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -14,7 +14,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[how, long, will, it, take, to, do, that],\"how long will it take to do that\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[will(it,take(time(636.2506216216218)))],\"it will take about 10 minutes and 36 seconds\",{})", "true" ]
+      "serviceArgs" : [ "it will take about 10 minutes and 36 seconds", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,7 +22,7 @@
       "serviceArgs" : [ "UNKNOWN(tyler,andy:agent,[where, do, you, foresee, issues],\"where do you foresee issues\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(andy:agent,tyler,[propertyOf(fetch(andy:agent,physobj_2:physobj,location_2:location),mostLikelyToFail)],\"I fetch the smallgear the smallgearlocation is most Likely To Fail\",{})", "true" ]
+      "serviceArgs" : [ "I fetch the smallgear the smallgearlocation is most Likely To Fail", "true" ]
     } ]
   } ]
 }

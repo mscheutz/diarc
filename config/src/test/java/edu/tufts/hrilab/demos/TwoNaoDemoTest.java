@@ -41,9 +41,7 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("submitGoal", Predicate.class);
     addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
     addServiceToObserve("joinOnGoal", Long.class);
-    addServiceToObserve("sayText", Utterance.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("sayText", Utterance.class, Boolean.class);
     addServiceToObserve("sayText", String.class, Boolean.class);
     setPermanentTimeout(10, TimeUnit.SECONDS);
   }

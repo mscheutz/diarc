@@ -352,26 +352,6 @@ public class StreamingTTSComponent extends DiarcComponent implements SpeechProdu
   }
 
   @Override
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance, true);
-  }
-
-  @Override
-  public boolean sayText(Utterance utterance, boolean wait) {
-    try {
-      boolean local = TRADE.getAvailableService(new TRADEServiceConstraints().name("isLocalAddressee").argTypes(Symbol.class))
-              .call(Boolean.class, utterance.getAddressee());
-      if (!local) {
-        log.info("[sayText] non-local addressee {}; not speaking: {}", utterance.getAddressee(), utterance.getWordsAsString());
-        return false;
-      }
-    } catch (TRADEException e) {
-      log.debug("[sayText] isLocalAddressee unavailable");
-    }
-    return sayText(utterance.getWordsAsString(), wait);
-  }
-
-  @Override
   public boolean sayText(String text, boolean wait) {
     if (text == null || text.trim().isEmpty()) {
       log.debug("[sayText] empty input");

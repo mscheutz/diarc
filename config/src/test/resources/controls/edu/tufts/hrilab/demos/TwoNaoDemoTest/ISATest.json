@@ -3,12 +3,12 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "23" ]
@@ -22,16 +22,16 @@
       "serviceArgs" : [ "capableOf(doasquat(dempster))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(no),\"no\",{})", "true" ]
+      "serviceArgs" : [ "no", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "evan", "35" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "evan", "30" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "35", "FAILED" ]
+      "serviceArgs" : [ "30", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,cannot(doasquat(dempster),because(not(know(dempster,how(doasquat(dempster)))))),\"I can not do a squat because I do not know how to do a squat\",{})", "true" ]
+      "serviceArgs" : [ "I can not do a squat because I do not know how to do a squat", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -39,16 +39,16 @@
       "serviceArgs" : [ "capableOf(move(dempster,forward))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(yes),\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "41" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "37" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "41", "FAILED" ]
+      "serviceArgs" : [ "37", "FAILED" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,cannot(move(dempster,forward),because(see(dempster,obstacle))),\"I can not move forward because I see obstacle\",{})", "true" ]
+      "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -56,29 +56,29 @@
       "serviceArgs" : [ "capableOf(move(dempster,forward))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(yes),\"yes\",{})", "true" ]
+      "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "52" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "49" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "75" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "72" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "75", "SUCCEEDED" ]
+      "serviceArgs" : [ "72", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "52", "CANCELED" ]
+      "serviceArgs" : [ "49", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,bye),\"bye evan\",{})", "true" ]
+      "serviceArgs" : [ "bye evan", "true" ]
     } ]
   } ]
 }

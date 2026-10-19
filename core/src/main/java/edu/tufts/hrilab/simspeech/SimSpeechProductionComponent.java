@@ -64,24 +64,10 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
    * Sends text to the speech production component.
    */
   @Override
-  public boolean sayText(Utterance utterance) {
-    return sayText(utterance.getWordsAsString(), true);
-  }
-  /**
-   * Sends text to the speech production component.
-   */
-  @Override
   public boolean sayText(String text) {
     return sayText(text, true);
   }
 
-  /**
-   * Sends text to the speech production component.
-   */
-  @Override
-  public boolean sayText(Utterance utterance, boolean wait) {
-    return sayText(utterance.getWordsAsString(),wait);
-  }
   /**
    * Sends text to the speech production component.
    */

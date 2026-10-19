@@ -3,84 +3,84 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "NORMAL", "1", "evan", "5" ]
+      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "NORMAL", "1", "evan", "368" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "raise(dempster,arms)", "ACT", "NORMAL", "1", "evan", "8" ]
+      "serviceArgs" : [ "raise(dempster,arms)", "ACT", "NORMAL", "1", "evan", "371" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "8", "SUCCEEDED" ]
+      "serviceArgs" : [ "371", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "crouchDown(dempster)", "ACT", "NORMAL", "1", "evan", "11" ]
+      "serviceArgs" : [ "crouchDown(dempster)", "ACT", "NORMAL", "1", "evan", "374" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "11", "SUCCEEDED" ]
+      "serviceArgs" : [ "374", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "standUp(dempster)", "ACT", "NORMAL", "1", "evan", "14" ]
+      "serviceArgs" : [ "standUp(dempster)", "ACT", "NORMAL", "1", "evan", "377" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "14", "SUCCEEDED" ]
+      "serviceArgs" : [ "377", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "endActionLearning(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1", "evan", "17" ]
+      "serviceArgs" : [ "endActionLearning(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1", "evan", "380" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "5", "SUCCEEDED" ]
+      "serviceArgs" : [ "380", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "17", "SUCCEEDED" ]
+      "serviceArgs" : [ "368", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "ravenna", "20" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "ravenna", "383" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "20", "SUCCEEDED" ]
+      "serviceArgs" : [ "383", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "lower(dempster,arms)", "ACT", "NORMAL", "1", "evan", "23" ]
+      "serviceArgs" : [ "lower(dempster,arms)", "ACT", "NORMAL", "1", "evan", "386" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "23", "SUCCEEDED" ]
+      "serviceArgs" : [ "386", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -97,40 +97,40 @@
       "serviceArgs" : [ "probabilityOf(doasquat(dempster),X)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,[actionDescription(doasquat(dempster),steps(raise(dempster,arms),crouchDown(dempster),standUp(dempster)))],\"to do a squat I raise my arms, then I crouch Down and then I stand Up\",{})", "true" ]
+      "serviceArgs" : [ "to do a squat I raise my arms, then I crouch Down and then I stand Up", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1", "evan", "31" ]
+      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1", "evan", "394" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "31", "SUCCEEDED" ]
+      "serviceArgs" : [ "394", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,ravenna,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "ravenna", "34" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1", "ravenna", "397" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "34", "SUCCEEDED" ]
+      "serviceArgs" : [ "397", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,ravenna,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(shafer)", "ACT", "NORMAL", "1", "ravenna", "37" ]
+      "serviceArgs" : [ "doasquat(shafer)", "ACT", "NORMAL", "1", "ravenna", "400" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "37", "SUCCEEDED" ]
+      "serviceArgs" : [ "400", "SUCCEEDED" ]
     } ]
   } ]
 }

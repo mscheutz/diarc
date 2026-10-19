@@ -149,7 +149,7 @@ public class SpotRoomClearingConfig extends DiarcConfiguration {
       if (!speakerId.isEmpty()) {
         maryTTSArgs += " -matchMixer " + speakerId;
       }
-      createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);
+      createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);
     }
 
     SwingUtilities.invokeLater(() -> new TeleopGui().start(new TeleopGui.TRADEVelocityPublisher()));

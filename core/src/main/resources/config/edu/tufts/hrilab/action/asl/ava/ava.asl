@@ -529,8 +529,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     op:invokeMethod(!utterance, "setWords", ?literal);
 
     act:toggleVoiceOn();
-    act:updateDialogueHistory(!utterance);
-    act:sayText(!utterance);
+    act:communicateUtterance(!utterance);
     act:toggleVoiceOff();
 }
 

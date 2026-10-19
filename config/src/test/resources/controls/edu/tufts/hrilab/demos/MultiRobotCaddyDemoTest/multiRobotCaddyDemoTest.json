@@ -6,7 +6,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[setup, demo],\"setup demo\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "setupscene(self:agent)", "ACT", "NORMAL", "1", "evan", "3" ]
@@ -116,13 +116,13 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[define, new, kit, medkit],\"define new kit medkit\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "defineRecipe(self:agent,medkit)", "ACT", "NORMAL", "1", "evan", "12" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[What, container, does, it, use?],\"What container does it use?\",{})", "true" ]
+      "serviceArgs" : [ "What container does it use?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -133,7 +133,7 @@
       "serviceArgs" : [ "What container does it use?", "[val(X)]", "self:agent", "evan", "-1", "{X=medicalcaddy:physobj}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,where(is(there,num(1,medicalcaddy:physobj))),\"where is there a medicalcaddy\",{})", "true" ]
+      "serviceArgs" : [ "where is there a medicalcaddy", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -162,7 +162,7 @@
       "serviceArgs" : [ "containerArea(physobj_0Area:area)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[Okay., What, does, a, medkit, contain?],\"Okay. What does a medkit contain?\",{})", "true" ]
+      "serviceArgs" : [ "Okay. What does a medkit contain?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -173,7 +173,7 @@
       "serviceArgs" : [ "Okay. What does a medkit contain?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(2,painkiller:property)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(2,painkiller:property))),\"where are there painkillers\",{})", "true" ]
+      "serviceArgs" : [ "where are there painkillers", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -193,7 +193,7 @@
       "serviceArgs" : [ "{X:physobj=physobj_2:physobj}", "1.0", "[painkiller(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -204,7 +204,7 @@
       "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,antiseptic:physobj)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(1,antiseptic:physobj))),\"where is there an antiseptic\",{})", "true" ]
+      "serviceArgs" : [ "where is there an antiseptic", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -221,7 +221,7 @@
       "serviceArgs" : [ "{X:physobj=physobj_3:physobj}", "1.0", "[antiseptic(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -232,7 +232,7 @@
       "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,bandagebox:physobj)}" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,where(are(there,num(1,bandagebox:physobj))),\"where is there a bandagebox\",{})", "true" ]
+      "serviceArgs" : [ "where is there a bandagebox", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -249,7 +249,7 @@
       "serviceArgs" : [ "{X:physobj=physobj_4:physobj}", "1.0", "[bandagebox(X:physobj)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[does, it, contain, anything, else?],\"does it contain anything else?\",{})", "true" ]
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -263,7 +263,7 @@
       "serviceArgs" : [ "recipe(medkit,container(medicalcaddy:physobj),contents(contains(2,painkiller:property),contains(1,antiseptic:physobj),contains(1,bandagebox:physobj)))", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,[okay],\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -271,7 +271,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[deliver, a, medkit, to, alpha],\"deliver a medkit to alpha\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "deliver(self:agent,medkit,temilocation_0:temilocation)", "ACT", "NORMAL", "1", "evan", "33" ]
@@ -313,16 +313,16 @@
       "serviceArgs" : [ "observableAt(bandagebox:property,tableE:area)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,failed(execution(self:agent),because(and(not(objectAt(physobj_4:physobj,tableE:area))))),\"I failed execution because the bandagebox objects not At table E\",{})", "true" ]
+      "serviceArgs" : [ "I failed execution because the bandagebox objects not At table E", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,[I, have, found, a, plan, to, recover],\"I have found a plan to recover\",{})", "true" ]
+      "serviceArgs" : [ "I have found a plan to recover", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,will(it,take(time(27.439799999999998))),\"it will take about 27 seconds\",{})", "true" ]
+      "serviceArgs" : [ "it will take about 28 seconds", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[Do, you, want, me, to, execute, it?],\"Do you want me to execute it?\",{})", "true" ]
+      "serviceArgs" : [ "Do you want me to execute it?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -330,7 +330,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[describe, your, plan],\"describe your plan\",{})", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "describeYourPlan(self:agent)", "ACT", "NORMAL", "1", "evan", "212" ]
@@ -348,7 +348,7 @@
       "serviceArgs" : [ "probabilityOf(planned(self:agent),X)", "null" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,actionDescription(executeThePlan(self:agent),steps(goTo(spot:spot,spotlocation_5:spotlocation),receive(spot:spot,prep(physobj_4:physobj,at(pharmacy:area))),goTo(spot:spot,spotlocation_1:spotlocation),putDown(spot:spot,prep(physobj_4:physobj,on(tableG:area))),goTo(fetch:fetch,movebaselocation_6:movebaselocation),pickUp(fetch:fetch,prep(physobj_4:physobj,from(tableG:area))),goTo(fetch:fetch,movebaselocation_4:movebaselocation),putdown(fetch:fetch,physobj_4:physobj,bandagebox:property,tableE:area,movebaselocation_4:movebaselocation))),\"to execute The Plan spot goes To the betaLocation, then spot receives the bandagebox at pharmacy, then spot goes To the tableGLocation, then spot puts Down the bandagebox on table G, then fetch goes To the tableGLocation, then fetch picks Up the bandagebox from table G, then fetch goes To the tableELocation and then fetch putdowns\",{})", "true" ]
+      "serviceArgs" : [ "to execute The Plan spot goes To the betaLocation, then spot receives the bandagebox at pharmacy, then spot goes To the tableGLocation, then spot puts Down the bandagebox on table G, then fetch goes To the tableGLocation, then fetch picks Up the bandagebox from table G, then fetch goes To the tableELocation and then fetch putdowns", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -371,7 +371,7 @@
       "serviceArgs" : [ "arm", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "QUESTION(self:agent,evan,[Can, I, please, have, physobj_4:physobj],\"Can I please have physobj_4:physobj\",{})", "true" ]
+      "serviceArgs" : [ "Can I please have physobj_4:physobj", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -457,7 +457,7 @@
       "serviceArgs" : [ "carry", "justification(true)" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(self:agent,evan,[Recovery, completed, resuming, original, goal],\"Recovery completed resuming original goal\",{})", "true" ]
+      "serviceArgs" : [ "Recovery completed resuming original goal", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_4:physobj", "2" ]

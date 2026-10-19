@@ -3,12 +3,12 @@
   "testlets" : [ {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,greeting(dempster,evan,hello),\"hello evan\",{})", "true" ]
+      "serviceArgs" : [ "hello evan", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(dempster,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "13" ]
@@ -19,7 +19,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "REPLY(shafer,evan,ack(okay),\"okay\",{})", "true" ]
+      "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "crouch(shafer)", "ACT", "NORMAL", "1", "evan", "16" ]
