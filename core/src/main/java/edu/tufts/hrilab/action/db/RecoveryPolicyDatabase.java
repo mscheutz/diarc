@@ -60,6 +60,12 @@ public class RecoveryPolicyDatabase {
         }
 
         for (PolicyConstraints constraints : action.getPolicyConstraints()) {
+          if (constraints.alwaysApplicable() && constraints.recoveryType.isAction() && constraints.postRecoveryExecutionType == PostRecoveryExecutionType.CONTINUE) {
+            log.warn("The recovery specification for action {} is not permitted (empty constraints with action recovery and CONTINUE post-recovery execution type). " +
+                    "The recovery policy will not be available.", action.getName());
+            continue;
+          }
+
           log.debug("Adding recovery policy to DB: " + action);
 
           List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);

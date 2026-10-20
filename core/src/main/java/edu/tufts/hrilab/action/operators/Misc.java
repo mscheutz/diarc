@@ -107,12 +107,17 @@ public final class Misc {
   /**
    * Binds local variables in a string to a string.
    * @param input String with variables to bind
-   * @retrun Bound string
+   * @return Bound string
    */
-  public static String bind (String input) {
+  public static String bind(String input) {
     return input + "";
   }
 
+  /**
+   * Parses a string to a long.
+   * @param s
+   * @return
+   */
   public static long parseLong(String s) {
     return Long.parseLong(s);
   }

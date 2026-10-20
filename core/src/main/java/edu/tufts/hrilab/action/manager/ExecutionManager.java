@@ -1414,7 +1414,7 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
-   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(index1,index2,...))
    */
   public boolean cancelPendingGoalsByIndices(Predicate indicesPred) {
     log.debug("[cancelPendingGoalsByIndices] removing pending goals with indices: " + indicesPred);
@@ -1450,7 +1450,7 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
-   * Cancels the upcoming scheduled goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   * Cancels the upcoming scheduled goals at the supplied indices (Predicate in the form and(index1,index2,...))
    */
   public boolean cancelScheduledGoalsByIndices(Predicate indicesPred) {
     log.debug("[cancelScheduledGoalsByIndices] removing scheduled goals with indices: " + indicesPred);

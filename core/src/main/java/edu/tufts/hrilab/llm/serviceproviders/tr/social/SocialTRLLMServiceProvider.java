@@ -2384,7 +2384,7 @@ public abstract class SocialTRLLMServiceProvider extends LLMServiceProvider {
   //  reached. For now, if a user submits another input which terminates the chat context before this method has a
   //  chance to be called, we just discard the response.
   /**
-   * Method used by "social LLM" itk behaviors (llm <-> diarc itk) to add DIARC's response to an ITK request and then
+   * Method used by "social LLM" itk behaviors (llm to/from diarc itk) to add DIARC's response to an ITK request and then
    * call the Completion endpoint with the updated Chat for a text response.
    */
   @TRADEService

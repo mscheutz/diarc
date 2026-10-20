@@ -446,4 +446,26 @@ public class ParameterizedAction {
     return getBoundActionSignature().toString();
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ParameterizedAction that = (ParameterizedAction) o;
+    return persistent == that.persistent &&
+        Objects.equals(entry, that.entry) &&
+        Objects.equals(actionParameters, that.actionParameters) &&
+        observable == that.observable &&
+        Objects.equals(justification, that.justification) &&
+        Objects.equals(actor, that.actor);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(entry, actionParameters, persistent, observable, justification, actor);
+  }
+
 }

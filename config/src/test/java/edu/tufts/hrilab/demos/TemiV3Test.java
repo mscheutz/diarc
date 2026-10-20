@@ -635,7 +635,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //            {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},  // no longer happens -- followMeBlocking already suspended
 //            {"interruptFollowBlocking", null},
 // no longer happens -- followMeBlocking already suspended
-//            {"stopMoving", null},
+            {"stopMoving", null},
             {"joinOnGoal", followGid, GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelGoal(self:agent," + followGid + ")"), GoalStatus.SUCCEEDED},
     });

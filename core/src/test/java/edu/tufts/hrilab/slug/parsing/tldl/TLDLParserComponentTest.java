@@ -11,10 +11,7 @@ import java.util.List;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.common.UtteranceType;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.rules.TestRule;
@@ -30,13 +27,18 @@ public class TLDLParserComponentTest {
     @Rule
     public TestRule watcher = new TestWatcher() {
         protected void starting(Description description) {
-            log.info(description.getMethodName());
+      log.info(description.getMethodName());
         }
     };
 
+    @Before
+    public void setUp() {
+      component = DiarcComponent.createInstance(TLDLParserComponent.class, "", true, false);
+    }
 
-    public TLDLParserComponentTest() {
-        component = DiarcComponent.createInstance(TLDLParserComponent.class, "");
+    @After
+    public void tearDown() {
+      component.shutdown();
     }
 
     //brad this is like this so I don't have to change a bunch of old tests, it should probably be updated at some point
@@ -2922,10 +2924,10 @@ public class TLDLParserComponentTest {
 
     }
 
-  @Test
-  public void tetherBotTest() {
-    log.info("tetherBotTest");
-    component.addDictionary("tetherbot.dict");
+    @Test
+    public void tetherBotTest() {
+        log.info("tetherBotTest");
+        component.addDictionary("tetherbot.dict");
 
 //    "I will teach you how to sterilize the office one"
 //    This utterance indicates that the human is going to teach the TetherBot a new custom behavior
@@ -2965,51 +2967,51 @@ public class TLDLParserComponentTest {
 //"Sterilize the office."
 //    The video XXXX shows the execution of this taught behavior.
 
-    assertTrue(testUtterance("sterilize the office",
-            "INSTRUCT(brad,self,cleanRoom(self,office),{})",
-            "brad",
-            "self"
-    ));
+        assertTrue(testUtterance("sterilize the office",
+                "INSTRUCT(brad,self,cleanRoom(self,office),{})",
+                "brad",
+                "self"
+        ));
 
-    assertTrue(testUtterance("go to office",
-            "INSTRUCT(brad,self,goTo(self,office,true),{})",
-            "brad",
-            "self"
-    ));
-
-
-  }
-
-  @Test
-  public void nasaDeepSpaceTest() {
-      component.addDictionary("nasadeepspace.dict");
-      component.addDictionary("poc4.dict");
-      component.addDictionary("assemblyHomophones.dict");
+        assertTrue(testUtterance("go to office",
+                "INSTRUCT(brad,self,goTo(self,office,true),{})",
+                "brad",
+                "self"
+        ));
 
 
-      assertTrue(testUtterance("init",
-              "INSTRUCT(brad,self,initGoalQueue(self),{})",
-              "brad",
-              "self"
-      ));
+    }
 
-      assertTrue(testUtterance("init goal queue problem solving",
-              "INSTRUCT(brad,self,initGoalQueueProblemSolving(self),{})",
-              "brad",
-              "self"
-      ));
+    @Test
+    public void nasaDeepSpaceTest() {
+        component.addDictionary("nasadeepspace.dict");
+        component.addDictionary("poc4.dict");
+        component.addDictionary("assemblyHomophones.dict");
 
-      //eval case 1
-      assertTrue(testUtterance("when is the last time experiment two was run",
-              "INSTRUCT(brad,self,queryEventTime(self,experiment2(X)),{})",
-              "brad",
-              "self"
-      ));
-      assertTrue(testUtterance("was it successful",
-              "INSTRUCT(brad,self,describeSuccess(self,VAR0:context),{it(VAR0:context),INFOCUS(VAR0:context)})",
-              "brad",
-              "self"
-      ));
+
+        assertTrue(testUtterance("init",
+                "INSTRUCT(brad,self,initGoalQueue(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("init goal queue problem solving",
+                "INSTRUCT(brad,self,initGoalQueueProblemSolving(self),{})",
+                "brad",
+                "self"
+        ));
+
+        //eval case 1
+        assertTrue(testUtterance("when is the last time experiment two was run",
+                "INSTRUCT(brad,self,queryEventTime(self,experiment2(X)),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("was it successful",
+                "INSTRUCT(brad,self,describeSuccess(self,VAR0:context),{it(VAR0:context),INFOCUS(VAR0:context)})",
+                "brad",
+                "self"
+        ));
 //      assertTrue(testUtterance("has work station 4 been repaired",
 //              "INSTRUCT(brad,self,querySupport(self,repaired(X),{})", //todo: get binding
 //              "brad",
@@ -3060,79 +3062,79 @@ public class TLDLParserComponentTest {
 //              "self"
 //      ));
 //
-      //eval case 4
-      assertTrue(testUtterance("describe how to run experiment 8",
-              "INSTRUCT(brad,self,describe(self,how(to(experiment8(self)))),{})",
-              "brad",
-              "self"
-      ));
+        //eval case 4
+        assertTrue(testUtterance("describe how to run experiment 8",
+                "INSTRUCT(brad,self,describe(self,how(to(experiment8(self)))),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("add robot one run experiment 8 to the top of the schedule",
-              "INSTRUCT(brad,self,submitGoalDialogue(self,experiment8(robotone:agent)),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("add robot one run experiment 8 to the top of the schedule",
+                "INSTRUCT(brad,self,submitGoalDialogue(self,experiment8(robotone:agent)),{})",
+                "brad",
+                "self"
+        ));
 
-      //eval case 5 //todo: all
-      assertTrue(testUtterance("run experiment 7",
-              "INSTRUCT(brad,self,experiment7(self),{})",
-              "brad",
-              "self"
-      ));
+        //eval case 5 //todo: all
+        assertTrue(testUtterance("run experiment 7",
+                "INSTRUCT(brad,self,experiment7(self),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("run experiment 9 is like run experiment 4",
-              "INSTRUCT(brad,self,modifyLikeInteractive(self,experiment9(self),experiment4(self)),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("run experiment 9 is like run experiment 4",
+                "INSTRUCT(brad,self,modifyLikeInteractive(self,experiment9(self),experiment4(self)),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("go to experiment station gamma right four",
-              "INSTRUCT(brad,self,goToLocation(self,VAR0:location),{experimentStation(VAR0:location),in(VAR0:location,gamma:area),side(VAR0:location,right:direction),wingid(VAR0:location,four:id),DEFINITE(VAR0:location)})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("go to experiment station gamma right four",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0:location),{experimentStation(VAR0:location),in(VAR0:location,gamma:area),side(VAR0:location,right:direction),wingid(VAR0:location,four:id),DEFINITE(VAR0:location)})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("go to experiment station gamma right five",
-              "INSTRUCT(brad,self,goToLocation(self,VAR0:location),{experimentStation(VAR0:location),in(VAR0:location,gamma:area),side(VAR0:location,right:direction),wingid(VAR0:location,five:id),DEFINITE(VAR0:location)})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("go to experiment station gamma right five",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0:location),{experimentStation(VAR0:location),in(VAR0:location,gamma:area),side(VAR0:location,right:direction),wingid(VAR0:location,five:id),DEFINITE(VAR0:location)})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("replace go to experiment station beta left four with go to experiment station gamma right five",
-              "REPLY(brad,self,mod(replace(goToLocation(self,VAR1:location),goToLocation(self,VAR0:location)),none()),{experimentStation(VAR0:location),in(VAR0:location,beta:area),side(VAR0:location,left:direction),wingid(VAR0:location,four:id),experimentStation(VAR1:location),in(VAR1:location,gamma:area),side(VAR1:location,right:direction),wingid(VAR1:location,five:id),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("replace go to experiment station beta left four with go to experiment station gamma right five",
+                "REPLY(brad,self,mod(replace(goToLocation(self,VAR1:location),goToLocation(self,VAR0:location)),none()),{experimentStation(VAR0:location),in(VAR0:location,beta:area),side(VAR0:location,left:direction),wingid(VAR0:location,four:id),experimentStation(VAR1:location),in(VAR1:location,gamma:area),side(VAR1:location,right:direction),wingid(VAR1:location,five:id),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("replace check that tube temperature is 27 degrees with check that tube pressure is below 23 psi",
-              "REPLY(brad,self,mod(replace(checkTubePressureIsBelow(self,psi(23)),checkTubeTemperatureIs(self,degrees(27))),none()),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("replace check that tube temperature is 27 degrees with check that tube pressure is below 23 psi",
+                "REPLY(brad,self,mod(replace(checkTubePressureIsBelow(self,psi(23)),checkTubeTemperatureIs(self,degrees(27))),none()),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("That is all",
-              "REPLY(brad,self,mod(none),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("That is all",
+                "REPLY(brad,self,mod(none),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("robot one run experiment 9",
-              "INSTRUCT(brad,robotone:agent,experiment9(robotone:agent),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("robot one run experiment 9",
+                "INSTRUCT(brad,robotone:agent,experiment9(robotone:agent),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("robot one run experiment 8",
-              "INSTRUCT(brad,robotone:agent,experiment8(robotone:agent),{})",
-              "brad",
-              "self"
-      ));
+        assertTrue(testUtterance("robot one run experiment 8",
+                "INSTRUCT(brad,robotone:agent,experiment8(robotone:agent),{})",
+                "brad",
+                "self"
+        ));
 
-      assertTrue(testUtterance("robot one add run experiment 8 to the top of the schedule",
-              "INSTRUCT(brad,robotone:agent,submitGoalDialogue(robotone:agent,experiment8(robotone:agent)),{})",
-              "brad",
-              "robotone"
-      ));
+        assertTrue(testUtterance("robot one add run experiment 8 to the top of the schedule",
+                "INSTRUCT(brad,robotone:agent,submitGoalDialogue(robotone:agent,experiment8(robotone:agent)),{})",
+                "brad",
+                "robotone"
+        ));
 
 
 /*
@@ -3202,7 +3204,7 @@ public class TLDLParserComponentTest {
 //      R: Okay, Anything else?
 //      H: Tell me the number of scheduled experiments
 
-  }
+    }
 
     @Test
     public void multiRobotCaddyTest() {
@@ -3364,6 +3366,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
     }
+
     @Test
     public void sortingDemoTest() {
         component.addDictionary("sortingDemo.dict");
@@ -4010,30 +4013,29 @@ public class TLDLParserComponentTest {
         ));
     }
 
+    @Test
+    public void SpotPickAndPlaceTest() {
 
-  @Test
-  public void SpotPickAndPlaceTest() {
+        component.addDictionary("spot.dict");
+        component.addDictionary("spotGenerated.dict");
 
-    component.addDictionary("spot.dict");
-    component.addDictionary("spotGenerated.dict");
+        assertTrue(testUtterance("deliver a bottle to the table",
+                "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("deliver a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("deliver the bottle to the table",
+                "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("deliver the bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
-
-    assertTrue(testUtterance("bring a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("bring a bottle to the table",
+                "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
         assertTrue(testUtterance("bring me a bottle from the table",
                 "INSTRUCT(eric,self,deliver(self,VAR1:physobj,VAR0:location),{me(VAR0:location),bottle(VAR1:physobj),table(VAR2:location),DEFINITE(VAR0:location),INDEFINITE(VAR1:physobj),DEFINITE(VAR2:location)})",
@@ -4047,17 +4049,17 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-    assertTrue(testUtterance("get a bottle to the table",
-            "INSTRUCT(eric,self,getTo(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("get a bottle to the table",
+                "INSTRUCT(eric,self,getTo(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("bring the bottle to a table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),INDEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("bring the bottle to a table",
+                "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),INDEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
         assertTrue(testUtterance("could you please bring a bottle to the table",
                 "QUESTION(eric,self,can(deliver(self,VAR0:physobj,VAR1:location)),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
@@ -4071,11 +4073,11 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-    assertTrue(testUtterance("spot deliver a bottle to the table",
-            "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("spot deliver a bottle to the table",
+                "INSTRUCT(eric,self,deliver(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
         assertTrue(testUtterance("would you deliver a bottle to the table",
                 "QUESTION(eric,self,can(deliver(self,VAR0:physobj,VAR1:location)),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
@@ -4083,121 +4085,121 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-    assertTrue(testUtterance("look for a bottle",
-            "INSTRUCT(eric,self,perceiveEntity(self,VAR0:physobj),{bottle(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("look for a bottle",
+                "INSTRUCT(eric,self,perceiveEntity(self,VAR0:physobj),{bottle(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("do you see the bottle",
-            "QUESTION(eric,self,see(self,bottle:property),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("do you see the bottle",
+                "QUESTION(eric,self,see(self,bottle:property),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("do you know how to deliver a bottle to the table",
-            "QUESTION(eric,self,knowHow(self,to(deliver(self,VAR0:physobj,VAR1:location))),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("do you know how to deliver a bottle to the table",
+                "QUESTION(eric,self,knowHow(self,to(deliver(self,VAR0:physobj,VAR1:location))),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("bring a banana to the table",
-            "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("bring a banana to the table",
+                "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("do you know how to deliver a banana to the table",
-            "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("do you know how to deliver a banana to the table",
+                "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("spot stow arm",
-            "INSTRUCT(eric,self,goToPose(self,stow),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("spot stow arm",
+                "INSTRUCT(eric,self,goToPose(self,stow),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("unstow arm",
-            "INSTRUCT(eric,self,goToPose(self,unstow),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("unstow arm",
+                "INSTRUCT(eric,self,goToPose(self,unstow),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("carry mode",
-            "INSTRUCT(eric,self,goToPose(self,carry),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("carry mode",
+                "INSTRUCT(eric,self,goToPose(self,carry),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("close gripper",
-            "INSTRUCT(eric,self,closeGripper(self,arm),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("close gripper",
+                "INSTRUCT(eric,self,closeGripper(self,arm),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("open gripper",
-            "INSTRUCT(eric,self,openGripper(self,arm),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("open gripper",
+                "INSTRUCT(eric,self,openGripper(self,arm),{})",
+                "eric",
+                "self"
+        ));
 
-    //Not sure which of these forms we want or if any of this should be exposed
-    assertTrue(testUtterance("go to the dock",
-            "INSTRUCT(eric,self,goToLocation(self,VAR0:location),{dock(VAR0:location),DEFINITE(VAR0:location)})",
-            "eric",
-            "self"
-    ));
+        //Not sure which of these forms we want or if any of this should be exposed
+        assertTrue(testUtterance("go to the dock",
+                "INSTRUCT(eric,self,goToLocation(self,VAR0:location),{dock(VAR0:location),DEFINITE(VAR0:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("pick up the bottle",
-            "INSTRUCT(eric,self,pickUp(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("pick up the bottle",
+                "INSTRUCT(eric,self,pickUp(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("put down",
-            "INSTRUCT(eric,self,putdown(self),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("put down",
+                "INSTRUCT(eric,self,putdown(self),{})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("put down the bottle",
-            "INSTRUCT(eric,self,putdown(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("put down the bottle",
+                "INSTRUCT(eric,self,putdown(self,VAR0:physobj),{bottle(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("put down the bottle on the table please",
-            "INSTRUCT(eric,self,putdownat(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("put down the bottle on the table please",
+                "INSTRUCT(eric,self,putdownat(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),DEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
+                "eric",
+                "self"
+        ));
 
-    assertTrue(testUtterance("i am holding it",
-            "REPLY(eric,self,holding(it),{})",
-            "eric",
-            "self"
-    ));
+        assertTrue(testUtterance("i am holding it",
+                "REPLY(eric,self,holding(it),{})",
+                "eric",
+                "self"
+        ));
 
-    ////TODO: don't know how to do this through TLDL if we want this
-    //assertTrue(testUtterance("can you get the patient a bottle from the office",
-    //        "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
-    //        "eric",
-    //        "self"
-    //));
+        ////TODO: don't know how to do this through TLDL if we want this
+        //assertTrue(testUtterance("can you get the patient a bottle from the office",
+        //        "UNKNOWN(eric,self,error(self,doNotKnowWhat(self,banana,means)),{})",
+        //        "eric",
+        //        "self"
+        //));
 
-    ////TODO: State based goal
-    //assertTrue(testUtterance("I want a bottle from the office",
-    //        ""
-    //        "eric",
-    //        "self"
-    //));
+        ////TODO: State based goal
+        //assertTrue(testUtterance("I want a bottle from the office",
+        //        ""
+        //        "eric",
+        //        "self"
+        //));
 
-    //TODO: ACTIVATED (this/that)
-    //Do you see that
-    //Pick up this bottle
-  }
+        //TODO: ACTIVATED (this/that)
+        //Do you see that
+        //Pick up this bottle
+    }
 
     @Test
     public void avaTowerTest() {

@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.fol.Predicate;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -89,4 +90,42 @@ public class PolicyConstraints {
    * GaolRecovery: Attempt count always increments and never resets. TODO if also want to check for progress (see notes in Recovery.java)
    */
   public int maximumAttempts = 1;
+
+  /**
+   * Returns true if the corresponding recovery policy is always applicable (i.e., empty recovery ASL block).
+   * @return
+   */
+  public boolean alwaysApplicable() {
+    return goals.isEmpty() && excludedGoals.isEmpty() &&
+            failedActions.isEmpty() && excludedFailedActions.isEmpty() &&
+            failureReasons.isEmpty() && excludedFailureReasons.isEmpty() &&
+            actionStatuses.isEmpty() &&
+            catchingActions.isEmpty();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PolicyConstraints that = (PolicyConstraints) o;
+    return maximumAttempts == that.maximumAttempts &&
+            Objects.equals(methodName, that.methodName) &&
+            recoveryType == that.recoveryType &&
+            Objects.equals(goals, that.goals) &&
+            Objects.equals(excludedGoals, that.excludedGoals) &&
+            Objects.equals(failedActions, that.failedActions) &&
+            Objects.equals(excludedFailedActions, that.excludedFailedActions) &&
+            Objects.equals(failureReasons, that.failureReasons) &&
+            Objects.equals(excludedFailureReasons, that.excludedFailureReasons) &&
+            Objects.equals(actionStatuses, that.actionStatuses) &&
+            postRecoveryExecutionType == that.postRecoveryExecutionType &&
+            Objects.equals(catchingActions, that.catchingActions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(methodName, recoveryType, goals, excludedGoals, failedActions,
+            excludedFailedActions, failureReasons, excludedFailureReasons, actionStatuses,
+            postRecoveryExecutionType, catchingActions, maximumAttempts);
+  }
 }

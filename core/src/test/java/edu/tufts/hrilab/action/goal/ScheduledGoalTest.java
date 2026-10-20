@@ -14,12 +14,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -43,7 +41,7 @@ public class ScheduledGoalTest {
 
   @BeforeClass
   public static void setUpClass() {
-    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true);
+    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true, false);
   }
 
   @AfterClass

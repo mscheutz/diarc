@@ -32,7 +32,7 @@ public class InterruptTest {
 
   @BeforeClass
   static public void init() {
-    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true);
+    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true, false);
   }
 
   @AfterClass

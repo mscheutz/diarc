@@ -131,10 +131,26 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   @Override
   public void shutdownConfiguration() {
     try {
-      TRADE.deregister(areaConsultant);
-      TRADE.deregister(itemConsultant);
-      TRADE.deregister(cognexConsultant);
-      TRADE.deregister(locationConsultant);
+      if (areaConsultant != null) {
+        TRADE.deregister(areaConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        areaConsultant = null;
+      }
+      if (itemConsultant != null) {
+        TRADE.deregister(itemConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        itemConsultant = null;
+      }
+      if (cognexConsultant != null) {
+        TRADE.deregister(cognexConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        cognexConsultant = null;
+      }
+      if (locationConsultant != null) {
+        TRADE.deregister(locationConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        locationConsultant = null;
+      }
     } catch (TRADEException e) {
       log.error("[shutdownConfiguration] Error deregistering consultants", e);
     }

@@ -725,7 +725,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   * Cancels the upcoming pending goals at the supplied indices (Predicate in the form and(index1,index2,...))
    */
   @TRADEService
   @Action
@@ -735,7 +735,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
   //TODO: when having the time, implement this method body in asl and remove this
   /**
-   * Cancels scheduled goals at the supplied indices (Predicate in the form and(<index1>,<index2>,...))
+   * Cancels scheduled goals at the supplied indices (Predicate in the form and(index1,index2,...))
    */
   @TRADEService
   @Action

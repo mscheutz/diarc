@@ -244,7 +244,7 @@ abstract public class DiarcComponent {
   }
 
   static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade) {
-    return createInstance(clazz, args, registerWithTrade, false);
+    return createInstance(clazz, args, registerWithTrade, true);
   }
   /**
    * Factory method to create a DIARC component instance, parseArgs, init, and finally register as
@@ -253,11 +253,11 @@ abstract public class DiarcComponent {
    * @param clazz             class to be instantiated (must extend DiarcComponent)
    * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
-   * @param fromConfig whether this class is being created from within a DiarcConfiguration
+   * @param addShutdownHook whether this class should automatically register a shutdown hook
    * @param <T>
    * @return
    */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade, boolean fromConfig) {
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade, boolean addShutdownHook) {
     // find clazz default constructor
     Constructor<T> clazzConstructor;
     try {
@@ -282,7 +282,7 @@ abstract public class DiarcComponent {
     instance.parseDiarcArgs(args);
     instance.init();
 
-    if (!fromConfig) {
+    if (addShutdownHook) {
       instance.attachShutdownHook();
     }
 
@@ -349,12 +349,12 @@ abstract public class DiarcComponent {
    * @param clazz             class to be instantiated (must extend DiarcComponent)
    * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
-   * @param fromConfig whether this class is being created from within a DiarcConfiguration
+   * @param addShutdownHook whether this class should automatically register a shutdown hook
    * @param <T>
    * @return
    */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade, boolean fromConfig) {
-    return createInstance(clazz, args.split(" "), registerWithTrade, fromConfig);
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade, boolean addShutdownHook) {
+    return createInstance(clazz, args.split(" "), registerWithTrade, addShutdownHook);
   }
 
   /**
