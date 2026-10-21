@@ -1041,7 +1041,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public boolean hasGreaterPriority(long goalId, PriorityTier priorityTier, long priority) {
     return em.hasGreaterPriority(goalId,priorityTier,priority);
   }
-  
+
   /**
    * Get the goal ID for a goal predicate. Checks current and
    * past goals. If no goal is found, -1 is returned.
@@ -1301,7 +1301,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
     // pick action, and get event specs from selected action
     ActionSelector actionSelector = ActionSelector.getInstance();
-    Goal goal = new Goal(goalPredicate);
+    Goal goal = Goal.createGoal(goalPredicate);
     ParameterizedAction parameterizedAction = actionSelector.selectActionForGoal(goal, initialConstraints, em.getStateMachine());
 
     // do null check for action
