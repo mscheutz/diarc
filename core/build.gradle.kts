@@ -111,9 +111,12 @@ tasks.named<Test>("test") {
   systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
-  if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
     testLogging.showStandardStreams = true
   }
+
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.test.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
