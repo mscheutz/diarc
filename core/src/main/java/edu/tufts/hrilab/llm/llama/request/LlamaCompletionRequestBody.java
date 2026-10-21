@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.llm.llama.request;
 
-import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.llm.Chat;
 
 public class LlamaCompletionRequestBody {

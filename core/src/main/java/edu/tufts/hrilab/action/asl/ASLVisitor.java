@@ -311,6 +311,30 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRecovery(ASLParser.RecoveryContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ASLParser#recoveryGoals}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -353,11 +377,11 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ASLParser#locks}.
+	 * Visit a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLocks(ASLParser.LocksContext ctx);
+	T visitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#spec}.
 	 * @param ctx the parse tree
@@ -538,4 +562,10 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitJoinStatement(ASLParser.JoinStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
 }

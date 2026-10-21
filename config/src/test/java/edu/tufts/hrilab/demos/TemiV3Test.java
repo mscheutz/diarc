@@ -10,6 +10,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.config.TemiV3Mock;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.temiv3.TemiV3PoseReference;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -34,7 +35,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   static DiarcConfigTester tester;
   TemiV3Mock config;
-  private final static Pattern alphaNumericPattern = Pattern.compile("\\w+");
+  private final static Pattern alphaNumericPattern = Pattern.compile("[\\w ]+");
   private Map<Variable, Symbol> ackResponseBindings = new HashMap();
   private Map<Variable, Symbol> freezeResponseBindings = new HashMap();
 
@@ -67,15 +68,17 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     servicesToObserve.add(Pair.of("goToPos", new Class<?>[]{List.class, Symbol.class, Boolean.class}));
     servicesToObserve.add(Pair.of("knowsLocation", new Class<?>[]{Symbol.class}));
     servicesToObserve.add(Pair.of("sayText", new Class<?>[]{String.class}));
-    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{Predicate.class}));
-    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{Predicate.class, Long.class}));
-    servicesToObserve.add(Pair.of("cancelWaitForResponse", new Class<?>[]{Predicate.class}));
+    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class}));
+    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class}));
+    servicesToObserve.add(Pair.of("waitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class, Long.class}));
+    servicesToObserve.add(Pair.of("cancelWaitForResponse", new Class<?>[]{String.class, List.class, Symbol.class}));
+    servicesToObserve.add(Pair.of("cancelWaitForResponse", new Class<?>[]{String.class, List.class, Symbol.class, Symbol.class}));
     servicesToObserve.add(Pair.of("startAcknowledgeDisplay", new Class<?>[]{String.class}));
     servicesToObserve.add(Pair.of("endAcknowledgeDisplay", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("stopMoving", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("freezeTemi", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("endFreezeTemi", new Class<?>[]{}));
-    servicesToObserve.add(Pair.of("followMeBlocking", new Class<?>[]{}));
+    servicesToObserve.add(Pair.of("followMe", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("stopMoving", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("endRepositionLoop", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("startQRCodeDisplay", new Class<?>[]{String.class, String.class}));
@@ -84,7 +87,6 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     servicesToObserve.add(Pair.of("setEscortWaitAttempts", new Class<?>[]{Symbol.class}));
     servicesToObserve.add(Pair.of("setEscortWaitDuration", new Class<?>[]{Symbol.class}));
     servicesToObserve.add(Pair.of("interruptGoToLocation", new Class<?>[]{}));
-    servicesToObserve.add(Pair.of("interruptFollowBlocking", new Class<?>[]{}));
     servicesToObserve.add(Pair.of("setSayTextBlocks", new Class<?>[]{Boolean.class}));
 
     for (Pair<String, Class<?>[]> service : servicesToObserve) {
@@ -99,9 +101,11 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     try {
       TRADEServiceInfo wrapperTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("addObservedOutput").argTypes(Object[].class));
-      TRADEServiceInfo TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(Predicate.class));
+      TRADEServiceInfo TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class));
       TRADE.beforeService(wrapperTSI, TSItoWrap);
-      TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(Predicate.class, Long.class));
+      TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class, Symbol.class));
+      TRADE.beforeService(wrapperTSI, TSItoWrap);
+      TSItoWrap = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class, Symbol.class, Long.class));
       TRADE.beforeService(wrapperTSI, TSItoWrap);
     } catch (TRADEException e) {
       log.error("exception adding before wrapper for waitForResponse", e);
@@ -112,10 +116,10 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
   @Override
   public void shutdownDiarc() {
     log.debug("[shutdownDiarc] started");
+    config.shutdownConfiguration();
     tester.shutdown();
     tester = null;
     log.debug("[shutdownConfig] tester shutdown");
-    config.shutdownConfiguration();
     log.debug("[shutdownDiarc] completed");
   }
 
@@ -160,7 +164,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
       return null;
     }
     Matcher matcher = alphaNumericPattern.matcher(desc);
-    if (!matcher.matches() || desc.contains(" ")) {
+    if (!matcher.matches()) {// || desc.contains(" ")) {
       return "\"" + desc + "\"";
     }
     return desc;
@@ -201,7 +205,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     //TODO: don't want parens
     //Need to make sure this is a unique name
     runUserGeneratedTest("go to uniquelocation", new Object[][]{
-            {"sayText", "sorry, I do Not Know What uniquelocation means", null},
+            {"sayText", "sorry, I error I do Not Know What uniquelocation means", null},
     });
 
     runUserGeneratedTest("save this location as uniquelocation", new Object[][]{
@@ -243,7 +247,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //    });
 
     runUserGeneratedTest("go to uniquelocation", new Object[][]{
-            {"sayText", "sorry, I do Not Know What uniquelocation means", null},
+            {"sayText", "sorry, I error I do Not Know What uniquelocation means", null},
     });
 
     runUserGeneratedTest("save this location as uniquelocation", new Object[][]{
@@ -305,7 +309,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"goToLoc", locSymbol, false, true},
                     {"startAcknowledgeDisplay", "Hello patient. Please come with me. I will show you to homebase.", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to homebase.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), waitTime},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), waitTime},
             }
     );
 
@@ -317,7 +321,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "okay",
             new Object[][]{
 //                    {"sayText", "okay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), waitTime, ackResponseBindings},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to homebase.", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), waitTime, ackResponseBindings},
                     {"endAcknowledgeDisplay", null},
                     {"knowsLocation", locSymbol, true},
                     {"goToLoc", locSymbol, true, true},
@@ -380,11 +384,11 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"endAcknowledgeDisplay", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to homebase.", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to homebase.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, null},
-                    {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
+                    {"waitForResponse","Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 2L},
+                    {"waitForResponse","Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 2L},
+                    {"waitForResponse","Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 2L, null},
+                    {"waitForResponse","Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 2L, null},
+                    {"cancelWaitForResponse","Hello patient. Please come with me. I will show you to homebase.", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), null},
                     {"knowsLocation", homebaseLocSymbol, true},
                     {"goToLoc", homebaseLocSymbol, true, true},
 //                    {"sayTextDialogueHistory", Factory.createSymbol("Arrived at homebase"), true, null},
@@ -450,7 +454,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Could I please have braces", null},
                     {"setSayTextBlocks", true, null},
                     {"startAcknowledgeDisplay", "Please place braces on my tray.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","Could I please have braces", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
@@ -460,7 +464,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "okay",
             new Object[][]{
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+                    {"waitForResponse", "Could I please have braces", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
 //                    {"sayText", "okay", null},
                     //TODO: do we want to modify action script for this to be a ref?
                     {"knowsLocation", Factory.createSymbol("homebase"), true},
@@ -479,7 +483,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Could I please have braces", null},
                     {"setSayTextBlocks", true, null},
                     {"startAcknowledgeDisplay", "Please place braces on my tray.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","Could I please have braces", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
@@ -487,7 +491,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "okay",
             new Object[][]{
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+                    {"waitForResponse", "Could I please have braces", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
 //                    {"sayText", "okay", null},
                     {"knowsLocation", Factory.createSymbol("homebase"), true},
                     {"goToLoc", Factory.createSymbol("homebase"), true, true},
@@ -514,16 +518,17 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     }
 
     runUserGeneratedTest("follow me", new Object[][]{
+            {"startAcknowledgeDisplay", "following until interrupted", null},
+            {"followMe", null},
             {"sayText", "okay", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+            {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
     });
 
     runUserGeneratedTest("cancel current task", new Object[][]{
-            {"followMeBlocking", null},
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"interruptFollowBlocking", null},
+            {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), null},
+            {"stopMoving", null},
+            {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), null},
             {"joinOnGoal", Factory.createPredicate("followMeBlocking(self:agent)"), GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
     });
@@ -545,16 +550,17 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     }
 
     runUserGeneratedTest("follow me", new Object[][]{
+            {"startAcknowledgeDisplay", "following until interrupted", null},
+            {"followMe", null},
             {"sayText", "okay", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+            {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
     });
 
     runUserGeneratedTest("stop", new Object[][]{
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"followMeBlocking", null},
-            {"interruptFollowBlocking", null},
+            {"stopMoving", null},
+            {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), null},
+            {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), null},
     });
 
     long followGid = getGoalId("followMeBlocking(self:agent)");
@@ -573,15 +579,16 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //            {"sayText", "okay", null},
             {"endFreezeTemi", null},
             {"freezeTemi", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+            {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             {"joinOnGoal", Factory.createPredicate("freezeTemi(self:agent)"), GoalStatus.SUCCEEDED},
             {"joinOnGoal", Factory.createPredicate("endFreezeTemi(self:agent)"), GoalStatus.SUCCEEDED}
     });
 
     runUserGeneratedTest("okay", new Object[][]{
 //            {"sayText", "okay", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
-            {"followMeBlocking", null},
+            {"stopMoving", null},
+            {"endAcknowledgeDisplay", null},
+            {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
             {"joinOnGoal", followGid, GoalStatus.SUCCEEDED}
     });
 
@@ -606,26 +613,29 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     }
 
     runUserGeneratedTest("follow me", new Object[][]{
+            {"followMe", null},
             {"sayText", "okay", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+            {"startAcknowledgeDisplay", "following until interrupted", null},
+            {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
     });
 
     long followGid = getGoalId("followMeBlocking(self:agent)");
 
     runUserGeneratedTest("stop", new Object[][]{
-            {"followMeBlocking", null},
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"interruptFollowBlocking", null},
+            {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), null},
+            {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), null},
+            {"stopMoving", null},
     });
 
     long freezeGid = getGoalId("freezeTemi(self:agent)");
 
     runUserGeneratedTest("cancel task with gid " + followGid, new Object[][]{
             {"sayText", "okay", null},
-//            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},  // no longer happens -- followMeBlocking already suspended
-//            {"interruptFollowBlocking", null},                                                // no longer happens -- followMeBlocking already suspended
+//            {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},  // no longer happens -- followMeBlocking already suspended
+//            {"interruptFollowBlocking", null},
+// no longer happens -- followMeBlocking already suspended
+            {"stopMoving", null},
             {"joinOnGoal", followGid, GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelGoal(self:agent," + followGid + ")"), GoalStatus.SUCCEEDED},
     });
@@ -639,12 +649,14 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
     });
 
     runUserGeneratedTest("follow me", new Object[][]{
+            {"followMe", null},
+            {"startAcknowledgeDisplay", "following until interrupted", null},
             {"sayText", "okay", null},
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+            {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
     });
 
     runUserGeneratedTest("okay", new Object[][]{
-            {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+            {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
     });
 
   }
@@ -665,18 +677,19 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("follow me",
             new Object[][]{
+                    {"followMe", null},
+                    {"startAcknowledgeDisplay", "following until interrupted", null},
                     {"sayText", "okay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
     runUserGeneratedTest("stop",
             new Object[][]{
-                    {"followMeBlocking", null},
                     {"sayText", "okay", null},
-                    {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-                    {"interruptFollowBlocking", null},
+                    {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), null},
+                    {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), null},
+                    {"stopMoving", null},
             }
     );
 
@@ -685,7 +698,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //                    {"sayText", "okay", null},
                     {"endFreezeTemi", null},
                     {"freezeTemi", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","following until interrupted", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
                     {"joinOnGoal", Factory.createPredicate("freezeTemi(self:agent)"), GoalStatus.SUCCEEDED},
                     {"joinOnGoal", Factory.createPredicate("endFreezeTemi(self:agent)"), GoalStatus.SUCCEEDED}
             }
@@ -695,11 +708,10 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("cancel current task",
             new Object[][]{
-                    {"followMeBlocking", null},
                     {"sayText", "okay", null},
-                    {"interruptFollowBlocking", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-                    {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
+                    {"stopMoving", null},
+                    {"waitForResponse", "following until interrupted", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), null},
+                    {"cancelWaitForResponse", "following until interrupted",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), null},
                     {"joinOnGoal", followGid, GoalStatus.CANCELED},
                     {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
@@ -845,7 +857,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Could I please have braces", null},
                     {"setSayTextBlocks", true, null},
                     {"startAcknowledgeDisplay", "Please place braces on my tray.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","Could I please have braces", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
@@ -856,7 +868,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //                    {"sayText", "okay", null},
                     {"goToPos", new ArrayList<>(Arrays.asList(1.0f, 1.0f, 1.0f)), Factory.createSymbol("Original Location"), true, true},
                     {"sayText", "I have brought braces", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+                    {"waitForResponse", "Could I please have braces", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
                     {"endAcknowledgeDisplay", null},
                     {"joinOnGoal", Factory.createPredicate("fetch(self:agent,braces)"), GoalStatus.SUCCEEDED}
             }
@@ -936,7 +948,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Could I please have braces", null},
                     {"setSayTextBlocks", true, null},
                     {"startAcknowledgeDisplay", "Please place braces on my tray.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","Could I please have braces", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
@@ -944,7 +956,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             new Object[][]{
 //                    {"sayText", "okay", null},
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+                    {"waitForResponse", "Could I please have braces", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
                     {"goToPos", new ArrayList<>(Arrays.asList(1.0f, 1.0f, 1.0f)), Factory.createSymbol("Original Location"), true, true},
                     {"sayText", "I have brought braces", null},
             }
@@ -987,13 +999,13 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Could I please have braces", null},
                     {"setSayTextBlocks", true, null},
                     {"startAcknowledgeDisplay", "Please place braces on my tray.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X")},
+                    {"waitForResponse","Could I please have braces", List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent")},
             }
     );
 
     runUserGeneratedTest("okay",
             new Object[][]{
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), ackResponseBindings},
+                    {"waitForResponse", "Could I please have braces", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), ackResponseBindings},
                     {"endAcknowledgeDisplay", null},
 //                    {"sayText", "okay", null},
                     {"knowsLocation", Factory.createSymbol(escapeSpecialCharacters("newl0cn@me's")), true},
@@ -1040,7 +1052,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "okay", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to test.", null},
                     {"startAcknowledgeDisplay", "Hello patient. Please come with me. I will show you to test.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to test.",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L},
             }
     );
 
@@ -1049,7 +1061,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             new Object[][]{
 //                    {"sayText", "okay", null},
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L, ackResponseBindings},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to test.", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L, ackResponseBindings},
                     {"knowsLocation", locSymbol, true},
                     {"goToLoc", locSymbol, true, true},
                     {"sayText", "Arrived at test", null},
@@ -1097,7 +1109,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"goToLoc", testLocSymbol, false, true},
                     {"startAcknowledgeDisplay", "Hello patient. Please come with me. I will show you to homebase.", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to homebase.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to homebase.",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L},
             }
     );
 
@@ -1107,7 +1119,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     //don't really want tentativeAccept on acknowledgement
 //                    {"sayText", "okay", null},
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L, ackResponseBindings},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to homebase.", List.of( Factory.createPredicate("waitForAckTemi", "X")), Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L, ackResponseBindings},
                     {"knowsLocation", locSymbol, true},
                     {"goToLoc", locSymbol, true, true},
                     {"sayText", "Arrived at homebase", null},
@@ -1156,7 +1168,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"knowsLocation", locSymbol, true},
                     {"goToLoc", locSymbol, false, true},
                     {"sayText", "Hello patient. Please come with me. I will show you to test.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to test.",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L},
                     {"startAcknowledgeDisplay", "Hello patient. Please come with me. I will show you to test.", null},
             }
     );
@@ -1165,8 +1177,8 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("cancel current task",
             new Object[][]{
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 10L, null},
-                    {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to test.",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), 10L, null},
+                    {"cancelWaitForResponse", "Hello patient. Please come with me. I will show you to test.",List.of(Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), null},
                     {"sayText", "okay", null},
                     {"endAcknowledgeDisplay", null},
                     {"joinOnGoal", escortGid, GoalStatus.CANCELED},
@@ -1317,7 +1329,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"goToLoc", locSymbol, false, true},
                     {"startAcknowledgeDisplay", "Hello patient. Please come with me. I will show you to escorttolocation.", null},
                     {"sayText", "Hello patient. Please come with me. I will show you to escorttolocation.", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), waitTime},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to escorttolocation.", List.of( Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), waitTime},
             }
     );
 
@@ -1328,7 +1340,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             new Object[][]{
 //                    {"sayText", "okay", null},
                     {"endAcknowledgeDisplay", null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), waitTime, ackResponseBindings},
+                    {"waitForResponse", "Hello patient. Please come with me. I will show you to escorttolocation.", List.of( Factory.createPredicate("waitForAckTemi", "X")),Factory.createSymbol("self:agent"), Factory.createSymbol("brad"), waitTime, ackResponseBindings},
                     {"knowsLocation", locSymbol, true},
                     {"goToLoc", locSymbol, true, true},
                     {"sayText", "Arrived at escorttolocation", null},
@@ -1515,7 +1527,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as ambiguous\",\"locname",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location ambiguous locname", null}
+                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location \"ambiguous\" \"locname\"", null}
             }
     );
 
@@ -1523,7 +1535,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as this is my \", \", te,\" st\",,\"\" location,",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \\34\\, \" te \" st\\34\\,\\34\\\\34\\ location,\"", null}
+                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \", \" te \" st\",\"\" location,\"", null}
             }
     );
 

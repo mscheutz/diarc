@@ -199,7 +199,7 @@ public class ElevatorBoardingComponent extends DiarcComponent {
    * @throws TRADEException
    */
   private Justification followPath(List<Matrix4d> path) throws TRADEException {
-    List<Pose> waypoints = new ArrayList<Pose>();
+    List<Pose> waypoints = new ArrayList<>();
 
     for (Matrix4d transform : path) {
       Pose pose = Convert.convertToPose(transform);

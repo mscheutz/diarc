@@ -213,7 +213,7 @@ namespace diarc {
         cv_bridge::CvImageConstPtr cv_depth_ptr;
         try {
           // get rgb frame and resize
-          cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC4);
+          cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv::resize(cv_rgb_ptr->image, frame, frame.size(), 0, 0, CV_INTER_NN);
 
           // get depth frame and resize
@@ -248,7 +248,13 @@ namespace diarc {
           }
 
           // create point cloud from color and depth frames
-          diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+          if (performDepthRegistration_) {
+            // use color camera matrix bc depth has already been aligned with color frame
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 1);
+          } else {
+            // use depth camera matrix
+            diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud, 0);
+          }
 
         } catch (cv_bridge::Exception &e) {
           LOG4CXX_ERROR(logger, boost::format("cv_bridge exception: %s") % e.what());

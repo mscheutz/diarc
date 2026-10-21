@@ -148,4 +148,13 @@ public interface Prover {
    * @return
    */
   String sanitize(Term term);
+
+  /**
+   * Todo: see sanitize. This isn't super clean and can be fixed in the pipeline update.
+   *
+   * @param term
+   * @return
+   */
+  Symbol unsanitize(Term term);
+
 }

@@ -7,6 +7,7 @@ package edu.tufts.hrilab.action.learning;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,6 +55,9 @@ public class ActionLearning {
    */
   private ActionLearningStatus learningStatus = ActionLearningStatus.NONE;
   private Map<String, LearningState> pausedLearningStates = new HashMap<>();
+  private Condition learningStateUpdateCondition = goalQueueEmptyLock.newCondition();
+  private Map<Predicate,Boolean> learningStateUpdateListenerInterrupted = new HashMap<>();
+  private final AtomicBoolean consumerBusy = new AtomicBoolean(false);
   private ActionLearningGui learningGui;
 
   /**
@@ -83,9 +88,14 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
     ignoreActionSet.add(Factory.createPredicate("learnAction(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endTaskLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
@@ -93,43 +103,74 @@ public class ActionLearning {
 
     ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoalsBlocking(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("resumeSystemGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelPendingGoalByIndex(?actor)"));
+
+    //spotPickAndPlace - Only here because of workaround implementation of itk actions
+    ignoreActionSet.add(Factory.createPredicate("believeObjectAt(?actor,?object,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectPose(?actor,?object)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectPoses(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectsAt(?actor,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeNumberOfObjectsAt(?actor,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeCurrentGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describePendingGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeCurrentPose(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeDetectableObjectNames(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeKnownPoseNames(?actor)"));
   }
 
   public void startQueuingGoals() {
     goalQueueManager = new Thread(() -> {
       while (learningStatus.equals(ActionLearningStatus.ACTIVE)) {
-        if (!goalQueue.isEmpty()) {
-          Goal g = goalQueue.remove();
+        Goal g = null;
+        goalQueueEmptyLock.lock();
+        try {
+          if (!goalQueue.isEmpty()) {
+            g = goalQueue.remove();
+            consumerBusy.set(true);
+          } else {
+            try {
+              goalQueueNotEmpty.await();
+            } catch (InterruptedException ignored) {}
+          }
+        } finally {
+          goalQueueEmptyLock.unlock();
+        }
+        if (g == null) {
+          continue;
+        }
+        try {
           if (shouldExecute()) {
             //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
             ignoreActionSet.add(g.getGoalStatePredicate());
             g.setIsLearningGoal(true);
-            g = executionManager.submitGoal(g, ExecutionType.ACT);
+            g = executionManager.submitGoal(g);
             GoalStatus goalStatus = executionManager.joinOnGoal(g.getId());
             ignoreActionSet.remove(g.getGoalStatePredicate());
 
             if (goalStatus == GoalStatus.SUCCEEDED) {
-              currentLearningState.createEventSpec(g);
+              if (currentLearningState != null) {
+                currentLearningState.createEventSpec(g);
+              }
             } else {
               log.error("not adding goal to learned action because it failed: " + g);
               //TODO:brad:how should the rest of the system find out about this
             }
           } else {
             g.setStatus(GoalStatus.SUCCEEDED);
-            currentLearningState.createEventSpec(g);
+            if (currentLearningState != null) {
+              currentLearningState.createEventSpec(g);
+            }
           }
-
-        } else {
+        } finally {
+          consumerBusy.set(false);
           goalQueueEmptyLock.lock();
           try {
-            goalQueueNotEmpty.await();
-          } catch (Exception e) {
-            log.error("[startQueuingGoals]", e);
+            learningStateUpdateCondition.signalAll();
           } finally {
             goalQueueEmptyLock.unlock();
           }
@@ -147,8 +188,8 @@ public class ActionLearning {
    * @param status
    */
   private void setLearningStatus(ActionLearningStatus status) {
+    statusLock.lock();
     try {
-      statusLock.lock();
       learningStatus = status;
       statusCondition.signalAll();
     } finally {
@@ -157,9 +198,9 @@ public class ActionLearning {
   }
 
   public void waitForActionLearningStart(Predicate newAction) {
+    statusLock.lock();
     try {
-      statusLock.lock();
-      while (learningStatus != ActionLearningStatus.ACTIVE && currentLearningState != null && !newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      while (!(learningStatus == ActionLearningStatus.ACTIVE && currentLearningState != null && newAction.getName().equalsIgnoreCase(currentLearningState.getName()))) {
         try {
           statusCondition.await();
         } catch (InterruptedException e) {
@@ -197,19 +238,19 @@ public class ActionLearning {
     setLearningStatus(ActionLearningStatus.ACTIVE);
     startQueuingGoals();
 
-     //to keep the learning goal active while learning, wait here until status is no longer active
-      try {
-        statusLock.lock();
-        while (learningStatus == ActionLearningStatus.ACTIVE) {
-          try {
-            statusCondition.await();
-          } catch (InterruptedException e) {
-            log.warn("Interrupted while waiting for learning to finish.", e);
-          }
+    //to keep the learning goal active while learning, wait here until status is no longer active
+    statusLock.lock();
+    try {
+      while (learningStatus == ActionLearningStatus.ACTIVE) {
+        try {
+          statusCondition.await();
+        } catch (InterruptedException e) {
+          log.warn("Interrupted while waiting for learning to finish.", e);
         }
-      } finally {
-        statusLock.unlock();
       }
+    } finally {
+      statusLock.unlock();
+    }
 
     return true;
   }
@@ -217,6 +258,23 @@ public class ActionLearning {
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
     log.debug("[endActionLearning] " + newAction);
+
+    // Wait for the consumer thread to drain any pending goals and finish event-spec'ing
+    // the one currently in flight before we touch currentLearningState.
+    goalQueueEmptyLock.lock();
+    try {
+      long deadline = System.currentTimeMillis() + 30000;
+      while ((!goalQueue.isEmpty() || consumerBusy.get()) && System.currentTimeMillis() < deadline) {
+        try {
+          learningStateUpdateCondition.await(200, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ignored) {}
+      }
+      if (!goalQueue.isEmpty() || consumerBusy.get()) {
+        log.warn("[endActionLearning] timed out waiting for learning goal queue to drain");
+      }
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
 
     boolean currentState;
     LearningState learningState;
@@ -234,7 +292,11 @@ public class ActionLearning {
     }
 
     log.debug("Generating new ActionDBEntry");
-    learningState.generateActionDBEntry();
+    ActionDBEntry dbEntry  = learningState.generateActionDBEntry();
+    if (executionManager.getLearnedActionsFile() != null) {
+      ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
+      writer.writeToFile(dbEntry, executionManager.getLearnedActionsFile(), true);
+    }
     LearningState previousLearningState = learningState.getPreviousLearningState();
     if (previousLearningState != null) {
       log.debug("restoring previous action: " + learningState.getPreviousLearningState().getName());
@@ -272,21 +334,28 @@ public class ActionLearning {
   public boolean cancelActionLearning(Predicate action) {
     log.debug("[cancelActionLearning] " + action);
 
-    if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      setLearningStatus(ActionLearningStatus.CANCEL);
-      currentLearningState = null;
-      setLearningStatus(ActionLearningStatus.NONE);
-      if (learningGui != null) {
-        learningGui.clear();
-      }
-    } else {
-      LearningState learningState = pausedLearningStates.remove(action.getName());
-      if (learningState == null) {
-        log.error("[cancelActionLearning] called for action with no learning state: {}", action);
-        return false;
+    if (action == null) {
+      log.warn("[cancelActionLearning] supplied action is null");
+      return false;
+    }
+    if (currentLearningState != null) {
+      if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+        setLearningStatus(ActionLearningStatus.CANCEL);
+        currentLearningState = null;
+        setLearningStatus(ActionLearningStatus.NONE);
+        if (learningGui != null) {
+          learningGui.clear();
+        }
+        return true;
       }
     }
-    return true;
+    LearningState learningState = pausedLearningStates.remove(action.getName());
+    if (learningState == null) {
+      log.error("[cancelActionLearning] called for action with no learning state: {}", action);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -298,8 +367,14 @@ public class ActionLearning {
   public boolean pauseActionLearning(Predicate action) {
     log.debug("[pauseActionLearning] " + action);
 
+    if (action == null) {
+      log.warn("[pauseActionLearning] supplied action is null");
+      return false;
+    }
+
     if (currentLearningState == null) {
       log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
+      return false;
     } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
       pausedLearningStates.put(action.getName(), currentLearningState);
       currentLearningState = null;
@@ -319,6 +394,12 @@ public class ActionLearning {
    */
   public boolean resumeActionLearning(Predicate action) {
     log.debug("[resumeActionLearning] " + action);
+
+    if (action == null) {
+      log.warn("[resumeActionLearning] supplied action is null");
+      return false;
+    }
+
     LearningState resumedLearningState = pausedLearningStates.get(action.getName());
     if (resumedLearningState != null) {
       if (currentLearningState != null) {
@@ -338,6 +419,40 @@ public class ActionLearning {
     return true;
   }
 
+  public boolean waitForLearningStateUpdate(Predicate action) {
+    boolean updated = false;
+    learningStateUpdateListenerInterrupted.put(action,false);
+    while (!updated) {
+      goalQueueEmptyLock.lock();
+      try {
+        learningStateUpdateCondition.await();
+        if (learningStateUpdateListenerInterrupted.get(action) == true) {
+          break;
+        }
+        //TODO: Why are the comparison checks only using name throughout this file. This isn't fully safe is it?
+        if (currentLearningState != null && currentLearningState.getName().equalsIgnoreCase(action.getName())) {
+          updated = true;
+        }
+      } catch (Exception e) {
+        log.error("[waitForLearningStateUpdate]", e);
+      } finally {
+        goalQueueEmptyLock.unlock();
+      }
+    }
+    return updated;
+  }
+
+  public void interruptWaitForLearningStateUpdate(Predicate action) {
+    if (learningStateUpdateListenerInterrupted.containsKey(action)) {
+      learningStateUpdateListenerInterrupted.put(action, true);
+      goalQueueEmptyLock.lock();
+      learningStateUpdateCondition.signal();
+      goalQueueEmptyLock.unlock();
+    } else {
+      log.error("[interruptWaitForLearningStateUpdate] don't have pending listener for predicate {}", action);
+    }
+  }
+
   public boolean shouldIgnore(Goal goal) {
     return ignoreActionSet.stream().anyMatch(a -> goal.getGoalStatePredicate().instanceOf(a));
   }
@@ -354,6 +469,7 @@ public class ActionLearning {
     goalQueueEmptyLock.lock();
     try {
       goalQueueNotEmpty.signal();
+      learningStateUpdateCondition.signal();
     } catch (Exception e) {
       log.error("[addGoal] ", e);
     } finally {
@@ -371,6 +487,18 @@ public class ActionLearning {
 
   public boolean shouldExecute() {
     return executeAction;
+  }
+
+  //TODO: Shouldn't learning states be indexed by something more detailed than just signature name?
+  public Predicate getActiveLearningSignature() {
+    if (currentLearningState == null) {
+      log.warn("[getActiveLearningName] method called but current learning state is null");
+      return null;
+    } else {
+      List<Symbol> args = currentLearningState.getRoleNames();
+      args.add(0, Factory.createVariable("?actor"));
+      return Factory.createPredicate(currentLearningState.getName(),args);
+    }
   }
 
   //TODO: cancelTeachingByModification
@@ -442,6 +570,7 @@ public class ActionLearning {
       Database.getActionDB().removeAction(existingEntry);
     }
     learningState.generateActionDBEntry();
+    //TODO: write new version of action to file?? Only for modified taught actions?
   }
 
   private void modifyAction(Predicate modification, Predicate location, LearningState ls) {

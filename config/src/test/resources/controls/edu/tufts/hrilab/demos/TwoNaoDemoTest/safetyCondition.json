@@ -11,10 +11,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824638065" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "130" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824638065", "FAILED" ]
+      "serviceArgs" : [ "130", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
@@ -25,10 +25,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824643041" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "138" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824643041", "FAILED" ]
+      "serviceArgs" : [ "138", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]
@@ -50,7 +50,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824653026" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "150" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -58,13 +58,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "NORMAL", "1704824658043" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1", "evan", "177" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824658043", "SUCCEEDED" ]
+      "serviceArgs" : [ "177", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824653026", "CANCELED" ]
+      "serviceArgs" : [ "150", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -72,7 +72,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "ACT", "NORMAL", "1704824663009" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "ACT", "NORMAL", "1", "evan", "181" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,will(catch(evan,dempster)))", "null" ]
@@ -84,7 +84,7 @@
       "serviceArgs" : [ "believes(shafer,will(catch(evan,dempster)))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824663009", "SUCCEEDED" ]
+      "serviceArgs" : [ "181", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -92,10 +92,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824668007" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1", "evan", "186" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824668007", "FAILED" ]
+      "serviceArgs" : [ "186", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]

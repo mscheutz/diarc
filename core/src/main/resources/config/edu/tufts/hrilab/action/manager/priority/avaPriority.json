@@ -1,0 +1,390 @@
+{
+  "urgentChargeAtHomeToPercent": {
+    "priority": 1,
+    "priorityTier": "URGENT"
+  },
+  "switchDisplayToTelepresence": {
+    "priority": 1,
+    "priorityTier": "HIGH"
+  },
+  "scheduleGoal": {
+    "priority": 1,
+    "priorityTier": "NORMAL"
+  },
+  "monitorBattery": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "avaListen": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listenForWWandASR": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptListenForWWandASR": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "testDialogueComponent": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "handleAvaDialogue": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stop": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopFollowing": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endTaskLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "pauseActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "repeatLastQuestion":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeAllKnownLocations":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentLocation":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeAllKnownPatrolPaths":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeAllLocationsOnPatrolPath":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeScheduledGoals":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "patrol":  {
+    "priority": 1,
+    "priorityTier": "LOW"
+  },
+  "interruptWaitForReadyAck": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "forgetTaughtAction": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportTaughtActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportInstructableActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeActionSteps": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportIfCanPerform": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportKioskSettings": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateKioskTimeout": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskTimeout": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskModeEnabled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateKioskAction": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listSavedVideos": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listSavedImages": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "lowerVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "raiseVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "lowerVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "raiseVoiceVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportIsVideoSaved": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelSingleTaskInQueue": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableAdminMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableAdminMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "switchDisplayToTRACS": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setMaryTTSVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopIdleImageCycle": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "startIdleImageCycle": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "skippendingsay": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "playAudioFile": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "generateResponseFromString": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getAllKnownLocations":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getBatteryLevelString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentLocationString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredWifiStrengths":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredWifiStrengthsAtLocationsString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "measureWifiAtCurrentLocationAndReport":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "measureWifiAtCurrentLocation":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPreviouslyMeasuredTemperaturesAtLocationsString":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getTaughtActionsList":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getIfCanPerform":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getPredefinedActions":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getActionSteps":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getKioskGoalSettings":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getVideoVolume":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getIsVideoSaved":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getSavedVideos":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getSavedImages":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getAssignedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resetConversation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getInformationAroundHowToTeachATask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getInformationAroundWhatALearnedTaskIs": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getInformationAroundWhatActionsCanBePerformedAlongALearnedTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getInformationAroundTeachingNewActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "checkPastInteractionHistoryForMissingInformation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateDialogueHistoryFromString": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "dontRespond": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentAndQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllScheduledGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtPrimaryDock": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAtSecondaryDock": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "saveLocation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getAssistanceOnUsingSaveLocationAndGoToLocationProperly": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getAllKnownRooms": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "modifyExistingTaskStatus": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "submitTaskStatusModificationDefinition": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelQueuedTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelScheduledTasks": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentView": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "getCurrentViewDescription": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  }
+}

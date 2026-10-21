@@ -10,8 +10,10 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.util.*;
 import java.io.Serializable;
+import java.util.stream.Collectors;
 
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,10 @@ public final class Utterance implements Serializable {
    * by the rest of the system. This is currently for verifying LLM generated parses.
    */
   private boolean needsValidation = false;
+  /**
+   * If true, this utterance's parse has been explicitly validated by a human user
+   */
+  private boolean validated = false;
   /**
    * Speaker of the utterance.
    */
@@ -80,6 +86,12 @@ public final class Utterance implements Serializable {
   private Map<String,String> translations = new HashMap<>();
 
   /**
+   * Utterance ID
+   */
+  private long id;
+  private static final IdGenerator idGenerator = new IdGenerator();
+
+  /**
    * Convenience method for instantiating Utterance from ASL.
    * @param speaker
    * @param addressee
@@ -105,6 +117,7 @@ public final class Utterance implements Serializable {
     this.words = words;
     this.type = type;
     this.isInputUtterance = isInput;
+    this.id = idGenerator.getNext();
   }
 
   /**
@@ -123,12 +136,13 @@ public final class Utterance implements Serializable {
   private Utterance(Symbol speaker, Symbol addressee, List<Symbol> listeners, List<String> words,
                    Symbol semantics, List<Term> indirectSemantics, List<Term> supSementics,
                    List<Map<Variable, Symbol>> bindings, Map<Variable, Symbol> tierAssignments,
-                   UtteranceType type, boolean isInput, boolean needsValidation,
-                   String language, Map<String,String> translations) {
+                   UtteranceType type, boolean isInput, boolean needsValidation, boolean validated,
+                   String language, Map<String,String> translations, long id) {
 
     this.type = type;
     this.isInputUtterance = isInput;
     this.needsValidation = needsValidation;
+    this.validated = validated;
     this.speaker = speaker;
     this.addressee = addressee;
     this.listeners = listeners;
@@ -140,6 +154,7 @@ public final class Utterance implements Serializable {
     this.tierAssignments = tierAssignments;
     this.language = language;
     this.translations = translations;
+    this.id = id;
   }
 
   public static class Builder {
@@ -147,6 +162,7 @@ public final class Utterance implements Serializable {
     private UtteranceType type;
     private boolean isInputUtterance;
     private boolean needsValidation;
+    private boolean validated;
     private Symbol speaker;
     private Symbol addressee;
     private List<Symbol> listeners;
@@ -158,11 +174,13 @@ public final class Utterance implements Serializable {
     private Map<Variable, Symbol> tierAssignments;
     private String language;
     private Map<String,String> translations;
+    private long id;
 
     public Builder() {
       type = UtteranceType.UNKNOWN;
       isInputUtterance = true;
       needsValidation = false;
+      validated = false;
       speaker = null;
       addressee = null;
       listeners = new ArrayList<>();
@@ -174,12 +192,14 @@ public final class Utterance implements Serializable {
       tierAssignments = new LinkedHashMap<>();
       language = "en";
       translations = new HashMap<>();
+      this.id = idGenerator.getNext();
     }
 
     public Builder(Utterance source) {
       this.type = source.type;
       this.isInputUtterance = source.isInputUtterance;
       this.needsValidation = source.needsValidation;
+      this.validated = source.validated;
       this.speaker = source.speaker;
       this.addressee = source.addressee;
       this.listeners = new ArrayList<>(source.listeners);
@@ -191,10 +211,11 @@ public final class Utterance implements Serializable {
       this.tierAssignments = new LinkedHashMap<>(source.tierAssignments);
       this.language = source.getLanguage();
       this.translations = new HashMap<>(source.getTranslations());
+      this.id = source.id;
     }
 
     public Utterance build() {
-      return new Utterance(speaker, addressee, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, language, translations);
+      return new Utterance(speaker, addressee, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, validated, language, translations, id);
     }
 
     public Builder setSpeaker(Symbol speaker) {
@@ -241,13 +262,25 @@ public final class Utterance implements Serializable {
       return this;
     }
 
+    public Builder setWords(String words) {
+      this.words = new ArrayList<>(Arrays.asList(words.trim().split(" ")));
+      return this;
+    }
+
+    public Builder setisValidated(boolean validated) {
+      this.validated = validated;
+      return this;
+    }
+
     public Builder setWords(List<String> words) {
-      this.words = new ArrayList<>(words);
+      this.words = words.stream().filter(word -> !word.isBlank()).collect(Collectors.toList());
       return this;
     }
 
     public Builder addWord(String word) {
-      this.words.add(word);
+      if (!word.isBlank()) {
+        this.words.add(word);
+      }
       return this;
     }
 
@@ -341,6 +374,23 @@ public final class Utterance implements Serializable {
    */
   public void setNeedsValidation(boolean validationFlag) {
     this.needsValidation = validationFlag;
+  }
+
+
+  /**
+   * If true, this utterance's parse has been validated by a human user
+   * @return
+   */
+  public boolean isValidated() {
+    return validated;
+  }
+
+  /**
+   * Set the isValidated flag
+   * @param validatedFlag
+   */
+  public void setIsValidated(boolean validatedFlag) {
+    this.validated = validatedFlag;
   }
 
   /**
@@ -474,10 +524,13 @@ public final class Utterance implements Serializable {
 
   /**
    * Set words of this Utterance. The input String will be split on spaces.
+   * Empty or whitespace-only words will be ignored.
    * @param words
    */
   public void setWords(String words) {
-    this.words = new ArrayList<>(Arrays.asList(words.trim().split(" ")));
+    this.words = Arrays.stream(words.trim().split(" "))
+            .filter(word -> !word.isBlank())
+            .toList();
   }
 
   /**
@@ -485,7 +538,7 @@ public final class Utterance implements Serializable {
    * @param words
    */
   public void setWords(List<String> words) {
-    this.words = new ArrayList<>(words);
+    this.words = words.stream().filter(word -> !word.isBlank()).collect(Collectors.toList());
   }
 
   /**
@@ -517,8 +570,31 @@ public final class Utterance implements Serializable {
     this.indirectSemantics = indirectSemantics;
   }
 
+  public void setTierAssignments(Map<Variable, Symbol> tierAssignments) {
+    this.tierAssignments = tierAssignments;
+  }
+
   public void addBinding(Map<Variable, Symbol> binding) {
-    bindings.add(binding);
+    //todo: this is inefficient and we should be using a different data structure. if we run rr a second time we can duplicate bindings accidentally
+    boolean novel = false;
+    if (!bindings.isEmpty()) {
+      for (Map<Variable, Symbol> existingBinding : bindings) {
+        for (Variable var : existingBinding.keySet()) {
+          Symbol existingValue = existingBinding.get(var);
+          Symbol newValue = binding.get(var);
+          if (!existingValue.equals(newValue)) {
+            novel = true;
+            break;
+          }
+        }
+      }
+    } else {
+      novel = true;
+    }
+    if (novel) {
+      bindings.add(binding);
+    }
+    this.boundSemantics = null;
   }
 
   public void setBindings(List<Map<Variable, Symbol>> bindings) {
@@ -703,6 +779,14 @@ public final class Utterance implements Serializable {
     return language;
   }
 
+  /**
+   * Get the identifier associated with this Utterance
+   * @return
+   */
+  public long getUid() {
+    return id;
+  }
+
   //TODO:brad:is this sufficient?
   @Override
   public boolean equals(Object o) {
@@ -724,12 +808,8 @@ public final class Utterance implements Serializable {
     // add speaker info
     sb.append(speaker != null ? speaker.toString() : "_").append(",");
 
-    // add listener info
-    if (listeners != null && !listeners.isEmpty() && listeners.get(0) != null) {
-      sb.append(listeners.get(0).toString()).append(",");
-    } else {
-      sb.append("_").append(",");
-    }
+    // add addressee info
+    sb.append(addressee != null ? addressee.toString() : "_").append(",");
 
     // add semantics (or words if semantics is null or "null")
     if (semantics == null) {
@@ -755,6 +835,11 @@ public final class Utterance implements Serializable {
         sb.append(semantics);
       }
     }
+    sb.append(",");
+
+    sb.append("\"");
+    sb.append(getWordsAsString());
+    sb.append("\"");
     sb.append(",");
 
     // print supplemental semantics modifiers

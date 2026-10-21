@@ -1,0 +1,78 @@
+root ::= " robot-ava" | " robot-ava" valid | valid | nonvalid
+
+
+valid ::= command | hard-coded-commands | (modal){0,2} command (modal){0,2} | statement | reply
+command ::=  escort-command | move prep lref | delver ref prep lref
+hard-coded-commands ::= " go home" | " find person" | " battery level" | " look at moving" | " long demo" | " stop"
+reply ::= " yes" | " no"
+statement ::= agent " is" at-prep lref
+
+move ::= " drive" | " go" | " get" | " move"
+escort-command ::= escort (human (at-prep lref)? | speaker) prep lref | " show" (human (at-prep lref)? | speaker) (vp | np)? lref
+escort ::= " bring" | " drive" | " escort" | " guide" | " get" | " lead" | " take" | " transport"
+delver ::= " bring" | " carry" | " deliver" | " get" | " move" | " take" | " transport"
+
+modal ::= " are you able to" | " would you mind" | " could you go and" | " could you" | " can you" | " is it possible to" |
+          " id like you to" | " please"
+
+
+noun ::= lref | ref | agent
+
+ref ::= " the" rn
+rn ::= thing
+thing ::= " box" | " package"
+
+vp ::= " how to get" prep | " how to reach" | " how to access"
+np ::= (" directions" | " the directions" | " the way" | " the path" | " the route") prep | " the location of"
+
+agent ::= speaker | human
+speaker ::= " me"
+human ::= " matt" | " chris" | " evan"
+
+prep ::= " to"
+at-prep ::= " in" | " around" | " near" | " by" | " at" | " inside" | " besides" | " adjacent" | " from" | " in front of"
+
+lref ::= " the" ln | jcc-lref | room
+ln ::= loc
+loc ::= jcc-loc
+
+
+
+
+jcc-loc ::= jcc-lab | jcc-office | jcc-rooms | jcc-office-hours | " dock" | (adj)? " elevator" (pp)? | (adj)? " stairs" (pp)? |
+            " kitchenette" | (" kitchen" | " sink") (" area")? | " construction" (" zone" | " site" | " area")? | " utility corridor" | " storage" |
+            " bathroom" | " restroom"
+jcc-lref ::= " stairs" (" a" | " b") | prof " office" |jcc-office-hours | prof-with-lab " lab" | " room" room-number
+
+jcc-lab ::= (" h r i" | " nat" | " mu lip" | " able" | " robotics") " lab" | " lab space"
+jcc-office ::= ((" c s")? " admin") " office"
+jcc-rooms ::= (" conference" | " meeting" | " huddle" | (" levy" (" family")?)? " seminar") " room"
+jcc-office-hours ::= (" c s" | " comp")? class-number " office hours"
+
+class-number ::= three-digit-number | two-digit-number
+room-number ::= lettered-room-number | three-digit-number
+
+zero-to-nine ::= " zero" | " oh" | " one" | " two" | " three" | " four" | " five" | " six" | " seven" | " nine"
+ten-to-nineteen ::= " ten" | " eleven" | " twelve" | " thirteen" | " fourteen" |" fifteen" | " sixteen" | " seventeen" | " eighteen" | " nineteen"
+tens ::= " twenty" | " thirty" | " forty" | " fifty" | " sixty"  | " seventy" | " eighty" | " ninety"
+two-digit-number ::= zero-to-nine zero-to-nine | ten-to-nineteen | tens (zero-to-nine)?
+
+three-digit-number ::= (" four" | " one") (" hundred")? two-digit-number
+lettered-room-number ::= ((" four four" (" zero" | " oh")) | " four hundred forty" | " four forty") letter
+letter ::= " a" | " b" | " c" | " d" | " e" | " f" | " g" | " h" | " i" | " j" | " k" | " l"
+
+prof-with-lab ::= " matthias" | " elaine's" | " professor" ( " shorts")
+prof ::= " matthias" |  " marty's" | " norman's" | " karen's" |
+         " elaine's" |  " megan's" | " diane's" | " noah's" | " marks" | " davids" | " richards" | " professor" ( " allens" | " ramseys" | " edwards" |
+         " shorts" |  " monroe's" |
+         " townsend's")
+adj ::= " back" | " rear" | " front"
+pp ::= " in the" adj
+
+first-name ::= " evans"
+
+room ::= first-name " office"
+
+nonvalid ::= disfluencies
+
+disfluencies ::= " um" | " uh" | " ah"

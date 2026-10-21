@@ -38,6 +38,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
     plc = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockPLCComponent.class, "-groups agent:robotone:agent agent:robottwo:agent");
 
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees james");
     createInstance(TLDLParserComponent.class, "-dict poc4.dict -dict assemblyHomophones.dict ");
     createInstance(ReferenceResolutionComponent.class, "");
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -59,6 +60,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
                     "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/assemble.asl " +
 
                     "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/assistaCognex.asl " +
+                    "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/cognexArmUtil.asl " +
                     "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/onRobotScrewing.asl " +
                     "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/circuitBreakerScrewingActions.asl " +
                     "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/circuitBreakerScrewingInit.asl " +

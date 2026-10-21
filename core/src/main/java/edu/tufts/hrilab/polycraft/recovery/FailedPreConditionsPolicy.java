@@ -45,24 +45,26 @@ public class FailedPreConditionsPolicy {
    * Explore an action that has failed with FAIL_PRECONDITONS.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
    */
   @TRADEService
   @Action
-  public Justification executeFailedPreConditionsPolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) {
-    if (brokenActionSignature == null) {
+  public Justification executeFailedPreConditionsPolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) {
+    if (brokenActionSignatures == null || brokenActionSignatures.isEmpty()) {
       return new ConditionJustification(false);
     }
+
+    Predicate brokenActionSignature = brokenActionSignatures.get(0);
 
     ActionDBEntry brokenAction = Utilities.getActionBySignature(brokenActionSignature);
     AndJustification justification = new AndJustification();
 
     for (Predicate failure : failureReasons) {
       // get failed pre-condition from failed action
-      ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+      ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
       Condition failedCondition = ExploreUtils.getExistingCondition(parameterizedAction, failure);
       if (failedCondition == null) {
         log.warn("Could not find failed Condition.");

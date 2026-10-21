@@ -9,7 +9,9 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.lock.ResourceUnavailableException;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
+import edu.tufts.hrilab.action.recovery.Recovery;
+import edu.tufts.hrilab.action.recovery.RecoveryStatus;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
@@ -25,7 +27,6 @@ import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.justification.AndJustification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -43,19 +44,20 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private double negAff = 0.0;
 
   private ScriptParser parser;
+  protected Recovery recovery = new Recovery();
 
   /**
    * Map of observations for Effects. These need to be kept track of separately from children for normal execution.
    */
-  private Map<Effect, ObservationContext> effectObservers = new HashMap<>();
+  private final Map<Effect, ObservationContext> effectObservers = new HashMap<>();
   /**
    * Map of observations for Conditions. These need to be kept track of separately from children for normal execution.
    */
-  private Map<Condition, Map<Predicate, ObservationContext>> conditionObservers = new HashMap<>();
-
-  private List<ActionResourceLock> heldLocks;
-  private String lockOwnerDescription;
-
+  private final Map<Condition, Map<Predicate, ObservationContext>> conditionObservers = new HashMap<>();
+  /**
+   * Interruption contexts. These need to be kept track of separately from children for normal execution.
+   */
+  private final List<Context> interruptionContexts = new ArrayList<>();
   /**
    * Thread manager for concurrent overall conditions.
    */
@@ -65,7 +67,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   private Future overallConditionFuture = null;
 
-  private Lock doStepLock = new ReentrantLock();
+  private final Lock doStepLock = new ReentrantLock();
 
   /**
    * @param caller
@@ -104,45 +106,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private void initialize() {
     parser = new ScriptParser(getDBE().getEventSpecs());
     setTimeout();
-  }
-
-  /**
-   * Acquire all locks registered for this action
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    if not greedy, then release the locks if all can't be
-   *                  acquired
-   * @return true is all locks acquired, false otherwise
-   */
-  @Override
-  public boolean acquireLocks(ActionInterpreter actionInt, boolean greedy) {
-    try {
-      heldLocks = getDBE().acquireResourceLocks(actionInt, greedy);
-    } catch (ResourceUnavailableException e) {
-      lockOwnerDescription = e.getMessage();
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Release all locks registered for this action
-   *
-   * @param actionInt The AI that needs the lock
-   */
-  @Override
-  public void releaseLocks(ActionInterpreter actionInt) {
-    if (heldLocks == null) {
-      // FIXME heldLocks is always null because we never call acquireLocks on any action
-      log.debug("heldLocks is null. This should not be the case. Initializing and returning for now.");
-      heldLocks = new ArrayList<>();
-      return;
-    }
-    for (ActionResourceLock lock : heldLocks) {
-      lock.release(actionInt);
-    }
-    heldLocks.clear();
   }
 
   public double getCost() {
@@ -537,9 +500,74 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
   @Override
   protected void setupNextStep() {
+    if (this.getStatus() == ActionStatus.RECOVERY) {
+      log.debug("In RECOVERY mode " + recovery.getStatus() + " for action: " + cmd);
+      // update recovery status with info about what has happened since the last recovery check-in
+      // e.g., it's unlikely that more explorations should be done if an exploration was successful
+      recovery.updateRecoveryStatus(this);
+
+      if (recovery.getStatus() == RecoveryStatus.SUCCESS) {
+        //Recovery is complete, reset recovery state and make sure next step is setup correctly
+        PostRecoveryExecutionType execType = recovery.getPostRecoveryExecutionType();
+        handleRecoverySuccess(execType);
+        recovery.resetState();
+        return;
+      } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
+        // Previous attempt/child failed -- attempt to execute recovery policy
+        ParameterizedAction recoveryPolicy = recovery.getSelectedRecoveryPolicy(this);
+
+        if (recoveryPolicy != null) {
+          // Add recovery policy as child rather than null or next parser step
+          RecoveryGoalContext recoveryContext = new RecoveryGoalContext(this, this.stateMachine, recoveryPolicy, ExecutionType.ACT, new Recovery());
+          childContexts.add(recoveryContext);
+          return;
+        } else {
+          // ActionStatus should only be RECOVER if shouldAttemptRecovery just returned true
+          // ShouldAttemptRecovery should only return true after finding a recovery policy and setting recovery status to RECOVER.
+          // ActionStatus should then be cleaned up after recovery execution.
+          // If we are in this block, something went wrong.
+          log.error("[setupNextStep] context has RECOVERY status but recovery returned null recovery policy, shouldn't be possible");
+          setStatus(ActionStatus.EXIT_RECOVERY);
+        }
+      } else if (recovery.getStatus() == RecoveryStatus.EXIT || recovery.getStatus() == RecoveryStatus.PLAN) {
+        // Same reasoning as above, shouldn't be possible
+        log.error("[setupNextStep] context has RECOVERY status but recovery has {} status, shouldn't be possible", recovery.getStatus());
+        setStatus(ActionStatus.EXIT_RECOVERY);
+      }
+    }
+
+    setupStepFromParser();
+  }
+
+  private void setupStepFromParser() {
     if (parser != null && !parser.isEmpty()) {
       setupNextStep(parser);
       parser = parser.getRest();
+      recovery.signalStep();
+    }
+  }
+
+  /**
+   * Helper method which should be called after successful action recovery execution. Set status of this context and
+   * setup children based on the PostRecoveryExecutionType associated with the executed recovery policy.
+   */
+  private void handleRecoverySuccess(PostRecoveryExecutionType executionType) {
+    switch (executionType) {
+      case RETRY:
+        //Get the failed action which caused recovery and add a reinitialized copy as the next child
+        setStatus(ActionStatus.PROGRESS);
+        ActionContext copiedChildContext = recovery.getContextToRetry().copy(this);
+        //TODO: done in demo crunch, revisit.
+        copiedChildContext.childContexts.clear();
+        copiedChildContext.parser = new ScriptParser(copiedChildContext.getDBE().getEventSpecs());
+        copiedChildContext.resetContext();
+        childContexts.add(copiedChildContext);
+        break;
+      case CONTINUE:
+        //Proceed with execution as previously planned
+        setStatus(ActionStatus.PROGRESS);
+        setupStepFromParser();
+        break;
     }
   }
 
@@ -809,6 +837,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     log.debug("resetting local arguments for context: " + this.cmd);
     List<ActionBinding> localRoles = this.getDBE().getRoles().stream().filter(role -> role.isLocal).collect(Collectors.toList());
     localRoles.forEach(role -> setArgument(role.name, role.defaultValue));
+    recovery.resetConcreteState();
   }
 
   /**
@@ -949,6 +978,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     ActionContext newActContext = new ActionContext(newParent, newParent.stateMachine, getDBE(), this.arguments);
 
     copyInternal(newActContext);
+    newActContext.recovery = this.recovery;
     newActContext.parser = this.parser;
     newActContext.posAff = this.posAff;
     newActContext.negAff = this.negAff;
@@ -999,12 +1029,15 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       return;
     }
 
+    // create interruption context and add it to interruptionContexts
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
-    Goal interruptGoal = new Goal(interruptGoalPredicate);
-    ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-    //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
-    //  executed separately in the line below.
-    childContexts.getNextAndIncrement();
+    Goal interruptGoal = Goal.createGoal(interruptGoalPredicate);
+    Context interruptionContext = this.createContext(interruptEvent);
+    interruptionContexts.add(interruptionContext);
+
+    // execute interruption context
+    // NOTE: this will block until the interruption is terminated
+    ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(interruptGoal, interruptionContext);
     ai.call(); //Call interruption event
   }
 
@@ -1015,37 +1048,90 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    * @param justification
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (getDBE() == null) {
       // this happens during context construction because the DBE hasn't been set before the
       // INITIALIZE status is set
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (isScript()) {
-      // if this is an action script, always call onInterrupt
-      super.setStatus(eStatus, justification);
-      handleInterrupt(eStatus);
-    } else {
-      // if primitive action, call onInterrupt until it's no longer blocking
-      // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
-
-      try {
-        long timeout = 0;
-        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
-          // lock NOT acquired (doStep is executing)
-          // attempt to interrupt until lock can be acquired
+      if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
+        log.debug("[setStatus] not propagating failure: " + eStatus);
+        return super.setStatus(ActionStatus.RECOVERY, justification);
+      } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+        //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+        // start propagating the original failure reasons up the tree instead
+        ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+        Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+        return super.setStatus(originalFailureStatus, originalFailureJustification);
+      } else {
+        // this is an action script, always call onInterrupt if status is set
+        boolean ret = super.setStatus(eStatus, justification);
+        if (ret) {
           handleInterrupt(eStatus);
-          timeout = 3;
         }
+        return ret;
+      }
+    } else {
+      // this is a primitive action
+      ActionStatus originalStatus = getStatus();
+      boolean ret = super.setStatus(eStatus, justification);
+      if (ret) {
+        try {
+          // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
+          //Q: is there any other way to do this?
+          //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
+          if (originalStatus == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
+            handleInterrupt(eStatus);
+          }
 
-        super.setStatus(eStatus, justification);
-      } catch (InterruptedException e) {
-        log.error("Exception trying to get doStepLock.", e);
-      } finally {
-        doStepLock.unlock();
+          // call onInterrupt until it's no longer blocking
+          long timeout = 0;
+          while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+            // lock NOT acquired (doStep is executing)
+            // attempt to interrupt until lock can be acquired
+            handleInterrupt(eStatus);
+            timeout = 3;
+          }
+          return ret;
+        } catch (InterruptedException e) {
+          log.error("Exception trying to get doStepLock.", e);
+        } finally {
+          doStepLock.unlock();
+        }
       }
     }
-
+    return false;
   }
 
+  @Override
+  public boolean canSuspend() {
+    return isInterruptible() && (isScript() || getDBE().hasOnSuspendEvent());
+  }
+
+  @Override
+  public boolean canCancel() {
+    return isInterruptible() && (isScript() || getDBE().hasOnCancelEvent());
+  }
+
+  /**
+   * Get the Recovery instance corresponding to this context
+   */
+  public Recovery getRecovery() {
+    return recovery;
+  }
+
+  public Symbol getOriginalSubmitter() {
+    Context context = this;
+    while (context != null) {
+      if (context instanceof GoalContext) {
+        Symbol submitter = ((GoalContext) context).getGoal().getSubmitter();
+        if (!submitter.equals(Factory.createSymbol("unknown"))) {
+          return submitter;
+        }
+      }
+      context = context.getParentContext();
+    }
+    return Factory.createSymbol("unknown");
+  }
 }

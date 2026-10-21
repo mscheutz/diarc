@@ -64,23 +64,16 @@ public class QueueExecutionManagerTest {
       throw new RuntimeException(e);
     }
 
-    //TODO: Update actions to use new resources when integrated.
-//    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
-
     ActionDBEntry.Builder driveBuilder = new ActionDBEntry.Builder("drive");
-    //driveBuilder.addResourceLock("driveLock");
     driveBuilder.build(true);
 
     ActionDBEntry.Builder lookBuilder = new ActionDBEntry.Builder("look");
-    //lookBuilder.addResourceLock("visionLock");
     lookBuilder.build(true);
 
     ActionDBEntry.Builder speakBuilder = new ActionDBEntry.Builder("speak");
-    //speakBuilder.addResourceLock("speakerLock");
     speakBuilder.build(true);
 
     ActionDBEntry.Builder grabBuilder = new ActionDBEntry.Builder("grab");
-    //grabBuilder.addResourceLock("armLock");
     grabBuilder.build(true);
 
     ActionDBEntry.Builder updateSettingsBuilder = new ActionDBEntry.Builder("updateSettings");
@@ -117,11 +110,11 @@ public class QueueExecutionManagerTest {
     } else if (goalPred.getName().equals("endActionLearning")) {
       priorityTier = PriorityTier.SKIPPENDING;
     }
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriorityTier(priorityTier);
     g.setPriority(priority);
 
-    g = em.submitGoal(g, ExecutionType.ACT);
+    g = em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -131,10 +124,11 @@ public class QueueExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
-    em.submitGoal(g, executionType);
+    g.setExecutionType(executionType);
+    em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -441,8 +435,7 @@ public class QueueExecutionManagerTest {
     Goal lookGoal = submitGoalAndWait(goalPred);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
     assertSame(lookGoal.getStatus(), GoalStatus.PENDING);
-    Goal cancelGoal = submitGoalAndWait(Factory.createPredicate("cancelSystemGoals", "self:agent"));
-    em.joinOnGoal(cancelGoal.getId());
+    em.cancelSystemGoals();
     em.joinOnGoal(freezeGoal.getId());
     assertSame(freezeGoal.getStatus(), GoalStatus.CANCELED);
     em.joinOnGoal(driveGoal.getId());
@@ -647,18 +640,25 @@ public class QueueExecutionManagerTest {
     submitGoalAndWait(goalPred5);
     assertSame(freezeGoal.getStatus(), GoalStatus.ACTIVE);
 
+    List<Predicate> expendedPendingList = new ArrayList<>();
+    expendedPendingList.add(goalPred3);
+    expendedPendingList.add(goalPred4);
+    expendedPendingList.add(goalPred5);
     List<Predicate> pendingList = new ArrayList<>();
-    pendingList.add(goalPred3);
-    pendingList.add(goalPred4);
-    pendingList.add(goalPred5);
-    assertEquals(em.getPendingGoalsPredicates(), pendingList);
+    em.getPendingGoals().forEach(g -> pendingList.add(g.getGoalPredicate()));
+    assertEquals(expendedPendingList, pendingList);
 
-    List<Predicate> systemList = new ArrayList<>();
-    systemList.add(Factory.createPredicate("ACTIVE",goalPred2));
-    assertEquals(em.getSystemGoalsPredicates(Factory.createSymbol("agent3:agent")), systemList);
+    List<Goal> agent3Goals = em.getSystemGoals(Factory.createSymbol("agent3:agent"));
+    assertEquals(agent3Goals.size(), 1);
+    assertEquals(agent3Goals.get(0).getGoalPredicate(), goalPred2);
+    assertEquals(agent3Goals.get(0).getStatus(), GoalStatus.ACTIVE);
 
-    systemList.add(Factory.createPredicate("ACTIVE",goalPred));
-    assertEquals(em.getSystemGoalsPredicates(Factory.createSymbol("self:agent")), systemList);
+    List<Goal> selfGoals = em.getSystemGoals(Factory.createSymbol("self:agent"));
+    assertEquals(selfGoals.size(), 2);
+    assertEquals(selfGoals.get(0).getStatus(), GoalStatus.ACTIVE);
+    assertEquals(selfGoals.get(1).getStatus(), GoalStatus.ACTIVE);
+    assertEquals(selfGoals.get(0).getGoalPredicate(), goalPred);
+    assertEquals(selfGoals.get(1).getGoalPredicate(), goalPred2);
 
     assertSame(em.getNextGoal().getGoalPredicate(), goalPred3);
     assertSame(em.getNextGoal(Factory.createSymbol("team1:agent")).getGoalPredicate(), goalPred5);
@@ -694,6 +694,9 @@ public class QueueExecutionManagerTest {
     cancelAllGoals();
   }
 
+  //Changed how this works. If you want this functionality, you should just use Freeze. Otherwise, could
+  //  write a 'suspendAllSystemGoals' variation
+  @Ignore
   @Test
   public void testSuspendResumeSystemGoals() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent");
@@ -732,10 +735,10 @@ public class QueueExecutionManagerTest {
     Predicate goalPred = Factory.createPredicate("freeze", "team1:agent");
     Goal freezeGoal = submitGoalAndWait(goalPred);
     goalPred = Factory.createPredicate("endFreeze", "agent2:agent");
-    Goal endfreezeGoal = submitGoalAndWait(goalPred);
+    Goal endFreezeGoal = submitGoalAndWait(goalPred);
     Util.Sleep(2000);
     assertSame(GoalStatus.ACTIVE, freezeGoal.getStatus());
-    assertSame(GoalStatus.SUCCEEDED, endfreezeGoal.getStatus());
+    assertSame(GoalStatus.SUCCEEDED, endFreezeGoal.getStatus());
 
     cancelAllGoals();
   }

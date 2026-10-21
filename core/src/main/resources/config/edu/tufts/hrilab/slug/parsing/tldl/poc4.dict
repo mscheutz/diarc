@@ -1047,6 +1047,7 @@ generate robot code for; C/C; #x.translateGoal(?ADDRESSEE,$x)
 
 verify that you can see; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
 
+to; (C/REF)\REF; #x#y.getOn(?ADDRESSEE,$x,$y)
 on; (C/REF)\REF; #x#y.getOn(?ADDRESSEE,$x,$y)
 in; (C/REF)\REF; #x#y.getOn(?ADDRESSEE,$x,$y)
 on to; (STATE/REF)\REF; #x#y.on($x,$y)
@@ -1093,4 +1094,7 @@ generate offline representation for your last goal; C; translateLastGoal(?ADDRES
 
 that is all; VAL; mod(none,none)
 that's all; VAL; mod(none,none)
+
+open gripper; C; openGripper(?ADDRESSEE)
+close gripper; C; closeGripper(?ADDRESSEE)
 

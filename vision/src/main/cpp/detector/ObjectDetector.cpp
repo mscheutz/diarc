@@ -18,8 +18,10 @@
 #include "SurfaceMarkingDetector.hpp"
 #include "MotionDetector.hpp"
 #include "ArucoDetector.hpp"
+
 #ifdef USE_PYTHON
 #include "FastSamDetector.hpp"
+#include "OwlV2Detector.hpp"
 #endif //USE_PYTHON
 
 #ifdef OPENCV3_DNN
@@ -29,7 +31,6 @@
 #ifdef OPENCV_DNN
 #include "NeuralDetector.hpp"
 #include "ButtonDetector.hpp"
-#include "ElevatorDoorDetector.hpp"
 #include "PersonDetector.hpp"
 #endif //OPENCV_DNN
 
@@ -116,6 +117,12 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
 #else
       LOG4CXX_ERROR(factoryLogger, "FastSamDetector not available. This require pybind11.");
 #endif //USE_PYTHON
+    case OWLV2:
+#if defined(USE_PYTHON)
+      return OwlV2Detector::Ptr(new OwlV2Detector(processorId, imgWidth, imgHeight));
+#else
+      LOG4CXX_ERROR(factoryLogger, "OwlV2Detector not available. This require pybind11.");
+#endif //USE_PYTHON
     case DNN:
       #if defined(OPENCV_DNN)
             return NeuralDetector::Ptr(new NeuralDetector(processorId, imgWidth, imgHeight));
@@ -128,13 +135,6 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return ButtonDetector::Ptr(new ButtonDetector(processorId, imgWidth, imgHeight));
 #else
     LOG4CXX_ERROR(factoryLogger, "ButtonDetector not available. This require OpenCV DNN module 4.5+.");
-#endif
-    case ELEVATORDOORDETECTOR:
-
-#if defined(OPENCV_DNN)
-      return ElevatorDoorDetector::Ptr(new ElevatorDoorDetector(processorId, imgWidth, imgHeight));
-#else
-    LOG4CXX_ERROR(factoryLogger, "ElevatorDoorDetector not available. This require OpenCV DNN module 4.5+.");
 #endif
     case PERSONDETECTOR:
 
@@ -185,7 +185,7 @@ void ObjectDetector::sendDetectionNotifications(MemoryObject::Ptr newDetectedObj
     ++numObjectsDetected_;
     objectDetected_ = true;
     MemoryObjectNotification::Ptr n(
-            new MemoryObjectNotification(shared_from_this(),
+            new MemoryObjectNotification(this->getProcessorId(),
                                          newDetectedObject->getTypeId(),
                                          newDetectedObject->getDetectionMask()->getFrameNumber(),
                                          newDetectedObject));

@@ -107,6 +107,9 @@ public class ControlFactory {
         case JOIN:
           controlContext = new JoinContext(parent, sm, parser.getEventSpec().getInputArgs(), parser.getEventSpec().getReturnArgs());
           break;
+        case NOINTERRUPT:
+          controlContext = new NoInterruptContext(parent, sm, parser);
+          break;
         case OTHER:
           log.error("Unknown control element: " + cmd);
       }
@@ -147,7 +150,9 @@ public class ControlFactory {
     THEN(false),
     TRUE(true),
     TRY(true),
-    WHILE(true);
+    WHILE(true),
+    NOINTERRUPT(true),
+    ENDNOINTERRUPT(false);
 
     /**
      * If this control can start a control sequence (i.e. not and end... or something like else, do...).
@@ -202,6 +207,8 @@ public class ControlFactory {
           return Collections.singletonList(DO);
         case DO:
           return Collections.singletonList(ENDWHILE);
+        case NOINTERRUPT:
+          return Collections.singletonList(ENDNOINTERRUPT);
         default:
           return null;
       }

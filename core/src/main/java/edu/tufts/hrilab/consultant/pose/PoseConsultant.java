@@ -105,12 +105,18 @@ public class PoseConsultant extends Consultant<PoseReference> {
     PoseRefJson loadedPoseRefs = gson.fromJson(reader, PoseRefJson.class);
     log.debug("Parsed pose references from json:\n" + gson.toJson(loadedPoseRefs));
 
+    int maxRefNumber = -1;
+
     for (PoseReferenceJson ref : loadedPoseRefs.poseReferences) {
       Symbol refId = Factory.createSymbol(ref.getRefId());
       if (getReference(refId) != null) {
         log.error("[loadReferencesFromFile] reference " + refId + " already exists. Not loaded from file: " + ref);
         continue;
       }
+
+      String refNumberString = refId.getName().split("_")[1];
+      int refNumber = Integer.parseInt(refNumberString);
+      maxRefNumber = Math.max(refNumber, maxRefNumber);
 
       // update reference counters
       addReference(
@@ -120,7 +126,10 @@ public class PoseConsultant extends Consultant<PoseReference> {
                       ref.getProperties().stream().map(Factory::createPredicate).collect(Collectors.toList()),
                       ref.getPosition(), ref.getOrientation())
       );
+
     }
+    //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
+    this.refNumber = ++maxRefNumber;
   }
 
   /**
@@ -135,11 +144,17 @@ public class PoseConsultant extends Consultant<PoseReference> {
 
       PoseRefJson jsonClass = new PoseRefJson();
       jsonClass.poseReferences = new ArrayList<>();
-      jsonClass.poseReferences.addAll(getAllReferences().stream().map(PoseReferenceJson::new).collect(Collectors.toList()));
+      for (PoseReference ref : getAllReferences()) {
+        try {
+          jsonClass.poseReferences.add(new PoseReferenceJson(ref));
+        } catch (Exception e) {
+          log.error("[writeReferencesToFile] issue writing reference " + ref + " to file. Skipping");
+        }
+      }
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {
-      log.error("Trying to write vision references json to file.", e);
+      log.error("Trying to write pose references json to file.", e);
       return false;
     }
 

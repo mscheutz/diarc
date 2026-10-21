@@ -264,30 +264,13 @@ protected:
   void clearPendingNotifications();
 
   /**
-   * Called after each handleNotification call if ignoreOldNotifications flag is true
-   * to remove older notifications in the pending queue. The exact method of removal
-   * is defined based on the notification type. This can be overridden to change the
-   * behavior of removal.
+   * Called after each handleNotification call (if pruneNotificationsFlag is true)
+   * to filter notifications in the pending queue. This is an attempt to not fall behind
+   * too far behind.
    * @param pending - list of pending notifications to be processed this iteration
    * @param notification - notification just handled
    */
-  virtual void removeOldNotifications(std::list<Notification::Ptr> &pending, Notification::Ptr notification);
-
-  /**
-   * Remove all notifications of the given type from the given list of notifications.
-   * Note that this is different from clearPendingNotifications() which simply clears
-   * the processor's whole internal notification queue irrespective of type.
-   */
-  void removeNotificationsOfType(std::list<Notification::Ptr> &pending, Notification::Type type);
-
-  /**
-   * Remove the notifications of the given type from the given list of notifications that
-   * are older than the given frame number.
-   * Note that this is different from clearPendingNotifications() which simply clears
-   * the processor's whole internal notification queue irrespective of type.
-   */
-  void removeNotificationsOfType(std::list<Notification::Ptr> &pending, Notification::Type type,
-          unsigned long int frameNum);
+  virtual void pruneNotifications(std::list<Notification::Ptr> &pending, Notification::Ptr notification);
 
   /**
    * @brief display MemoryObject and its validation results (i.e., properties)
@@ -319,12 +302,14 @@ protected:
   boost::mutex perform_mutex;
 
   /**
-   * If set to true (the default), then whenever a notification of type T is found
-   * in the list of pending notifications, all older notifications of the same type
-   * are ignored. Useful if your notifier (e.g. capture) is faster than your processing.
+   * If set to true (the default), then whenever a notification of type T
+   * in the list of pending notifications is processed, similar notifications are removed.
+   * The exact removal algorithm is defined in the pruneNotifications method.
+   *
+   * Useful if your notifier (e.g. capture) is faster than your processing.
    * If you do not want to miss any notification, then set to false.
    */
-  bool ignoreOlderNotifications;
+  bool pruneNotificationsFlag;
 
   log4cxx::LoggerPtr logger;
 

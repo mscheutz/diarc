@@ -6,10 +6,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824913067" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "445" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824913067", "SUCCEEDED" ]
+      "serviceArgs" : [ "445", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -17,10 +17,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "dance(dempster,shafer)", "ACT", "NORMAL", "1704824918064" ]
+      "serviceArgs" : [ "dance(dempster,shafer)", "ACT", "NORMAL", "1", "evan", "448" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824918064", "FAILED" ]
+      "serviceArgs" : [ "448", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not dance shafer because I do not know how to dance shafer", "true" ]
@@ -31,7 +31,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "learnAction(dempster,dance(dempster,shafer))", "ACT", "SKIPPENDING", "1704824923038" ]
+      "serviceArgs" : [ "learnAction(dempster,dance(dempster,shafer))", "ACT", "NORMAL", "1", "evan", "451" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -39,10 +39,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "raise(dempster,arms)", "ACT", "NORMAL", "1704824928078" ]
+      "serviceArgs" : [ "raise(dempster,arms)", "ACT", "NORMAL", "1", "evan", "454" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824928078", "SUCCEEDED" ]
+      "serviceArgs" : [ "454", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -50,10 +50,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "crouchDown(shafer)", "ACT", "NORMAL", "1704824933082" ]
+      "serviceArgs" : [ "crouchDown(shafer)", "ACT", "NORMAL", "1", "evan", "457" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824933082", "SUCCEEDED" ]
+      "serviceArgs" : [ "457", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -61,10 +61,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "lower(dempster,arms)", "ACT", "NORMAL", "1704824938077" ]
+      "serviceArgs" : [ "lower(dempster,arms)", "ACT", "NORMAL", "1", "evan", "460" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824938077", "SUCCEEDED" ]
+      "serviceArgs" : [ "460", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -72,10 +72,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "standUp(shafer)", "ACT", "NORMAL", "1704824943054" ]
+      "serviceArgs" : [ "standUp(shafer)", "ACT", "NORMAL", "1", "evan", "463" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824943054", "SUCCEEDED" ]
+      "serviceArgs" : [ "463", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -83,13 +83,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "endActionLearning(dempster,dance(dempster,shafer))", "ACT", "SKIPPENDING", "1704824948078" ]
+      "serviceArgs" : [ "endActionLearning(dempster,dance(dempster,shafer))", "ACT", "SKIPPENDING", "1", "evan", "466" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824948078", "SUCCEEDED" ]
+      "serviceArgs" : [ "466", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824923038", "SUCCEEDED" ]
+      "serviceArgs" : [ "451", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -97,10 +97,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "dance(dempster,shafer)", "ACT", "NORMAL", "1704824953069" ]
+      "serviceArgs" : [ "dance(dempster,shafer)", "ACT", "NORMAL", "1", "evan", "469" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824953069", "SUCCEEDED" ]
+      "serviceArgs" : [ "469", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -113,10 +113,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "dance(shafer,dempster)", "ACT", "NORMAL", "1704824963107" ]
+      "serviceArgs" : [ "dance(shafer,dempster)", "ACT", "NORMAL", "1", "evan", "474" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824963107", "SUCCEEDED" ]
+      "serviceArgs" : [ "474", "SUCCEEDED" ]
     } ]
   } ]
 }

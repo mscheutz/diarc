@@ -214,7 +214,7 @@ public class NovelRunComponent extends DiarcComponent {
 
   private void cancelCurrentGoals() {
     try {
-      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalPredicates").argTypes(Symbol.class, GoalFilter.class)).call(List.class, actor, GoalFilter.CURRENT);
+      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalPredicates").argTypes(GoalFilter.class, Symbol.class)).call(List.class, GoalFilter.CURRENT, actor);
       for (Predicate goal : currGoals) {
         log.info("Terminating current goal: " + goal);
         Predicate cancelGoal = Factory.createPredicate("cancelGoal", actor, goal);

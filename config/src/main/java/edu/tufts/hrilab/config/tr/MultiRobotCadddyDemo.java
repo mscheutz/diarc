@@ -16,7 +16,7 @@ import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.tufts.hrilab.spot.MockSpotComponent;
+import edu.tufts.hrilab.spot.MockRos2SpotComponent;
 
 public class MultiRobotCadddyDemo extends DiarcConfiguration {
 
@@ -82,7 +82,7 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
             createInstance(com.simspeech.SimSpeechProductionComponent.class, "");
             if (useSpot) {
                 createInstance(com.spot.MockSpotNavGraphComponent.class, "-mapDescriptor spotlocation -refs spotLocationRefs.json -groups agent:spot:spot -simExecTime");
-                createInstance(MockSpotComponent.class, "-groups agent:spot:spot");
+                createInstance(MockRos2SpotComponent.class, "-groups agent:spot:spot");
             }
         } else {
             if (useSpot) {

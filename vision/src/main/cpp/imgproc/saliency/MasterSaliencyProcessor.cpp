@@ -18,7 +18,7 @@ MasterSaliencyProcessor::MasterSaliencyProcessor(const long long& processorId,
 : SaliencyProcessor(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "MasterSaliencyProcessor";
   logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.MasterSaliencyProcessor");
-  ignoreOlderNotifications = false;
+  pruneNotificationsFlag = false;
 }
 
 void MasterSaliencyProcessor::init() {
@@ -31,7 +31,7 @@ void MasterSaliencyProcessor::handleSaliencyNotification(SaliencyNotification::C
   //lock saliencyMaps
   boost::lock_guard<boost::mutex> salamp_lock(saliencyMaps_mutex);
 
-  long long salprocId = notification->notifier->getProcessorId();
+  long long salprocId = notification->processorId;
   boost::unordered_map<long long, cv::Mat>::iterator salmaps_iter = saliencyMaps.find(salprocId);
   if (salmaps_iter == saliencyMaps.end()) {
     LOG4CXX_WARN(logger, "[haveNewSaliencyMap] received notification from unregistered saliency processor.");
@@ -48,7 +48,7 @@ void MasterSaliencyProcessor::handleSaliencyNotification(SaliencyNotification::C
     cv::multiply(resultImage, img, resultImage);
   }
 
-  Notification::Ptr n(new SaliencyNotification(shared_from_this(), notification->frameNumber, notification->captureData, resultImage));
+  Notification::Ptr n(new SaliencyNotification(this->getProcessorId(), notification->frameNumber, notification->captureData, resultImage));
   sendNotifications(n);
   if (getDisplayFlag()) {
     diarc::Display::displayFrame(resultImage, getDisplayName());

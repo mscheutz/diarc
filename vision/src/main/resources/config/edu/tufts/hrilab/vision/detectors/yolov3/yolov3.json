@@ -6,6 +6,7 @@
   "config": {
     "model": "yolov3-tiny",
     "type" : "darknet",
+    "yolo_version" : 3,
     "backend": "CPU",
     "input_size": 416,
     "conf_thresh": 0.2,

@@ -7,20 +7,18 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
 import java.lang.Long;
 
 () = checkCapableOf["checks if post condition is capable of bing reached by ?actor"](Predicate ?goal) {
-    Term !toAssert;
+    Term !capableOf;
     Term !otherActor;
 
     effects : {
-      success : knows(?actor,capableOf(?goal));
+      success : knowsIf(?actor,capableOf(?goal));
     }
 
-    if (tsc:actionExists(?goal)) {
-      !toAssert = op:createPredicate("capableOf(?goal)");
-      act:assertBelief(!toAssert);
+    !capableOf = op:createPredicate("capableOf(?goal)");
+    if (tsc:actionExecutable(?goal)) {
+      act:assertBelief(!capableOf);
     } else {
-      // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
-      //       way that ITKs are handled
-      exit(FAIL);
+      act:retractBelief(!capableOf);
     }
 }
 
@@ -56,6 +54,7 @@ import java.lang.Long;
 
 () = getCurrGoals["get list of current goals and assert it to belief"]() {
     java.util.List !allGoals;
+    Predicate !currGoal;
     java.util.List !filteredGoals;
     Predicate !currentGoals;
     Predicate !oldGoals;
@@ -72,7 +71,7 @@ import java.lang.Long;
 
     // get current goals for ?actor
     GoalFilter !goalEnum = CURRENT;
-    !allGoals = tsc:getGoalPredicatesForActor(!goalEnum);
+    !allGoals = tsc:getGoalPredicatesForActor(!goalEnum, ?actor);
 
     // remove handling nlp goal and getting currgoals from the goal list
     !filteredGoals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
@@ -314,6 +313,37 @@ import java.lang.Long;
      }
 }
 
+() = suspendGoalBlocking(Predicate ?goalPredicate = goal(mostRecent)) {
+    java.util.List !goalIds;
+    java.lang.Long !goalId;
+    java.lang.Boolean !suspended;
+    GoalStatus !status;
+    java.lang.Long !timeout = 0;
+
+    !goalIds = act:getGoalIds(?goalPredicate);
+    if (~op:isEmpty(!goalIds)) {
+        !goalId = op:get(!goalIds,0);
+        op:log("debug", "[suspendGoal] suspending goal: !goalId.");
+        !status = tsc:getGoalStatus(!goalId);
+        !suspended = act:suspendGoal(!goalId);
+        if (op:equals(!suspended,true)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
+            if (op:isNull(!status)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            } elseif (~op:equalsValue(!status,SUSPENDED)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            }
+            //else report success?
+        } else {
+             op:log("warn", "[suspendGoalBlocking] ?goalPredicate found but could not be suspended");
+             exit(FAIL,not(isActive(goalToSuspend)));
+        }
+    } else {
+         op:log("warn", "[suspendGoalBlocking] No goal found for predicate: ?goalPredicate.");
+         exit(FAIL,not(found(goalToSuspend)));
+     }
+}
+
 () = resumeGoal(Predicate ?goalPredicate = goal(mostRecent)) {
     java.util.List !goalIds;
     java.lang.Long !goalId;
@@ -321,7 +351,7 @@ import java.lang.Long;
     !goalIds = act:getGoalIds(?goalPredicate);
     if (~op:isEmpty(!goalIds)) {
         !goalId = op:get(!goalIds,0);
-        op:log("debug", "[resumeGoal] resuming goal: !goal.");
+        op:log("debug", "[resumeGoal] resuming goal: !goalId.");
         act:resumeGoal(!goalId);
     } else {
           op:log("warn", "[resumeGoal] No goal found for predicate: ?goalPredicate.");
@@ -347,7 +377,7 @@ import java.lang.Long;
         }
     } else {
       // find matching goal
-      ?goalIds = tsc:getGoalIds(?goalPredicate, !filterEnum);
+      ?goalIds = tsc:getGoalIds(!filterEnum, ?goalPredicate);
     }
 
     // check if goal was found

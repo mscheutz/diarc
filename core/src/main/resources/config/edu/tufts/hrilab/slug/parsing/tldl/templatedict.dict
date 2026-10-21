@@ -102,6 +102,7 @@ before; PP/C; #x.before($x)
 blue; RN/RN; #x.blue($x) ; MOD
 
 bottle; THING
+apple; THING
 
 box; THING
 
@@ -165,6 +166,9 @@ do; Q/ C; #x.$x
 %do; (Q/WHO)/(C / AGENT) ; #x.$x
 
 do you see ; Q/REF ; #x.see(?ADDRESSEE,$x)
+handle; THING; handle
+doorknob; THING; doorknob
+block; THING; block
 
 do that; C; dothat:dialog ; ACTIVATED
 
@@ -232,16 +236,20 @@ from; REF/REF; #x.$x
 
 give; VERBDT ;give
 
-go to pose; C/POSE; #x.goToPose(?ADDRESSEE,$x)
-go to pose; (C/POSE)\AGENT; #y#x.goToPose(?ADDRESSEE,$x)
+%go to pose; C/POSE; #x.goToPose(?ADDRESSEE,$x)
+%go to pose; (C/POSE)\AGENT; #y#x.goToPose(?ADDRESSEE,$x)
 
-go to location; C/LOC ; #x.goToLocation(?ADDRESSEE,$x)
-go to location; (C/LOC)\AGENT ; #a#x.goToLocation(?ADDRESSEE,$x)
+home; POSE; home
+vertical; POSE; vertical
+start; POSE; start
 
-go to start pose; C ; startOver()
+%go to location; C/LOC ; #x.goToLocation(?ADDRESSEE,$x)
+%go to location; (C/LOC)\AGENT ; #a#x.goToLocation(?ADDRESSEE,$x)
 
-go to; C/LREF; #x.moveTo($x)
-go; VERBTD ;move
+%go to start pose; C ; startOver()
+
+%go to; C/LREF; #x.moveTo($x)
+%go; VERBTD ;move
 
 goal; QUERYABLE; goal
 
@@ -484,6 +492,8 @@ right; DIR; right
 right; N/N ; #x.right$x
 
 robot; ADDRESSABLE; self
+robot one; ADDRESSABLE; robotone
+robot two; ADDRESSABLE; robottwo
 
 room one; PLACE; roomOne
 
@@ -736,8 +746,11 @@ successfully; (C\AGENT)/(C\AGENT); #x.complete($x)
 %successfully; C/C; #x.complete($x)
 first; FIRST/C; #x.modify(insert($x))
 
-%save this pose as
+% save this location
+save this location as; C/LOC; #x.recordLocation(?ADDRESSEE,$x)
+this location is; C/LOC; #x.recordLocation(?ADDRESSEE,$x)
 
+%save this pose as
 save this pose as; C/POSE; #x.recordPose($x)
 this pose is; C/POSE; #x.recordPose($x)
 %save this pose as; C/POSE; #x.recordEEPose($x)
@@ -804,7 +817,4 @@ undock ; VERBI ; undock
 dock ; VERBI ; dock
 use the dock ; VERBI ; dock
 leave the dock ; VERBI ; undock
-open the door ; VERBI ; openDoor
-leave the room ; VERBI ; openDoor
-enter the room ; VERBI ; openDoor
 % the rest of the spot stuff should be covered by movebase

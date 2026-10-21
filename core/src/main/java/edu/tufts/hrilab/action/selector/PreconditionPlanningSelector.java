@@ -77,7 +77,7 @@ public class PreconditionPlanningSelector extends ActionSelector {
   private ParameterizedAction planForPreconditions(Goal goal, ActionConstraints constraints, StateMachine stateMachine, List<Predicate> boundPreconditions) {
     // find plan to satisfy pre-conditions
     Predicate preconditionGoalPredicate = Utilities.createAndPredicate(boundPreconditions);
-    Goal preconditionGoal = new Goal(goal.getActor(), preconditionGoalPredicate);
+    Goal preconditionGoal = Goal.createGoal(goal.getActor(), preconditionGoalPredicate);
     ParameterizedAction preconditionAction = new GoalPlanningActionSelector().selectActionForGoal(preconditionGoal, constraints, stateMachine);
 
     if (preconditionAction == null) {

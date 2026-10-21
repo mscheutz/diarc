@@ -6,15 +6,14 @@
  */
 package edu.tufts.hrilab.vision;
 
-import java.awt.Dimension;
-
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.annotations.Observes;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Map;
 

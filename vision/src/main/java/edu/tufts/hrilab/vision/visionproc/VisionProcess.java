@@ -4,14 +4,15 @@
 
 package edu.tufts.hrilab.vision.visionproc;
 
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.vision.reflection.TaskPerformanceInformation;
 import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
 import edu.tufts.hrilab.vision.imgproc.ImageProcessor;
 import edu.tufts.hrilab.vision.visionproc.swig.NativeVisionProcess;
 import edu.tufts.hrilab.vision.visionproc.swig.VectorLong;
 import edu.tufts.hrilab.util.IdGenerator;
-import java.util.HashSet;
-import java.util.List;
+
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -21,8 +22,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.vision.Vision;
 import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
-import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
@@ -67,7 +67,11 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
   /**
    * Processor's image processing dependencies (e.g. sift, etc).
    */
-  protected HashMap<ImageProcessorType, ImageProcessor> dependencies = new HashMap();
+  protected Map<ImageProcessorType, ImageProcessor> dependencies = new HashMap();
+  /**
+   * Processor's SearchManager dependencies (e.g. sift, etc).
+   */
+  protected Map<Predicate, SearchManager> searchDependencies = new HashMap();
   /**
    * Native processor (used via SWIG) that does the actual vision processing
    * work.
@@ -93,12 +97,12 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
    * Keeps track of all objects that have called start. A single processor can
    * be servicing multiple searches simultaneously.
    */
-  private final HashSet<Object> startCallers = new HashSet();
+  private final Set<Object> startCallers = new HashSet();
   /**
    * Predicate description that processor is trying to process. Hashed by caller
    * object.
    */
-  protected HashMap<Object, List<Term>> description = new HashMap();
+  protected Map<Object, List<Term>> description = new HashMap();
   /**
    * Runtime stats and metrics.
    */
@@ -114,7 +118,7 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
     processId = nativeProcessor.getProcessorId();
     performanceInfo = new TaskPerformanceInformation(detail.toString());
 
-    //get instantiated ImageProcessor dependencies
+    // instantiate ImageProcessor dependencies and register for notifications
     for (ImageProcessorType dependencyType : detail.getDependencies()) {
       //need to look in all three imgProc factories for dependencies
       //TODO: make this cleaner ?
@@ -137,6 +141,16 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
       // NOTE: using -1 here for typeId because all dependencies of this vision processor
       // are the same regardless of the typeId using this vision processor
       dependency.registerForNotification(this, -1L);
+    }
+
+    //instantiate search dependencies and register for notifications
+    for (Predicate searchPredicate : detail.getSearchDependencies()) {
+      SearchManager searchManager = Vision.availableSearchTypes.getInstance(this, List.of(searchPredicate), true);
+      searchDependencies.put(searchPredicate, searchManager);
+
+      // register VisionProcess to be notified by its own dependencies
+      // EAK: using "this" in constr is dangerous but i think it should be ok here
+      searchManager.registerForNotification(this);
     }
   }
 
@@ -213,7 +227,7 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
   }
 
   /**
-   * Get specific instantiated ImageProcessor dependency. Null if dependency
+   * Get specific instantiated ImageProcessor dependency. Null if the dependency
    * doesn't exist.
    *
    * @param type
@@ -224,6 +238,20 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
 
     return dependencies.get(type);
   }
+
+  /**
+   * Get specific instantiated SearchManager dependency. Null if the dependency
+   * doesn't exist.
+   *
+   * @param searchPredicate
+   * @return
+   */
+  public synchronized SearchManager getSearchDependency(Predicate searchPredicate) {
+    isValid();
+
+    return searchDependencies.get(searchPredicate);
+  }
+
 
   /**
    * Configure native VisionProcess.
@@ -701,6 +729,11 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
           dependency.stop(thisRef, true);
         }
 
+        // stop SearchManager dependencies
+        for (SearchManager dependency : searchDependencies.values()) {
+          dependency.stop(thisRef, true);
+        }
+
         //set running status to false
         log.trace("[stopHelper] set run status.");
         processor.setRunningStatus(false);
@@ -796,7 +829,7 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
       Thread.currentThread().interrupt();
     }
 
-    //"release" dependencies
+    //"release" img proc dependencies
     for (ImageProcessor dependency : dependencies.values()) {
       ImageProcessorType dependencyType = dependency.getType();
       if (Vision.availableSaliencyProcessors.hasCapableProcessorType(dependencyType)) {
@@ -808,6 +841,11 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
       } else {
         log.error("At least one dependency could not be released!");
       }
+    }
+
+    //"release" search manager dependencies
+    for (SearchManager dependency : searchDependencies.values()) {
+      Vision.availableSearchTypes.release(this, dependency);
     }
 
     //delete native procesor (this would be deleted by GC, but we may as well do it now)

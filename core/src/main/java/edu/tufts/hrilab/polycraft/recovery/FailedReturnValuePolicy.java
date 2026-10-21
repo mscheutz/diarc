@@ -58,14 +58,14 @@ public class FailedReturnValuePolicy {
    * often with no failure semantics.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
    */
   @TRADEService
   @Action
-  public Justification executeFailedReturnValuePolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
+  public Justification executeFailedReturnValuePolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
     // so we don't try to repair broken actions if we're exploring actions we expect to fail
       if ((boolean )TRADE.getAvailableService(new TRADEServiceConstraints().name("isCurrentlyExploring")).call(Object.class)) {
         return new ConditionJustification(true);
@@ -77,9 +77,11 @@ public class FailedReturnValuePolicy {
 //      return;
 //    }
 
-    if (brokenActionSignature == null) {
+    if (brokenActionSignatures == null || brokenActionSignatures.isEmpty()) {
       return new ConditionJustification(false);
     }
+    Predicate brokenActionSignature = brokenActionSignatures.get(0);
+
     ActionDBEntry brokenAction = Utilities.getActionBySignature(brokenActionSignature);
     if (brokenAction == null) {
       return new ConditionJustification(false);
@@ -145,7 +147,7 @@ public class FailedReturnValuePolicy {
 
         // check if broken action already has holding(self, X) pre-condition
         Predicate holdingConditionPred = Factory.createPredicate("holding", actor, Factory.createVariable("H"));
-        ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+        ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
         if (ExploreUtils.getExistingCondition(parameterizedAction, holdingConditionPred) != null) {
           // broken action already has holding(self, novelObject) pre-condition, don't need to try that
           continue;
@@ -163,7 +165,7 @@ public class FailedReturnValuePolicy {
 
             // make new action and add holding(novelObj) and object(type) pre-conditions
             ActionDBEntry.Builder newActionBuilder = new ActionDBEntry.Builder(brokenAction);
-            newActionBuilder.setType(brokenActionSignature + "_holding_" + novelObject.getName());
+            newActionBuilder.setMethodName(brokenActionSignature + "_holding_" + novelObject.getName());
             newActionBuilder.addCondition(new Condition(holdingPred, ConditionType.PRE, Observable.TRUE));
             newActionBuilder.addCondition(new Condition(typeConstraint, ConditionType.PRE, Observable.FALSE));
             newActionBuilder.build(true); // add modified action to DB

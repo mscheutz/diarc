@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -31,13 +29,6 @@ abstract public class DiarcConfiguration {
   private boolean launchGuiBackend = false;
 
   protected List<DiarcComponent> diarcComponents = new ArrayList<>();
-
-  private boolean singleComponentPerContainer = false;
-
-  public void setSingleComponentPerContainer(boolean singleComponentPerContainer) {
-    log.warn("singleComponentPerContainer is currently disabled.");
-    //this.singleComponentPerContainer = singleComponentPerContainer;
-  }
 
   /**
    * Command line options.
@@ -162,62 +153,9 @@ abstract public class DiarcConfiguration {
    * @return
    */
   public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
-    if (singleComponentPerContainer) {
-      if (!registerWithTrade) {
-        log.warn("All components in a single container must be registered with TRADE. Ignoring registration request for: " + clazz.getName() + " with args: " + Arrays.toString(args) + " and starting in a new container.");
-      }
-      return createInstanceInNewContainer(clazz, args);
-    } else {
-      T component = DiarcComponent.createInstance(clazz, registerWithTrade, args);
-      diarcComponents.add(component);
-      return component;
-    }
-  }
-
-  private <T extends DiarcComponent> T createInstanceInNewContainer(Class<T> clazz, String... args) {
-    // path to the current Java runtime executable
-    String javaHome = System.getProperty("java.home");
-    String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-
-    // current classpath to ensure the sub-process can find the target class
-    String classpath = System.getProperty("java.class.path");
-
-    // command arguments list
-    List<String> command = new ArrayList<>();
-    command.add(javaBin);
-    command.add("-cp");
-    command.add(classpath);
-
-    // set system properties
-    command.add("-Dlogback.configurationFile=" + System.getProperty("logback.configurationFile"));
-    command.add("-Dlogging.config=" + System.getProperty("logging.config"));
-    command.add("-DtradeLogging.config.path=" + System.getProperty("tradeLogging.config.path"));
-    command.add("-Dtrade.properties.path=" + System.getProperty("trade.properties.path"));
-    command.add("-Ddiarc.planner.ff=" + System.getProperty("diarc.planner.ff"));
-    command.add("-Djava.library.path=" + System.getProperty("java.library.path"));
-
-    command.add("-Dcomponent=" + clazz.getName());
-    command.add(clazz.getName());
-
-    if (args != null) {
-      StringJoiner joiner = new StringJoiner(" ");
-      Arrays.stream(args).forEach(arg -> joiner.add(arg.trim()));
-      command.add(joiner.toString());
-    }
-
-    // 4. Build and start the process
-    ProcessBuilder builder = new ProcessBuilder(command);
-
-    // Redirect streams so you can see the sub-process output in the main console
-    builder.inheritIO();
-
-    try {
-      Process process = builder.start();
-    } catch (IOException e) {
-      log.error("Error starting new container: {}", clazz.getName(), e);
-    }
-
-    return null;
+    T component = DiarcComponent.createInstance(clazz, registerWithTrade, false, args);
+    diarcComponents.add(component);
+    return component;
   }
 
   /**

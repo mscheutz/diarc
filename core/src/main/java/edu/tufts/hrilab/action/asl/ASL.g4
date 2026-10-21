@@ -35,7 +35,6 @@ FAILURE : 'failure';
 NONPERF : 'nonperf';
 OBSERVES : 'observes';
 RECOVERY : 'recovery';
-LOCKS : 'locks';
 CONDITION : 'conditions';
 IF : 'if';
 ELIF : 'elseif';
@@ -57,6 +56,7 @@ INTERRUPT : 'onInterrupt';
 SUSPEND : 'suspend';
 CANCEL : 'cancel';
 RESUME : 'resume';
+NOINTERRUPT: 'noInterrupt';
 
 // fragments
 fragment NAMECHAR : LETTER | DIGIT | HEADCHAR;
@@ -94,7 +94,7 @@ alias : AS javaType;
 definitions : definition+;
 
 reserved : THIS | TSC | ACTION | OPERATOR | GOAL | OBSERVATION | VAR | SET | OR | PRE | POST | OVERALL | OBLIGATION | EFFECT
-        | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | LOCKS | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
+        | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
         | FOR | FOREACH | TRUE | FALSE | EXIT | TRY | CATCH | FINALLY | NOT | RETURN | ASYNC | JOIN;
 
 // TODO: cleanup usage of name vs NAME
@@ -136,7 +136,6 @@ content : (
         | observes
         | interrupts
         | recovery
-        | locks
         | spec
         | control
         )*;
@@ -199,7 +198,15 @@ interruptSpec : interruptSpecType ':' function ';';
 
 interruptSpecType : TSC | ACTION | GOAL | name '.' TSC | name '.' ACTION  | name '.' GOAL;
 
-recovery : RECOVERY ':' '{' (recoveryGoals | recoveryExcludedGoals)? (recoveryFailedActions | recoveryExcludedFailedActions)? (recoveryFailureReasons | recoveryExcludedFailureReasons)? recoveryActionStatuses? '}';
+recovery : RECOVERY ':' '{' (actionRecoveryDetails | recoveryGoals | recoveryExcludedGoals | recoveryFailedActions | recoveryExcludedFailedActions | recoveryFailureReasons | recoveryExcludedFailureReasons | recoveryActionStatuses | recoveryMaximumAttempts)* '}';
+
+actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryCatchingActions? postActionRecoveryBehavior '}';
+
+actionRecoveryCatchingActions : 'catchingActions' ':' predicateList;
+
+postActionRecoveryBehavior : 'postRecovery' ':' postActionRecoveryType;
+
+postActionRecoveryType :'postrecovery_retry' | 'postrecovery_continue';
 
 recoveryGoals : 'goals' ':' predicateList;
 
@@ -216,7 +223,7 @@ recoveryExcludedFailureReasons : 'excludedFailureReasons' ':' predicateList;
 // TODO: replace NAME here with allowed ACTION_STATUS values
 recoveryActionStatuses : 'actionStatuses' ':' '{' NAME (',' NAME)* '}';
 
-locks : LOCKS ':' name ';';
+recoveryMaximumAttempts : 'maximumAttempts' ':' NUMBER;
 
 spec : specFunction ';';
 
@@ -242,6 +249,7 @@ control : (
         | asyncStatement
         | joinStatement
         | returnStatement
+        | noInterruptStatement
         );
 
 ifStatement : IF '(' booleanExpression ')' controlContent elifStatement* elseStatement?;
@@ -288,3 +296,5 @@ returnStatement : RETURN ';';
 asyncStatement : singleArgReturn? ASYNC controlContent;
 
 joinStatement : singleArgReturn? JOIN inputList ';';
+
+noInterruptStatement : NOINTERRUPT controlContent;

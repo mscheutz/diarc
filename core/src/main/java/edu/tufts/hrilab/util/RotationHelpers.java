@@ -25,7 +25,10 @@ public class RotationHelpers {
    * @return The same rotation as a quaternion.
    */
   public static Quat4d xyzRotationsToQuaternion(Tuple3d xyz) {
-    Rotation rot = new Rotation(RotationOrder.XYZ, xyz.x, xyz.y, xyz.z);
+    return rotationsToQuaternion(xyz, RotationOrder.XYZ);
+  }
+  public static Quat4d rotationsToQuaternion(Tuple3d xyz, RotationOrder rotationOrder) {
+    Rotation rot = new Rotation(rotationOrder, xyz.x, xyz.y, xyz.z);
     return new Quat4d(-rot.getQ1(), -rot.getQ2(), -rot.getQ3(), rot.getQ0());  // inverting the imaginary outputs, see Javadocs for Rotation for an explanation of why... or perhaps better, just take my word for it and leave these negatives
   }
 
@@ -40,6 +43,11 @@ public class RotationHelpers {
   public static Matrix3d xyzRotationsToRotationMatrix(Tuple3d xyz) {
     Matrix3d mat = new Matrix3d();
     mat.set(xyzRotationsToQuaternion(xyz));
+    return mat;
+  }
+  public static Matrix3d rotationsToRotationMatrix(Tuple3d xyz, RotationOrder rotationOrder) {
+    Matrix3d mat = new Matrix3d();
+    mat.set(rotationsToQuaternion(xyz, rotationOrder));
     return mat;
   }
 
@@ -57,6 +65,12 @@ public class RotationHelpers {
     Matrix4d mat = new Matrix4d();
     mat.setIdentity();
     mat.setRotation(xyzRotationsToQuaternion(xyz));
+    return mat;
+  }
+  public static Matrix4d rotationsToTransformMatrix(Tuple3d xyz, RotationOrder rotationOrder) {
+    Matrix4d mat = new Matrix4d();
+    mat.setIdentity();
+    mat.setRotation(rotationsToQuaternion(xyz, rotationOrder));
     return mat;
   }
   

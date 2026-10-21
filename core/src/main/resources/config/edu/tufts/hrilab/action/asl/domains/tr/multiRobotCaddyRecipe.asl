@@ -37,14 +37,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Predicate !tmp;
     Predicate !question;
 
-    !bindings = act:askQuestionFromString(?actor,"What container does it use?", val(X));
+    !bindings = act:askQuestionFromString("What container does it use?", val(X));
     !containerPred = op:get(!bindings, !x);
 
     //check if we know about any container of the specified type, if not ask
     if(act:knowsContainerLocation(!containerPred)){
         op:log(debug,"don't know the location of any !containerPred , need to ask");
         (!question) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","where(is(there,num(1,!containerPred)))");
-        (!bindings) = act:askQuestion(?actor,!question, val(X));
+        (!bindings) = act:askQuestion(!question, val(X));
         (!contentLocation) = op:get(!bindings, !x);
         (!newRefsList) = act:positContents(!contentLocation);
 
@@ -77,7 +77,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Symbol !number;
     Symbol !contained;
 
-    !bindings = act:askQuestionFromString(?actor,"Okay. What does a ?descriptor contain?", val(X));
+    !bindings = act:askQuestionFromString("Okay. What does a ?descriptor contain?", val(X));
     !contentType = op:get(!bindings, !x);
     op:log("debug","contentType: !contentType");
 
@@ -88,13 +88,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
             (!number) = op:invokeMethod(!contentType, "get", 0);
             (!contained) = op:invokeMethod(!contentType, "get", 1);
             (!question) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","where(are(there,num(!number,!contained)))");
-            (!bindings) = act:askQuestion(?actor,!question, val(X));
-            //(!bindings) = act:askQuestionFromString(?actor,"where are there !contentType", val(X));
+            (!bindings) = act:askQuestion(!question, val(X));
+            //(!bindings) = act:askQuestionFromString("where are there !contentType", val(X));
             (!contentLocation) = op:get(!bindings, !x);
             act:positContents(!contentLocation);
             //TODO:brad: ask where item can be found
         }
-        (!bindings) = act:askQuestionFromString(?actor,"does it contain anything else?", val(X));
+        (!bindings) = act:askQuestionFromString("does it contain anything else?", val(X));
         (!contentType) = op:get(!bindings, !x);
         op:log("debug","contentType: !contentType");
     }
@@ -348,7 +348,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 // generates a recovery plan for a failure, runs performance assessment, and submits the plan
-() = generateRecoveryPlanAndAssess(Predicate ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = generateRecoveryPlanAndAssess(List ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
 
     recovery: {
       actionStatuses: {FAIL_POSTCONDITIONS}
@@ -387,6 +387,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     // for asking if it should execute the plan
     java.util.Map !bindings;
     Predicate !shouldExecuteResponse;
+
+    // for submitting the planned action on behalf of whoever asked for the original goal
+    Symbol !submitter = this:getOriginalSubmitter();
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
+    java.lang.Long !priority;
 
     op:log(debug, "[generateRecoveryPlanAndAssess] generated goal predicate !goalPred");
 
@@ -435,12 +441,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
         //Ask user for desire to execute the found plan
 
-        (!bindings) = act:askQuestionFromString(!planningActor,"Do you want me to execute it?", val(X));
+        (!bindings) = act:askQuestionFromString("Do you want me to execute it?", val(X));
         (!shouldExecuteResponse) = op:get(!bindings, !x);
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
@@ -473,12 +481,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         act:generateResponse(!reportFailurePred);
 
         //Ask user for desire to execute the found plan
-        (!bindings) = act:askQuestionFromString(!planningActor,"I have found a plan to recover, but it requires your help, can you help execute it now?", val(X));
+        (!bindings) = act:askQuestionFromString("I have found a plan to recover, but it requires your help, can you help execute it now?", val(X));
         (!shouldExecuteResponse) = op:get(!bindings, !x);
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
@@ -510,7 +520,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !locStr = op:invokeMethod(?area, "getName");
 
     // "Could you put a bandagebox at table E"
-    !bindings = act:askQuestionFromString(?actor, "Could you put a !propertyStr at !locStr ?", val(X));
+    !bindings = act:askQuestionFromString( "Could you put a !propertyStr at !locStr ?", val(X));
     !shouldExecuteResponse = op:get(!bindings, !x);
     if (~op:equalsValue(!shouldExecuteResponse,yes())) {
       op:log("info", "?actor refused to put ?propertyType at ?area");

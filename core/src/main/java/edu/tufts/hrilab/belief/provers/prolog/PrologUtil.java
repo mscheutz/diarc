@@ -60,11 +60,11 @@ public class PrologUtil {
           symName = symName.replace("\"","\\34\\");
           symName = symName.replace("'","\\39\\");
           symName = "\"" + symName + "\"";
-          safeName.append(prefix).append(new Symbol(symName ));
+          safeName.append(prefix).append(Factory.createSymbol(symName,""));
         } else if (symName.startsWith("\"") && symName.endsWith("\"")) {
           //TODO: if this turns out to work, do in a better way
           //replace all internal ' " with code
-          symName = symName.substring(1,symName.length()-1).replace("\"","\\34\\");
+          symName = symName.replace("\"","\\34\\");
           symName = "\"" + symName.replace("'","\\39\\") + "\"";
           safeName.append(prefix).append(symName);
         }
@@ -90,6 +90,15 @@ public class PrologUtil {
   }
 
   public static Symbol undoMakePrologSafe(Symbol t) {
+    if (t.isTerm()) {
+      Term tmpT = (Term) t;
+      List<Symbol> args = new ArrayList<>();
+      for (Symbol s : tmpT.getArgs()) {
+        args.add(undoMakePrologSafe(s));
+      }
+      t = Factory.createPredicate(t.getName(), args);
+    }
+    t.setName(t.getName().replace("\"",""));
     t.setName(t.getName().replace("\\34\\","\""));
     t.setName(t.getName().replace("\\39\\","'"));
     return t;

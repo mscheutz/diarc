@@ -28,12 +28,12 @@ public class ResponseGeneration {
    * @param semantics "semantics(boundOption1, boundOption2, ...)"
    * @return Predicate of the form "itk(actor, mean(speaker, or(boundOption1, boundOption2)))"
    */
-  public static Predicate generateClarificationMultipleMeanings(Symbol actor, Symbol speaker, Term semantics) {
+  public static Predicate generateClarificationMultipleMeanings(Symbol actor, Symbol speaker, Term semantics, Term supplementalSemantics) {
 
     Predicate orPred = Factory.createPredicate("or", semantics.getArgs());
     log.debug("conflict set: " + orPred);
     Predicate meanPred = Factory.createPredicate("mean", speaker, orPred);
-    return new Predicate("itk", actor, meanPred);
+    return new Predicate("itk", actor, meanPred, supplementalSemantics);
   }
 
   /**

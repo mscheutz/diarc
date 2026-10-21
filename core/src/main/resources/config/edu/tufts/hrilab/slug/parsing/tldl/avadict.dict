@@ -1,0 +1,555 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TEMPLATES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+START-TEMPLATES
+
+% delivering specific ditransitive verb
+VERBDELT; {((C/PP)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}, {(C/PP)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}
+
+%transitive verb
+VERBT; {(C/REF)\AGENT; #a#y.?PH($a,$y)}, {(C/PP)\AGENT; #a#y.?PH($a,$y)}, {C/REF ; #x.?PH(?ADDRESSEE,$x)}, {C/PP ; #x.?PH(?ADDRESSEE,$x)}
+
+%ditransitive verb
+% Simplified template of this syntax worked: ((C/(REF | LREF | PP | NP | VP})/{AGENT})[\AGENT]
+VERBDT; {((C/REF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/LREF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/LREF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/PP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/PP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/VP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/VP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/NP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/NP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}
+%VERBDTCOMPLEX; {((C/REF)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/LREF)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/LREF)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/PP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/PP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/VP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/VP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/NP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/NP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}
+
+%VERBDTCOMPLEX;
+% Simplified template of this syntax worked: (((C/(LREF | PP | NP | VP})/PP)/AGENT})[\AGENT]
+VERBDTCOMPLEX; {(((C/PP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/PP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/LREF)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/LREF)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/NP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/NP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/VP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/VP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)},
+
+END-TEMPLATES
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MISC RULES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% to AGENT in the LOC
+
+how to get; VP/PP; #x.$x
+how to reach; VP/LREF; #x.$x
+how to access; VP/LREF; #x.$x
+
+directions; NP/PP; #x.$x
+the directions; NP/PP; #x.$x
+the way; NP/PP; #x.$x
+the path; NP/PP; #x.$x
+the route; NP/PP; #x.$x
+the location of; NP/LREF;#x.$x
+
+%in; ((LREF/LREF)/LREF); #x.$x
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HARD CODED COMMANDS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+go home; C; goHome(?ADDRESSEE)
+dock; VERBT; dock
+
+hey av; C; heyAva(?ADDRESSEE)
+hey ava; C; heyAva(?ADDRESSEE)
+
+find person; C; findPerson(?ADDRESSEE)
+battery level; C; evaluateBatteryLevel(?ADDRESSEE)
+
+look at moving; C; lookAtMoving(?ADDRESSEE)
+long demo; C; longDemo(?ADDRESSEE)
+long driving demo; C; longDrivingDemo(?ADDRESSEE)
+drive everywhere demo; C; driveEverywhereDemo(?ADDRESSEE)
+how many people; C; countPeople(?ADDRESSEE)
+do you see a person; C; personInFront(?ADDRESSEE)
+describe what you see; C; describe(?ADDRESSEE)
+
+%TODO;daniel;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  UNIMPLEMENTED USAGES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% i need help getting to the arena  -> weird phrasing
+% bring this to the arena -> can't process unspecified "this" (it can do "this box" but not just "this")
+% could you please take this box to the exit and guide chris to the arena -> can't process "and" commands
+% transport yourself to the arena -> incorrectly processes reflexive commands (will be treated as escort when simple move to)
+% how do i get to the arena -> complex way of saying escort to location also should this be treated as a question
+
+% could you please take this box to andy in the exit -> can't process complex descriptors
+
+% bring bob [in | around | near | by | at | inside | beside | adjacent | in front of | from] the lobby to the lab
+
+%bob in the lobby
+%AGENT NP LREF
+%in; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%around; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%near; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%by; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%at; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%inside; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%besides; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%adjacent; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%from; (NP/LREF)\AGENT; #x#y.at($x,$y)
+%in front of; (NP/LREF)\AGENT; #x#y.at($x,$y)
+
+%to; PP/LREF; #x.$x
+in; PP/LREF; #x.$x
+around; PP/LREF; #x.$x
+near; PP/LREF; #x.$x
+by; PP/LREF; #x.$x
+at; PP/LREF; #x.$x
+inside; PP/LREF; #x.$x
+besides; PP/LREF; #x.$x
+adjacent; PP/LREF; #x.$x
+%from; PP/LREF; #x.$x
+in front of; PP/LREF; #x.$x
+
+
+in; AtPP/LREF; #x.$x
+around; AtPP/LREF; #x.$x
+near; AtPP/LREF; #x.$x
+by; AtPP/LREF; #x.$x
+at; AtPP/LREF; #x.$x
+at; AtPP/REF; #x.$x
+inside; AtPP/LREF; #x.$x
+besides; AtPP/LREF; #x.$x
+adjacent; AtPP/LREF; #x.$x
+from; AtPP/LREF; #x.$x
+in front of; AtPP/LREF; #x.$x
+
+% AGENT is at the elevator
+% TODO;daniel; this feels gross
+is; (S/AtPP)\AGENT; #x#y.at($x,$y)
+
+%i do not know; S;
+%i dont know; S;
+
+% bring bob to the lab from the lobby
+% bring bob who is in the lobby, to the lab
+% bring bob to the lab. he is in the lobby
+% from the lobby, bring bob to the lab
+% take bob from the lobby and bring him to the lab
+% bob is in the lobby, bring him to the lab
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MOVING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+drive; VERBT; goToLocation
+get; VERBT; goToLocation
+go; VERBT; goToLocation
+move; VERBT; goToLocation
+
+follow; C; follow(?ADDRESSEE)
+follow me; C; follow(?ADDRESSEE)
+stop following; C; stopFollowing(?ADDRESSEE)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ESCORTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+to; REF/REF; #x.$x
+to; RN/RN; #x.$x
+
+%escort to; ESCORTTO
+%escort the patient to; ESCORTTO
+%escort from; ESCORT
+%escort the patient from; ESCORT
+escort * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+escort * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+take * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+take * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+
+%bring; VERBDT; escortToLocation
+%escort; VERBDT; escortToLocation
+%guide; VERBDT; escortToLocation
+%get; VERBDT; escortToLocation
+%lead; VERBDT; escortToLocation
+%take; VERBDT; escortToLocation
+%transport; VERBDT; escortToLocation
+%show; VERBDT; escortToLocation
+%
+%bring; VERBDTCOMPLEX; escortToLocation
+%escort; VERBDTCOMPLEX; escortToLocation
+%guide; VERBDTCOMPLEX; escortToLocation
+%get; VERBDTCOMPLEX; escortToLocation
+%lead; VERBDTCOMPLEX; escortToLocation
+%take; VERBDTCOMPLEX; escortToLocation
+%transport; VERBDTCOMPLEX; escortToLocation
+%show; VERBDTCOMPLEX; escortToLocation
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DELIVERING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+bring; VERBDELT; deliverToLocation
+carry; VERBDELT; deliverToLocation
+deliver; VERBDELT; deliverToLocation
+get; VERBDELT; deliverToLocation
+move; VERBDELT; deliverToLocation
+take; VERBDELT; deliverToLocation
+transport; VERBDELT; deliverToLocation
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MODAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Can't do MODAL/C because it would result in the terminal to be MODAL instead of C which isn't a valid terminal
+
+are you able to; C/C; #x.$x
+would you mind; C/C; #x.$x
+could you go and; C/C; #x.$x
+could you; C/C; #x.$x
+can you; C/C; #x.$x
+is it possible to; C/C; #x.$x
+id like you to; C/C; #x.$x
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SOMETHING WEIRD AND CRAZY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sit; C; sit(?ADDRESSEE)
+stand; C; stand(?ADDRESSEE)
+
+%NP
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOCATIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%% Lab specific locations
+%arena; LOC; arena
+%bullpen; LOC; bullpen
+%
+%% 4th floor specific
+%lab space; LOC; lab space
+%
+%elevator in the back; LOC; back elevator
+%back elevator; LOC; back elevator
+%rear elevator; LOC; back elevator
+%stairs in the back; LOC; stair b
+%back stairs; LOC; stair b
+%rear stairs; LOC; stair b
+%stairs b; LREF; stair b
+%main stairs a; LOC; stair a
+%front stairs a; LOC; stair a
+%stairs a; LREF; stair a
+%stairs; LOC; stair a
+%
+%
+%kitchenette; LOC; 430 kitchenette
+%kitchen; LOC; 430 kitchenette
+%kitchen area; LOC; 430 kitchenette
+%sink; LOC; 430 kitchenette
+%
+%conference room; LOC; 475 conference room
+%meeting room; LOC; 475 conference room
+%construction; LOC; 457 construction
+%construction zone; LOC; 457 construction
+%construction site; LOC; 457 construction
+%construction area; LOC; 457 construction
+%huddle room; LOC; 449 huddle room
+%
+%utility corridor; LOC; 405 utility corridor
+%storage; LOC; 440l storage
+%
+%h r i lab; LOC; 481b hri lab; DEFINITE
+%hri lab; LOC; 481b hri lab; DEFINITE
+%matthias lab; LREF; 481b hri lab; DEFINITE
+%professor scheutzs lab; LREF; 481b hri lab; DEFINITE
+%nat lab; LOC; 440g nat lab
+%fahads lab; LREF; 440g nat lab; DEFINITE
+%professor dogars lab; LREF; 440g nat lab; DEFINITE
+%mulip lab; LOC; 474 mulip
+%mu lip lab; LOC; 474 mulip
+%jivkos lab; LREF; 474 mulip; DEFINITE
+%professor sinapovs lab; LREF; 474 mulip; DEFINITE
+%able lab; LOC; 472 aabl
+%aabl lab; LOC; 472 aabl
+%elaines lab; LREF; 472 aabl
+%professor shorts lab; LREF; 472 aabl
+%robotics lab; LOC; 435 robotics lab
+%
+%bathroom; LOC; bathroom
+%elevator; LOC; elevator
+%coffee maker; LOC; coffee maker
+%back door; LOC; back door
+%restroom; LOC; bathroom
+%loo; LOC; bathroom
+%admin office; LOC; 420 cs admin office
+%c s admin office; LOC; 420 cs admin office
+%cs admin office; LOC; 420 cs admin office
+%admin offices; LOC; 420 cs admin office
+%
+%levy family seminar room; LOC; 402 levy family seminar room
+%seminar room; LOC; 402 levy family seminar room
+%
+%%phd student offices; LOC; 440h phd student offices
+%%phd student offices; LOC; 440k phd student offices
+%%phd student offices; LOC; 454 phd student offices
+%%phd student offices; LOC; 481f phd student offices
+%
+%comp 111 office hours; LREF; 442 huddle room; DEFINITE
+%comp 111 office hours; LOC; 442 huddle room
+%comp 160 office hours; LREF; 442 huddle room; DEFINITE
+%comp 160 office hours; LOC; 442 huddle room
+%comp 11 office hours; LREF; 401 collaborative; DEFINITE
+%comp 11 office hours; LOC; 401 collaborative
+%c s 111 office hours; LREF; 442 huddle room; DEFINITE
+%c s 111 office hours; LOC; 442 huddle room
+%c s 160 office hours; LREF; 442 huddle room; DEFINITE
+%c s 160 office hours; LOC; 442 huddle room
+%c s 11 office hours; LREF; 401 collaborative; DEFINITE
+%c s 11 office hours; LOC; 401 collaborative
+%cs 111 office hours; LREF; 442 huddle room; DEFINITE
+%cs 111 office hours; LOC; 442 huddle room
+%cs 160 office hours; LREF; 442 huddle room; DEFINITE
+%cs 160 office hours; LOC; 442 huddle room
+%cs 11 office hours; LREF; 401 collaborative; DEFINITE
+%cs 11 office hours; LOC; 401 collaborative
+%
+%% Decided to make these LREFS since you dont say the milods office (since milods office is definite and singular)
+%matthias office; LREF; 471 matthias scheutz; DEFINITE
+%milods office; LREF; 469 milod kazerounian; DEFINITE
+%jivkos office; LREF; 467 jivko sinapov; DEFINITE
+%saeeds office; LREF; 465 saeed mehraban; DEFINITE
+%vladimirs office; LREF; 463 vladimir podolskii; DEFINITE
+%martys office; LREF; 461 marty allen; DEFINITE
+%normans office; LREF; 459 norman ramsey; DEFINITE
+%karens office; LREF; 455 karen edwards; DEFINITE
+%rajas office; LREF; 453 raja sambasivan; DEFINITE
+%elaines office; LREF; 451 elaine short; DEFINITE
+%fahads office; LREF; 440f fahad dogar; DEFINITE
+%megans office; LREF; 440i megan monaghan; DEFINITE
+%dianes office; LREF; 440e diane souvaine; DEFINITE
+%noahs office; LREF; 440j noah mendelsohn; DEFINITE
+%megans office; LREF; 440d megan monroe; DEFINITE
+%marks office; LREF; 440c mark sheldon; DEFINITE
+%davids office; LREF; 440b david lillethun; DEFINITE
+%richards office; LREF; 440a richard townsend; DEFINITE
+%
+%professor scheutzs office; LREF; 471 matthias scheutz; DEFINITE
+%professor kazerounians office; LREF; 469 milod kazerounian; DEFINITE
+%professor sinapovs office; LREF; 467 jivko sinapov; DEFINITE
+%professor mehrabans office; LREF; 465 saeed mehraban; DEFINITE
+%professor podolskiis office; LREF; 463 vladimir podolskii; DEFINITE
+%professor allens office; LREF; 461 marty allen; DEFINITE
+%professor ramseys office; LREF; 459 norman ramsey; DEFINITE
+%professor edwards office; LREF; 455 karen edwards; DEFINITE
+%professor sambasivans office; LREF; 453 raja sambasivan; DEFINITE
+%professor shorts office; LREF; 451 elaine short; DEFINITE
+%professor dogars office; LREF; 440f fahad dogar; DEFINITE
+%professor monaghans office; LREF; 440i megan monaghan; DEFINITE
+%professor souvaines office; LREF; 440e diane souvaine; DEFINITE
+%professor mendelsohns office; LREF; 440j noah mendelsohn; DEFINITE
+%professor monroes office; LREF; 440d megan monroe; DEFINITE
+%professor sheldons office; LREF; 440c mark sheldon; DEFINITE
+%professor lillethuns office; LREF; 440b david lillethun; DEFINITE
+%professor townsends office; LREF; 440a richard townsend; DEFINITE
+%
+%room 475; LREF; 475 conference room; DEFINITE
+%room 471; LREF; 471 matthias scheutz; DEFINITE
+%room 469; LREF; 469 milod kazerounian; DEFINITE
+%room 467; LREF; 467 jivko sinapov; DEFINITE
+%room 478; LREF; 478 room; DEFINITE
+%room 470; LREF; 470 room; DEFINITE
+%room 465; LREF; 465 saeed mehraban; DEFINITE
+%room 463; LREF; 463 vladimir podolskii; DEFINITE
+%room 461; LREF; 461 marty allen; DEFINITE
+%room 459; LREF; 459 norman ramsey; DEFINITE
+%room 454; LREF; 454 phd student offices
+%room 455; LREF; 455 karen edwards; DEFINITE
+%room 453; LREF; 453 raja sambasivan; DEFINITE
+%room 451; LREF; 451 elaine short; DEFINITE
+%room 449; LREF; 449 huddle room; DEFINITE
+%room 442; LREF; 442 huddle room; DEFINITE
+%room 440h; LREF; 440h phd student offices; DEFINITE
+%room 440g; LREF; 440g nat lab; DEFINITE
+%room 440f; LREF; 440f fahad dogar; DEFINITE
+%room 440i; LREF; 440i megan monaghan; DEFINITE
+%room 440e; LREF; 440e diane souvaine; DEFINITE
+%room 440j; LREF; 440j noah mendelsohn; DEFINITE
+%room 440d; LREF; 440d megan monroe; DEFINITE
+%room 440c; LREF; 440c mark sheldon; DEFINITE
+%room 440b; LREF; 440b david lillethun; DEFINITE
+%room 440k; LREF; 440k phd student offices; DEFINITE
+%room 440a; LREF; 440a richard townsend; DEFINITE
+%room 440l; LREF; 440l storage; DEFINITE
+%room 435; LREF; 435 robotics lab; DEFINITE
+%room 430; LREF; 430 kitchenette; DEFINITE
+%room 474; LREF; 474 mulip; DEFINITE
+%room 472; LREF; 472 aabl; DEFINITE
+%room 420; LREF; 420 cs admin office; DEFINITE
+%room 405; LREF; 405 utility corridor; DEFINITE
+%room 402; LREF; 402 levy family seminar room; DEFINITE
+%room 481; LREF; 481f phd student offices; DEFINITE
+%room 481f; LREF; 481f phd student offices; DEFINITE
+%room 481b; LREF; 481b phd student offices; DEFINITE
+%room 401; LREF; 401 collaborative; DEFINITE
+%
+%room 440 h; LREF; 440h phd student offices; DEFINITE
+%room 440 g; LREF; 440g nat lab; DEFINITE
+%room 440 f; LREF; 440f fahad dogar; DEFINITE
+%room 440 i; LREF; 440i megan monaghan; DEFINITE
+%room 440 e; LREF; 440e diane souvaine; DEFINITE
+%room 440 j; LREF; 440j noah mendelsohn; DEFINITE
+%room 440 d; LREF; 440d megan monroe; DEFINITE
+%room 440 c; LREF; 440c mark sheldon; DEFINITE
+%room 440 b; LREF; 440b david lillethun; DEFINITE
+%room 440 k; LREF; 440k phd student offices; DEFINITE
+%room 440 a; LREF; 440a richard townsend; DEFINITE
+%room 440 l; LREF; 440l storage; DEFINITE
+%room 481 f; LREF; 481f phd student offices; DEFINITE
+%room 481 b; LREF; 481b phd student offices; DEFINITE
+
+% Scheduled (run init in 10 seconds, run init at 11:54:00)
+%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),10,seconds)
+%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),11-54-00)
+% Scheduled persistent (in 10 seconds, run init as a persistent goal)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,init(?ADDRESSEE)),10,seconds)
+% Persistent scheduled (every 10 seconds run init)
+%test; C; persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,seconds))
+% Scheduled Persistent Scheduled (starting at noon, run init every 10 seconds)
+% (I think this case might actually not have expected behavior right now. First execution doesn't happen at noon, but 10 seconds after noon)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,seconds)),12-00-00)
+
+noon; VAL; absoluteTime(12-00-00)
+
+minute; VAL\NUM ; #x.relativeTime($x,minutes)
+minutes; VAL\NUM ; #x.relativeTime($x,minutes)
+second; VAL\NUM ; #x.relativeTime($x,seconds)
+seconds; VAL\NUM ; #x.relativeTime($x,seconds)
+hour; VAL\NUM ; #x.relativeTime($x,hours)
+hours; VAL\NUM ; #x.relativeTime($x,hours)
+
+the task is; VAL/C; #x.taskPredicate($x)
+the task is; VAL/VERBT; #x.taskPredicate($x)
+
+add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
+
+i want to discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+
+every; PP/LREF; #x.$x
+
+a.m.; VAL\NUM; #x.absoluteTime($x, am)
+p.m.; VAL\NUM; #x.absoluteTime($x, pm)
+
+%% "pass-through" for timing replies
+every; VAL/VAL; #x.$x
+in; VAL/VAL; #x.$x
+at; VAL/VAL; #x.$x
+
+testtest; C; testtest(?ADDRESSEE)
+
+#perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
+
+#perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+#perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
+#perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+%add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
+%the name is; VAL/LIT*; #x.name($x)
+that is all; VAL; location(none)
+modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
+the interval; VAL; timingOf(interval)
+
+%location; VAL/REF; #x.location($x)
+
+execution; VAL; timingOf(execution)
+first execution; VAL; timingOf(execution)
+interval; VAL; timingOf(interval)
+
+what are your scheduled tasks; C; describeScheduledGoals(?ADDRESSEE)
+
+%num is special term
+%TODO: generalize
+%task 1; VAL; number(1)
+%task 2; VAL; number(2)
+%task 3; VAL; number(3)
+
+stop; C; cancelSystemGoals(?ADDRESSEE)
+pause; C; suspendSystemGoalsBlocking(?ADDRESSEE)
+resume; C; resumeSystemGoals(?ADDRESSEE)
+nevermind; VAL; abort(question)
+
+%i will teach you a new task; C; learnNewTask(?ADDRESSEE)
+%end
+where are you now; C; describeCurrentLocation(?ADDRESSEE)
+
+i will teach you a new task; C; learnNewTask(?ADDRESSEE)
+
+the task name is; VAL/LIT*; #x.taskName($x)
+it will be called; VAL/LIT*; #x.taskName($x)
+task greet; VAL; taskName(greet)
+i am done teaching; C; endActionLearning(?ADDRESSEE)
+
+%skippending say; C/LIT*; #x.skippendingsay(?ADDRESSEE, $x)
+say; C/LIT*; #x.say(?ADDRESSEE, $x)
+%greet; C; greet(?ADDRESSEE)
+
+option; VAL/NUM; #x.option($x)
+
+tell me your current task; VERBI; describeCurrentGoal
+what are your pending tasks; VERBI; describePendingGoals
+cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
+tell me your current goal; VERBI; describeCurrentGoal
+what are your pending goals; VERBI; describePendingGoals
+cancel pending goals; VERBI; cancelAllPendingGoals
+cancel all pending goals; VERBI; cancelAllPendingGoals
+cancel all active goals; VERBI; cancelAllActiveGoals
+cancel all goals; VERBI; cancelAllCurrentGoals
+cancel all scheduled goals; VERBI; cancelAllScheduledGoals
+cancel all scheduled tasks; VERBI; cancelAllScheduledGoals
+cancel a scheduled goal; VERBI; cancelScheduledGoal
+cancel a scheduled task; VERBI; cancelScheduledGoal
+
+
+the path name is; VAL/LIT*; #x.pathName($x)
+
+what did you ask me; VERBI; repeatLastQuestion
+
+what locations do you have saved; VERBI; describeAllKnownLocations
+%what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
+
+%Start of itk ('correct') versions of describe actions
+what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
+what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
+%what are you doing;  Q; whatAre(?ADDRESSEE,goals)
+
+show demo video; VERBI; playNextVideo
+enable microphone; VERBI; enableMic
+disable microphone; VERBI; disableMic
+
+now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+start demo; VERBI; startDemo
+stop demo; VERBI; stopDemo
+
+%enable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,false)
+%disable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,true)
+
+ww; VERBI; triggerWW
+ready; VERBI; interruptWaitForReadyAck
+
+forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
+
+%what actions have you been taught; VERBI; reportTaughtActions
+%what actions can you be instructed to perform; VERBI; reportInstructableActions
+%taught actions; VAL; actionType(taught)
+%predefined actions; VAL; actionType(predefined)
+%both; VAL; actionType(both)
+%at a time; VAL\NUM; #x.amount($x)
+
+learn new tour sequence; VERBI; learnTourAction
+remove the task from the queue at position; C/LIT* ; #x.cancelSingleTaskInQueue(?ADDRESSEE,$x)
+
+enable admin mode; VERBI; enableAdminMode
+disable admin mode; VERBI; disableAdminMode
+
+disable_ww_listen; VERBI; interruptListenForWWandASR
+enable_ww_listen; VERBI; listenForWWandASR
+set output volume to; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set output volume; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set video volume to; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+set video volume; C/LIT* ; #x.setVideoVolume(?ADDRESSEE,$x)
+lower the volume; VERBI; lowerVideoVolume
+lower volume; VERBI; lowerVideoVolume
+lower media volume; VERBI; lowerVideoVolume
+turn down the volume; VERBI; lowerVideoVolume
+turn down volume; VERBI; lowerVideoVolume
+turn it down; VERBI; lowerVideoVolume
+lower video volume; VERBI; lowerVideoVolume
+turn down video volume; VERBI; lowerVideoVolume
+raise the volume; VERBI; raiseVideoVolume
+raise volume; VERBI; raiseVideoVolume
+raise media volume; VERBI; raiseVideoVolume
+turn up the volume; VERBI; raiseVideoVolume
+turn up volume; VERBI; raiseVideoVolume
+turn it up; VERBI; raiseVideoVolume
+raise video volume; VERBI; raiseVideoVolume
+turn up video volume; VERBI; raiseVideoVolume
+start idle image cycle; VERBI; startIdleImageCycle
+stop idle image cycle; VERBI; stopIdleImageCycle
+
+play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)
+primary dock; C; setAtPrimaryDock(?ADDRESSEE)
+secondary dock; C; setAtSecondaryDock(?ADDRESSEE)

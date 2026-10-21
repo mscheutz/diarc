@@ -5,7 +5,12 @@
 package edu.tufts.hrilab.test.framework.tester;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.serviceproviders.tr.social.ChatContext;
+import edu.tufts.hrilab.llm.serviceproviders.tr.social.SocialTRLLMServiceProvider;
 import edu.tufts.hrilab.test.framework.gson.ServiceCallInstance;
+import edu.tufts.hrilab.test.framework.gson.SocialChatHistories;
 import edu.tufts.hrilab.test.framework.gson.TestServiceCalls;
 
 import java.io.File;
@@ -42,6 +47,20 @@ public class GenerativeDiarcConfigTester extends DiarcConfigTester {
    * Distinguish between "execution" (false) and "generative" (true) test mode.
    */
   public final boolean generativeMode = Boolean.getBoolean("generativeMode");
+
+  /**
+   * Optional fields to populate from test itself in order to write LLM ChatContexts to a separate, associated file
+   *  on test end alongside base generative test functionality
+   */
+  private SocialTRLLMServiceProvider serviceProvider = null;
+  private Symbol speaker;
+  private Symbol agentTeam;
+  public void setServiceProvider(SocialTRLLMServiceProvider serviceProvider) {
+    this.serviceProvider = serviceProvider;
+  }
+  public void setSpeaker(Symbol speaker) { this.speaker = speaker; }
+  public void setAgentTeam(Symbol agentTeam) { this.agentTeam = agentTeam; }
+  private SocialChatHistories chatHistories;
 
   /**
    * Override the super method so that generative mode can use the observed output,
@@ -120,6 +139,20 @@ public class GenerativeDiarcConfigTester extends DiarcConfigTester {
   public void endTest(Class clazz, String testName) {
     if (generativeMode) {
       writeGeneratedResults(createFilename(clazz, testName));
+      if (serviceProvider != null && speaker != null && agentTeam != null) {
+        chatHistories = new SocialChatHistories(testName);
+        List<ChatContext> histories = serviceProvider.getExtendedConversationHistories(speaker, agentTeam);
+        for (int i = histories.size() - 1; i >= 0; i--) {
+          chatHistories.startNextUtterance();
+          chatHistories.addChatHistory(histories.get(i).getHistory().messages);
+        }
+        List<Message> currentHistory = serviceProvider.getChatHistory(speaker, agentTeam);
+        if (currentHistory != null) {
+          chatHistories.startNextUtterance();
+          chatHistories.addChatHistory(currentHistory);
+        }
+        writeGeneratedChatHistories(createFilename(clazz, testName+"_chatHistories"));
+      }
     } else {
       clearObservedOutput();
     }
@@ -141,6 +174,23 @@ public class GenerativeDiarcConfigTester extends DiarcConfigTester {
         mapper.writerWithDefaultPrettyPrinter().writeValue(file, expectedOutputs);
       } catch (Exception e) {
         log.error("error writing JSON file for generated test output", e);
+      }
+    }
+  }
+
+  private void writeGeneratedChatHistories(String filename) {
+    if (generativeMode) {
+      try {
+        File file = new File(filename);
+        if (!file.exists()) {
+          file.getParentFile().mkdirs();
+          file.createNewFile();
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerWithDefaultPrettyPrinter().writeValue(file, chatHistories);
+      } catch (Exception e) {
+        log.error("error writing JSON file for generated test llm chat histories", e);
       }
     }
   }

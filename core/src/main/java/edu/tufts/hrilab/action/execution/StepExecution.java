@@ -4,7 +4,6 @@
 package edu.tufts.hrilab.action.execution;
 
 import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.ActionStack;
 import edu.tufts.hrilab.action.ActionStatus;
@@ -247,9 +246,14 @@ public class StepExecution {
 //            throw new RuntimeException(e);
 //          }
           break;
+        case PARENT_SUSPEND:
         case SUSPEND:
+          context.caller.setStatus(ActionStatus.SUSPEND, context.getJustification());
+          context.performAdditionalStatusUpdates();
+          return context.getJustification();
+        case PARENT_CANCEL:
         case CANCEL:
-          context.caller.setStatus(context.getStatus(), context.getJustification());
+          context.caller.setStatus(ActionStatus.CANCEL, context.getJustification());
           context.performAdditionalStatusUpdates();
           return context.getJustification();
         default: // No state change for other cases.

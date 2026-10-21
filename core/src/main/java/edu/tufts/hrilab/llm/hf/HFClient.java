@@ -6,15 +6,18 @@ package edu.tufts.hrilab.llm.hf;
 
 import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.llm.*;
+import edu.tufts.hrilab.llm.gson.tool.ToolDefinition;
 import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBody;
-import edu.tufts.hrilab.llm.hf.request.T5BaseCompletionRequestBody;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
-import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
-import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
+import edu.tufts.hrilab.llm.openai.request.OpenaiChatRequestBody;
+import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,25 +25,25 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import com.google.gson.Gson;
 
-public class HFClient{
+//TODO: Removed all model specific endpoints and configuration - hf deprecated/overhauled them for general router endpoint.
+//      Need to revisit necessary configurability if returning to using old models/code.
+public class HFClient implements LLMClient {
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
-    private String llamaHFCompletionEndpoint = "https://api-inference.huggingface.co/models/meta-llama/%s";
+    private String hfCompletionEndpoint = "https://router.huggingface.co/v1/chat/completions";
 
-    private String t5CompletionEndpoint = "https://api-inference.huggingface.co/models/%s";
+    private String endpoint;
 
-    //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
-    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct");
-    private List<String> t5CompletionModels = Arrays.asList("t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b");
+    private final Pattern UNICODE_PATTERN = Pattern.compile("(?<!\\\\)\\\\u(\\p{XDigit}{4})");
 
     private String defaultSystemPrompt = "";
 
-    public String service = "llamahf";
-    public String model = "Meta-Llama-3-70B-Instruct";
+    public String service = "hf";
+    public String model = "meta-llama/Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
-    private int maxNewTokens = 1028;
+    private int maxNewTokens = 1024;
     private float temperature = 0.6f;
 
     public HFClient () {
@@ -57,46 +60,23 @@ public class HFClient{
     }
 
     public void setModel (String serviceStr, String modelStr) {
-        if (!((serviceStr.equals("llamahf") && llamaHFCompletionModels.contains(modelStr)) || (serviceStr.equals("t5hf") && t5CompletionModels.contains(modelStr)))) {
-            log.error("HFClient does not support service/model pair {}/{}: ", serviceStr, modelStr);
-            return;
-        }
         service = serviceStr;
         model = modelStr;
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion(String prompt) {
-        return t5BaseCompletion(prompt, model);
+    @Override
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion(String prompt, String model) {
-        T5BaseCompletionRequestBody requestBody = new T5BaseCompletionRequestBody(prompt);
-        return t5BaseCompletion(requestBody, model);
+    @Override
+    public void setModel(String model) {
+        log.error("[setModel] please use the setModel method supplying a service string instead. Not updating model");
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody) {
-        return t5BaseCompletion(requestBody, model);
-    }
-    /**
-    * Sends a Llama completion request with the given model and request body, and returns the completion response.
-    * https://github.com/ggerganov/llama.cpp/tree/master/examples/server
-    * @param requestBody the request body containing the prompt and other parameters for the completion request
-    * @return the completion response from the TextSynth API
-    **/
-    public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody, String model) {
-        String endpoint = String.format(t5CompletionEndpoint, model);
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", "Bearer " + apiKey);
-        Gson gson = new Gson();
-        String response = Http.sendPostRequest(endpoint, requestBody, headers);
-        log.debug("Response: " + response);
-        Type t = new TypeToken<List<T5BaseCompletionResponse>>() {}.getType();
-        List<T5BaseCompletionResponse> results = gson.fromJson(response, t);
-        if (results == null) {
-            return new T5BaseCompletionResponse(response);
-        } else {
-            return results.get(0);
-        }
+    @Override
+    public void setStopWords(String[] stopWords) {
+        log.warn("HFClient does not support stop words");
     }
 
     /**
@@ -104,96 +84,173 @@ public class HFClient{
      *
      * @param temperatureFloat - The temperature value to set
      */
+    @Override
     public void setTemperature (float temperatureFloat) {
         temperature = temperatureFloat;
         log.info(String.format("Using temperature: %s", temperature));
     }
+
     /**
      * Sets the max number of tokens included in the response (Not including the provided prompt)
      *
      * @param maxNewTokens - The number of tokens to set
      */
     public void setMaxNewTokens(int maxNewTokens) {
-        maxNewTokens = this.maxNewTokens;
+        this.maxNewTokens = maxNewTokens;
         log.info(String.format("Setting maxNewTokens: %s", maxNewTokens));
     }
 
-    /**
-    * Generates a chat completion using the LLaMA HuggingFace Inference Endpoint and a prompt string.
-    * @param userPrompt the prompt string provided by the user
-    * @return the LlamaHFChatCompletionResponse containing the completed chat.
-    **/
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt) {
-        return llamaHFChatCompletion(userPrompt.toString(), defaultSystemPrompt);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt, Symbol systemPrompt) {
-        return llamaHFChatCompletion(userPrompt.toString(), systemPrompt.toString(), model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt, Symbol systemPrompt, String model) {
-        return llamaHFChatCompletion(userPrompt.toString(), systemPrompt.toString(), model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt) {
-        return llamaHFChatCompletion(userPrompt, defaultSystemPrompt);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt, String systemPrompt) {
-        return llamaHFChatCompletion(userPrompt, systemPrompt, model);
+    @Override
+    public Completion completion(String userPrompt) {
+        return completion(userPrompt, model, defaultSystemPrompt);
     }
 
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt, String systemPrompt, String model) {
+    @Override
+    public Completion completion(String userPrompt, String model) {
+        return completion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion completion(String userPrompt, String model, String systemPrompt) {
+        return chatCompletion(userPrompt, model, systemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt) {
+        return chatCompletion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt, String model) {
+        return chatCompletion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt, String model, String systemPrompt) {
         List<Message> messages = new ArrayList<>();
-        messages.add(new Message("user", userPrompt));
+        messages.add(new TextMessage("user", userPrompt));
         if (!systemPrompt.isEmpty()) {
-            messages.add(new Message("system", systemPrompt));
+            messages.add(new TextMessage("system", systemPrompt));
         }
-        return llamaHFChatCompletion(new LlamaHFChat(messages, systemPrompt), model);
+        return chatCompletion(new Chat(messages), model);
     }
 
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion(List<Message> messages) {
-        Chat chat = new Chat(messages);
-        return llamaHFChatCompletion(chat);
+    @Override
+    public Completion chatCompletion(List<Message> messages) {
+        return chatCompletion(new Chat(messages));
     }
 
-    /**
-    * Performs a chat completion using LLaMA with the set model and the given chat messages.
-    * @param chat the chat containing the messages to use for the completion
-    * @return an LlamaHFChatCompletionResponse object representing the response from LLaMA
-    **/
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat) {
-        return llamaHFChatCompletion(chat, model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat, Symbol model) {
-        return llamaHFChatCompletion(chat, model.toString());
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat, String model) {
-        LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
-        llamaHFChat.setModel(model);
-        llamaHFChat.setService(service);
-        LlamaHFCompletionRequestBody requestBody = new LlamaHFCompletionRequestBody(llamaHFChat);
-        requestBody.setTemperature(temperature);
-        requestBody.setMax_new_tokens(maxNewTokens);
-        return llamaHFChatCompletion(requestBody,model);
+    @Override
+    public Completion chatCompletion(Chat chat) {
+        return chatCompletion(chat, model);
     }
 
-
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (LlamaHFCompletionRequestBody requestBody) {
-        return llamaHFChatCompletion(requestBody, model);
+    public Completion chatCompletion(Chat chat, List<ToolDefinition> tools) {
+        return chatCompletion(chat, model, tools);
     }
+
+    @Override
+    public Completion chatCompletion(Chat chat, String model) {
+        return chatCompletion(chat, model, null);
+    }
+
+    public Completion chatCompletion(Chat chat, String model, List<ToolDefinition> tools) {
+        //if (!useTool) {
+        //    log.error("[chatCompletion] called with ToolDefinitions, but tool support is not enabled")
+        //}
+
+        if (service.equals("llamahf")) {
+            log.error("[chatCompletion] llamahf setup not extended to use tool definitions. Please use the base openai-api compatible hf service");
+            return null;
+        } else if (service.equals("t5hf")) {
+            log.error("[chatCompletion] t5hf setup not extended to use tool definitions. Please use the base openai-api compatible hf service");
+            return null;
+        } else if (service.equals("hf")) {
+            //TODO: this shouldn't live here
+            if (model.startsWith("Qwen")) {
+                chat.systemMessage = "\\no_think " + chat.systemMessage;
+            }
+            OpenaiChatRequestBody requestBody = new OpenaiChatRequestBody(model, chat.toPrompt(), tools);
+            requestBody.temperature = (double) temperature;
+            requestBody.max_tokens = maxNewTokens;
+            return new Completion(openaiCompatibleChatCompletion(requestBody, model));
+        } else {
+            log.error("HF Client does not support service: {}", service);
+            return null;
+        }
+    }
+
     public LlamaHFChatCompletionResponse llamaHFChatCompletion (LlamaHFCompletionRequestBody requestBody, String model) {
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
         Gson gson = new Gson();
-        String response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
-        log.debug("Response: " + response);
-        if (response == null) {
-          log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
-          requestBody.setWait_for_model(true);
-          response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
-          log.debug("Response attempt 2: " + response);
+        String targetEndpoint;
+        if (endpoint == null) {
+            targetEndpoint = hfCompletionEndpoint;
+        } else {
+            targetEndpoint = endpoint;
         }
-        Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
-        List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
-        LlamaHFChatCompletionResponse resp = results.get(0);
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
+        int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+        log.debug("Response: " + response);
+        log.info("Response code: " + responseCode);
+        if (responseCode == 503) {
+            log.warn("[llamaHFChatCompletion] in cold start period for model, this may take up to ten minutes...");
+            //TODO: sayText to report coldstart period?
+            //Try using free endpoint temporarily
+            log.debug("[llamaHFChatCompletion] attempting using serverless endpoint...");
+            targetEndpoint = hfCompletionEndpoint;
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("serverless response: " + response);
+            log.info("serverless response code: " + responseCode);
+        } else if (responseCode == 422) {
+            log.warn("[llamaHFChatCompletion] token length of query + response may be too long. Settings for private endpoint must be updated");
+        } else if (response == null) {
+            //TODO: get wait_for_model code for serverless endpoint and use that specifically
+            log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
+            requestBody.setWait_for_model(true);
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("Response attempt 2: " + response);
+        }
+
+        LlamaHFChatCompletionResponse resp = new LlamaHFChatCompletionResponse();
+        if (response != null) {
+            Type t = new TypeToken<OpenaiChatCompletionResponse>() {
+            }.getType();
+            OpenaiChatCompletionResponse result = gson.fromJson(response, t);
+            if (result != null && result.choices.length > 0) {
+                resp.generated_text = result.choices[0].message.content;
+            }
+        }
         return resp;
     }
 
+    public OpenaiChatCompletionResponse openaiCompatibleChatCompletion(OpenaiChatRequestBody requestBody, String model) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + apiKey);
+        Gson gson = new Gson();
+        String targetEndpoint;
+        if (endpoint == null) {
+            targetEndpoint = hfCompletionEndpoint;
+        } else {
+            targetEndpoint = endpoint;
+        }
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
+        int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+        log.debug("Response: " + response);
+        log.info("Response code: " + responseCode);
+
+        OpenaiChatCompletionResponse resp = new OpenaiChatCompletionResponse();
+        if (response != null) {
+            Type t = new TypeToken<OpenaiChatCompletionResponse>() {
+            }.getType();
+            resp = gson.fromJson(response, t);
+        }
+        return resp;
+    }
 }

@@ -3,28 +3,12 @@
  */
 package edu.tufts.hrilab.vision.stm;
 
-import alice.tuprolog.MalformedGoalException;
-import alice.tuprolog.NoMoreSolutionException;
-import alice.tuprolog.NoSolutionException;
-import alice.tuprolog.Prolog;
-import alice.tuprolog.SolveInfo;
-import alice.tuprolog.Struct;
-import alice.tuprolog.Var;
+import alice.tuprolog.*;
 import edu.tufts.hrilab.belief.provers.prolog.PrologUtil;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +16,9 @@ import org.slf4j.LoggerFactory;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
+import java.lang.Double;
+import java.lang.Float;
+import java.util.*;
 
 /**
  *

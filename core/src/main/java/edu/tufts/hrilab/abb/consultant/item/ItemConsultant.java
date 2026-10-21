@@ -30,7 +30,7 @@ public class ItemConsultant extends Consultant<ItemReference> {
   }
 
   @Override
-  public boolean addPropertiesHandled(List<Term> properties) {
+  public boolean addPropertiesHandled(List<? extends Term> properties) {
     boolean propertiesAdded = false;
     for (Term property : properties) {
       if (propertiesHandled.stream().noneMatch(p -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(p, property))) {

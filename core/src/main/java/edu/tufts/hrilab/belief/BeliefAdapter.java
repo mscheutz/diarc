@@ -137,11 +137,11 @@ public class BeliefAdapter extends GuiAdapter {
         continue;
       }
 
-      Pair<Term, List<Term>> p = rules.get(i - facts.size());
       StringBuilder sb = new StringBuilder();
+      Pair<Term, List<Term>> p = rules.get(i - facts.size());
       sb.append(p.getLeft().toString())
               .append(" :- ");
-      for (Term t : p.getRight()) {
+      for (Symbol t : p.getRight()) {
         sb.append(t.toString())
                 .append(", ");
       }

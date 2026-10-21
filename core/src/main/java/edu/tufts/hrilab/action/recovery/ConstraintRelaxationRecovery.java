@@ -112,7 +112,7 @@ public class ConstraintRelaxationRecovery extends GoalRecovery {
       }
       //If any of the preconditions for the violated are negated, we're out of a violated state
       Predicate goalPred = Factory.createPredicate("or", goalPreds);
-      Goal g = new Goal(goalContext.getGoal().getActor(), goalPred);
+      Goal g = Goal.createGoal(goalContext.getGoal().getActor(), goalPred);
 
       //todo: pass with bindings and only check name there
       //plan to get out of each of the conditions in the rule, using bindings from the justification
@@ -157,7 +157,7 @@ public class ConstraintRelaxationRecovery extends GoalRecovery {
     }
 
     // Create a composite goal that provides all relaxable constraints
-    Goal g = new Goal(Factory.createPredicate("negotiateConstraints",
+    Goal g = Goal.createGoal(Factory.createPredicate("negotiateConstraints",
         Factory.createSymbol("self"), Factory.createPredicate("options", successfulRelaxations)));
     return g;
   }

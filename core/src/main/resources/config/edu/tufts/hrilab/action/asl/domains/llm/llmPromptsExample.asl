@@ -14,7 +14,7 @@ import edu.tufts.hrilab.llm.Prompt;
 () = promptsExample() {
 	Boolean !updateTokens = true;
 
-	Prompt !dialogSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "dialogExample");
+	Prompt !dialogSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "lab/dialogExample");
 
   Chat !interactionChat = op:newObject("edu.tufts.hrilab.llm.Chat");
 	Chat !dialogChat = op:newObject("edu.tufts.hrilab.llm.Chat", !dialogSystem);
@@ -82,7 +82,7 @@ import edu.tufts.hrilab.llm.Prompt;
 
 () = evaluateEmotion (Chat ?interactionChat) {
   op:log("info", "---> Evaluating Emotion < ---");
-	Prompt !emotionSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "emotionExample");
+	Prompt !emotionSystem = op:invokeStaticMethod("edu.tufts.hrilab.llm.Prompts", "getPrompt", "lab/emotionExample");
 	Chat !emotionChat = op:newObject("edu.tufts.hrilab.llm.Chat", !emotionSystem);
 	String !emotionDescription = op:invokeMethod(?interactionChat, "toPromptString");
   Completion !emotionResponse;

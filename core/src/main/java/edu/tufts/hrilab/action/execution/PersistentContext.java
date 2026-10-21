@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.action.execution;
 
+import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.state.StateMachine;
 
 /**
@@ -18,12 +19,21 @@ public class PersistentContext extends Context {
     this.childContexts.add(child);
   }
 
+  protected void setChild(Context child) {
+    this.childContexts.clear();
+    this.childContexts.add(child);
+  }
+
   @Override
   protected Context getNextStepForType() {
     switch (this.getExecType()) {
       case SIMULATE_ACT:
       case ACT:
-        this.childContexts.get(0).resetContext();
+        //Don't reset context on resume
+        if (this.getChildContexts().get(0).getStatus() != ActionStatus.RESUME) {
+          this.childContexts.get(0).resetContext();
+        }
+        this.childContexts.setNextIndex(1); //Need to increment so notion of the "current" child is correct.
         return this.childContexts.get(0);
       default:
         return this.childContexts.getNextAndIncrement(); // get each child once

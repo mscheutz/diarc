@@ -129,7 +129,7 @@ public class ExploreUtils {
    * @return if the goal was successfully executed
    */
   static public Justification doGoal(Predicate goalPredicate) {
-    Goal goal = new Goal(goalPredicate);
+    Goal goal = Goal.createGoal(goalPredicate);
     try {
       //TODO: Do we want goals from this method to skip/override the execution manager?
       //      Depending on the answer to the above, do we only care if a matching goal is currently active or submitted?

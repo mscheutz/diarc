@@ -6,8 +6,9 @@ import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.llm.*;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.NLG;
 import edu.tufts.hrilab.slug.parsing.llm.*;
@@ -21,12 +22,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
+public class PickAndPlaceLLM extends DiarcComponent {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
-    NLG nlg = new NLG();
+    NLG nlg = new NLG(null);
     Prompt nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     boolean fromSemantics = false;
-    Prompt wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");;
+    Prompt wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");
     Prompt semanticsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceSemanticsNLGTranslation");
     String outputLanguage = "en";
 
@@ -68,7 +69,7 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     public ParserResponse pickAndPlaceLLMParser (String utterance) {
         String userMessage = nluPrompt.getText() + utterance;
         List<Message> chatInput = new ArrayList<>();
-        chatInput.add(new Message("user",userMessage));
+        chatInput.add(new TextMessage("user",userMessage));
         Chat chat = new Chat();
         chat.setMessages(chatInput);
 
@@ -162,8 +163,8 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
 
         return parserResponse;
     }
-
-    @Override
+    @TRADEService
+    @Action
     public Utterance convertSemanticsToText(Utterance u) {
         return convertSemanticsToText(u,false);
     }
@@ -188,7 +189,7 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
 
         String userMessage = nlgPrompt.getText() + realization;
         List<Message> chatInput = new ArrayList<>();
-        chatInput.add(new Message("user",userMessage));
+        chatInput.add(new TextMessage("user",userMessage));
         Chat chat = new Chat();
         chat.setMessages(chatInput);
 

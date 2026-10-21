@@ -6,6 +6,9 @@ package edu.tufts.hrilab.slug.parsing.tldl;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.slug.parsing.tldl.parse.Entry;
+import edu.tufts.hrilab.slug.parsing.tldl.parse.SemanticRule;
+import edu.tufts.hrilab.slug.parsing.tldl.parse.SyntacticRule;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -223,9 +226,9 @@ public class Dictionary {
     for (Map.Entry<String, List<TemplateEntry>> entry : templateTypes.entrySet()) {
       List<TemplateEntry> posclass = entry.getValue();
       for (TemplateEntry te : posclass) {
-        if (te.syntax.trim().equals(newEntry.syntax.type.trim())) {
+        if (te.syntax.trim().equals(newEntry.getSyntacticRule().getType().trim())) {
           String[] temp = new String[2];
-          temp[0] = newEntry.morpheme;
+          temp[0] = newEntry.getMorpheme();
           temp[1] = entry.getKey().trim();
           matching.addAll(entriesFromTemplate(temp));
         }
@@ -235,14 +238,14 @@ public class Dictionary {
   }
 
   public void addEntry(Entry newEntry) {
-    insertEntry(newEntry.morpheme, newEntry);
+    insertEntry(newEntry.getMorpheme(), newEntry);
     log.debug("New Entry added!");
   }
 
   void addEntries(List<Entry> newEntries) {
     //TODO:brad: think about this
     if (!newEntries.isEmpty()) {
-      insertEntries(newEntries.get(0).morpheme, newEntries);
+      insertEntries(newEntries.get(0).getMorpheme(), newEntries);
       log.debug("New Entries added!");
     }
   }
@@ -282,9 +285,9 @@ public class Dictionary {
       for (List<Entry> el : entries.values()) {
         for (Entry e : el) {
           if (e.getCognitiveStatus().equals("VAR")) {
-            refWords.add(e.morpheme);
+            refWords.add(e.getMorpheme());
           } else {
-            nonRefWords.add(e.morpheme);
+            nonRefWords.add(e.getMorpheme());
           }
         }
       }
@@ -846,7 +849,7 @@ public class Dictionary {
     if (entries.containsKey(key)) {
       List<Entry> updatedEntries = new ArrayList<>();
       for (Entry e : entries.get(key)) {
-        if (!e.syntax.type.equals("LOC")) {
+        if (!e.getSyntacticRule().getType().equals("LOC")) {
           updatedEntries.add(e);
         }
       }
@@ -866,7 +869,7 @@ public class Dictionary {
     if (entries.containsKey(name)) {
       List<Entry> updatedEntries = new ArrayList<>();
       for (Entry e : entries.get(name)) {
-        if (!(e.syntax.type.equals(grammar) && e.semantics.getSemantics().equals(meaning) && e.getCognitiveStatus().equals(cognitiveStatus))) {
+        if (!(e.getSyntacticRule().getType().equals(grammar) && e.getSemanticRule().getSemantics().equals(meaning) && e.getCognitiveStatus().equals(cognitiveStatus))) {
           updatedEntries.add(e);
         }
       }
@@ -919,8 +922,8 @@ public class Dictionary {
 
     for (Entry e : lookUpEntries(name)) {
       //existing location
-      if (e.syntax.type.equals("LOC")) {
-        return e.getSemantics().getSemantics();
+      if (e.getSyntacticRule().getType().equals("LOC")) {
+        return e.getSemanticRule().getSemantics();
       } else {
         //other meaning
         return "";

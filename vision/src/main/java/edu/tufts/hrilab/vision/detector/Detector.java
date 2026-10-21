@@ -7,6 +7,7 @@ package edu.tufts.hrilab.vision.detector;
 import edu.tufts.hrilab.vision.imgproc.ImageProcessor;
 import edu.tufts.hrilab.vision.detector.swig.NativeDetector;
 import edu.tufts.hrilab.vision.detector.swig.NativeDetector.DetectorType;
+import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker.TrackerType;
 import edu.tufts.hrilab.vision.visionproc.VisionProcess;
 import edu.tufts.hrilab.fol.Predicate;
@@ -49,6 +50,10 @@ public class Detector extends VisionProcess<DetectorType, DetectorDetail, Native
     //start image processing dependecies
     for (ImageProcessor dependency : dependencies.values()) {
       dependency.start(this);
+    }
+
+    for (SearchManager searchDependency : searchDependencies.values()) {
+      searchDependency.start(this);
     }
 
     long looptime = 0;

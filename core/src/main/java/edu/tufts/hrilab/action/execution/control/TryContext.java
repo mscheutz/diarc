@@ -90,9 +90,9 @@ public class TryContext extends Context {
    * @param eStatus the execution status of the currently running event
    */
   @Override
-  public void setStatus(ActionStatus eStatus, Justification justification) {
-    if (!eStatus.isTerminated()) {
-      super.setStatus(eStatus, justification);
+  public boolean setStatus(ActionStatus eStatus, Justification justification) {
+    if (!eStatus.isTerminated() && eStatus != ActionStatus.RETURN) {
+      return super.setStatus(eStatus, justification);
     } else if (tryState == TryContextState.NORMAL && canCatch(eStatus, justification)) {
       tryState = TryContextState.SHOULD_CATCH;
       statusToCatch = eStatus;
@@ -103,14 +103,16 @@ public class TryContext extends Context {
       statusToPropagate = eStatus;
       justificationToPropagate = justification;
     } else {
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     }
+    return true;
   }
 
   @Override
   protected void setupNextStep() {
     switch (getExecType()) {
       case SIMULATE_ACT:
+      case SIMULATE_PERFORMANCE:
       case ACT:
         setupStepForState();
         break;

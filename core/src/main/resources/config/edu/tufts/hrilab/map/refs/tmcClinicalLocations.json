@@ -1,0 +1,94 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_6:location",
+      "variable": "X",
+      "properties": [
+        "atrium 5 check in(X)"
+      ],
+      "position": [
+        -10.85448694918045,
+        2.25064637298957,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.5454052720523453,
+        0.8381724698518243
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "atrium elevators(X)"
+      ],
+      "position": [
+        -2.272639509908674,
+        0.349883220041898,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6526755542471339,
+        0.7576375260559608
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "south 5 check in(X)"
+      ],
+      "position": [
+        88.36323672900366,
+        -17.76485851969133,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9520135227552601,
+        0.30605596300532995
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "south elevators(X)"
+      ],
+      "position": [
+        88.458887570224,
+        -10.63023114302162,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9998221572257066,
+        0.018858788946656463
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        84.18037118963808,
+        -22.92968592276461,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6716860065507934,
+        0.7408359525588967
+      ]
+    }
+  ]
+}

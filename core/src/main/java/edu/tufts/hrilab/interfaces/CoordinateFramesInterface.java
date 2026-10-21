@@ -3,10 +3,10 @@
  */
 package edu.tufts.hrilab.interfaces;
 
-import java.util.List;
-import javax.vecmath.Matrix4d;
-
 import ai.thinkingrobots.trade.TRADEService;
+
+import javax.vecmath.Matrix4d;
+import java.util.List;
 
 /**
  * Core interface for robot coordinate frames and their transformations.

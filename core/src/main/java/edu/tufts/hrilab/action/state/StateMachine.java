@@ -464,7 +464,7 @@ public class StateMachine {
    * @return reference to the requested BeliefComponent
    */
   static private BeliefComponent createBeliefComponent(String[] beliefArgs, boolean registerWithTrade) {
-    return DiarcComponent.createInstance(BeliefComponent.class, registerWithTrade, beliefArgs);
+    return DiarcComponent.createInstance(BeliefComponent.class, registerWithTrade, false, beliefArgs);
   }
 
   public void shutdown() {

@@ -7,11 +7,18 @@
     "priority": 9999,
     "priorityTier": "URGENT"
   },
+  "focusedContextResponseSubmissionWrapper": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "endFreeze": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-
+  "scheduled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "describeCurrentGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -56,6 +63,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "suspendGoalBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -64,7 +75,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "suspendSystemGoalsBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "resumeSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeCurrentTask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -299,6 +318,51 @@
     "priorityTier": "SKIPPENDING"
   },
   "setStorageArea": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelScheduledGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskModeEnabled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+
+  "describeObjectPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectPoses": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeNumberOfObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectTypes": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeDetectableObjectNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeKnownPoseNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endConversation": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

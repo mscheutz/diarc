@@ -39,6 +39,7 @@ public class SocketConnection {
     this.ipAddress = ip;
     this.port = port;
     this.sock = new Socket(InetAddress.getByName(ip), port);
+    this.sock.setKeepAlive(true);
     this.out = new PrintWriter(this.sock.getOutputStream(), true);
     this.in = new BufferedReader(new InputStreamReader(this.sock.getInputStream()));
   }
@@ -48,19 +49,25 @@ public class SocketConnection {
   }
 
   public String waitedResponse(int max_time) {
-    String response = null;
-
-    int cycles = (int) Math.ceil(((float) max_time) / RESP_SLEEP);
-    int i;
+    String response;
     long startTime = System.currentTimeMillis();
-    for (i = 0; i < cycles; i++) {
-      if (this.messageAvailable()) {
-        response = this.readMessage();
-        if (response == null) {
-          log.warn(port + ": Received null response.");
+
+    while (System.currentTimeMillis() - startTime < max_time) {
+      log.debug("Waiting for response...");
+      try {
+        if (in.ready()) {  // Check if data is available
+          log.debug("Reading line...");
+          response = in.readLine();
+          if (response == null) {
+            log.warn("{}: Received null response.", port);
+          }
+          return response;
         }
-        break;
+      } catch (IOException e) {
+        log.error("{}: Error reading message.", port, e);
+        return null;
       }
+
       try {
         Thread.sleep(RESP_SLEEP);
       } catch (InterruptedException e) {
@@ -68,50 +75,36 @@ public class SocketConnection {
         return null;
       }
     }
-    long endTime = System.currentTimeMillis();
 
-    if (i >= cycles) {
-      log.warn(port + ": No msg available. Max wait time specified: " + (max_time/1000.0) + " Wall clock duration: " +
-              ((endTime - startTime)/1000.0) + ". Returning null.");
-    }
-    log.debug("                                Socket wait time: "  + ((endTime - startTime)/1000.0));
-
-    return response;
+    log.warn("{}: No message received within {} seconds.", port, max_time / 1000.0);
+    return null;
   }
+
 
   public void sendCommand(String message) {
-    //Clear out past responses if they exist
+    // Clear out past responses if they exist
     StringBuilder readMsg = new StringBuilder();
-    while (this.messageAvailable()) {
-      readMsg.append("[").append(this.readMessage()).append("]  ");
-    }
-    if (!readMsg.toString().isEmpty()) {
-      log.warn(port + ": [sendCommand] reading available message before sending. Read message: " + readMsg);
-    }
-
-    this.sendMessage(message);
-  }
-
-  private String readMessage() {
     try {
-      return this.in.readLine();
+      while (in.ready()) {
+        String line = in.readLine();
+        if (line != null) {
+          readMsg.append("[").append(line).append("]  ");
+        }
+      }
     } catch (IOException e) {
-      log.error(port + ": Error reading message. Returning null.", e);
-      return null;
+      log.error("{}: Error reading available messages before sending.", port, e);
     }
-  }
 
-  private boolean messageAvailable() {
-    try {
-      return this.in.ready();
-    } catch (IOException e) {
-      log.error(port + ": Error checking if message is available. Returning false.", e);
-      return false;
+    if (!readMsg.isEmpty()) {
+      log.warn("{}: [sendCommand] Read stale messages before sending: {}", port, readMsg);
     }
+
+    sendMessage(message);
   }
 
   public void sendMessage(String message) {
     out.println(message);
+    out.flush();
   }
 
   public void closeSocket() {
@@ -120,11 +113,12 @@ public class SocketConnection {
       this.in.close();
       this.out.close();
     } catch (IOException e) {
-      log.error(port + ": Error closing socket.", e);
+      log.error("{}: Error closing socket.", port, e);
     }
   }
 
   public boolean isConnected() {
-    return sock.isConnected();
+    return sock != null && sock.isConnected() && !sock.isClosed();
   }
+
 }

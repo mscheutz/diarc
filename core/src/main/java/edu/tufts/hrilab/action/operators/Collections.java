@@ -121,4 +121,8 @@ public final class Collections {
   public static <K, V> V remove(Map<K, V> map, K key) {
     return map.remove(key);
   }
+
+  public static boolean isEmpty(Map map) {
+    return map.isEmpty();
+  }
 }

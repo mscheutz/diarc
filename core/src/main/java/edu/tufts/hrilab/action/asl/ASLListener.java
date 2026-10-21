@@ -508,6 +508,46 @@ public interface ASLListener extends ParseTreeListener {
 	 */
 	void exitRecovery(ASLParser.RecoveryContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 */
+	void enterActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 */
+	void exitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
+	 * @param ctx the parse tree
+	 */
+	void enterActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
+	 * @param ctx the parse tree
+	 */
+	void exitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ASLParser#recoveryGoals}.
 	 * @param ctx the parse tree
 	 */
@@ -578,15 +618,15 @@ public interface ASLListener extends ParseTreeListener {
 	 */
 	void exitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link ASLParser#locks}.
+	 * Enter a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
 	 * @param ctx the parse tree
 	 */
-	void enterLocks(ASLParser.LocksContext ctx);
+	void enterRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link ASLParser#locks}.
+	 * Exit a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
 	 * @param ctx the parse tree
 	 */
-	void exitLocks(ASLParser.LocksContext ctx);
+	void exitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#spec}.
 	 * @param ctx the parse tree
@@ -887,4 +927,14 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitJoinStatement(ASLParser.JoinStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
 }

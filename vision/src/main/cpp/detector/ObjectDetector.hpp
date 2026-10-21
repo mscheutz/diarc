@@ -33,7 +33,8 @@ public:
     BUTTONDETECTOR,
     ELEVATORDOORDETECTOR,
     PERSONDETECTOR,
-    FASTSAM
+    FASTSAM,
+    OWLV2
   };
 
   /**

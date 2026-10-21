@@ -391,7 +391,12 @@ public class ParameterizedAction implements Serializable {
     List<Predicate> predicateSteps = new ArrayList<>();
     Map<String, String> localRoles = new HashMap();
     for(ActionBinding localRole : entry.getLocalRoles()) {
-      localRoles.put(localRole.getName(), localRole.getBinding().toString());
+      if (localRole.getBinding() == null) {
+        //TODO: how to actually resolve local roles getting populated internally in script? Just need to be named sanely?
+        localRoles.put(localRole.getName(), localRole.name.substring(1));
+      } else {
+        localRoles.put(localRole.getName(), localRole.getBinding().toString());
+      }
     }
 
     // iterate through actionDBEntry's eventSpecs
@@ -440,6 +445,28 @@ public class ParameterizedAction implements Serializable {
   @Override
   public String toString() {
     return getBoundActionSignature().toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ParameterizedAction that = (ParameterizedAction) o;
+    return persistent == that.persistent &&
+        Objects.equals(entry, that.entry) &&
+        Objects.equals(actionParameters, that.actionParameters) &&
+        observable == that.observable &&
+        Objects.equals(justification, that.justification) &&
+        Objects.equals(actor, that.actor);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(entry, actionParameters, persistent, observable, justification, actor);
   }
 
 }

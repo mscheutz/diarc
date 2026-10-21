@@ -1,0 +1,169 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
+package edu.tufts.hrilab.slug.cache;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.slug.common.UtteranceType;
+
+public class CachedUtterance {
+  protected static Logger log = LoggerFactory.getLogger(CachedUtterance.class);
+
+  protected String type; //UtteranceType
+  //public boolean needsValidation = false;
+  //public String speaker;
+  //public List<Symbol> listeners = new ArrayList<>(); //List<Symbol>
+  protected List<String> words;
+  protected String semantics; //Symbol
+  //public List<String> boundSemantics = null; //List<Term>
+  protected List<String> indirectSemantics;  //List<Term>
+  protected List<String> supplementalSemantics;  //List<Term>
+  protected List<Map<String, String>> bindings = new ArrayList<>(); //List<Map<Variable, Symbol>>
+  protected Map<String, String> tierAssignments;
+  //private String language = "en";
+  //private Map<String,List<String>> translations = new HashMap<>();
+
+  public CachedUtterance(List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings, List<Term> supplementalSemantics, Map<Variable, Symbol> tierAssignments) {
+    this.words = words;
+    this.type = type.toString();
+    this.semantics = semantics.toString();
+    this.indirectSemantics = new ArrayList<>();
+    this.supplementalSemantics = supplementalSemantics.stream().map(Term::toString).toList();
+    this.tierAssignments = new HashMap<>();
+
+    if (indirectSemantics != null) {
+      for (Symbol indirectSemantic : indirectSemantics) {
+        this.indirectSemantics.add(indirectSemantic.toString());
+      }
+    }
+
+    if (bindings != null) {
+      for (Map<Variable, Symbol> binding : bindings) {
+        Map<String, String> bindingStrings = new HashMap<>();
+        for (Map.Entry<Variable, Symbol> entry : binding.entrySet()) {
+          bindingStrings.put(entry.getKey().toString(), entry.getValue().toString());
+        }
+        this.bindings.add(bindingStrings);
+      }
+    }
+
+    if (tierAssignments != null) {
+      for (Map.Entry<Variable, Symbol> entry : tierAssignments.entrySet()) {
+        this.tierAssignments.put(entry.getKey().toString(), entry.getValue().toString());
+      }
+    }
+  }
+
+  /**
+   * Retrieves the UtteranceType based on the stored String value.
+   *
+   * @return The UtteranceType corresponding to the stored type value.
+   */
+  public UtteranceType getType() {
+    return UtteranceType.valueOf(type);
+  }
+
+  /**
+   * Retrieves the Predicate representing semantics.
+   *
+   * @return The Predicate representing semantics.
+   */
+  public Predicate getSemantics() {
+    return Factory.createPredicate(semantics);
+  }
+
+  /**
+   * Retrieves a list of Terms representing indirect semantics.
+   *
+   * @return A list of Terms representing indirect semantics.
+   */
+  public List<Term> getIndirectSemantics() {
+    if (indirectSemantics == null) {
+      return new ArrayList<>();
+    }
+    List<Term> indirectSemantics = new ArrayList<Term>();
+    for (String indirectSemantic : this.indirectSemantics) {
+      indirectSemantics.add(Factory.createPredicate(indirectSemantic));
+    }
+    return indirectSemantics;
+  }
+
+  public List<Term> getSupplementalSemantics() {
+    if (supplementalSemantics == null) {
+      return new ArrayList<>();
+    }
+    List<Term> supplementalSemantics = new ArrayList<Term>();
+    for (String supplementalSemantic : this.supplementalSemantics) {
+      supplementalSemantics.add(Factory.createPredicate(supplementalSemantic));
+    }
+    return supplementalSemantics;
+  }
+
+  public Map<Variable, Symbol> getTierAssignments() {
+    if (tierAssignments == null) {
+      return new HashMap<>();
+    }
+    HashMap<Variable, Symbol> tierAssignments = new HashMap<>();
+    for (Map.Entry<String, String> entry : this.tierAssignments.entrySet()) {
+      tierAssignments.put(new Variable(entry.getKey()), Factory.createSymbol(entry.getValue()));
+    }
+    return tierAssignments;
+  }
+
+  /**
+   * Retrieves a list of bindings represented as maps of Variable to Symbol.
+   *
+   * @return A list of bindings represented as maps of Variable to Symbol.
+   */
+  public List<Map<Variable, Symbol>> getBindings() {
+    if (bindings == null) {
+      return null;
+    }
+    List<Map<Variable, Symbol>> bindings = new ArrayList<>();
+    for (Map<String, String> bindingStrings : this.bindings) {
+      Map<Variable, Symbol> binding = new HashMap<>();
+      for (Map.Entry<String, String> entry : bindingStrings.entrySet()) {
+        binding.put(new Variable(entry.getKey()), Factory.createSymbol(entry.getValue()));
+      }
+      bindings.add(binding);
+    }
+    return bindings;
+  }
+
+  /**
+   * Converts the object to its JSON representation.
+   *
+   * @return The JSON representation of the object.
+   */
+  public String toJSON() {
+    Gson gson = new GsonBuilder().serializeNulls().create();
+    return gson.toJson(this);
+  }
+
+  /**
+   * Constructs a CachedUtterance object from its JSON representation.
+   *
+   * @param json The JSON string representing the CachedUtterance object.
+   * @return The CachedUtterance object constructed from the JSON representation.
+   */
+  public static CachedUtterance fromJSON(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, CachedUtterance.class);
+  }
+}

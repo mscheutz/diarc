@@ -12,7 +12,6 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
-import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Before;
@@ -43,7 +42,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("retractBelief", Term.class);
 //    addServiceToObserve("runScrewdriverProgram", Integer.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
     addServiceToObserve("openGripper");
     addServiceToObserve("closeGripper");
     addServiceToObserve("getCameraData", String.class);
@@ -51,6 +50,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("moveToCognexTarget", Symbol.class);
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);
     addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
     tester.setTimeoutDuration(6, TimeUnit.SECONDS);
   }
@@ -68,7 +68,6 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     speechInputBrad.setText(input);
   }
 
-  @Ignore // must be ignored until TR mtracs jar is updated (getMatchingResult method)
   @Test
   public void screwingActionModificationTestOrdered() {
 

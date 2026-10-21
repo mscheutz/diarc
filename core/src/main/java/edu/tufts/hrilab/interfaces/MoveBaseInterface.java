@@ -7,11 +7,7 @@ package edu.tufts.hrilab.interfaces;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
-import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.annotations.Condition;
-import edu.tufts.hrilab.action.annotations.Effect;
-import edu.tufts.hrilab.action.annotations.Observes;
-import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.annotations.*;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -64,7 +60,7 @@ public interface MoveBaseInterface {
   @Effect(
       effect={"at(?actor,?location)"},
       type = EffectType.SUCCESS,
-      observable = {"at(?actor,?location"}
+      observable = {"at(?actor,?location)"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location);
@@ -86,7 +82,8 @@ public interface MoveBaseInterface {
   @Effect(
       effect={"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"},
       type = EffectType.SUCCESS,
-      observable = {"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"}
+      observable = {"at(?actor,?desiredLocation)"},
+      infer = {"not(at(?actor,?initialLocation))"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol desiredLocation, Symbol initialLocation);
@@ -117,9 +114,9 @@ public interface MoveBaseInterface {
   @TRADEService
   @Action
   @Effect(
-    effect={"at(?actor,?location)"},
-    type = EffectType.SUCCESS,
-    observable = {"at(?actor,?location"}
+          effect={"at(?actor,?location)"},
+          type = EffectType.SUCCESS,
+          observable = {"at(?actor,?location)"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification approachLocation(Symbol location);

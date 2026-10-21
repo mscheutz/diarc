@@ -29,16 +29,28 @@ public class GraspComponent extends DiarcComponent {
    */
   private String defaultConfigPath = "config/edu/tufts/hrilab/vision";
   private String log4cxxConfig = "log4cxx.txt";
+  private String graspConfig = "grasps.json";
 
   @Override
   protected void init() {
 
-    URL url = Resources.getResource(defaultConfigPath + "/logging", log4cxxConfig);
-    if (url != null) {
-      CommonModule.setLoggingConfiguration(url.getPath());
+    // set log4cxx logging config
+    URL loggingUrl = Resources.getResource(defaultConfigPath + "/logging", log4cxxConfig);
+    if (loggingUrl != null) {
+      CommonModule.setLoggingConfiguration(loggingUrl.getPath());
     } else {
       log.error("Could not find log4cxx configuration file: {}.", log4cxxConfig);
     }
+
+    // load grasp config file
+    URL graspUrl = Resources.getResource(defaultConfigPath + "/grasp", graspConfig);
+    if (graspUrl != null) {
+      GraspDetectorModule.initialize(graspUrl.getPath());
+    } else {
+      log.error("Could not find log4cxx configuration file: {}.", log4cxxConfig);
+    }
+
+    // turn on/off sandbox loop
     shouldRunExecutionLoop = false;
   }
 
@@ -79,10 +91,12 @@ public class GraspComponent extends DiarcComponent {
     return calculateGraspOptions(mo, constraints);
   }
 
+  @TRADEService
   public List<Grasp> calculateGraspOptions(MemoryObject mo) {
     return calculateGraspOptions(mo, new ArrayList<>());
   }
 
+  @TRADEService
   public List<Grasp> calculateGraspOptions(MemoryObject mo, List<? extends Term> constraints) {
     double[][] cloud = mo.getPointCloud();
     int numPoints = cloud.length;

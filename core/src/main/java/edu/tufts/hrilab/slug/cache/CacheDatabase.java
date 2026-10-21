@@ -1,0 +1,456 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
+package edu.tufts.hrilab.slug.cache;
+
+import edu.tufts.hrilab.slug.nlg.cache.ReverseCachedUtterance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
+
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.Connection;
+import java.util.List;
+import java.util.Map;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.IOException;
+
+import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.StringJoiner;
+
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.util.resource.Resources;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
+
+public class CacheDatabase {
+  static private Logger log = LoggerFactory.getLogger(CacheDatabase.class);
+  static private String cacheDirectoryPath = "/";
+  private String tableName = "cache";
+  private String defaultCacheName = "diarc-parser-cache";
+  private String defaultReverseCacheName = "diarc-parser-cache-reverse";
+  private String file = null;
+  private boolean reverseCache;
+
+  private Connection connection;
+  private Statement statement;
+  private PreparedStatement getStatement;
+  private PreparedStatement insertStatement;
+
+  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache) {
+    this.reverseCache = reverseCache;
+    String homeDirPath;
+
+    if (persist) {
+      homeDirPath = System.getProperty("user.home");
+      try {
+        homeDirPath = Paths.get(homeDirPath, ".diarc").toString();
+        Files.createDirectories(Paths.get(homeDirPath));
+      } catch (IOException ex) {
+        log.error("Couldn't create .diarc directory in user home directory", ex);
+        return;
+      }
+
+      if (name != null) {
+        if (reverseCache && name.equals(defaultReverseCacheName)) {
+          log.warn("The cache name \"" + defaultReverseCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+        } else if (name.equals(defaultCacheName)) {
+        log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+        }
+      }
+
+      if (name != null) {
+        file = Paths.get(homeDirPath, name + ".sqlite").toString();
+      } else {
+        if (reverseCache) {
+          file = Paths.get(homeDirPath, defaultReverseCacheName + ".sqlite").toString();
+        } else {
+        file = Paths.get(homeDirPath, defaultCacheName + ".sqlite").toString();
+      }
+    }
+    }
+
+    initializeDatabase();
+    initializeTable();
+    initializeStatements();
+    if (loadPaths != null && loadPaths.length > 0) {
+      loadCache(loadPaths);
+    }
+  }
+
+  /**
+   * Initializes a SQLite database connection.
+   * If a file path is provided, it initializes the database at that path.
+   * If no file path is provided, it initializes an in-memory database.
+   */
+  private void initializeDatabase () {
+    String connectionString = file == null ? "jdbc:sqlite::memory:" : "jdbc:sqlite:" + file;
+
+    try {
+      SQLiteConfig config = new SQLiteConfig();
+      if (file != null) {
+        config.setOpenMode(SQLiteOpenMode.FULLMUTEX);
+        log.info("[initializeDatabase] Initializing parser cache database with file: " + file);
+      } else {
+        log.info("[initializeDatabase] Initializing parser cache database in memory");
+      }
+      connection = DriverManager.getConnection(connectionString, config.toProperties());
+      statement = connection.createStatement();
+    } catch (SQLException ex) {
+      log.error("Couldn't connect to database.", ex);
+    }
+  }
+
+  /**
+   * Retrieves the absolute path of the specified database file.
+   * If the file is not found in the cache directory, returns null.
+   *
+   * @param file The name of the database file.
+   * @return The absolute path of the database file if found; otherwise, null.
+   */
+  private static String getDatabasePath (String file) {
+    String cachePath = Resources.createFilepath(CacheDatabase.cacheDirectoryPath, file);
+    URL u = CacheDatabase.class.getResource(cachePath);
+    URI uri = null;
+    if (u == null) {
+      log.warn("[getDatabasePath] No pre-existing " + cachePath + " exists, skipping...");
+      return null;
+    }
+    try {
+      uri = u.toURI();
+    } catch (URISyntaxException ex) {
+      log.error("[getDatabasePath] Error converting URL to URI for " + cachePath, ex);
+      return null;
+    }
+    Path path = Paths.get(uri);
+    return path.toString();
+  }
+
+  /**
+   * Initializes a table in the SQLite database if it does not already exist.
+   * Creates an index on the words column of it does not already exist.
+   * The table consists of columns: words (TEXT), utterance (JSONB), and created (BIGINT).
+   */
+  private void initializeTable () {
+    String tableQuery = "CREATE TABLE IF NOT EXISTS " + tableName + " ( words TEXT NOT NULL, utterance JSONB NOT NULL, created BIGINT NOT NULL);";
+    String indexQuery;
+    if (reverseCache) {
+      indexQuery = "CREATE INDEX IF NOT EXISTS cache_utterance_idx ON " + tableName + " (utterance);";
+    } else {
+      indexQuery = "CREATE INDEX IF NOT EXISTS cache_words_idx ON " + tableName + " (words);";
+    }
+    boolean success = false;
+    boolean indexSuccess = false;
+
+    try {
+      success = statement.execute(tableQuery);
+    } catch (SQLException ex) {
+      log.error("[initializeTable] Couldn't create table", ex);
+    } catch (Exception ex) {
+      log.error("[initializeTable] Error creating table", ex);
+    }
+
+    try {
+      indexSuccess = statement.execute(indexQuery);
+    } catch (SQLException ex) {
+      log.error("[initializeTable] Couldn't create index on table", ex);
+    } catch (Exception ex) {
+      log.error("[initializeTable] Error creating index on table", ex);
+    }
+
+    if (success && indexSuccess) {
+      log.debug("[initializeTable] Created " + tableName + "  table and index");
+    }
+  }
+
+  /**
+   * Initializes PreparedStatements for retrieving and inserting data into the SQLite database.
+   * PreparedStatement for retrieving data selects the latest utterance for the given words.
+   * PreparedStatement for inserting data ignores insertion if a conflicting entry already exists.
+   */
+  private void initializeStatements () {
+    String getQuery;
+    String insertQuery = "INSERT OR IGNORE INTO " + tableName + " ( words, utterance, created) VALUES (?, ?, ?);";
+    if (reverseCache) {
+      getQuery = "SELECT words FROM " + tableName + " WHERE utterance = ? ORDER BY created DESC LIMIT 1;";
+    } else {
+      getQuery = "SELECT utterance FROM " + tableName + " WHERE words = ? ORDER BY created DESC LIMIT 1;";
+    }
+    try {
+      getStatement = connection.prepareStatement(getQuery);
+    } catch (SQLException ex) {
+      log.error("[initializeStatements] Couldn't create PreparedStatement for get query", ex);
+    }
+    try {
+      insertStatement = connection.prepareStatement(insertQuery);
+    } catch (SQLException ex) {
+      log.error("[initializeStatements] Couldn't create PreparedStatement for insert query", ex);
+    }
+  }
+
+  /**
+   * If cache paths are provided, the persistent cache database will be emptied
+   * and populated by the rows in the loadPaths databases. In the case of a non-
+   * persistent cache, this will simply load rows into the in-memory database.
+   *
+   * @param loadPaths Cache database files to load entries from
+   */
+  private void loadCache(String[] loadPaths) {
+    String eraseQuery;
+    String selectQuery;
+    if (reverseCache) {
+      eraseQuery = "DELETE FROM " + tableName + " WHERE utterance IS NOT NULL;";
+      selectQuery = "SELECT words, utterance, created FROM " + tableName + " WHERE utterance IS NOT NULL;";
+    } else {
+      eraseQuery = "DELETE FROM " + tableName + " WHERE words IS NOT NULL;";
+      selectQuery = "SELECT words, utterance, created FROM " + tableName + " WHERE words IS NOT NULL;";
+    }
+    boolean eraseSuccess = false;
+    String dbPath;
+
+    //wipe persistent database and load from loadPaths
+    try {
+      eraseSuccess = statement.execute(eraseQuery);
+    } catch (SQLException ex) {
+      log.error("[loadCache] Couldn't delete all rows in table", ex);
+    } catch (Exception ex) {
+      log.error("[loadCache] Error deleting all rows in table", ex);
+    }
+    if (eraseSuccess) {
+      log.warn("[loadCache] Deleted all rows in cache file " + file);
+    }
+    for (String loadPath : loadPaths) {
+      dbPath = CacheDatabase.getDatabasePath(loadPath);
+      if (dbPath == null) {
+        continue;
+      }
+      String connectionString = "jdbc:sqlite:" + dbPath;
+      Statement loadStatement = null;
+      try {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setOpenMode(SQLiteOpenMode.FULLMUTEX);
+        log.debug("[loadCache] Loading cache database with file: " + dbPath);
+        Connection loadConnection = DriverManager.getConnection(connectionString, config.toProperties());
+        loadStatement = loadConnection.createStatement();
+      } catch (SQLException ex) {
+        log.error("[loadCache] Couldn't connect to database.", ex);
+        continue;
+      }
+      ResultSet results = null;
+      int count = 0;
+      try {
+        results = loadStatement.executeQuery(selectQuery);
+      } catch (SQLException ex) {
+        log.error("[loadCache] Couldn't execute SELECT query while loading from database.", ex);
+        continue;
+      }
+      try {
+        while (results.next()) {
+          String words = results.getString("words");
+          String utterance = results.getString("utterance");
+          long created = results.getLong("created");
+          boolean success = false;
+          insertStatement.setString(1, words);
+          insertStatement.setString(2, utterance);
+          insertStatement.setLong(3, created);
+          success = insertStatement.execute();
+          if (success) {
+            log.debug("[loadCache] Added cache entry for [" + words + "] = " + utterance);
+          }
+          count++;
+        }
+      } catch (SQLException ex) {
+        log.error("[loadCache] Couldn't add utterance entry to database", ex);
+      }
+      log.debug("[loadCache] Loaded " + count + " cache " + (count == 1 ? "entry" : "entries") + " from " + dbPath);
+    }
+  }
+
+  /**
+   * Adds an Utterance entry to the cache database.
+   *
+   * @param entry The Utterance object to add to the cache.
+   */
+  //TODO: This method should be removed and the language set in the utterance itself should be used instead.
+  //      Need coherent universal notion of language and multilingual support
+  public void add (Utterance entry) {
+    add(entry,"English");
+  }
+  public void add (Utterance entry, String language) {
+    int rows = -1;
+    UtteranceType type = entry.getType();
+    Symbol semantics = entry.getSemantics();
+    List<Term> indirectSemantics = entry.getIndirectSemantics();
+    List<Map<Variable, Symbol>> bindings = entry.getBindings();
+    String words = entry.getWordsAsString();
+    List<String> wordsList;
+    CachedUtterance cached;
+    if (reverseCache) {
+      //Making reverse cache structure the same as that for parsing for code reusability and ease of impl. Indexing by utterance
+      //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
+      cached = new ReverseCachedUtterance(type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
+    } else {
+      wordsList = entry.getWords();
+      cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
+    }
+
+    try {
+      insertStatement.setString(1, words);
+      insertStatement.setString(2, cached.toJSON());
+      insertStatement.setLong(3, System.currentTimeMillis());
+      rows = insertStatement.executeUpdate();
+    } catch (SQLException ex) {
+      log.error("[add] Couldn't add utterance entry to database", ex);
+    }
+    if (rows == 1) {
+      log.debug("[add] Entry added to cache for [" + words + "] = " + cached.toJSON());
+    } else {
+      log.debug("[add] Failed adding row to cache for [" + words + "]");
+    }
+  }
+
+  /**
+   * Retrieves an Utterance entry from the cache database based on the words in the incoming Utterance.
+   * If the entry exists in the cache, updates the incoming Utterance with cached values.
+   *
+   * @param incoming The Utterance object containing the words to retrieve from the cache.
+   * @return The Utterance object with updated values if found in the cache; otherwise, returns the incoming Utterance unchanged.
+   */
+  //TODO: This method should be removed and the language set in the utterance itself should be used instead.
+  //      Need coherent universal notion of language and multilingual support
+  public Utterance get (Utterance incoming) {
+    return get(incoming,"English");
+  }
+  public Utterance get (Utterance incoming, String language) {
+    String getStatementString;
+    String words = incoming.getWordsAsString();
+    if (reverseCache) {
+      CachedUtterance cached = new ReverseCachedUtterance(incoming.getType(),
+              incoming.getSemantics(),
+              incoming.getIndirectSemantics(),
+              incoming.getBindings(),
+              incoming.getSupplementalSemantics(),
+              incoming.getTierAssignments(),
+              language);
+      getStatementString = cached.toJSON();
+    } else {
+      getStatementString = words;
+    }
+    ResultSet results = null;
+    CachedUtterance cachedUtterance = null;
+    String json;
+    Predicate semantics;
+
+    try {
+      getStatement.setString(1, getStatementString);
+      results = getStatement.executeQuery();
+    } catch (SQLException ex) {
+      log.error("[get] Couldn't execute SELECT query on cache database.", ex);
+    }
+
+    try {
+      if (results.next()) {
+        if (reverseCache) {
+          String cachedWords = results.getString("words");
+          if (cachedWords != null) {
+
+            StringJoiner joiner = new StringJoiner(" and ");
+            if (incoming.getBindings().isEmpty()) {
+              // no bindings to apply --> use cached words directly
+              joiner.add(cachedWords);
+            } else {
+              // apply bindings to output words with free-variables
+              // e.g., tube ALPHA SIDE NUM is broken --> tube beta left four is broken
+              for (Map<Variable, Symbol> bindingOption : incoming.getBindings()) {
+                String cachedWordsCopy = new String(cachedWords);
+                for (Map.Entry<Variable, Symbol> entry : bindingOption.entrySet()) {
+                  cachedWordsCopy = cachedWordsCopy.replaceAll(entry.getKey().toString(), entry.getValue().toString());
+                }
+                joiner.add(cachedWordsCopy);
+              }
+            }
+
+            Utterance.Builder output = new Utterance.Builder(incoming);
+            output.setWords(joiner.toString());
+            return output.build();
+          } else {
+            return null;
+          }
+        }
+        json = results.getString("utterance");
+        cachedUtterance = CachedUtterance.fromJSON(json);
+        log.debug("[get] Cache hit for [" + words + "] = " + json);
+      }
+    } catch (SQLException ex) {
+      log.error("[get] Couldn't get utterance from ResultSet", ex);
+    }
+
+    Utterance.Builder output = new Utterance.Builder();
+    if (cachedUtterance != null) {
+      output.setUtteranceType(cachedUtterance.getType());
+      semantics = cachedUtterance.getSemantics();
+      //EW: In the case of any other utterance type, we cannot blindly overwrite the first argument with an actor
+      if (cachedUtterance.getType() == UtteranceType.INSTRUCT) {
+        if (semantics != null && semantics.size() > 0) {
+          semantics.set(0, incoming.getAddressee());
+        } else {
+          log.warn("[get] cached utterance semantics possibly invalid {}", cachedUtterance.getSemantics());
+        }
+      }
+      //TODO: PickAndPlace2024 Hacks
+      //EW: this is only safe because we know it is for this domain, need to have better long term solution
+      else if (cachedUtterance.getType() == UtteranceType.QUESTION) {
+        List<Symbol> args = semantics.getArgs();
+        if (incoming.getAddressee().getName().equals("robotone")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robottwo")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
+        } else if (incoming.getAddressee().getName().equals("robottwo")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robotone")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
+        }
+      }
+      output.setSemantics(semantics);
+      output.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
+      output.setBindings(cachedUtterance.getBindings());
+      output.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
+      output.setTierAssignments(cachedUtterance.getTierAssignments());
+    }
+
+    return output.build();
+  }
+
+  public void removeRelatedEntries(Predicate semantics) {
+    //TODO: properly introspect specifically on Utterance.semantics field
+    try {
+      PreparedStatement eraseStatement = connection.prepareStatement("DELETE FROM " + tableName + " WHERE utterance LIKE ?;");
+      eraseStatement.setString(1,"%"+semantics.getName()+"%");
+      eraseStatement.execute();
+      log.debug("successfully erased related entries");
+    } catch (SQLException ex) {
+      log.error("[removeRelatedEntries] Couldn't delete all related rows in table", ex);
+    } catch (Exception ex) {
+      log.error("[removeRelatedEntries] Error deleting all related rows in table", ex);
+    }
+  }
+}

@@ -282,7 +282,7 @@ public class MCTSActionSelector extends ActionSelector {
     }
 
     //Is the player action successful?
-    Goal rolloutGoal = new Goal(Factory.createSymbol("self"), new Predicate("rollout", new String[0]), Observable.FALSE);
+    Goal rolloutGoal = Goal.createGoal(Factory.createSymbol("self"), new Predicate("rollout", new String[0]));
 
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(rolloutGoal, rolloutNode.getContext());
     ActionStatus status = ai.call();
@@ -402,7 +402,7 @@ public class MCTSActionSelector extends ActionSelector {
     List<ActionDBEntry> newEntries = new ArrayList<>();
     for (ActionDBEntry action : entries) {
       ActionDBEntry.Builder actionBuilder = new ActionDBEntry.Builder(action);
-      actionBuilder.setType("mcts" + action.getName());
+      actionBuilder.setMethodName("mcts" + action.getName());
       for (Effect e : action.getEffects()) {
         if (!isRelevant(relevantEffects, e.getPredicate())) {
           actionBuilder.removeEffect(e);

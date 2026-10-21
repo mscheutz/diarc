@@ -3,32 +3,53 @@
 // actions which will work for our compilation system must be done here.
 
 //====================== Robot arm movement action scripts ============
-() = goToPose["goes to pose without adjustment"](edu.tufts.hrilab.fol.Symbol ?pose) {
+() = goToPosePrimitive["goes to pose without adjustment"](edu.tufts.hrilab.fol.Symbol ?pose) {
     ai.thinkingrobots.mtracs.util.MPose !goalPose;
 
-    op:log(debug, "[goToPose] pose only");
+    op:log(debug, "[goToPosePrimitive] pose only");
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goalPose)) {
+        exit(FAIL, notAPose(?pose));
+    }
     tsc:goToPose(!goalPose);
 }
 
-() = goToPoseLong["goes to pose without adjustment the long way around"](edu.tufts.hrilab.fol.Symbol ?pose) {
+() = goToPosePrimitiveLong["goes to pose without adjustment the long way around"](edu.tufts.hrilab.fol.Symbol ?pose) {
     ai.thinkingrobots.mtracs.util.MPose !goalPose;
     java.lang.Boolean !success;
 
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
-    (!success) = tsc:goToPoseLong(!goalPose);
+    if (op:isNull(!goalPose)) {
+        exit(FAIL, notAPose(?pose));
+    }
+    (!success) = tsc:goToPosePrimitiveLong(!goalPose);
 }
 
-() = goToPose["goes to pose with adjustment to the given cameraHeight"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
+() = goToPosePrimitiveNoAdjust(edu.tufts.hrilab.fol.Symbol ?pose) {
     ai.thinkingrobots.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
+    tsc:goToPose(!goal);
+}
+
+() = goToPosePrimitive["goes to pose with adjustment to the given cameraHeight"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
+    ai.thinkingrobots.mtracs.util.MPose !goal;
+    (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPose(!goal);
 }
 
-() = goToPoseLong["goes to pose with adjustment to the given cameraHeight the long way around"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
+() = goToPosePrimitiveLong["goes to pose with adjustment to the given cameraHeight the long way around"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
     ai.thinkingrobots.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPoseLong(!goal);
 }
@@ -52,7 +73,7 @@
 
  (!speaker) = op:newObject("edu.tufts.hrilab.fol.Symbol",?actor);
 
-  (!bindings) = act:askQuestion(!speaker,"what is its offset", val(X,Y));
+  (!bindings) = act:askQuestion("what is its offset", val(X,Y));
   (!z) = op:get(!bindings, !x);
   tsc:recordPose(?poseName,!z);
 
@@ -61,13 +82,7 @@
 
 //====================== Gripper Switching =====================
 () = rotateToEE["changes TCP of robot to refer to a new EE attached to the cuff at a different offset"](edu.tufts.hrilab.fol.Symbol ?gripperType) {
-    ai.thinkingrobots.mtracs.util.MPose !currentPose;
-    ai.thinkingrobots.mtracs.util.MPose !newTCP;
-    (!currentPose) = tsc:getCurrentPose();
-     op:log(debug, "getting tcp for ?gripperType in rotate");
-    (!newTCP) = tsc:getTCPForEE(?gripperType);
-    tsc:alternateEE(!newTCP);
-    tsc:goToPose(!currentPose);
+    tsc:alternateEE(?gripperType);
 }
 
 () = putAwayGripper(edu.tufts.hrilab.fol.Symbol ?gripperType) {

@@ -217,6 +217,11 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
+  public Justification stop() {
+    return new ConditionJustification(true);
+  }
+
+  @Override
   public boolean moveToJointPosition(String joint, double position) {
     return true;
   }

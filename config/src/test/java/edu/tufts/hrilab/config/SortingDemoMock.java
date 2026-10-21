@@ -29,6 +29,7 @@ public class SortingDemoMock extends DiarcConfiguration {
         createInstance(MockScaleComponent.class);
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+        createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees brad");
         createInstance(TLDLParserComponent.class, "-dict poc4.dict -dict assemblyHomophones.dict -dict sortingDemo.dict");
         createInstance(ReferenceResolutionComponent.class);
         createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

@@ -22,18 +22,18 @@ import java.util.List;
 public class GoalContext extends ArgumentBasedContext {
   protected Goal goal;
   protected ExecutionType executionType;
-  protected GoalRecovery goalRecovery;
+  protected Recovery recovery;
 
-  public GoalContext(Context caller, StateMachine sm, Goal goal, ExecutionType executionType, GoalRecovery recovery) {
+  public GoalContext(Context caller, StateMachine sm, Goal goal, ExecutionType executionType, Recovery recovery) {
     super(caller, sm, "goal(" + goal.toString() + ")");
     this.goal = goal;
     this.executionType = executionType;
     setupArguments(null, null);
-    goalRecovery = recovery;
+    this.recovery = recovery;
   }
 
   public GoalContext(Context caller, StateMachine sm, Goal goal, ExecutionType executionType) {
-    this(caller, sm, goal, executionType, new ExplorationGoalRecovery());
+    this(caller, sm, goal, executionType, new Recovery());
   }
 
   @Override
@@ -57,32 +57,44 @@ public class GoalContext extends ArgumentBasedContext {
   @Override
   public void setupNextStep() {
     if (this.getStatus() == ActionStatus.RECOVERY) {
-      log.debug("In RECOVERY mode " + goalRecovery.getStatus() + " for goal: " + goal);
-      // update recovery status with info about what has happened since the last goalRecovery check-in
+      log.debug("In RECOVERY mode " + recovery.getStatus() + " for goal: " + goal);
+      // update recovery status with info about what has happened since the last recovery check-in
       // e.g., it's unlikely that more explorations should be done if an exploration was successful
-      goalRecovery.updateRecoveryStatus(this);
+      recovery.updateRecoveryStatus(this);
 
-      if (goalRecovery.getStatus() == RecoveryStatus.PLAN) {
+      if (recovery.getStatus() == RecoveryStatus.SUCCESS && goal.isAction()) {
+        //Special cases: action recovery with postrecovery_continue executed directly under root goal context. If goal is
+        //  direct action submission, then consider terminated. Other SUCCESS case below will still validate postconditions of goal
+        //  and potentially replan.
+        setStatus(ActionStatus.SUCCESS);
+        recovery.resetState();
+      } else if (recovery.getStatus() == RecoveryStatus.PLAN || recovery.getStatus() == RecoveryStatus.SUCCESS) {
         // make plan to achieve goal state
         selectAction();
 
         // exit RECOVERY mode. If the selected action fails, RECOVERY mode can be re-entered based on shouldAttemptRecovery
         setStatus(ActionStatus.PROGRESS);
-      } else if (goalRecovery.getStatus() == RecoveryStatus.RECOVER) {
+        recovery.resetState();
+      } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
         // previous attempt/child failed -- attempt to execute recovery policy
-        ParameterizedAction recoveryPolicy = goalRecovery.selectRecoveryPolicy(this);
+        ParameterizedAction recoveryPolicy = recovery.getSelectedRecoveryPolicy(this);
 
         // add recovery policy
         if (recoveryPolicy != null) {
-          RecoveryGoalContext recoveryContext = new RecoveryGoalContext(this, this.stateMachine, recoveryPolicy, this.executionType, new DefaultGoalRecovery());
+          RecoveryGoalContext recoveryContext = new RecoveryGoalContext(this, this.stateMachine, recoveryPolicy, this.executionType, new Recovery());
           childContexts.add(recoveryContext);
         } else {
-          // no recovery policy --> exit recovery mode
-          setStatus(ActionStatus.FAIL_RECOVERY);
+          // ActionStatus should only be RECOVER if shouldAttemptRecovery just returned true
+          // ShouldAttemptRecovery should only return true after finding a recovery policy and setting recovery status to RECOVER.
+          // ActionStatus should then be cleaned up after recovery execution.
+          // If we are in this block, something went wrong.
+          log.error("[setupNextStep] context has RECOVERY status but recovery returned null recovery policy, shouldn't be possible");
+          setStatus(ActionStatus.EXIT_RECOVERY);
         }
-      } else if (goalRecovery.getStatus() == RecoveryStatus.EXIT) {
-        // exit RECOVERY mode. Set to FAIL_RECOVERY so StepExection can properly finishStep
-        setStatus(ActionStatus.FAIL_RECOVERY);
+      } else if (recovery.getStatus() == RecoveryStatus.EXIT) {
+        // Same reasoning as above, shouldn't be possible
+        log.error("[setupNextStep] context has RECOVERY status but recovery has {} status, shouldn't be possible", recovery.getStatus());
+        setStatus(ActionStatus.EXIT_RECOVERY);
       }
     } else if (this.getChildContexts().isEmpty()) {
       // normal non-recovery action selection (i.e., PROGRESS)
@@ -129,7 +141,7 @@ public class GoalContext extends ArgumentBasedContext {
       child = new ObservationContext(this, stateMachine, goal.getGoalStatePredicate(), goal.getActor(), Observable.TRUE);
     } else {
       // perform action selection
-      ParameterizedAction action = goalRecovery.selectNextAction(goal, constraints, stateMachine);
+      ParameterizedAction action = recovery.selectNextAction(goal, constraints, stateMachine);
 
       if (action == null) {
         Justification just = new ConditionJustification(false, new Predicate("found", goal.getActor(), goal.getGoalStatePredicate()));
@@ -183,23 +195,30 @@ public class GoalContext extends ArgumentBasedContext {
    * @param justification the reason for the context's execution status
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (eStatus == ActionStatus.INITIALIZED) {
       // allow context to be (re)set to INITIALIZED, which is required for a context to be reset for re-use
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (this.isTerminated()) {
       log.warn("Trying to set status of previously terminated context: " + this.getSignatureInPredicateForm()
               + ". Current status is: " + this.getStatus() + ", tried to set to: " + eStatus);
+      return false;
     } else if (!eStatus.isTerminated() || eStatus == ActionStatus.CANCEL || eStatus == ActionStatus.SUCCESS) {
       log.debug("Can't recover from action status: " + eStatus);
-      super.setStatus(eStatus, justification);
-    } else if (goalRecovery.shouldAttemptRecovery(eStatus, justification, this)) {
+      return super.setStatus(eStatus, justification);
+    } else if (recovery.shouldAttemptRecovery(eStatus, justification, this)) {
       log.debug("[setStatus] not propagating failure: " + eStatus);
-      super.setStatus(ActionStatus.RECOVERY, justification);
+      return super.setStatus(ActionStatus.RECOVERY, justification);
+    } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+      //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+      // start propagating the original failure reasons up the tree instead
+      ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+      Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+      return super.setStatus(originalFailureStatus, originalFailureJustification);
     } else {
       log.debug("[setStatus] passing exit handling to super class: " + eStatus);
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     }
   }
 
@@ -211,6 +230,13 @@ public class GoalContext extends ArgumentBasedContext {
   }
 
   /**
+   * Get the Recovery instance corresponding to this context
+   */
+  public Recovery getRecovery() {
+    return recovery;
+  }
+
+  /**
    * Make a copy of this node in the execution tree for simulation purposes
    *
    * @param newParent new parent context
@@ -218,7 +244,7 @@ public class GoalContext extends ArgumentBasedContext {
    */
   @Override
   public GoalContext copy(Context newParent) {
-    Goal newGoal = new Goal(goal.getActor(), goal.getGoalStatePredicate().clone());
+    Goal newGoal = Goal.createGoal(goal.getActor(), goal.getGoalStatePredicate().clone());
     // TODO: probably change the following so that it has the proper execution type
     GoalContext newGoalContext = new GoalContext(newParent, newParent.stateMachine, newGoal, newParent.getExecType());
     copyInternal(newGoalContext);

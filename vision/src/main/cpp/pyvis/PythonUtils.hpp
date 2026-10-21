@@ -16,6 +16,7 @@ public:
     static log4cxx::LoggerPtr logger;
     static pybind11::array_t<uchar> convertMatToNumpy(const cv::Mat& mat);
     static cv::Mat convertNumpyToMat(const pybind11::array_t<uchar>& array);
+    static cv::Mat convertNumpyToMatDepth(const pybind11::array_t<float>& array);
 };
 
 

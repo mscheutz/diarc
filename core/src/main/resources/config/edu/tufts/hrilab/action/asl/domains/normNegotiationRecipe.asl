@@ -35,7 +35,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Predicate !tmp;
     Predicate !question;
 
-    !bindings = act:askQuestionFromString(?actor,"What container does it use?", val(X));
+    !bindings = act:askQuestionFromString("What container does it use?", val(X));
     !containerPred = op:get(!bindings, !x);
 
     !containerPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "container",!containerPred);
@@ -45,13 +45,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Symbol !number;
     Symbol !contained;
 
-    !bindings = act:askQuestionFromString(?actor,"Okay. What does a ?descriptor contain?", val(X));
+    !bindings = act:askQuestionFromString("Okay. What does a ?descriptor contain?", val(X));
     !contentType = op:get(!bindings, !x);
     op:log("debug","contentType: !contentType");
 
     while(~op:equalsValue(!contentType,none())){
         op:add(!tmpDescriptors,!contentType);
-        (!bindings) = act:askQuestionFromString(?actor,"does it contain anything else?", val(X));
+        (!bindings) = act:askQuestionFromString("does it contain anything else?", val(X));
         (!contentType) = op:get(!bindings, !x);
         op:log("debug","contentType: !contentType");
     }

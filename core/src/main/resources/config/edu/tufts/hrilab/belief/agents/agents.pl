@@ -14,8 +14,12 @@ name(temi,temi).
 name(leftArm,leftArm).
 name(rightArm,rightArm).
 name(human,human).
+name(ava,ava).
+name(self,spot).
+name(spot,spot).
 
 actor(brad).
+actor(pete).
 actor(eric).
 actor(medic).
 actor(searcher).
@@ -27,6 +31,12 @@ actor(ravenna).
 actor(marlow).
 actor(manager).
 actor(front).
+actor(patient).
+actor(webapp).
+actor(asrapp).
+actor(local_user).
+actor(operator).
+actor(local_visitor).
 
 diarcAgent(self).
 diarcAgent(dempster).
@@ -46,6 +56,8 @@ diarcAgent(mobileyumi).
 diarcAgent(leftArm).
 diarcAgent(rightArm).
 diarcAgent(human).
+diarcAgent(ava).
+diarcAgent(spot).
 
 memberOf(X,X).
 memberOf(temi, self).
@@ -54,13 +66,20 @@ memberOf(andy, self).
 memberOf(leftArm, self).
 memberOf(rightArm, self).
 memberOf(human, self).
-memberOf(human, self).
+memberOf(ava, self).
+memberOf(robotone, self).
+memberOf(robottwo, self).
+memberOf(spot, self).
 object(temi, agent).
 object(andy, agent).
 object(fetch, agent).
+object(ava, agent).
+object(spot, agent).
 object(leftArm, yumi).
 object(rightArm, yumi).
 object(human, mobileyumi).
+object(robotone, agent).
+object(robottwo, agent).
 
 object(self, agent).
 team(self).
@@ -78,8 +97,18 @@ supervisor(ravenna).
 supervisor(tyler).
 supervisor(marlow).
 supervisor(manager).
+supervisor(patient).
+supervisor(webapp).
+supervisor(asrapp).
+supervisor(local_user).
+supervisor(operator).
+supervisor(local_visitor).
 
 %% admin
 admin(brad).
 admin(manager).
 admin(evan).
+admin(webapp).
+admin(asrapp).
+admin(local_user).
+admin(operator).

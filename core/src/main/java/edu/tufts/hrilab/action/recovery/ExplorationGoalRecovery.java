@@ -54,7 +54,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
   /**
    * Max times to explore the same failure with no progress before giving up.
    */
-  private int maxRepeatedExplorations = 5;
+  private int maxRepeatedExplorations = 2;
 
   public ExplorationGoalRecovery() {
     super();
@@ -188,7 +188,7 @@ public class ExplorationGoalRecovery extends GoalRecovery {
     Map<String, Object> arguments = new HashMap<>();
     List<ActionBinding> inputArgs = lastSelectedRecoveryAction.getInputRoles();
     arguments.put(inputArgs.get(0).getName(), lastFailureInfo.actor);
-    arguments.put(inputArgs.get(1).getName(), lastFailureInfo.failedAction);
+    arguments.put(inputArgs.get(1).getName(), lastFailureInfo.failedActions);
     arguments.put(inputArgs.get(2).getName(), lastFailureInfo.failureReasons);
     arguments.put(inputArgs.get(3).getName(), lastFailureInfo.goal);
 
@@ -225,7 +225,8 @@ public class ExplorationGoalRecovery extends GoalRecovery {
     lastFailureInfo.goal = goalContext.getGoal().getGoalStatePredicate();
     lastFailureInfo.actor = goalContext.getGoal().getActor();
     lastFailureInfo.actionStatus = actionStatus;
-    lastFailureInfo.failedAction = getFailedAction(goalContext);
+    lastFailureInfo.failedActions = new ArrayList<>();
+    lastFailureInfo.failedActions.add(getFailedAction(goalContext));
     lastFailureInfo.failureReasons = justification.getFailedConditions();
 
     // look up recovery policy options

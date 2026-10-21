@@ -30,3 +30,9 @@ tasks.named("clean") {
 tasks.named<DependenciesInstallTask>("installDependencies") {
     args.set(listOf("--ignore-engines"))
 }
+
+// react-scripts test waits for a keypress in watch mode, which hangs ./gradlew test once the
+// java tests pass. the only test here is the create-react-app placeholder, and it does not load.
+tasks.matching { it.name == "test" }.configureEach {
+    enabled = false
+}

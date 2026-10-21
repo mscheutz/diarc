@@ -36,17 +36,21 @@ public class CachedUtterance {
   public String semantics = null; //Symbol
   //public List<String> boundSemantics = null; //List<Term>
   public List<String> indirectSemantics = new ArrayList<>(); //List<Term>
-  //public List<String> supplementalSemantics = new ArrayList<>(); //List<Term>
+  public List<String> supplementalSemantics = new ArrayList<>(); //List<Term>
   private List<Map<String, String>> bindings = new ArrayList<>(); //List<Map<Variable, Symbol>>
-  //private Map<Variable, Symbol> tierAssignments = new LinkedHashMap<>();
+  private Map<String, String> tierAssignments = new HashMap<>();
   //private String language = "en";
   //private Map<String,List<String>> translations = new HashMap<>();
 
-  public CachedUtterance (List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings) {
+  public CachedUtterance (List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings, List<Term> supplementalSemantics, Map<Variable,Symbol> tierAssignments) {
     this.words = words;
     this.type = type.toString();
     this.semantics = semantics.toString();
     this.indirectSemantics = new ArrayList<String>();
+    this.supplementalSemantics = supplementalSemantics.stream().map(Term::toString).toList();
+    this.tierAssignments = new HashMap<>();
+
+
 
     for (Symbol indirectSemantic : indirectSemantics) {
       this.indirectSemantics.add(indirectSemantic.toString());
@@ -58,6 +62,10 @@ public class CachedUtterance {
         bindingStrings.put(entry.getKey().toString(), entry.getValue().toString());
       }
       this.bindings.add(bindingStrings);
+    }
+
+    for (Map.Entry<Variable, Symbol> entry : tierAssignments.entrySet()) {
+      this.tierAssignments.put(entry.getKey().toString(), entry.getValue().toString());
     }
   }
 
@@ -90,6 +98,22 @@ public class CachedUtterance {
       indirectSemantics.add(Factory.createPredicate(indirectSemantic));
     }
     return indirectSemantics;
+  }
+
+  public List<? extends Term> getSupplementalSemantics() {
+    List<Term> supplementalSemantics = new ArrayList<Term>();
+    for (String supplementalSemantic : this.supplementalSemantics) {
+      supplementalSemantics.add(Factory.createPredicate(supplementalSemantic));
+    }
+    return supplementalSemantics;
+  }
+
+  public Map<Variable, Symbol> getTierAssignments() {
+    HashMap<Variable, Symbol> tierAssignments = new HashMap<>();
+    for (Map.Entry<String, String> entry : this.tierAssignments.entrySet()) {
+      tierAssignments.put(new Variable(entry.getKey()), Factory.createSymbol(entry.getValue()));
+    }
+    return tierAssignments;
   }
 
   /**
@@ -129,4 +153,5 @@ public class CachedUtterance {
     Gson gson = new Gson();
     return gson.fromJson(json, CachedUtterance.class);
   }
+
 }

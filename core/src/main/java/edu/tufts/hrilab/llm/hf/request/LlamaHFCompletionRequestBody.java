@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.llm.hf.request;
 
 import java.util.HashMap;
@@ -25,16 +29,16 @@ public class LlamaHFCompletionRequestBody {
         options.put("use_cache", false);
     }
 
-    public LlamaHFCompletionRequestBody () {
+    public LlamaHFCompletionRequestBody() {
         init();
     }
 
-    public LlamaHFCompletionRequestBody (String p) {
+    public LlamaHFCompletionRequestBody(String p) {
         init();
         inputs = p;
     }
 
-    public LlamaHFCompletionRequestBody (LlamaHFChat chat) {
+    public LlamaHFCompletionRequestBody(LlamaHFChat chat) {
         init();
         inputs = chat.toPromptString();
     }

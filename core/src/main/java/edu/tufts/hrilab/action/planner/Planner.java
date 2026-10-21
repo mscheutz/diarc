@@ -189,22 +189,7 @@ public abstract class Planner {
   }
 
   private String deSanitize(String input) {
-    int startIndex = input.indexOf("QUOTE");
-    StringBuilder builder = new StringBuilder();
-    if (startIndex != -1) {
-      int endIndex = input.indexOf("QUOTE", startIndex + 5);
-      if (endIndex != -1) {
-        builder.append("\"");
-        builder.append(input.substring(startIndex + 5, endIndex).replaceAll("_", " "));
-        builder.append(("\""));
-        builder.append(input.substring(endIndex + 5));
-      }
-    }
-    if (builder.isEmpty()) {
-      return input;
-    } else {
-      return builder.toString();
-    }
+    return input.replaceAll("QUOTE", "\"").replaceAll("SPACE", " ");
   }
 
   private Predicate createTypedPredicate(Predicate untypedPredicate, Map<String, Symbol> objectTypeMap) {

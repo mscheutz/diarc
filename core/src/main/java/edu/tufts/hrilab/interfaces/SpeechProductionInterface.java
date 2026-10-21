@@ -5,6 +5,7 @@ package edu.tufts.hrilab.interfaces;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.slug.common.Utterance;
 
 /**
  Defines a standard set of methods that must be defined in an

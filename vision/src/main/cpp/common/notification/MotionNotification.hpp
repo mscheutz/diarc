@@ -22,11 +22,11 @@ public:
   typedef boost::shared_ptr<MotionNotification> Ptr;
   typedef boost::shared_ptr<const MotionNotification> ConstPtr;
 
-  MotionNotification(const VisionProcessConstPtr &notifier_,
+  MotionNotification(const long long& processorId_,
                      const unsigned long long &frameNumber_,
                      const CaptureData::ConstPtr &captureData_,
                      const cv::Mat &motionFrame_)
-      : ImageProcessorNotification(notifier_, MOTION, frameNumber_, captureData_),
+      : ImageProcessorNotification(MOTION, processorId_, frameNumber_, captureData_),
         motionFrame(motionFrame_.clone()) {
   }
 

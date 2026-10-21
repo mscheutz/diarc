@@ -10,12 +10,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ConditionJustification extends Justification {
   /**
@@ -143,15 +138,25 @@ public class ConditionJustification extends Justification {
     }
   }
 
-  //todo: pete: this is implemented primarily so that justifications used as return types can be handled in the testing framework
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
+
     ConditionJustification justification = (ConditionJustification) o;
-    if (condition != justification.condition) return false;
-    if (!bindings.equals(justification.bindings)) return false;
+    if (!Objects.equals(condition, justification.condition)) return false;
+    if (!Objects.equals(bindings, justification.bindings)) return false;
     return true;
   }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (condition != null ? condition.hashCode() : 0);
+    result = 31 * result + bindings.hashCode();
+    return result;
+  }
+
+
 }

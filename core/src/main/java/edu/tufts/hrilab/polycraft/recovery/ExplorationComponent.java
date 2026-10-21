@@ -256,7 +256,7 @@ public class ExplorationComponent extends DiarcComponent {
           // create new action to be used during exploration and add it to the DB
           ActionDBEntry.Builder newActionBuilder = new ActionDBEntry.Builder(existingAction);
           String newActionName = existingActionName + "_holding_" + novelObject;
-          newActionBuilder.setType(newActionName);
+          newActionBuilder.setMethodName(newActionName);
           newActionBuilder.addCondition(new Condition(holdingPredicate, ConditionType.PRE, Observable.TRUE));
           newActionBuilder.build(true);
 

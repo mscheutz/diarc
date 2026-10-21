@@ -18,6 +18,60 @@
         -0.288167286092,
         0.957580082931
       ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "elevator(VAR0:location)"
+      ],
+      "position": [
+        0.68,
+        -0.40,
+        0.000
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.42,
+        0.9
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "ava(VAR0:location)"
+      ],
+      "position": [
+        -3.0,
+        0.7,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.33,
+        0.957580082931
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "bullpen(VAR0:location)"
+      ],
+      "position": [
+        4.421,
+        -1.365,
+        0.000
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.950,
+        -0.311
+      ]
     }
   ]
 }

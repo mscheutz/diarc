@@ -44,7 +44,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     groupNames = sb.toString();
   }
 
-  @Override
+    public CognexConsultant(List<String> groups, String kbName) {
+        super(CognexReference.class, kbName);
+        StringBuilder sb = new StringBuilder();
+        for (String group : groups) {
+            sb.append(group.split(":")[1]);//todo: this wants the second portion of agent:robotone, and nothing else? hacky.
+        }
+        groupNames = sb.toString();
+    }
+
+    @Override
   public <U> U localConvertToType(Symbol refId, Class<U> type) {
     return convertToType(refId, type, new ArrayList<>());
   }

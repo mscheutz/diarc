@@ -121,7 +121,7 @@
     //ob:acknowledged(!ackMessage);
     act:waitForDetection();
     act:startAcknowledgeDisplay("Hello, please follow me to the waiting area.");
-    act:askQuestionFromString(!addressee, "Hello, please follow me to the waiting area.", !waitForAckForm);
+    act:askQuestionFromString("Hello, please follow me to the waiting area.", !waitForAckForm);
     act:endAcknowledgeDisplay();
     act:goToLocation(!destination, !fromGreet);
     act:generateResponseFromString("Someone will be with you shortly");
@@ -162,7 +162,7 @@
     (!destinationName) = act:getLocationNameFromReference(?destination);
     op:log("info","[escort] entering waitForAck");
     act:startAcknowledgeDisplay("Hello ?name. Please come with me. I will show you to !destinationName.");
-    !ackAnswerBindings = act:askQuestionFromString(!addressee, "Hello ?name. Please come with me. I will show you to !destinationName.", !waitForAckForm, !maxWaitAttempts, !waitDuration);
+    !ackAnswerBindings = act:askQuestionFromString("Hello ?name. Please come with me. I will show you to !destinationName.", !waitForAckForm, !maxWaitAttempts, !waitDuration);
     act:endAcknowledgeDisplay();
     op:log("info","[escort] out waitForAck");
 
@@ -171,7 +171,9 @@
     //If not acknowledged and ran out of tries -> clear screen, return to original location, and
     //  say that we could not find the requested patient
     if(op:isNull(!ackAnswerBindings)) {
-//        op:log("info", "[escort] going to destination to communicate failure to find patient");
+        act:generateResponseFromString("I could not find the requested patient ?name");
+    } elseif (op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
+        //double conditional due to asl bug
         act:generateResponseFromString("I could not find the requested patient ?name");
     } else {
         act:generateResponseFromString("Arrived at !destinationName");
@@ -203,7 +205,10 @@
     java.lang.Boolean !toFetch = false;
     java.lang.Boolean !fromFetch = true;
     edu.tufts.hrilab.fol.Symbol !addressee = "patient";
+    java.util.List !waitForAckForms;
     edu.tufts.hrilab.fol.Predicate !waitForAckForm = "waitForAckTemi(X)";
+    !waitForAckForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!waitForAckForms,!waitForAckForm);
 
    (!locQuery) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","at(?actor,X)");
    (!noBindingsLoc) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","not(knowWhereIAm(?actor))");
@@ -253,7 +258,7 @@
 
     op:log("info","[fetch] entering waitForAck");
     act:startAcknowledgeDisplay("Please place ?item on my tray.");
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse("Could I please have ?item",!waitForAckForms,?actor);
     act:endAcknowledgeDisplay();
     op:log("info","[fetch] out waitForAck");
 
@@ -289,7 +294,10 @@
     java.lang.Boolean !toFetch = false;
     java.lang.Boolean !fromFetch = true;
     edu.tufts.hrilab.fol.Symbol !addressee = "patient";
+    java.util.List !waitForAckForms;
     edu.tufts.hrilab.fol.Predicate !waitForAckForm = "waitForAckTemi(X)";
+    !waitForAckForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!waitForAckForms,!waitForAckForm);
 
    (!locQuery) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","at(?actor,X)");
    (!noBindingsLoc) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","not(knowWhereIAm(?actor))");
@@ -332,7 +340,7 @@
 
     op:log("info","[fetch] entering waitForAck");
     act:startAcknowledgeDisplay("Please place ?item on my tray.");
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse("Could I please have ?item",!waitForAckForms,?actor);
     act:endAcknowledgeDisplay();
     op:log("info","[fetch] out waitForAck");
 
@@ -354,10 +362,13 @@
       cancel: tsc:endQRCodeDisplay();
       resume: tsc:startQRCodeDisplay(?url, ?header);
     }
+    java.util.List !waitForAckForms;
     edu.tufts.hrilab.fol.Predicate !waitForAckForm = "waitForAckTemi(X)";
+    !waitForAckForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!waitForAckForms,!waitForAckForm);
 
     act:startQRCodeDisplay(?url, ?header);
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse("",!waitForAckForms,?actor);
     act:endQRCodeDisplay();
 }
 
@@ -370,3 +381,28 @@
 //    act:answerQuestion(?actor, !listener, !waitForAckForm);
 //    act:stopMoving();
 //}
+
+() = followMeBlocking() {
+    onInterrupt : {
+        suspend : act:interruptFollowBlocking();
+        cancel : act:interruptFollowBlocking();
+    }
+    effects : {
+        always : at(?actor,unknown);
+        always : not(at(?actor,X));
+    }
+    java.util.List !waitForAckForms;
+    edu.tufts.hrilab.fol.Predicate !waitForAckForm = "waitForAckTemi(X)";
+    !waitForAckForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!waitForAckForms,!waitForAckForm);
+
+    act:followMe();
+    act:startAcknowledgeDisplay("following until interrupted");
+    act:waitForResponse("following until interrupted", !waitForAckForms, ?actor);
+    act:stopMoving();
+    act:endAcknowledgeDisplay();
+}
+
+() = interruptFollowBlocking() {
+    act:stopMoving();
+}
