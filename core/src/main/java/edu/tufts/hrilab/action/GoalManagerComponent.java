@@ -1041,48 +1041,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public boolean hasGreaterPriority(long goalId, PriorityTier priorityTier, long priority) {
     return em.hasGreaterPriority(goalId,priorityTier,priority);
   }
-
-  /**
-   * Get the predicate of the pending goal currently with the highest priority
-   */
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public Predicate getNextGoal() {
-    return em.getNextGoal().getGoalPredicate();
-  }
-
-  /**
-   * Get the predicate of the pending goal for a specific agentTeam currently with the highest priority
-   */
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public Predicate getNextGoal(Symbol agent) {
-    return em.getNextGoal(agent).getGoalPredicate();
-  }
-
-  /**
-   * Get the gid of the pending goal currently with the highest priority
-   */
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public long getNextGoalId() {
-    return em.getNextGoalId();
-  }
-
-  /**
-   * Get the gid of the pending goal for a specific agentTeam currently with the highest priority
-   */
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public long getNextGoalId(Symbol agent) {
-    return em.getNextGoalId(agent);
-  }
-
-
+  
   /**
    * Get the goal ID for a goal predicate. Checks current and
    * past goals. If no goal is found, -1 is returned.
