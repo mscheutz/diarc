@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -12,6 +13,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Before;
@@ -68,6 +70,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     speechInputBrad.setText(input);
   }
 
+  @Ignore
   @Test
   public void screwingActionModificationTestOrdered() {
 

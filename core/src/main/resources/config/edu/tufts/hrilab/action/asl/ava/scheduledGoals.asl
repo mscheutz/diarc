@@ -9,6 +9,7 @@ import java.lang.Integer;
 import java.lang.Double;
 import java.lang.Boolean;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.justification.Justification;
 
 () = scheduleGoal() {
@@ -301,7 +302,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPred;
     Long !gid;
 
-    !scheduledGoalIds = tsc:getScheduledGoalIds();
+    GoalFilter !scheduledGoalFilters = SCHEDULED;
+    !scheduledGoalIds = tsc:getGoalIds(!scheduledGoalFilters);
     !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
     if (op:isEmpty(!scheduledGoalIds)) {
         act:generateResponseFromString("There are no scheduled tasks");

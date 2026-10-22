@@ -7,6 +7,8 @@ import java.lang.String;
 import edu.tufts.hrilab.action.justification.Justification;
 import java.lang.Double;
 import java.lang.Integer;
+import edu.tufts.hrilab.action.goal.GoalFilter;
+import edu.tufts.hrilab.action.goal.GoalStatus;
 
 () = openGripper() {
     Symbol !heldObject;
@@ -990,17 +992,19 @@ import java.lang.Integer;
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
 
-    java.lang.Integer !resultsSize = 0;
-    java.lang.String !status;
+    GoalStatus !status;
+    java.lang.String !statusStr;
     Predicate !goalPred;
-    long !goalId;
+    Long !goalId;
 
     GoalFilter !goalFilter = SYSTEM;
-    java.util.List !goalIds = act:getGoalIds(!goalFilter);
-    !resultsSize = op:size(!goalIds);
-    if(op:gt(!resultsSize,0)){
+    java.util.List !goalIds = tsc:getGoalIds(!goalFilter);
+    op:log("info", "GoalIds: !goalIds");
+    if (~op:isEmpty(!goalIds)) {
         foreach(!goalId: !goalIds){
             !status = tsc:getGoalStatus(!goalId);
+            !statusStr = op:invokeMethod(!status, "toString");
+            !statusStr = op:invokeMethod(!statusStr, "toLowerCase");
             !goalPred = tsc:getGoalPredicate(!goalId);
             act:reportGoalStatus(!status);
             act:generateResponse(!goalPred);

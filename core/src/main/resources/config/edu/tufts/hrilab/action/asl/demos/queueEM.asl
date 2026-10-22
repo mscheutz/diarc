@@ -3,6 +3,7 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.Justification;
+import java.lang.Long;
 
 () = resumeCurrentTask() {
     act:resumeSystemGoals();
@@ -78,7 +79,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         }
         if (op:equalsValue(!success,false)) {
             //Goal meant to be suspended has already terminated.
-            !systemGoalPredicates = tsc:getGoalPredicates(!systemGoalFilter, ?actor);
+            !systemGoalPredicates = tsc:getGoalPredicatesForActor(!systemGoalFilter, ?actor);
             op:log("debug","[suspendSystemGoalsBlocking] Suspend failed, current goals now: !systemGoalPredicates");
             if (op:isEmpty(!systemGoalPredicates)) {
                 //No new goals started execution as a result of this one completing, fail on suspend
@@ -195,7 +196,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
         if (op:equalsValue(!success,false)) {
             //Goal meant to be canceled has already terminated.
-            !systemGoalPredicates = tsc:getGoalPredicates(!systemGoalFilter);
+            !systemGoalPredicates = tsc:getGoalPredicatesForActor(!systemGoalFilter, ?actor);
             op:log("debug","[cancelSystemGoalsBlocking] Cancel failed, current goals now: !systemGoalPredicates");
             exit(FAIL,alreadyComplete(taskToCancel));
         }
@@ -203,20 +204,21 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
-    java.lang.Integer !resultsSize = 0;
-    java.lang.String !status;
+    GoalStatus !status;
+    java.lang.String !statusStr;
     Predicate !goalPred;
-    java.util.List !goalIds;
-    long !goalId;
+    Long !goalId;
 
     GoalFilter !goalFilter = SYSTEM;
-    java.util.List !goalIds = act:getGoalIds(!goalFilter);
-    !resultsSize = op:size(!goalIds);
-    if (op:gt(!resultsSize,0)) {
+    java.util.List !goalIds = tsc:getGoalIds(!goalFilter);
+    op:log("info", "GoalIds: !goalIds");
+    if (~op:isEmpty(!goalIds)) {
         foreach (!goalId: !goalIds) {
             !status = tsc:getGoalStatus(!goalId);
+            !statusStr = op:invokeMethod(!status, "toString");
+            !statusStr = op:invokeMethod(!statusStr, "toLowerCase");
             !goalPred = tsc:getGoalPredicate(!goalId);
-            act:generateResponse(goal(status(!status),predicate(!goalPred)));
+            act:generateResponse(goal(status(!statusStr),predicate(!goalPred)));
             //act:reportGoalStatus(!status);
             //act:generateResponse(!goalPred);
         }
@@ -267,7 +269,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     act:retractBelief(!oldGoalsPred);
 
     GoalFilter !goalFilter = SYSTEM;
-    java.util.List !goalIds = act:getGoalIds(!goalFilter);
+    java.util.List !goalIds = tsc:getGoalIds(!goalFilter);
     !resultsSize = op:size(!goalIds);
     if (op:gt(!resultsSize,0)) {
         foreach (!goalId: !goalIds) {

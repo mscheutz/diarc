@@ -33,7 +33,7 @@ public class TLDLParserComponentTest {
 
     @Before
     public void setUp() {
-      component = DiarcComponent.createInstance(TLDLParserComponent.class, "", true, false);
+      component = DiarcComponent.createInstance(TLDLParserComponent.class, true, false);
     }
 
     @After

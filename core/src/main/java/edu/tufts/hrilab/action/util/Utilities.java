@@ -296,7 +296,8 @@ public class Utilities {
         // if already of target type, we're done
         output = value;
       } else if (clazz.equals(String.class) && value instanceof Symbol) {
-        output = ((Symbol) value).toUntypedString();
+//        output = ((Symbol) value).toUntypedString();
+        output = value.toString();
       } else if (value == null || (value instanceof String && value.toString().equalsIgnoreCase("null"))) {
         // if value is "null" just return null, no need to instantiate null object of specified type
         return null;

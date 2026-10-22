@@ -811,170 +811,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.resumeSystemGoals(agentTeam);
   }
 
-//  /**
-//   * Get the goals that are currently being pursued by the Execution Manager for a particular actor.
-//   * This includes both goals which are actively undergoing execution (have a corresponding Action Interpreter)
-//   * and goals which are being considered by the Execution Manager but may not have been passed on to execution yet
-//   *
-//   * @return a list of predicates representing the goal
-//   */
-//  @TRADEService
-//  @Action
-//  public List<Predicate> getCurrentGoals(Symbol actor) {
-//    List<Predicate> pg = new ArrayList<>();
-//    for (Goal g : em.getCurrentGoals()) {
-//      if (g.getActor().equals(actor)) {
-//        pg.add(g.getGoalPredicate());
-//      }
-//    }
-//    return pg;
-//  }
-//
-//  /**
-//   * Get a list of all pending and active goals.
-//   *
-//   * TODO: remove this method, or at least make it not a trade service
-//   */
-//  @TRADEService
-//  @Action
-//  public List<Goal> getCurrentGoals() {
-//    return em.getCurrentGoals();
-//  }
-//
-//  /**
-//   * Get a list of all current pending and/or active goals matching the goalPredicate query.
-//   *
-//   * TODO: remove this method, or at least make it not a trade service
-//   *
-//   * @return goals with matching goalPredicate, or null if no matching goal found
-//   */
-//  @Action
-//  @TRADEService
-//  public List<Goal> getCurrentGoals(Predicate goalPredicate) {
-//    return em.getCurrentGoals(goalPredicate);
-//  }
-//  /**
-//   * Get a list of all current pending and/or active goals matching the goalPredicate query.
-//   * @return goals with matching goalPredicate, or null if no matching goal found
-//   *
-//   * TODO: remove this method. No Goal instances should be passed in TRADE services.
-//   */
-//  @TRADEService
-//  public List<Goal> getMatchingCurrentGoals(Predicate queryGoal) {
-//    return em.getCurrentGoals(queryGoal);
-//  }
-
-  /**
-   * Get a copied list of previously executed goals.
-   *
-   * @return list of past <code>Goal</code>s
-   */
-  @TRADEService
-  @Deprecated(forRemoval = true)
-  public List<Predicate> getPastGoals() {
-    List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getPastGoals()) {
-      result.add(g.getGoalPredicate());
-    }
-    return result;
-  }
-
-  /**
-   * Get a copied list of the goals currently undergoing execution.
-   *
-   * @return list of active <code>Goal</code>s
-   */
-  @TRADEService
-  @Deprecated(forRemoval = true)
-  public List<Predicate> getActiveGoals() {
-    List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getActiveGoals()) {
-      result.add(g.getGoalPredicate());
-    }
-    return result;
-  }
-
-  /**
-   * Get the goals that are currently being pursued by the Basic Goal Manager for a particular actor.
-   *
-   * @return a list of predicates representing the goal
-   */
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public List<Predicate> getActiveGoals(Symbol actor) {
-    List<Predicate> pg = new ArrayList<>();
-    for (Goal g : em.getActiveGoals()) {
-      if (g.getActor().equals(actor)) {
-        pg.add(g.getGoalPredicate());
-      }
-    }
-    return pg;
-  }
-
-  //TODO: Q: should interactions with active goals exclude scheduled goals?
-  /**
-   * Get all scheduled goals which have either yet to be submitted, or are currently executing.
-   *
-   * @return a list of predicates representing the goal
-   */
-  @TRADEService
-  public List<Predicate> getScheduledGoals() {
-    List<Predicate> result = new ArrayList<>();
-    for (ScheduledGoal sg : em.getScheduledGoals()) {
-      result.add(sg.getDisplayPredicate());
-    }
-    return result;
-  }
-
-  /**
-   * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing.
-   *
-   * @param agentTeam the actor to filter the scheduled goals list by
-   * @return a list of predicates representing the goal
-   */
-  @TRADEService
-  public List<Predicate> getScheduledGoals(Symbol agentTeam) {
-    List<Predicate> pg = new ArrayList<>();
-    for (ScheduledGoal sg : em.getScheduledGoals()) {
-      if (sg.getActor().equals(agentTeam)) {
-        pg.add(sg.getDisplayPredicate());
-      }
-    }
-    return pg;
-  }
-
-  /**
-   * Get the goal ids of scheduled goals which have either yet to be submitted, or are currently executing.
-   *
-   * @return a list of scheduled goals' ids
-   */
-  @TRADEService
-  public List<Long> getScheduledGoalIds() {
-    List<Long> result = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      result.add(g.getId());
-    }
-    return result;
-  }
-
-  /**
-   * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently.
-   *
-   * @param agentTeam the actor to filter the scheduled goals list by
-   * @return a list of scheduled goals' ids
-   */
-  @TRADEService
-  public List<Long> getScheduledGoalIds(Symbol agentTeam) {
-    List<Long> pg = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      if (g.getActor().equals(agentTeam)) {
-        pg.add(g.getId());
-      }
-    }
-    return pg;
-  }
-
   /**
    * Update the scheduled goal specified by the goal ID. The update predicate can
    * specify the next execution/start time (e.g., start(dateString), set a new periodicity (e.g., period(1, hour),
@@ -1016,20 +852,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Get GoalInfo for all (active, current, past) goals.
-   *
-   * @return
-   */
-  @TRADEService
-  @Deprecated(forRemoval = true)
-  public List<GoalInfo> getAllGoals() {
-    List<GoalInfo> goals = new ArrayList<>();
-    em.getCurrentGoals().forEach(g -> goals.add(g.getInfo()));
-    em.getPastGoals().forEach(g -> goals.add(g.getInfo()));
-    return goals;
-  }
-
-  /**
    * Determine whether the existing goal has higher priority than the supplied priorityTier and priority values
    *  (This method is used speculatively before goal submission to know how to format tentativeAccept responses, it
    *    is assumed that the goal associated with priorityTier/priority will have a higher goalId and therefore lose ties)
@@ -1047,13 +869,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * past goals. If no goal is found, -1 is returned.
    * NOTE: Depending on the ExecutionManager subclass, more than one match may exist and one will be returned at random.
    *
-   * @param goal
+   * @param goalPredicate
    * @return
    */
   @TRADEService
-  public Long getGoalId(Predicate goal) {
-    List<Long> goalIds = getGoalIds(goal);
-    if (goalIds == null || goalIds.size() == 0) {
+  public Long getGoalId(Predicate goalPredicate) {
+    List<Long> goalIds = getGoalIds(goalPredicate);
+    if (goalIds == null || goalIds.isEmpty()) {
       return -1L;
     } else {
       return goalIds.get(0);
@@ -1069,42 +891,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   public List<Long> getGoalIds(Predicate goalPredicate) {
-    List<Goal> goals = em.getAllGoals(goalPredicate);
+    List<Goal> goals = getFilteredGoals(GoalFilter.ALL, goalPredicate);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
-  }
-
-  /**
-   * Get the GoalInfo for all goals matching the supplied predicate. Checks all goal collections.
-   *
-   * @param goal
-   * @return
-   */
-  @TRADEService
-  public List<GoalInfo> getGoalInfos(Predicate goal) {
-    List<Goal> goals = em.getAllGoals(goal);
-    return goals.stream().map(Goal::getInfo).collect(Collectors.toList());
-  }
-
-  /**
-   * Get the Goal for a particular goal ID. This checks current and past goals.
-   * Returns null if no matching goal ID is found.
-   *
-   * TODO: remove this method once PA doesn't use GM
-   *
-   * @param gid goal id.
-   * @return the Goal corresponding to the ID.
-   */
-  @TRADEService
-  @Deprecated(forRemoval = true)
-  public Goal getGoal(long gid) {
-    return em.getGoal(gid);
-  }
-
-  @TRADEService
-  @Action
-  @Deprecated(forRemoval = true)
-  public Goal getCurrentGoal(Symbol actorToCheck, int index) {
-    return em.getCurrentGoal(actorToCheck, index);
   }
 
   /**
@@ -1131,7 +919,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return the GoalStatus
    */
   @TRADEService
-  @Action
   public GoalStatus getGoalStatus(long gid) {
     return em.getGoalStatus(gid);
   }
@@ -1143,7 +930,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return the PriorityTier
    */
   @TRADEService
-  @Action
   public PriorityTier getGoalPriorityTier(long gid) {
     return em.getGoalPriorityTier(gid);
   }
@@ -1155,7 +941,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return the priority
    */
   @TRADEService
-  @Action
   public long getGoalPriority(long gid) {
     return em.getGoalPriority(gid);
   }
@@ -1324,7 +1109,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public Predicate getActionContextSteps(Predicate goalPredicate, Predicate locationPredicate) {
 
     // get Goal instance from goalPredicate
-    List<Goal> goals = em.getCurrentGoals(goalPredicate);
+    List<Goal> goals = getFilteredGoals(GoalFilter.CURRENT, goalPredicate);
     if (goals.size() != 1) {
       log.error("[getActionContextSteps] Unique goal not found for goalPredicate: " + goalPredicate);
       return null;
@@ -1345,7 +1130,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   private List<Goal> getFilteredGoals(GoalFilter filter, Symbol actor) {
     List<Goal> goals = getFilteredGoals(filter);
-    goals.removeIf(g -> !g.getActor().equals(actor)); // TODO: how to handle type info?
+    goals.removeIf(g -> !g.getActor().equalsIgnoreType(actor)); // TODO: how to handle type info?
     return goals;
   }
 
@@ -1384,10 +1169,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       case NEXT -> goals.add(em.getNextGoal());
       case PAST -> goals.addAll(em.getPastGoals());
       case SYSTEM -> goals.addAll(em.getSystemGoals());
+      case SCHEDULED -> goals.addAll(em.getScheduledGoals());
       case ALL -> {
         goals.addAll(em.getActiveGoals());
         goals.addAll(em.getPendingGoals());
         goals.addAll(em.getPastGoals());
+        goals.addAll(em.getScheduledGoals());
       }
     }
 
@@ -1480,6 +1267,20 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Retrieves a list of GoalInfo objects based on the given goal filter criteria.
+   *
+   * @param filter a GoalFilter object containing specific filtering details.
+   * @return a list of GoalInfo objects that match the given predicate and filter criteria.
+   */
+  @TRADEService
+  public List<GoalInfo> getGoalInfos(GoalFilter filter) {
+    List<Goal> goals = getFilteredGoals(filter);
+    List<GoalInfo> goalInfos = new ArrayList<>();
+    goals.forEach(goal -> goalInfos.add(goal.getInfo()));
+    return goalInfos;
+  }
+
+  /**
    * Retrieves a list of goal IDs associated with the specified actor based on the provided filter.
    *
    * @param filter the filter criteria to apply when retrieving goals
@@ -1510,6 +1311,20 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Retrieves a list of goal IDs based on the provided goal filter.
+   *
+   * @param filter an additional filter object used to refine the goals selection
+   * @return a list of IDs of the goals matching the given predicate and filter
+   */
+  @TRADEService
+  public List<Long> getGoalIds(GoalFilter filter) {
+    List<Long> goalIds = new ArrayList<>();
+    List<Goal> goals = getFilteredGoals(filter);
+    goals.forEach(goal -> goalIds.add(goal.getId()));
+    return goalIds;
+  }
+
+  /**
    * Selects an action for the given goal predicate.
    *
    * @param goalPredicate the predicate representing the goal for which an action needs to be selected
@@ -1526,12 +1341,21 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Utility method mainly used for testing.
+   * Utility method used for testing.
    *
    * @param predicate
    */
   public void setState(Predicate predicate) {
     em.getStateMachine().assertBelief(predicate, MemoryLevel.EPISODIC, Factory.createPredicate("setState(gui)"));
+  }
+
+  /**
+   * Utility method used for testing. This should not be exposed as a TRADEService.
+   *
+   * @param gid
+   */
+  public Goal getGoal(long gid) {
+    return em.getGoal(gid);
   }
 
   @Override

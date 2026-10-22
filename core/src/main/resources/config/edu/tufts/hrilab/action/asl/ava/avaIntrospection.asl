@@ -7,6 +7,7 @@ import java.lang.String;
 import java.util.List;
 import java.util.Map;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 
 // is this  used?
 () = reportBatteryLevel() {
@@ -298,7 +299,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         //Assumes QueueEM here
         !goalId = op:get(!goalIds,0);
         !goalStatus = tsc:getGoalStatus(!goalId);
-        !priorityTier = act:getGoalPriorityTier(!goalId);
+        !priorityTier = tsc:getGoalPriorityTier(!goalId);
         if (~op:equalsValue(!goalStatus,"SUSPENDED") && ~op:equalsValue(!priorityTier,"KIOSK")) {
             ?exists = op:newObject("java.lang.Boolean", "true");
         }
@@ -357,12 +358,8 @@ import edu.tufts.hrilab.action.goal.Goal;
 //TODO: LLM only - fail gracefully if no LLM present
 //Wrapper to adhere to queueEM
 () = describeActionSteps(Predicate ?action) {
-    Goal !goal;
-    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
     edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
     Predicate !actionDescription;
-    edu.tufts.hrilab.action.ActionConstraints !ac;
-    edu.tufts.hrilab.action.state.StateMachine !sm;
     java.util.List !eventSpecs;
     Predicate !stepPredicate;
     java.util.List !actDescArgs;
@@ -373,18 +370,13 @@ import edu.tufts.hrilab.action.goal.Goal;
     !isTaughtAction = tsc:isLearnedAction(?action);
 
     if (op:equals(!isTaughtAction,true)) {
-        // get StateMachine for use in action selection
-        !sm = tsc:getStateMachine();
 
         // pick action, and get event specs from selected action
-        !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", ?action);
-        !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
-        !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
-        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+        !parameterizedAction = tsc:selectActionForGoal(?action);
 
         // do null check for action
         if (op:isNull(!parameterizedAction)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,how(?action)))");
+            !failCond = op:createPredicate("not(know(?actor,how(?action)))");
             exit(FAIL, !failCond);
         }
 

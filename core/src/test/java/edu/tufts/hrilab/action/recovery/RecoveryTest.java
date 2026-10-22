@@ -66,7 +66,7 @@ public class RecoveryTest {
     }
 
     private <T extends DiarcComponent> T  createInstanceHelper(Class<T> clazz, String args) {
-      return DiarcComponent.createInstance(clazz, args, true, false);
+      return DiarcComponent.createInstance(clazz, true, false, args);
     }
 
     //This test might not be the most helpful past checking whether every case works as a set

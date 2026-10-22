@@ -357,12 +357,8 @@ import edu.tufts.hrilab.action.goal.Goal;
 
 //Wrapper to adhere to queueEM
 (String ?output) = generateActionStepsString(Predicate ?action) {
-    Goal !goal;
-    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
     edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
     Predicate !actionDescription;
-    edu.tufts.hrilab.action.ActionConstraints !ac;
-    edu.tufts.hrilab.action.state.StateMachine !sm;
     java.util.List !eventSpecs;
     Predicate !stepPredicate;
     java.util.List !actDescArgs;
@@ -373,14 +369,9 @@ import edu.tufts.hrilab.action.goal.Goal;
     !isTaughtAction = tsc:isLearnedAction(?action);
 
     if (op:equals(!isTaughtAction,true)) {
-        // get StateMachine for use in action selection
-        !sm = tsc:getStateMachine();
 
         // pick action, and get event specs from selected action
-        !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", ?action);
-        !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
-        !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
-        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+        !parameterizedAction = tsc:selectActionForGoal(?action);
 
         // do null check for action
         if (op:isNull(!parameterizedAction)) {

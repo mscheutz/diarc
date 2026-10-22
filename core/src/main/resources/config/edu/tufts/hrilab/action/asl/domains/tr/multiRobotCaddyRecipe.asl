@@ -368,6 +368,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
     !bradAsHumanActor = op:createPredicate("object(brad, human)");
     !plannedActionFull = op:createPredicate("planned", !planningActor);
+    op:log("info", ">>>> 1 plannedActionFull: !plannedActionFull");
 
     Predicate !goalState;
     !goalState = op:createPredicate("and", ?failureReasons);
@@ -415,7 +416,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (~op:isNull(!parameterizedAction)) {
         op:log(debug, "[generateRecoveryPlanAndAssess] successfully got planned parameterizedAction for !goalPred for self");
         //do performance assessment on this goal
+    op:log("info", ">>>> 2 plannedActionFull: !plannedActionFull");
         act:estimatePerformanceMeasures(!plannedActionFull, before);
+    op:log("info", ">>>> 2 plannedActionFull: !plannedActionFull");
         op:log(debug, "[generateRecoveryPlanAndAssess] performances measures run for planned action for goal !goalPred");
 
         //say that it failed
@@ -446,8 +449,11 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
+            op:log("info", ">>>> 4 plannedActionFull: !plannedActionFull");
             !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            op:log("info", ">>>> 5 plannedActionFull: !plannedActionFull");
             !priority = act:getPriorityForGoal(!plannedActionFull);
+            op:log("info", ">>>> 6 plannedActionFull: !plannedActionFull");
             !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {

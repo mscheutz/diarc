@@ -657,8 +657,8 @@ public class QueueExecutionManagerTest {
     assertEquals(selfGoals.size(), 2);
     assertEquals(selfGoals.get(0).getStatus(), GoalStatus.ACTIVE);
     assertEquals(selfGoals.get(1).getStatus(), GoalStatus.ACTIVE);
-    assertEquals(selfGoals.get(0).getGoalPredicate(), goalPred);
-    assertEquals(selfGoals.get(1).getGoalPredicate(), goalPred2);
+    assertEquals(selfGoals.get(1).getGoalPredicate(), goalPred);
+    assertEquals(selfGoals.get(0).getGoalPredicate(), goalPred2);
 
     assertSame(em.getNextGoal().getGoalPredicate(), goalPred3);
     assertSame(em.getNextGoal(Factory.createSymbol("team1:agent")).getGoalPredicate(), goalPred5);

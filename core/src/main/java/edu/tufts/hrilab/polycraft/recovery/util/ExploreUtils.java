@@ -11,6 +11,7 @@ import edu.tufts.hrilab.action.Condition;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.ParameterizedAction;
@@ -134,7 +135,8 @@ public class ExploreUtils {
       //TODO: Do we want goals from this method to skip/override the execution manager?
       //      Depending on the answer to the above, do we only care if a matching goal is currently active or submitted?
       //Currently made methods in GM and swapped calls here to do so
-      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActiveGoals").argTypes(Symbol.class)).call(List.class, goal.getActor());
+      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalPredicatesForActor").argTypes(GoalFilter.class, Symbol.class))
+              .call(List.class, GoalFilter.CURRENT, goal.getActor());
       if (currGoals.contains(goalPredicate)) {
         log.info("Goal is already a current goal. Skipping this goal to prevent a deadlock. Goal: " + goalPredicate);
         return new ConditionJustification(false);

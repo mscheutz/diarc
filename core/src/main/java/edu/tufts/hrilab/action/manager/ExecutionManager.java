@@ -1787,7 +1787,12 @@ public class ExecutionManager implements GoalListener {
    * @return list of Goals
    */
   public List<Goal> getPendingGoals() {
-    return pendingGoals.stream().map(PendingGoal::getGoal).toList();
+    List<Goal> goals = new ArrayList<>();
+    Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
+    while (pendingGoalsIterator.hasNext()) {
+      goals.add(pendingGoalsIterator.next().getGoal());
+    }
+    return goals;
   }
 
   /**
@@ -1897,51 +1902,6 @@ public class ExecutionManager implements GoalListener {
     return canceledIds;
   }
 
-  /**
-   * Get a list of the corresponding predicate representations of all goals currently found in the pending collection
-   */
-  public List<Predicate> getPendingGoalsPredicates() {
-    log.trace("[getPendingGoalsPredicates] in method");
-    List<Predicate> goalPreds = new ArrayList<>();
-    synchronized (pendingGoalsLock) {
-      log.trace("[getPendingGoalsPredicates] have pendingGoalsLock");
-      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
-      while (pendingGoalIterator.hasNext()) {
-        PendingGoal pendingGoal = pendingGoalIterator.next();
-        goalPreds.add(pendingGoal.getGoal().getGoalStatePredicate());
-      }
-    }
-    log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
-    return goalPreds;
-  }
-
-  /**
-   * Get a list of the corresponding predicate representations of all goals currently found in the pending collection
-   * for a specific AgentTeam.
-   */
-  public List<Predicate> getPendingGoalsPredicates(Symbol agentTeamSym) {
-    log.trace("[getPendingGoalsPredicates] in method with actor {}", agentTeamSym);
-
-    AgentTeam agentTeam = getAgentTeam(agentTeamSym);
-    if (agentTeam == null) {
-      return new ArrayList<>();
-    }
-
-    List<Predicate> goalPreds = new ArrayList<>();
-    synchronized (pendingGoalsLock) {
-      log.trace("[getPendingGoalsPredicates] have pendingGoalsLock");
-      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
-      while (pendingGoalIterator.hasNext()) {
-        PendingGoal pendingGoal = pendingGoalIterator.next();
-        if (agentTeam.getName().getName().equals(pendingGoal.getGoal().getActor().getName()) || agentTeam.getMember(pendingGoal.getGoal().getActor()) != null) {
-          goalPreds.add(pendingGoal.getGoal().getGoalStatePredicate());
-        }
-      }
-    }
-    log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
-    return goalPreds;
-  }
-
   public List<Goal> getSystemGoals() {
     return getSystemGoals(rootAgent);
   }
@@ -1956,44 +1916,17 @@ public class ExecutionManager implements GoalListener {
       return goals;
     }
 
-    goals.addAll(agentTeam.getActiveGoals());
+    for (Goal g : agentTeam.getActiveGoals()) {
+      if (g.getPriorityTier() != PriorityTier.SKIPPENDING) {
+        goals.add(g);
+      }
+    }
 
     for (Symbol member : agentTeam.getMemberNames()) {
       goals.addAll(getSystemGoals(member));
     }
 
     return goals;
-  }
-
-  @Deprecated
-  public List<Predicate> getSystemGoalsPredicates() {
-    return getSystemGoalsPredicates(rootAgent);
-  }
-
-  @Deprecated
-  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
-    log.trace("[getSystemGoalsPredicates] {}", actor);
-    return getSystemGoalsPredicatesHelper(actor.toUntyped(), new ArrayList<>());
-  }
-
-  @Deprecated
-  private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
-    AgentTeam agentTeam = getAgentTeam(actor);
-    if (agentTeam == null) {
-      return goalPreds;
-    }
-
-    for (Goal g : agentTeam.getActiveGoals()) {
-      if (g.getPriorityTier() != PriorityTier.SKIPPENDING) {
-        goalPreds.add(g.getGoalPredicate());
-      }
-    }
-
-    for (Symbol member : agentTeam.getMemberNames()) {
-      goalPreds.addAll(getSystemGoalsPredicates(member));
-    }
-
-    return goalPreds;
   }
 
   public Goal getNextGoal() {
@@ -2181,58 +2114,6 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
-   * Get a list of the currently running goals matching the goalPredicate query.
-   *
-   * @return goals with matching goalPredicate, or null if no matching goal found
-   */
-  protected List<Goal> getActiveGoals(Predicate goalPredicate) {
-    log.debug("[getActiveGoals] {}", goalPredicate);
-    return getGoalHelper(getActiveGoals(), goalPredicate);
-  }
-
-  /**
-   * Get a list of all past goals matching the goalPredicate query.
-   *
-   * @return goals with matching goalPredicate, or null if no matching goal found
-   */
-  public List<Goal> getPastGoals(Predicate goalPredicate) {
-    log.debug("[getPastGoals] {}", goalPredicate);
-    return getGoalHelper(getPastGoals(), goalPredicate);
-  }
-
-  /**
-   * Get a list of all current pending and/or active goals matching the goalPredicate query.
-   *
-   * @return goals with matching goalPredicate, or null if no matching goal found
-   */
-  public List<Goal> getCurrentGoals(Predicate goalPredicate) {
-    log.debug("[getCurrentGoals] {}", goalPredicate);
-    return getGoalHelper(getCurrentGoals(), goalPredicate);
-  }
-
-  /**
-   * Get a list of all pending, active, and past goals matching the goalPredicate query.
-   *
-   * @return goals with matching goalPredicate, or null if no matching goal found
-   */
-  public List<Goal> getAllGoals(Predicate goalPredicate) {
-    log.debug("[getAllGoals] {}", goalPredicate);
-    synchronized (pendingGoalsLock) {
-      log.trace("[getAllGoals] {} have pendingGoalsLock", goalPredicate);
-      synchronized (pastGoals) {
-        log.trace("[getAllGoals] {} have pastGoalsLock", goalPredicate);
-        synchronized (goalsLock) {
-          log.trace("[getAllGoals] {} have goalsLock", goalPredicate);
-          List<Goal> goals = getCurrentGoals(goalPredicate);
-          goals.addAll(getPastGoals(goalPredicate));
-          log.trace("[getCurrentGoals] {} releasing all locks", goalPredicate);
-          return goals;
-        }
-      }
-    }
-  }
-
-  /**
    * Query the GoalStatus of a particular goal.
    *
    * @param gid the ID of the goal to check on
@@ -2314,7 +2195,6 @@ public class ExecutionManager implements GoalListener {
     return compareGoal(g.getPriorityTier(), g.getPriority(), g.getId(), priorityTier, priority, g.getId()+1) > 0;
   }
 
-
   /**
    * Query the ActionStatus of the action (i.e., root context for this goal) being executed
    * in pursuit of the specified goal.
@@ -2385,17 +2265,6 @@ public class ExecutionManager implements GoalListener {
       log.trace("[getGoalHelper(" + actor + "," + index + ")] no matching goal found.");
     }
     return returnGoal;
-  }
-
-  private List<Goal> getGoalHelper(List<Goal> goalCollection, Predicate goalPredicate) {
-    log.trace("[getGoalHelper] {}. goal: {}", goalCollection, goalPredicate);
-    List<Goal> matchingGoals = new ArrayList<>();
-    for (Goal currGoal : goalCollection) {
-      if (currGoal.matches(goalPredicate)) {
-        matchingGoals.add(currGoal);
-      }
-    }
-    return matchingGoals;
   }
 
   ////////// Action Learning //////////

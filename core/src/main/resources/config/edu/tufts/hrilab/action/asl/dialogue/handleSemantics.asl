@@ -5,6 +5,7 @@ import edu.tufts.hrilab.slug.dialogue.Question;
 import java.lang.Integer;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import java.lang.Boolean;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 
 () = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType, Boolean ?validated) {
     // ?semanticType: either direct or indirect   not sure if this is the best variable name
@@ -191,8 +192,8 @@ import java.lang.Boolean;
     java.util.Set !queryVariables;
 
       // query belief for results
-      !beliefs = act:queryBelief(!knowsQuery);
-      op:log("debug", "Queried for !knowsQuery; result: !beliefs");
+      !beliefs = act:queryBelief(?knowsQuery);
+      op:log("debug", "Queried for ?knowsQuery; result: !beliefs");
 
       if (op:invokeMethod(!beliefs, "isEmpty")) {
         !queryVariables = op:invokeMethod(?query, "getVars");

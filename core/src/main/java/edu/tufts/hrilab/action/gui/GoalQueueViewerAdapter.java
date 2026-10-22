@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.notification.NotificationType;
@@ -66,15 +67,16 @@ public class GoalQueueViewerAdapter extends GuiAdapter {
 
   private void updateGoals() {
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllGoals").argTypes());
-      List<GoalInfo> goals = tsi.call(List.class);
+
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalInfos").argTypes(GoalFilter.class));
+      List<GoalInfo> goals = tsi.call(List.class, GoalFilter.ALL);
 
       JsonObject json = new JsonObject();
       json.add("goals", toJson(goals));
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {
-      log.error("Error calling getAllGoals service.", e);
+      log.error("Error calling getGoalInfos service.", e);
     }
   }
 

@@ -41,7 +41,7 @@ public class ScheduledGoalTest {
 
   @BeforeClass
   public static void setUpClass() {
-    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true, false);
+    gm = DiarcComponent.createInstance(GoalManagerComponent.class, true, false, "-beliefinitfile agents/agents.pl");
   }
 
   @AfterClass
