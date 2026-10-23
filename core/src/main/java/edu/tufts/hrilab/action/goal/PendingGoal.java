@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.action.goal;
 
-import edu.tufts.hrilab.action.execution.ExecutionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +13,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+// TODO: why doesn't this extend Goal?
 public class PendingGoal {
   private static final Logger log = LoggerFactory.getLogger(PendingGoal.class);
   private final Goal goal;

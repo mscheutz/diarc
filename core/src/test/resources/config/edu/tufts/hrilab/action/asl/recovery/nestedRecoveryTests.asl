@@ -18,7 +18,7 @@ import java.util.List;
         actionRecovery : {
             //catchingActions : {pickUp(X,success)}
             catchingActions : {pickup(X)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         //failedActions : {pickup(X)}
         goals : {pickUp(X,success)}
@@ -34,7 +34,7 @@ import java.util.List;
 () = failActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         failedActions : {failAction(X)}
         actionStatuses : {FAIL_PRECONDITIONS}
@@ -48,7 +48,7 @@ import java.util.List;
 () = pickupNestedRecoveryFail(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         failedActions : {pickup(X)}
     }
@@ -84,7 +84,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             //catchingActions : {pickUpV2(X,Y)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         goals : {pickUpV2(?actor,child)}
         failedActions : {pickupv2(X)}
@@ -97,7 +97,7 @@ import java.util.List;
 //    recovery : {
 //        actionRecovery : {
 //            catchingActions : {pickUpV2(X,Y)}
-//            postRecovery : postrecovery_parent_retry
+//            postRecovery : retry
 //        }
 //        goals : {pickUpV2(?actor,parent)}
 //        failedActions : {pickupv2(X)}

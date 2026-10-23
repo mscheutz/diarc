@@ -73,7 +73,7 @@ public class ScheduledGoalTest {
     } catch (TRADEException e) {
       log.error("Error deregistering with TRADE.", e);
     }
-    gm.cancelAllCurrentGoals();
+    gm.cancelGoals(GoalFilter.CURRENT);
   }
 
   private String getDateString(int delay, int timeUnit) {

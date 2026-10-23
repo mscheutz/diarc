@@ -63,7 +63,7 @@ public class GoalContext extends ArgumentBasedContext {
       recovery.updateRecoveryStatus(this);
 
       if (recovery.getStatus() == RecoveryStatus.SUCCESS && goal.isAction()) {
-        //Special cases: action recovery with postrecovery_continue executed directly under root goal context. If goal is
+        //Special cases: action recovery with CONTINUE executed directly under root goal context. If goal is
         //  direct action submission, then consider terminated. Other SUCCESS case below will still validate postconditions of goal
         //  and potentially replan.
         setStatus(ActionStatus.SUCCESS);

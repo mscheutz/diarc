@@ -375,7 +375,7 @@ public class RecoveryTest {
         Context recoveryActionContext = recoveryGoalContext.getChildContexts().get(0);
         Assert.assertEquals(ActionStatus.SUCCESS, recoveryActionContext.getStatus());
 
-        //postrecovery execution defined as postrecovery_success -> pickup continues from step after failed action
+        //postrecovery execution defined as CONTINUE -> pickup continues from step after failed action
         //Child four: log statement
         Context logContext = opengripperContext.getChildContexts().get(3);
         Assert.assertEquals(ActionStatus.SUCCESS, logContext.getStatus());
@@ -422,7 +422,7 @@ public class RecoveryTest {
         Context recoveryActionContext = recoveryGoalContext.getChildContexts().get(0);
         Assert.assertEquals(ActionStatus.SUCCESS, recoveryActionContext.getStatus());
 
-        //Third child: next step of pickUp - postRecovery execution defined as postrecovery_success
+        //Third child: next step of pickUp - postRecovery execution defined as CONTINUE
         Context pickupContext = pickUpContext.getChildContexts().get(2);
         Assert.assertEquals(ActionStatus.SUCCESS, pickupContext.getStatus());
         Assert.assertEquals("pickup", pickupContext.getCommand());
@@ -733,7 +733,7 @@ public class RecoveryTest {
         Assert.assertEquals("failAction", failActionContext.getCommand());
         Assert.assertEquals(ActionStatus.FAIL_PRECONDITIONS, failActionContext.getStatus());
 
-        //Second inner child: recovery of recovery policy - succeeds with postrecovery_retry
+        //Second inner child: recovery of recovery policy - succeeds with RETRY
         recoveryContext = recoveryActionContext.getChildContexts().get(1);
         Assert.assertEquals("goal(failActionRecovery(self:agent,[failAction(self:agent),[failActionPre(self:agent),pickupNestedRecoverySuccess(self:agent,[pickup(self:agent),[gripperOpen(self:agent),pickUp(self:agent,success))))", recoveryContext.getCommand());
         Assert.assertEquals(ActionStatus.SUCCESS, recoveryContext.getStatus());
@@ -834,7 +834,7 @@ public class RecoveryTest {
         Assert.assertEquals(ActionStatus.FAIL_PRECONDITIONS, pickupContext.getStatus());
         Assert.assertEquals("pickupv2", pickupContext.getCommand());
 
-        //Recovery with postrecovery_retry
+        //Recovery with postrecovery RETRY
         Context recoveryContext = pickUpContext.getChildContexts().get(2);
         Assert.assertEquals(ActionStatus.SUCCESS, recoveryContext.getStatus());
         Assert.assertEquals("goal(pickupNestedRecoveryFaulty(self:agent,[pickupv2(self:agent),[gripperOpenV2(self:agent),pickUpV2(self:agent,child)))", recoveryContext.getCommand());
@@ -1058,7 +1058,7 @@ public class RecoveryTest {
         Assert.assertEquals("goal(testActionSuccessRecovery(self:agent,[testActionSuccess(self:agent),[testActionPre(self:agent),testActionSuccess(self:agent)))", recoveryContext.getCommand());
         Assert.assertEquals(ActionStatus.SUCCESS, recoveryContext.getStatus());
 
-        //postrecovery_continue -> no more execution
+        //continue -> no more execution
     }
 
     /**

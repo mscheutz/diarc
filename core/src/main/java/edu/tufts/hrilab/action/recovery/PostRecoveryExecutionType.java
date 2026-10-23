@@ -24,9 +24,6 @@ public enum PostRecoveryExecutionType {
 
     public static PostRecoveryExecutionType fromString(String typeStr) {
         if (typeStr != null) {
-            if (typeStr.startsWith("postrecovery_")) {
-                typeStr = typeStr.substring(13);
-            }
             for (PostRecoveryExecutionType t : PostRecoveryExecutionType.values()) {
                 if (typeStr.equalsIgnoreCase(t.name())) {
                     return t;

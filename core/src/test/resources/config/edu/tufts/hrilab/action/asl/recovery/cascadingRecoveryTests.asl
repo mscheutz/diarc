@@ -16,7 +16,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {opengripper(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failureReasons : {found(self:agent,fakeAction(self:agent))}
         goals : {holding(?actor)}

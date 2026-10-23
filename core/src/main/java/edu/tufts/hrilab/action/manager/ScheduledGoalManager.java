@@ -371,7 +371,7 @@ public class ScheduledGoalManager {
   /**
    * Cancel all scheduled goals.
    */
-  public void cancelAllScheduledGoals() {
+  public void cancelScheduledGoals() {
     Set<ScheduledGoal> goals;
     synchronized (scheduledGoals) {
       goals = new HashSet<>(scheduledGoals.keySet());

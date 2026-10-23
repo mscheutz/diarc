@@ -181,7 +181,7 @@ import java.lang.Integer;
     recovery : {
         actionRecovery : {
             catchingActions : {fakeAction(), actionEight(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         goals : {stateEight(X)}
     }
@@ -205,7 +205,7 @@ import java.lang.Integer;
     recovery : {
         actionRecovery : {
             catchingActions : {fakeAction(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         goals : {stateNine(X)}
     }
@@ -229,7 +229,7 @@ import java.lang.Integer;
     recovery : {
         actionRecovery : {
             catchingActions : {actionTen(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         excludedGoals : {stateTen(X)}
     }
@@ -252,7 +252,7 @@ import java.lang.Integer;
 () = actionElevenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         goals : {stateEleven(X)}
         failedActions : {emptyActionFail(X)}
@@ -308,7 +308,7 @@ import java.lang.Integer;
 () = actionThirteenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
     }
     effects : {
@@ -354,7 +354,7 @@ import java.lang.Integer;
 () = testActionRetryRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         failedActions : {testActionRetry(X)}
     }
@@ -367,7 +367,7 @@ import java.lang.Integer;
 () = testActionSuccessRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failedActions : {testActionSuccess(X)}
     }

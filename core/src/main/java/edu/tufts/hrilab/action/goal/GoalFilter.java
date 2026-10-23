@@ -7,10 +7,10 @@ package edu.tufts.hrilab.action.goal;
 public enum GoalFilter {
   ACTIVE, // being executed
   PENDING, // waiting to execute
-  CURRENT, // active and pending
+  CURRENT, // active, pending, and scheduled
   NEXT, // PENDING and next to be executed
   PAST, // permanently terminated
-  SYSTEM, // ACTIVE goal that does not skip the pending queue. TODO: rename this. maybe USER_ACTIVE ?
+  SYSTEM, // ACTIVE goal that does not skip the pending queue. TODO: rename this. maybe ACTIVE_USER ?
   SCHEDULED,
   ALL //
 }

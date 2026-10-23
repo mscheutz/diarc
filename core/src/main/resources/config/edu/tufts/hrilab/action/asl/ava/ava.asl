@@ -308,7 +308,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 //    recovery : {
 //        actionRecovery : {
 //            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
-//            postRecovery : postrecovery_retry
+//            postRecovery : retry
 //        }
 //        failedActions: {goToLocation(X,Y,Z)}
 //        maximumAttempts : 1
@@ -325,7 +325,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     recovery : {
         actionRecovery : {
             catchingActions : {goToLocation(X,Y)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         //failedActions: {goToLocation(X,Y,Z)}
         failedActions: {goToLocation(X,Y)}

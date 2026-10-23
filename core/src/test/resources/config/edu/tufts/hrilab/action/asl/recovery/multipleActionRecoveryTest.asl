@@ -31,7 +31,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {pickupv2(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failureReasons : {found(self:agent,fakeAction(self:agent))}
     }
@@ -46,7 +46,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {opengripper(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failureReasons : {found(self:agent,fakeAction(self:agent))}
     }
@@ -78,7 +78,7 @@ import java.util.List;
         actionRecovery : {
             //catchingActions : {closeGripperThrice(X)}
             catchingActions : {closeGripper(X)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         excludedGoals : {testActionSequence(X,Y)}
     }
@@ -101,7 +101,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {testActionSequence(X,once)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
     }
     effects : {
@@ -115,7 +115,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {testActionSequence(X,twice)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         maximumAttempts: 2
     }

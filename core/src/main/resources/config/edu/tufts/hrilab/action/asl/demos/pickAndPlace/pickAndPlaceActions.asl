@@ -305,7 +305,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     recovery : {
         actionRecovery : {
             catchingActions : {moveObjectTo(A,X,Y,Z)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failureReasons : {not(holding(X,Y))}
     }
@@ -540,7 +540,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     recovery : {
         actionRecovery : {
             catchingActions : {putDown(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         failureReasons : {has(theLocationBelowMe,space)}
         excludedGoals : {putDown(X), putDown(X,Y)}

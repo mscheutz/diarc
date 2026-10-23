@@ -139,7 +139,7 @@ public class QueueExecutionManagerTest {
 
   private void cancelAllGoals() {
     log.info("[cancelAllGoals] cleaning up");
-    em.cancelAllCurrentGoals();
+    em.cancelCurrentGoals();
   }
 
   /**
@@ -570,7 +570,7 @@ public class QueueExecutionManagerTest {
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
     assertSame(lookGoal.getStatus(), GoalStatus.PENDING);
 
-    em.cancelAllPendingGoals();
+    em.cancelPendingGoals();
     em.joinOnGoal(driveGoal.getId());
     em.joinOnGoal(lookGoal.getId());
     assertSame(driveGoal.getStatus(), GoalStatus.CANCELED);
@@ -592,7 +592,7 @@ public class QueueExecutionManagerTest {
     assertSame(freeze2Goal.getStatus(), GoalStatus.ACTIVE);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
 
-    em.cancelAllActiveGoals();
+    em.cancelActiveGoals();
     em.joinOnGoal(freezeGoal.getId());
     em.joinOnGoal(freeze2Goal.getId());
     em.joinOnGoal(driveGoal.getId());
@@ -615,7 +615,7 @@ public class QueueExecutionManagerTest {
     assertSame(freeze2Goal.getStatus(), GoalStatus.ACTIVE);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
 
-    em.cancelAllCurrentGoals();
+    em.cancelCurrentGoals();
     em.joinOnGoal(freezeGoal.getId());
     em.joinOnGoal(freeze2Goal.getId());
     em.joinOnGoal(driveGoal.getId());

@@ -15,7 +15,6 @@ import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
@@ -658,12 +657,61 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Cancels all goals of the specified type. Prefer this method over the deprecated cancel***Goals methods.
+   * @param filter
+   */
+  @TRADEService
+  public void cancelGoals(GoalFilter filter) {
+    switch (filter) {
+      case ALL:
+      case CURRENT:
+        em.cancelCurrentGoals();
+        break;
+      case ACTIVE:
+        em.cancelActiveGoals();
+        break;
+      case PENDING:
+        em.cancelPendingGoals();
+        break;
+      case SYSTEM:
+        em.cancelSystemGoals();
+        break;
+      case SCHEDULED:
+        em.cancelScheduledGoals();
+        break;
+      default:
+        log.error("Can not cancel goals of type: " + filter);
+    }
+  }
+
+  /**
    * Cancels all pending and active goals (other than the listen goal)
    */
   @TRADEService
   @Action
+  @Deprecated (forRemoval = true)
   public void cancelAllCurrentGoals() {
-    em.cancelAllCurrentGoals();
+    em.cancelCurrentGoals();
+  }
+
+  /**
+   * Cancels all active goals (other than the listen goal)
+   */
+  @TRADEService
+  @Action
+  @Deprecated (forRemoval = true)
+  public void cancelAllActiveGoals() {
+    em.cancelActiveGoals();
+  }
+
+  /**
+   * Cancels all pending goals
+   */
+  @TRADEService
+  @Action
+  @Deprecated (forRemoval = true)
+  public void cancelAllPendingGoals() {
+    em.cancelPendingGoals();
   }
 
   /**
@@ -676,18 +724,11 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
+  @Deprecated (forRemoval = true)
   public List<Long> cancelSystemGoals() {
     return em.cancelSystemGoals();
   }
 
-  /**
-   * Cancels all active goals (other than the listen goal)
-   */
-  @TRADEService
-  @Action
-  public void cancelAllActiveGoals() {
-    em.cancelAllActiveGoals();
-  }
   /**
    * Cancels a subset of active goals for the supplied agentTeam and all of its children. This method ignores goals with
    * PriorityTier SKIPPENDING and scheduled goals. In order to accommodate some practical agent configurations with
@@ -700,15 +741,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public List<Long> cancelSystemGoals(Symbol agentTeam) {
     return em.cancelSystemGoals(agentTeam);
-  }
-
-  /**
-   * Cancels all pending goals
-   */
-  @TRADEService
-  @Action
-  public void cancelAllPendingGoals() {
-    em.cancelAllPendingGoals();
   }
 
   /**
@@ -1164,6 +1196,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       case CURRENT -> {
         goals.addAll(em.getActiveGoals());
         goals.addAll(em.getPendingGoals());
+        goals.addAll(em.getScheduledGoals());
       }
       case PENDING -> goals.addAll(em.getPendingGoals());
       case NEXT -> goals.add(em.getNextGoal());

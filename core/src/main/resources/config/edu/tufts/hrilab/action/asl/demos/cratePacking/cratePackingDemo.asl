@@ -372,7 +372,7 @@ import java.lang.Boolean;
     recovery : {
         actionRecovery : {
             catchingActions : {graspItem(A)}
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         failureReasons : {holding(X,Y)}
         maximumAttempts : 99

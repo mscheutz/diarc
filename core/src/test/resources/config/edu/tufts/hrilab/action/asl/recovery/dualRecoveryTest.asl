@@ -12,7 +12,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {pickupwrapper(X)}
-            postRecovery : postrecovery_continue
+            postRecovery : continue
         }
         goals : {pickUpWrapperSuccess(X)}
     }

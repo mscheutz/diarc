@@ -89,17 +89,16 @@ public class ASLParser extends Parser {
 		return new String[] {
 			null, "';'", "'='", "'['", "']'", "'('", "')'", "','", "'.'", "'<'", 
 			"'>'", "':'", "'{'", "'}'", "'reset'", "'actionRecovery'", "'catchingActions'", 
-			"'postRecovery'", "'postrecovery_retry'", "'postrecovery_continue'", 
-			"'goals'", "'excludedGoals'", "'failedActions'", "'excludedFailedActions'", 
-			"'failureReasons'", "'excludedFailureReasons'", "'actionStatuses'", "'maximumAttempts'", 
-			null, null, null, "'import'", "'as'", "'act'", "'op'", "'obs'", "'goal'", 
-			"'tsc'", "'this'", "'infer'", "'var'", "'setting'", "'or'", "'pre'", 
-			"'post'", "'overall'", "'obligation'", "'effects'", "'always'", "'success'", 
-			"'failure'", "'nonperf'", "'observes'", "'recovery'", "'conditions'", 
-			"'if'", "'elseif'", "'else'", "'while'", "'for'", "'foreach'", "'true'", 
-			"'false'", "'exit'", "'try'", "'catch'", "'finally'", "'~'", "'return'", 
-			"'async'", "'join'", "'onInterrupt'", "'suspend'", "'cancel'", "'resume'", 
-			"'noInterrupt'", null, "'||'", "'&&'"
+			"'postRecovery'", "'retry'", "'continue'", "'goals'", "'excludedGoals'", 
+			"'failedActions'", "'excludedFailedActions'", "'failureReasons'", "'excludedFailureReasons'", 
+			"'actionStatuses'", "'maximumAttempts'", null, null, null, "'import'", 
+			"'as'", "'act'", "'op'", "'obs'", "'goal'", "'tsc'", "'this'", "'infer'", 
+			"'var'", "'setting'", "'or'", "'pre'", "'post'", "'overall'", "'obligation'", 
+			"'effects'", "'always'", "'success'", "'failure'", "'nonperf'", "'observes'", 
+			"'recovery'", "'conditions'", "'if'", "'elseif'", "'else'", "'while'", 
+			"'for'", "'foreach'", "'true'", "'false'", "'exit'", "'try'", "'catch'", 
+			"'finally'", "'~'", "'return'", "'async'", "'join'", "'onInterrupt'", 
+			"'suspend'", "'cancel'", "'resume'", "'noInterrupt'", null, "'||'", "'&&'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();

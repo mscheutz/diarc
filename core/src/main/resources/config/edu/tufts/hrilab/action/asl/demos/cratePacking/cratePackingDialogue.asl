@@ -706,7 +706,7 @@ import java.lang.Boolean;
 () = solverNotRanRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_retry
+            postRecovery : retry
         }
         failureReasons : {ranPackingAlgorithmWithUpdatedSettings(X)}
     }

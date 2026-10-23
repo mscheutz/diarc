@@ -1807,11 +1807,11 @@ public class ExecutionManager implements GoalListener {
   /**
    * Cancel all goals currently found in the pendingGoals collection
    */
-  public void cancelAllPendingGoals() {
-    log.debug("[cancelAllPendingGoals] in method");
+  public void cancelPendingGoals() {
+    log.debug("[cancelPendingGoals] in method");
     List<Long> goalIds = new ArrayList<>();
     synchronized (pendingGoalsLock) {
-      log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
+      log.trace("[cancelPendingGoals] have pendingGoalsLock");
       //while (!pendingGoals.isEmpty()) {
       //  int size = pendingGoals.size();
       //  cancelPendingGoalByIndex(size - 1);
@@ -1824,9 +1824,9 @@ public class ExecutionManager implements GoalListener {
         goalIds.add(pg.getGoal().getId());
       }
     }
-    log.trace("[cancelAllPendingGoals] released pendingGoalsLock, canceling all gather goals");
+    log.trace("[cancelPendingGoals] released pendingGoalsLock, canceling all gather goals");
     for (Long gid : goalIds) {
-      log.trace("[cancelAllPendingGoals] canceling {}", gid);
+      log.trace("[cancelPendingGoals] canceling {}", gid);
       cancelGoal(gid);
     }
   }
@@ -1834,24 +1834,24 @@ public class ExecutionManager implements GoalListener {
   /**
    * Cancel all goals currently found in either the pending or active Goals collections
    */
-  public void cancelAllCurrentGoals() {
-    log.debug("[cancelAllCurrentGoals] in method");
+  public void cancelCurrentGoals() {
+    log.debug("[cancelCurrentGoals] in method");
     //synchronized (pendingGoalsLock) {
-    //  log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
+    //  log.trace("[cancelCurrentGoals] have pendingGoalsLock");
     //  synchronized (goalsLock) {
-    //    log.trace("[cancelAllCurrentGoals] have goalsLock");
-        scheduledGoalManager.cancelAllScheduledGoals();
-        cancelAllPendingGoals();
-        cancelAllActiveGoals();
+    //    log.trace("[cancelCurrentGoals] have goalsLock");
+        scheduledGoalManager.cancelScheduledGoals();
+        cancelPendingGoals();
+        cancelActiveGoals();
     //  }
     //}
-    //log.trace("[cancelAllCurrentGoals] released locks");
+    //log.trace("[cancelCurrentGoals] released locks");
   }
 
   /**
    * Cancel all goals currently found in the activeGoals colection
    */
-  public void cancelAllActiveGoals() {
+  public void cancelActiveGoals() {
     Set<Goal> goalsToCancel = new HashSet<>();
     synchronized (goalsLock) {
       for (Symbol agentTeam : agentTeams.keySet()) {
@@ -1869,6 +1869,10 @@ public class ExecutionManager implements GoalListener {
 
   public List<Long> cancelSystemGoals() {
     return cancelSystemGoals(rootAgent);
+  }
+
+  public void cancelScheduledGoals() {
+    scheduledGoalManager.cancelScheduledGoals();
   }
 
   /**
