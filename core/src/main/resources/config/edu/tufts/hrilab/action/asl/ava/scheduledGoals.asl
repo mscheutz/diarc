@@ -222,7 +222,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 (Predicate ?scheduledGoalPred) = selectScheduledGoal() {
-    List !scheduledGoals;
+    List !scheduledGoalPreds;
     Predicate !goalPred;
     Integer !numGoals;
     Integer !goalIndex;
@@ -235,17 +235,18 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPredExtended;
     Long !gid;
 
-    !scheduledGoals = tsc:getScheduledGoals();
-    op:log(debug, "[modifyScheduledGoal] current scheduled goals: !scheduledGoals");
-    !numGoals = op:invokeMethod(!scheduledGoals, "size");
+    GoalFilter !scheduledGoalFilter = SCHEDULED;
+    !scheduledGoalPreds = tsc:getGoalPredicates(!scheduledGoalFilter);
+    op:log(debug, "[modifyScheduledGoal] current scheduled goals: !scheduledGoalPreds");
+    !numGoals = op:invokeMethod(!scheduledGoalPreds, "size");
 
-    if (op:isEmpty(!scheduledGoals)) {
+    if (op:isEmpty(!scheduledGoalPreds)) {
         //TODO: test NLG
         exit(FAIL,not(exist(scheduledGoals)));
         //act:generateResponse("There are no currently scheduled goals");
         //return;
     } elseif (op:equals(!numGoals,1)) {
-        ?scheduledGoalPred = op:get(!scheduledGoals,0);
+        ?scheduledGoalPred = op:get(!scheduledGoalPreds,0);
         //TODO: should this function use submitted pred or 'current state' pred
         act:generateResponseFromString("There is currently one scheduled task");
         act:generateResponse(!scheduledGoalPred);
@@ -253,7 +254,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     } else {
         act:generateResponseFromString("There are multiple currently scheduled tasks");
         for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
-            !goalPred = op:get(!scheduledGoals,!goalIndex);
+            !goalPred = op:get(!scheduledGoalPreds,!goalIndex);
             !spokenIndex = op:++(!goalIndex);
             act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPred);
@@ -268,7 +269,7 @@ import edu.tufts.hrilab.action.justification.Justification;
             !goalNumber = op:newObject("java.lang.Integer", !numberString);
             !goalNumber = op:--(!goalNumber);
             if (op:lt(!goalNumber,!numGoals)) {
-                ?scheduledGoalPred = op:get(!scheduledGoals,!goalNumber);
+                ?scheduledGoalPred = op:get(!scheduledGoalPreds,!goalNumber);
                 return;
             } else {
                 act:generateResponseFromString("Task !numberString was not a valid option");
@@ -279,18 +280,19 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = describeScheduledGoals() {
-    List !scheduledGoals;
+    List !scheduledGoalPreds;
     Integer !numGoals;
     Predicate !goalPred;
 
-    !scheduledGoals = tsc:getScheduledGoals();
-    //op:log(debug, "[describeScheduledGoals] current scheduled goals: !scheduledGoals");
-    if (op:isEmpty(!scheduledGoals)) {
+    GoalFilter !scheduledGoalFilter = SCHEDULED;
+    !scheduledGoalPreds = tsc:getGoalPredicates(!scheduledGoalFilter);
+    //op:log(debug, "[describeScheduledGoals] current scheduled goals: !scheduledGoalPreds");
+    if (op:isEmpty(!scheduledGoalPreds)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
-        !numGoals = op:invokeMethod(!scheduledGoals,"size");
+        !numGoals = op:invokeMethod(!scheduledGoalPreds,"size");
         act:generateResponseFromString("I currently have !numGoals scheduled goals. They are");
-        foreach (!goalPred : !scheduledGoals) {
+        foreach (!goalPred : !scheduledGoalPreds) {
             act:generateResponse(!goalPred);
         }
     }
