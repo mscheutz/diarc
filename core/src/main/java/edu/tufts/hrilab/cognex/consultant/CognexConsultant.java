@@ -177,13 +177,13 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public CognexReference createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
+  public Symbol createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
     CognexReference ref = createCognexRef(j, additionalProperties);
     if (!additionalProperties.isEmpty()) {
       //TODO:brad:what happens if these are duplicate?
       assertProperties(ref.refId, additionalProperties);
     }
-    return ref;
+    return ref.refId;
   }
 
   public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
@@ -281,9 +281,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @TRADEService
   @Action
   public Symbol createCogRefWithProperty(Symbol jobDescriptor, Term property) {
-    CognexReference ref = createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
-    //todo: shouldn't have to do this lookup this way. should have the refId already.
-    return ref.refId;
+    return createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
   }
 
   @TRADEService

@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.HashMap;
 import edu.tufts.hrilab.cognex.consultant.CognexJob;
 import edu.tufts.hrilab.cognex.consultant.CognexResult;
-import edu.tufts.hrilab.cognex.consultant.CognexReference;
 //======================bind descriptor to a cognex job ============
 () = defineItem["defines new item, and asks for relevant parameters"](edu.tufts.hrilab.fol.Symbol ?item){
   Symbol !jobID;
@@ -212,7 +211,6 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     Integer !iCopy;
 
     CognexResult !result;
-    CognexReference !ref;
     Symbol !refId;
 
     !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
@@ -224,8 +222,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         (!size) = op:size(?cameraResults);
         op:log("info","[bindResultsRecursive] !size results left!");
         //create reference and add any additional props
-        (!ref) = tsc:createCogRefWithProps(?job, !additionalProps);
-        (!refId) = op:invokeMethod(!ref, "getRefId");
+        (!refId) = tsc:createCogRefWithProps(?job, !additionalProps);
         //bind reference to the result that it matches
         (!iCopy) = op:newObject("java.lang.Integer", ?i);
         tsc:bindCognexResult(!refId, !result, !iCopy);
@@ -239,7 +236,6 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     String !jobName;
     CognexJob !job;
     CognexResult !result;
-    CognexReference !ref;
     List !additionalProps;
 
     !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
@@ -254,8 +250,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     } else {
         (!result) = op:get(!cameraResults, 0);
         //create reference and add any additional props
-        (!ref) = tsc:createCogRefWithProps(!job, !additionalProps);
-        (?return) = op:invokeMethod(!ref, "getRefId");
+        (?return) = tsc:createCogRefWithProps(!job, !additionalProps);
         //bind reference to the result that it matches
         tsc:bindCognexResult(?return, !result, 0);
     }
