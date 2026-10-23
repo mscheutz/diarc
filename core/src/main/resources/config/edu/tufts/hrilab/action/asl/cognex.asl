@@ -2,7 +2,6 @@ import java.util.List;
 import java.lang.String;
 import edu.tufts.hrilab.cognex.consultant.CognexJob;
 import edu.tufts.hrilab.cognex.consultant.CognexResult;
-import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
 () = perceiveEntityFromSymbol["runs a job for a given pre-existing ?refId and binds the relevant result to that reference"](edu.tufts.hrilab.fol.Symbol ?refId) {
     List !cameraResults;
@@ -19,12 +18,15 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     (!cameraResults) = tsc:getCameraData(!jobName);
     if (op:isEmpty(!cameraResults)) {
         op:log("info","[perceiveEntityFromSymbol] failed to get cognex results");
+        exit(FAIL_RETURNVALUE);
     } else {
 //        (!result) = tsc:getMatchingResult(!ref,!cameraResults);
         (!result) = tsc:getMatchingResult(?refId,!cameraResults);
+        //this will fail if result doesn't have confidence > 50
+        act:checkIfPositive(!result);
         //bind reference to the result that it matches
         tsc:bindCognexResult(?refId, !result, 0);
-        op:log("info","[perceiveEntityFromSymbol] Bound !result to !ref");
+        op:log("info","[perceiveEntityFromSymbol] Bound !result to ?refId");
     }
 }
 
