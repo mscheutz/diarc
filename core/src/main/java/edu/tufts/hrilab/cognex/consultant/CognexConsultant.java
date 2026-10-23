@@ -310,8 +310,6 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
    * @param ref The CognexReference to fetch the matching CognexJob of.
    * @return The CognexJob associated with this reference.
    */
-  @TRADEService
-  @Action
   public CognexJob getCognexJobForCognexReference(CognexReference ref) {
     return ref.cognexJob;
   }
@@ -322,8 +320,6 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     return getCognexJobForCognexReference(getCognexReferenceForID(refId));
   }
 
-  @TRADEService
-  @Action
   public CognexReference getCognexReferenceForID(Symbol refId) {
     Symbol s = refId;
     CognexReference ret = getReference(s);
