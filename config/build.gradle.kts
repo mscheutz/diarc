@@ -64,7 +64,7 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.56") {
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.57-gm-api-refactor") {
     exclude(group = "edu.tufts.hrilab", module = "diarc-core")
   }
 
