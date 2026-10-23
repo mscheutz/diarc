@@ -213,6 +213,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
     CognexResult !result;
     CognexReference !ref;
+    Symbol !refId;
 
     !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
 
@@ -224,9 +225,10 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         op:log("info","[bindResultsRecursive] !size results left!");
         //create reference and add any additional props
         (!ref) = tsc:createCogRefWithProps(?job, !additionalProps);
+        (!refId) = op:invokeMethod(!ref, "getRefId");
         //bind reference to the result that it matches
         (!iCopy) = op:newObject("java.lang.Integer", ?i);
-        tsc:bindCognexResult(!ref, !result, !iCopy);
+        tsc:bindCognexResult(!refId, !result, !iCopy);
         (?i) = op:++(?i);
         act:bindResultsRecursive(?job, ?cameraResults, ?i);
     }
@@ -253,8 +255,8 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         (!result) = op:get(!cameraResults, 0);
         //create reference and add any additional props
         (!ref) = tsc:createCogRefWithProps(!job, !additionalProps);
-        //bind reference to the result that it matches
-        tsc:bindCognexResult(!ref, !result, 0);
         (?return) = op:invokeMethod(!ref, "getRefId");
+        //bind reference to the result that it matches
+        tsc:bindCognexResult(?return, !result, 0);
     }
 }
