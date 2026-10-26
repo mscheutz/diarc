@@ -342,6 +342,23 @@ public class ReferenceResolutionComponent extends DiarcComponent {
         log.warn("[positReference] and valid property: "+prop);
       }
     }
+//    //todo: (pete) this is a hack! urgently remove. only posit a new reference if one doesn't already exist that shares all properties
+//    resolver.updateConsultCache(null);
+//    try {
+//      Symbol tmpActor = actor;
+//      if (!actor.hasType()) {
+//        tmpActor = Factory.createSymbol(actor.getName(), "agent");
+//      }
+//      Map<Symbol, Double> activatedEntities = resolver.getActivatedEntities(new ArrayList<>(Arrays.asList("agent:" + tmpActor)));
+//      for (Symbol refId : activatedEntities.keySet()) {
+//        List<String> propertyNames = props.stream().map(p -> p.getName()).toList();
+//        if (resolver.getProperties(refId).stream().map(p -> p.getName()).anyMatch(n -> propertyNames.contains(n))) {
+//          return refId;
+//        }
+//      }
+//    } catch (Exception e) {
+//      log.warn("[positReference] could not check if reference with properties " + propertiesList + " in consultants because no consultant registered with group " + "agent:" + actor);
+//    }
     return resolver.positReference(props, actor);
   }
 

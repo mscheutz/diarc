@@ -1,0 +1,21 @@
+{
+    "processor": {
+      "type": "category",
+      "arity": 1
+    },
+    "config": {
+      "model": "buttonModelS320",
+      "type" : "onnx",
+      "backend": "CPU",
+      "input_size": 640,
+      "conf_thresh": 0.3,
+      "score_thresh": 0.3,
+      "nms_thresh": 0.4,
+      "classes" : 368
+    },
+    "predicates": [
+      {
+        "name": "object"
+      }
+    ]
+  }

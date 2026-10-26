@@ -13,6 +13,8 @@ import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.ActionDBEntry.Builder;
 import edu.tufts.hrilab.action.recovery.PolicyConstraints;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
+import edu.tufts.hrilab.action.recovery.RecoveryType;
 import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -402,34 +404,90 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterRecovery(ASLParser.RecoveryContext ctx) {
       PolicyConstraints policyConstraints = new PolicyConstraints();
-      if (ctx.recoveryGoals() != null) {
-        ctx.recoveryGoals().predicateList().predicate().forEach(pred -> policyConstraints.goals.add(Factory.createPredicate(pred.getText())));
+      if (!ctx.actionRecoveryDetails().isEmpty()) {
+        if (ctx.actionRecoveryDetails().size() > 1) {
+          log.warn("[enterRecovery] Multiple actionRecovery fields detected, only using first");
+        }
+        policyConstraints.recoveryType = RecoveryType.ACTION;
+        if (ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions() != null) {
+          ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions().predicateList().predicate().forEach(pred -> policyConstraints.catchingActions.add(Factory.createPredicate(pred.getText())));
+        }
+        policyConstraints.postRecoveryExecutionType = PostRecoveryExecutionType.fromString(ctx.actionRecoveryDetails(0).postActionRecoveryBehavior().postActionRecoveryType().getText());
       }
-      if (ctx.recoveryExcludedGoals() != null) {
-        ctx.recoveryExcludedGoals().predicateList().predicate().forEach(pred -> policyConstraints.excludedGoals.add(Factory.createPredicate(pred.getText())));
+
+      if (!ctx.recoveryGoals().isEmpty()) {
+        if (ctx.recoveryGoals().size() > 1) {
+          log.warn("[enterRecovery] Multiple goals fields detected, only using first");
+        }
+        ctx.recoveryGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.goals.add(Factory.createPredicate(pred.getText())));
       }
-      if (ctx.recoveryFailedActions() != null) {
-        ctx.recoveryFailedActions().predicateList().predicate().forEach(pred -> policyConstraints.failedActions.add(Factory.createPredicate(pred.getText())));
+      if (!ctx.recoveryExcludedGoals().isEmpty()) {
+        if (ctx.recoveryGoals(0) != null) {
+          log.warn("[enterRecovery] goals and excludedGoals cannot both be defined, ignoring supplied excludedGoals");
+        } else {
+          if (ctx.recoveryExcludedGoals().size() > 1) {
+            log.warn("[enterRecovery] Multiple excludedGoals fields detected, only using first");
+          }
+          ctx.recoveryExcludedGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedGoals.add(Factory.createPredicate(pred.getText())));
+        }
       }
-      if (ctx.recoveryExcludedFailedActions() != null) {
-        ctx.recoveryExcludedFailedActions().predicateList().predicate().forEach(pred -> policyConstraints.excludedFailedActions.add(Factory.createPredicate(pred.getText())));
+      if (!ctx.recoveryFailedActions().isEmpty()) {
+        if (ctx.recoveryFailedActions().size() > 1) {
+          log.warn("[enterRecovery] Multiple failedActions fields detected, only using first");
+        }
+        ctx.recoveryFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.failedActions.add(Factory.createPredicate(pred.getText())));
       }
-      if (ctx.recoveryFailureReasons() != null) {
-        ctx.recoveryFailureReasons().predicateList().predicate().forEach(pred -> policyConstraints.failureReasons.add(Factory.createPredicate(pred.getText())));
+      if (!ctx.recoveryExcludedFailedActions().isEmpty()) {
+        if (ctx.recoveryFailedActions(0) != null) {
+          log.warn("[enterRecovery] failedActions and excludedFailedActions cannot both be defined, ignoring supplied excludedFailedActions");
+        } else {
+          if (ctx.recoveryExcludedFailedActions().size() > 1) {
+            log.warn("[enterRecovery] Multiple excludedFailedActions fields detected, only using first");
+          }
+          ctx.recoveryExcludedFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailedActions.add(Factory.createPredicate(pred.getText())));
+        }
       }
-      if (ctx.recoveryExcludedFailureReasons() != null) {
-        ctx.recoveryExcludedFailureReasons().predicateList().predicate().forEach(pred -> policyConstraints.excludedFailureReasons.add(Factory.createPredicate(pred.getText())));
+      if (!ctx.recoveryFailureReasons().isEmpty()) {
+        if (ctx.recoveryFailureReasons().size() > 1) {
+          log.warn("[enterRecovery] Multiple failureReasons fields detected, only using first");
+        }
+        ctx.recoveryFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.failureReasons.add(Factory.createPredicate(pred.getText())));
       }
-      if (ctx.recoveryActionStatuses() != null) {
-        ctx.recoveryActionStatuses().NAME().forEach(status -> policyConstraints.actionStatuses.add(ActionStatus.fromString(status.getText())));
+      if (ctx.recoveryExcludedFailureReasons(0) != null) {
+        if (ctx.recoveryFailureReasons(0) != null) {
+          log.warn("[enterRecovery] failureReasons and excludedFailureReasons cannot both be defined, ignoring supplied excludedFailureReasons");
+        } else {
+          if (ctx.recoveryExcludedFailureReasons().size() > 1) {
+            log.warn("[enterRecovery] Multiple excludedFailureReasons fields detected, only using first");
+          }
+          ctx.recoveryExcludedFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailureReasons.add(Factory.createPredicate(pred.getText())));
+        }
+      }
+      if (!ctx.recoveryActionStatuses().isEmpty()) {
+        if (ctx.recoveryActionStatuses().size() > 1) {
+          log.warn("[enterRecovery] Multiple actionStatuses fields detected, only using first");
+        }
+        ctx.recoveryActionStatuses(0).NAME().forEach(status -> policyConstraints.actionStatuses.add(ActionStatus.fromString(status.getText())));
+      }
+      if (!ctx.recoveryMaximumAttempts().isEmpty()) {
+        if (ctx.recoveryMaximumAttempts().size() > 1) {
+          log.warn("[enterRecovery] Multiple maximumAttempts fields detected, only using first");
+        }
+        String numberText = ctx.recoveryMaximumAttempts(0).NUMBER().getText();
+        int number = -1;
+        try {
+          number = Integer.parseInt(numberText);
+        } catch (NumberFormatException e) {
+          log.error("[enterRecovery] maximumAttempts field must be a positive integer", e);
+        }
+        if (number < 1) {
+          log.warn("[enterRecovery] invalid maximumAttempts value encountered {}, not using field", number);
+        } else {
+          policyConstraints.maximumAttempts = number;
+        }
       }
 
       curr_dbe_builder.addRecoveryPolicyConstraint(policyConstraints);
-    }
-
-    @Override
-    public void enterLocks(ASLParser.LocksContext ctx) {
-      curr_dbe_builder.addResourceLock(ctx.name().getText());
     }
 
     @Override
@@ -712,6 +770,16 @@ public class ActionScriptLanguageParser {
       }
     }
 
+    @Override public void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) {
+      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("nointerrupt");
+      curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
+    @Override public void exitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) {
+      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endnointerrupt");
+      curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
     @Override
     public void visitErrorNode(ErrorNode node) {
       log.warn("error parsing " + dbFile + " : " + node.getSymbol().getText() + " at line: " + node.getSymbol().getLine() + ":" + node.getSymbol().getCharPositionInLine());
@@ -836,6 +904,8 @@ public class ActionScriptLanguageParser {
         return EventSpec.EventType.GOAL;
       } else if (specType.TSC() != null) {
         return EventSpec.EventType.TSC;
+      } else if (specType.THIS() != null) {
+        return EventSpec.EventType.THIS;
       } else {
         log.error("Unexpected EventType in event spec: " + specType.getText());
         return null;

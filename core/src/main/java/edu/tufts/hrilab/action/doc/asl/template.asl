@@ -25,8 +25,6 @@ import edu.tufts.hrilab.fol.Symbol;
       nonperf : nonperformance();
     }
 
-    locks : motionLock;
-
     if (op:gt(1, 0)) {
         ?actor.act:action(arg1, arg2, 3.1415);
     }

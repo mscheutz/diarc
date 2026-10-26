@@ -22,7 +22,31 @@ END-SET
 NEW-SET
 RULES
 REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,D)),because(isOccupied(E))),Z)
+REPLY(A,B,cannot(handleSemantics(C,val(D)),because(not(know(C,how(handled(C,C,val(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
+REPLY(A,B,cannot(handleSemantics(C,blockType(D)),because(not(know(C,how(handled(C,C,blockType(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
+REPLY(A,B,cannot(handleSemantics(C,pose(D)),because(not(know(C,how(handled(C,C,pose(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
+REPLY(A,B,cannot(handleSemantics(C,taskName(D)),because(not(know(C,how(handled(C,C,taskName(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
+#REPLY(A,B,cannot(handleSemantics(C,D),because(not(know(C,how(handled(C,C,D,direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
 END-SET
+
+#Pick and Place 2024
+NEW-SET
+RULES
+REPLY(A,B,cannot(detectObject(C,D),because(not(know(C,objectDefinition(E))))),Z) := REPLY(A,B,cannot(detect(C,D),because(not(isDetectable(D)))),Z)
+REPLY(A,B,cannot(detectObject(C,D),because(dont(C,see,D,E))),Z) := REPLY(A,B,cannot(detect(C,D),because(dont(C,see,D,E))),Z)
+REPLY(A,B,cannot(pickUp(C),because(dont(C,see,anyObjects,atMyLocation))),Z) := REPLY(A,B,cannot(pickUp(C,anything),because(dont(C,see,anyObjects,atMyLocation))),Z)
+REPLY(A,B,cannot(pickUp(C),because(not(free(C)))),Z) := REPLY(A,B,cannot(pickUp(C,anything),because(already(C,holding,something))),Z)
+REPLY(A,B,cannot(pickUp(C,D),because(not(free(C)))),Z) := REPLY(A,B,cannot(pickUp(C,D),because(already(C,holding,something))),Z)
+REPLY(A,B,cannot(putDown(C,D),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C,D),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(putDown(C),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C,anObject),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(putDown(C),because(D)),Z) := REPLY(A,B,cannot(putDown(C,anObject),because(D)),Z)
+REPLY(A,B,cannot(moveObjectTo(C,D,E,F),because(G)),Z) := REPLY(A,B,cannot(move(C,D,from,to(E,F)),because(G)),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D,E),because(F)),Z) := REPLY(A,B,cannot(place(C,D,at,E),because(F)),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D,E),because(not(holding(C,D)))),Z) := REPLY(A,B,cannot(place(C,D,at,E),because(not(holding(C,D)))),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D),because(G)),Z) := REPLY(A,B,cannot(place(C,theObject,at,D),because(G)),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D),because(free(C))),Z) := REPLY(A,B,cannot(place(C,theObject,at,D),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(getObjectTo(C,D,E),because(X)),Z) := REPLY(A,B,cannot(get(C,D,to,E),because(X)),Z)
+END_SET
 
 #Temi specific
 #TODO: still need to test whether the left side matches after merge (will change again after actor changes anyway)
@@ -74,7 +98,7 @@ RULES
 REPLY(A,B,ahead(X,Y),Z) := REPLY(A,B,is(ahead(X,Y)),Z)
 REPLY(A,B,isAdminGoal(X),Z) := REPLY(A,B,is(gerund(X),adminGoal),Z)
 REPLY(A,B,found(C,Y),Z) := REPLY(A,B,know(C,how(Y)),Z)
-REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
+#REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
 REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,Y),Z)
 REPLY(A,B,unknown(X),Z) := REPLY(A,B,is(there,unknown(X)),Z)
 REPLY(A,B,getActDesc(C,Y),Z) := REPLY(A,B,describe(C,how(Y)),Z)

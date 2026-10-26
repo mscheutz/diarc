@@ -23,7 +23,7 @@ void SegmentedObjectLearner::handleMemoryObjectNotification(MemoryObjectNotifica
   DescriptorsByType::const_iterator descriptorsByType_iter = descriptorsByType->find(object->getTypeId());
 
   if (descriptorsByType_iter != descriptorsByType->end()) {
-    LearningNotification::Ptr n(new LearningNotification(shared_from_this(),
+    LearningNotification::Ptr n(new LearningNotification(this->getProcessorId(),
                                                          object->getTypeId(),
                                                          object->getTrackingMask()->getFrameNumber(),
                                                          object,

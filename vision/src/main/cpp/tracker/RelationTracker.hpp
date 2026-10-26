@@ -25,7 +25,7 @@ protected:
 
   virtual void haveTrackedMemoryObject(diarc::stm::MemoryObject::Ptr trackedObject);
 
-  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
+  virtual diarc::stm::MemoryObject::Ptr mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
 
   virtual void removeLowConfidenceObjects();
 

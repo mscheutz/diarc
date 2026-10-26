@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.map;
 
-import edu.tufts.hrilab.fol.Symbol;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
@@ -12,6 +11,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.map.util.Pose;
 import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
@@ -23,14 +23,7 @@ import javax.vecmath.Point3d;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class FloorMap {
   private static Logger log = LoggerFactory.getLogger(FloorMap.class);

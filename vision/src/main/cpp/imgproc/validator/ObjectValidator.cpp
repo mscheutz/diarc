@@ -77,7 +77,7 @@ void ObjectValidator::sendValidationNotifications(MemoryObject::VecPtr validated
 
   if (validatedObjects->size() > 0) {
     for (size_t i = 0; i < validatedObjects->size(); i++) {
-      MemoryObjectNotification::Ptr n(new MemoryObjectNotification(shared_from_this(),
+      MemoryObjectNotification::Ptr n(new MemoryObjectNotification(this->getProcessorId(),
                                                                    (*validatedObjects)[i]->getTypeId(),
                                                                    (*validatedObjects)[i]->getDetectionMask()->getFrameNumber(),
                                                                    (*validatedObjects)[i]));
@@ -89,7 +89,7 @@ void ObjectValidator::sendValidationNotifications(MemoryObject::VecPtr validated
 void ObjectValidator::sendValidationNotifications(MemoryObject::Ptr validatedObject) {
   LOG4CXX_TRACE(logger, "[sendValidationNotifications] single validated object.");
   if (validatedObject) {
-    MemoryObjectNotification::Ptr n(new MemoryObjectNotification(shared_from_this(), validatedObject->getTypeId(), validatedObject->getDetectionMask()->getFrameNumber(), validatedObject));
+    MemoryObjectNotification::Ptr n(new MemoryObjectNotification(this->getProcessorId(), validatedObject->getTypeId(), validatedObject->getDetectionMask()->getFrameNumber(), validatedObject));
     sendNotifications(n);
   }
 }

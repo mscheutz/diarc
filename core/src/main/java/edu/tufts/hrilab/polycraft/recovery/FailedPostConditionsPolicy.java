@@ -54,17 +54,19 @@ public class FailedPostConditionsPolicy {
    * Explore an action that has failed with FAIL_POSTCONDITONS.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
    */
   @TRADEService
   @Action
-  public Justification executeFailedPostConditionsPolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) {
-    if (brokenActionSignature == null) {
+  public Justification executeFailedPostConditionsPolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) {
+    if (brokenActionSignatures == null || brokenActionSignatures.isEmpty()) {
       return new ConditionJustification(false);
     }
+
+    Predicate brokenActionSignature = brokenActionSignatures.get(0);
 
     ActionDBEntry brokenAction = edu.tufts.hrilab.action.recovery.Utilities.getActionBySignature(brokenActionSignature);
 
@@ -77,7 +79,7 @@ public class FailedPostConditionsPolicy {
     // create action builder that will get populated with fixed post-conditions
     AndJustification justification = new AndJustification();
     ActionDBEntry.Builder fixedActionBuilder = new ActionDBEntry.Builder(brokenAction);
-    ParameterizedAction parameterizedBrokenAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+    ParameterizedAction parameterizedBrokenAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
 
     Set<Predicate> novelties = new HashSet<>();
 
@@ -93,7 +95,7 @@ public class FailedPostConditionsPolicy {
         createNewAction = false;
       } else {
         // create new action --> change new action name to not conflict with existing action
-        fixedActionBuilder.setType(brokenAction.getType() + "_" + inputArg);
+        fixedActionBuilder.setMethodName(brokenAction.getMethodName() + "_" + inputArg);
         createNewAction = true;
       }
     } else {
@@ -127,7 +129,8 @@ public class FailedPostConditionsPolicy {
             Set<Predicate> initPreds = new HashSet<>();
             Symbol s = worldState.get(0);
             //add to universal beliefs
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, worldState, MemoryLevel.UNIVERSAL);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class))
+                    .call(Object.class, worldState, MemoryLevel.UNIVERSAL);
 
             if (worldState.getName().equals("constant")) {
               generateConstantExploration = worldState;
@@ -136,21 +139,21 @@ public class FailedPostConditionsPolicy {
               //add new fluents for the object to keep track of quantities of it
               // only want objects that are physobj type
 
-              List<Map<Variable, Symbol>> fluentbindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, Factory.createPredicate("visiblefluent(X,Y,Z)"));
+              List<Map<Variable, Symbol>> fluentbindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, Factory.createPredicate("visiblefluent(X,Y,Z)"));
               for (Map<Variable, Symbol> fluent : fluentbindings) {
                 Predicate typequery = Factory.createPredicate("type", s, fluent.get(new Variable("Z")));
-                if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, typequery)) {
+                if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, typequery)) {
                   //fluent is visible
                   // if condition to check whether the predicated below exists or not. X
                   Predicate fluentquery;
                   if (fluent.get("Y").equals("none")) {
                     fluentquery = Factory.createPredicate("fluent_equals(" + fluent.get(new Variable("X")) + "(" + s + "),X)");
-                    if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, fluentquery, MemoryLevel.EPISODIC)) {
+                    if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class, MemoryLevel.class)).call(boolean.class, fluentquery, MemoryLevel.EPISODIC)) {
                       initPreds.add(Factory.createPredicate("fluent_equals(" + fluent.get(new Variable("X")) + "(" + s + "),0)"));
                     }
                   } else {
                     fluentquery = Factory.createPredicate("fluent_equals(" + fluent.get(new Variable("X")) + "(" + fluent.get("Y") + "," + s + "),X)");
-                    if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, fluentquery, MemoryLevel.EPISODIC)) {
+                    if (!TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class, MemoryLevel.class)).call(boolean.class, fluentquery, MemoryLevel.EPISODIC)) {
                       initPreds.add(Factory.createPredicate("fluent_equals(" + fluent.get(new Variable("X")) + "(" + fluent.get("Y") + "," + s + "),0)"));
                     }
                   }
@@ -158,7 +161,8 @@ public class FailedPostConditionsPolicy {
               }
 
 
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, initPreds, MemoryLevel.EPISODIC);
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class, MemoryLevel.class))
+                      .call(Object.class, initPreds, MemoryLevel.EPISODIC);
 
             }
           } catch (TRADEException e) {
@@ -166,7 +170,8 @@ public class FailedPostConditionsPolicy {
           }
         } else if (beliefState.getName().equals("fluent_equals")) {
           try {
-            List<Map<Variable, Symbol>> navigationActions = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, Factory.createPredicate("navigation(X)"));
+            List<Map<Variable, Symbol>> navigationActions = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class))
+                    .call(List.class, Factory.createPredicate("navigation(X)"));
             for (Map<Variable, Symbol> binding : navigationActions) {
               Symbol action = binding.get(new Variable("X"));
               if (brokenActionName.startsWith(action.getName())) {
@@ -192,7 +197,7 @@ public class FailedPostConditionsPolicy {
           if (beliefState.getName().equals("fluent_equals")) {
             ActionDBEntry fixedAction = fixedActionBuilder.build(true);
             Predicate fixedActionPredicate = Factory.createPredicate(fixedAction.getName(), brokenActionSignature.getArgs());
-            ParameterizedAction parameterizedFixedAction = new ParameterizedAction(fixedAction, new Goal(actor, fixedActionPredicate));
+            ParameterizedAction parameterizedFixedAction = new ParameterizedAction(fixedAction, Goal.createGoal(actor, fixedActionPredicate));
 
             Effect fixedEffect = ExploreUtils.generateNewPostCondition(parameterizedFixedAction, discrepancy);
             Predicate existingEffectPred = fixedEffect.getPredicate();
@@ -220,7 +225,7 @@ public class FailedPostConditionsPolicy {
             try {
               Symbol item = beliefState.toUnnegatedForm().get(0);
               Predicate physobjQuery = Factory.createPredicate("type", item, Factory.createSymbol("physobj"));
-              if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, physobjQuery)) {
+              if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, physobjQuery)) {
                 Predicate worldItem = Factory.createPredicate("world", item);
                 if (beliefState.isNegated()) {
                   // incorrect belief is not(at(item,x,y)) --> increase world count
@@ -229,7 +234,7 @@ public class FailedPostConditionsPolicy {
                   // incorrect belief is at(item,x,y) --> decrease world count
                   worldCountPred = Factory.createPredicate("fluent_decrease", worldItem, Factory.createSymbol("1"));
                 }
-                TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, worldCountPred, MemoryLevel.EPISODIC);
+                TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class)).call(Object.class, worldCountPred, MemoryLevel.EPISODIC);
               }
             } catch (TRADEException e) {
               log.error("Error trying to handle at() discrepancy: " + failure);
@@ -261,10 +266,12 @@ public class FailedPostConditionsPolicy {
         if (observationJustification.getValue()) {
           // add the observation result to UNIVERSAL, so it remains across games
           try {
-            List<Map<Variable, Symbol>> bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, brokenActionPredicateNonLocalBound);
+            List<Map<Variable, Symbol>> bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class))
+                    .call(List.class, brokenActionPredicateNonLocalBound);
             // TODO: how to know which things to assert to universal memory to persist across episodes?
             if (brokenActionPredicateNonLocalBound.toString().contains("cost")) {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, brokenActionPredicateNonLocalBound.copyWithNewBindings(bindings.get(0)), MemoryLevel.UNIVERSAL);
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class, MemoryLevel.class))
+                      .call(Object.class, brokenActionPredicateNonLocalBound.copyWithNewBindings(bindings.get(0)), MemoryLevel.UNIVERSAL);
             }
           } catch (TRADEException e) {
             log.error("Exception trying to add updated post-condition belief to UNIVERSAL memory: " + brokenActionPredicateNonLocalBound);
@@ -286,7 +293,8 @@ public class FailedPostConditionsPolicy {
           }
 
           try {
-            if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, new Predicate("unfixable", brokenActionSignature.getName()))) {
+            if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class))
+                    .call(boolean.class, new Predicate("unfixable", brokenActionSignature.getName()))) {
               log.debug("Not attempting to fix action; we don't want to update it.");
               continue;
             }
@@ -300,9 +308,9 @@ public class FailedPostConditionsPolicy {
           try {
             List<Map<Variable, Symbol>> queryResults;
             if (failure.getName().startsWith("fluent") && !failure.getName().startsWith("fluent_equals")) {
-              queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeFluent")).call(List.class, actor, stateQuery);
+              queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeFluent").argTypes(Symbol.class, Term.class)).call(List.class, actor, stateQuery);
             } else {
-              queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeState")).call(List.class, stateQuery);
+              queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeState").argTypes(Term.class)).call(List.class, stateQuery);
             }
             log.debug("observeState results: " + stateQuery + " " + queryResults);
             if (!queryResults.isEmpty()) {
@@ -345,10 +353,10 @@ public class FailedPostConditionsPolicy {
     if (generateConstantExploration != null) {
       try {
         // generate list of explorations to try
-        Set<Predicate> explorationsToTry = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateExplorationsToTry")).call(Set.class, generateConstantExploration);
+        Set<Predicate> explorationsToTry = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateExplorationsToTry").argTypes(Term.class)).call(Set.class, generateConstantExploration);
         // assert explorations to try, which will be removed as they're explored
         // this allows explorations to continue into subsequent games if explorations can't be completed
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, explorationsToTry, MemoryLevel.UNIVERSAL);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class, MemoryLevel.class)).call(Object.class, explorationsToTry, MemoryLevel.UNIVERSAL);
         //add to universal beliefs
       } catch (TRADEException e) {
         log.error("Error reporting novelties: ", e);
@@ -356,7 +364,7 @@ public class FailedPostConditionsPolicy {
     }
 
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, novelties);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties").argTypes(Set.class)).call(Object.class, novelties);
     } catch (TRADEException e) {
       log.error("Error reporting novelties: ", e);
     }
@@ -390,9 +398,14 @@ public class FailedPostConditionsPolicy {
 
   boolean isChangeable(Predicate failure, ParameterizedAction parameterizedBrokenAction) {
     //check if the failure is something that we consider acceptably changeable
-    Predicate effect = new Predicate("changeable", ExploreUtils.generateNewPostCondition(parameterizedBrokenAction, failure).getPredicate());
+    Effect newEffect = ExploreUtils.generateNewPostCondition(parameterizedBrokenAction, failure);
+    if (newEffect == null) {
+      return false;
+    }
+
+    Predicate effect = new Predicate("changeable", newEffect.getPredicate());
     try {
-      if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, effect)) {
+      if (TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, effect)) {
         return true;
       }
     } catch (TRADEException e) {

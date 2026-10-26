@@ -1,0 +1,256 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        -0.40199152245752034,
+        -2.836794073167844,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.031617578867738624,
+        0.9995000393729568
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X",
+      "properties": [
+        "kitchen(X)"
+      ],
+      "position": [
+        -13.79999217987061,
+        -10.89999761581421,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "hallway(X)"
+      ],
+      "position": [
+        15.00000782012939,
+        -0.999997615814209,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "restrooms(X)"
+      ],
+      "position": [
+        9.000007820129394,
+        9.400002384185791,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7236888444468094,
+        0.6901264061193729
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "front door(X)"
+      ],
+      "position": [
+        2.100007820129395,
+        -9.999997615814209,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.8980401427049148,
+        0.4399135166035889
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "X",
+      "properties": [
+        "large display(X)"
+      ],
+      "position": [
+        -4.799992179870607,
+        -8.39999761581421,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.5682153980838883,
+        0.8228798584121307
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "X",
+      "properties": [
+        "digital signage(X)"
+      ],
+      "position": [
+        0.1000078201293952,
+        -4.899997615814209,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9999714378735481,
+        0.007558004836511276
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "X",
+      "properties": [
+        "enterprise meeting room(X)"
+      ],
+      "position": [
+        -9.8064097645639,
+        3.243584794788068,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9846719823675997,
+        0.17441641878063363
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "X",
+      "properties": [
+        "kelvin meeting room(X)"
+      ],
+      "position": [
+        -12.17710464451393,
+        -9.548568747034139,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.8346185234551482,
+        0.5508283946072027
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "X",
+      "properties": [
+        "reliant meeting room(X)"
+      ],
+      "position": [
+        -8.753389917366546,
+        -8.151080684805667,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.8283979230995089,
+        0.5601400548116696
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "X",
+      "properties": [
+        "stargazer meeting room(X)"
+      ],
+      "position": [
+        1.68486731666647,
+        -4.828055388433958,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.1288730324857187,
+        0.9916611021402094
+      ]
+    },
+    {
+      "refId": "location_11:location",
+      "variable": "X",
+      "properties": [
+        "voyager meeting room(X)"
+      ],
+      "position": [
+        13.97298892804668,
+        -1.122435923524415,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7954808635259757,
+        0.605978709002196
+      ]
+    },
+    {
+      "refId": "location_12:location",
+      "variable": "X",
+      "properties": [
+        "discovery meeting room(X)"
+      ],
+      "position": [
+        14.8478971776647,
+        -1.049740952433385,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6720582116146422,
+        0.7404983188376114
+      ]
+    },
+    {
+      "refId": "location_13:location",
+      "variable": "X",
+      "properties": [
+        "front desk(X)"
+      ],
+      "position": [
+        1.281989799915544,
+        -4.675735073494298,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.682160361291061,
+        0.7312025994779074
+      ]
+    }
+  ]
+}

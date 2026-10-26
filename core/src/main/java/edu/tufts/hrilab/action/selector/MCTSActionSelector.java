@@ -140,7 +140,7 @@ public class MCTSActionSelector extends ActionSelector {
       //back up the tree!
       rolloutNode.backup(value);
       //If we have reached our goal
-      if (rolloutNode.getContext().getStateMachine().holds(goal.getPredicate()).getValue()) {
+      if (rolloutNode.getContext().getStateMachine().holds(goal.getGoalStatePredicate()).getValue()) {
         log.debug("[MCTS] reached goal");
         break;
       }
@@ -282,7 +282,7 @@ public class MCTSActionSelector extends ActionSelector {
     }
 
     //Is the player action successful?
-    Goal rolloutGoal = new Goal(Factory.createSymbol("self"), new Predicate("rollout", new String[0]), Observable.FALSE);
+    Goal rolloutGoal = Goal.createGoal(Factory.createSymbol("self"), new Predicate("rollout", new String[0]));
 
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(rolloutGoal, rolloutNode.getContext());
     ActionStatus status = ai.call();
@@ -384,7 +384,7 @@ public class MCTSActionSelector extends ActionSelector {
   private List<ActionDBEntry> filterActionsByGoal(Set<ActionDBEntry> entries, Goal goal, ActionConstraints constraints, StateMachine sm) {
     //Only look at goal predicates
     Set<String> relevantEffects = new HashSet<>();
-    for (Symbol p : goal.getPredicate().getArgs()) {
+    for (Symbol p : goal.getGoalStatePredicate().getArgs()) {
       if (Operators.DIARC_TO_PDDL.containsKey(p.getName())) {
         relevantEffects.add(((Term) p).getArgs().get(0).getName());
       } else {
@@ -402,7 +402,7 @@ public class MCTSActionSelector extends ActionSelector {
     List<ActionDBEntry> newEntries = new ArrayList<>();
     for (ActionDBEntry action : entries) {
       ActionDBEntry.Builder actionBuilder = new ActionDBEntry.Builder(action);
-      actionBuilder.setType("mcts" + action.getName());
+      actionBuilder.setMethodName("mcts" + action.getName());
       for (Effect e : action.getEffects()) {
         if (!isRelevant(relevantEffects, e.getPredicate())) {
           actionBuilder.removeEffect(e);

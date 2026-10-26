@@ -76,6 +76,7 @@ public abstract class  DIARCPrompt {
             log.error("[getStateFromDIARC]",e);
         }
 
+        // TODO: this is bad, and only works if this class is in the same JVM as the GoalManagerComponent
         state.addActions(Database.getInstance().getActionDB().getAllActions());
 
        TRADE.getAvailableServices(new TRADEServiceConstraints().name("getPropertiesHandled")).forEach(x -> {

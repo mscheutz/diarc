@@ -5,11 +5,13 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
@@ -37,10 +39,10 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
     addServiceToObserve("joinOnGoal", Long.class);
     addServiceToObserve("sayText", String.class);
-
+    addServiceToObserve("sayText", String.class, Boolean.class);
     setPermanentTimeout(10, TimeUnit.SECONDS);
   }
 
@@ -192,8 +194,8 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     sendTrustedUserInput("crouch down shafer");
     sendTrustedUserInput("lower your arms dempster");
     sendTrustedUserInput("stand up shafer");
-//    sendTrustedUserInput("dempster that is how you dance with shafer"); // TODO: this leading direct address doesn't parse
-    sendTrustedUserInput("that is how you dance with shafer dempster"); // TODO: this leading direct address doesn't parse
+    sendTrustedUserInput("dempster that is how you dance with shafer"); // TODO: this leading direct address workds
+//    sendTrustedUserInput("that is how you dance with shafer dempster"); // TODO: this trailing direct address gives two parse options, but the "wrong" one is selected
     sendTrustedUserInput("dance with shafer");
     sendTrustedUserInput("hello shafer");
     sendTrustedUserInput("dance with dempster");

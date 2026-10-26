@@ -4,40 +4,30 @@
 
 package edu.tufts.hrilab.llm.llama;
 
-import edu.tufts.hrilab.llm.openai.request.*;
-import edu.tufts.hrilab.llm.openai.response.*;
+import edu.tufts.hrilab.llm.LLMClient;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import edu.tufts.hrilab.llm.llama.request.*;
 import edu.tufts.hrilab.llm.llama.response.*;
 
-import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
-import edu.tufts.hrilab.llm.Message;
-import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.llm.message.Message;
 import edu.tufts.hrilab.util.Http;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import static java.util.Map.entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.github.cdimascio.dotenv.Dotenv;
-import io.github.cdimascio.dotenv.DotenvException;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.io.InputStreamReader;
 
-public class LlamaClient {
+public class LlamaClient implements LLMClient {
 
   static private Logger log = LoggerFactory.getLogger(LlamaClient.class);
 
   private String completionEndpoint      = "http://localhost:8080/completion";
-  //use OpenaiClient
-  //private String chatCompletionEndpoint  = "http://localhost:8080/v1/chat/completions";
 
   private float temperature = 0.5f;
   private String[] stopWords = {};
@@ -50,10 +40,16 @@ public class LlamaClient {
    *
    * @param endpoint - The base endpoint to set
    */
+  @Override
   public void setEndpoint (String endpoint) {
     completionEndpoint = endpoint + "/completion";
     //chatCompletionEndpoint = endpoint + "/v1/chat/completions";
     log.info("Using llama.cpp endpoint: " + endpoint);
+  }
+
+  @Override
+  public void setModel(String model) {
+    log.info("[setModel] not supported for LlamaClient");
   }
 
   /**
@@ -61,6 +57,7 @@ public class LlamaClient {
    *
    * @param stopWordsArr - An array of stop words to set
    */
+  @Override
   public void setStopWords (String[] stopWordsArr) {
     stopWords = stopWordsArr;
     log.info("Using stop words: " + String.join(", ", stopWordsArr));
@@ -71,38 +68,99 @@ public class LlamaClient {
    *
    * @param temperatureFloat - The temperature value to set
    */
+  @Override
   public void setTemperature (float temperatureFloat) {
     temperature = temperatureFloat;
     log.info(String.format("Using temperature: %s", temperature));
   }
 
-  /**
-   * Generates a completion of the given prompt using the llama.cpp API service.
-   * @param prompt the prompt for which to generate the completion
-   * @return a LlamaCompletionResponse containing the generated completion and additional information
-   **/
-  public LlamaCompletionResponse completion (Prompt prompt) {
-    return completion(prompt.toString());
-  }
-  public LlamaCompletionResponse completion (Symbol prompt) {
-    return completion(prompt.toString());
+  @Override
+  public Completion completion(String userPrompt) {
+    return completion(userPrompt, null);
   }
 
   /**
-   * Generates a completion of the given prompt and model using the llama.cpp API service.
-   * @param prompt the prompt for which to generate the completion
+   * Generates a completion of the given prompt using the llama.cpp API service.
+   * @param userPrompt the user prompt for which to generate the completion
    * @return a LlamaCompletionResponse containing the generated completion and additional information
    **/
-  public LlamaCompletionResponse completion (Symbol model, Symbol prompt) {
-    return completion(prompt.toString());
+  @Override
+  public Completion completion(String userPrompt, String model) {
+    if (model != null) {
+      log.error("[completion] Llama client does not currently support multiple models");
+      return null;
+    }
+    return completion(userPrompt, model, "You are a helpful assistant.");
   }
-  public LlamaCompletionResponse completion(String prompt) {
-    LlamaCompletionRequestBody requestBody = new LlamaCompletionRequestBody(prompt);
+
+  @Override
+  public Completion completion(String userPrompt, String model, String systemPrompt) {
+    if (model != null) {
+      log.error("[completion] Llama client does not currently support multiple models");
+      return null;
+    }
+    LlamaCompletionRequestBody requestBody = new LlamaCompletionRequestBody(userPrompt);
     if (stopWords.length > 0) {
       requestBody.addStopWords(stopWords);
     }
     requestBody.setTemperature(temperature);
-    return completion(requestBody);
+    return new Completion(completion(requestBody));
+  }
+
+  /**
+   * Generates a chat completion using the LLaMA service and a prompt string.
+   * @param userPrompt the prompt string provided by the user
+   * @return the LlamaCompletionResponse containing the completed chat.
+   **/@Override
+  public Completion chatCompletion(String userPrompt) {
+    return chatCompletion(userPrompt, null);
+  }
+
+  @Override
+  public Completion chatCompletion(String userPrompt, String model) {
+    if (model != null) {
+      log.error("[chatCompletion] Llama client does not currently support multiple models");
+      return null;
+    }
+    return chatCompletion(userPrompt, model, "You are a helpful assistant.");
+  }
+
+  @Override
+  public Completion chatCompletion(String userPrompt, String model, String systemPrompt) {
+    if (model != null) {
+      log.error("[chatCompletion] Llama client does not currently support multiple models");
+      return null;
+    }
+
+    List<Message> messages = new ArrayList<>();
+    messages.add(new TextMessage("system", systemPrompt));
+    messages.add(new TextMessage("user", userPrompt));
+    return chatCompletion(messages);
+  }
+
+  /**
+   * Performs an LLaMA chat completion using the specified model and the given list of messages.
+   * This method creates a new LlamaRequestBody object with the provided model and messages.
+   * @param messages a list of messages to be sent for chat completion
+   * @return an LlamaCompletionResponse object representing the response from LLaMA
+   **/
+  @Override
+  public Completion chatCompletion(List<Message> messages) {
+    return chatCompletion(new Chat(messages));
+  }
+
+  @Override
+  public Completion chatCompletion(Chat chat) {
+    return chatCompletion(chat, null);
+  }
+
+  @Override
+  public Completion chatCompletion(Chat chat, String model) {
+    if (model != null) {
+      log.error("[chatCompletion] Llama client does not currently support multiple models");
+      return null;
+    }
+    return new Completion(chatCompletionInner(chat));
   }
 
   /**
@@ -115,35 +173,11 @@ public class LlamaClient {
     String endpoint = completionEndpoint;
     Map<String, String> headers = new HashMap<>();
     Gson gson = new Gson();
-    String response = Http.sendPostRequest(endpoint, requestBody, headers);
+
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, LlamaCompletionResponse.class);
-  }
-
-  /**
-   * Generates a chat completion using the LLaMA service and a prompt string.
-   * @param prompt the prompt string provided by the user
-   * @return the LlamaCompletionResponse containing the completed chat.
-   **/
-  public LlamaCompletionResponse chatCompletion (Symbol prompt) {
-    return chatCompletion(prompt.toString());
-  }
-  public LlamaCompletionResponse chatCompletion (String prompt) {
-    List<Message> messages = new ArrayList<>();
-    messages.add(new Message("system", "You are a helpful assistant."));
-    messages.add(new Message("user", prompt));
-    return chatCompletion(messages);
-  }
-
-  /**
-   * Performs an LLaMA chat completion using the specified model and the given list of messages.
-   * This method creates a new LlamaRequestBody object with the provided model and messages.
-   * @param messages a list of messages to be sent for chat completion
-   * @return an LlamaCompletionResponse object representing the response from LLaMA
-   **/
-  public LlamaCompletionResponse chatCompletion (List<Message> messages) {
-    Chat chat = new Chat(messages);
-    return chatCompletion(chat);
   }
 
   /**
@@ -151,7 +185,7 @@ public class LlamaClient {
    * @param chat the chat containing the messages to use for the completion
    * @return an LlamaCompletionResponse object representing the response from LLaMA
    **/
-  public LlamaCompletionResponse chatCompletion (Chat chat) {
+  public LlamaCompletionResponse chatCompletionInner (Chat chat) {
     LlamaCompletionRequestBody requestBody = new LlamaCompletionRequestBody(chat);
     String userStop = chat.getUserRole();
     String robotStop = chat.getRobotRole();
@@ -172,7 +206,8 @@ public class LlamaClient {
     String endpoint = completionEndpoint;
     Map<String, String> headers = new HashMap<>();
     Gson gson = new Gson();
-    String response = Http.sendPostRequest(endpoint, requestBody, headers);
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, LlamaCompletionResponse.class);
   }

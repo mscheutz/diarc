@@ -4,11 +4,23 @@
 
 package edu.tufts.hrilab.llm.openai.response;
 
-import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 
 public class OpenaiChatCompletionChoice {
-	public Message message;
-	public int index;
-	public float logprobs;
-	public String finish_reason;
+	public TextMessage message = null;
+	public int index = -1;
+	public float logprobs = -1;
+	public String finish_reason = null;
+	public TextMessage delta = null; //streaming
+
+	@Override
+	public String toString() {
+		return "OpenaiChatCompletionChoice{" +
+						"message=" + message +
+						", index=" + index +
+						", logprobs=" + logprobs +
+						", finish_reason='" + finish_reason + '\'' +
+						", delta=" + delta +
+						'}';
+	}
 }

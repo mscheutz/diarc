@@ -35,7 +35,8 @@ struct CameraParameters {
 
     //init params
     M = cv::Mat::zeros(M.size(), M.type());
-    M.at<float>(0,0) = M.at<float>(1,1) = 300.0f;       //fx, fy
+    M.at<float>(0,0) = 552.0291012161067f * (imgWidth/640.0f);   //fx
+    M.at<float>(1,1) = 552.0291012161067f * (imgHeight/480.0f);  //fy
     M.at<float>(0,2) = imgWidth / 2.0f;                //cx
     M.at<float>(1,2) = imgHeight / 2.0f;               //cy
     M.at<float>(2,2) = 1.0f;

@@ -23,11 +23,11 @@ public:
   typedef boost::shared_ptr<SaliencyNotification> Ptr;
   typedef boost::shared_ptr<const SaliencyNotification> ConstPtr;
 
-  SaliencyNotification(const VisionProcessConstPtr& notifier_,
+  SaliencyNotification(const long long& processorId_,
                        const unsigned long long& frameNumber_,
                        const CaptureData::ConstPtr& captureData_,
                        const cv::Mat& saliencyMap_)
-          : ImageProcessorNotification(notifier_, SALIENCY, frameNumber_, captureData_),
+          : ImageProcessorNotification(SALIENCY, processorId_, frameNumber_, captureData_),
             saliencyMap(saliencyMap_.clone()) {
   }
 

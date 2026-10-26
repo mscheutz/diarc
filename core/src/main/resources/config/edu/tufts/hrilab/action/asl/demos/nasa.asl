@@ -13,17 +13,17 @@
 
     !likeGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "like", ?newScriptName, ?oldScriptName);
 
-    !bindings = act:askQuestionFromString(?actor,"what are the differences", mod(X));
+    !bindings = act:askQuestionFromString("what are the differences", mod(X));
     !modification = op:get(!bindings, !x);
     op:log(debug, "modification !modification");
     act:modifyAction(!likeGoal,!modification,!location);
 
-    !bindings = act:askQuestionFromString(?actor,"okay are there any more differences", mod(X));
+    !bindings = act:askQuestionFromString("okay are there any more differences", mod(X));
     !modification = op:get(!bindings, !x);
     !modName = op:getName(!modification);
     while(op:!=(!modName,"none")){
         act:modifyAction(?newScriptName,!modification,!location);
-        !bindings = act:askQuestionFromString(?actor,"okay are there any more differences", mod(X));
+        !bindings = act:askQuestionFromString("okay are there any more differences", mod(X));
         !modification = op:get(!bindings, !x);
         !modName = op:getName(!modification);
     }
@@ -412,16 +412,16 @@
     edu.tufts.hrilab.fol.Symbol !speaker =?actor;
     (!speaker) = op:newObject("edu.tufts.hrilab.fol.Symbol",?actor);
 
-    (!bindings) = act:askQuestionFromString(!speaker,"When should I send it?", mod(X));
+    (!bindings) = act:askQuestionFromString("When should I send it?", mod(X));
     //"every time an experiment bay breaks"
     (!queryPred) = op:get(!bindings, !x);
 
-    (!bindings) = act:askQuestionFromString(!speaker,"What should it contain?", mod(X));
+    (!bindings) = act:askQuestionFromString("What should it contain?", mod(X));
     (!actionPred) = op:get(!bindings, !x);
 
     while(~op:equalsValue(!actionPred,none())){
         op:add(!tmpDescriptors,!actionPred);
-        (!bindings) = act:askQuestionFromString(!speaker,"anything else?", mod(X));
+        (!bindings) = act:askQuestionFromString("anything else?", mod(X));
         op:log(info,!bindings);
         (!actionPred) = op:get(!bindings, !x);
         op:log(info,!actionPred);

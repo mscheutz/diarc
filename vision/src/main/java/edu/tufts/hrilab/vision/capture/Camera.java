@@ -106,63 +106,60 @@ public class Camera {
     //add entry to FPS GUI
     Vision.FPSpanel.addEntry(threadName);
 
-    runFuture = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        //if thread has been stopped, the captureDevice was deleted
-        //which is mainly to ensure the native destructor is called on program exit
-        if (captureDevice == null) {
-          captureDevice = Capture.createCaptureDevice(captureConfig);
-        }
+    runFuture = executor.submit(() -> {
+      //if thread has been stopped, the captureDevice was deleted
+      //which is mainly to ensure the native destructor is called on program exit
+      if (captureDevice == null) {
+        captureDevice = Capture.createCaptureDevice(captureConfig);
+      }
 
-        try {
-          while (true) {
+      try {
+        while (true) {
 
-            // check if thread should be paused
-            try {
-              pauseLock.lock();
-              while (pauseFlag) {
-                pauseCondition.await();
-              }
-            } finally {
-              pauseLock.unlock();
+          // check if thread should be paused
+          try {
+            pauseLock.lock();
+            while (pauseFlag) {
+              pauseCondition.await();
             }
-
-            double[] transform;
-            try {
-              //lock while data is copied
-              captureDataLock.lock();
-              //convert Matrix4d to double[] to pass to native
-              transform = matrix4dToArray(currVisionTransform);
-            } finally {
-              captureDataLock.unlock();
-            }
-
-            log.debug("capture called");
-            boolean success = captureDevice.capture(transform);
-            log.debug("capture completed: " + success);
-            Vision.FPSpanel.registerThreadCompletion(threadName, success);
-
-            //TODO: fps regulation here instead of in individual Capture___.cpp classes
-            Thread.sleep(1);    //significantly reduces CPU usage
+          } finally {
+            pauseLock.unlock();
           }
 
-        } catch (InterruptedException e) {
-          log.debug("capture thread caught InterruptedException");
-        } finally {
-          log.debug("capture thread in finally");
-          if (captureDataLock.isHeldByCurrentThread()) {
+          double[] transform;
+          try {
+            //lock while data is copied
+            captureDataLock.lock();
+            //convert Matrix4d to double[] to pass to native
+            transform = matrix4dToArray(currVisionTransform);
+          } finally {
             captureDataLock.unlock();
           }
 
-          //remove entry from FPS GUI
-          Vision.FPSpanel.removeEntry(threadName);
+          log.debug("capture called");
+          boolean success = captureDevice.capture(transform);
+          log.debug("capture completed: " + success);
+          Vision.FPSpanel.registerThreadCompletion(threadName, success);
 
-          log.debug("capture thread finally finished");
+          //TODO: fps regulation here instead of in individual Capture___.cpp classes
+          Thread.sleep(1);    //significantly reduces CPU usage
         }
 
-        log.debug("capture thread finished");
+      } catch (InterruptedException e) {
+        log.debug("capture thread caught InterruptedException");
+      } finally {
+        log.debug("capture thread in finally");
+        if (captureDataLock.isHeldByCurrentThread()) {
+          captureDataLock.unlock();
+        }
+
+        //remove entry from FPS GUI
+        Vision.FPSpanel.removeEntry(threadName);
+
+        log.debug("capture thread finally finished");
       }
+
+      log.debug("capture thread finished");
     });
   }
 

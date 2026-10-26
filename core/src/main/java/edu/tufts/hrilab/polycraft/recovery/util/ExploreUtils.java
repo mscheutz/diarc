@@ -11,6 +11,7 @@ import edu.tufts.hrilab.action.Condition;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.ParameterizedAction;
@@ -64,7 +65,7 @@ public class ExploreUtils {
       // Finding if object is in inventory
       Predicate query = Factory.createPredicate("fluent_equals", "inventory(self," + object + ")", "X");
       log.debug("query: " + query);
-      List<Map<Variable, Symbol>> inventoryObjectQuantity = (List<Map<Variable, Symbol>>) TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(Object.class, query);
+      List<Map<Variable, Symbol>> inventoryObjectQuantity = (List<Map<Variable, Symbol>>) TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(Object.class, query);
       log.debug("inventory: " + inventoryObjectQuantity); // [{X=1.0}]
 
       for (Map<Variable, Symbol> quantity : inventoryObjectQuantity) {
@@ -78,7 +79,7 @@ public class ExploreUtils {
       // check if the object is a floating entity
       query = Factory.createPredicate("floating", object);
       log.debug("query: " + query);
-      List<Map<Variable, Symbol>> novelObjects = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      List<Map<Variable, Symbol>> novelObjects = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
       log.debug("floating: " + novelObjects);
       // If the list has an empty map inside it, that means objectName is floating - [{}].
       // If the list is empty that means objectName is not floating - [].
@@ -89,7 +90,7 @@ public class ExploreUtils {
       // query if its a block
       query = Factory.createPredicate("fluent_equals", "world(" + object + ")", "X");
       log.debug("query: " + query);
-      List<Map<Variable, Symbol>> blockObjects = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      List<Map<Variable, Symbol>> blockObjects = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
       log.debug("world: " + blockObjects); //world = [{X=6.0}]
       for (Map<Variable, Symbol> quantity : blockObjects) {
         Variable X = new Variable("X");
@@ -129,26 +130,27 @@ public class ExploreUtils {
    * @return if the goal was successfully executed
    */
   static public Justification doGoal(Predicate goalPredicate) {
-    Goal goal = new Goal(goalPredicate);
+    Goal goal = Goal.createGoal(goalPredicate);
     try {
       //TODO: Do we want goals from this method to skip/override the execution manager?
       //      Depending on the answer to the above, do we only care if a matching goal is currently active or submitted?
       //Currently made methods in GM and swapped calls here to do so
-      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActiveGoals")).call(List.class, goal.getActor());
+      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalPredicatesForActor").argTypes(GoalFilter.class, Symbol.class))
+              .call(List.class, GoalFilter.CURRENT, goal.getActor());
       if (currGoals.contains(goalPredicate)) {
         log.info("Goal is already a current goal. Skipping this goal to prevent a deadlock. Goal: " + goalPredicate);
         return new ConditionJustification(false);
       }
 
       log.info("Submitting goal: " + goalPredicate);
-      long goalID = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal")).call(Long.class, goalPredicate);
-      GoalStatus goalStatus = TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal")).call(GoalStatus.class, goalID);
+      long goalID = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goalPredicate);
+      GoalStatus goalStatus = TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, goalID);
       log.info("Goal Status for goal (ID=" + goalID + "): " + goalStatus);
       if (goalStatus == GoalStatus.SUCCEEDED) {
         return new ConditionJustification(true);
       } else if (goalStatus == GoalStatus.FAILED) {
         log.debug("Goal failed: " + goalPredicate);
-        Justification goalJustification = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalFailConditions")).call(Justification.class, goalID);
+        Justification goalJustification = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalFailConditions").argTypes(Long.class)).call(Justification.class, goalID);
         return goalJustification;
       } else {
         return new ConditionJustification(false);
@@ -167,9 +169,9 @@ public class ExploreUtils {
     try {
       List<Map<Variable, Symbol>> queryResults;
       if (observe) {
-        queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeCost")).call(List.class, actionCostQuery);
+        queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("observeCost").argTypes(Term.class)).call(List.class, actionCostQuery);
       } else {
-        queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, actionCostQuery);
+        queryResults =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, actionCostQuery);
       }
 
       if (!queryResults.isEmpty()) {
@@ -196,7 +198,7 @@ public class ExploreUtils {
     Variable noveltyVar = Factory.createVariable("NOVELTY");
     Predicate noveltyPred = Factory.createPredicate("novelty", noveltyVar, level);
     try {
-      List<Map<Variable, Symbol>> noveltyBindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, noveltyPred);
+      List<Map<Variable, Symbol>> noveltyBindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, noveltyPred);
       noveltyBindings.forEach(binding -> novelties.add((Predicate) binding.get(noveltyVar)));
     } catch (TRADEException e) {
       log.error("Error getting novelties from Belief.");
@@ -284,7 +286,7 @@ public class ExploreUtils {
 
       return new Effect(newFluentChange, EffectType.SUCCESS, Observable.TRUE);
     } else {
-      log.error("Can't generate new Effect for discrepancy: " + discrepancy);
+      log.info("Can't generate new Effect for discrepancy: " + discrepancy);
       return null;
     }
   }
@@ -355,7 +357,7 @@ public class ExploreUtils {
     Predicate query = Factory.createPredicate("typeobject", var, semanticType); // e.g., typeobject(OBJ,trader)
     List<Map<Variable, Symbol>> queryBindings;
     try {
-      queryBindings =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, query);
+      queryBindings =TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, query);
     } catch (TRADEException e) {
       log.error("Exception getting objects of type: " + semanticType, e);
       return objects;

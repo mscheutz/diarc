@@ -17,18 +17,24 @@ namespace diarc {
 
       void xyzImageToPointCloud(const cv::Mat xyzImage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
               pcl::PointIndices::Ptr indices);
-      void depthToPointCloud(const cv::Mat depth, CameraParameters::ConstPtr irParams,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointIndices::Ptr indices);
+      void depthToPointCloud(const cv::Mat depth, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+              pcl::PointIndices::Ptr indices, int camera_index = 0);
       void depthToPointCloud(const cv::Mat depth, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
               pcl::PointIndices::Ptr indices);
       void depthAndColorToPointCloud(const cv::Mat depth, const cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::Ptr color_cloud,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr());
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(),
+              int camera_index = 0);
       void xyzAndColorToPointCloud(const cv::Mat xyzImage, const cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::Ptr color_cloud,
-              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr());
+              pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(),
+              int camera_index = 0);
       void pointCloudToDepthAndColor(cv::Mat depth, cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+      void pointCloudToDepth(cv::Mat depth, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
+      void pointCloudToDepthWithinReferenceCube(cv::Mat depth,
+                                                pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
+                                                float refCubeSize);
       //void pointCloudToDepthAndColor(cv::Mat depth, cv::Mat color,
       //        pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
 

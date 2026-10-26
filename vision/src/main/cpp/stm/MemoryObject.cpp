@@ -114,10 +114,10 @@ double MemoryObject::compare(const MemoryObject::Ptr &other) const {
   //  }
 
   // make sure other mo has all the same descriptors as this object
-  if (!other->getValidationResults().containsAllDescriptors(this->getValidationResults().getDescriptors())) {
-    LOG4CXX_DEBUG(logger, "[compare] objects have different descriptors. Not comparing.");
-    return 0.0;
-  }
+  // if (!other->getValidationResults().containsAllDescriptors(this->getValidationResults().getDescriptors())) {
+  //   LOG4CXX_DEBUG(logger, "[compare] objects have different descriptors. Not comparing.");
+  //   return 0.0;
+  // }
 
   // find closest tracking result (in time)
   const unsigned long long &detectFrameNum = other->getDetectionMask()->getFrameNumber();
@@ -187,7 +187,7 @@ void MemoryObject::update(const MemoryObject::Ptr &match) {
   //TODO: probably need to merge the old and new and not just use new here
   captureData = match->getCaptureData();
   mask = match->getDetectionMask();
-  validationResults = getValidationResults();
+  validationResults = match->getValidationResults();
 
   // update entire scene graph
   LOG4CXX_DEBUG(logger, "[update] updating scene graph relations.");

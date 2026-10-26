@@ -87,6 +87,15 @@ public class TradeServiceContext extends ArgumentBasedContext {
     }
   }
 
+  protected void setArgumentType(int index, Class<?> type) {
+    if (index < inputArgTypes.size()) {
+      inputArgTypes.remove(index);
+      inputArgTypes.add(index, type);
+    } else {
+      log.error("[setArgumentType] supplied index out of bounds");
+    }
+  }
+
   /**
    * Helper method to check if TRADE groups contains the diarc agent (e.g., agent:dempster or agent:dempster:nao).
    *
@@ -115,7 +124,6 @@ public class TradeServiceContext extends ArgumentBasedContext {
         if (firstArg) {
           // first arg is ?actor -- leave out of TSI call
           firstArg = false;
-          continue;
         } else if (arg.isReturn) {
           if (returnArg != null) {
             log.error("More than one return value in executeAction for primitive action: " + tsi);

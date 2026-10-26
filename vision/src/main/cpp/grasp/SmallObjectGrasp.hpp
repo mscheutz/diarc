@@ -22,7 +22,7 @@ namespace diarc {
       typedef boost::shared_ptr<SmallObjectGrasp> Ptr;
       typedef boost::shared_ptr<const SmallObjectGrasp> ConstPtr;
 
-      SmallObjectGrasp();
+      SmallObjectGrasp(const std::string &config);
       ~SmallObjectGrasp();
 
       //! determine if calculateGraspPoses will result in useful grasps for the MO

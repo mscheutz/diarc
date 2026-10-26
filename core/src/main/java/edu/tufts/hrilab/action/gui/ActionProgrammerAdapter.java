@@ -16,6 +16,7 @@ import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -82,6 +83,7 @@ public class ActionProgrammerAdapter extends GuiAdapter {
    *
    * @return a JsonObject containing the hierarchy of ASL files.
    */
+  @Nonnull
   private JsonObject getAslFilesAsTree() {
     File root = new File(ACTION_SCRIPT_PATH);
 
@@ -169,11 +171,7 @@ public class ActionProgrammerAdapter extends GuiAdapter {
 
     ActionDBEntry.Builder builder = new ActionDBEntry.Builder(name);
     for (JsonElement link : chain) {
-      builder.addEventSpec(
-              new EventSpec(
-                      Factory.createPredicate(link.getAsString())
-              )
-      );
+      builder.addEventSpec(new EventSpec(Factory.createPredicate(link.getAsString()), true));
     }
 
     builder.build(true);

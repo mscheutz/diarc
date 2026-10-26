@@ -36,7 +36,8 @@ dist_threshold: Max distance of plane inlier points to table plane.
 
 <processor type="plane" arity="1">
   <config>
-    <table_height>0.75</table_height>
+    <table_height>0.53</table_height>
+<!--    <table_height>0.75</table_height>-->
     <dist_threshold>0.01</dist_threshold>
   </config>
 </processor>

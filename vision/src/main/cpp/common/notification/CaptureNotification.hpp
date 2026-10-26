@@ -25,7 +25,7 @@ public:
   typedef boost::shared_ptr<const CaptureNotification> ConstPtr;
 
   CaptureNotification(unsigned long long& frameNumber_, const CaptureData::ConstPtr& captureData_)
-          : Notification(CAPTURE, -1L, frameNumber_),
+          : Notification(CAPTURE, -1L, -1L, frameNumber_),
             captureData(captureData_) {
   }
 
@@ -38,7 +38,7 @@ public:
           const cv::Mat& depthFrameIntensity_,
           pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_,
           pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloudRGB_)
-  : Notification(CAPTURE, -1L, frameNumber),
+  : Notification(CAPTURE, -1L, -1L, frameNumber),
   captureData(new CaptureData(frameNumber,
   transform_,
   frame_,

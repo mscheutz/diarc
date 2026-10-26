@@ -2,6 +2,9 @@
   "testName" : "PickAndPlaceDemoTestEnglish",
   "testlets" : [ {
     "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
     }, {
@@ -22,10 +25,9 @@
     }, {
       "serviceName" : "addDetectionType",
       "serviceArgs" : [ "\"chipotle sauce\"", "detChipotle", "\"chipotle sauce\"" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
-    }, {
+    } ]
+  }, {
+    "serviceCalls" : [ {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
     }, {
@@ -47,14 +49,14 @@
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
     }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "オーケー", "true" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
-    }, {
-      "serviceName" : "perceiveEntityFromSymbol",
-      "serviceArgs" : [ "physobj_0:physobj", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_0:physobj", "true" ]
@@ -70,15 +72,12 @@
     }, {
       "serviceName" : "putDownItem",
       "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_8:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "goToCameraPose",
-      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
-    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
     }, {
@@ -100,8 +99,11 @@
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
     }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "「チキン」とは何を意味するのか分かりません。", "true" ]
+      "serviceArgs" : [ "「チキン」とはどういう意味か分からない。", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -161,10 +163,10 @@
       "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
@@ -263,7 +265,7 @@
       "serviceArgs" : [ "オーケー", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "コーンを下ろせないのは、\"prep area\"が占有されているため右腕です。", "true" ]
+      "serviceArgs" : [ "右のアームはコーンを下ろすことができない。なぜなら「prep area」が占有されているからだ。", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -277,10 +279,10 @@
       "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]

@@ -26,15 +26,10 @@
 #include "CapturePCDFile.cpp"
 #include "common/notification/CaptureNotification.hpp"
 
-#ifdef FREENECT
-#include "CaptureFreenect.cpp"
-#endif
 #ifdef USE_OPENNI
-
 #include "CaptureOpenni.cpp"
-#include "CaptureOpenniPlus.cpp"
-
 #endif
+
 #ifdef USE_OPENNI2
 #include "CaptureOpenni2.cpp"
 #endif
@@ -48,6 +43,10 @@
 #include "CaptureMultisense.hpp"
 #endif
 
+#ifdef USE_ROS2_VISION
+#include "CaptureROS2.hpp"
+#endif
+
 #ifdef USE_NAO
 #include "CaptureNao.hpp"
 #endif
@@ -55,6 +54,16 @@
 #ifdef USE_GSTREAMER
 #include "CaptureGStreamer.hpp"
 #endif
+
+#ifdef USE_BOSDYN
+#include "CaptureSpot.hpp"
+#endif
+
+#ifdef USE_PYTHON
+#include "pyvis/PythonHelper.hpp"
+#include "CaptureSpotPython.hpp"
+namespace py = pybind11;
+#endif // USE_PYTHON
 
 namespace diarc {
   namespace capture {
@@ -83,11 +92,6 @@ namespace diarc {
       LOG4CXX_INFO(logger, boost::format("Capture Factory cammode: %d.") % camMode);
 
       switch (camMode) {
-        case MONO_FW:
-        case STEREO_FW:
-        case STEREO_SYNC: LOG4CXX_ERROR(logger, "FireWire modes not available. Capture classes need to be rewritten!!");
-          //captureDevice = Capture::Ptr(new CaptureFirewire(configFile));
-          break;
         case MONO_V4L2:
           captureDevice = Capture::Ptr(new CaptureV4L2(configFile));
           break;
@@ -139,6 +143,13 @@ namespace diarc {
         LOG4CXX_ERROR(logger, "ROS is not available.");
 #endif
           break;
+        case ROS2:
+#ifdef USE_ROS2_VISION
+          captureDevice = Capture::Ptr(new CaptureROS2(configFile));
+#else
+            LOG4CXX_ERROR(logger, "ROS2 is not available.");
+#endif
+        break;
           //====================== End PR2 Options ===========================
 
         case MULTISENSE:
@@ -152,13 +163,6 @@ namespace diarc {
         case SIM_PC1:
         case SIM_PC2:
           captureDevice = Capture::Ptr(new CaptureSimulateKinect(configFile));
-          break;
-        case KINECT_PLUS:
-#ifdef USE_OPENNI
-          captureDevice = Capture::Ptr(new CaptureOpenniPlus(configFile));
-#else
-          LOG4CXX_ERROR(logger, "OpenNI is not available.");
-#endif
           break;
         case NAO:
 #ifdef USE_NAO
@@ -174,6 +178,20 @@ namespace diarc {
           LOG4CXX_ERROR(logger, "GStreamer not available");
 #endif
           break;
+      case BOSDYN:
+#ifdef USE_BOSDYN
+        captureDevice = Capture::Ptr(new CaptureSpot(configFile));
+#else
+        LOG4CXX_ERROR(logger, "Boston Dynamics SDK not available");
+#endif
+        break;
+      case BOSDYN_PYTHON:
+#ifdef USE_PYTHON
+        captureDevice = Capture::Ptr(new CaptureSpotPython(configFile));
+#else
+        LOG4CXX_ERROR(logger, "Boston Dynamics Python SDK requires pybind11");
+#endif
+        break;
         default: LOG4CXX_ERROR(logger, "Invalid camera mode!");
         case NUM_MODES:
           break;
@@ -308,9 +326,16 @@ namespace diarc {
         nh = new ros::NodeHandle();
 
         // ROS publisher
-        pub = nh->advertise<pcl::PointCloud<pcl::PointXYZ> >("/head_mount_kinect/depth_registered/points", 1);
+        pub = nh->advertise<pcl::PointCloud<pcl::PointXYZRGB> >("/diarc/depth_registered/points", 1);
       }
 #endif //USE_ROS_VISION
+
+
+      // initialize python for all vision threads
+#ifdef USE_PYTHON
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->initializePython();
+#endif //USE_PYTHON
     }
 
     Capture::~Capture() {
@@ -318,6 +343,14 @@ namespace diarc {
       if (saveToAVIstarted) {
         stopAviWrite();
       }
+
+
+      // finalize python stuff
+#ifdef USE_PYTHON
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->finalizePython();
+
+#endif // USE_PYTHON
     }
 
     bool Capture::capture(const double transform[]) {
@@ -328,10 +361,11 @@ namespace diarc {
       bool success = captureCurrentCameraFrame();
 
 #ifdef USE_ROS_VISION
-      if (publishCloudToRos && cloud) {
-        cloud->header.frame_id = "head_mount_kinect_rgb_optical_frame";
-        cloud->header.stamp = ros::Time::now().toNSec() / 1e3;
-        pub.publish(cloud);
+      if (publishCloudToRos && cloudRGB) {
+        // cloudRGB->header.frame_id = "camera_depth_frame";
+        cloudRGB->header.frame_id = "camera_color_frame";
+        cloudRGB->header.stamp = ros::Time::now().toNSec() / 1e3;
+        pub.publish(cloudRGB);
         ros::spinOnce();
       }
 #endif //USE_ROS_VISION
@@ -361,7 +395,7 @@ namespace diarc {
       // send frame completion notification
       FrameCompletionNotification::Ptr frameCompletionNotification =
               FrameCompletionNotification::Ptr(
-                      new FrameCompletionNotification(VisionProcess::Ptr(), -1L, captureNotification->frameNumber));
+                      new FrameCompletionNotification(-1L, -1L, captureNotification->frameNumber));
       sendNotifications(frameCompletionNotification);
 
       //display captured frames

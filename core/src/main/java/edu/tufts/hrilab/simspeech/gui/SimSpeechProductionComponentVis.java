@@ -42,11 +42,11 @@ public class SimSpeechProductionComponentVis extends JFrame {
     this.setSize(50 * words.length, 100);
 
     this.setLocation(tx, ty);
-    this.setVisible(true);
+    if (!this.isVisible()) {
+      this.setVisible(true);
+    }
     new Thread(() -> {
-      // sleep, then hide
       Sleep(time);
-      this.setVisible(false);
       isSpeaking = false;
     }).start();
   }

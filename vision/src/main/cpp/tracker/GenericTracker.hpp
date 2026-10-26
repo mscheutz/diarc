@@ -22,7 +22,7 @@ protected:
 
   virtual void removeLowConfidenceObjects();
 
-  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newObject);
+  virtual diarc::stm::MemoryObject::Ptr mergeObject(diarc::stm::MemoryObject::Ptr newObject);
 
 private:
 

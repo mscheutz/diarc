@@ -27,6 +27,6 @@ import edu.tufts.hrilab.fol.Predicate;
 
     !questionString = act:getQuestionFromRefs(?itemType, ?perceptionArea, ?putdownArea);
 
-    !bindings = act:askQuestionFromString(?actor, !questionString, got(X));
+    !bindings = act:askQuestionFromString(!questionString, got(X));
     !response = op:get(!bindings, !x);
 }

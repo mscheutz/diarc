@@ -14,6 +14,7 @@ import edu.tufts.hrilab.fol.Variable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -98,10 +99,17 @@ public abstract class Justification implements Serializable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Justification justification = (Justification) o;
-    if (value != justification.value) return false;
-    if ((step != null && justification.step == null) || (justification.step != null && step == null));
-    if (step != null && justification.step != null && !step.equals(justification.step)) return false;
+
+    Justification that = (Justification) o;
+    if (!Objects.equals(value, that.value)) return false;
+    if (!Objects.equals(step, that.step)) return false;
+
     return true;
   }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value, step);
+  }
+
 }

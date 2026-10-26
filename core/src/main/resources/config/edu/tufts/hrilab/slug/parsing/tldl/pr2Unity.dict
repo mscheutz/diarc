@@ -104,8 +104,31 @@ autonomy ; C ; autonomy(?ADDRESSEE)
 what; Q/QUERYABLE; #x.$x
 which; Q/QUERYABLE; #x.$x
 
-tubes are damaged; QUERYABLE; tubesDamaged(WHICH)
-is the damage; QUERYABLE; tubesDamaged(WHICH)
+%% questions about tubes
+tubes are damaged in ; QUERYABLE/AREA; #a.propertyOf(tube($a,LR,NUM),damaged(AMOUNT))
+tubes are damaged; QUERYABLE; propertyOf(tube(AREA,LR,NUM),damaged(AMOUNT))
+tubes are broken in ; QUERYABLE/AREA; #a.propertyOf(tube($a,LR,NUM),broken)
+tubes are broken; QUERYABLE; propertyOf(tube(AREA,LR,NUM),broken)
+tubes are off in; QUERYABLE/AREA; #a.propertyOf(tube($a,LR,NUM),off)
+tubes are off; QUERYABLE; propertyOf(tube(AREA,LR,NUM),off)
+
+%% questions about robot's area location
+where are you; Q ; amIn(?ADDRESSEE,AREA)
+what area are you in; Q ; amIn(?ADDRESSEE,AREA)
+which area are you in; Q ; amIn(?ADDRESSEE,AREA)
+what wing are you in; Q ; amIn(?ADDRESSEE,AREA)
+which wing are you in; Q ; amIn(?ADDRESSEE,AREA)
+are you in area; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+are you in wing; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+are you in; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+
+%% questions about robot's tube side and number location
+what tube are you at; Q ; amAt(?ADDRESSEE,LR,NUM)
+what tube are you in front of; Q ; amAt(?ADDRESSEE,LR,NUM)
+%are you at left; Q/NUMBER ; #n.amAt(?ADDRESSEE,left,$n)
+%are you at right; Q/NUMBER ; #n.amAt(?ADDRESSEE,right,$n)
+%are you at tube left; Q/NUMBER ; #n.amAt(?ADDRESSEE,left,$n)
+%are you at tube right; Q/NUMBER ; #n.amAt(?ADDRESSEE,right,$n)
 
 level; Q\Q; #x.$x
 
@@ -114,10 +137,6 @@ located; Q\Q; #x.$x
 
 you; AGENT; ?ACTOR
 
-what is the situation; Q; tubesDamaged(WHICH)
-which tubes are off; Q ;tubesOff(WHICH)
-where are you; Q ;whereAre(?ACTOR)
-what are you doing; Q ;whatAre(?ACTOR,doing)
 
 monitor; C/AREA ; #x.monitorArea($x)
 monitor tubes ; C ; monitorArea()

@@ -45,7 +45,7 @@ void SiftProcessor::handleCaptureNotification(CaptureNotification::ConstPtr noti
     LOG4CXX_ERROR(logger, "catch all exception.");
   }
 
-  SiftNotification::Ptr siftNotification(new SiftNotification(shared_from_this(), siftFeatures->frameNum, notification->captureData, siftFeatures));
+  SiftNotification::Ptr siftNotification(new SiftNotification(this->getProcessorId(), siftFeatures->frameNum, notification->captureData, siftFeatures));
   sendNotifications(siftNotification);
 }
 

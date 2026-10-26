@@ -20,7 +20,33 @@ SET(SOURCES
 	validator/SizeValidator.cpp
 	)
 
+SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs")
+
 # optional sources
+if (pybind11_FOUND AND OpenCV_dnn_FOUND)
+	SET(SOURCES ${SOURCES}
+	    validator/ComponentValidator.cpp
+		)
+
+    # Model trained with objects_c_rpd_v2_501
+    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/model_objects_c_rpd_v2_501.onnx")
+    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_rpd_v2_501.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
+    	message("Downloading model: ${COMPONENT_MODEL_URL}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL}" "${COMPONENT_MODEL_PATH}")
+    endif()
+
+    # Model trained with objects_c_v1_1500
+    SET(COMPONENT_MODEL_PATH_V1 "${CONFIG_DIR}/componentvalidator/model_objects_c_v1_1500.onnx")
+    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/model_objects_c_v1_1500.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH_V1}")
+    	message("Downloading model: ${COMPONENT_MODEL_URL_V1}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL_V1}" "${COMPONENT_MODEL_PATH_V1}")
+    endif()
+endif (pybind11_FOUND AND OpenCV_dnn_FOUND)
+
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
 		saliency/ColorProcessor.cpp
@@ -28,9 +54,7 @@ if (V4R_V0_FOUND)
 		saliency/LocationSaliencyProcessor.cpp
 		saliency/SymmetryProcessor.cpp
 		saliency/OrientationProcessor.cpp
-		validator/ShapeValidator.cpp
 		validator/SurfaceMarkingValidator.cpp
-		validator/OrientationValidator.cpp
 	)
 endif(V4R_V0_FOUND)
 
@@ -47,6 +71,11 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES} )
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc capture vl shape_match)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
+if (pybind11_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pyvis)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
+endif (pybind11_FOUND)
 if (V4R_V0_FOUND) 
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rEPUtils v4rAttentionModule)
 endif(V4R_V0_FOUND)

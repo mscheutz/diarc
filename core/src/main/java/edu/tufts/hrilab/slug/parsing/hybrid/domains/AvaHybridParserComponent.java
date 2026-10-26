@@ -1,0 +1,199 @@
+package edu.tufts.hrilab.slug.parsing.hybrid.domains;
+
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.learning.ActionLearningStatus;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
+import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AvaHybridParserComponent extends HybridParserComponent {
+  private List<Long> modifiedUtteranceUids = new ArrayList<>();
+
+  @Override
+  public Utterance parseUtteranceForNonLLMResult(Utterance incoming, boolean callStreaming) {
+    //TODO: AvaDemo "hack" to prevent duplicate parsing when checking for false positive wakeword triggers
+    if (incoming.getSemantics() != null) {
+      log.info("[parseUtterance] receiving utterance with set semantics. Please unset before calling parseUtterance if desiring a new result");
+      return incoming;
+    }
+
+    if (incoming.getWordsAsString().equals("reset")) {
+      incoming.setSemantics(Factory.createPredicate("resetConversation",incoming.getAddressee()));
+      incoming.setType(UtteranceType.INSTRUCT);
+      return incoming;
+    }
+
+    Utterance output = super.parseUtteranceForNonLLMResult(incoming, callStreaming);
+    if (output != null) {
+      output = applyContextToOutput(output);
+    }
+    return output;
+  }
+
+  @Override
+  public Utterance parseUtterance(Utterance incoming) {
+    //TODO: AvaDemo "hack" to prevent duplicate parsing when checking for false positive wakeword triggers
+    if (incoming.getSemantics() != null) {
+      log.info("[parseUtterance] receiving utterance with set semantics. Please unset before calling parseUtterance if desiring a new result");
+      return incoming;
+    }
+
+    if (incoming.getWordsAsString().equals("reset")) {
+      incoming.setSemantics(Factory.createPredicate("resetConversation",incoming.getAddressee()));
+      incoming.setType(UtteranceType.INSTRUCT);
+      return incoming;
+    }
+
+    Utterance output = super.parseUtterance(incoming);
+    output = applyContextToOutput(output);
+    return output;
+  }
+
+  //TODO: not sure if any of this is relevant anymore for smarter "social" setup
+  private Utterance applyContextToOutput(Utterance utterance) {
+    if (utterance.getSemantics() == null) {
+      return utterance;
+    }
+    Predicate semantics;
+    try {
+      //TODO: In what other cases are semantics not a predicate? ("Hello")
+      semantics = (Predicate) utterance.getSemantics();
+    } catch (ClassCastException ignored) {
+      //Don't care about this case, so just return the original parse
+      return utterance;
+    }
+
+    //Copying Utterance so we don't modify what was put into the cache (if not using validation)
+    Utterance output = new Utterance.Builder(utterance).build();
+
+    //TODO: should this always be last question? Or should look for non-validation question specifically?
+    //Get current question expected response forms
+    List<Term> expectedResponseForms = new ArrayList<>();
+    try {
+      expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class, output.getAddressee());
+    } catch (TRADEException e) {
+      log.error("[applyContextToOutput] unable to get last question response form", e);
+    }
+
+    if (semantics.getName().equals("displayNamedImage") || semantics.getName().equals("displayNamedImageAtLocation")) {
+      try {
+        ActionLearningStatus status = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearningStatus").argTypes(Symbol.class)).call(ActionLearningStatus.class, output.getAddressee());;
+        if (status == ActionLearningStatus.ACTIVE) {
+          Utterance.Builder failure = new Utterance.Builder();
+          failure.setSpeaker(utterance.getSpeaker());
+          failure.setAddressee(utterance.getAddressee());
+          failure.setSemantics(Factory.createPredicate("error(" + utterance.getAddressee() + ",please(repeatYourInstructionIncludingADurationToDisplayTheImage))"));
+          failure.setWords(utterance.getWords());
+          output = failure.build();
+          modifiedUtteranceUids.add(output.getUid());
+          return output;
+        }
+      } catch (TRADEException e) {
+        log.error("[applyContextToOutput] error getting action learning status", e);
+      }
+    }
+
+    //If getting endActionLearning while a pending question exists seeking location(X), swap to location(none)
+    if (semantics.getName().equals("endActionLearning")) {
+      if (expectedResponseForms.contains(Factory.createPredicate("location","X"))) {
+        semantics = Factory.createPredicate("location","none");
+        output.setSemantics(semantics);
+        output.setType(UtteranceType.REPLY);
+        modifiedUtteranceUids.add(output.getUid());
+      }
+    } else if (semantics.equals(Factory.createPredicate("location","none"))) {
+      //If getting location(none) while action learning is present and no question for location(X) exists, swap to endActionLearning
+      if (!expectedResponseForms.contains(Factory.createPredicate("location","X"))) {
+        semantics = Factory.createPredicate("endActionLearning", output.getAddressee());
+        output.setSemantics(semantics);
+        output.setType(UtteranceType.INSTRUCT);
+        modifiedUtteranceUids.add(output.getUid());
+      }
+    }
+
+    //If a question exists asking for a taskPredicate, coerce direct action parses into the corresponding REPLY form
+    // (relevant for: scheduled goal task, tour action along the path, kiosk action)
+    //  Do not include SKIPPENDING goals
+    if (!expectedResponseForms.isEmpty()) {
+      if (expectedResponseForms.contains(Factory.createPredicate("taskPredicate","X"))) {
+        if (!semantics.getName().equals("taskPredicate") && output.getType().equals(UtteranceType.INSTRUCT)) {
+          try {
+            PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, semantics);
+            if (priorityTier != PriorityTier.SKIPPENDING) {
+              output.setSemantics(Factory.createPredicate("taskPredicate",semantics));
+              output.setType(UtteranceType.REPLY);
+              modifiedUtteranceUids.add(output.getUid());
+              //TODO: Do we want to set needsValidation to true here?
+              return output;
+            } else {
+              try {
+                String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class, output.getAddressee());
+                if (questionString.equals("how do you perform the task") && (semantics.getName().equals("endActionLearning") || semantics.getName().equals("endTaskLearning"))) {
+                  output.setSemantics(Factory.createPredicate("taskPredicate","none"));
+                  output.setType(UtteranceType.REPLY);
+                  modifiedUtteranceUids.add(output.getUid());
+                  return output;
+                }
+              } catch (TRADEException e) {
+                log.error("[applyContextToOutput] unable to get last question response form", e);
+              }
+            }
+          } catch (TRADEException e) {
+            log.error("[applyContextToOutput] unable to get priority tier for output goal", e);
+          }
+        }
+      }
+    }
+
+    return output;
+  }
+
+  @Override
+  public void cacheLLMParse(Utterance utterance) {
+    if (cacheLLM) {
+      cacheParse(utterance);
+    }
+  }
+  @Override
+  public void cacheParse(Utterance utterance) {
+    // Don't cache entries whose output were modified due to context
+    if (modifiedUtteranceUids.contains(utterance.getUid())) {
+      return;
+    }
+
+    // If semantics are taskName, then just return. Do not cache
+    if (utterance.getSemantics() != null) {
+      String command = utterance.getSemantics().getName();
+      if (command.equals("taskName")) {
+        return;
+      } else if (command.equals("learnTaskSequence") || command.equals("startSchedulingTask") || command.equals("scheduled") || command.equals("submitTaskSequenceDefinition") || command.equals("modifyExistingTaskStatus") || command.equals("startLearningNewTask") || command.equals("submitTaskDefinition")) {
+        // TODO: where should general mechanism for this live? "Social" LLM version - do not want to cache any parses
+        //  targeting "focused context template population" scripts. Currently, doing so and hitting these cache targets
+        //  would discard relevant pre-validation conversation history which may include relevant information about target
+        //  template arguments
+        return;
+      } else if (command.equals("cancelGoal")) {
+        Utterance copy = new Utterance.Builder(utterance).setSemantics(Factory.createPredicate("cancelSystemGoals",utterance.getAddressee())).build();
+        super.cacheParse(copy);
+        return;
+      } else if (command.equals("suspendGoal")) {
+        Utterance copy = new Utterance.Builder(utterance).setSemantics(Factory.createPredicate("suspendSystemGoalsBlocking",utterance.getAddressee())).build();
+        super.cacheParse(copy);
+        return;
+      }
+    }
+
+    super.cacheParse(utterance);
+  }
+}
+

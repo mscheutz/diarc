@@ -1,0 +1,39 @@
+
+define new object structure; C; defineVisualSearch(?ADDRESSEE)
+
+one; VAL; val(1)
+two; VAL; val(2)
+three; VAL; val(3)
+
+cylindrical; VAL; val(cylinder)
+cylinder; VAL; val(cylinder)
+it's cylindrical; VAL; val(cylinder)
+it's a cylinder; VAL; val(cylinder)
+yes it's cylindrical; VAL; val(cylinder)
+yes it's a cylinder; VAL; val(cylinder)
+
+spherical; VAL; val(sphere)
+sphere; VAL; val(sphere)
+it's spherical; VAL; val(sphere)
+it's a sphere; VAL; val(sphere)
+yes it's spherical; VAL; val(sphere)
+yes it's a sphere; VAL; val(sphere)
+
+disk; VAL; val(disk)
+it's a disk; VAL; val(disk)
+yes it's a disk; VAL; val(disk)
+
+cuboid; VAL; val(cuboid)
+it's a cuboid; VAL; val(cuboid)
+yes it's a cuboid; VAL; val(cuboid)
+
+capsule; VAL; val(capsule)
+it's a capsule; VAL; val(capsule)
+yes it's a capsule; VAL; val(capsule)
+
+plate; VAL; val(plate)
+it's a plate; VAL; val(plate)
+yes it's a plate; VAL; val(plate)
+
+object structure one; VAL; val(type1)
+object structure two; VAL; val(type2)

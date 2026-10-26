@@ -44,7 +44,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     groupNames = sb.toString();
   }
 
-  @Override
+    public CognexConsultant(List<String> groups, String kbName) {
+        super(CognexReference.class, kbName);
+        StringBuilder sb = new StringBuilder();
+        for (String group : groups) {
+            sb.append(group.split(":")[1]);//todo: this wants the second portion of agent:robotone, and nothing else? hacky.
+        }
+        groupNames = sb.toString();
+    }
+
+    @Override
   public <U> U localConvertToType(Symbol refId, Class<U> type) {
     return convertToType(refId, type, new ArrayList<>());
   }
@@ -168,13 +177,13 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public CognexReference createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
+  public Symbol createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
     CognexReference ref = createCognexRef(j, additionalProperties);
     if (!additionalProperties.isEmpty()) {
       //TODO:brad:what happens if these are duplicate?
       assertProperties(ref.refId, additionalProperties);
     }
-    return ref;
+    return ref.refId;
   }
 
   public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
@@ -229,8 +238,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   //todo: should this actually be an action? additional sanity checks? should we route this through somewhere else? RR?
   @TRADEService
   @Action
-  public CognexReference removeReference(Symbol refId) {
-    return super.removeReference(refId);
+  public void removeCognexReference(Symbol refId) {
+    removeReference(refId);
   }
 
   /**
@@ -272,9 +281,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @TRADEService
   @Action
   public Symbol createCogRefWithProperty(Symbol jobDescriptor, Term property) {
-    CognexReference ref = createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
-    //todo: shouldn't have to do this lookup this way. should have the refId already.
-    return ref.refId;
+    return createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
   }
 
   @TRADEService
@@ -286,8 +293,9 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
-    log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
+  public void bindCognexResult(Symbol refId, CognexResult result, int indexIntoCognexResult) {
+    log.debug("Binding: " + refId + " to cognex result index: " + indexIntoCognexResult);
+    CognexReference ref = getCognexReferenceForID(refId);
     ref.setResult(result);
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("updateFOC")).call(void.class, ref.refId);
@@ -302,14 +310,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
    * @param ref The CognexReference to fetch the matching CognexJob of.
    * @return The CognexJob associated with this reference.
    */
-  @TRADEService
-  @Action
   public CognexJob getCognexJobForCognexReference(CognexReference ref) {
     return ref.cognexJob;
   }
 
   @TRADEService
   @Action
+  public CognexJob getCognexJobForCognexReference(Symbol refId) {
+    return getCognexJobForCognexReference(getCognexReferenceForID(refId));
+  }
+
   public CognexReference getCognexReferenceForID(Symbol refId) {
     Symbol s = refId;
     CognexReference ret = getReference(s);

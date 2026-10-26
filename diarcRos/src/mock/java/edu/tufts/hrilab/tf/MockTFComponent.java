@@ -8,22 +8,21 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.CoordinateFramesInterface;
 
 import javax.vecmath.Matrix4d;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MockTFComponent extends DiarcComponent implements CoordinateFramesInterface {
-  @Override
-  public Matrix4d getTransform(String dstFrame) {
-    return null;
-  }
 
   @Override
   public Matrix4d getTransform(String srcFrame, String dstFrame) {
-    return null;
+    Matrix4d tf =  new Matrix4d();
+    tf.setIdentity();
+    return tf;
   }
 
   @Override
   public List<String> getCoordinateFrames() {
-    return null;
+    return new ArrayList<>();
   }
 
   @Override

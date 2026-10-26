@@ -11,10 +11,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824975545" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1", "evan", "13" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824975545", "SUCCEEDED" ]
+      "serviceArgs" : [ "13", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,10 +22,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "crouch(shafer)", "ACT", "NORMAL", "1704824980550" ]
+      "serviceArgs" : [ "crouch(shafer)", "ACT", "NORMAL", "1", "evan", "16" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824980550", "SUCCEEDED" ]
+      "serviceArgs" : [ "16", "SUCCEEDED" ]
     } ]
   } ]
 }

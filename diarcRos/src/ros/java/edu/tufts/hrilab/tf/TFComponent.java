@@ -19,7 +19,6 @@ import java.util.List;
 public class TFComponent extends DiarcComponent implements CoordinateFramesInterface {
   protected TF tf;
   protected RosConfiguration rosConfig = new RosConfiguration();
-  private String baseFrame = "base_link";
 
   public TFComponent() {
     super();
@@ -37,7 +36,6 @@ public class TFComponent extends DiarcComponent implements CoordinateFramesInter
     options.add(Option.builder("ns").longOpt("namespace").hasArg().argName("namespace").desc("Set a ROS namespace pointing to this ROS component. Default: empty.").build());
     options.add(Option.builder("tf_prefix").hasArg().argName("namespace").desc("Set a tf prefix. Note that this appears similar to a namespace, but ROS namespaces do not impact tf tree links (making this parameter necessary). Read the TF docs for more detail. Default: empty.").build());
     options.add(Option.builder("rosmasteruri").hasArg().argName("rosmasteruri").desc("Override ROS_MASTER_URI environment variable").build());
-    options.add(Option.builder("baselink").hasArg().argName("base_link").desc("Override default TF base frame").build());
     return options;
   }
 
@@ -48,20 +46,11 @@ public class TFComponent extends DiarcComponent implements CoordinateFramesInter
     }
     if (cmdLine.hasOption("tf_prefix")) {
       rosConfig.tfPrefix = cmdLine.getOptionValue("tf_prefix");
-      baseFrame = rosConfig.getPrefixedFrame(baseFrame);
     }
     if (cmdLine.hasOption("rosmasteruri")) {
       String uri = cmdLine.getOptionValue("rosmasteruri");
       rosConfig.setUriFromString(uri);
     }
-    if (cmdLine.hasOption("baselink")) {
-      baseFrame = rosConfig.getPrefixedFrame(cmdLine.getOptionValue("baselink"));
-    }
-  }
-
-  @Override
-  public Matrix4d getTransform(String dstFrame) {
-    return tf.getTransform(baseFrame, dstFrame);
   }
 
   @Override

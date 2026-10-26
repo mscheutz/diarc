@@ -1,0 +1,96 @@
+{
+  "created": "2024-09-03T18:56:58.404Z",
+  "id": "75bd7ddb-8719-48e5-93bd-5cbdae39798f",
+  "name": "Space Station SMM Study",
+  "type": "server",
+  "room": "Single Player Server Alpha",
+  "maxPlayers": 1,
+  "tubeOnDecayRate": 1,
+  "tubeOffDecayRate": 0.5,
+  "tubeRepairRate": 5,
+  "stationNotifications": true,
+  "truncateRepairStatements": false,
+  "networkConnectionUrl": "192.168.0.97",
+  "networkConnectionPort": 8868,
+  "useLSL": true,
+  "perRobotCommunication": true,
+  "DIARC": [
+    {
+      "port": 1755,
+      "ROS": [
+        {
+          "model": "PR2",
+          "IP": "192.168.0.97",
+          "port": 9090,
+          "voice": "festival:en1_mbrola"
+        }
+      ]
+    }
+  ],
+  "trials": [
+    {
+      "seconds": 300,
+      "robots": 1,
+      "survey": false,
+      "endAtZero": true,
+      "tubes": [
+        {
+          "time": 10,
+          "specificity": 0,
+          "tube": "Beta:R:9"
+        },
+        {
+          "time": 80,
+          "specificity": 0,
+          "tube": "Alpha:R:7"
+        },
+        {
+          "time": 111,
+          "specificity": 0,
+          "tube": "Gamma:L:3"
+        },
+        {
+          "time": 139,
+          "specificity": 0,
+          "tube": "Beta:L:11"
+        },
+        {
+          "time": 168,
+          "specificity": 0,
+          "tube": "Beta:R:12"
+        },
+        {
+          "time": 194,
+          "specificity": 0,
+          "tube": "Gamma:R:10"
+        },
+        {
+          "time": 214,
+          "specificity": 0,
+          "tube": "Alpha:L:2"
+        },
+        {
+          "time": 234,
+          "specificity": 0,
+          "tube": "Gamma:L:5"
+        },
+        {
+          "time": 256,
+          "specificity": 0,
+          "tube": "Alpha:R:8"
+        },
+        {
+          "time": 276,
+          "specificity": 0,
+          "tube": "Beta:L:2"
+        },
+        {
+          "time": 295,
+          "specificity": 0,
+          "tube": "Gamma:L:11"
+        }
+      ],
+      "rovers": []
+    }
+  ]
+}

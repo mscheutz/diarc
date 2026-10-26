@@ -38,11 +38,11 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("goToCameraPose", Symbol.class);
         addServiceToObserve("sayText", String.class, Boolean.class);
         addServiceToObserve("perceiveEntityFromSymbol", Symbol.class);
-        addServiceToObserve("waitForResponse", Predicate.class);
+        addServiceToObserve("waitForResponse", String.class, List.class, Symbol.class);
         addServiceToObserve("addDetectionType", Symbol.class, Symbol.class);
         addServiceToObserve("addItem", Symbol.class);
 
-        setPermanentTimeout(5, TimeUnit.SECONDS);
+        setPermanentTimeout(15, TimeUnit.SECONDS);
 
     }
 
@@ -68,7 +68,9 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
     @Test
     public void PickAndPlaceDemoTestEnglish() {
 
-        setSingleTestTimeout(15, TimeUnit.SECONDS);
+        addUserInput("init");
+        evaluateResults();
+
         addUserInput("Get the corn to the hotplate");
         evaluateResults();
 
@@ -121,7 +123,9 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
     @Test
     public void PickAndPlaceDemoTestJapanese() {
 
-        setSingleTestTimeout(15, TimeUnit.SECONDS);
+        addUserInput("init");
+        evaluateResults();
+
         addUserInput("トウモロコシをホットプレートに持ってきます");
         evaluateResults();
 

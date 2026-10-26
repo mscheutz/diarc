@@ -58,6 +58,7 @@
 
 () = finallyTest4() {
     try {
+      op:log("info", "Try body");
     } finally {
       exit(FAIL); // this should execute --> action fails
     }
@@ -65,9 +66,16 @@
 
 () = finallyTest5() {
     try {
-      exit(FAIL)
+      exit(FAIL);
     } finally {
       tsc:cacheTestString("finallyTest5");
     }
 }
 
+() = tryCatchReturnTest() {
+    try {
+      return;
+    } finally {
+      tsc:cacheTestString("tryCatchReturnTest");
+    }
+}

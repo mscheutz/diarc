@@ -12,6 +12,7 @@ import com.google.common.graph.EndpointPair;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -20,6 +21,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.map.gui.AvaMapAdapter;
 import edu.tufts.hrilab.map.gui.MapAdapter;
 import edu.tufts.hrilab.map.util.Pose;
 import edu.tufts.hrilab.map.util.Utils;
@@ -80,6 +82,8 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
   private String refsConfigDir = "config/edu/tufts/hrilab/map";
 
+  private boolean avaGui = false;
+
   public MapComponent() {
     super();
   }
@@ -93,6 +97,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     options.add(Option.builder("start_floor").hasArg().argName("number").desc("floor the robot is starting on at launch").build());
     options.add(Option.builder("refs").longOpt("references").hasArg().argName("file").desc("load pre-defined object references and their properties").build());
     options.add(Option.builder("kb_name").hasArg().argName("file").desc("consultant kbName (default: location)").build());
+    options.add(Option.builder("ava_gui").desc("serve the map tab from the ava base maps instead of the ros map files").build());
     return options;
   }
 
@@ -113,6 +118,9 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     }
     if (cmdLine.hasOption("kb_name")) {
       poseKBName = cmdLine.getOptionValue("kb_name");
+    }
+    if (cmdLine.hasOption("ava_gui")) {
+      avaGui = true;
     }
   }
 
@@ -142,6 +150,92 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
     // add all map reference to consultant
     addReferencesFromMaps();
+  }
+
+  // spot's mapcomponent (the one i pulled over) is missing a pile of the ava location stuff. re-adding it, starting here -- llm grounding calls this one
+  /**
+   * Gets all known map references as a map of refId -> PoseReference.
+   *
+   * @return a map of known PoseReferences keyed by Symbol
+   */
+  @TRADEService
+  public Map<Symbol, PoseReference> getMapReferences() {
+    Map<Symbol, PoseReference> refs = new HashMap<>();
+    consultant.getAllReferences().forEach(ref -> refs.put(ref.refId, ref));
+    return refs;
+  }
+
+  // ava -- getAllKnownLocations wants this
+  @TRADEService
+  public List<String> getMapLocationNames() {
+    List<String> locationNames = new ArrayList<>();
+    Map<Symbol, PoseReference> refs = getMapReferences();
+    for (PoseReference ref : refs.values()) {
+      if (!ref.properties.isEmpty()) {
+        locationNames.add(ref.properties.get(0).getName());
+      }
+    }
+    locationNames.sort(String::compareTo);
+    return locationNames;
+  }
+
+  // ava -- ava.asl nav uses it
+  @TRADEService
+  public String getMapReferenceName(Symbol refId) {
+    PoseReference ref = consultant.getReference(refId);
+    if (ref != null) {
+      if (!ref.properties.isEmpty()) {
+        return ref.properties.get(0).getName();
+      }
+    }
+    return refId.getName();
+  }
+
+  // ava -- avacomponent calls this (only matters on the real robot)
+  @TRADEService
+  public PoseReference getMapReference(Symbol refId) {
+    return consultant.getReference(refId);
+  }
+
+  // ava -- the "save location" tool + ava.asl. leans on getPose being a service
+  @TRADEService
+  public Justification saveLocation(Symbol locationName) {
+    Variable var = Factory.createVariable("X");
+    List<Term> properties = new ArrayList<>();
+    properties.add(Factory.createPredicate(locationName.getName(), var));
+    PoseReference ref = consultant.createReference(var, properties);
+
+    try {
+      Pair<Point3d, Quat4d> pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPose").argTypes()).call(Pair.class);
+      ref.setPose(pose.getLeft(), pose.getRight());
+    } catch (TRADEException e) {
+      log.error("Unable to get robot pose", e);
+      consultant.removeReference(ref.refId);
+      return new ConditionJustification(false, Factory.createPredicate("known(pose)"));
+    }
+
+    return new ConditionJustification(true);
+  }
+
+  // ava -- ava.asl writes the refs back out after a save
+  @TRADEService
+  public Justification saveLocationsToFile() {
+    String path = System.getProperty("user.dir") + "/../core/src/main/resources/" + refsConfigDir + "/" + refsConfigFile;
+    boolean result = consultant.writeReferencesToFile(path);
+    return new ConditionJustification(result);
+  }
+
+  // ava -- mockava dumps its saved poses in through here at startup
+  @TRADEService
+  public void addReferencesDirectly(Map<String, Pair<Point3d, Quat4d>> mapLocations) {
+    Variable var = Factory.createVariable("VAR0");
+    for (String name : mapLocations.keySet()) {
+      Pair<Point3d, Quat4d> pose = mapLocations.get(name);
+      List<Term> properties = new ArrayList<>();
+      properties.add(Factory.createPredicate(name, var));
+      PoseReference ref = consultant.createReference(var, properties);
+      ref.setPose(pose.getLeft(), pose.getRight());
+    }
   }
 
   /**
@@ -695,8 +789,34 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   @Override
   public String[] getAdapterClassNames() {
     log.info("getting classname from map");
+    if (avaGui) {
+      return new String[]{
+              AvaMapAdapter.class.getName()
+      };
+    }
     return new String[]{
             MapAdapter.class.getName()
     };
+  }
+
+  /**
+   * TODO: HACK: remove this. This is only for the space station, and should be replaced with a more general mechanism,
+   * or at least moved into a subclass.
+   *
+   * @param property
+   * @return
+   */
+  @TRADEService
+  @Action
+  public Symbol getSpaceStationReference(Symbol property) {
+    Reference reference = consultant.getAllReferences().stream()
+            .filter(ref -> ref.properties.stream().anyMatch(prop -> prop.getName().equals(property.getName())))
+            .findFirst().orElse(null);
+
+    if (reference != null) {
+      return reference.refId;
+    } else {
+      return null;
+    }
   }
 }

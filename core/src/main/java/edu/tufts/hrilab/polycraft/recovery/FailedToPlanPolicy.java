@@ -52,7 +52,7 @@ public class FailedToPlanPolicy {
    * Main entry point for executing recovery policy.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
@@ -60,7 +60,7 @@ public class FailedToPlanPolicy {
    */
   @TRADEService
   @Action
-  public Justification executeFailedToPlanPolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
+  public Justification executeFailedToPlanPolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
     // explorations should depend on the goal that can't be planned for. Failing to plan for break_and_pickup(diamond)
     // for example, might be because there's no diamond in the world. Failing to plan for crafting a pogostick, however,
     // should generate lots of potential explorations.
@@ -85,13 +85,13 @@ public class FailedToPlanPolicy {
         // report novelty
         Set<Term> novelties = new HashSet<>();
         novelties.add(Factory.createPredicate("trades(none)")); // TODO: what should this novelty predicate be?
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties")).call(Object.class, novelties);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("reportNovelties").argTypes(Set.class)).call(Object.class, novelties);
 
         Predicate exploration = secondaryExplorationsToTry.get(secondaryExplorationIndex++);
         executeExploration(exploration);
       } else if (tertiaryExplorationIndex < tertiaryExplorationsToTry.size()) {
         Predicate exploration = tertiaryExplorationsToTry.get(tertiaryExplorationIndex++);
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("executeExploration")).call(Object.class, actor, exploration);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("executeExploration").argTypes(Predicate.class)).call(Object.class, exploration);
       }
     } else {
       // TODO: what other goals should generate explorations when failing to plan?
@@ -130,7 +130,7 @@ public class FailedToPlanPolicy {
     // get all non-trader, non-self actors and form interact_with action for each
     List<Symbol> actors = ExploreUtils.getObjectsOfType(Factory.createSymbol("agent"));
     for (Symbol otherActor : actors) {
-      if (!otherActor.equals(actor) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport")).call(boolean.class, Factory.createPredicate("typeobject", otherActor, Factory.createSymbol("trader")))) {
+      if (!otherActor.equals(actor) && !TRADE.getAvailableService(new TRADEServiceConstraints().name("querySupport").argTypes(Term.class)).call(boolean.class, Factory.createPredicate("typeobject", otherActor, Factory.createSymbol("trader")))) {
         Predicate exploration = Factory.createPredicate("interact_with", actor, otherActor);
         if (!secondaryExplorationsToTry.contains(exploration)) {
           secondaryExplorationsToTry.add(exploration);
@@ -170,7 +170,7 @@ public class FailedToPlanPolicy {
               TRADE.callThe("assertBeliefs", explorations, MemoryLevel.UNIVERSAL);
             }
           }*/
-    Predicate lastBrokenAction = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastBrokenAction")).call(Predicate.class);
+    Predicate lastBrokenAction = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastBrokenAction").argTypes()).call(Predicate.class);
     if (lastBrokenAction != null) {
       Set<Predicate> explorations = new HashSet<>();
       Predicate exploration = new Predicate("toExplore", lastBrokenAction, lastBrokenAction);
@@ -178,11 +178,11 @@ public class FailedToPlanPolicy {
       //if (!exploredLastAction) {
       //  TRADE.callThe("executeExploration",actor, exploration);
       //} else {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs")).call(Object.class, explorations, MemoryLevel.UNIVERSAL);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class, MemoryLevel.class)).call(Object.class, explorations, MemoryLevel.UNIVERSAL);
       //}
 
       Predicate explorationPredicate = Factory.createPredicate("toExplore(X,Y)");
-      List<Map<Variable, Symbol>> explorationResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief")).call(List.class, explorationPredicate);
+      List<Map<Variable, Symbol>> explorationResults = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, explorationPredicate);
       List<Term> explorationsToTry = new ArrayList<>(explorationPredicate.copyWithNewBindings(explorationResults));
       log.debug("explorations: " + explorationsToTry);
       for (Term t : explorationsToTry) {

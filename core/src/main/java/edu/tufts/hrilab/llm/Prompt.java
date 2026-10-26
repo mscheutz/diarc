@@ -40,6 +40,10 @@ public class Prompt {
         for (Map.Entry<String, String> entry : data.entrySet()) {
             String key = entry.getKey();
             String val = entry.getValue();
+            //TODO: see what all breaks replaceAll - currently know $ are no good
+            if (val.contains("$")) {
+                val = val.replaceAll("\\$","");
+            }
             if (template.contains(key)) {
                 template = template.replaceAll(key, val);
             }

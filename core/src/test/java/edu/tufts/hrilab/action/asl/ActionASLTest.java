@@ -16,9 +16,7 @@ import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 import edu.tufts.hrilab.fol.Factory;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,11 +26,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 
 public class ActionASLTest {
-
-    @BeforeClass
-    public static void setUp() {
-        ActionResourceLockLinear.initResources();
-    }
 
     /**
      * TODO: EAK: the ASL writer and reader should be separated from the Database entirely so that
@@ -58,7 +51,6 @@ public class ActionASLTest {
         subBuilder.addEffect(new Effect(Factory.createPredicate("successobservable"), EffectType.SUCCESS, Observable.TRUE));
         subBuilder.addEffect(new Effect(Factory.createPredicate("failureeffect"), EffectType.FAILURE));
         subBuilder.addEffect(new Effect(Factory.createPredicate("nonperformance"), EffectType.NONPERF));
-        subBuilder.addResourceLock("motionLock");
         subBuilder.setCost("3");
         subBuilder.setBenefit("4");
         subBuilder.setTimeout("5");

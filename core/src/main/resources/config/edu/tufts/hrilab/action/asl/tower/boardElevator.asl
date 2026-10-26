@@ -14,9 +14,7 @@ import edu.tufts.hrilab.fol.Predicate;
     act:goToNearestElevator();
 
     // press button
-    op:log("info", ">> findAndPressButton");motes/origin/Unity_Broken_Welder
-  remotes/origin/Unity_Dean
-  remotes/origin/Unity_Dean_WebGL
+    op:log("info", ">> findAndPressButton");
 
     act:findAndPressButton(!downbutton);
 

@@ -70,7 +70,7 @@ public class ActionConstraints {
    * @return True if constraints are met
    */
   public Justification verifyConstraints(ParameterizedAction action, StateMachine sm) {
-    return verifyConstraints(action.getEntry().getType(), action.getEffects(), sm);
+    return verifyConstraints(action.getEntry().getMethodName(), action.getEffects(), sm);
   }
 
   /**
@@ -83,7 +83,7 @@ public class ActionConstraints {
   public Justification verifyConstraints(ActionDBEntry action, List<Effect> effects, StateMachine sm) {
     List<Predicate> effectPredicates = new ArrayList<>();
     effects.forEach(e -> effectPredicates.add(e.getPredicate()));
-    return verifyConstraints(action.getType(), effectPredicates, sm);
+    return verifyConstraints(action.getMethodName(), effectPredicates, sm);
   }
 
   /**

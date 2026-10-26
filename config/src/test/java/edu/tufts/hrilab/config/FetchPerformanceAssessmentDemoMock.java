@@ -38,6 +38,8 @@ public class FetchPerformanceAssessmentDemoMock extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees tyler");
+
     createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict multiRobotCaddyGenerated.dict");
 
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

@@ -78,11 +78,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -398,22 +395,20 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     applyCarryingConstraints = false;
   }
 
-  @TRADEService
-  @Action
-  public boolean interrupt() {
+  @Override
+  public Justification stop() {
     //There does exist a stop command on the move group in move it source, but it is not currently implemented in
     //our GenericMoveGroup implementation. Since subsequent calls overwrite previous ones, I think that the following
     //should be a simpler way to achieve the stop, as long as it doesn't require planning time.
-    Pair<Point3d, Quat4d> curPose = getPose(endEffectorNames.get("manipulator"));
-    return moveToRelative("manipulator", curPose.getLeft(), curPose.getRight()).getValue();
+    return moveToRelative(moveItConfig.defaultGroupName, new Point3d(0,0,0), new Quat4d(0,0,0,1));
   }
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification moveTo(String groupName, Symbol refId) {
     return moveTo(groupName, refId, new ArrayList<>());
   }
 
+  @Override
   public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
     log.debug("[moveTo(group,refId,constraints)] method entered with constraints: " + constraints);
 
@@ -513,21 +508,6 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     log.debug("[moveTo(group,refId)] success!");
     return new ConditionJustification(true);
-  }
-
-  private Vector3d getVectorFromRobotToObj(MemoryObject o) {
-    Vector3d vec;
-    if (o.transformToBase()) {
-      //Todo: Will: Make the base of the robot point configurable?
-      vec = new Vector3d(o.getLocation());
-      vec.sub(new Vector3d(0, 0, 0.02));
-      //for now we only care about matching on 2 dimensions
-      vec.setZ(0);
-      return vec;
-    } else {
-      log.warn("[getVectorFromRobotToObj]Unable to transform memory object to base");
-    }
-    return null;
   }
 
   @Override
@@ -695,17 +675,12 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       log.warn("Config does not have pointingFrame set. Defaulting to (0,0,1).");
     } else {
       String linkName = moveItConfig.pointingFrame;
-//      if (!TRADE.isAvailable("getTransform")) {
-//        log.warn("No getTransform service available in the system. Start a TFComponent.");
-//        return false;
-//      }
-      Matrix4d linkTransform = null;
+      Matrix4d linkTransform;
       try {
-        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform"));
+        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class));
         linkTransform = tsi.call(Matrix4d.class, moveItConfig.baseLinkString, linkName);
-
       } catch (TRADEException e) {
-        log.error("Error calling getTransform.", e);
+        log.error("Error calling getTransform. Did you start a TFComponent?", e);
         return new ConditionJustification(false, Factory.createPredicate("received(transform)"));
       }
       linkLocation = new Point3d(linkTransform.m03, linkTransform.m13, linkTransform.m23);
@@ -741,9 +716,6 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @Override
   public Justification pointTo(String groupName, Symbol refId) {
-    //TODO:brad: this was previously calling the local convertToType method, which is part of the pose consultant, not the vision consultant. replacing with call to rr
-//    Point3d location = convertToType(refId,Point3d.class);
-
     Point3d location = null;
     try {
       TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
@@ -765,7 +737,6 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   private boolean moveToGrasp(String groupName, Quat4d orient, Point3d point, float grasp_offset) {
     log.debug("[moveToGrasp] point: " + point + " orient: " + orient + " offset: " + grasp_offset);
-    // TODO: is using (-1,0,0) general or does the eeTransform need to be used here?
     point = MoveItHelper.calcTargetOffset(point, orient, new Vector3d(-1.0, 0.0, 0.0), grasp_offset);
     return moveTo(groupName, point, orient).getValue();
   }
@@ -794,8 +765,8 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   @Override
   public Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
     log.debug("[moveTo(String, Point3d, Quat4d, Point3d, Quat4d)] method entered.");
-    log.debug(String.format("[moveTo] \n\t\t point_l: %s \n\t\t orient_l: %s \n\t\t point_r: %s \n\t\t orient_r: %s \n\t\t",
-            point_l, orientation_l, point_r, orientation_r));
+    log.debug("[moveTo] \n\t\t point_l: {} \n\t\t orient_l: {} \n\t\t point_r: {} \n\t\t orient_r: {} \n\t\t",
+            point_l, orientation_l, point_r, orientation_r);
 
     groupName = groupNameSafetyClean(groupName);
 
@@ -823,14 +794,20 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       Quat4d quat = (orientation_l == null) ? orientation_r : orientation_l;
 
       // apply end-effector transform
+      // pose is currently in the assumed DIARC end-effector frame (x-forward/pointing dir, y-open/close dir), apply the
+      // inverse of the eeTransform to transform the goal pose to the actual end-effector frame
+
+      log.debug("[moveTo] (diarc ee) point: {} quat: {}", point, quat);
+
       Matrix4d final_transform = new Matrix4d();
       final_transform.setIdentity();
       Matrix4d pose_transform = edu.tufts.hrilab.util.Convert.convertToMatrix4d(point, quat);
-//      Matrix4d ee_transform = new Matrix4d(eeTransform);
-//      ee_transform.invert();
+      Matrix4d ee_transform = new Matrix4d(eeTransform);
+      ee_transform.invert();
       final_transform.mul(pose_transform);
-//      final_transform.mul(ee_transform);
+      final_transform.mul(ee_transform);
       Pose pose = convertToPose(final_transform);
+      log.debug("[moveTo] transformed to ee. point: {} quat: {}", Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()));
 
       Constraints tmpConstraints = MoveItHelper.makeGoalConstraints(pose, moveItConfig.positionTolerance,
               moveItConfig.angleTolerance, effectorLink, moveItConfig.baseLinkString);
@@ -840,19 +817,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     Constraints pathConstraints = null;
     if (applyCarryingConstraints) {
       log.error("[moveTo]: attempting to use 'carrying' path constraints!");
-      //Get current position as a pose in the base frame
+      //Get current ee position as a pose in the base frame
       Pair<Point3d, Quat4d> curPose = getPose(endEffectorNames.get(groupName));
-      //Matrix4d final_transform = new Matrix4d();
-      //final_transform.setIdentity();
-      //Matrix4d pose_transform = Convert.convertToMatrix4d(curPose.getLeft(), curPose.getRight());
-      //Matrix4d ee_transform = new Matrix4d(eeTransform);
-      //ee_transform.invert();
-      //final_transform.mul(pose_transform);
-      //final_transform.mul(ee_transform);
-      //Pose curPoseConverted = Convert.convertToPose(final_transform);
-      Pose curPoseConverted = Convert.convertToPose(curPose.getLeft(), curPose.getRight());
-
-      pathConstraints = MoveItHelper.makeCarryingPathConstraints(curPoseConverted,
+      pathConstraints = MoveItHelper.makeCarryingPathConstraints(convertToPose(curPose.getLeft(), curPose.getRight()),
               Math.PI / 3.0, endEffectorNames.get(groupName), moveItConfig.baseLinkString);
     }
 
@@ -959,12 +926,14 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     //the link pose is the translated and rotation link position in base link frame
     Pose goal_link_pose = new Pose(new_pose_translation, new_pose_rotation.getOrientation());
 
-    // apply ee_transform
+    // apply inverse ee_transform
     Matrix4d final_transform = new Matrix4d();
     final_transform.setIdentity();
     Matrix4d pose_transform = Convert.convertToMatrix4d(goal_link_pose);
     final_transform.mul(pose_transform);
-    final_transform.mul(eeTransform);
+    Matrix4d ee_transform = new Matrix4d(eeTransform);
+    ee_transform.invert();
+    final_transform.mul(ee_transform);
     Pose pose = convertToPose(final_transform);
 
 //    return moveTo(group_name, Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()), null, null, true);
@@ -988,7 +957,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   public Pair<Point3d, Quat4d> getEEPose(String group_name) {
     Pair<Point3d, Quat4d> pose = getPose(endEffectorNames.get(group_name));
 
-    // apply inverse end-effector transform
+    // apply end-effector transform
     Matrix4d final_transform = new Matrix4d();
     final_transform.setIdentity();
     Matrix4d pose_transform = edu.tufts.hrilab.util.Convert.convertToMatrix4d(pose.getLeft(), pose.getRight());
@@ -996,7 +965,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     final_transform.mul(pose_transform);
     final_transform.mul(ee_transform);
     Pose ee_adjusted_pose = Convert.convertToPose(final_transform);
-    return Convert.convertToPose(ee_adjusted_pose);
+    return Convert.convertToPair(ee_adjusted_pose);
   }
 
   @Override
@@ -1005,15 +974,17 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     groupName = groupNameSafetyClean(groupName);
 
     GetCartesianPathResponse response = new GetCartesianPathResponse();
-    Pair<Point3d, Quat4d> posePair = getEEPose(groupName);
+    Pair<Point3d, Quat4d> posePair = getPose(endEffectorNames.get(groupName));
     Pose currentPose = Convert.convertToPose(posePair.getLeft(), posePair.getRight());
 
-    // apply ee_transform to target pose (i.e., )
+    // convert target pose from diarc end-effector to ros end-effector by applying ee_transform inverse to target pose
     Matrix4d final_transform = new Matrix4d();
     final_transform.setIdentity();
     Matrix4d pose_transform = edu.tufts.hrilab.util.Convert.convertToMatrix4d(point, orientation);
     final_transform.mul(pose_transform);
-    final_transform.mul(eeTransform);
+    Matrix4d ee_transform = new Matrix4d(eeTransform);
+    ee_transform.invert();
+    final_transform.mul(ee_transform);
     Pose target_pose = convertToPose(final_transform);
 
     GetCartesianPathRequest request = MoveItHelper.makeCartesianPath(
@@ -1115,7 +1086,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     final_y -= start_y;
     double final_z = 0;
 
-    Quat4d quat = edu.tufts.hrilab.util.Convert.eulerToQuat4d(final_x, final_y, final_z);
+    Quat4d quat = edu.tufts.hrilab.util.Convert.convertToQuat4d(final_x, final_y, final_z);
 
     // Find a point sufficiently far away from the starting object from which to begin the push
 
@@ -1135,7 +1106,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       return null;
     }
 
-    return Convert.convertToPose(poses_ros.get(0));
+    return Convert.convertToPair(poses_ros.get(0));
   }
 
   protected List<Pose> getPoses(List<String> list_names) {
@@ -1444,7 +1415,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   @TRADEService
   @Action
   public Justification recordEEPose(Symbol poseName) {
-    Pair<Point3d, Quat4d> curPose = getEEPose("manipulator");
+    Pair<Point3d, Quat4d> curPose = getEEPose(moveItConfig.defaultGroupName);
     eePoses.put(poseName.getName(), curPose);
 
     List<Term> props = new ArrayList<>();
@@ -1477,24 +1448,23 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   public Justification goToEEPose(Symbol poseName) {
     Pair<Point3d, Quat4d> goalPose = eePoses.get(poseName.getName());
     if (goalPose == null) {
       log.error("[goToEEPose] Unable to go to ee pose that hasn't been saved yet, exiting.");
       return new ConditionJustification(false, Factory.createPredicate("known(endEffectorPose)"));
     }
-    return moveTo("manipulator", goalPose.getLeft(), goalPose.getRight(), null, null);
+    return moveTo(moveItConfig.defaultGroupName, goalPose.getLeft(), goalPose.getRight(), null, null);
   }
 
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification goToPose(Symbol pose_name) {
     return goToPose(moveItConfig.defaultGroupName, pose_name);
   }
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification goToPose(String groupName, Symbol poseName) {
     boolean result = false;
     groupName = groupNameSafetyClean(groupName);
@@ -1973,9 +1943,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @TRADEService
   @Action
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   public Justification pour(boolean forward) {
-    String group_name = "manipulator";
+    String group_name = moveItConfig.defaultGroupName;
 
     //Todo: Will: very very manual - fix later
     JointState curr = jointStateSub.getCurrentJointState();

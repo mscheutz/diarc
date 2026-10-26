@@ -6,7 +6,6 @@ package edu.tufts.hrilab.movebase;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -39,6 +38,7 @@ import edu.tufts.hrilab.util.SimpleGeometry;
 import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -115,7 +115,9 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
     moveTowardsEnabler = new MoveTowardsEnabler();
 
     if (hasInitPose) {
-      updateAmclPose(initPose[0], initPose[1], initPose[2]);
+      Point3d location = new Point3d(initPose[0], initPose[1], 0);
+      Quat4d orientation = edu.tufts.hrilab.util.Convert.convertToQuat4d(initPose[2], 0, 0);
+      updateAmclPose(location,orientation);
     }
 
     log.debug("All set up! Connected at namespace: " + rc.namespace);
@@ -172,10 +174,10 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
     }
   }
 
-  private void updateAmclPose(double x, double y, double theta) {
-    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Point xyz = new edu.tufts.hrilab.diarcros.msg.geometry_msgs.Point(x, y, 0);
-    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Quaternion orientation = Convert.eulerToQuaternion(theta, 0, 0);
-    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Pose pose = new edu.tufts.hrilab.diarcros.msg.geometry_msgs.Pose(xyz, orientation);
+  private void updateAmclPose(Point3d location, Quat4d orientation) {
+    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Point xyz = Convert.convertToPoint(location);
+    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Quaternion orient = Convert.convertToQuaternion(orientation);
+    edu.tufts.hrilab.diarcros.msg.geometry_msgs.Pose pose = new edu.tufts.hrilab.diarcros.msg.geometry_msgs.Pose(xyz, orient);
 
     double[] covariance = new double[36]; // covariance is a 6x6 matrix indicating our confidence in this pose
     // because we want AMCL to be able to update our pose, we don't want to pass 0's (since this would imply 0 error, perfect knowledge)
@@ -191,34 +193,14 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
     amcl.sendInitialpose(pwcs);
   }
 
-  protected Pose getPose() {
-    return base.getPose();
-  }
-
-  /**
-   * Used to updated Firebase GUI
-   *
-   * @return
-   */
-  @TRADEService
-  public Point3d getPosition() {
-    Pose p = getPose();
-    Point point = p.getPosition();
-
-    log.debug("[getPosition] executing getting position for firebase agent location" + " " + p);
-    log.debug("[getPosition] executing getting position for firebase agent location" + " " + point.getX() + " " + point.getY() + " " + point.getZ());
-
-    return new Point3d(point.getX(), point.getY(), point.getZ());
-  }
-
 
   //////////////////////////////////////////////////////////////////////
   // Position Interface
   //////////////////////////////////////////////////////////////////////
 
   @Override
-  public void setPoseGlobal(double x, double y, double theta) {
-    updateAmclPose(x, y, theta);
+  public void setPose(Point3d location, Quat4d orientation) {
+    updateAmclPose(location, orientation);
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -226,11 +208,9 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
   //////////////////////////////////////////////////////////////////////
 
   @Override
-  public double[] getPoseGlobalQuat() {
-    Pose pose = getPose();
-    return new double[]{pose.getPosition().getX(), pose.getPosition().getY(),
-            pose.getOrientation().getX(), pose.getOrientation().getY(),
-            pose.getOrientation().getZ(), pose.getOrientation().getW()};
+  public Pair<Point3d,Quat4d> getPose() {
+    Pose pose = base.getPose();
+    return Convert.convertToPair(pose);
   }
 
   /**
@@ -250,16 +230,20 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
    */
   @Override
   public Justification goToLocation(Symbol location, boolean wait) {
+    if (location == null) {
+      return new ConditionJustification(false);
+    }
+
     // TODO: make these command line args?
     double padding = 1.0;
     boolean canOpenDoors = false;
 
     List<PathAction> path;
     try {
-      path = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPath")).call(List.class, Convert.convertToMatrix4d(getPose()), location, padding, canOpenDoors);
+      path = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPath"))
+              .call(List.class, Convert.convertToMatrix4d(base.getPose()), location, padding, canOpenDoors);
     } catch (TRADEException e) {
-      log.error("Error trying to get path for location: " + location);
-      log.error("ERROR", e);
+      log.error("Error trying to get path for location: " + location, e);
       return new ConditionJustification(false, Factory.createPredicate("path_to", location.getName(), "known"));
     }
 
@@ -278,6 +262,15 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
   @Override
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
     return goToLocation(desiredLocation, true);
+  }
+
+  @Override
+  public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
+    if (getPose() == null) {
+      log.warn("Robot pose has not been initialized. Navigation will likely fail");
+    }
+    Pose pose = Convert.convertToPose(location, orientation);
+    return goToLocation(pose, wait);
   }
 
   @Override
@@ -324,7 +317,7 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
     Pose locationPose = getLocationPose(args.get(1));
     ArrayList<Map<Variable, Symbol>> returnVal = new ArrayList<>();
     if (locationPose != null) {
-      Point currentPoint = getPose().getPosition();
+      Point currentPoint = base.getPose().getPosition();
       Point goalPoint = locationPose.getPosition();
       log.debug("currentPoint " + currentPoint.getX() + " " + currentPoint.getY() + " " + currentPoint.getZ());
       log.debug("goalPoint " + goalPoint.getX() + " " + goalPoint.getY() + " " + goalPoint.getZ());
@@ -336,7 +329,7 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
       Tuple3d angles = RotationHelpers.quatToXYZRotations(qt4d);
       log.debug("goalAngle " + angles.getZ());
 
-      Quaternion qtCurrent = getPose().getOrientation();
+      Quaternion qtCurrent = base.getPose().getOrientation();
       Quat4d qtCurrent4d = new Quat4d(qtCurrent.getX(), qtCurrent.getY(), qtCurrent.getZ(), qtCurrent.getW());
       Tuple3d anglesCurrent = RotationHelpers.quatToXYZRotations(qtCurrent4d);
       double angleDiff = SimpleGeometry.diffAngle(angles.getZ(), anglesCurrent.getZ());

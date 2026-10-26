@@ -27,9 +27,8 @@ repositories {
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven {
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
+    name = "DIARC Third Party Maven Host"
+    url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
 }
 
@@ -62,7 +61,25 @@ sourceSets {
   create("controlApp"){
     java{
       srcDir("src/main/java")
-      include(listOf("edu/tufts/hrilab/fol/**" ,"edu/tufts/hrilab/slug/common/**","edu/tufts/hrilab/util/**","edu/tufts/hrilab/action/annotations/**","edu/tufts/hrilab/action/ActionStatus.java","edu/tufts/hrilab/action/EffectType.java","edu/tufts/hrilab/action/ConditionType.java","edu/tufts/hrilab/action/util/Utilities.java","edu/tufts/hrilab/action/ActionBinding.java","edu/tufts/hrilab/action/justification/Justification.java"))
+      include(
+        listOf(
+          "edu/tufts/hrilab/fol/**",
+          "edu/tufts/hrilab/slug/common/**",
+          "edu/tufts/hrilab/util/**",
+          "edu/tufts/hrilab/action/annotations/**",
+          "edu/tufts/hrilab/action/ActionStatus.java",
+          "edu/tufts/hrilab/action/EffectType.java",
+          "edu/tufts/hrilab/action/ConditionType.java",
+          "edu/tufts/hrilab/action/util/Utilities.java",
+          "edu/tufts/hrilab/action/ActionBinding.java",
+          "edu/tufts/hrilab/action/justification/**",
+          "edu/tufts/hrilab/action/notification/NotificationType.java",
+          "edu/tufts/hrilab/action/goal/GoalStatus.java",
+          "edu/tufts/hrilab/action/goal/GoalInfo.java",
+          "edu/tufts/hrilab/action/goal/PriorityTier.java",
+          "edu/tufts/hrilab/action/goal/schedule/ScheduleInfo.java"
+        )
+      )
       exclude(listOf("edu/tufts/hrilab/slug/common/UtteranceUtil.java"))
       compileClasspath += sourceSets.main.get().compileClasspath
       runtimeClasspath += sourceSets.main.get().runtimeClasspath
@@ -90,12 +107,16 @@ tasks.named<Test>("test") {
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
   systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
-  if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
     testLogging.showStandardStreams = true
   }
+
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.test.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
@@ -158,7 +179,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.1.1")
+  api("ai.thinkingrobots:trade:1.1.3")
 
   //junit
   testImplementation("junit:junit:4.13.1")
@@ -168,6 +189,7 @@ dependencies {
   //action
   implementation("org.antlr:antlr4-runtime:4.13.1")
   implementation("com.github.pellierd:pddl4j:3.8.3")
+  implementation("org.quartz-scheduler:quartz:2.5.0")
 
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
@@ -222,13 +244,23 @@ dependencies {
   //nao
   implementation("com.aldebaran:qimessaging:2.1.0.19-linux64")
 
+  //ava
+  implementation("org.java-websocket:Java-WebSocket:1.6.0")
+
   //ros2
-  api("io.github.pinorobotics:jros2services:4.0");
-  api("io.github.pinorobotics:jros2tf2:2.0")
+  api("io.github.pinorobotics:jros2services:6.0");
+  api("io.github.lambdaprime:jros2client:9.0")
+  api("io.github.pinorobotics:jros2actionlib:4.0");
+  api("io.github.pinorobotics:jros2tf2:3.0")
 
 
   //gui
   implementation("org.apache.commons:commons-imaging:1.0-alpha3") // MapAdapter
+
+
+  //todo: unsafe to include? vlc wrapper library for playing videos
+  implementation("uk.co.caprica:vlcj:4.10.1")
+
 
 }
 

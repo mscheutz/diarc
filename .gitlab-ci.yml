@@ -20,7 +20,7 @@ java-only-tests:
   # tags:
   #   - java-only
   script:
-    - ./gradlew build -Pdiarc.testLogging=true
+    - ./gradlew build -Pdiarc.test.enableLogging=true
   only:
     - web
     #- master

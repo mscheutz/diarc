@@ -1,0 +1,48 @@
+{
+  "references": [
+    {
+      "properties": ["building entrance(X:location)"],
+      "variable": "X:location",
+      "graphId": "biform-cowrie-Wi+dKgforHCwFvhFXWK2XQ\u003d\u003d",
+      "x": 0.9419295490026554,
+      "y": -0.020384974481466617,
+      "orientX": -0.0010432540234602539,
+      "orientY": 1.1037175808926847E-4,
+      "orientZ": 0.022139191695862658,
+      "orientW": 0.9997543476425454
+    },
+    {
+      "properties": ["near side(X:location)"],
+      "variable": "X:location",
+      "graphId": "arched-gnu-.JxciXDfs50+DokvlV.eKQ\u003d\u003d",
+      "x": 6.033361313840437,
+      "y": -2.055642542608563,
+      "orientX": 0.002076600505539811,
+      "orientY": 1.3425406150378386E-4,
+      "orientZ": -0.4735328026552519,
+      "orientW": 0.8807737249235185
+    },
+    {
+      "properties": ["far side(X:location)"],
+      "variable": "X:location",
+      "graphId": "corned-weasel-VZ5ul+VpVkpaD8kGPZ7s9g\u003d\u003d",
+      "x": 4.466811814933511,
+      "y": -2.1641256541707534,
+      "orientX": -9.894566321265795E-4,
+      "orientY": -6.31716893609152E-4,
+      "orientZ": 0.21785987064261728,
+      "orientW": 0.9759793536099632
+    },
+    {
+      "properties": ["entrance(X:location)"],
+      "variable": "X:location",
+      "graphId": "jangly-magpie-371SqDbxhws7F2sizDVmoQ\u003d\u003d",
+      "x": 5.3922721840986645,
+      "y": -1.670685519833101,
+      "orientX": 9.862936578563027E-4,
+      "orientY": -0.0011071220820229794,
+      "orientZ": -0.10570505518111382,
+      "orientW": 0.9943964213605527
+    }
+  ]
+}

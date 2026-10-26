@@ -1,0 +1,6 @@
+root   ::= init color "."
+prompt ::= init "."
+
+init ::= " red, green, blue" # Comment
+
+color ::= ", " ("red" | "green" | "blue")

@@ -30,7 +30,7 @@ public class PreconditionPlanningSelector extends ActionSelector {
   @Override
   public ParameterizedAction selectActionForGoal(Goal goal, ActionConstraints constraints, StateMachine stateMachine) {
     //TODO:add special case to call utilitarian action selector for handled goals
-    if (goal.isObservation() || goal.isAction() || "handled".equals(goal.getPredicate().getName()) || "handleSemantics".equals(goal.getPredicate().getName()) || "knows".equals(goal.getPredicate().getName())) {
+    if (goal.isObservation() || goal.isAction() || "handled".equals(goal.getGoalStatePredicate().getName()) || "handleSemantics".equals(goal.getGoalStatePredicate().getName()) || "knows".equals(goal.getGoalStatePredicate().getName())) {
       // If goal is specifying a particular action or observation action, look up action using utilitarian action selector,
       // and then attach planned action to reach pre-conditions (if any)
 
@@ -77,7 +77,7 @@ public class PreconditionPlanningSelector extends ActionSelector {
   private ParameterizedAction planForPreconditions(Goal goal, ActionConstraints constraints, StateMachine stateMachine, List<Predicate> boundPreconditions) {
     // find plan to satisfy pre-conditions
     Predicate preconditionGoalPredicate = Utilities.createAndPredicate(boundPreconditions);
-    Goal preconditionGoal = new Goal(goal.getActor(), preconditionGoalPredicate);
+    Goal preconditionGoal = Goal.createGoal(goal.getActor(), preconditionGoalPredicate);
     ParameterizedAction preconditionAction = new GoalPlanningActionSelector().selectActionForGoal(preconditionGoal, constraints, stateMachine);
 
     if (preconditionAction == null) {
@@ -88,7 +88,7 @@ public class PreconditionPlanningSelector extends ActionSelector {
     // combine preconditionAction and selectedAction into one ParameterizedAction
     ActionDBEntry.Builder combinedADB = new ActionDBEntry.Builder("planned");
     combinedADB.prependEventSpecs(preconditionAction.getEntry().getEventSpecs()); // steps to reach pre-conditions
-    combinedADB.addEventSpec(new EventSpec(goal.getPredicate())); // original action step
+    combinedADB.addEventSpec(new EventSpec(goal.getGoalStatePredicate(), true)); // original action step
 
     return new ParameterizedAction(combinedADB.build(false), goal);
   }

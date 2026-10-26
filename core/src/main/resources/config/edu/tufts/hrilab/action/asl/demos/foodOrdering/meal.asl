@@ -25,7 +25,7 @@
     !mealID = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "meal!size");
 
 
-    !bindings = act:askQuestionFromString(?actor,"It will be called !mealID . What type of items are in it?", item(X));
+    !bindings = act:askQuestionFromString("It will be called !mealID . What type of items are in it?", item(X));
     !itemType = op:get(!bindings, !x);
 
     while(~op:equalsValue(!itemType, none())) {
@@ -33,7 +33,7 @@
         !itemTypeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !itemTypeString);
         op:add(!itemTypes, !itemTypeSymbol);
         op:log(debug, "[defineMeal] got item type !itemType");
-        !bindings = act:askQuestionFromString(?actor,"Okay. What else is included?", item(X));
+        !bindings = act:askQuestionFromString("Okay. What else is included?", item(X));
         !itemType = op:get(!bindings, !x);
     }
     op:log(debug, "[defineMeal] finished getting item types !itemTypes");
@@ -107,7 +107,7 @@
 
     //TODO:sandwich?
 //    foreach (!itemType : !itemTypes) {
-//        !answerBindings = act:askQuestionFromString(?actor,"What !itemType do you want?", val(X));
+//        !answerBindings = act:askQuestionFromString("What !itemType do you want?", val(X));
 //        !item = op:get(!answerBindings, !x);
 //        op:log(debug, "[orderMeal] got response !item for item type !itemType");
 //        //todo: type checking
@@ -159,7 +159,7 @@
                 //how many options do we need?
                 while(op:le(!i, !numOfExpectedOptions)) {
                     //todo: better question asking language
-                    !questionBindings = act:askQuestionFromString(?actor,"What is option !i of !numOfExpectedOptions?", option(X));
+                    !questionBindings = act:askQuestionFromString("What is option !i of !numOfExpectedOptions?", option(X));
                     !option = op:get(!questionBindings, !x);
                     op:add(!itemOptionList, !option);
                     !i = op:++(!i);
@@ -174,7 +174,7 @@
         op:add(!mealItemAndOptionsPredicateList, !tmp);
     }
 
-//    !answerBindings = act:askQuestionFromString(?actor,"What drink would you like", val(X));
+//    !answerBindings = act:askQuestionFromString("What drink would you like", val(X));
 //    !drinkRef = op:get(!answerBindings, !x);
 
     act:generateResponseFromString("okay");

@@ -518,9 +518,9 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
       } else {
         String beliefSanitized = currProver.sanitize(belief);
         sql.assertSQLString(beliefSanitized, memoryLevel.name(), source.toString());
-        notificationProver.assertBelief(beliefSanitized);
+        notificationProver.assertBelief(belief);
         if (currLevel.includesLevel(memoryLevel)) {
-          currProver.assertBelief(beliefSanitized);
+          currProver.assertBelief(belief);
         }
       }
     }
@@ -662,7 +662,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
   @Override
   synchronized public BeliefComponent createClone() {
     String dbName = "-disk sim_num_" + nextSQLNumber.getAndIncrement() + ".db";
-    BeliefComponent newBeliefComponent = DiarcComponent.createInstance(this.getClass(), dbName, false);
+    BeliefComponent newBeliefComponent = DiarcComponent.createInstance(this.getClass(), false, dbName);
 
     // populate new component's prover
     if (!newBeliefComponent.notificationProver.setTheory(this.notificationProver.getTheory())) {
@@ -715,7 +715,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
 
     // get all explicit facts
     ResultSet resultSet = sql.getFacts(memoryLevel);
-    facts.addAll(sql.translateResultSet(resultSet));
+    facts.addAll(sql.translateResultSet(resultSet).stream().map(f -> (Term) currProver.unsanitize(f)).toList());
 
     // get heads of all the rules, query those to get facts through inference
     List<Pair<Term, List<Term>>> rules = getRules(memoryLevel);
@@ -1101,7 +1101,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
     Predicate teamPredicate = Factory.createPredicate("team", queryVar);
     queryResult = queryBelief(teamPredicate);
     Set<Symbol> teamNames = new HashSet<>();
-    queryResult.forEach(m -> teamNames.add(m.get(queryVar)));
+    queryResult.forEach(m -> teamNames.add(Factory.createSymbol(m.get(queryVar).getName())));
     Map<Symbol, Set<Symbol>> teams = new HashMap<>();
     for (Symbol teamName : teamNames) {
       Predicate queryPred = Factory.createPredicate("memberOf", queryVar, teamName);

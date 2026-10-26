@@ -4,12 +4,13 @@
 package edu.tufts.hrilab.asr.sphinx4;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.asr.ASRInterface;
 
 /**
  * Defines a standard set of methods that must be defined in an DIARCComponent
  * that utilizes Sphinx4 speech recognition.
  */
-public interface Sphinx4Interface {
+public interface Sphinx4Interface extends ASRInterface {
 
   @TRADEService
   void setGrammar(String path);

@@ -1,5 +1,10 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.llm;
 
+import edu.tufts.hrilab.llm.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +15,7 @@ public class LlamaHFChat extends Chat {
     static private Logger log = LoggerFactory.getLogger(LlamaHFChat.class);
 
     public String service = "llamahf";
-    public String model = "Meta-Llama-3-70B-Instruct";
+    public String model = "Meta-Llama-3.1-70B-Instruct";
 
     public LlamaHFChat () {
     }
@@ -24,7 +29,6 @@ public class LlamaHFChat extends Chat {
         context = chat.context;
         service = chat.service;
         model = chat.model;
-        tokenCounts = new ArrayList<>(chat.tokenCounts);
     }
 
     public void setService(String service) {
@@ -69,16 +73,14 @@ public class LlamaHFChat extends Chat {
                 sb.append("</s>");
             }
             return sb.toString().trim();
-        }
-
-        //TODO: add system message with 'first'
-        if (model.startsWith("Meta-Llama-3")) {
+        } else if (model.startsWith("Meta-Llama-3") || model.startsWith("Llama-3")) {
+            //TODO: add system message with 'first'
             if (position == 0 || singleMessage) {
                 sb.append("<|begin_of_text|>");
                 if (systemMessage != null && !systemMessage.isEmpty()) {
                     sb.append("<|start_header_id|>system<|end_header_id|>\n\n");
                     sb.append(systemMessage);
-                    sb.append("<|eot_id|>");
+                    sb.append("<|eot_id|>\n");
                 }
             }
 
@@ -87,9 +89,8 @@ public class LlamaHFChat extends Chat {
             } else {
                 sb.append("<|start_header_id|>assistant<|end_header_id|>\n\n");
             }
-            String s = m.content;
-            s = s.replace("\n", " ");
-            sb.append(s);
+            //s = s.replace("\n", " ");
+            sb.append(m.getText());
             //sb.append(m.content);
             sb.append("<|eot_id|>");
             if (position == 2) {
@@ -102,7 +103,7 @@ public class LlamaHFChat extends Chat {
         }
 
         log.warn("[messageToString] unknown model {}, not formatting message", model);
-        return m.content;
+        return m.getText();
     }
 
     //Assuming messages is well-formed list of alternating speakers

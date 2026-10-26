@@ -9,6 +9,7 @@ import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.Effect;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -30,6 +31,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification moveTo(String groupName, Point3d point, Quat4d orientation);
 
   /**
@@ -48,6 +50,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r);
 
   /**
@@ -62,6 +65,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification moveTo(String groupName, Symbol refId);
 
   /**[
@@ -74,6 +78,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints);
 
   /**
@@ -88,6 +93,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification moveToRelative(String groupName, Point3d point, Quat4d orientation);
 
   /**
@@ -98,6 +104,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification graspObject(String groupName, Symbol refId, float position);
 
   /**
@@ -108,6 +115,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification releaseObject(String groupName, Symbol refId, float position);
 
   /**
@@ -117,6 +125,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification pointTo(String groupName, Symbol objectRef);
 
   /**
@@ -191,6 +200,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToPose(String groupName, Symbol poseName);
 
   /**
@@ -202,6 +212,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToPose(Symbol poseName);
 
   /**
@@ -229,6 +240,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification executeTrajectory(String trajectoryName);
 
   /**
@@ -255,6 +267,14 @@ public interface ArmInterface {
   @Action
   Justification openGripper(String groupName);
 
+  /**
+   * Set gripper position (i.e., how much gripper is open).
+   * TODO: consider renaming method to setGripperPosition
+   *
+   * @param groupName
+   * @param meters
+   * @return
+   */
   @TRADEService
   @Action
   Justification moveGripper(String groupName, float meters);
@@ -273,6 +293,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification pressObject(String group_name, Point3d object_location, Quat4d object_orientation);
 
   /**
@@ -284,5 +305,15 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification pressObject(String group_name, Symbol refID);
+
+  /**
+   * Generic stop method to cancel any arm motion (does not cancel gripper opening/closing).
+   *
+   * @return
+   */
+  @TRADEService
+  @Action
+  Justification stop();
 }

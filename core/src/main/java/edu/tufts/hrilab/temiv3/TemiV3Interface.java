@@ -11,6 +11,7 @@ import edu.tufts.hrilab.action.annotations.Effect;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.slug.common.Utterance;
 
 import java.util.List;
 
@@ -58,22 +59,6 @@ public interface TemiV3Interface {
     @TRADEService
     @Action
     void followMe();
-
-    /**
-     * Blocking version of followMe (waits for acknowledgement)
-     */
-    @TRADEService
-    @Action
-    @OnInterrupt(onCancelServiceCall = "interruptFollowBlocking()", onSuspendServiceCall = "interruptFollowBlocking()")
-    @Effect( effect={"not(at(?actor,X))"},
-            type= EffectType.ALWAYS)
-    @Effect( effect={"at(?actor,unknown)"},
-            type= EffectType.ALWAYS)
-    void followMeBlocking();
-
-    @Action
-    @TRADEService
-    void interruptFollowBlocking();
 
     /**
      * Stop moving. Has side effect of causing goToLocationStatus and ReposeStatus to be set to ABORT. We additionally
@@ -359,6 +344,10 @@ public interface TemiV3Interface {
 
     @TRADEService
     @Action
+    void sayText(Utterance utterance);
+
+    @TRADEService
+    @Action
     void sayText(String message);
 
     //TODO: remove after action reimplmentation
@@ -567,10 +556,6 @@ public interface TemiV3Interface {
 
     @TRADEService
     String getCheckInHeaderMessage();
-
-    //TODO: Until we figure out where to put all of this demo-specific functionality, need to have these to have temi configs work generally
-    @TRADEService
-    boolean ignoreTentativeAccept(Predicate goalPred);
 
     @TRADEService
     boolean skipsQueue(String funcName);

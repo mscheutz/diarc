@@ -1,6 +1,12 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.action.goal;
 
+import edu.tufts.hrilab.action.goal.schedule.ScheduleInfo;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 
@@ -49,6 +55,10 @@ public class GoalInfo implements Serializable {
    */
   public boolean isAction = false;
   /**
+   * If this goal is an observation (i.e., results in calling a DIARC observer).
+   */
+  public boolean isObservation = false;
+  /**
    * Optional metric for task planning.
    */
   public Predicate metric;
@@ -60,6 +70,29 @@ public class GoalInfo implements Serializable {
    * Goal priority. Used by the ExecutionManager to determine what goals to execute.
    */
   public long priority = 1;
+
+  /**
+   * Goal priority tier. Priority tiers are stronger than priority values themselves. Used by the ExecutionManager to
+   * determine what goals to execute.
+   */
+  public PriorityTier priorityTier = PriorityTier.NORMAL;
+
+  /**
+   * Parameters defining timing of this goal, if scheduled. Will be null otherwise
+   */
+  public ScheduleInfo schedulingInfo = null;
+
+  //TODO: Do we also care about knowing whether 'executeWhileLearning' was toggled on during this goal?
+  /**
+   * Whether this goal was instructed as a step during teaching of a task
+   */
+  public boolean isLearningGoal = false;
+
+  /**
+   * EXPERIMENTAL
+   * The entity (currently only the speaker if a dialogue goal) triggering this goal submission
+   */
+  public Symbol submitter = Factory.createSymbol("unknown");
 
   public GoalInfo(long gid) {
     this.gid = gid;
@@ -75,8 +108,13 @@ public class GoalInfo implements Serializable {
     this.status = other.status;
     this.actor = other.actor;
     this.isAction = other.isAction;
+    this.isObservation = other.isObservation;
     this.metric = other.metric;
     this.persistent = other.persistent;
     this.priority = other.priority;
+    this.priorityTier = other.priorityTier;
+    this.schedulingInfo = other.schedulingInfo;
+    this.isLearningGoal = other.isLearningGoal;
+    this.submitter = other.submitter;
   }
 }

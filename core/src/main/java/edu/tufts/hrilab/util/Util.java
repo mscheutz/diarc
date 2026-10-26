@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.max;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,9 +263,11 @@ public class Util {
    * @param s string to be tokenized
    * @return tokens
    */
-
   public static List<String> tokenizeArgs(String s) {
     List<String> tokens = tokenizeArgs(s,',');
+    if (tokens == null) {
+      return new ArrayList<>();
+    }
     tokens=tokens.stream().map(String::trim).collect(Collectors.toList());
     return tokens;
   }
@@ -279,141 +282,153 @@ public class Util {
     return value.toString().matches("[-+]?\\d*\\.?\\d+[fFlLdD]?");
   }
 
-  //TODO:brad:compare this with how things work in the parser now. and/or delete it if it isn't used anywhere
   /**
-   * Converts text numbers into digits.
+   * Converts written number words in a given text to their digit representation.
    *
-   * @author mheilman
+   * @param text The input text containing number words.
+   * @return The input text with number words converted to digits.
    */
-  public static String numbersTextToDigits(String in) {
-    final String[] numberStrings = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
-            "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"};
-    final String[] tensStrings = {"zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"};
-    String result = in;
-    int idx1, idx2;
-    int i, j, k;
-    String token;
-    boolean test = false;
-    int tmpidx = 0;
-    int number;
-    int tmpnumber;
-    idx1 = -1;
-    boolean numberstart;
-    idx2 = -1;
-    boolean firstloop = true;
-    //System.out.println("numbersTextToDigits: in == " + in);
-    while (tmpidx != -1) {
-      number = 0;
-      k = 0;
-      firstloop = true;
-      tmpnumber = 0;
-      numberstart = true;
-      while ((tmpidx = k) != -1 || firstloop) {
-        k = result.indexOf(" ", tmpidx + 1);
-        if (firstloop && k != -1) {
-          token = result.substring(tmpidx, k);
-          tmpidx--;
-          firstloop = false;
-        } else if (firstloop && k == -1) {
-          token = result.substring(tmpidx);
-          tmpidx--;
-          firstloop = false;
-        } else if (k != -1) {
-          token = result.substring(tmpidx + 1, k);
-        } else {
-          token = result.substring(tmpidx + 1);
-        }
-        //System.out.println("token == " + token);
-        test = false;
-        if (numberstart) {
-          for (j = 0; j < numberStrings.length; j++) {
-            if (numberStrings[j].compareTo(token) == 0) {
-              numberstart = false;
-              tmpnumber = j;
-              idx1 = tmpidx + 1;
-              break;
-            }
-          }
-          for (j = 0; j < tensStrings.length; j++) {
-            if (tensStrings[j].compareTo(token) == 0) {
-              tmpnumber = j * 10;
-              numberstart = false;
-              idx1 = tmpidx + 1;
-              break;
-            }
-          }
-          if (token.compareTo("hundred") == 0) {
-            numberstart = false;
-            idx1 = tmpidx + 1;
-            tmpnumber = 100;
-          } else if (token.compareTo("thousand") == 0) {
-            numberstart = false;
-            idx1 = tmpidx + 1;
-            tmpnumber = 1000;
-          } else if (token.compareTo("million") == 0) {
-            numberstart = false;
-            idx1 = tmpidx + 1;
-            tmpnumber = 1000000;
-          } else if (token.compareTo("billion") == 0) {
-            numberstart = false;
-            idx1 = tmpidx + 1;
-            tmpnumber = 1000000000;
-          }
-        } else {
-          idx2 = tmpidx;
-          for (j = 0; j < numberStrings.length; j++) {
-            if (numberStrings[j].compareTo(token) == 0) {
-              if (tmpnumber > 999) {
-                number += tmpnumber;
-                tmpnumber = 0;
-              }
-              test = true;
-              tmpnumber += j;
-            }
-          }
-          for (j = 0; j < tensStrings.length; j++) {
-            if (tensStrings[j].compareTo(token) == 0) {
-              if (tmpnumber > 999) {
-                number += tmpnumber;
-                tmpnumber = 0;
-              }
-              test = true;
-              tmpnumber += j * 10;
-            }
-          }
-          if (token.compareTo("hundred") == 0) {
-            test = true;
-            tmpnumber *= 100;
-          } else if (token.compareTo("thousand") == 0) {
-            test = true;
-            tmpnumber *= 1000;
-          } else if (token.compareTo("million") == 0) {
-            test = true;
-            tmpnumber *= 1000000;
-          } else if (token.compareTo("billion") == 0) {
-            test = true;
-            tmpnumber *= 1000000000;
-          } else if (token.compareTo("and") == 0) {
-            test = true;
-            number += tmpnumber;
-            tmpnumber = 0;
-          }
-          if (!test) {
-            number += tmpnumber;
-            result = result.substring(0, idx1) + number + result.substring(idx2);
-            break;
-          }
-        }
+  public static String numbersTextToDigits(String text) {
+    Map<String, Integer> numberMap = getStringIntegerMap();
 
-      }
-      if (test) {
-        //number ended the string
-        number += tmpnumber;
-        result = result.substring(0, idx1) + number;
-      }
-
+    // Crate a regex pattern and look for each group of numbers and convert them to digits
+    Pattern pattern = Pattern.compile(numTextToDigitRegexHelper(numberMap.keySet()));
+    Matcher matcher = pattern.matcher(text);
+    StringBuilder result = new StringBuilder();
+    while (matcher.find()) {
+      matcher.appendReplacement(result, numbersTextToDigitsHelper(matcher.group(), numberMap));
     }
-    return result;
+    matcher.appendTail(result);
+
+    return result.toString();
+  }
+
+  /**
+   * Helper function that processes a group of number words and converts them to their digit representation.
+   *
+   * @param group The group of number words.
+   * @param numberMap A map of number words to their corresponding digit values.
+   * @return The digit representation of the group of number words.
+   */
+  private static String numbersTextToDigitsHelper(String group, Map<String, Integer> numberMap) {
+    String[] words = group.split("\\s+");
+    long returnNum = 0; // the ultimate number to return
+    long tempNum = -1; // keeps track of numbers that need to be constructed before adding to the return
+    int tempNumDigits; // number of digits in the temp variable (1452 has 4 digits)
+    int prevWordDigits = -1; // number of digits in the previous word
+    for (String word : words) {
+      int currWordVal = numberMap.get(word);
+      int currWordNumDigits = max(1, (int) Math.ceil(Math.log10(currWordVal + 1)));
+      tempNumDigits = max(1, (int) Math.ceil(Math.log10(tempNum + 1)));
+      if (tempNum == -1) {
+        // First number just add it to the temp number
+        tempNum = currWordVal;
+      } else if (currWordVal > 10 && currWordVal % 100 == 0) {
+        // if the value is hundred, thousand, million, billion etc.
+        tempNum *= currWordVal;
+      } else if (tempNum > 1000 && (countTrailingZeros(returnNum) == tempNumDigits || returnNum == 0)) {
+        // temp is too large to be needed to be stored in the temp (this only needs to be done once the trailing zeros match to num digits)
+        returnNum += tempNum;
+        tempNum = currWordVal;
+      } else if (prevWordDigits > currWordNumDigits) {
+        // if this number is smaller digit than the previous one then add it to the temp
+        tempNum += currWordVal;
+      } else {
+        // If this number is the same or longer digit length as the previous one just concat it to the temp
+        tempNum *= (int) Math.pow(10, currWordNumDigits);
+        tempNum += currWordVal;
+      }
+      prevWordDigits = currWordNumDigits;
+    }
+    tempNumDigits = max(1, (int) Math.ceil(Math.log10(tempNum + 1)));
+    if (countTrailingZeros(returnNum) < tempNumDigits) {
+      // if not enough space to add the zeros then just concat them to the end
+      returnNum *= (int) Math.pow(10, tempNumDigits);
+    }
+    returnNum += tempNum;
+
+    return "" + returnNum;
+  }
+
+  /**
+   * Counts the number of trailing zeros in a given number.
+   *
+   * @param number The number to count trailing zeros for.
+   * @return The count of trailing zeros.
+   */
+  private static int countTrailingZeros(long number) {
+    if (number == 0) {
+      return 0; // Edge case: if the number itself is 0
+    }
+
+    int count = 0;
+    while (number % 10 == 0) {
+      count++;
+      number /= 10;
+    }
+    return count;
+  }
+
+  /**
+   * Given a set of words to be considered a single group (number words for example), creates a regex pattern to
+   * extract groups of these types of words.
+   *
+   * @param strings A set of strings of words to group together and isolate (e.g., all number words).
+   * @return Regex pattern: "\\b(group1)(\\s+(group1))*\\b". For example, if group1 contains "one|two|three" and given:
+   *      "go to room one two three and then room three and then room three two two one"
+   *  it will isolate the following values:
+   *      "one two three"
+   *      "three"
+   *      "three two two one"
+   */
+  private static String numTextToDigitRegexHelper(Set<String> strings) {
+    String group = String.join("|", strings);
+
+    return "\\b(" + group + ")(\\s+(" + group + "))*\\b";
+  }
+
+  /**
+   * Creates a map of number words to their corresponding digit values.
+   *
+   * @return A map of number words to digit values.
+   */
+  private static Map<String, Integer> getStringIntegerMap() {
+    Map<String, Integer> numberMap = new HashMap<>();
+
+    numberMap.put("zero", 0);
+    numberMap.put("oh", 0);
+    numberMap.put("one", 1);
+    numberMap.put("two", 2);
+    numberMap.put("three", 3);
+    numberMap.put("four", 4);
+    numberMap.put("five", 5);
+    numberMap.put("six", 6);
+    numberMap.put("seven", 7);
+    numberMap.put("eight", 8);
+    numberMap.put("nine", 9);
+    numberMap.put("ten", 10);
+    numberMap.put("eleven", 11);
+    numberMap.put("twelve", 12);
+    numberMap.put("thirteen", 13);
+    numberMap.put("fourteen", 14);
+    numberMap.put("fifteen", 15);
+    numberMap.put("sixteen", 16);
+    numberMap.put("seventeen", 17);
+    numberMap.put("eighteen", 18);
+    numberMap.put("nineteen", 19);
+    numberMap.put("twenty", 20);
+    numberMap.put("thirty", 30);
+    numberMap.put("forty", 40);
+    numberMap.put("fifty", 50);
+    numberMap.put("sixty", 60);
+    numberMap.put("seventy", 70);
+    numberMap.put("eighty", 80);
+    numberMap.put("ninety", 90);
+    numberMap.put("hundred", 100);
+    numberMap.put("thousand", 1000);
+    numberMap.put("million", 1000000);
+    numberMap.put("billion", 1000000000);
+    return numberMap;
   }
 
   /**
@@ -442,7 +457,7 @@ public class Util {
   public static int unsignedInt(byte b1, byte b2, byte b3) {
     int uint = ((0xFF & (int) b1) << 16
             | (0xFF & (int) b2) << 8
-            | (0xFF & (int) b3)) & 0xFFFFFFFF;
+            | (0xFF & (int) b3));
     return uint;
   }
 

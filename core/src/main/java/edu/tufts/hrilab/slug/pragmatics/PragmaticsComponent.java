@@ -6,6 +6,7 @@ package edu.tufts.hrilab.slug.pragmatics;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
@@ -52,7 +53,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
    * The dialogue history from DialogueComponent. This is updated during each
    * call to pragmatics from an outside component to reflect the latest state of Dialogue.
    */
-  protected List<Utterance> dialogHistory =  new ArrayList<>();
+  protected List<Utterance> dialogHistory = new ArrayList<>();
 
   protected List<String> pragRulesFiles = new ArrayList<>();
   protected List<String> genRulesFiles = new ArrayList<>();
@@ -180,11 +181,13 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
     updateRelevantBeliefsAndDialogueHistory();
     if (utterance.isInputUtterance()) {
       applyInputPragmaticMeaning(utterance);
+      log.info("[applyPragmaticMeaning] INPUT. direct meaning: {} indirect meaning: {}",
+              utterance.getBoundSemanticsPredicate(), utterance.getBoundIndirectSemanticsPredicate());
     } else {
       applyOutputPragmaticMeaning(utterance);
+      log.info("[applyPragmaticMeaning] OUTPUT. direct meaning: {} indirect meaning: {}",
+              utterance.getBoundSemanticsPredicate(), utterance.getBoundIndirectSemanticsPredicate());
     }
-    log.info("[applyPragmaticMeaning] direct meaning: {} indirect meaning: {}",
-            utterance.getBoundSemanticsPredicate(),utterance.getBoundIndirectSemanticsPredicate());
     return utterance;
   }
 
@@ -259,19 +262,46 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
       semantics = new ArrayList<>(newDirectMeaning).get(0);
     }
     if (!utterance.getBindings().isEmpty()) {
-      for (Variable var : utterance.getBindings().get(0).keySet()) {
-        semantics = Factory.createPredicate(semantics.toString().replace(utterance.getBindings().get(0).get(var).toString(), var.toString()));
-      }
+      semantics = replaceVarsInSemantics(semantics, utterance.getBindings().get(0));
     }
     utterance.setSemantics(semantics);
     utterance.setIndirectSemantics(indirectMeaning);
+  }
+
+  private Symbol replaceVarsInSemantics(Symbol semantics, Map<Variable,Symbol> bindings) {
+    if (semantics.isPredicate()) {
+      String name = semantics.getName();
+      List<Symbol> args = new ArrayList<>();
+      for (Symbol arg : ((Predicate)semantics).getArgs()) {
+        if (arg.isPredicate()) {
+          args.add(replaceVarsInSemantics((Predicate) arg, bindings));
+        } else {
+          for (Variable var : bindings.keySet()) {
+            if (arg.getName().equals(bindings.get(var).getName())) {
+              arg = var;
+            }
+          }
+          args.add(arg);
+        }
+      }
+      return Factory.createPredicate(name, args);
+    } else {
+      for (Variable var : bindings.keySet()) {
+        if (semantics.getName().equals(bindings.get(var).getName())) {
+          semantics = var;
+        }
+      }
+      return semantics;
+    }
   }
 
   private void applyOutputPragmaticMeaning(Utterance utterance) {
     Pair<Set<Term>, Set<Term>> meanings = getRecursedMeanings(utterance, genRuleSets);
     Set<Term> directMeaning = meanings.getLeft();
 
-    if (directMeaning.size() > 0) {
+    if (directMeaning.size() > 1) {
+      utterance.setSemantics(Factory.createPredicate("and", new ArrayList<>(directMeaning)));
+    } else if (!directMeaning.isEmpty()) {
       utterance.setSemantics(new ArrayList<>(directMeaning).get(0));
     }
   }
@@ -369,7 +399,11 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
             List<Term> boundSemantics = utt.getBoundSemantics();
             log.debug("[getMeaningsInSet] bound semantics: " + boundSemantics);
             if (!boundSemantics.isEmpty()) {
-              semantics = boundSemantics.get(0);
+              if (boundSemantics.size() == 1) {
+                semantics = boundSemantics.get(0);
+              } else {
+                semantics = Factory.createPredicate("and", boundSemantics);
+              }
             }
             bindingsOption.put((Variable) prLHS, semantics);
             bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
@@ -416,7 +450,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
             try {
               bindings = prover.queryBelief((Term) prLHS);
             } catch (Exception e) {
-              log.error("Error querying prover with: " +  prLHS, e);
+              log.error("Error querying prover with: " + prLHS, e);
             }
 
             if (!bindings.isEmpty()) {
@@ -451,37 +485,46 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
               bindings = prs.checkPropertyApplicability(combinedBindings, utt, prs.getPropertyContext());
 
               log.trace("query: " + prLHS + " | bindings: " + bindings);
+
+              Set<Term> directMeanings = new HashSet<>();
+              Set<Term> indirectMeanings = new HashSet<>();
               if (!(bindings.isEmpty())) {
-                //TODO: fix bindings issue such that we get accurate bindings regardless of prag rule ordering
-                Map<Variable, Symbol> bindingsOption = bindings.get(0);
-                bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
-                if (bindingsOption == null) {
-                  // does not match the current prag rule
-                  continue;
-                }
-                bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getSpeaker(), utt.getSpeaker());
-                for (Variable key : bindingsOption.keySet()) {
-                  //replace 'safe' variable name with the correct original variable name
-                  for (Term supp : utt.getSupplementalSemantics()) {
-                    if (!supp.getArgs().isEmpty()) {
-                      String phrase = bindingsOption.get(key).toString();
-                      phrase = phrase.replace(supp.getName(), supp.get(0).toString());
-                      if (bindingsOption.get(key).isPredicate()) {
-                        bindingsOption.replace(key, Factory.createPredicate(phrase));
-                      } else {
-                        bindingsOption.replace(key, Factory.createSymbol(phrase));
+                for (Map<Variable, Symbol> bindingsOption : bindings) {
+                  //TODO: fix bindings issue such that we get accurate bindings regardless of prag rule ordering
+                  bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
+                  if (bindingsOption == null) {
+                    // does not match the current prag rule
+                    continue;
+                  }
+                  bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getSpeaker(), utt.getSpeaker());
+                  for (Variable key : bindingsOption.keySet()) {
+                    //replace 'safe' variable name with the correct original variable name
+                    for (Term supp : utt.getSupplementalSemantics()) {
+                      if (!supp.getArgs().isEmpty()) {
+                        String phrase = bindingsOption.get(key).toString();
+                        phrase = phrase.replace(supp.getName(), supp.get(0).toString());
+                        if (bindingsOption.get(key).isPredicate()) {
+                          bindingsOption.replace(key, Factory.createPredicate(phrase));
+                        } else {
+                          bindingsOption.replace(key, Factory.createSymbol(phrase));
+                        }
                       }
                     }
                   }
+
+                  PragRuleProver boundpr = pr.getBoundVersion(bindingsOption);
+                  Set<Term> directMeaning = boundpr.getSemantics();
+                  Set<Term> indirectMeaning = boundpr.getOffRecordSem();
+                  if (directMeaning != null && indirectMeaning != null) {
+                    log.debug("bindings: " + bindingsOption);
+                    log.debug("match found! " + directMeanings);
+                    directMeanings.addAll(directMeaning);
+                    indirectMeanings.addAll(indirectMeaning);
+                  }
                 }
 
-                PragRuleProver boundpr = pr.getBoundVersion(bindingsOption);
-                Set<Term> directMeaning = boundpr.getSemantics();
-                Set<Term> indirectMeaning = boundpr.getOffRecordSem();
-                if (directMeaning != null && indirectMeaning != null) {
-                  log.debug("bindings: " + bindingsOption);
-                  log.debug("match found! " + directMeaning);
-                  return Pair.of(bindMeanings(directMeaning, shouldApply), bindMeanings(indirectMeaning, shouldApply));
+                if (directMeanings != null && indirectMeanings != null) {
+                  return Pair.of(bindMeanings(directMeanings, shouldApply), bindMeanings(indirectMeanings, shouldApply));
                 }
               }
             }
@@ -521,7 +564,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
 
     // update dialogue history
     try {
-      dialogHistory =TRADE.getAvailableService(new TRADEServiceConstraints().name("getDialogueHistory")).call(List.class);
+      dialogHistory = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDialogueHistory")).call(List.class);
     } catch (TRADEException e) {
       log.warn("Could not call getDialogueHistory.", e);
     }

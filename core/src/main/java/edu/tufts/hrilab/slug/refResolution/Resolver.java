@@ -41,12 +41,17 @@ public class Resolver {
   static class ConsultantInfo {
     final String kbName;
     final TRADEServiceInfo tsi;
-    final TRADEServiceConstraints tsc;
+    final String[] groups;
 
-    ConsultantInfo(String kbName, TRADEServiceInfo tsi, TRADEServiceConstraints tsc) {
+    ConsultantInfo(String kbName, TRADEServiceInfo tsi, String[] groups) {
       this.kbName = kbName;
       this.tsi = tsi;
-      this.tsc = tsc;
+      this.groups = groups;
+    }
+
+    // a fresh one per lookup, the setters on it mutate in place and lookups run on several threads
+    TRADEServiceConstraints tsc() {
+      return new TRADEServiceConstraints().inGroups(groups);
     }
 
     @Override
@@ -55,8 +60,10 @@ public class Resolver {
     }
   }
 
+  //brad: for every new Resolver get list of consultants(as TSI+ kbName) and property cache (call get properties handled on everything)
   public void updateConsultCache(Symbol actor) {
     if (actor == null) {
+      // use all available consultants
       Collection<TRADEServiceInfo> services = TRADE.getAvailableServices(
           additionalConstraints.name("getKBName").argTypes());
       consultants = new ArrayList<>();
@@ -68,10 +75,12 @@ public class Resolver {
           log.error("[updateConsultCache] exception calling getKBName", e);
         }
         String[] groupArr = c.getGroups().toArray(new String[0]);
-        TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
-        consultants.add(new ConsultantInfo(name, c, tsc));
+        consultants.add(new ConsultantInfo(name, c, groupArr));
       }
     } else {
+      // filter available consultants based on group information
+
+      // get relevant diarc agents
       Set<String> agents;
       try {
         agents = TRADE.getAvailableService(
@@ -83,6 +92,7 @@ public class Resolver {
         agents = new HashSet<>();
       }
 
+      // populate typed and untyped versions of relevant diarc agents
       Set<String> untypedActors = new HashSet<>();
       Set<String> typedActors = new HashSet<>();
       for (String a : agents) {
@@ -91,6 +101,7 @@ public class Resolver {
         typedActors.add("agent:" + (agent.hasType() ? agent : Factory.createSymbol(agent.getName(), "agent")));
       }
 
+      // filter consultants based on groups: keep if consultant has no groups or no "agent:" groups or if consultant is in one of the agent(s) group
       Collection<TRADEServiceInfo> services = TRADE.getAvailableServices(
           additionalConstraints.name("getKBName").argTypes());
       consultants = new ArrayList<>();
@@ -107,8 +118,7 @@ public class Resolver {
             log.error("[updateConsultCache] exception calling getKBName", e);
           }
           String[] groupArr = cGroups.toArray(new String[0]);
-          TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
-          consultants.add(new ConsultantInfo(name, c, tsc));
+          consultants.add(new ConsultantInfo(name, c, groupArr));
         }
       }
     }
@@ -120,7 +130,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         List<Term> handled = TRADE.getAvailableService(
-            c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+            c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
         List<Property> props = handled.stream().map(Property::new).collect(Collectors.toList());
         propertyCache.put(c, props);
       } catch (Exception e) {
@@ -137,9 +147,11 @@ public class Resolver {
     if (matching.size() != 1) {
       log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one " + matching);
     }
+
+    //call convertToType va tsi, return results
     try {
       return TRADE.getAvailableService(
-          matching.get(0).tsc.name("convertToType").argTypes(Symbol.class, Class.class))
+          matching.get(0).tsc().name("convertToType").argTypes(Symbol.class, Class.class))
           .call(entityJavaType, ref, entityJavaType);
     } catch (TRADEException e) {
       log.error("[getEntityForReference] exception calling convertToType", e);
@@ -157,7 +169,7 @@ public class Resolver {
     boolean success = false;
     try {
       success = TRADE.getAvailableService(
-          matching.get(0).tsc.name("assertProperties").argTypes(Symbol.class, List.class))
+          matching.get(0).tsc().name("assertProperties").argTypes(Symbol.class, List.class))
           .call(Boolean.class, ref, properties);
     } catch (Exception e) {
       log.error("exception calling assertProperties on: " + matching.get(0).kbName, e);
@@ -171,7 +183,9 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         List<Term> handled = TRADE.getAvailableService(
-            c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+            c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
+
+        //check if all of the members of properties match (name and arg semantic type) the properties handled by any of the consultants
         boolean matches = properties.stream().anyMatch(q ->
             handled.stream().anyMatch(p ->
                 p.getName().equals(q.getName())
@@ -193,10 +207,10 @@ public class Resolver {
     List<Variable> vars = Utilities.getUnboundVariables(properties);
     try {
       Map<Variable, Symbol> m = TRADE.getAvailableService(
-          matchingConsultants.get(0).tsc.name("createReferences").argTypes(List.class))
+          matchingConsultants.get(0).tsc().name("createReferences").argTypes(List.class))
           .call(Map.class, vars);
       TRADE.getAvailableService(
-          matchingConsultants.get(0).tsc.name("assertProperties").argTypes(Map.class, Double.class, List.class))
+          matchingConsultants.get(0).tsc().name("assertProperties").argTypes(Map.class, Double.class, List.class))
           .call(Boolean.class, m, 1.0, properties);
       if (m.size() > 1) {
         log.warn("[positReference] created more than 1 reference. Returning first reference. Properties: " + properties);
@@ -210,6 +224,7 @@ public class Resolver {
     }
   }
 
+  //generate binding hypotheses, given a sequence of properties, a concretenessOrdering of the variables used in those properties, and a sequence of initial binding hypotheses, as well as a flag about whether to posit to LTM or not
   public List<Hypothesis> resolve(List<Property> query, List<Variable> co, List<Hypothesis> initialHyps, boolean posit) {
     log.debug("[resolve]");
     List<Variable> T = getVariableMapping(query);
@@ -246,7 +261,9 @@ public class Resolver {
     List<Property> q2 = q.stream()
         .filter(t -> !t.nonDSPredicateForm().getName().equals("unfamiliar"))
         .collect(Collectors.toList());
+    //version without "unfamiliar" properties
 
+    //Only complete most likely hypothesis, as there's no MHT currently
     log.trace("IN COMPLETE SOLUTIONS");
     log.trace("compSol: " + s + ", " + av + ", " + q2);
 
@@ -262,7 +279,7 @@ public class Resolver {
         for (ConsultantInfo c : consultants) {
           try {
             List<Term> handled = TRADE.getAvailableService(
-                c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+                c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
             boolean matches = handled.stream().map(Property::new).anyMatch(cp -> cp.matches(p));
             if (matches) {
               cons.add(c);
@@ -284,7 +301,7 @@ public class Resolver {
       vars.add(new Variable(v.getName(), c.kbName));
       try {
         Map<Variable, Symbol> created = TRADE.getAvailableService(
-            c.tsc.name("createReferences").argTypes(List.class))
+            c.tsc().name("createReferences").argTypes(List.class))
             .call(Map.class, vars);
         newAssignments.putAll(created);
       } catch (Exception e) {
@@ -292,17 +309,20 @@ public class Resolver {
       }
     }
 
+    //add all the other properties
+    // log.debug("CONS: " + cons)
     List<Term> nonDSTerms = q2.stream().map(Property::nonDSPredicateForm).collect(Collectors.toList());
     for (ConsultantInfo c : consultants) {
       try {
         TRADE.getAvailableService(
-            c.tsc.name("assertProperties").argTypes(Map.class, Double.class, List.class))
+            c.tsc().name("assertProperties").argTypes(Map.class, Double.class, List.class))
             .call(Boolean.class, new HashMap<>(newAssignments), 1.0, nonDSTerms);
       } catch (TRADEException e) {
         log.error("[completeSolutions] exception calling assertProperties", e);
       }
     }
 
+    //return the new hypothesis
     return List.of(new Hypothesis(newAssignments, bestS.likelihood()));
   }
 
@@ -328,6 +348,10 @@ public class Resolver {
         .collect(Collectors.toList());
   }
 
+  //
+  /* COMMON HELPER METHODS */
+  //
+
   private double scoreT(List<Variable> t, List<Property> S) {
     double ret = 1.0;
     for (Property s : S) {
@@ -351,6 +375,10 @@ public class Resolver {
   private int gamma(Property s) {
     return (int) propertyCache.values().stream().flatMap(List::stream).filter(p -> p.matches(s)).count();
   }
+
+  //========================================================================
+  // Calculation of optimal binding t:V->K
+  //========================================================================
 
   public List<Variable> getVariableMapping(List<Property> S) {
     List<Variable> SV = S.stream()
@@ -397,16 +425,19 @@ public class Resolver {
         .orElse(new ArrayList<>());
   }
 
+  //line 8
   protected List<Symbol> initialDomain(String v) throws Exception {
     Optional<ConsultantInfo> match = consultants.stream()
         .filter(c -> c.kbName.equals(v))
         .findFirst();
     if (!match.isPresent()) throw new Exception("No consultant keyed with name " + v);
     return TRADE.getAvailableService(
-        match.get().tsc.name("getInitialDomain").argTypes(List.class))
+        match.get().tsc().name("getInitialDomain").argTypes(List.class))
         .call(List.class, new ArrayList<>());
   }
 
+  //line 18
+  //Calculates new likelihood for applyConstraint, or simply assess probability...
   public double assess(Hypothesis h, Property prop) {
     log.trace("In assess with " + h + " -- " + prop);
     double propLikelihood;
@@ -416,7 +447,7 @@ public class Resolver {
       log.debug("Chose consultant: " + consultantInfo.kbName);
       try {
         propLikelihood = TRADE.getAvailableService(
-            consultantInfo.tsc.name("process").argTypes(Term.class, Map.class))
+            consultantInfo.tsc().name("process").argTypes(Term.class, Map.class))
             .call(Double.class, prop.nonDSPredicateForm(), new HashMap<>(h.assignments()));
       } catch (Exception e) {
         log.error("[Assess] Exception calling process", e);
@@ -434,7 +465,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         Map<Symbol, Double> entities = TRADE.getAvailableService(
-            c.tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+            c.tsc().name("getActivatedEntities").argTypes()).call(Map.class);
         result.putAll(entities);
       } catch (Exception e) {
         log.error("[getAllActivatedEntities] consultant: " + c.kbName, e);
@@ -451,7 +482,7 @@ public class Resolver {
     if (!match.isPresent()) throw new RuntimeException("No consultant keyed with groups " + groups);
     try {
       return TRADE.getAvailableService(
-          match.get().tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+          match.get().tsc().name("getActivatedEntities").argTypes()).call(Map.class);
     } catch (TRADEException e) {
       log.error("[getActivatedEntities] consultant: " + match.get().kbName, e);
       return new HashMap<>();
@@ -464,6 +495,7 @@ public class Resolver {
     log.debug("FINDING CONSULTANT FOR: " + bf + " / " + bf.predicateForm().toString());
     log.debug("hypothesis ids: " + h.assignments().values().stream().map(Symbol::getType).collect(Collectors.toList()));
 
+    //Brad: eliminate consultants whose name doesn't match any of the ref ids in the hypothesis
     List<ConsultantInfo> filteredConsultants = consultants.stream()
         .filter(c -> h.assignments().values().stream().anyMatch(a -> a.getType().equals(c.kbName)))
         .collect(Collectors.toList());
@@ -475,6 +507,13 @@ public class Resolver {
         .findFirst();
   }
 
+  //========================================================================
+  // REG //brad: not sure why REGenerator was a separate file for so long
+  //========================================================================
+
+  //HELPERS//------------------------------------------------------------
+  //TODO:brad:this is where bad stuff happens, so that assess can be reused...
+  //assess and/or process should ultimately be refactored
   public Hypothesis b2h(Map<Symbol, Symbol> b) {
     Map<Variable, Symbol> h = new HashMap<>();
     for (Map.Entry<Symbol, Symbol> entry : b.entrySet()) {
@@ -496,7 +535,7 @@ public class Resolver {
         if (consultant.isPresent()) {
           try {
             List<Symbol> domain = TRADE.getAvailableService(
-                consultant.get().tsc.name("getInitialDomain").argTypes(List.class))
+                consultant.get().tsc().name("getInitialDomain").argTypes(List.class))
                 .call(List.class, new ArrayList<>());
             List<Map<Symbol, Symbol>> entries = new ArrayList<>();
             for (Symbol id : domain) {
@@ -541,7 +580,7 @@ public class Resolver {
     if (!consultantOpt.isPresent()) return new ArrayList<>();
     try {
       return TRADE.getAvailableService(
-          consultantOpt.get().tsc.name("getAssertedProperties").argTypes(Symbol.class))
+          consultantOpt.get().tsc().name("getAssertedProperties").argTypes(Symbol.class))
           .call(List.class, ref);
     } catch (TRADEException e) {
       log.error("[getProperties] call of getAssertedProperties for ref: " + ref + " from: " + consultantOpt.get().kbName, e);
@@ -549,6 +588,8 @@ public class Resolver {
     }
   }
 
+  // TODO: generating a referring expression depends on context (describing a scene vs clarification requests), and there is none here...
+  //brad: the structure of this is wild...
   public LinkedHashMap<Symbol, List<Term>> generateRE(Symbol ref) {
     log.debug("generating RE -resolver");
     updateConsultCache(null);
@@ -597,7 +638,7 @@ public class Resolver {
     for (ConsultantInfo c : filteredConsultants) {
       try {
         List<Symbol> d = TRADE.getAvailableService(
-            c.tsc.name("getInitialDomain").argTypes(List.class))
+            c.tsc().name("getInitialDomain").argTypes(List.class))
             .call(List.class, new ArrayList<>());
         domain.addAll(d);
       } catch (Exception e) {
@@ -612,7 +653,7 @@ public class Resolver {
     for (ConsultantInfo c : filteredConsultants) {
       try {
         List<Term> asserted = TRADE.getAvailableService(
-            c.tsc.name("getAssertedProperties").argTypes(Symbol.class))
+            c.tsc().name("getAssertedProperties").argTypes(Symbol.class))
             .call(List.class, ref);
         asserted.stream().map(Property::new).forEach(propsList::add);
       } catch (Exception e) {
@@ -627,6 +668,9 @@ public class Resolver {
 
     log.debug("PROPS: " + props);
 
+    //TODO: old code didn't account for there only being a single object ref, thus no distractors
+    // This doesn't work for describing a scene, where you don't necessarily want optimized descriptions, but
+    // instead prefer verbosity
     while (!props.isEmpty() && !distractors.isEmpty()) {
       log.debug("Distractors: " + distractors + "; P: " + props);
       Map.Entry<Property, Map<Symbol, Symbol>> entry = props.pop();
@@ -674,6 +718,22 @@ public class Resolver {
         }
       }
     }
+
+    // this ruins reference expression generation for clarification requests
+//    while (!props.isEmpty() && distractors.isEmpty()) {
+//      Map.Entry<Property, Map<Symbol, Symbol>> entry = props.pop();
+//      Property prop = entry.getKey();
+//      Map<Symbol, Symbol> bindings = entry.getValue();
+//
+//      description.add(prop.boundForm(
+//              bindings.entrySet().stream()
+//                      .map(x -> new Variable(x.getKey().getName(), x.getValue().getName()))
+//                      .collect(Collectors.toList())
+//      ));
+//
+//      log.debug("DESCRIPTION: " + description);
+//    }
+
     return Optional.of(new STMResult(ref, description, distractors));
   }
 
@@ -857,6 +917,8 @@ public class Resolver {
     }
   }
 
+  ////DIST-COWER Line 5ish
+  //Looks through a given hypothesis for the first unassigned variable, if any.
   private Optional<Variable> newVariable(Hypothesis h, List<Property> mb) {
     Set<String> assignedVarNames = h.assignments().keySet().stream()
         .map(Variable::getName).collect(Collectors.toSet());
@@ -865,6 +927,11 @@ public class Resolver {
         .findFirst();
   }
 
+  //DIST-COWER Lines 6-10
+  //expandVariable: given a hypothesis and a new variable,
+  //adds entries to the hypothesis queue that make the same assumptions
+  //as the previous hypothesis, plus a new assumption from the initial
+  //domain of the given variable.
   private void expandVariable(Hypothesis h, List<Property> mb, Variable v,
       PriorityQueue<Map.Entry<Hypothesis, List<Property>>> hypothesisQueue) {
     try {
@@ -881,6 +948,9 @@ public class Resolver {
     }
   }
 
+  //Dist-COWER Lines 12-16
+  //adapts a hypothesis based on the first in a list of properties,
+  //and pops that property if
   private void applyConstraint(Hypothesis h, List<Property> mb,
       PriorityQueue<Map.Entry<Hypothesis, List<Property>>> hypothesisQueue,
       List<Hypothesis> solutions) {

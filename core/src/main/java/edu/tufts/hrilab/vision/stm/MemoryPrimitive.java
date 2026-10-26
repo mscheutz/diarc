@@ -4,8 +4,8 @@
 
 package edu.tufts.hrilab.vision.stm;
 
-import java.io.Serializable;
 import javax.vecmath.Matrix4d;
+import java.io.Serializable;
 
 public class MemoryPrimitive implements Serializable {
   

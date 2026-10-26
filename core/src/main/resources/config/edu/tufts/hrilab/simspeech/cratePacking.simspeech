@@ -1,0 +1,54 @@
+run vision calibration
+done
+----------
+run grasp calibration
+done
+----------
+start packing
+yes
+no
+------
+stop
+------
+reset demo
+------
+hello assista
+please start the packing procedure
+yes
+560 mm
+360 mm
+200 mm
+225 mm
+150 mm
+54 mm
+no
+10 items
+-- optional --
+what information do you need from me before packing
+the crates are 560 by 360 by 200 millimeters large
+the packed item dimensions are 225 by 150 by 54 mm
+pack 10 items per crate
+start packing
+-------------
+pause the current task
+what is your current task
+how many items are in the crate right now
+please pack 2 items per crate instead
+resume
+--------------
+*swipe box and show recovery*
+--------------
+i have replaced the crate
+--------------
+stop packing
+--------------
+--------------
+I have changed the type of crate being used
+the crate is now 340 by 220 by 140 mm
+how many items can you fit in the crate
+start packing
+------
+------
+------
+------
+

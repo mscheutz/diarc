@@ -5,22 +5,11 @@
 package edu.tufts.hrilab.vision.util;
 
 import edu.tufts.hrilab.consultant.util.Utilities;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import edu.tufts.hrilab.fol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Helper methods to deal with Predicates in VisionComponent.

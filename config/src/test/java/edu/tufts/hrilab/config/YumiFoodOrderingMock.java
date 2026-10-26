@@ -45,6 +45,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees front brad");
 
     leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
     rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");
@@ -81,7 +82,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
       log.error("error registering location consultant in DIARC config" + e);
     }
 
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -tldlNoUpdateAddressee -patternMatching");
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -noUpdateAddressee");
 
     createInstance(ReferenceResolutionComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -92,7 +93,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
 
     String gmArgs = "";
     if (!test) {
-      gmArgs += "-editor -beliefg ";
+      gmArgs += "";
     }
     gmArgs +=
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager "
@@ -106,6 +107,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
                     + "-asl dialogue/nlg.asl "
                     + "-asl dialogue/nlu.asl "
                     + "-asl dialogue/handleSemantics.asl "
+                    + "-asl demos/queueEM.asl "
                     + "-asl demos/foodOrdering/prepareFood.asl "
                     + "-asl demos/foodOrdering/prepareFoodPerception.asl "
                     + "-asl demos/foodOrdering/cookingActions.asl "
@@ -129,10 +131,26 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   @Override
   public void shutdownConfiguration() {
     try {
-      TRADE.deregister(areaConsultant);
-      TRADE.deregister(itemConsultant);
-      TRADE.deregister(cognexConsultant);
-      TRADE.deregister(locationConsultant);
+      if (areaConsultant != null) {
+        TRADE.deregister(areaConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        areaConsultant = null;
+      }
+      if (itemConsultant != null) {
+        TRADE.deregister(itemConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        itemConsultant = null;
+      }
+      if (cognexConsultant != null) {
+        TRADE.deregister(cognexConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        cognexConsultant = null;
+      }
+      if (locationConsultant != null) {
+        TRADE.deregister(locationConsultant);
+        // set to null to prevent double deregistration in DiarcConfiguration's shutdown hook
+        locationConsultant = null;
+      }
     } catch (TRADEException e) {
       log.error("[shutdownConfiguration] Error deregistering consultants", e);
     }

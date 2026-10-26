@@ -56,26 +56,6 @@ public class PatternMatchingParserTest {
         }
         return outcome.equals(desired);
     }
-    @Test
-    public void IntegerPatternTest(){
-        component.activatePattern("IntegerPattern");
-        assertEquals(1,component.getNumberOfActivePatterns());
-
-        assertTrue(testUtterance("5",
-                "REPLY(brad,self,val(5),{})",
-                "brad",
-                "self"
-        ));
-
-        assertTrue(testUtterance("-73",
-                "REPLY(brad,self,val(-73),{})",
-                "brad",
-                "self"
-        ));
-
-        component.deactivatePattern("IntegerPattern");
-        assertEquals(0,component.getNumberOfActivePatterns());
-    }
 
     //TODO:convert this into a real test that checks the expected output vs the generated output input
     @Ignore

@@ -41,7 +41,7 @@ import java.util.List;
     if (op:equals(!success, true)) {
        op:log(debug, "[perceiveitem] succeeded");
     } else {
-        !failCond = op:invokeStaticMethod("edu.hrilab.tufts.fol.Factory", "createPredicate", "not(perceive(?actor, ?itemType))");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(perceive(?actor, ?itemType))");
         exit(FAIL, !failCond);
     }
 }
@@ -69,7 +69,7 @@ import java.util.List;
 
 () = invalidateReference["todo: (pete) document"](Symbol ?refId:physobj){
     Predicate !toRetract;
-    act:removeReference(?refId);
+    act:removeCognexReference(?refId);
     !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "itemOn(?refId, X)");
     act:retractBelief(!toRetract);
     !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "itemAt(?refId, X)");

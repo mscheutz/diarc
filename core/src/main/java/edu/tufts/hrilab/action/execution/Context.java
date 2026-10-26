@@ -2,11 +2,6 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-/**
- * @author willie
- * @author luca
- * @author tyler frasca
- */
 package edu.tufts.hrilab.action.execution;
 
 import edu.tufts.hrilab.action.ActionBinding;
@@ -14,10 +9,9 @@ import edu.tufts.hrilab.action.ActionConstraints;
 import edu.tufts.hrilab.action.ScriptParser;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.description.ContextDescription;
-import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
-import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
+import edu.tufts.hrilab.action.execution.control.NoInterruptContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -45,13 +39,16 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 
+/**
+ * Base class for action execution nodes that make up the execution tree.
+ */
 public abstract class Context {
 
   protected final Logger log;
   /**
    * Used to assign unique IDs so each Context instance.
    */
-  private static AtomicLong nextId = new AtomicLong(0);
+  private static final AtomicLong nextId = new AtomicLong(0);
 
   /**
    * Each Context has a parent context from which the context is generated.
@@ -132,6 +129,11 @@ public abstract class Context {
   protected ActionConstraints constraints;
 
   /**
+   * Whether execution of the current context can be interrupted by suspension/cancellation
+   */
+  private Boolean interruptible = null;
+
+  /**
    * Context constructor.
    *
    * @param parent parent context
@@ -184,25 +186,6 @@ public abstract class Context {
     return id;
   }
 
-  /**
-   * Acquire all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    if not greedy, then release the locks if all can't be acquired
-   * @return true is all locks acquired, false otherwise
-   */
-  public boolean acquireLocks(ActionInterpreter actionInt, boolean greedy) {
-    return true;
-  }
-
-  /**
-   * Release all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   */
-  public void releaseLocks(ActionInterpreter actionInt) {
-  }
-
   public ActionStatus getStatus() {
     try {
       statusLock.lock();
@@ -222,7 +205,7 @@ public abstract class Context {
    * @param status
    * @param justification
    */
-  public void setStatus(ActionStatus status, Justification justification) {
+  public boolean setStatus(ActionStatus status, Justification justification) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status);
 
     try {
@@ -234,13 +217,14 @@ public abstract class Context {
         this.justification = justification;
       } else if (actionStatus != null && actionStatus.isTerminated()) {
         log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
-        return;
+        return false;
       } else if (actionStatus == ActionStatus.SUSPEND) {
         if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
           actionStatus = status;
           this.justification = justification;
         } else {
           log.debug("Can not set context {} to status {} while it has SUSPEND status.", cmd, status);
+          return false;
         }
       } else {
         actionStatus = status;
@@ -252,14 +236,14 @@ public abstract class Context {
       // (2) when overall conditions fail
       if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.PARENT_CANCEL && !child.isTerminated()) {
               child.setStatus(ActionStatus.CANCEL);
           }
         });
       } else if (actionStatus == ActionStatus.SUSPEND) {
         // propagate SUSPEND down the tree to any running children (e.g., async)
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && child.getStatus() != ActionStatus.PARENT_SUSPEND && !child.isTerminated()) {
               child.setStatus(ActionStatus.SUSPEND);
           }
         });
@@ -272,6 +256,7 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+    return true;
   }
 
   /**
@@ -282,9 +267,9 @@ public abstract class Context {
    *
    * @param status
    */
-  public final void setStatus(ActionStatus status) {
+  public final boolean setStatus(ActionStatus status) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status + " with justification: " + justification);
-    setStatus(status, this.justification);
+    return setStatus(status, this.justification);
   }
 
   /**
@@ -395,10 +380,16 @@ public abstract class Context {
     Context next = null;
     if (getStatus() == ActionStatus.RESUME) {
       // check if any child context(s) are suspended (and need to be resumed)
-      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND);
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND || child.getStatus() == ActionStatus.PARENT_SUSPEND);
       if (suspendedChildIdx >= 0) {
-        // suspended child found -- set as next child, and set status to RESUME
-        childContexts.get(suspendedChildIdx).setStatus(ActionStatus.RESUME);
+        Context childContext = childContexts.get(suspendedChildIdx);
+        if (childContext.getStatus() == ActionStatus.SUSPEND) {
+          // suspended child found -- set as next child, and set status to RESUME
+          childContext.setStatus(ActionStatus.RESUME);
+        } else {
+          // child which never began execution found -- set as next child, and set status to INITIALIZED
+          childContext.setStatus(ActionStatus.INITIALIZED);
+        }
         childContexts.setNextIndex(suspendedChildIdx);
       } else {
         // no suspended children, continue normal execution
@@ -741,6 +732,36 @@ public abstract class Context {
     }
   }
 
+  protected boolean hasNoInterruptAncestor() {
+    if (this.caller == null) {
+      return false;
+    } else if (this.caller instanceof NoInterruptContext) {
+      return true;
+    }
+    return this.caller.hasNoInterruptAncestor();
+  }
+
+  public boolean isInterruptible() {
+    if (interruptible == null) {
+      interruptible = !hasNoInterruptAncestor();
+    }
+    return interruptible;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting SUSPEND ActionStatus
+   */
+  public boolean canSuspend() {
+    return false;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting CANCEL ActionStatus
+   */
+  public boolean canCancel() {
+    return false;
+  }
+
   /**
    * Get parent context.
    *
@@ -879,11 +900,29 @@ public abstract class Context {
   }
 
   /**
-   * Instantiate the event specified in the event specification
+   * Instantiate the event specified in the event specification as a new Context instance. The new Context
+   * is automatically added as a child to this Context.
    *
    * @param eSpec the event to be executed
+   * @return the new Context
    */
   public Context addEvent(EventSpec eSpec) {
+    Context child = createContext(eSpec);
+
+    //add new child context to childContexts
+    childContexts.add(child);
+    return child;
+  }
+
+  /**
+   * Create new context instance with "this" as the parent, but does NOT add the new Context as a child
+   * to "this". This is useful for attaching "child" contexts to other non-childContexts data structures
+   * (e.g.,  interruption contexts, effect/condition contexts, etc.).
+   *
+   * @param eSpec
+   * @return
+   */
+  public Context createContext(EventSpec eSpec) {
     if (log.isDebugEnabled()) {
       log.debug("Adding event according to specification: " + eSpec.toString() + " exec: " + this.execType);
     }
@@ -927,6 +966,7 @@ public abstract class Context {
           if (this.hasNormCheckingAncestor()) {
             c = new NormCheckingActionContext(this, this.stateMachine, action, inputArgs, actor);
           } else {
+            //TODO: pass on recovery type
             c = new ActionContext(this, this.stateMachine, action, inputArgs, eSpec.getReturnArgs(), actor);
           }
         } else {
@@ -943,7 +983,7 @@ public abstract class Context {
         } else {
           goalState = Factory.createPredicate(command, inputArgs.toArray(new String[inputArgs.size()]));
         }
-        Goal goal = new Goal(actor, goalState);
+        Goal goal = Goal.createGoal(actor, goalState);
         c = new GoalContext(this, this.stateMachine, goal, this.execType);
         break;
 
@@ -966,16 +1006,19 @@ public abstract class Context {
       // observation DB
       case OBSERVATION:
         // create new context for observation
-        c = new ObservationContext(this, this.stateMachine, command, inputArgs, actor, Observable.TRUE);
+        c = new ObservationContext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor, Observable.TRUE);
+        break;
+
+      case THIS:
+        c = new ThisContext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor);
         break;
 
       case CONTROL:
         log.error("Error: addEvent is not compatible with controls");
         break;
+
     }
 
-    //add new child context to childContexts
-    childContexts.add(c);
     return c;
   }
 
