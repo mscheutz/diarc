@@ -2535,6 +2535,9 @@ public class ExecutionManager implements GoalListener {
         if (!s.isEmpty()) {
           ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
           List<ActionDBEntry> entries = parser.parseFromString(learnedActionsFile, new ArrayList<>(), s);
+          if (entries == null) {
+            throw new IllegalArgumentException("Invalid learned actions file: " + learnedActionsFile);
+          }
           if (addToDB) {
             for (ActionDBEntry entry : entries) {
               Database.getInstance().addActionDBEntry(entry);

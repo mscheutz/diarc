@@ -110,3 +110,18 @@ are three functions to call:
 
         c. close block
         The function will close a block (add "}") and reduce indent for two spaces.
+
+12. Parser validation and writer round trips
+Both parseFromFile and parseFromString reject lexer or syntax errors before creating actions.
+They log diagnostics with line and column information and return null on failure; callers must
+check the result. For-loop initialization, condition, and update must use the same loop variable.
+
+The writer preserves recovery blocks, predicate negation, semantic types on input/output/local
+roles, all spec types (including tsc and this), multiple return bindings, and noInterrupt blocks.
+Async uses "!id = async { ... }" (or "async { ... }" without a return binding), and join may
+likewise bind its result: "!status = join(!id, 1000);". Interrupt calls end with semicolons;
+the special resume handler is "resume: reset;".
+
+When changing the grammar or emitter, add parse-write-parse cases to ActionASLTest. Compare
+the resulting actions, interrupt handlers, and role semantic types, as action equality alone
+does not cover all of these fields.

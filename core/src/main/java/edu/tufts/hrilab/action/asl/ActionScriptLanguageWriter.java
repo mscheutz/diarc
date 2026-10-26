@@ -11,6 +11,8 @@ package edu.tufts.hrilab.action.asl;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.execution.control.ControlFactory.Control;
+import edu.tufts.hrilab.action.recovery.PolicyConstraints;
+import edu.tufts.hrilab.action.recovery.RecoveryType;
 import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Predicate;
 import org.slf4j.Logger;
@@ -22,6 +24,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
@@ -64,6 +68,7 @@ public class ActionScriptLanguageWriter {
 
   public String writeAction(ActionDBEntry entry) {
     sb = new StringBuilder();
+    indent = 0;
 
     openBlock(generateMethodSignature(entry));
     writeLocalParameters(entry);
@@ -72,6 +77,7 @@ public class ActionScriptLanguageWriter {
     writeEffects(entry);
     writeInterrupts(entry);
     writeObserves(entry);
+    writeRecovery(entry);
     writeMainSpecs(entry);
     closeBlock();
 
@@ -111,6 +117,9 @@ public class ActionScriptLanguageWriter {
 
   private String actionBindingString(ActionBinding ab) {
     String varNamePlusType = ab.javaType.getCanonicalName() + " " + ab.name;
+    if (ab.hasSemanticType()) {
+      varNamePlusType += ":" + ab.getSemanticType();
+    }
     String assign = "";
     if (ab.hasDefaultValue()) {
       if (ab.javaType.equals(String.class)) {
@@ -204,26 +213,60 @@ public class ActionScriptLanguageWriter {
         obs = "";
         break;
     }
-    StringJoiner sj = new StringJoiner(",", "(", ")");
-    predicate.getArgs().forEach(s -> sj.add(s.toString()));
-    String predicateString = predicate.getName() + sj;
-    if (predicate.isNegated()) {
-      predicateString = "~" + predicateString;
+    cat(prefix + obs + " : " + predicateString(predicate) + ";");
+  }
+
+  private String predicateString(Predicate predicate) {
+    return predicate.isNegated() ? "~" + predicate.toUnnegatedForm() : predicate.toString();
+  }
+
+  private void writeRecovery(ActionDBEntry entry) {
+    for (PolicyConstraints constraints : entry.getPolicyConstraints()) {
+      openBlock("recovery :");
+      if (constraints.recoveryType == RecoveryType.ACTION) {
+        openBlock("actionRecovery :");
+        writeRecoveryPredicates("catchingActions", constraints.catchingActions);
+        cat("postRecovery : " + constraints.postRecoveryExecutionType.name().toLowerCase(Locale.ROOT));
+        closeBlock();
+      }
+      writeRecoveryPredicates("goals", constraints.goals);
+      writeRecoveryPredicates("excludedGoals", constraints.excludedGoals);
+      writeRecoveryPredicates("failedActions", constraints.failedActions);
+      writeRecoveryPredicates("excludedFailedActions", constraints.excludedFailedActions);
+      writeRecoveryPredicates("failureReasons", constraints.failureReasons);
+      writeRecoveryPredicates("excludedFailureReasons", constraints.excludedFailureReasons);
+      if (!constraints.actionStatuses.isEmpty()) {
+        cat("actionStatuses : {" + constraints.actionStatuses.stream()
+                .map(Enum::name).sorted().collect(Collectors.joining(", ")) + "}");
+      }
+      cat("maximumAttempts : " + constraints.maximumAttempts);
+      closeBlock();
     }
-    cat(prefix + obs + " : " + predicateString +";");
+  }
+
+  private void writeRecoveryPredicates(String name, Set<Predicate> predicates) {
+    if (!predicates.isEmpty()) {
+      cat(name + " : {" + predicates.stream().map(this::predicateString)
+              .sorted().collect(Collectors.joining(", ")) + "}");
+    }
   }
 
   private void writeInterrupts(ActionDBEntry entry) {
     if (entry.hasOnCancelEvent() || entry.hasOnResumeEvent() || entry.hasOnSuspendEvent()) {
       openBlock("onInterrupt :");
       if (entry.hasOnCancelEvent()) {
-        cat("cancel: " + generateSpec(entry.getOnCancelEvent()));
+        cat("cancel: " + generateSpec(entry.getOnCancelEvent()) + ";");
       }
       if (entry.hasOnSuspendEvent()) {
-        cat("suspend: " + generateSpec(entry.getOnSuspendEvent()));
+        cat("suspend: " + generateSpec(entry.getOnSuspendEvent()) + ";");
       }
       if (entry.hasOnResumeEvent()) {
-        cat("resume: " + generateSpec(entry.getOnResumeEvent()));
+        EventSpec resume = entry.getOnResumeEvent();
+        if (resume.getType() == EventSpec.EventType.CONTROL && "reset".equals(resume.getCommand())) {
+          cat("resume: reset;");
+        } else {
+          cat("resume: " + generateSpec(resume) + ";");
+        }
       }
       closeBlock();
     }
@@ -242,6 +285,8 @@ public class ActionScriptLanguageWriter {
             case OPERATOR:
             case OBSERVATION:
             case GOAL:
+            case TSC:
+            case THIS:
               if (!conditionStack.isEmpty()) {
                 conditionStack.peek().add(generateSpec(es));
               } else {
@@ -352,6 +397,8 @@ public class ActionScriptLanguageWriter {
             case OPERATOR:
             case OBSERVATION:
             case GOAL:
+            case TSC:
+            case THIS:
               cat(generateSpec(es) + ";");
               break;
             case CONTROL:
@@ -407,6 +454,7 @@ public class ActionScriptLanguageWriter {
                 case ENDTRY:
                 case ENDFOR:
                 case ENDASYNC:
+                case ENDNOINTERRUPT:
                   closeBlock();
                   break;
                 case EXIT:
@@ -415,16 +463,15 @@ public class ActionScriptLanguageWriter {
                   cat("exit" + exitArgs.toString() + ";");
                   break;
                 case ASYNC:
-                  if (es.getInputArgs().size() == 0) {
-                    openBlock("async ()");
-                  } else {
-                    openBlock("async (" + es.getInputArgs().get(0) + ")");
-                  }
+                  openBlock(generateReturnPrefix(es) + "async");
+                  break;
+                case NOINTERRUPT:
+                  openBlock("noInterrupt");
                   break;
                 case JOIN:
                   StringJoiner joinArgs = new StringJoiner(", ", "(", ")");
                   es.getInputArgs().forEach(joinArgs::add);
-                  cat("join" + joinArgs.toString() + ";");
+                  cat(generateReturnPrefix(es) + "join" + joinArgs.toString() + ";");
                   break;
                 case RETURN:
                   cat("return;");
@@ -481,6 +528,9 @@ public class ActionScriptLanguageWriter {
       case TSC:
         type = "tsc";
         break;
+      case THIS:
+        type = "this";
+        break;
       default:
         log.error("Unexpected type: " + spec);
         type = spec.getType().toString().toLowerCase();
@@ -489,15 +539,17 @@ public class ActionScriptLanguageWriter {
     if(!spec.getActor().equals("?actor") && spec.getActor().length()>0) {
       type = spec.getActor() + "." + type;
     }
-    String returnValue="";
+    return generateReturnPrefix(spec) + type + ":" + command + sj;
+  }
 
-    if(spec.getReturnArgs().size() == 1) {
-      returnValue = spec.getReturnArgs().get(0) +" = ";
-    } else if(spec.getReturnArgs().size()>1){
-      log.warn("[generateSpec] printing multiple return args not supported: "+spec.getReturnArgs());
+  private String generateReturnPrefix(EventSpec spec) {
+    if (spec.getReturnArgs().isEmpty()) {
+      return "";
     }
-
-    return returnValue + type + ":" + command + sj;
+    if (spec.getReturnArgs().size() == 1) {
+      return spec.getReturnArgs().get(0) + " = ";
+    }
+    return spec.getReturnArgs().stream().collect(Collectors.joining(", ", "(", ") = "));
   }
 
   private int indent = 0;

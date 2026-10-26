@@ -16,7 +16,11 @@ import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
+import edu.tufts.hrilab.action.recovery.RecoveryType;
 import edu.tufts.hrilab.fol.Factory;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
 
 import java.io.File;
@@ -24,8 +28,261 @@ import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ActionASLTest {
+
+    private static final String TEST_DB = "/config/edu/tufts/hrilab/action/asl/roundTrip.asl";
+
+    private ActionDBEntry parseAction(String source) {
+        List<ActionDBEntry> actions = new ActionScriptLanguageParser().parseFromString(TEST_DB, null, source);
+        assertNotNull("Parsing failed: " + source, actions);
+        assertEquals(1, actions.size());
+        return actions.get(0);
+    }
+
+    private ActionDBEntry assertRoundTrip(String source) {
+        ActionDBEntry original = parseAction(source);
+        String written = new ActionScriptLanguageWriter().writeAction(original);
+
+        ASLParser syntaxParser = new ASLParser(new CommonTokenStream(new ASLLexer(CharStreams.fromString(written))));
+        syntaxParser.actionScript();
+        assertEquals("Writer produced invalid ASL: " + written, 0, syntaxParser.getNumberOfSyntaxErrors());
+
+        ActionDBEntry restored = parseAction(written);
+        assertEquals(original, restored);
+        assertEquals(original.getOnCancelEvent(), restored.getOnCancelEvent());
+        assertEquals(original.getOnSuspendEvent(), restored.getOnSuspendEvent());
+        assertEquals(original.getOnResumeEvent(), restored.getOnResumeEvent());
+        for (int i = 0; i < original.getRoles().size(); ++i) {
+            assertEquals(original.getRoles().get(i).getSemanticType(), restored.getRoles().get(i).getSemanticType());
+        }
+        return restored;
+    }
+
+    @Test
+    public void testRejectsLexicalErrors() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        assertNull(parser.parseFromString(TEST_DB, null, "() = invalid() { @ act:move(); }"));
+        assertNull(parser.parseFromString(TEST_DB, null, "() = invalid() {} @"));
+    }
+
+    @Test
+    public void testRejectsRecoveredSyntaxErrors() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        assertNull(parser.parseFromString(TEST_DB, null, "() = valid() {} () = invalid() { act:move() }"));
+        assertNull(parser.parseFromString(TEST_DB, null, "() = invalid() { act:move();"));
+        assertNull(parser.parseFromString(TEST_DB, null, "() = invalid() {} trailing"));
+        assertNotNull(parser.parseFromString(TEST_DB, null, "() = valid() {}"));
+    }
+
+    @Test
+    public void testFileParserRejectsErrors() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        for (String filename : List.of("invalid-lexical.asl", "invalid-syntax.asl")) {
+            String resource = "/config/edu/tufts/hrilab/action/asl/" + filename;
+            assertNotNull(getClass().getResource(resource));
+            assertNull(parser.parseFromFile(resource, null));
+        }
+    }
+
+    @Test
+    public void testExistingScriptsStillParse() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        for (String filename : List.of("async_tests.asl", "multiple-returns-test.asl", "this_tests.asl",
+                "tsc_tests.asl", "for-loop.asl", "for-each.asl", "recovery_tests.asl")) {
+            assertNotNull(filename, parser.parseFromFile("/config/edu/tufts/hrilab/action/asl/" + filename, null));
+        }
+    }
+
+    @Test
+    public void testNegatedPredicatesRoundTrip() {
+        assertRoundTrip("""
+                () = negated() {
+                    conditions: {
+                        pre: ~ready();
+                        or: { pre: ~first(); pre obs: second(); }
+                        overall obs: ~blocked(?actor);
+                        obligation infer: ~forbidden(?actor);
+                    }
+                    effects: {
+                        always: ~before();
+                        success obs: ~after();
+                        failure infer: ~failed();
+                        nonperf: ~performed();
+                    }
+                    observes: ~visible(?actor);
+                }
+                """);
+    }
+
+    @Test
+    public void testRecoveryRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = recover() {
+                    recovery: {
+                        actionRecovery: {
+                            catchingActions: {move(?actor), ~blocked(?actor)}
+                            postRecovery: retry
+                        }
+                        goals: {arrived(?actor), ~blocked(?actor)}
+                        failedActions: {move(?actor)}
+                        failureReasons: {obstacle(?actor), ~clear(?actor)}
+                        actionStatuses: {FAIL, FAIL_PRECONDITIONS}
+                        maximumAttempts: 3
+                    }
+                    recovery: {
+                        actionRecovery: { postRecovery: continue }
+                        excludedGoals: {unrelated(?actor)}
+                        excludedFailedActions: {waitFor(?actor)}
+                        excludedFailureReasons: {~recoverable(?actor)}
+                        maximumAttempts: 2
+                    }
+                    recovery: {
+                        goals: {done(?actor)}
+                    }
+                    recovery: {}
+                }
+                """);
+        assertEquals(4, restored.getPolicyConstraints().size());
+        assertEquals(RecoveryType.ACTION, restored.getPolicyConstraints().get(0).recoveryType);
+        assertEquals(PostRecoveryExecutionType.RETRY, restored.getPolicyConstraints().get(0).postRecoveryExecutionType);
+        assertEquals(PostRecoveryExecutionType.CONTINUE, restored.getPolicyConstraints().get(1).postRecoveryExecutionType);
+        assertEquals(RecoveryType.GOAL, restored.getPolicyConstraints().get(2).recoveryType);
+        assertEquals(3, restored.getPolicyConstraints().get(0).maximumAttempts);
+        assertTrue(restored.getPolicyConstraints().get(0).goals.contains(
+                Factory.createPredicate("blocked", "?actor").toNegatedForm()));
+        assertTrue(restored.getPolicyConstraints().get(0).catchingActions.contains(
+                Factory.createPredicate("blocked", "?actor").toNegatedForm()));
+        assertTrue(restored.getPolicyConstraints().get(1).excludedFailureReasons.contains(
+                Factory.createPredicate("recoverable", "?actor").toNegatedForm()));
+    }
+
+    @Test
+    public void testAllSpecTypesAndNoInterruptRoundTrip() {
+        assertRoundTrip("""
+                () = specTypes() {
+                    java.lang.String !command;
+                    act:move();
+                    op:log("info", "test");
+                    obs:visible(?actor);
+                    goal:ready(?actor);
+                    tsc:notify(?actor);
+                    !command = this:getCommand();
+                    noInterrupt {
+                        tsc:begin();
+                        noInterrupt {
+                            if (this:isAction() && (tsc:ready() || ~tsc:blocked())) {
+                                this:getCommand();
+                            } elseif (tsc:available()) {
+                                act:move();
+                            } else {
+                                tsc:waitFor();
+                            }
+                        }
+                        while (~this:isDone()) { tsc:step(); }
+                    }
+                }
+                """);
+    }
+
+    @Test
+    public void testAsyncAndJoinRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = asynchronous() {
+                    java.lang.Long !id;
+                    edu.tufts.hrilab.action.ActionStatus !status;
+                    !id = async {
+                        async { tsc:work(); }
+                        noInterrupt { act:move(); }
+                    }
+                    !status = join(!id, 1000);
+                    join(!id);
+                }
+                """);
+        assertEquals(List.of("!id"), restored.getEventSpecs().get(0).getReturnArgs());
+        EventSpec join = restored.getEventSpecs().stream().filter(e -> e.getCommand().equals("join")).findFirst().get();
+        assertEquals(List.of("!status"), join.getReturnArgs());
+        assertEquals(List.of("!id", "1000"), join.getInputArgs());
+    }
+
+    @Test
+    public void testInterruptCallsRoundTrip() {
+        assertRoundTrip("""
+                () = interruptible() {
+                    onInterrupt: {
+                        cancel: robot.act:stop();
+                        suspend: ?actor.tsc:pause();
+                        resume: robot.goal:ready();
+                    }
+                }
+                """);
+    }
+
+    @Test
+    public void testResumeResetRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = restartable() {
+                    onInterrupt: { resume: reset; }
+                }
+                """);
+        assertEquals(EventSpec.EventType.CONTROL, restored.getOnResumeEvent().getType());
+        assertEquals("reset", restored.getOnResumeEvent().getCommand());
+    }
+
+    @Test
+    public void testMultipleReturnsRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = multipleReturns() {
+                    int !first;
+                    int !second;
+                    (!first, !second) = robot.tsc:values();
+                    if ((!first, !second) = act:checkValues()) {
+                        (!first, !second) = op:values();
+                    }
+                }
+                """);
+        assertEquals(List.of("!first", "!second"), restored.getEventSpecs().get(0).getReturnArgs());
+    }
+
+    @Test
+    public void testRejectsMismatchedLoopVariables() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        assertNull(parser.parseFromString(TEST_DB, null, "() = loop() { for (!i=0; !j lt 10; !i++) {} }"));
+        assertNull(parser.parseFromString(TEST_DB, null, "() = loop() { for (!i=0; !i lt 10; !j++) {} }"));
+        assertNull(parser.parseFromString(TEST_DB, null, "() = loop(int ?i) { for (?i; ?j lt 10; ?i++) {} }"));
+    }
+
+    @Test
+    public void testMatchingLoopVariablesRoundTrip() {
+        assertRoundTrip("""
+                () = loops(int ?limit, int ?step) {
+                    int !index = 0;
+                    for (!index; !index lt ?limit; !index += ?step) { tsc:step(!index); }
+                    for (!i=0; !i lt 10; !i++) {
+                        for (!j=5; !j geq 0; !j--) { act:step(!i, !j); }
+                    }
+                }
+                """);
+    }
+
+    @Test
+    public void testSemanticTypesRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                (edu.tufts.hrilab.fol.Symbol ?result:physical) = typed(
+                        edu.tufts.hrilab.fol.Symbol ?actor:robot,
+                        edu.tufts.hrilab.fol.Symbol ?object:physical) {
+                    edu.tufts.hrilab.fol.Symbol !place:location;
+                    conditions: { pre: available(?object); }
+                    effects: { success: found(?result); }
+                }
+                """);
+        assertEquals("robot", restored.getRole("?actor").getSemanticType());
+        assertEquals("physical", restored.getRole("?object").getSemanticType());
+        assertEquals("physical", restored.getRole("?result").getSemanticType());
+        assertEquals("location", restored.getRole("!place").getSemanticType());
+    }
 
     /**
      * TODO: EAK: the ASL writer and reader should be separated from the Database entirely so that

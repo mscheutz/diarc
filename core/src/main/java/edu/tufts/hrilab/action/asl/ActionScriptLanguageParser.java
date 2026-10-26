@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.util.*;
 
 public class ActionScriptLanguageParser {
@@ -45,30 +46,18 @@ public class ActionScriptLanguageParser {
   /**
    * Parse contents of dbFile into ActionDBEntry(s).
    *
-   * @return
+   * @return parsed actions, or null if the script cannot be parsed
    */
   public List<ActionDBEntry> parseFromFile(String dbFile, List<Symbol> agents) {
     log.debug("Parsing action db file: " + dbFile + " for agents: " + agents);
     this.dbFile = dbFile;
     this.agents = agents;
 
-    try {
-      // LEX THE INPUT
-      CharStream input = CharStreams.fromStream(getClass().getResourceAsStream(dbFile));
-      ASLLexer lexer = new ASLLexer(input);
-      CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-      // PARSE THE TOKENS
-      ASLParser parser = new ASLParser(tokens);
-      parser.setBuildParseTree(true);
-      ParseTree tree = parser.actionScript();
-
-      // WALK THE PARSE TREE
-      ParseTreeWalker walker = new ParseTreeWalker();
-      AsEmitter converter = new AsEmitter();
-      walker.walk(converter, tree);
-      log.debug("Successfully parsed " + dbFile + " !");
-      return converter.getParsedAction();
+    try (InputStream stream = getClass().getResourceAsStream(dbFile)) {
+      if (stream == null) {
+        throw new IllegalArgumentException("ASL resource not found: " + dbFile);
+      }
+      return parse(CharStreams.fromStream(stream));
     } catch (Exception e) {
       log.error("Error parsing file: " + dbFile, e);
       return null;
@@ -81,7 +70,7 @@ public class ActionScriptLanguageParser {
    * @param dbFile - filename to associate with ActionDBEntry
    * @param agents  - agents (possibly null)
    * @param asl    - ASL contents to parse in String form
-   * @return
+   * @return parsed actions, or null if the script cannot be parsed
    */
   public List<ActionDBEntry> parseFromString(String dbFile, List<Symbol> agents, String asl) {
     log.debug("[parseFromString] Attempting to create ActionDBEntrys from asl: " + asl);
@@ -89,26 +78,38 @@ public class ActionScriptLanguageParser {
     this.agents = agents;
 
     try {
-      // LEX THE INPUT
-      CharStream input = CharStreams.fromString(asl);
-      ASLLexer lexer = new ASLLexer(input);
-      CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-      // PARSE THE TOKENS
-      ASLParser parser = new ASLParser(tokens);
-      parser.setBuildParseTree(true);
-      ParseTree tree = parser.actionScript();
-
-      // WALK THE PARSE TREE
-      ParseTreeWalker walker = new ParseTreeWalker();
-      AsEmitter converter = new AsEmitter();
-      walker.walk(converter, tree);
-      log.debug("Successfully parsed " + dbFile + " !");
-      return converter.getParsedAction();
+      return parse(CharStreams.fromString(asl));
     } catch (Exception e) {
       log.error("Error parsing file: " + dbFile, e);
       return null;
     }
+  }
+
+  private List<ActionDBEntry> parse(CharStream input) {
+    List<String> errors = new ArrayList<>();
+    BaseErrorListener errorListener = new BaseErrorListener() {
+      @Override
+      public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+                              int charPositionInLine, String message, RecognitionException exception) {
+        errors.add(line + ":" + charPositionInLine + " " + message);
+      }
+    };
+
+    ASLLexer lexer = new ASLLexer(input);
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(errorListener);
+    ASLParser parser = new ASLParser(new CommonTokenStream(lexer));
+    parser.removeErrorListeners();
+    parser.addErrorListener(errorListener);
+    ParseTree tree = parser.actionScript();
+    if (!errors.isEmpty()) {
+      throw new IllegalArgumentException("Invalid ASL: " + String.join("; ", errors));
+    }
+
+    AsEmitter converter = new AsEmitter();
+    ParseTreeWalker.DEFAULT.walk(converter, tree);
+    log.debug("Successfully parsed {} !", dbFile);
+    return converter.getParsedAction();
   }
 
   private class AsEmitter extends ASLBaseListener {
@@ -410,7 +411,7 @@ public class ActionScriptLanguageParser {
         }
         policyConstraints.recoveryType = RecoveryType.ACTION;
         if (ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions() != null) {
-          ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions().predicateList().predicate().forEach(pred -> policyConstraints.catchingActions.add(Factory.createPredicate(pred.getText())));
+          ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions().predicateList().predicate().forEach(pred -> policyConstraints.catchingActions.add(processPredicate(pred)));
         }
         policyConstraints.postRecoveryExecutionType = PostRecoveryExecutionType.fromString(ctx.actionRecoveryDetails(0).postActionRecoveryBehavior().postActionRecoveryType().getText());
       }
@@ -419,7 +420,7 @@ public class ActionScriptLanguageParser {
         if (ctx.recoveryGoals().size() > 1) {
           log.warn("[enterRecovery] Multiple goals fields detected, only using first");
         }
-        ctx.recoveryGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.goals.add(Factory.createPredicate(pred.getText())));
+        ctx.recoveryGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.goals.add(processPredicate(pred)));
       }
       if (!ctx.recoveryExcludedGoals().isEmpty()) {
         if (ctx.recoveryGoals(0) != null) {
@@ -428,14 +429,14 @@ public class ActionScriptLanguageParser {
           if (ctx.recoveryExcludedGoals().size() > 1) {
             log.warn("[enterRecovery] Multiple excludedGoals fields detected, only using first");
           }
-          ctx.recoveryExcludedGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedGoals.add(Factory.createPredicate(pred.getText())));
+          ctx.recoveryExcludedGoals(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedGoals.add(processPredicate(pred)));
         }
       }
       if (!ctx.recoveryFailedActions().isEmpty()) {
         if (ctx.recoveryFailedActions().size() > 1) {
           log.warn("[enterRecovery] Multiple failedActions fields detected, only using first");
         }
-        ctx.recoveryFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.failedActions.add(Factory.createPredicate(pred.getText())));
+        ctx.recoveryFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.failedActions.add(processPredicate(pred)));
       }
       if (!ctx.recoveryExcludedFailedActions().isEmpty()) {
         if (ctx.recoveryFailedActions(0) != null) {
@@ -444,14 +445,14 @@ public class ActionScriptLanguageParser {
           if (ctx.recoveryExcludedFailedActions().size() > 1) {
             log.warn("[enterRecovery] Multiple excludedFailedActions fields detected, only using first");
           }
-          ctx.recoveryExcludedFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailedActions.add(Factory.createPredicate(pred.getText())));
+          ctx.recoveryExcludedFailedActions(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailedActions.add(processPredicate(pred)));
         }
       }
       if (!ctx.recoveryFailureReasons().isEmpty()) {
         if (ctx.recoveryFailureReasons().size() > 1) {
           log.warn("[enterRecovery] Multiple failureReasons fields detected, only using first");
         }
-        ctx.recoveryFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.failureReasons.add(Factory.createPredicate(pred.getText())));
+        ctx.recoveryFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.failureReasons.add(processPredicate(pred)));
       }
       if (ctx.recoveryExcludedFailureReasons(0) != null) {
         if (ctx.recoveryFailureReasons(0) != null) {
@@ -460,7 +461,7 @@ public class ActionScriptLanguageParser {
           if (ctx.recoveryExcludedFailureReasons().size() > 1) {
             log.warn("[enterRecovery] Multiple excludedFailureReasons fields detected, only using first");
           }
-          ctx.recoveryExcludedFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailureReasons.add(Factory.createPredicate(pred.getText())));
+          ctx.recoveryExcludedFailureReasons(0).predicateList().predicate().forEach(pred -> policyConstraints.excludedFailureReasons.add(processPredicate(pred)));
         }
       }
       if (!ctx.recoveryActionStatuses().isEmpty()) {
@@ -557,7 +558,13 @@ public class ActionScriptLanguageParser {
       EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for");
 
       ASLParser.ForInitialContext initial = ctx.forInitial();
-      esBuilder.addInputArg(initial.name().get(0).getText());
+      String loopVariable = initial.name(0).getText();
+      if (!loopVariable.equals(ctx.forCondition().name(0).getText())
+              || !loopVariable.equals(ctx.forUpdate().name(0).getText())) {
+        throw new IllegalArgumentException("For-loop initialization, condition, and update must use the same variable at "
+                + ctx.getStart().getLine() + ":" + ctx.getStart().getCharPositionInLine());
+      }
+      esBuilder.addInputArg(loopVariable);
       if (initial.NUMBER() != null) {
         esBuilder.addInputArg(initial.NUMBER().getText());
       } else if (initial.name().size() > 1) {
