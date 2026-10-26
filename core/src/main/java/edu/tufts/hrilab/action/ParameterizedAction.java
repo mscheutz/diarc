@@ -35,7 +35,7 @@ public class ParameterizedAction implements Serializable {
   private ActionDBEntry entry;
 
   /**
-   * TODO: consider changing this to Map<Variable,Object>
+   * TODO: consider changing this to Map &lt; Variable,Object &gt;
    */
   private Map<String, Object> actionParameters;
 
