@@ -35,16 +35,23 @@ public class GoalManagerNotifier implements DatabaseListener, GoalListener {
   private final Set<TRADEServiceInfo> goalStatusCallbacks = Collections.synchronizedSet(new HashSet<>());
 
   public void registerNotification(TRADEServiceInfo callback, NotificationType type) {
-    Set<TRADEServiceInfo> callbacks = new HashSet<>();
-    switch (type) {
-      case GOAL_STATUS_CHANGE -> callbacks = goalStatusCallbacks;
-      case DATABASE_ADDITION -> callbacks = dbAdditionCallbacks;
-      case DATABASE_REMOVAL -> callbacks = dbRemovalCallbacks;
+    Set<TRADEServiceInfo> callbacks = switch (type) {
+      case GOAL_STATUS_CHANGE -> goalStatusCallbacks;
+      case DATABASE_ADDITION -> dbAdditionCallbacks;
+      case DATABASE_REMOVAL -> dbRemovalCallbacks;
+    };
+    synchronized (callbacks) {
+      if (callbacks.stream().anyMatch(c -> c.matches(callback))) {
+        log.warn("[registerNotification] attempt to register duplicate callback, not adding");
+      } else {
+        callbacks.add(callback);
+      }
     }
-    if (callbacks.stream().anyMatch(c -> c.matches(callback))) {
-      log.warn("[registerNotification] attempt to register duplicate callback, not adding");
-    } else {
-      callbacks.add(callback);
+  }
+
+  private List<TRADEServiceInfo> snapshot(Set<TRADEServiceInfo> callbacks) {
+    synchronized (callbacks) {
+      return new ArrayList<>(callbacks);
     }
   }
 
@@ -58,46 +65,37 @@ public class GoalManagerNotifier implements DatabaseListener, GoalListener {
 
   @Override
   public void actionAdded(ActionDBEntry adb) {
-    // must synchronize explicitly while iterating over synchronizedSet
-    synchronized (dbAdditionCallbacks) {
-      for (TRADEServiceInfo callback : dbAdditionCallbacks) {
-        try {
-          callback.call(void.class, adb);
-        } catch (TRADEException e) {
-          log.error("Exception sending actionAdded notification.", e);
-        }
+    for (TRADEServiceInfo callback : snapshot(dbAdditionCallbacks)) {
+      try {
+        callback.call(void.class, adb);
+      } catch (TRADEException e) {
+        log.error("Exception sending actionAdded notification.", e);
       }
     }
   }
 
   @Override
   public void actionRemoved(ActionDBEntry adb) {
-    // must synchronize explicitly while iterating over synchronizedSet
-    synchronized (dbRemovalCallbacks) {
-      for (TRADEServiceInfo callback : dbRemovalCallbacks) {
-        try {
-          callback.call(void.class, adb);
-        } catch (TRADEException e) {
-          log.error("Exception sending actionRemoved notification.", e);
-        }
+    for (TRADEServiceInfo callback : snapshot(dbRemovalCallbacks)) {
+      try {
+        callback.call(void.class, adb);
+      } catch (TRADEException e) {
+        log.error("Exception sending actionRemoved notification.", e);
       }
     }
   }
 
   @Override
   public void goalStatusChanged(GoalInfo info) {
-    // must synchronize explicitly while iterating over synchronizedSet
     List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
-    synchronized (goalStatusCallbacks) {
-      for (TRADEServiceInfo callback : goalStatusCallbacks) {
-        try {
-          callback.call(void.class, info);
-        } catch (TRADEException | NullPointerException e) {
-          log.error("Exception sending goalStatusChanged notification.", e);
-          //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
-          if (e.getMessage() != null && (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null"))) {
-            servicesToRemove.add(callback);
-          }
+    for (TRADEServiceInfo callback : snapshot(goalStatusCallbacks)) {
+      try {
+        callback.call(void.class, new GoalInfo(info));
+      } catch (TRADEException | NullPointerException e) {
+        log.error("Exception sending goalStatusChanged notification.", e);
+        //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+        if (e.getMessage() != null && (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null"))) {
+          servicesToRemove.add(callback);
         }
       }
     }

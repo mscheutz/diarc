@@ -177,8 +177,13 @@ public class ExecutionManager implements GoalListener {
 
   private boolean displayActionLearningGui = false;
 
-  //TODO: remove this
-  private Set<Long> interruptWaitForStatusUpdateGids = new HashSet<>();
+  private static final class GoalWaitState {
+    long interruptVersion;
+    int waiters;
+    boolean pendingInterrupt;
+  }
+
+  private final Map<Long, GoalWaitState> goalWaitStates = new HashMap<>();
 
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
@@ -1186,12 +1191,15 @@ public class ExecutionManager implements GoalListener {
     //updatePriorities();
   }
 
-  //TODO: reimplement this, was in a rush
-  //Needs to be more specific to each call
   public void interruptWaitForNextGoalStatusUpdate(long gid) {
     goalStatusUpdateLock.lock();
     try {
-      interruptWaitForStatusUpdateGids.add(gid);
+      GoalWaitState state = goalWaitStates.computeIfAbsent(gid, key -> new GoalWaitState());
+      if (state.waiters == 0) {
+        state.pendingInterrupt = true;
+      } else {
+        state.interruptVersion++;
+      }
       goalStatusUpdateCondition.signalAll();
     } finally {
       goalStatusUpdateLock.unlock();
@@ -1209,22 +1217,18 @@ public class ExecutionManager implements GoalListener {
     return waitForNextGoalStatusUpdate(gid, timeout, null);
   }
   public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
+    validateWaitArguments(0, timeout);
     Goal goal = getGoal(gid);
 
     if (goal == null) {
       return null;
     }
-    if (startStatus == null && goal.getStatus().isTerminated()) {
-      //TODO: think a lot of functionality using this was written assuming returning null could mean the goal terminated
-      //  already. But if a start status is explicitly supplied, it should always be done by checking for a terminal
-      //  status instead. Make sure nothing breaks as a result of this change.
+    GoalInfo snapshot = goal.getInfo();
+    if (startStatus == null && snapshot.status.isTerminated()) {
       return null;
     }
-    if (startStatus == null) {
-      startStatus = goal.getStatus();
-    }
-
-    return waitForNextGoalStatusUpdate(goal, timeout, startStatus);
+    return legacyWaitResult(awaitGoalUpdate(goal, snapshot.statusVersion, timeout,
+            startStatus == null ? snapshot.status : startStatus));
   }
 
   /**
@@ -1235,20 +1239,192 @@ public class ExecutionManager implements GoalListener {
    * @return The GoalStatus after the soonest update occurred or the timeout duration elapsed without an update
    */
   protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout, GoalStatus startStatus) {
+    GoalInfo snapshot = goal.getInfo();
+    return legacyWaitResult(awaitGoalUpdate(goal, snapshot.statusVersion, timeout,
+            startStatus == null ? snapshot.status : startStatus));
+  }
+
+  /**
+   * Wait for a transition after afterVersion. Zero timeout waits indefinitely; a terminal goal never blocks.
+   */
+  public GoalWaitResult waitForGoalUpdate(long gid, long afterVersion, long timeout) {
+    validateWaitArguments(afterVersion, timeout);
+    Goal goal = getGoal(gid);
+    if (goal == null) {
+      return new GoalWaitResult(GoalWaitResult.Outcome.UNKNOWN_GOAL, null);
+    }
+    return awaitGoalUpdate(goal, afterVersion, timeout, null);
+  }
+
+  /**
+   * Capture membership and resource blockers under the same lock order used by scheduling.
+   * Status metadata is a versioned snapshot; interpreter transitions can still be in flight.
+   */
+  public GoalSchedulingExplanation explainGoalScheduling(long gid) {
+    synchronized (pendingGoalsLock) {
+      synchronized (resourceLock) {
+        synchronized (goalsLock) {
+          Goal goal = getGoal(gid);
+          if (goal == null) {
+            return new GoalSchedulingExplanation(gid, getClass().getName(), null,
+                    GoalSchedulingExplanation.Location.UNKNOWN, -1,
+                    List.of(GoalSchedulingExplanation.Reason.UNKNOWN_GOAL), List.of(), List.of());
+          }
+          GoalInfo snapshot = goal.getInfo();
+          PendingGoal pending = getPendingGoal(gid);
+          int position = pending == null ? -1 : getIndexOfPendingGoal(pending);
+          GoalSchedulingExplanation.Location location;
+          if (pending != null) {
+            location = GoalSchedulingExplanation.Location.PENDING;
+          } else if (getActiveGoal(gid) != null) {
+            location = GoalSchedulingExplanation.Location.ACTIVE;
+          } else if (pastGoals.contains(goal)) {
+            location = GoalSchedulingExplanation.Location.PAST;
+          } else if (learningGoals.containsKey(gid)) {
+            location = GoalSchedulingExplanation.Location.LEARNING;
+          } else if (goal.isScheduled() && scheduledGoalManager != null
+                  && scheduledGoalManager.getScheduledGoal(gid) != null) {
+            location = GoalSchedulingExplanation.Location.SCHEDULED;
+          } else {
+            location = GoalSchedulingExplanation.Location.SUBMITTING;
+          }
+
+          ResourceClaims claims = resourceAllocations.get(goal);
+          if (claims == null) {
+            claims = pending == null ? new ResourceClaims(Set.of(), Set.of()) : getResourceClaims(goal);
+          }
+          List<GoalSchedulingExplanation.ResourceClaim> resources = new ArrayList<>();
+          for (Resource resource : orderedResources(claims.used)) {
+            resources.add(new GoalSchedulingExplanation.ResourceClaim(resourceProvider(resource),
+                    resource.getName().toString(), claims.required.contains(resource), claims.held.contains(resource)));
+          }
+          List<GoalSchedulingExplanation.Blocker> blockers = new ArrayList<>();
+          List<GoalSchedulingExplanation.Reason> reasons = new ArrayList<>();
+          if (snapshot.status.isTerminated()) {
+            reasons.add(location == GoalSchedulingExplanation.Location.PAST
+                    ? GoalSchedulingExplanation.Reason.TERMINATED : GoalSchedulingExplanation.Reason.TERMINATING);
+          } else if (pending != null) {
+            List<Goal> activeBlockers = new ArrayList<>(getResourceConflictingActiveGoals(goal));
+            activeBlockers.sort(Comparator.comparingLong(Goal::getId));
+            for (Goal blocker : activeBlockers) {
+              ResourceClaims allocation = resourceAllocations.get(blocker);
+              blockers.add(explainBlocker(claims, blocker,
+                      allocation == null ? getResourceClaims(blocker) : allocation,
+                      GoalSchedulingExplanation.Location.ACTIVE));
+            }
+            if (!activeBlockers.isEmpty()) {
+              reasons.add(GoalSchedulingExplanation.Reason.ACTIVE_RESOURCE_CONFLICT);
+            }
+            Iterator<PendingGoal> iterator = pendingGoals.descendingIterator();
+            for (int i = 0; i < position && iterator.hasNext(); i++) {
+              Goal blocker = iterator.next().getGoal();
+              ResourceClaims other = getResourceClaims(blocker);
+              if (claims.conflictsWith(other)) {
+                blockers.add(explainBlocker(claims, blocker, other, GoalSchedulingExplanation.Location.PENDING));
+                if (!reasons.contains(GoalSchedulingExplanation.Reason.HIGHER_PRIORITY_PENDING_CONFLICT)) {
+                  reasons.add(GoalSchedulingExplanation.Reason.HIGHER_PRIORITY_PENDING_CONFLICT);
+                }
+              }
+            }
+            if (snapshot.status == GoalStatus.SUSPENDED) {
+              reasons.add(GoalSchedulingExplanation.Reason.SUSPENDED);
+            }
+            if (blockers.isEmpty()) {
+              reasons.add(GoalSchedulingExplanation.Reason.READY);
+            }
+          } else {
+            switch (location) {
+              case ACTIVE:
+                if (snapshot.status == GoalStatus.SUSPENDED) {
+                  reasons.add(GoalSchedulingExplanation.Reason.SUSPENDED);
+                } else {
+                  reasons.add(snapshot.status == GoalStatus.PENDING
+                          ? GoalSchedulingExplanation.Reason.STARTING : GoalSchedulingExplanation.Reason.EXECUTING);
+                }
+                break;
+              case PAST:
+                reasons.add(GoalSchedulingExplanation.Reason.TERMINATED);
+                break;
+              case LEARNING:
+                reasons.add(GoalSchedulingExplanation.Reason.LEARNING);
+                break;
+              case SCHEDULED:
+                reasons.add(GoalSchedulingExplanation.Reason.SCHEDULED);
+                break;
+              default:
+                reasons.add(GoalSchedulingExplanation.Reason.SUBMITTING);
+            }
+          }
+          return new GoalSchedulingExplanation(gid, getClass().getName(), snapshot, location,
+                  position, reasons, resources, blockers);
+        }
+      }
+    }
+  }
+
+  private GoalSchedulingExplanation.Blocker explainBlocker(ResourceClaims claims, Goal blocker,
+                                                           ResourceClaims other,
+                                                           GoalSchedulingExplanation.Location location) {
+    List<GoalSchedulingExplanation.ResourceConflict> resources = new ArrayList<>();
+    for (Resource resource : orderedResources(claims.conflictingResources(other))) {
+      resources.add(new GoalSchedulingExplanation.ResourceConflict(resourceProvider(resource),
+              resource.getName().toString(), claims.held.contains(resource), other.held.contains(resource)));
+    }
+    return new GoalSchedulingExplanation.Blocker(blocker.getInfo(), location, resources);
+  }
+
+  private static String resourceProvider(Resource resource) {
+    return resource.getProvider() == null ? null : resource.getProvider().getName().toString();
+  }
+
+  private static List<Resource> orderedResources(Set<Resource> resources) {
+    List<Resource> ordered = new ArrayList<>(resources);
+    ordered.sort(Comparator.comparing((Resource resource) -> Objects.toString(resourceProvider(resource), ""))
+            .thenComparing(resource -> resource.getName().toString()));
+    return ordered;
+  }
+
+  private static void validateWaitArguments(long afterVersion, long timeout) {
+    if (afterVersion < 0 || timeout < 0) {
+      throw new IllegalArgumentException("Goal version and timeout must be nonnegative");
+    }
+  }
+
+  private static GoalStatus legacyWaitResult(GoalWaitResult result) {
+    if (result.outcome == GoalWaitResult.Outcome.UPDATED || result.outcome == GoalWaitResult.Outcome.TERMINATED) {
+      return result.getGoalInfo().status;
+    }
+    return null;
+  }
+
+  private GoalWaitResult awaitGoalUpdate(Goal goal, long afterVersion, long timeout, GoalStatus startStatus) {
+    validateWaitArguments(afterVersion, timeout);
     goalStatusUpdateLock.lock();
+    GoalWaitState state = goalWaitStates.computeIfAbsent(goal.getId(), key -> new GoalWaitState());
+    long interruptVersion = state.interruptVersion;
+    state.waiters++;
     long remaining = TimeUnit.MILLISECONDS.toNanos(timeout);
     try {
-      while (goal.getStatus() == startStatus) {
-        //TODO: even with this impl, doesn't handle if there are multiple listeners on the same goal
-        if (interruptWaitForStatusUpdateGids.contains(goal.getId())) {
-          interruptWaitForStatusUpdateGids.remove(goal.getId());
-          return null;
+      while (true) {
+        GoalInfo snapshot = goal.getInfo();
+        if (Thread.currentThread().isInterrupted()) {
+          return new GoalWaitResult(GoalWaitResult.Outcome.INTERRUPTED, snapshot);
+        }
+        if (snapshot.status.isTerminated()) {
+          return new GoalWaitResult(GoalWaitResult.Outcome.TERMINATED, snapshot);
+        }
+        if (startStatus == null ? snapshot.statusVersion > afterVersion : snapshot.status != startStatus) {
+          return new GoalWaitResult(GoalWaitResult.Outcome.UPDATED, snapshot);
+        }
+        if (state.pendingInterrupt || state.interruptVersion != interruptVersion) {
+          state.pendingInterrupt = false;
+          return new GoalWaitResult(GoalWaitResult.Outcome.INTERRUPTED, snapshot);
         }
         if (timeout == 0) {
           goalStatusUpdateCondition.await();
         } else {
           if (remaining <= 0) {
-            return null;
+            return new GoalWaitResult(GoalWaitResult.Outcome.TIMED_OUT, snapshot);
           }
           remaining = goalStatusUpdateCondition.awaitNanos(remaining);
         }
@@ -1256,11 +1432,13 @@ public class ExecutionManager implements GoalListener {
     } catch (InterruptedException e) {
       log.error("Error waiting on new status for goal {}", goal, e);
       Thread.currentThread().interrupt();
-      return null;
+      return new GoalWaitResult(GoalWaitResult.Outcome.INTERRUPTED, goal.getInfo());
     } finally {
+      if (--state.waiters == 0 && !state.pendingInterrupt) {
+        goalWaitStates.remove(goal.getId(), state);
+      }
       goalStatusUpdateLock.unlock();
     }
-    return goal.getStatus();
   }
 
   /**

@@ -117,7 +117,7 @@ interpreter, including when suspended and resumed; retries and new
 execution attempts are not introduced by this revision.
 
 This stage retains the existing manager locks and policy subclasses.
-Serialized coordination, versioned waits, and new scheduling policies
+Serialized coordination and new scheduling policies
 are separate revisions.
 
 When the \texttt{getViolations(Symbol, StateMachine)} TRADE service
@@ -129,6 +129,68 @@ invoke terminal bookkeeping, including resource release.
 Recurring schedules retain their full millisecond period when
 advancing a past start date. Scheduled-goal joins remember job
 deletion even if it happens before the caller begins waiting.
+
+\subsection{Versioned waits and scheduling explanations}
+
+GoalInfo now includes \texttt{statusVersion}, initially zero. Every
+accepted status transition (including a repeated-status notification)
+increments it atomically with the status, timestamps, and failure
+metadata. Ignored terminal transitions do not increment the version.
+GoalInfo retains its previous Java serialization identifier; older
+serialized metadata reads with version zero.
+
+Use the TRADE service
+\texttt{waitForGoalUpdate(gid, afterVersion, timeout)} after obtaining a
+GoalInfo snapshot. It returns a GoalWaitResult with an explicit
+\texttt{UPDATED}, \texttt{TERMINATED}, \texttt{TIMED\_OUT},
+\texttt{INTERRUPTED}, or \texttt{UNKNOWN\_GOAL} outcome and a metadata
+snapshot (null only for an unknown goal). A transition between reading
+the snapshot and starting the wait is not lost, even when ACTIVE changes
+to SUSPENDED and back to ACTIVE. The result is the latest observed
+snapshot, not a replay of every intermediate event. Terminal goals
+return immediately, including when their version has already been
+observed. Negative versions and timeouts are rejected. Timeouts use
+monotonic elapsed time and milliseconds; zero waits indefinitely.
+
+Existing \texttt{waitForNextGoalStatusUpdate} overloads retain their
+enum-based predicates and null result conventions. They cannot detect
+a round trip completed before the wait; use the versioned service for
+that guarantee. Waiting with an explicitly supplied terminal status
+now returns immediately rather than blocking forever.
+\texttt{interruptWaitForNextGoalStatusUpdate} interrupts all currently
+registered waiters for that goal, without canceling the goal or
+interrupting later waiters. For compatibility, an interrupt made before
+any waiter registers is consumed by the next blocking wait. Java thread
+interruption is also preserved.
+Pending-goal joins recheck their membership predicate after wakeups
+and preserve thread interruption.
+
+Goal notifications carry the transition version. Callback registries
+are copied before delivery, so callbacks execute without holding
+registry locks. Registration changes affect subsequent deliveries,
+and each goal-status subscriber receives its own metadata copy.
+Concurrent deliveries may arrive out of order; subscribers can discard
+versions older than the last version they have processed.
+
+The read-only TRADE service \texttt{explainGoalScheduling(gid)} returns
+a GoalSchedulingExplanation containing the manager policy class,
+versioned metadata, collection membership, zero-based pending position,
+resource claims, and structured reasons. Resource blockers identify
+the owning or higher-priority pending goal, its priority and status,
+the resource provider and name, and which side needs exclusive access.
+Required-only claims do not conflict. Explanations use the same
+resource rules and lock order as scheduling, including the acquired
+claim snapshot for active goals. Unknown goals are explicit rather
+than represented as an empty successful explanation.
+
+An explanation describes current state, not historical decisions or a
+prediction that preemption will succeed. READY means no current
+resource or higher-priority pending blocker; it does not resume a
+deliberately suspended goal. Status changes can be in flight while
+collection bookkeeping completes; versions identify the observed
+metadata, not a transaction across the entire interpreter and manager.
+Failure justifications remain available in the included GoalInfo.
+No new scheduling policy or coordinator is introduced.
 
 \subsection{Arguments\label{subsec:Arguments}}
 

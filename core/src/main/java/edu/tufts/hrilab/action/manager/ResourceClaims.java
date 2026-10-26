@@ -22,4 +22,15 @@ final class ResourceClaims {
     return !Collections.disjoint(held, other.used)
             || !Collections.disjoint(other.held, used);
   }
+
+  Set<Resource> conflictingResources(ResourceClaims other) {
+    Set<Resource> conflicts = new HashSet<>();
+    for (Resource resource : used) {
+      if ((held.contains(resource) && other.used.contains(resource))
+              || (other.held.contains(resource) && used.contains(resource))) {
+        conflicts.add(resource);
+      }
+    }
+    return conflicts;
+  }
 }

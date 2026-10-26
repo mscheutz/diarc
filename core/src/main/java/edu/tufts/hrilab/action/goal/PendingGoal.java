@@ -39,11 +39,12 @@ public class PendingGoal {
   public void waitForNoLongerPending() {
     pendingLock.lock();
     try {
-      if (isPending) {
+      while (isPending) {
         pendingLockCondition.await();
       }
     } catch (InterruptedException e) {
       log.error("[waitForNoLongerPending] Exception while waiting.", e);
+      Thread.currentThread().interrupt();
     } finally {
       pendingLock.unlock();
     }
@@ -58,13 +59,17 @@ public class PendingGoal {
   public boolean waitForNoLongerPending(long millis) {
     pendingLock.lock();
     try {
-      if (isPending) {
-        return pendingLockCondition.await(millis, TimeUnit.MILLISECONDS);
-      } else {
-        return true;
+      long remaining = TimeUnit.MILLISECONDS.toNanos(millis);
+      while (isPending) {
+        if (remaining <= 0) {
+          return false;
+        }
+        remaining = pendingLockCondition.awaitNanos(remaining);
       }
+      return true;
     } catch (InterruptedException e) {
       log.error("[waitForNoLongerPending] Exception while waiting.", e);
+      Thread.currentThread().interrupt();
       return false;
     } finally {
       pendingLock.unlock();

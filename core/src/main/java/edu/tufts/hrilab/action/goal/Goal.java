@@ -474,6 +474,7 @@ public class Goal {
         info.start = System.currentTimeMillis();
       }
       info.status = status;
+      info.statusVersion++;
       if (failure != null) {
         info.failConditions = failure;
       }

@@ -40,7 +40,7 @@ public class Resource {
         available = true;
     }
 
-    private AgentTeam getProvider() {
+    AgentTeam getProvider() {
         return provider;
     }
 

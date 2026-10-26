@@ -864,7 +864,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   public GoalInfo getGoalInfo(long goalID) {
-    return em.getGoal(goalID).getInfo();
+    Goal goal = em.getGoal(goalID);
+    return goal == null ? null : goal.getInfo();
   }
 
   /**
@@ -1009,6 +1010,22 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public void interruptWaitForNextGoalStatusUpdate(long gid) {
     em.interruptWaitForNextGoalStatusUpdate(gid);
+  }
+
+  /**
+   * Wait for a transition newer than the version in a previously obtained GoalInfo.
+   * Timeout is in milliseconds; zero waits indefinitely. Terminal and unknown goals return immediately.
+   */
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
+  public GoalWaitResult waitForGoalUpdate(long gid, long afterVersion, long timeout) {
+    return em.waitForGoalUpdate(gid, afterVersion, timeout);
+  }
+
+  @TRADEService
+  public GoalSchedulingExplanation explainGoalScheduling(long gid) {
+    return em.explainGoalScheduling(gid);
   }
 
   /**

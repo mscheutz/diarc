@@ -13,6 +13,8 @@ import edu.tufts.hrilab.fol.Symbol;
 import java.io.Serializable;
 
 public class GoalInfo implements Serializable {
+  private static final long serialVersionUID = -5548368486200074670L;
+
   /**
    * Goal predicate. This predicate can toggle between bound and unbound forms, depending on if the goal execution
    * has been started. If the initial goal predicate has unbound variables, this predicate will contain unbound
@@ -45,6 +47,10 @@ public class GoalInfo implements Serializable {
    * GoalStatus.
    */
   public GoalStatus status = GoalStatus.PENDING;
+  /**
+   * Monotonic transition version, including repeated notifications of the same status.
+   */
+  public long statusVersion = 0;
   /**
    * Actor responsible for this goal.
    */
@@ -106,6 +112,7 @@ public class GoalInfo implements Serializable {
     this.start = other.start;
     this.end = other.end;
     this.status = other.status;
+    this.statusVersion = other.statusVersion;
     this.actor = other.actor;
     this.isAction = other.isAction;
     this.isObservation = other.isObservation;
