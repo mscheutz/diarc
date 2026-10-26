@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author evankrause
  */
-public class CameraControlPanel extends javax.swing.JFrame {
+public class CameraControlPanel extends JFrame {
   //===================================
   //START CCP fields
 
@@ -124,172 +124,172 @@ public class CameraControlPanel extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        camNum_btnGrp = new javax.swing.ButtonGroup();
-        saliencyConstraints_popUp = new javax.swing.JPopupMenu();
-        saliencyConstraintRemove_menuItm = new javax.swing.JMenuItem();
-        saliencyConstraintDisplay_menuItm = new javax.swing.JMenuItem();
-        imgProcs_popUp = new javax.swing.JPopupMenu();
-        imgProcRemove_MenuItm = new javax.swing.JMenuItem();
-        imgProcDisplay_MenuItm = new javax.swing.JMenuItem();
-        validatorConstraints_popUp = new javax.swing.JPopupMenu();
-        validatorConstraintRemove_menuItm = new javax.swing.JMenuItem();
-        validatorConstraintDisplay_menuItm = new javax.swing.JMenuItem();
-        cameraControl_tabPanel = new javax.swing.JTabbedPane();
-        searchControl_panel = new javax.swing.JPanel();
-        availSearches_panel = new javax.swing.JPanel();
-        jScrollPane11 = new javax.swing.JScrollPane();
-        availSearches_list = new javax.swing.JList();
-        addConstraints_panel = new javax.swing.JPanel();
-        addConstraints_btn = new javax.swing.JButton();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        addConstraints_txtArea = new javax.swing.JTextArea();
-        existConstraints_panel = new javax.swing.JPanel();
-        jScrollPane10 = new javax.swing.JScrollPane();
-        existConstraints_list = new javax.swing.JList();
-        rmvConstraints_btn = new javax.swing.JButton();
-        rmvSearch_btn = new javax.swing.JButton();
-        startSearchType_btn = new javax.swing.JButton();
-        stopSearchType_btn = new javax.swing.JButton();
-        jLabel6 = new javax.swing.JLabel();
-        addSearch_btn = new javax.swing.JButton();
-        addSearch_cmbBx = new javax.swing.JComboBox();
-        newSearchPreds_txtBx = new javax.swing.JTextField();
-        addSearchFromPred_btn = new javax.swing.JButton();
-        memObjControl_panel = new javax.swing.JPanel();
-        singleSearchManagers_panel = new javax.swing.JPanel();
-        singleSearchDetails_tab = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
-        detectorDisplay_chkBx = new javax.swing.JCheckBox();
-        detectorOptions_cmbBx = new javax.swing.JComboBox();
-        jScrollPane9 = new javax.swing.JScrollPane();
-        detectorDep_list = new javax.swing.JList();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        detectorDepDisplay_chkBx = new javax.swing.JCheckBox();
-        detectorSelect_btn = new javax.swing.JButton();
-        jPanel6 = new javax.swing.JPanel();
-        trackerDisplay_chkBx = new javax.swing.JCheckBox();
-        trackerOptions_cmbBx = new javax.swing.JComboBox();
-        jScrollPane8 = new javax.swing.JScrollPane();
-        trackerDep_list = new javax.swing.JList();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        trackerDepDisplay_chkBx = new javax.swing.JCheckBox();
-        memObjConstraints_panel = new javax.swing.JPanel();
-        jScrollPane7 = new javax.swing.JScrollPane();
-        saliencyConstraints_list = new javax.swing.JList();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        validatorConstraints_list = new javax.swing.JList();
-        jPanel2 = new javax.swing.JPanel();
-        addConstraint_btn = new javax.swing.JButton();
-        constraintOptns_comBx = new javax.swing.JComboBox();
-        saliencyProcs_lbl = new javax.swing.JLabel();
-        validationProcs_lbl = new javax.swing.JLabel();
-        jPanel8 = new javax.swing.JPanel();
-        singleItr_chkBx = new javax.swing.JCheckBox();
-        detectorIncProc_chkBx = new javax.swing.JCheckBox();
-        constraintsIncProc_chkBx = new javax.swing.JCheckBox();
-        serialProc_chkBx = new javax.swing.JCheckBox();
-        jPanel9 = new javax.swing.JPanel();
-        imgProcOptions_cmbBx = new javax.swing.JComboBox();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        imgProcs_list = new javax.swing.JList();
-        imgProcsAdd_btn = new javax.swing.JButton();
-        rmvSingleSearch_btn = new javax.swing.JButton();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        availSingleSearches_list = new javax.swing.JList();
-        jScrollPane6 = new javax.swing.JScrollPane();
-        singleSearchDesc_txtArea = new javax.swing.JTextArea();
-        startSingleSearch_btn = new javax.swing.JButton();
-        stopSingleSearch_btn = new javax.swing.JButton();
-        addSimpleSearchManager_btn = new javax.swing.JButton();
-        jPanel10 = new javax.swing.JPanel();
-        availImgProcessors_panel = new javax.swing.JTabbedPane();
-        jPanel11 = new javax.swing.JPanel();
-        jScrollPane16 = new javax.swing.JScrollPane();
-        availImgProcs_list = new javax.swing.JList();
-        availImgProcsDisplay_chkBx = new javax.swing.JCheckBox();
-        availSaliencyProcessors_panel = new javax.swing.JPanel();
-        availSaliencyProcsDisplay_chkBx = new javax.swing.JCheckBox();
-        jScrollPane15 = new javax.swing.JScrollPane();
-        availSaliencyProcs_list = new javax.swing.JList();
-        availValidators_panel = new javax.swing.JPanel();
-        jScrollPane13 = new javax.swing.JScrollPane();
-        availValidators_list = new javax.swing.JList();
-        availValidatorsDisplay_chkBx = new javax.swing.JCheckBox();
-        availDetectors_panel = new javax.swing.JPanel();
-        availDetectorsDisplay_chkBx = new javax.swing.JCheckBox();
-        jScrollPane14 = new javax.swing.JScrollPane();
-        availDetectors_list = new javax.swing.JList();
-        availTrackers_panel = new javax.swing.JPanel();
-        jScrollPane12 = new javax.swing.JScrollPane();
-        availTrackers_list = new javax.swing.JList();
-        availTrackersDisplay_chkBx = new javax.swing.JCheckBox();
-        blobSettings_panel = new javax.swing.JPanel();
-        jPanel5 = new javax.swing.JPanel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        colorList_list = new javax.swing.JList();
-        addColor_btn = new javax.swing.JButton();
-        removeColor_btn = new javax.swing.JButton();
-        modifyColors_panel = new javax.swing.JPanel();
-        modifyColor_cancel_btn = new javax.swing.JButton();
-        modifyColor_ok_btn = new javax.swing.JButton();
-        jPanel3 = new javax.swing.JPanel();
-        modifyColor_lbl = new javax.swing.JLabel();
-        startColorRange_btn = new javax.swing.JButton();
-        endColorRange_btn = new javax.swing.JButton();
-        OR_lbl = new javax.swing.JLabel();
-        defineColorRegion_btn = new javax.swing.JButton();
-        expandColorRegion_btn = new javax.swing.JButton();
-        jPanel4 = new javax.swing.JPanel();
-        blobSize_lbl = new javax.swing.JLabel();
-        minBlobSize_lbl = new javax.swing.JLabel();
-        minBlobSize_txtBx = new javax.swing.JTextField();
-        maxBlobSize_lbl = new javax.swing.JLabel();
-        maxBlobSize_txtBx = new javax.swing.JTextField();
-        colorName_txtBx = new javax.swing.JTextField();
-        colorName_lbl = new javax.swing.JLabel();
-        openColorFile_btn = new javax.swing.JButton();
-        saveColorFile_btn = new javax.swing.JButton();
-        camCalibration_panel = new javax.swing.JPanel();
-        intrinsicCalib_panel = new javax.swing.JPanel();
-        cam1_radioBtn = new javax.swing.JRadioButton();
-        cam2_radioBtn = new javax.swing.JRadioButton();
-        calcExtrCalib_btn = new javax.swing.JButton();
-        calcIntrCalib_btn = new javax.swing.JButton();
-        loadSingleCamCalib_btn = new javax.swing.JButton();
-        saveSingleCamCalib_btn = new javax.swing.JButton();
-        extrinsicCalib_panel = new javax.swing.JPanel();
-        calcStereoCalib_btn = new javax.swing.JButton();
-        loadStereoCalib_btn = new javax.swing.JButton();
-        saveStereoCalib_btn = new javax.swing.JButton();
-        jTextField2 = new javax.swing.JTextField();
-        undistort_chkBx = new javax.swing.JCheckBox();
-        jPanel7 = new javax.swing.JPanel();
-        takeSnapshot_btn = new javax.swing.JButton();
-        cnclCalib_btn = new javax.swing.JButton();
-        takeSnapshots_btn = new javax.swing.JButton();
-        numSnapshots_txtBx = new javax.swing.JTextField();
-        calibrate_btn = new javax.swing.JButton();
-        totalSnapshots_txtBx = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        snapshotStatus_lbl = new javax.swing.JLabel();
-        numGridCorners_lbl = new javax.swing.JLabel();
-        xGridCorners_lbl = new javax.swing.JLabel();
-        xGridCorners_txtBx = new javax.swing.JTextField();
-        yGridCorners_lbl = new javax.swing.JLabel();
-        yGridCorners_txtBx = new javax.swing.JTextField();
-        gridSize_lbl = new javax.swing.JLabel();
-        gridSize_txtBx = new javax.swing.JTextField();
-        other_panel = new javax.swing.JPanel();
-        aviWrite_btn = new javax.swing.JButton();
-        snapshotRGB_btn = new javax.swing.JButton();
-        snapshotPCD_btn = new javax.swing.JButton();
-        oniWrite_btn = new javax.swing.JButton();
-        captureDisplay_chkBx = new javax.swing.JCheckBox();
-        depthDisplay_chkBx = new javax.swing.JCheckBox();
-        DisplayPipelineButton = new javax.swing.JCheckBox();
-        FPSCheckBox = new javax.swing.JCheckBox();
+        camNum_btnGrp = new ButtonGroup();
+        saliencyConstraints_popUp = new JPopupMenu();
+        saliencyConstraintRemove_menuItm = new JMenuItem();
+        saliencyConstraintDisplay_menuItm = new JMenuItem();
+        imgProcs_popUp = new JPopupMenu();
+        imgProcRemove_MenuItm = new JMenuItem();
+        imgProcDisplay_MenuItm = new JMenuItem();
+        validatorConstraints_popUp = new JPopupMenu();
+        validatorConstraintRemove_menuItm = new JMenuItem();
+        validatorConstraintDisplay_menuItm = new JMenuItem();
+        cameraControl_tabPanel = new JTabbedPane();
+        searchControl_panel = new JPanel();
+        availSearches_panel = new JPanel();
+        jScrollPane11 = new JScrollPane();
+        availSearches_list = new JList();
+        addConstraints_panel = new JPanel();
+        addConstraints_btn = new JButton();
+        jScrollPane3 = new JScrollPane();
+        addConstraints_txtArea = new JTextArea();
+        existConstraints_panel = new JPanel();
+        jScrollPane10 = new JScrollPane();
+        existConstraints_list = new JList();
+        rmvConstraints_btn = new JButton();
+        rmvSearch_btn = new JButton();
+        startSearchType_btn = new JButton();
+        stopSearchType_btn = new JButton();
+        jLabel6 = new JLabel();
+        addSearch_btn = new JButton();
+        addSearch_cmbBx = new JComboBox();
+        newSearchPreds_txtBx = new JTextField();
+        addSearchFromPred_btn = new JButton();
+        memObjControl_panel = new JPanel();
+        singleSearchManagers_panel = new JPanel();
+        singleSearchDetails_tab = new JTabbedPane();
+        jPanel1 = new JPanel();
+        detectorDisplay_chkBx = new JCheckBox();
+        detectorOptions_cmbBx = new JComboBox();
+        jScrollPane9 = new JScrollPane();
+        detectorDep_list = new JList();
+        jLabel1 = new JLabel();
+        jLabel2 = new JLabel();
+        detectorDepDisplay_chkBx = new JCheckBox();
+        detectorSelect_btn = new JButton();
+        jPanel6 = new JPanel();
+        trackerDisplay_chkBx = new JCheckBox();
+        trackerOptions_cmbBx = new JComboBox();
+        jScrollPane8 = new JScrollPane();
+        trackerDep_list = new JList();
+        jLabel3 = new JLabel();
+        jLabel4 = new JLabel();
+        trackerDepDisplay_chkBx = new JCheckBox();
+        memObjConstraints_panel = new JPanel();
+        jScrollPane7 = new JScrollPane();
+        saliencyConstraints_list = new JList();
+        jScrollPane2 = new JScrollPane();
+        validatorConstraints_list = new JList();
+        jPanel2 = new JPanel();
+        addConstraint_btn = new JButton();
+        constraintOptns_comBx = new JComboBox();
+        saliencyProcs_lbl = new JLabel();
+        validationProcs_lbl = new JLabel();
+        jPanel8 = new JPanel();
+        singleItr_chkBx = new JCheckBox();
+        detectorIncProc_chkBx = new JCheckBox();
+        constraintsIncProc_chkBx = new JCheckBox();
+        serialProc_chkBx = new JCheckBox();
+        jPanel9 = new JPanel();
+        imgProcOptions_cmbBx = new JComboBox();
+        jScrollPane1 = new JScrollPane();
+        imgProcs_list = new JList();
+        imgProcsAdd_btn = new JButton();
+        rmvSingleSearch_btn = new JButton();
+        jScrollPane5 = new JScrollPane();
+        availSingleSearches_list = new JList();
+        jScrollPane6 = new JScrollPane();
+        singleSearchDesc_txtArea = new JTextArea();
+        startSingleSearch_btn = new JButton();
+        stopSingleSearch_btn = new JButton();
+        addSimpleSearchManager_btn = new JButton();
+        jPanel10 = new JPanel();
+        availImgProcessors_panel = new JTabbedPane();
+        jPanel11 = new JPanel();
+        jScrollPane16 = new JScrollPane();
+        availImgProcs_list = new JList();
+        availImgProcsDisplay_chkBx = new JCheckBox();
+        availSaliencyProcessors_panel = new JPanel();
+        availSaliencyProcsDisplay_chkBx = new JCheckBox();
+        jScrollPane15 = new JScrollPane();
+        availSaliencyProcs_list = new JList();
+        availValidators_panel = new JPanel();
+        jScrollPane13 = new JScrollPane();
+        availValidators_list = new JList();
+        availValidatorsDisplay_chkBx = new JCheckBox();
+        availDetectors_panel = new JPanel();
+        availDetectorsDisplay_chkBx = new JCheckBox();
+        jScrollPane14 = new JScrollPane();
+        availDetectors_list = new JList();
+        availTrackers_panel = new JPanel();
+        jScrollPane12 = new JScrollPane();
+        availTrackers_list = new JList();
+        availTrackersDisplay_chkBx = new JCheckBox();
+        blobSettings_panel = new JPanel();
+        jPanel5 = new JPanel();
+        jScrollPane4 = new JScrollPane();
+        colorList_list = new JList();
+        addColor_btn = new JButton();
+        removeColor_btn = new JButton();
+        modifyColors_panel = new JPanel();
+        modifyColor_cancel_btn = new JButton();
+        modifyColor_ok_btn = new JButton();
+        jPanel3 = new JPanel();
+        modifyColor_lbl = new JLabel();
+        startColorRange_btn = new JButton();
+        endColorRange_btn = new JButton();
+        OR_lbl = new JLabel();
+        defineColorRegion_btn = new JButton();
+        expandColorRegion_btn = new JButton();
+        jPanel4 = new JPanel();
+        blobSize_lbl = new JLabel();
+        minBlobSize_lbl = new JLabel();
+        minBlobSize_txtBx = new JTextField();
+        maxBlobSize_lbl = new JLabel();
+        maxBlobSize_txtBx = new JTextField();
+        colorName_txtBx = new JTextField();
+        colorName_lbl = new JLabel();
+        openColorFile_btn = new JButton();
+        saveColorFile_btn = new JButton();
+        camCalibration_panel = new JPanel();
+        intrinsicCalib_panel = new JPanel();
+        cam1_radioBtn = new JRadioButton();
+        cam2_radioBtn = new JRadioButton();
+        calcExtrCalib_btn = new JButton();
+        calcIntrCalib_btn = new JButton();
+        loadSingleCamCalib_btn = new JButton();
+        saveSingleCamCalib_btn = new JButton();
+        extrinsicCalib_panel = new JPanel();
+        calcStereoCalib_btn = new JButton();
+        loadStereoCalib_btn = new JButton();
+        saveStereoCalib_btn = new JButton();
+        jTextField2 = new JTextField();
+        undistort_chkBx = new JCheckBox();
+        jPanel7 = new JPanel();
+        takeSnapshot_btn = new JButton();
+        cnclCalib_btn = new JButton();
+        takeSnapshots_btn = new JButton();
+        numSnapshots_txtBx = new JTextField();
+        calibrate_btn = new JButton();
+        totalSnapshots_txtBx = new JTextField();
+        jLabel5 = new JLabel();
+        snapshotStatus_lbl = new JLabel();
+        numGridCorners_lbl = new JLabel();
+        xGridCorners_lbl = new JLabel();
+        xGridCorners_txtBx = new JTextField();
+        yGridCorners_lbl = new JLabel();
+        yGridCorners_txtBx = new JTextField();
+        gridSize_lbl = new JLabel();
+        gridSize_txtBx = new JTextField();
+        other_panel = new JPanel();
+        aviWrite_btn = new JButton();
+        snapshotRGB_btn = new JButton();
+        snapshotPCD_btn = new JButton();
+        oniWrite_btn = new JButton();
+        captureDisplay_chkBx = new JCheckBox();
+        depthDisplay_chkBx = new JCheckBox();
+        DisplayPipelineButton = new JCheckBox();
+        FPSCheckBox = new JCheckBox();
 
         saliencyConstraints_popUp.setEnabled(false);
 
@@ -344,9 +344,9 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         setTitle("Camera Control Panel");
 
-        availSearches_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Available Searches"));
+        availSearches_panel.setBorder(BorderFactory.createTitledBorder("Available Searches"));
 
-        availSearches_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availSearches_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availSearches_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availSearches_listValueChanged(evt);
@@ -354,7 +354,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         });
         jScrollPane11.setViewportView(availSearches_list);
 
-        addConstraints_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("New Constraint(s)"));
+        addConstraints_panel.setBorder(BorderFactory.createTitledBorder("New Constraint(s)"));
 
         addConstraints_btn.setText("Add Constraint(s)");
         addConstraints_btn.addActionListener(new java.awt.event.ActionListener() {
@@ -370,28 +370,28 @@ public class CameraControlPanel extends javax.swing.JFrame {
         jScrollPane3.setViewportView(addConstraints_txtArea);
         addConstraints_txtArea.getAccessibleContext().setAccessibleDescription("Enter semi-colon separated predicates. Variables must start with a capital letter..");
 
-        javax.swing.GroupLayout addConstraints_panelLayout = new javax.swing.GroupLayout(addConstraints_panel);
+        GroupLayout addConstraints_panelLayout = new GroupLayout(addConstraints_panel);
         addConstraints_panel.setLayout(addConstraints_panelLayout);
         addConstraints_panelLayout.setHorizontalGroup(
-            addConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            addConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(addConstraints_panelLayout.createSequentialGroup()
                 .addGap(71, 71, 71)
                 .addComponent(addConstraints_btn)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(addConstraints_panelLayout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
                 .addContainerGap())
         );
         addConstraints_panelLayout.setVerticalGroup(
-            addConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, addConstraints_panelLayout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
+            addConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, addConstraints_panelLayout.createSequentialGroup()
+                .addComponent(jScrollPane3, GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addComponent(addConstraints_btn)
                 .addContainerGap())
         );
 
-        existConstraints_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Existing Constraint(s)"));
+        existConstraints_panel.setBorder(BorderFactory.createTitledBorder("Existing Constraint(s)"));
 
         jScrollPane10.setViewportView(existConstraints_list);
 
@@ -402,22 +402,22 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout existConstraints_panelLayout = new javax.swing.GroupLayout(existConstraints_panel);
+        GroupLayout existConstraints_panelLayout = new GroupLayout(existConstraints_panel);
         existConstraints_panel.setLayout(existConstraints_panelLayout);
         existConstraints_panelLayout.setHorizontalGroup(
-            existConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            existConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(existConstraints_panelLayout.createSequentialGroup()
                 .addGap(45, 45, 45)
-                .addComponent(rmvConstraints_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(rmvConstraints_btn, GroupLayout.PREFERRED_SIZE, 166, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(existConstraints_panelLayout.createSequentialGroup()
-                .addComponent(jScrollPane10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane10, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 10, Short.MAX_VALUE))
         );
         existConstraints_panelLayout.setVerticalGroup(
-            existConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            existConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(existConstraints_panelLayout.createSequentialGroup()
-                .addComponent(jScrollPane10, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                .addComponent(jScrollPane10, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addComponent(rmvConstraints_btn)
                 .addContainerGap())
@@ -446,50 +446,50 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         jLabel6.setText("Incremental Add/Remove of Constraints Disabled");
 
-        javax.swing.GroupLayout availSearches_panelLayout = new javax.swing.GroupLayout(availSearches_panel);
+        GroupLayout availSearches_panelLayout = new GroupLayout(availSearches_panel);
         availSearches_panel.setLayout(availSearches_panelLayout);
         availSearches_panelLayout.setHorizontalGroup(
-            availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availSearches_panelLayout.createSequentialGroup()
-                .addComponent(jScrollPane11, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, availSearches_panelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(startSearchType_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane11, GroupLayout.PREFERRED_SIZE, 156, GroupLayout.PREFERRED_SIZE)
+                .addGroup(availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(GroupLayout.Alignment.TRAILING, availSearches_panelLayout.createSequentialGroup()
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(startSearchType_btn, GroupLayout.PREFERRED_SIZE, 141, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(stopSearchType_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(stopSearchType_btn, GroupLayout.PREFERRED_SIZE, 141, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(rmvSearch_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(rmvSearch_btn, GroupLayout.PREFERRED_SIZE, 146, GroupLayout.PREFERRED_SIZE)
                         .addGap(64, 64, 64))
                     .addGroup(availSearches_panelLayout.createSequentialGroup()
-                        .addGroup(availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addGroup(availSearches_panelLayout.createSequentialGroup()
                                 .addGap(8, 8, 8)
-                                .addComponent(addConstraints_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(existConstraints_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(addConstraints_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(existConstraints_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                             .addGroup(availSearches_panelLayout.createSequentialGroup()
                                 .addGap(99, 99, 99)
-                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 402, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(jLabel6, GroupLayout.PREFERRED_SIZE, 402, GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         availSearches_panelLayout.setVerticalGroup(
-            availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, availSearches_panelLayout.createSequentialGroup()
-                .addGroup(availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+            availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, availSearches_panelLayout.createSequentialGroup()
+                .addGroup(availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
                     .addGroup(availSearches_panelLayout.createSequentialGroup()
-                        .addGroup(availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGroup(availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(rmvSearch_btn)
                             .addComponent(stopSearchType_btn)
                             .addComponent(startSearchType_btn))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel6)
                         .addGap(18, 18, 18)
-                        .addGroup(availSearches_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(addConstraints_panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(existConstraints_panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addComponent(jScrollPane11, javax.swing.GroupLayout.PREFERRED_SIZE, 348, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(availSearches_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                            .addComponent(addConstraints_panel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(existConstraints_panel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane11, GroupLayout.PREFERRED_SIZE, 348, GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         addSearch_btn.setText("Add Predfined Search");
@@ -508,44 +508,44 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout searchControl_panelLayout = new javax.swing.GroupLayout(searchControl_panel);
+        GroupLayout searchControl_panelLayout = new GroupLayout(searchControl_panel);
         searchControl_panel.setLayout(searchControl_panelLayout);
         searchControl_panelLayout.setHorizontalGroup(
-            searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, searchControl_panelLayout.createSequentialGroup()
+            searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, searchControl_panelLayout.createSequentialGroup()
                 .addContainerGap(26, Short.MAX_VALUE)
-                .addComponent(availSearches_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 754, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(availSearches_panel, GroupLayout.PREFERRED_SIZE, 754, GroupLayout.PREFERRED_SIZE)
                 .addGap(53, 53, 53))
             .addGroup(searchControl_panelLayout.createSequentialGroup()
                 .addGap(136, 136, 136)
-                .addGroup(searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                     .addComponent(newSearchPreds_txtBx)
                     .addComponent(addSearch_cmbBx, 0, 252, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(addSearch_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(addSearchFromPred_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                    .addComponent(addSearch_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(addSearchFromPred_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         searchControl_panelLayout.setVerticalGroup(
-            searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(searchControl_panelLayout.createSequentialGroup()
                 .addGap(22, 22, 22)
-                .addGroup(searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(addSearch_btn)
-                    .addComponent(addSearch_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(searchControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(newSearchPreds_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addSearch_cmbBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(searchControl_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(newSearchPreds_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(addSearchFromPred_btn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-                .addComponent(availSearches_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                .addComponent(availSearches_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(24, 24, 24))
         );
 
         cameraControl_tabPanel.addTab("Vision Searches", searchControl_panel);
 
-        singleSearchManagers_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Available SingleSearchManagers"));
+        singleSearchManagers_panel.setBorder(BorderFactory.createTitledBorder("Available SingleSearchManagers"));
 
         detectorDisplay_chkBx.setText("Display Detector");
         detectorDisplay_chkBx.addActionListener(new java.awt.event.ActionListener() {
@@ -598,49 +598,49 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(67, 67, 67)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 286, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 286, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addGap(86, 86, 86))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(30, 30, 30)
-                        .addComponent(detectorOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(detectorOptions_cmbBx, GroupLayout.PREFERRED_SIZE, 196, GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(67, 67, 67)
                         .addComponent(detectorSelect_btn))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(57, 57, 57)
                         .addComponent(detectorDisplay_chkBx)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 218, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 218, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(detectorDepDisplay_chkBx)
-                    .addComponent(jScrollPane9, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane9, GroupLayout.PREFERRED_SIZE, 267, GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(21, 21, 21)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(detectorOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(detectorOptions_cmbBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(detectorSelect_btn))
                     .addComponent(jScrollPane9, 0, 113, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(detectorDisplay_chkBx)
                     .addComponent(detectorDepDisplay_chkBx))
                 .addGap(42, 42, 42))
@@ -692,45 +692,45 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        GroupLayout jPanel6Layout = new GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(75, 75, 75)
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel4)
                 .addGap(76, 76, 76))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+                .addGroup(jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel6Layout.createSequentialGroup()
                         .addGap(28, 28, 28)
-                        .addComponent(trackerOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(trackerOptions_cmbBx, GroupLayout.PREFERRED_SIZE, 202, GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel6Layout.createSequentialGroup()
                         .addGap(58, 58, 58)
                         .addComponent(trackerDisplay_chkBx)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 210, Short.MAX_VALUE)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 210, Short.MAX_VALUE)
+                .addGroup(jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(trackerDepDisplay_chkBx)
-                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addGap(37, 37, 37))
         );
         jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(21, 21, 21)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel6Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel6Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane8, GroupLayout.PREFERRED_SIZE, 69, GroupLayout.PREFERRED_SIZE)
                         .addGap(28, 28, 28)
                         .addComponent(trackerDepDisplay_chkBx))
                     .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addComponent(trackerOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(trackerOptions_cmbBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(trackerDisplay_chkBx)))
                 .addContainerGap(76, Short.MAX_VALUE))
@@ -738,7 +738,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         singleSearchDetails_tab.addTab("Trackers", jPanel6);
 
-        saliencyConstraints_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        saliencyConstraints_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         saliencyConstraints_list.setComponentPopupMenu(saliencyConstraints_popUp);
         saliencyConstraints_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -747,7 +747,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         });
         jScrollPane7.setViewportView(saliencyConstraints_list);
 
-        validatorConstraints_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        validatorConstraints_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         validatorConstraints_list.setComponentPopupMenu(validatorConstraints_popUp);
         validatorConstraints_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -756,7 +756,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         });
         jScrollPane2.setViewportView(validatorConstraints_list);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("New Constraint"));
+        jPanel2.setBorder(BorderFactory.createTitledBorder("New Constraint"));
 
         addConstraint_btn.setText("Add Constraint");
         addConstraint_btn.addActionListener(new java.awt.event.ActionListener() {
@@ -765,22 +765,22 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(69, 69, 69)
                 .addComponent(constraintOptns_comBx, 0, 274, Short.MAX_VALUE)
                 .addGap(30, 30, 30)
-                .addComponent(addConstraint_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(addConstraint_btn, GroupLayout.PREFERRED_SIZE, 145, GroupLayout.PREFERRED_SIZE)
                 .addGap(67, 67, 67))
         );
         jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(constraintOptns_comBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel2Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(constraintOptns_comBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(addConstraint_btn))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
@@ -789,40 +789,40 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         validationProcs_lbl.setText("Validation Processors");
 
-        javax.swing.GroupLayout memObjConstraints_panelLayout = new javax.swing.GroupLayout(memObjConstraints_panel);
+        GroupLayout memObjConstraints_panelLayout = new GroupLayout(memObjConstraints_panel);
         memObjConstraints_panel.setLayout(memObjConstraints_panelLayout);
         memObjConstraints_panelLayout.setHorizontalGroup(
-            memObjConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            memObjConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(memObjConstraints_panelLayout.createSequentialGroup()
                 .addGap(78, 78, 78)
                 .addComponent(saliencyProcs_lbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(validationProcs_lbl)
                 .addGap(76, 76, 76))
             .addGroup(memObjConstraints_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane7, GroupLayout.PREFERRED_SIZE, 346, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
                 .addGap(24, 24, 24))
             .addGroup(memObjConstraints_panelLayout.createSequentialGroup()
                 .addGap(23, 23, 23)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         memObjConstraints_panelLayout.setVerticalGroup(
-            memObjConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, memObjConstraints_panelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(memObjConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+            memObjConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, memObjConstraints_panelLayout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(memObjConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(saliencyProcs_lbl)
                     .addComponent(validationProcs_lbl))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(memObjConstraints_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(memObjConstraints_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane7, GroupLayout.PREFERRED_SIZE, 94, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane2, GroupLayout.PREFERRED_SIZE, 94, GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -856,13 +856,13 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+        GroupLayout jPanel8Layout = new GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
         jPanel8Layout.setHorizontalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel8Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addGap(49, 49, 49)
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel8Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(serialProc_chkBx)
                     .addComponent(constraintsIncProc_chkBx)
                     .addComponent(detectorIncProc_chkBx)
@@ -870,24 +870,24 @@ public class CameraControlPanel extends javax.swing.JFrame {
                 .addContainerGap(372, Short.MAX_VALUE))
         );
         jPanel8Layout.setVerticalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel8Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addGap(17, 17, 17)
                 .addComponent(constraintsIncProc_chkBx)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(detectorIncProc_chkBx)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(serialProc_chkBx)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(singleItr_chkBx)
                 .addContainerGap(129, Short.MAX_VALUE))
         );
 
         singleSearchDetails_tab.addTab("Flags", jPanel8);
 
-        imgProcOptions_cmbBx.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        imgProcOptions_cmbBx.setModel(new DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        imgProcs_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        imgProcs_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         imgProcs_list.setComponentPopupMenu(imgProcs_popUp);
         imgProcs_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
@@ -903,30 +903,30 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        GroupLayout jPanel9Layout = new GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
         jPanel9Layout.setHorizontalGroup(
-            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel9Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
-                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel9Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGap(44, 44, 44)
-                        .addComponent(imgProcOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(imgProcOptions_cmbBx, GroupLayout.PREFERRED_SIZE, 198, GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel9Layout.createSequentialGroup()
                         .addGap(89, 89, 89)
-                        .addComponent(imgProcsAdd_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(imgProcsAdd_btn, GroupLayout.PREFERRED_SIZE, 87, GroupLayout.PREFERRED_SIZE)))
                 .addGap(26, 26, 26)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(209, Short.MAX_VALUE))
         );
         jPanel9Layout.setVerticalGroup(
-            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel9Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addGap(30, 30, 30)
-                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel9Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 110, GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel9Layout.createSequentialGroup()
-                        .addComponent(imgProcOptions_cmbBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(imgProcOptions_cmbBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addGap(31, 31, 31)
                         .addComponent(imgProcsAdd_btn)))
                 .addContainerGap(98, Short.MAX_VALUE))
@@ -941,7 +941,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        availSingleSearches_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availSingleSearches_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availSingleSearches_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availSingleSearches_listValueChanged(evt);
@@ -969,40 +969,40 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout singleSearchManagers_panelLayout = new javax.swing.GroupLayout(singleSearchManagers_panel);
+        GroupLayout singleSearchManagers_panelLayout = new GroupLayout(singleSearchManagers_panel);
         singleSearchManagers_panel.setLayout(singleSearchManagers_panelLayout);
         singleSearchManagers_panelLayout.setHorizontalGroup(
-            singleSearchManagers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            singleSearchManagers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addComponent(singleSearchDetails_tab)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, singleSearchManagers_panelLayout.createSequentialGroup()
+            .addGroup(GroupLayout.Alignment.TRAILING, singleSearchManagers_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane5, GroupLayout.PREFERRED_SIZE, 247, GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35)
-                .addGroup(singleSearchManagers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(singleSearchManagers_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
                     .addGroup(singleSearchManagers_panelLayout.createSequentialGroup()
-                        .addComponent(startSingleSearch_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(startSingleSearch_btn, GroupLayout.PREFERRED_SIZE, 105, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(stopSingleSearch_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(stopSingleSearch_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addComponent(rmvSingleSearch_btn))
-                    .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane6, GroupLayout.PREFERRED_SIZE, 341, GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         singleSearchManagers_panelLayout.setVerticalGroup(
-            singleSearchManagers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, singleSearchManagers_panelLayout.createSequentialGroup()
+            singleSearchManagers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, singleSearchManagers_panelLayout.createSequentialGroup()
                 .addContainerGap(18, Short.MAX_VALUE)
-                .addGroup(singleSearchManagers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(singleSearchManagers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                     .addGroup(singleSearchManagers_panelLayout.createSequentialGroup()
-                        .addGroup(singleSearchManagers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGroup(singleSearchManagers_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(startSingleSearch_btn)
                             .addComponent(stopSingleSearch_btn)
                             .addComponent(rmvSingleSearch_btn))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane6, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane5, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 106, GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(singleSearchDetails_tab, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(singleSearchDetails_tab, GroupLayout.PREFERRED_SIZE, 265, GroupLayout.PREFERRED_SIZE))
         );
 
         addSimpleSearchManager_btn.setText("Add SimpleSearchManager");
@@ -1012,30 +1012,30 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout memObjControl_panelLayout = new javax.swing.GroupLayout(memObjControl_panel);
+        GroupLayout memObjControl_panelLayout = new GroupLayout(memObjControl_panel);
         memObjControl_panel.setLayout(memObjControl_panelLayout);
         memObjControl_panelLayout.setHorizontalGroup(
-            memObjControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            memObjControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(memObjControl_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(memObjControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(singleSearchManagers_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addSimpleSearchManager_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(memObjControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(singleSearchManagers_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addSimpleSearchManager_btn, GroupLayout.PREFERRED_SIZE, 234, GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(64, Short.MAX_VALUE))
         );
         memObjControl_panelLayout.setVerticalGroup(
-            memObjControl_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            memObjControl_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(memObjControl_panelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(addSimpleSearchManager_btn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(singleSearchManagers_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(singleSearchManagers_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         cameraControl_tabPanel.addTab("Vision Searches (dev)", memObjControl_panel);
 
-        availImgProcs_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availImgProcs_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availImgProcs_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availImgProcs_listValueChanged(evt);
@@ -1050,24 +1050,24 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
+        GroupLayout jPanel11Layout = new GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
         jPanel11Layout.setHorizontalGroup(
-            jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel11Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel11Layout.createSequentialGroup()
                 .addGap(83, 83, 83)
-                .addComponent(jScrollPane16, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane16, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(122, 122, 122)
                 .addComponent(availImgProcsDisplay_chkBx)
                 .addContainerGap(262, Short.MAX_VALUE))
         );
         jPanel11Layout.setVerticalGroup(
-            jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel11Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel11Layout.createSequentialGroup()
-                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel11Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel11Layout.createSequentialGroup()
                         .addGap(51, 51, 51)
-                        .addComponent(jScrollPane16, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jScrollPane16, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel11Layout.createSequentialGroup()
                         .addGap(66, 66, 66)
                         .addComponent(availImgProcsDisplay_chkBx)))
@@ -1083,7 +1083,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        availSaliencyProcs_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availSaliencyProcs_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availSaliencyProcs_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availSaliencyProcs_listValueChanged(evt);
@@ -1091,33 +1091,33 @@ public class CameraControlPanel extends javax.swing.JFrame {
         });
         jScrollPane15.setViewportView(availSaliencyProcs_list);
 
-        javax.swing.GroupLayout availSaliencyProcessors_panelLayout = new javax.swing.GroupLayout(availSaliencyProcessors_panel);
+        GroupLayout availSaliencyProcessors_panelLayout = new GroupLayout(availSaliencyProcessors_panel);
         availSaliencyProcessors_panel.setLayout(availSaliencyProcessors_panelLayout);
         availSaliencyProcessors_panelLayout.setHorizontalGroup(
-            availSaliencyProcessors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availSaliencyProcessors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availSaliencyProcessors_panelLayout.createSequentialGroup()
                 .addGap(89, 89, 89)
-                .addComponent(jScrollPane15, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane15, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(101, 101, 101)
                 .addComponent(availSaliencyProcsDisplay_chkBx)
                 .addContainerGap(277, Short.MAX_VALUE))
         );
         availSaliencyProcessors_panelLayout.setVerticalGroup(
-            availSaliencyProcessors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availSaliencyProcessors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availSaliencyProcessors_panelLayout.createSequentialGroup()
-                .addGroup(availSaliencyProcessors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(availSaliencyProcessors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(availSaliencyProcessors_panelLayout.createSequentialGroup()
                         .addGap(74, 74, 74)
                         .addComponent(availSaliencyProcsDisplay_chkBx))
                     .addGroup(availSaliencyProcessors_panelLayout.createSequentialGroup()
                         .addGap(55, 55, 55)
-                        .addComponent(jScrollPane15, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jScrollPane15, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(224, Short.MAX_VALUE))
         );
 
         availImgProcessors_panel.addTab("Saliency Processors", availSaliencyProcessors_panel);
 
-        availValidators_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availValidators_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availValidators_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availValidators_listValueChanged(evt);
@@ -1132,24 +1132,24 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout availValidators_panelLayout = new javax.swing.GroupLayout(availValidators_panel);
+        GroupLayout availValidators_panelLayout = new GroupLayout(availValidators_panel);
         availValidators_panel.setLayout(availValidators_panelLayout);
         availValidators_panelLayout.setHorizontalGroup(
-            availValidators_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availValidators_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availValidators_panelLayout.createSequentialGroup()
                 .addGap(85, 85, 85)
-                .addComponent(jScrollPane13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane13, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(128, 128, 128)
                 .addComponent(availValidatorsDisplay_chkBx)
                 .addContainerGap(254, Short.MAX_VALUE))
         );
         availValidators_panelLayout.setVerticalGroup(
-            availValidators_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availValidators_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availValidators_panelLayout.createSequentialGroup()
                 .addGap(58, 58, 58)
-                .addGroup(availValidators_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(availValidators_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addComponent(availValidatorsDisplay_chkBx)
-                    .addComponent(jScrollPane13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane13, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(221, Short.MAX_VALUE))
         );
 
@@ -1162,7 +1162,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        availDetectors_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availDetectors_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availDetectors_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availDetectors_listValueChanged(evt);
@@ -1170,30 +1170,30 @@ public class CameraControlPanel extends javax.swing.JFrame {
         });
         jScrollPane14.setViewportView(availDetectors_list);
 
-        javax.swing.GroupLayout availDetectors_panelLayout = new javax.swing.GroupLayout(availDetectors_panel);
+        GroupLayout availDetectors_panelLayout = new GroupLayout(availDetectors_panel);
         availDetectors_panel.setLayout(availDetectors_panelLayout);
         availDetectors_panelLayout.setHorizontalGroup(
-            availDetectors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availDetectors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availDetectors_panelLayout.createSequentialGroup()
                 .addGap(87, 87, 87)
-                .addComponent(jScrollPane14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane14, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(133, 133, 133)
                 .addComponent(availDetectorsDisplay_chkBx)
                 .addContainerGap(247, Short.MAX_VALUE))
         );
         availDetectors_panelLayout.setVerticalGroup(
-            availDetectors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availDetectors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availDetectors_panelLayout.createSequentialGroup()
                 .addGap(54, 54, 54)
-                .addGroup(availDetectors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(availDetectors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane14, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(availDetectorsDisplay_chkBx))
                 .addContainerGap(225, Short.MAX_VALUE))
         );
 
         availImgProcessors_panel.addTab("Detectors", availDetectors_panel);
 
-        availTrackers_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        availTrackers_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         availTrackers_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 availTrackers_listValueChanged(evt);
@@ -1208,54 +1208,54 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout availTrackers_panelLayout = new javax.swing.GroupLayout(availTrackers_panel);
+        GroupLayout availTrackers_panelLayout = new GroupLayout(availTrackers_panel);
         availTrackers_panel.setLayout(availTrackers_panelLayout);
         availTrackers_panelLayout.setHorizontalGroup(
-            availTrackers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availTrackers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availTrackers_panelLayout.createSequentialGroup()
                 .addGap(30, 30, 30)
-                .addComponent(jScrollPane12, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane12, GroupLayout.PREFERRED_SIZE, 218, GroupLayout.PREFERRED_SIZE)
                 .addGap(26, 26, 26)
                 .addComponent(availTrackersDisplay_chkBx)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         availTrackers_panelLayout.setVerticalGroup(
-            availTrackers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            availTrackers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(availTrackers_panelLayout.createSequentialGroup()
                 .addGap(42, 42, 42)
-                .addGroup(availTrackers_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane12, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(availTrackers_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane12, GroupLayout.PREFERRED_SIZE, 316, GroupLayout.PREFERRED_SIZE)
                     .addComponent(availTrackersDisplay_chkBx))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         availImgProcessors_panel.addTab("Trackers", availTrackers_panel);
 
-        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
+        GroupLayout jPanel10Layout = new GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel10Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(availImgProcessors_panel)
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel10Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(availImgProcessors_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 447, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(availImgProcessors_panel, GroupLayout.PREFERRED_SIZE, 447, GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         availImgProcessors_panel.getAccessibleContext().setAccessibleName("Vision Processors");
 
         cameraControl_tabPanel.addTab("VisionProcessors", jPanel10);
 
-        jPanel5.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel5.setBorder(BorderFactory.createEtchedBorder());
         jPanel5.setEnabled(false);
 
-        colorList_list.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        colorList_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         colorList_list.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 colorList_listValueChanged(evt);
@@ -1277,7 +1277,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        modifyColors_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Modify Selected Color"));
+        modifyColors_panel.setBorder(BorderFactory.createTitledBorder("Modify Selected Color"));
 
         modifyColor_cancel_btn.setText("Revert");
         modifyColor_cancel_btn.addActionListener(new java.awt.event.ActionListener() {
@@ -1293,7 +1293,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel3.setBorder(BorderFactory.createEtchedBorder());
 
         modifyColor_lbl.setText("Modify RGB Values");
 
@@ -1327,52 +1327,52 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(87, 87, 87)
                         .addComponent(OR_lbl))
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(startColorRange_btn)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(endColorRange_btn))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                            .addGroup(GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                                 .addComponent(defineColorRegion_btn)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(expandColorRegion_btn)))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 50, GroupLayout.PREFERRED_SIZE)
                             .addComponent(modifyColor_lbl)
                             .addGap(34, 34, 34))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(modifyColor_lbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(endColorRange_btn)
                     .addComponent(startColorRange_btn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(OR_lbl)
                 .addGap(12, 12, 12)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel3Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(defineColorRegion_btn)
                     .addComponent(expandColorRegion_btn))
                 .addContainerGap())
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPanel4.setBorder(BorderFactory.createEtchedBorder());
 
         blobSize_lbl.setText("Blob Sizes");
 
@@ -1384,14 +1384,14 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         maxBlobSize_txtBx.setText("inf");
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        GroupLayout jPanel4Layout = new GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addGap(69, 69, 69)
                 .addComponent(blobSize_lbl)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(minBlobSize_lbl)
@@ -1399,49 +1399,49 @@ public class CameraControlPanel extends javax.swing.JFrame {
                 .addComponent(minBlobSize_txtBx)
                 .addGap(18, 18, 18)
                 .addComponent(maxBlobSize_lbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(maxBlobSize_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(maxBlobSize_txtBx, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
         jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel4Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(blobSize_lbl)
                 .addGap(20, 20, 20)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel4Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(minBlobSize_lbl)
-                    .addComponent(minBlobSize_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(minBlobSize_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(maxBlobSize_lbl)
-                    .addComponent(maxBlobSize_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(maxBlobSize_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout modifyColors_panelLayout = new javax.swing.GroupLayout(modifyColors_panel);
+        GroupLayout modifyColors_panelLayout = new GroupLayout(modifyColors_panel);
         modifyColors_panel.setLayout(modifyColors_panelLayout);
         modifyColors_panelLayout.setHorizontalGroup(
-            modifyColors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            modifyColors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(modifyColors_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(modifyColors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(modifyColors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(modifyColors_panelLayout.createSequentialGroup()
                         .addGap(79, 79, 79)
                         .addComponent(modifyColor_ok_btn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(modifyColor_cancel_btn))
-                    .addGroup(modifyColors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(modifyColors_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jPanel4, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel3, GroupLayout.Alignment.LEADING, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         modifyColors_panelLayout.setVerticalGroup(
-            modifyColors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            modifyColors_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(modifyColors_panelLayout.createSequentialGroup()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(12, 12, 12)
-                .addGroup(modifyColors_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(modifyColors_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(modifyColor_cancel_btn)
                     .addComponent(modifyColor_ok_btn))
                 .addGap(0, 11, Short.MAX_VALUE))
@@ -1451,46 +1451,46 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         colorName_lbl.setText("Name");
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        GroupLayout jPanel5Layout = new GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 331, GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel5Layout.createSequentialGroup()
                                 .addGap(101, 101, 101)
-                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(addColor_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(addColor_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(removeColor_btn))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE))
+                    .addGroup(GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(colorName_lbl)
                         .addGap(18, 18, 18)
-                        .addComponent(colorName_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(colorName_txtBx, GroupLayout.PREFERRED_SIZE, 146, GroupLayout.PREFERRED_SIZE)
                         .addGap(77, 77, 77)))
-                .addComponent(modifyColors_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(modifyColors_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(53, 53, 53))
         );
         jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(modifyColors_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel5Layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                    .addComponent(modifyColors_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGroup(jPanel5Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(colorName_lbl)
-                            .addComponent(colorName_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(colorName_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane4, GroupLayout.PREFERRED_SIZE, 154, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(addColor_btn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(removeColor_btn)
                         .addGap(36, 36, 36)))
                 .addContainerGap(31, Short.MAX_VALUE))
@@ -1510,29 +1510,29 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout blobSettings_panelLayout = new javax.swing.GroupLayout(blobSettings_panel);
+        GroupLayout blobSettings_panelLayout = new GroupLayout(blobSettings_panel);
         blobSettings_panel.setLayout(blobSettings_panelLayout);
         blobSettings_panelLayout.setHorizontalGroup(
-            blobSettings_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            blobSettings_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(blobSettings_panelLayout.createSequentialGroup()
-                .addGroup(blobSettings_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(blobSettings_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(blobSettings_panelLayout.createSequentialGroup()
                         .addGap(179, 179, 179)
-                        .addComponent(openColorFile_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(saveColorFile_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(openColorFile_btn, GroupLayout.PREFERRED_SIZE, 147, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(saveColorFile_btn, GroupLayout.PREFERRED_SIZE, 147, GroupLayout.PREFERRED_SIZE))
                     .addGroup(blobSettings_panelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jPanel5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(130, Short.MAX_VALUE))
         );
         blobSettings_panelLayout.setVerticalGroup(
-            blobSettings_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            blobSettings_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(blobSettings_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(blobSettings_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(blobSettings_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(openColorFile_btn)
                     .addComponent(saveColorFile_btn))
                 .addContainerGap())
@@ -1540,7 +1540,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         cameraControl_tabPanel.addTab("Blob Parameters", blobSettings_panel);
 
-        intrinsicCalib_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Single Camera Parameters"));
+        intrinsicCalib_panel.setBorder(BorderFactory.createTitledBorder("Single Camera Parameters"));
 
         camNum_btnGrp.add(cam1_radioBtn);
         cam1_radioBtn.setSelected(true);
@@ -1580,46 +1580,46 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout intrinsicCalib_panelLayout = new javax.swing.GroupLayout(intrinsicCalib_panel);
+        GroupLayout intrinsicCalib_panelLayout = new GroupLayout(intrinsicCalib_panel);
         intrinsicCalib_panel.setLayout(intrinsicCalib_panelLayout);
         intrinsicCalib_panelLayout.setHorizontalGroup(
-            intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(intrinsicCalib_panelLayout.createSequentialGroup()
-                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(intrinsicCalib_panelLayout.createSequentialGroup()
                         .addGap(107, 107, 107)
-                        .addGroup(intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                             .addGroup(intrinsicCalib_panelLayout.createSequentialGroup()
                                 .addComponent(cam1_radioBtn)
                                 .addGap(30, 30, 30)
                                 .addComponent(cam2_radioBtn))
-                            .addComponent(calcIntrCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 217, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(calcExtrCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(calcIntrCalib_btn, GroupLayout.PREFERRED_SIZE, 217, GroupLayout.PREFERRED_SIZE)
+                            .addComponent(calcExtrCalib_btn, GroupLayout.PREFERRED_SIZE, 218, GroupLayout.PREFERRED_SIZE)))
                     .addGroup(intrinsicCalib_panelLayout.createSequentialGroup()
                         .addGap(70, 70, 70)
-                        .addComponent(loadSingleCamCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(loadSingleCamCalib_btn, GroupLayout.PREFERRED_SIZE, 131, GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(saveSingleCamCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(saveSingleCamCalib_btn, GroupLayout.PREFERRED_SIZE, 130, GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(139, Short.MAX_VALUE))
         );
         intrinsicCalib_panelLayout.setVerticalGroup(
-            intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(intrinsicCalib_panelLayout.createSequentialGroup()
-                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(cam1_radioBtn)
                     .addComponent(cam2_radioBtn))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(calcIntrCalib_btn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(calcExtrCalib_btn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(intrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(saveSingleCamCalib_btn)
                     .addComponent(loadSingleCamCalib_btn))
                 .addContainerGap(33, Short.MAX_VALUE))
         );
 
-        extrinsicCalib_panel.setBorder(javax.swing.BorderFactory.createTitledBorder("Stereo Camera Parameters"));
+        extrinsicCalib_panel.setBorder(BorderFactory.createTitledBorder("Stereo Camera Parameters"));
 
         calcStereoCalib_btn.setText("Calibrate");
         calcStereoCalib_btn.setToolTipText("Single camera intrinsic parameters must first be calculated.");
@@ -1647,27 +1647,27 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         jTextField2.setText("jTextField2");
 
-        javax.swing.GroupLayout extrinsicCalib_panelLayout = new javax.swing.GroupLayout(extrinsicCalib_panel);
+        GroupLayout extrinsicCalib_panelLayout = new GroupLayout(extrinsicCalib_panel);
         extrinsicCalib_panel.setLayout(extrinsicCalib_panelLayout);
         extrinsicCalib_panelLayout.setHorizontalGroup(
-            extrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            extrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(extrinsicCalib_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(calcStereoCalib_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(calcStereoCalib_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
-                .addComponent(loadStereoCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(loadStereoCalib_btn, GroupLayout.PREFERRED_SIZE, 137, GroupLayout.PREFERRED_SIZE)
                 .addGap(12, 12, 12)
-                .addComponent(saveStereoCalib_btn, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(saveStereoCalib_btn, GroupLayout.PREFERRED_SIZE, 133, GroupLayout.PREFERRED_SIZE)
                 .addGap(56, 56, 56))
         );
         extrinsicCalib_panelLayout.setVerticalGroup(
-            extrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            extrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(extrinsicCalib_panelLayout.createSequentialGroup()
-                .addGroup(extrinsicCalib_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(extrinsicCalib_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(calcStereoCalib_btn)
                     .addComponent(saveStereoCalib_btn)
                     .addComponent(loadStereoCalib_btn))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         undistort_chkBx.setText("Undistort Captured Frames");
@@ -1678,7 +1678,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder("Calibration Snapshots"));
+        jPanel7.setBorder(BorderFactory.createTitledBorder("Calibration Snapshots"));
 
         takeSnapshot_btn.setText("Take Snapshot");
         takeSnapshot_btn.addActionListener(new java.awt.event.ActionListener() {
@@ -1703,7 +1703,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         numSnapshots_txtBx.setText("10");
         numSnapshots_txtBx.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 numSnapshots_txtBxKeyTyped(evt);
             }
         });
@@ -1723,27 +1723,27 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         snapshotStatus_lbl.setText("Snapshot Status");
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        GroupLayout jPanel7Layout = new GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            jPanel7Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cnclCalib_btn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
-                    .addComponent(calibrate_btn, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
-                        .addComponent(takeSnapshots_btn, javax.swing.GroupLayout.DEFAULT_SIZE, 152, Short.MAX_VALUE)
+                .addGroup(jPanel7Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(cnclCalib_btn, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+                    .addComponent(calibrate_btn, GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+                    .addGroup(GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                        .addComponent(takeSnapshots_btn, GroupLayout.DEFAULT_SIZE, 152, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
-                        .addComponent(numSnapshots_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(numSnapshots_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addGap(21, 21, 21))
-                    .addComponent(takeSnapshot_btn, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE))
+                    .addComponent(takeSnapshot_btn, GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE))
                 .addContainerGap())
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addGap(23, 23, 23)
                 .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-                .addComponent(totalSnapshots_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addComponent(totalSnapshots_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addGap(40, 40, 40))
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addGap(55, 55, 55)
@@ -1751,22 +1751,22 @@ public class CameraControlPanel extends javax.swing.JFrame {
                 .addContainerGap(74, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(totalSnapshots_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            jPanel7Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+                .addGroup(jPanel7Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(totalSnapshots_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5))
                 .addGap(18, 18, 18)
                 .addComponent(snapshotStatus_lbl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(takeSnapshot_btn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(takeSnapshots_btn)
-                    .addComponent(numSnapshots_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(numSnapshots_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(calibrate_btn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(cnclCalib_btn)
                 .addContainerGap())
         );
@@ -1777,7 +1777,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         xGridCorners_txtBx.setText("7");
         xGridCorners_txtBx.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 xGridCorners_txtBxKeyTyped(evt);
             }
         });
@@ -1786,7 +1786,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         yGridCorners_txtBx.setText("6");
         yGridCorners_txtBx.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 yGridCorners_txtBxKeyTyped(evt);
             }
         });
@@ -1795,66 +1795,66 @@ public class CameraControlPanel extends javax.swing.JFrame {
 
         gridSize_txtBx.setText("0.108");
 
-        javax.swing.GroupLayout camCalibration_panelLayout = new javax.swing.GroupLayout(camCalibration_panel);
+        GroupLayout camCalibration_panelLayout = new GroupLayout(camCalibration_panel);
         camCalibration_panel.setLayout(camCalibration_panelLayout);
         camCalibration_panelLayout.setHorizontalGroup(
-            camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(camCalibration_panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, camCalibration_panelLayout.createSequentialGroup()
-                        .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(GroupLayout.Alignment.TRAILING, camCalibration_panelLayout.createSequentialGroup()
+                        .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                             .addComponent(undistort_chkBx)
-                            .addComponent(intrinsicCalib_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(extrinsicCalib_panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(intrinsicCalib_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                            .addComponent(extrinsicCalib_panel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel7, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                         .addGap(47, 47, 47))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, camCalibration_panelLayout.createSequentialGroup()
-                        .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(GroupLayout.Alignment.TRAILING, camCalibration_panelLayout.createSequentialGroup()
+                        .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addComponent(numGridCorners_lbl)
                             .addGroup(camCalibration_panelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addComponent(xGridCorners_lbl)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(xGridCorners_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(yGridCorners_lbl, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(xGridCorners_txtBx, GroupLayout.PREFERRED_SIZE, 36, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(yGridCorners_lbl, GroupLayout.PREFERRED_SIZE, 21, GroupLayout.PREFERRED_SIZE)
                                 .addGap(1, 1, 1)
-                                .addComponent(yGridCorners_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(yGridCorners_txtBx, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)))
                         .addGap(94, 94, 94)
-                        .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                             .addComponent(gridSize_lbl)
                             .addGroup(camCalibration_panelLayout.createSequentialGroup()
                                 .addGap(12, 12, 12)
-                                .addComponent(gridSize_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(gridSize_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                         .addGap(250, 250, 250))))
         );
         camCalibration_panelLayout.setVerticalGroup(
-            camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(camCalibration_panelLayout.createSequentialGroup()
                 .addGap(53, 53, 53)
-                .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(camCalibration_panelLayout.createSequentialGroup()
                         .addComponent(numGridCorners_lbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(xGridCorners_lbl)
-                            .addComponent(xGridCorners_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(xGridCorners_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                             .addComponent(yGridCorners_lbl)
-                            .addComponent(yGridCorners_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(yGridCorners_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                     .addGroup(camCalibration_panelLayout.createSequentialGroup()
                         .addComponent(gridSize_lbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(gridSize_txtBx, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(gridSize_txtBx, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
                 .addGap(28, 28, 28)
-                .addGroup(camCalibration_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(camCalibration_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                     .addGroup(camCalibration_panelLayout.createSequentialGroup()
-                        .addComponent(extrinsicCalib_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(intrinsicCalib_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel7, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(extrinsicCalib_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(intrinsicCalib_panel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel7, 0, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(undistort_chkBx)
                 .addGap(44, 44, 44))
         );
@@ -1891,30 +1891,30 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout other_panelLayout = new javax.swing.GroupLayout(other_panel);
+        GroupLayout other_panelLayout = new GroupLayout(other_panel);
         other_panel.setLayout(other_panelLayout);
         other_panelLayout.setHorizontalGroup(
-            other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, other_panelLayout.createSequentialGroup()
+            other_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, other_panelLayout.createSequentialGroup()
                 .addGap(37, 37, 37)
-                .addGroup(other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(aviWrite_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(oniWrite_btn, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE))
+                .addGroup(other_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                    .addComponent(aviWrite_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(oniWrite_btn, GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE))
                 .addGap(30, 30, 30)
-                .addGroup(other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(snapshotPCD_btn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(snapshotRGB_btn, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(other_panelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                    .addComponent(snapshotPCD_btn, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(snapshotRGB_btn, GroupLayout.Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(366, 366, 366))
         );
         other_panelLayout.setVerticalGroup(
-            other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            other_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(other_panelLayout.createSequentialGroup()
                 .addGap(52, 52, 52)
-                .addGroup(other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(other_panelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                     .addGroup(other_panelLayout.createSequentialGroup()
                         .addComponent(snapshotRGB_btn)
                         .addGap(31, 31, 31)
-                        .addGroup(other_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGroup(other_panelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(snapshotPCD_btn)
                             .addComponent(oniWrite_btn)))
                     .addComponent(aviWrite_btn))
@@ -1951,28 +1951,28 @@ public class CameraControlPanel extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(FPSCheckBox)
                 .addGap(12, 12, 12)
                 .addComponent(captureDisplay_chkBx)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(depthDisplay_chkBx)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(DisplayPipelineButton)
                 .addContainerGap())
             .addComponent(cameraControl_tabPanel)
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(cameraControl_tabPanel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(captureDisplay_chkBx)
                     .addComponent(depthDisplay_chkBx)
                     .addComponent(DisplayPipelineButton)
@@ -2118,7 +2118,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
    * @param args the command line arguments
    */
   public static void main(String args[]) {
-    java.awt.EventQueue.invokeLater(new Runnable() {
+    EventQueue.invokeLater(new Runnable() {
       @Override
       public void run() {
         final String dataDir = "../../native/data/";
@@ -2136,172 +2136,172 @@ public class CameraControlPanel extends javax.swing.JFrame {
     });
   }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox DisplayPipelineButton;
-    private javax.swing.JCheckBox FPSCheckBox;
-    private javax.swing.JLabel OR_lbl;
-    private javax.swing.JButton addColor_btn;
-    private javax.swing.JButton addConstraint_btn;
-    private javax.swing.JButton addConstraints_btn;
-    private javax.swing.JPanel addConstraints_panel;
-    private javax.swing.JTextArea addConstraints_txtArea;
-    private javax.swing.JButton addSearchFromPred_btn;
-    private javax.swing.JButton addSearch_btn;
-    private javax.swing.JComboBox addSearch_cmbBx;
-    private javax.swing.JButton addSimpleSearchManager_btn;
-    private javax.swing.JCheckBox availDetectorsDisplay_chkBx;
-    private javax.swing.JList availDetectors_list;
-    private javax.swing.JPanel availDetectors_panel;
-    private javax.swing.JTabbedPane availImgProcessors_panel;
-    private javax.swing.JCheckBox availImgProcsDisplay_chkBx;
-    private javax.swing.JList availImgProcs_list;
-    private javax.swing.JPanel availSaliencyProcessors_panel;
-    private javax.swing.JCheckBox availSaliencyProcsDisplay_chkBx;
-    private javax.swing.JList availSaliencyProcs_list;
-    private javax.swing.JList availSearches_list;
-    private javax.swing.JPanel availSearches_panel;
-    private javax.swing.JList availSingleSearches_list;
-    private javax.swing.JCheckBox availTrackersDisplay_chkBx;
-    private javax.swing.JList availTrackers_list;
-    private javax.swing.JPanel availTrackers_panel;
-    private javax.swing.JCheckBox availValidatorsDisplay_chkBx;
-    private javax.swing.JList availValidators_list;
-    private javax.swing.JPanel availValidators_panel;
-    private javax.swing.JButton aviWrite_btn;
-    private javax.swing.JPanel blobSettings_panel;
-    private javax.swing.JLabel blobSize_lbl;
-    private javax.swing.JButton calcExtrCalib_btn;
-    private javax.swing.JButton calcIntrCalib_btn;
-    private javax.swing.JButton calcStereoCalib_btn;
-    private javax.swing.JButton calibrate_btn;
-    private javax.swing.JRadioButton cam1_radioBtn;
-    private javax.swing.JRadioButton cam2_radioBtn;
-    private javax.swing.JPanel camCalibration_panel;
-    private javax.swing.ButtonGroup camNum_btnGrp;
-    private javax.swing.JTabbedPane cameraControl_tabPanel;
-    private javax.swing.JCheckBox captureDisplay_chkBx;
-    private javax.swing.JButton cnclCalib_btn;
-    private javax.swing.JList colorList_list;
-    private javax.swing.JLabel colorName_lbl;
-    private javax.swing.JTextField colorName_txtBx;
-    private javax.swing.JComboBox constraintOptns_comBx;
-    private javax.swing.JCheckBox constraintsIncProc_chkBx;
-    private javax.swing.JButton defineColorRegion_btn;
-    private javax.swing.JCheckBox depthDisplay_chkBx;
-    private javax.swing.JCheckBox detectorDepDisplay_chkBx;
-    private javax.swing.JList detectorDep_list;
-    private javax.swing.JCheckBox detectorDisplay_chkBx;
-    private javax.swing.JCheckBox detectorIncProc_chkBx;
-    private javax.swing.JComboBox detectorOptions_cmbBx;
-    private javax.swing.JButton detectorSelect_btn;
-    private javax.swing.JButton endColorRange_btn;
-    private javax.swing.JList existConstraints_list;
-    private javax.swing.JPanel existConstraints_panel;
-    private javax.swing.JButton expandColorRegion_btn;
-    private javax.swing.JPanel extrinsicCalib_panel;
-    private javax.swing.JLabel gridSize_lbl;
-    private javax.swing.JTextField gridSize_txtBx;
-    private javax.swing.JMenuItem imgProcDisplay_MenuItm;
-    private javax.swing.JComboBox imgProcOptions_cmbBx;
-    private javax.swing.JMenuItem imgProcRemove_MenuItm;
-    private javax.swing.JButton imgProcsAdd_btn;
-    private javax.swing.JList imgProcs_list;
-    private javax.swing.JPopupMenu imgProcs_popUp;
-    private javax.swing.JPanel intrinsicCalib_panel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel10;
-    private javax.swing.JPanel jPanel11;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
-    private javax.swing.JPanel jPanel8;
-    private javax.swing.JPanel jPanel9;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane10;
-    private javax.swing.JScrollPane jScrollPane11;
-    private javax.swing.JScrollPane jScrollPane12;
-    private javax.swing.JScrollPane jScrollPane13;
-    private javax.swing.JScrollPane jScrollPane14;
-    private javax.swing.JScrollPane jScrollPane15;
-    private javax.swing.JScrollPane jScrollPane16;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JScrollPane jScrollPane6;
-    private javax.swing.JScrollPane jScrollPane7;
-    private javax.swing.JScrollPane jScrollPane8;
-    private javax.swing.JScrollPane jScrollPane9;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JButton loadSingleCamCalib_btn;
-    private javax.swing.JButton loadStereoCalib_btn;
-    private javax.swing.JLabel maxBlobSize_lbl;
-    private javax.swing.JTextField maxBlobSize_txtBx;
-    private javax.swing.JPanel memObjConstraints_panel;
-    private javax.swing.JPanel memObjControl_panel;
-    private javax.swing.JLabel minBlobSize_lbl;
-    private javax.swing.JTextField minBlobSize_txtBx;
-    private javax.swing.JButton modifyColor_cancel_btn;
-    private javax.swing.JLabel modifyColor_lbl;
-    private javax.swing.JButton modifyColor_ok_btn;
-    private javax.swing.JPanel modifyColors_panel;
-    private javax.swing.JTextField newSearchPreds_txtBx;
-    private javax.swing.JLabel numGridCorners_lbl;
-    private javax.swing.JTextField numSnapshots_txtBx;
-    private javax.swing.JButton oniWrite_btn;
-    private javax.swing.JButton openColorFile_btn;
-    private javax.swing.JPanel other_panel;
-    private javax.swing.JButton removeColor_btn;
-    private javax.swing.JButton rmvConstraints_btn;
-    private javax.swing.JButton rmvSearch_btn;
-    private javax.swing.JButton rmvSingleSearch_btn;
-    private javax.swing.JMenuItem saliencyConstraintDisplay_menuItm;
-    private javax.swing.JMenuItem saliencyConstraintRemove_menuItm;
-    private javax.swing.JList saliencyConstraints_list;
-    private javax.swing.JPopupMenu saliencyConstraints_popUp;
-    private javax.swing.JLabel saliencyProcs_lbl;
-    private javax.swing.JButton saveColorFile_btn;
-    private javax.swing.JButton saveSingleCamCalib_btn;
-    private javax.swing.JButton saveStereoCalib_btn;
-    private javax.swing.JPanel searchControl_panel;
-    private javax.swing.JCheckBox serialProc_chkBx;
-    private javax.swing.JCheckBox singleItr_chkBx;
-    private javax.swing.JTextArea singleSearchDesc_txtArea;
-    private javax.swing.JTabbedPane singleSearchDetails_tab;
-    private javax.swing.JPanel singleSearchManagers_panel;
-    private javax.swing.JButton snapshotPCD_btn;
-    private javax.swing.JButton snapshotRGB_btn;
-    private javax.swing.JLabel snapshotStatus_lbl;
-    private javax.swing.JButton startColorRange_btn;
-    private javax.swing.JButton startSearchType_btn;
-    private javax.swing.JButton startSingleSearch_btn;
-    private javax.swing.JButton stopSearchType_btn;
-    private javax.swing.JButton stopSingleSearch_btn;
-    private javax.swing.JButton takeSnapshot_btn;
-    private javax.swing.JButton takeSnapshots_btn;
-    private javax.swing.JTextField totalSnapshots_txtBx;
-    private javax.swing.JCheckBox trackerDepDisplay_chkBx;
-    private javax.swing.JList trackerDep_list;
-    private javax.swing.JCheckBox trackerDisplay_chkBx;
-    private javax.swing.JComboBox trackerOptions_cmbBx;
-    private javax.swing.JCheckBox undistort_chkBx;
-    private javax.swing.JLabel validationProcs_lbl;
-    private javax.swing.JMenuItem validatorConstraintDisplay_menuItm;
-    private javax.swing.JMenuItem validatorConstraintRemove_menuItm;
-    private javax.swing.JList validatorConstraints_list;
-    private javax.swing.JPopupMenu validatorConstraints_popUp;
-    private javax.swing.JLabel xGridCorners_lbl;
-    private javax.swing.JTextField xGridCorners_txtBx;
-    private javax.swing.JLabel yGridCorners_lbl;
-    private javax.swing.JTextField yGridCorners_txtBx;
+    private JCheckBox DisplayPipelineButton;
+    private JCheckBox FPSCheckBox;
+    private JLabel OR_lbl;
+    private JButton addColor_btn;
+    private JButton addConstraint_btn;
+    private JButton addConstraints_btn;
+    private JPanel addConstraints_panel;
+    private JTextArea addConstraints_txtArea;
+    private JButton addSearchFromPred_btn;
+    private JButton addSearch_btn;
+    private JComboBox addSearch_cmbBx;
+    private JButton addSimpleSearchManager_btn;
+    private JCheckBox availDetectorsDisplay_chkBx;
+    private JList availDetectors_list;
+    private JPanel availDetectors_panel;
+    private JTabbedPane availImgProcessors_panel;
+    private JCheckBox availImgProcsDisplay_chkBx;
+    private JList availImgProcs_list;
+    private JPanel availSaliencyProcessors_panel;
+    private JCheckBox availSaliencyProcsDisplay_chkBx;
+    private JList availSaliencyProcs_list;
+    private JList availSearches_list;
+    private JPanel availSearches_panel;
+    private JList availSingleSearches_list;
+    private JCheckBox availTrackersDisplay_chkBx;
+    private JList availTrackers_list;
+    private JPanel availTrackers_panel;
+    private JCheckBox availValidatorsDisplay_chkBx;
+    private JList availValidators_list;
+    private JPanel availValidators_panel;
+    private JButton aviWrite_btn;
+    private JPanel blobSettings_panel;
+    private JLabel blobSize_lbl;
+    private JButton calcExtrCalib_btn;
+    private JButton calcIntrCalib_btn;
+    private JButton calcStereoCalib_btn;
+    private JButton calibrate_btn;
+    private JRadioButton cam1_radioBtn;
+    private JRadioButton cam2_radioBtn;
+    private JPanel camCalibration_panel;
+    private ButtonGroup camNum_btnGrp;
+    private JTabbedPane cameraControl_tabPanel;
+    private JCheckBox captureDisplay_chkBx;
+    private JButton cnclCalib_btn;
+    private JList colorList_list;
+    private JLabel colorName_lbl;
+    private JTextField colorName_txtBx;
+    private JComboBox constraintOptns_comBx;
+    private JCheckBox constraintsIncProc_chkBx;
+    private JButton defineColorRegion_btn;
+    private JCheckBox depthDisplay_chkBx;
+    private JCheckBox detectorDepDisplay_chkBx;
+    private JList detectorDep_list;
+    private JCheckBox detectorDisplay_chkBx;
+    private JCheckBox detectorIncProc_chkBx;
+    private JComboBox detectorOptions_cmbBx;
+    private JButton detectorSelect_btn;
+    private JButton endColorRange_btn;
+    private JList existConstraints_list;
+    private JPanel existConstraints_panel;
+    private JButton expandColorRegion_btn;
+    private JPanel extrinsicCalib_panel;
+    private JLabel gridSize_lbl;
+    private JTextField gridSize_txtBx;
+    private JMenuItem imgProcDisplay_MenuItm;
+    private JComboBox imgProcOptions_cmbBx;
+    private JMenuItem imgProcRemove_MenuItm;
+    private JButton imgProcsAdd_btn;
+    private JList imgProcs_list;
+    private JPopupMenu imgProcs_popUp;
+    private JPanel intrinsicCalib_panel;
+    private JLabel jLabel1;
+    private JLabel jLabel2;
+    private JLabel jLabel3;
+    private JLabel jLabel4;
+    private JLabel jLabel5;
+    private JLabel jLabel6;
+    private JPanel jPanel1;
+    private JPanel jPanel10;
+    private JPanel jPanel11;
+    private JPanel jPanel2;
+    private JPanel jPanel3;
+    private JPanel jPanel4;
+    private JPanel jPanel5;
+    private JPanel jPanel6;
+    private JPanel jPanel7;
+    private JPanel jPanel8;
+    private JPanel jPanel9;
+    private JScrollPane jScrollPane1;
+    private JScrollPane jScrollPane10;
+    private JScrollPane jScrollPane11;
+    private JScrollPane jScrollPane12;
+    private JScrollPane jScrollPane13;
+    private JScrollPane jScrollPane14;
+    private JScrollPane jScrollPane15;
+    private JScrollPane jScrollPane16;
+    private JScrollPane jScrollPane2;
+    private JScrollPane jScrollPane3;
+    private JScrollPane jScrollPane4;
+    private JScrollPane jScrollPane5;
+    private JScrollPane jScrollPane6;
+    private JScrollPane jScrollPane7;
+    private JScrollPane jScrollPane8;
+    private JScrollPane jScrollPane9;
+    private JTextField jTextField2;
+    private JButton loadSingleCamCalib_btn;
+    private JButton loadStereoCalib_btn;
+    private JLabel maxBlobSize_lbl;
+    private JTextField maxBlobSize_txtBx;
+    private JPanel memObjConstraints_panel;
+    private JPanel memObjControl_panel;
+    private JLabel minBlobSize_lbl;
+    private JTextField minBlobSize_txtBx;
+    private JButton modifyColor_cancel_btn;
+    private JLabel modifyColor_lbl;
+    private JButton modifyColor_ok_btn;
+    private JPanel modifyColors_panel;
+    private JTextField newSearchPreds_txtBx;
+    private JLabel numGridCorners_lbl;
+    private JTextField numSnapshots_txtBx;
+    private JButton oniWrite_btn;
+    private JButton openColorFile_btn;
+    private JPanel other_panel;
+    private JButton removeColor_btn;
+    private JButton rmvConstraints_btn;
+    private JButton rmvSearch_btn;
+    private JButton rmvSingleSearch_btn;
+    private JMenuItem saliencyConstraintDisplay_menuItm;
+    private JMenuItem saliencyConstraintRemove_menuItm;
+    private JList saliencyConstraints_list;
+    private JPopupMenu saliencyConstraints_popUp;
+    private JLabel saliencyProcs_lbl;
+    private JButton saveColorFile_btn;
+    private JButton saveSingleCamCalib_btn;
+    private JButton saveStereoCalib_btn;
+    private JPanel searchControl_panel;
+    private JCheckBox serialProc_chkBx;
+    private JCheckBox singleItr_chkBx;
+    private JTextArea singleSearchDesc_txtArea;
+    private JTabbedPane singleSearchDetails_tab;
+    private JPanel singleSearchManagers_panel;
+    private JButton snapshotPCD_btn;
+    private JButton snapshotRGB_btn;
+    private JLabel snapshotStatus_lbl;
+    private JButton startColorRange_btn;
+    private JButton startSearchType_btn;
+    private JButton startSingleSearch_btn;
+    private JButton stopSearchType_btn;
+    private JButton stopSingleSearch_btn;
+    private JButton takeSnapshot_btn;
+    private JButton takeSnapshots_btn;
+    private JTextField totalSnapshots_txtBx;
+    private JCheckBox trackerDepDisplay_chkBx;
+    private JList trackerDep_list;
+    private JCheckBox trackerDisplay_chkBx;
+    private JComboBox trackerOptions_cmbBx;
+    private JCheckBox undistort_chkBx;
+    private JLabel validationProcs_lbl;
+    private JMenuItem validatorConstraintDisplay_menuItm;
+    private JMenuItem validatorConstraintRemove_menuItm;
+    private JList validatorConstraints_list;
+    private JPopupMenu validatorConstraints_popUp;
+    private JLabel xGridCorners_lbl;
+    private JTextField xGridCorners_txtBx;
+    private JLabel yGridCorners_lbl;
+    private JTextField yGridCorners_txtBx;
     // End of variables declaration//GEN-END:variables
 
   //********************************
@@ -2885,7 +2885,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_aviWrite_btnActionPerformed
 
-    private void yGridCorners_txtBxKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_yGridCorners_txtBxKeyTyped
+    private void yGridCorners_txtBxKeyTyped(KeyEvent evt) {//GEN-FIRST:event_yGridCorners_txtBxKeyTyped
         // only allow 0-9
         char c = evt.getKeyChar();
         if (!((c >= '0') && (c <= '9')
@@ -2896,7 +2896,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_yGridCorners_txtBxKeyTyped
 
-    private void xGridCorners_txtBxKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_xGridCorners_txtBxKeyTyped
+    private void xGridCorners_txtBxKeyTyped(KeyEvent evt) {//GEN-FIRST:event_xGridCorners_txtBxKeyTyped
         // only allow 0-9
         char c = evt.getKeyChar();
         if (!((c >= '0') && (c <= '9')
@@ -2922,7 +2922,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_calibrate_btnActionPerformed
 
-    private void numSnapshots_txtBxKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_numSnapshots_txtBxKeyTyped
+    private void numSnapshots_txtBxKeyTyped(KeyEvent evt) {//GEN-FIRST:event_numSnapshots_txtBxKeyTyped
         // only allow 0-9
         char c = evt.getKeyChar();
         if (!((c >= '0') && (c <= '9')

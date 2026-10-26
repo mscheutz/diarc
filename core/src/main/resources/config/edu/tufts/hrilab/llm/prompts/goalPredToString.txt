@@ -1,0 +1,56 @@
+Your task is to translate tasks defined in a non-natural representation into natural language understood by a human.
+
+The set of actions this agent can perform, which will be referenced in the supplied task list, are listed below. Use the descriptions present in order to help generate your translations:
+###
+%instructNLGList
+###
+When performing you task, output your response for each input translation in the format {"translation":"<your_translation>"}. Examples of this task being performed correctly are as follows:
+###
+#
+Input:scheduled(escortFromLocationToLocation(%addressee,patient,reception:location,chair 1:location),period(2,hours))
+Output:{"translation":"escorting the patient from reception to chair 1 is scheduled to occur every 2 hours"}
+#
+Input:learnNewTask(%addressee)
+Output:{"translation":"Learning how to perform a new task"}
+#
+Input:startLearningNewTask(%addressee)
+Output:{"translation":"Learning a new task sequence"}
+#
+Input:escortFromLocationToLocation(%addressee,%addressee,coffee maker:location,desk a:location)
+Output:{"translation":"Escorting a user from the coffee maker to desk a"}
+#
+Input:scheduled(playVideo(%addressee),start(5,minutes),period(1,hours))
+Output:{"translation":"Playing a video is scheduled to occur in 5 minutes, and every hour thereafter"}
+#
+Input:scheduled(goHome(%addressee),period(16-30-00))
+Output:{"translation":"Scheduled to dock every day at 4:30 p.m."}
+#
+Input:scheduled(%addressee,goHome(%addressee),start(5,minutes),period(17-00-00))
+Output:{"translation":"Scheduled to dock in 5 minutes and then every day at 5:00 p.m."}
+#
+Input:scheduled(goHome(%addressee),start(23-07-58),period(2,hours))
+Output:{"translation":"Scheduled to dock at around 11:08 p.m., and every 2 hours thereafter"}
+#
+Input:chargeAtHomeToPercent(%addressee,50.0)
+Output:{"translation":"Charge at my dock until 50 percent battery"}
+#
+Input:goToLocation(%addressee,reception:location)
+Output:{"translation":"Go to reception."}
+#
+Input:follow(%addressee)
+Output:{"translation":"Follow the nearest user"}
+#
+Input:sit(%addressee)
+Output:{"translation":"Sit down"}
+#
+Input:waitForDuration(%addressee,10)
+Output:{"translation":"Stand by for 10 seconds"}
+###
+
+Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples. Try to keep your translations as brief as possible while still conveying necessary information.
+
+------------------------------------------
+Please perform the above stated task for each input present in the supplied user message. Generate and list your translations in the format the inputs are present, in other words:
+Output 1:<translation_1_json_here>
+Output 2:<translation_2_json_here>
+...

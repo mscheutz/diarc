@@ -26,12 +26,12 @@ public abstract class DatabaseEntryContext<T extends DBEntry> extends ArgumentBa
   private T dbe;
 
   protected DatabaseEntryContext(Context caller, StateMachine sm, T dbentry) {
-    super(caller, sm, dbentry.getType());
+    super(caller, sm, dbentry.getMethodName());
     dbe = dbentry;
   }
 
   protected DatabaseEntryContext(Context caller, StateMachine sm, T dbentry, ExecutionType executionType) {
-    super(caller, sm, dbentry.getType(), executionType);
+    super(caller, sm, dbentry.getMethodName(), executionType);
     dbe = dbentry;
   }
 

@@ -21,14 +21,16 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.vecmath.Matrix4d;
-import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInterface {
   boolean shouldSimExecTime = false; // should the primitive actions simulate execution times
-  long simExecTimeout = 1000; // timeout to simulate execution time
+  long simExecTimeout = 3000; // timeout to simulate execution time
 
   //used to manage the previous and current location, since checkAt doesn't have outside information to handle this. important since checkAt observes facts used in preconditions and effects of asl actions as well
   private Symbol currentLocation = Factory.createSymbol("location_0", "location");

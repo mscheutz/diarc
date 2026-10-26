@@ -16,6 +16,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.temiv3.TemiV3Interface;
 import edu.tufts.hrilab.temiv3.TemiV3PoseConsultant;
 import edu.tufts.hrilab.temiv3.TemiV3PoseReference;
@@ -168,32 +169,6 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
     @Override
     public void followMe() {
         log.info("[followMe]");
-    }
-
-
-    @OnInterrupt(onCancelServiceCall = "interruptFollowBlocking()", onSuspendServiceCall = "interruptFollowBlocking()")
-    @Override
-    public void followMeBlocking() {
-        followMe();
-        startAcknowledgeDisplay("following until interrupted");
-        try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(Predicate.class)).call(Object.class, Factory.createPredicate("waitForAckTemi", "X"));
-        } catch (TRADEException e) {
-            log.error("[followMeBlocking] error blocking with waitForResponse", e);
-        }
-        stopMoving();
-        endAcknowledgeDisplay();
-    }
-
-    @Override
-    public void interruptFollowBlocking() {
-        try {
-            //TODO:brad: I don't think these are the query semantics we want, we'll see if we can come up with a way to fix them.
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelWaitForResponse").argTypes(Predicate.class)).call(void.class, Factory.createPredicate("waitForAckTemi", "X"));
-        } catch (TRADEException e) {
-            log.error("[interruptFollowBlocking] error calling cancelWaitForResponse", e);
-        }
-        stopMoving();
     }
 
     @Override
@@ -493,6 +468,12 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
         }
         log.warn("[convertStringToInt] Error converting string representation of integer: " + numberString);
         return -1;
+    }
+
+    @Override
+    public void sayText(Utterance utterance) {
+        String message = utterance.getWordsAsString();
+        sayText(message);
     }
 
     @Override
@@ -1005,67 +986,6 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
     @Action
     public void updateFirebaseDoc( Map<String,Object> goalInfo) {
         log.debug("[updateFirebaseDoc] "+goalInfo);
-    }
-
-
-    @TRADEService
-    @Action
-    public boolean ignoreTentativeAccept(Predicate goalPred){
-        log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
-        if(goalPred != null) {
-            switch (goalPred.getName()) {
-                case "sayText":
-                case "generateResponse":
-                case "generateResponseFromString":
-                case "setVolume":
-                case "sendMap":
-                case "sendLogs":
-                case "requestPermissions":
-                case "restartApp":
-                case "disableButtons":
-                case "enableButtons":
-                case "showTopBar":
-                case "enableObstacleNotifications":
-                case "disableObstacleNotifications":
-                case "enablePrivacyMode":
-                case "disablePrivacyMode":
-                case "enableVoiceAck":
-                case "disableVoiceAck":
-                case "setEscortWaitAttempts":
-                case "setEscortWaitDuration":
-                case "setBatteryAbortLevel":
-                case "setBatteryWarnLevel":
-                case "setBatteryChargedLevel":
-                case "chargeTemi":
-                case "displayFace":
-                case "enableKidsMode":
-                case "disableKidsMode":
-                case "sendPositionUpdate":
-                case "stopListening":
-                case "endFreezeTemi":
-                case "enableKioskMode":
-                case "disableKioskMode":
-                case "setKioskTimeout":
-                case "setKioskLocation":
-                case "setDisplayAppointmentsSince":
-                case "setAllowAppointmentsSince":
-                case "setLateAppointmentMessage":
-                case "setDisplayAppointmentsUntil":
-                case "setAllowAppointmentsUntil":
-                case "setEarlyAppointmentMessage":
-                case "setSuccessfulCheckInMessage":
-                case "setBirthdayMessageRange":
-                case "setBirthdayMessage":
-                case "setAppointmentLoadErrorMessage":
-                case "setAppointmentListEmptyMessage":
-                case "setCheckInHeaderMessage":
-                case "setStorageArea":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        return false;
     }
 
     @TRADEService

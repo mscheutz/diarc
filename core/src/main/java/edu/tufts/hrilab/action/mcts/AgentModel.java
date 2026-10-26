@@ -128,8 +128,7 @@ public class AgentModel extends DiarcComponent {
         if(approvedContext == null) {
             return c;
         }
-        Goal goal = new Goal(actor, new Predicate("rollout", new String[0]),
-                Observable.FALSE);
+        Goal goal = Goal.createGoal(actor, new Predicate("rollout", new String[0]));
         ActionInterpreter.createInterpreterFromContext(goal, approvedContext).call(); //execute rival action
         return approvedContext;
     }

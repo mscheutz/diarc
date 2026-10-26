@@ -4,6 +4,8 @@
 
 package edu.tufts.hrilab.vision.consultant;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import edu.tufts.hrilab.consultant.Consultant;
 import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.consultant.util.Utilities;
@@ -11,21 +13,12 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import edu.tufts.hrilab.vision.VisionInterface;
-import edu.tufts.hrilab.vision.stm.Grasp;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
-import edu.tufts.hrilab.vision.stm.MemoryObjectUtil;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 
 import javax.vecmath.Point3d;
-import java.io.BufferedReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 

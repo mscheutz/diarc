@@ -4,12 +4,10 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.llm.*;
-import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
-import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
-import edu.tufts.hrilab.util.resource.Resources;
+import edu.tufts.hrilab.llm.message.Message;
+import edu.tufts.hrilab.llm.message.TextMessage;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +29,7 @@ public class LLMTranslationTester {
     String inputDirectory = "/config/edu/tufts/hrilab/llm/inputs/";
     String inputFile = "pickAndPlaceAssistaJapanese";
     String outputFile = "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/llm/outputs/%s/%s/%s_prompt_%s.txt";
-    List<String> promptFiles = Arrays.asList("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
+    List<String> promptFiles = Arrays.asList("pickandplace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     List<String> systemPromptFiles = Arrays.asList("");
 
     public LLMComponent llmComponent;
@@ -148,7 +146,7 @@ public class LLMTranslationTester {
         String userMessage = prompt.getText() + input;
         String systemMessage = systemPrompt.getText();
         List<Message> chatInput = new ArrayList<>();
-        chatInput.add(new Message("user",userMessage));
+        chatInput.add(new TextMessage("user",userMessage));
         log.debug("generated prompt: " + userMessage);
         LlamaHFChat chat = new LlamaHFChat();
         chat.setSystem(systemMessage);
@@ -157,7 +155,7 @@ public class LLMTranslationTester {
             if (service.equals("t5hf")) {
                 completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(String.class)).call(Completion.class,userMessage);
             } else if (service.equals("llamahf")) {
-                completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class, Chat.class)).call(Completion.class, Factory.createSymbol(model), chat);
+                completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class, Chat.class)).call(Completion.class, chat, model);
             } else if (service.equals("openai")) {
                 completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(List.class)).call(Completion.class,chatInput);
             } else {

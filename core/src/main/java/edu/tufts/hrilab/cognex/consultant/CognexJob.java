@@ -6,10 +6,11 @@ package edu.tufts.hrilab.cognex.consultant;
 
 import edu.tufts.hrilab.fol.Symbol;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CognexJob {
+public class CognexJob implements Serializable {
 
   @Override
   public String toString() {

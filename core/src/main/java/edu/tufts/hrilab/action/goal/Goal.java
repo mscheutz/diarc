@@ -8,6 +8,8 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
+import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.manager.Resource;
 import edu.tufts.hrilab.fol.Factory;
@@ -34,6 +36,46 @@ public class Goal {
   private static final Logger log = LoggerFactory.getLogger(Goal.class);
 
   /**
+   * This is the standard way to construct a new Goal. This will automatically create
+   * a ScheduledGoal if the goalState is scheduled(...).
+   *
+   * @param goalState
+   * @return
+   */
+  public static Goal createGoal(Predicate goalState) {
+    if (goalState.getName().equals("scheduled")) {
+      return new ScheduledGoal(goalState);
+    } else {
+      return new Goal(goalState);
+    }
+  }
+
+  /**
+   * Convenience factory method for constructing goals from the execution of ASL, or when you don't already
+   * have a goal predicate of the form "goal(actor, goalState)".
+   *
+   * @param actor
+   * @param goalState
+   * @return
+   */
+  public static Goal createGoal(Symbol actor, Symbol goalState) {
+    return new Goal(actor, goalState);
+  }
+
+  /**
+   * Convenience factory method for constructing goals that explicitly mark goal as an observation. It's possible to
+   * have an observation goal without the OBS(actor, state) predicate form. This is almost
+   * always the case for observations from conditions and effects checks.
+   *
+   * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
+   * @param goalState  the goal predicate
+   * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
+   */
+  public static Goal createGoal(Symbol actor, Symbol goalState, Observable observable) {
+    return new Goal(actor, goalState, observable);
+  }
+
+  /**
    * Goal predicate. This predicate can toggle between bound and unbound forms, depending on if the goal execution
    * has been started. If the initial goal predicate has unbound variables, this predicate will contain unbound
    * variables until the GoalContext binds them during the action selection stage of goal execution. If the GoalContext
@@ -41,12 +83,18 @@ public class Goal {
    */
 
   private Set<GoalListener> listeners = new HashSet<>();
-  private GoalInfo info;
+  protected GoalInfo info;
   private Observable observable = Observable.FALSE;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
-  private boolean isLearningGoal = false;
+  /**
+   * What this goal's relationship with scheduling is
+   * 0 - no interaction with the scheduler
+   * 1 - a "scheduling" goal. I.e. ScheduledGoal which is doing the scheduling
+   * 2 - a "scheduled" goal. I.e. Goal which is a submitted execution of a scheduled goal
+   */
+  private int scheduledState = 0;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -62,8 +110,10 @@ public class Goal {
   private Context rootContext;
   private Lock contextLock = new ReentrantLock();
 
-  private PriorityTier priorityTier = PriorityTier.NORMAL;
-
+  /**
+   * Execution type, defaults to ACT.
+   */
+  private ExecutionType executionType = ExecutionType.ACT;
 
   /**
    * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
@@ -71,7 +121,7 @@ public class Goal {
    *
    * @param goalPredicate
    */
-  public Goal(Predicate goalPredicate) {
+  protected Goal(Predicate goalPredicate) {
     info = new GoalInfo(idGenerator.getNext());
 
     // check persistent first bc other goal predicate forms could be nested inside
@@ -93,6 +143,7 @@ public class Goal {
       case "obs":
       case "observe":
         observable = Observable.TRUE;
+        info.isObservation = true;
         // fall through
       case "goal":
         info.unboundGoal = goalPredicate.get(1);
@@ -112,7 +163,7 @@ public class Goal {
    * @param actor
    * @param goalState
    */
-  public Goal(Symbol actor, Symbol goalState) {
+  protected Goal(Symbol actor, Symbol goalState) {
     this(actor, goalState, Observable.FALSE);
 
     // handle special cases
@@ -133,7 +184,7 @@ public class Goal {
    * @param goalState  the goal state
    * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
    */
-  public Goal(Symbol actor, Symbol goalState, Observable observable) {
+  protected Goal(Symbol actor, Symbol goalState, Observable observable) {
     info = new GoalInfo(idGenerator.getNext());
     this.observable = observable;
     info.actor = actor;
@@ -276,6 +327,18 @@ public class Goal {
 
   public boolean isPersistent() {
     return info.persistent;
+  }
+
+  public boolean isScheduled() {
+    return false;
+  }
+
+  public void setScheduledState(int scheduledState) {
+    this.scheduledState = scheduledState;
+  }
+
+  public int getScheduledState() {
+    return scheduledState;
   }
 
   public Symbol getActor() {
@@ -426,11 +489,19 @@ public class Goal {
   }
 
   public void setPriorityTier(PriorityTier priorityTier) {
-    this.priorityTier = priorityTier;
+    info.priorityTier = priorityTier;
   }
 
   public PriorityTier getPriorityTier() {
-    return priorityTier;
+    return info.priorityTier;
+  }
+
+  public void setSubmitter(Symbol submitter) {
+    info.submitter = submitter;
+  }
+
+  public Symbol getSubmitter() {
+    return info.submitter;
   }
 
   /**
@@ -474,26 +545,27 @@ public class Goal {
    * ExecutionManager about whether the goal conflicts with active learning.
    */
   public void setIsLearningGoal(boolean isLearningGoal) {
-    this.isLearningGoal = isLearningGoal;
+    info.isLearningGoal = isLearningGoal;
   }
 
   /**
    * Returns true if this goal was submitted as part of an action learning process
    */
   public boolean isLearningGoal() {
-    return isLearningGoal;
+    return info.isLearningGoal;
   }
 
   /**
    * Cancels goal execution (if currently being executed). If being executed, calls cancel
    * on the ActionInterpreter which will set the status of this goal once execution has terminated.
    */
-  public void cancel() {
+  public boolean cancel() {
     if (ai != null) {
       // the AI will set the CANCELED status once it has terminated
-      ai.cancel();
+      return ai.cancel();
     } else {
       setStatus(GoalStatus.CANCELED);
+      return true;
     }
   }
 
@@ -501,12 +573,13 @@ public class Goal {
    * Suspends goal execution (if currently being executed). If being executed, calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
-  public void suspend() {
+  public boolean suspend() {
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended
-      ai.suspend();
+      return ai.suspend();
     } else {
       setStatus(GoalStatus.SUSPENDED);
+      return true;
     }
   }
 
@@ -514,10 +587,12 @@ public class Goal {
    * Resumes goal execution (if currently suspended). Calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has resumed.
    */
-  public void resume() {
+  public boolean resume() {
     if (ai != null) {
       // the AI will set the ACTIVE status once it has resumed
-      ai.resume();
+      return ai.resume();
+    } else {
+      return false;
     }
   }
 
@@ -565,4 +640,11 @@ public class Goal {
     listeners.remove(listener);
   }
 
+  public ExecutionType getExecutionType() {
+    return executionType;
+  }
+
+  public void setExecutionType(ExecutionType executionType) {
+    this.executionType = executionType;
+  }
 }

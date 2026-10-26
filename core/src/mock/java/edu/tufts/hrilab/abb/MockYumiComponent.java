@@ -45,7 +45,7 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   }
 
   @Override
-  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results) {
+  public CognexResult getMatchingResult(Symbol refId, List<CognexResult> results) {
     return results.get(0);
   }
 

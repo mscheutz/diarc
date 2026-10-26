@@ -33,6 +33,7 @@ public class TemiV3Mock extends DiarcConfiguration {
 
     temi = createInstance(MockTemiV3Component.class);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+    createInstance(edu.tufts.hrilab.ftrontend.FrontEndConfigurationComponent.class, "-noLLM -localAddressees brad");
     parser = createInstance(TLDLParserComponent.class, "-dict temi.dict");
     rr = createInstance(ReferenceResolutionComponent.class);
     prag = createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

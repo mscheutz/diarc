@@ -37,22 +37,46 @@ public final class Misc {
   public static void log(String level, Object o) {
     switch (level) {
       case "fatal":
-        log.error("FATAL DEPRECATED. USE ERROR INSTEAD. " + o.toString());
+        if (o == null) {
+          log.error("FATAL DEPRECATED. USE ERROR INSTEAD. null");
+        } else {
+          log.error("FATAL DEPRECATED. USE ERROR INSTEAD. " + o.toString());
+        }
         break;
       case "error":
-        log.error(o.toString());
+        if (o == null) {
+          log.error("null");
+        } else {
+          log.error(o.toString());
+        }
         break;
       case "warn":
-        log.warn(o.toString());
+        if (o == null) {
+          log.warn("null");
+        } else {
+          log.warn(o.toString());
+        }
         break;
       case "info":
-        log.info(o.toString());
+        if (o == null) {
+          log.info("null");
+        } else {
+          log.info(o.toString());
+        }
         break;
       case "debug":
-        log.debug(o.toString());
+        if (o == null) {
+          log.debug("null");
+        } else {
+          log.debug(o.toString());
+        }
         break;
       case "trace":
-        log.trace(o.toString());
+        if (o == null) {
+          log.trace("null");
+        } else {
+          log.trace(o.toString());
+        }
         break;
       default:
         throw new IllegalArgumentException("Invalid logging level: " + level);
@@ -78,5 +102,23 @@ public final class Misc {
    */
   public static Object setNull() {
     return null;
+  }
+
+  /**
+   * Binds local variables in a string to a string.
+   * @param input String with variables to bind
+   * @return Bound string
+   */
+  public static String bind(String input) {
+    return input + "";
+  }
+
+  /**
+   * Parses a string to a long.
+   * @param s
+   * @return
+   */
+  public static long parseLong(String s) {
+    return Long.parseLong(s);
   }
 }

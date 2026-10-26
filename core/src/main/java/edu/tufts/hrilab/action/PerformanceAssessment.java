@@ -194,10 +194,12 @@ public class PerformanceAssessment {
    */
   private static Pair<Goal, Goal> generateGoalPlan(Predicate goalPred, StateMachine simStateMachine) {
     // simulate goal to get plan
-    Goal goal = executionManager.submitGoal(new Goal(goalPred), ExecutionType.SIMULATE_PERFORMANCE);
+    Goal simGoal = Goal.createGoal(goalPred);
+    simGoal.setExecutionType(ExecutionType.SIMULATE_PERFORMANCE);
+    Goal goal = executionManager.submitGoal(simGoal);
     executionManager.joinOnGoal(goal.getId());
     // clone simulated goal and root context node
-    Goal clonedGoal = new Goal(goal.getGoalPredicate().clone());
+    Goal clonedGoal = Goal.createGoal(goal.getGoalPredicate().clone());
     //clonedGoal.setStatus(GoalStatus.PENDING);
     // tmf: does system need to create simulated root?
 
@@ -225,7 +227,7 @@ public class PerformanceAssessment {
     if (goal == null) {
       return null;
     }
-    Goal simGoal = new Goal(goal.getGoalPredicate().clone());
+    Goal simGoal = Goal.createGoal(goal.getGoalPredicate().clone());
 
     // following assumes top most state in statemachine hasn't been updated since execution of the goal
     Context goalContext = goal.getRootContext();
@@ -336,7 +338,7 @@ public class PerformanceAssessment {
    */
   private static StateMachine simulateGoalState(Predicate goalState, StateMachine stateMachine) {
     StateMachine tmpStateMachine = new StateMachine(stateMachine,false);
-    Goal stepGoal = new Goal(goalState);
+    Goal stepGoal = Goal.createGoal(goalState);
     Pair<Goal, Goal> goals = generateGoalPlan(goalState, stateMachine); // no goal has been submitted so need to generate a new goal and a plan
     // get success state from assessment
     Map<Set<Predicate>, StateDistribution> distribution = simulateStateDistribution(goals.getRight(), tmpStateMachine, defaultSamples);
@@ -373,7 +375,7 @@ public class PerformanceAssessment {
       return null;
     }
     Map<Set<Predicate>, StateDistribution> distribution = new HashMap<>();
-    Goal stepGoal = new Goal(step);
+    Goal stepGoal = Goal.createGoal(step);
     StateMachine simStatMachine;
     State startingState = originalStep.getStateMachine().getCurrentState();
     ActionStatus stepStatus = originalStep.getStatus();
@@ -388,7 +390,7 @@ public class PerformanceAssessment {
         startingState = simGoalContext.getStateMachine().getCurrentState();
         //simulate step
         StateMachine tmpStateMachine = new StateMachine(startingState);
-        stepGoal = new Goal(step);
+        stepGoal = Goal.createGoal(step);
         stepGoal.setRootContext(stepToComplete);
         // simulate goal to get state distribution
         distribution = simulateStateDistribution(stepGoal, tmpStateMachine, defaultSamples);
@@ -404,7 +406,7 @@ public class PerformanceAssessment {
         for (int i=currentStepIndex; i < stepIndex; i++) {
           //stepsToSimulate.add(simGoalContext.getChildContexts().get(i));
           Context stepContext = simGoalContext.getChildContexts().get(i);
-          tmpGoal = new Goal(stepContext.getSignatureInPredicateForm());
+          tmpGoal = Goal.createGoal(stepContext.getSignatureInPredicateForm());
           tmpGoal.setRootContext(stepContext);
           Map<Set<Predicate>, StateDistribution> tmpDistribution = simulateStateDistribution(tmpGoal, tmpStateMachine, defaultSamples);
           Map<Set<Predicate>,Integer> successStates = getSuccessStates(tmpGoal, tmpDistribution);
@@ -420,7 +422,7 @@ public class PerformanceAssessment {
           startingState = tmpStateMachine.getCurrentState();
         }
 
-        stepGoal = new Goal(step);
+        stepGoal = Goal.createGoal(step);
         stepGoal.setRootContext(stepToComplete);
         distribution = simulateStateDistribution(stepGoal, tmpStateMachine, defaultSamples);
       }
@@ -486,7 +488,7 @@ public class PerformanceAssessment {
         //       or
         //       select an action to simulate which will result in the correct state
         RootContext tmpRoot = new RootContext(new ActionConstraints(), new StateMachine(tmpState), ExecutionType.SIMULATE_PERFORMANCE);
-        Goal tmpGoal = new Goal(simGoal.getGoalPredicate());
+        Goal tmpGoal = Goal.createGoal(simGoal.getGoalPredicate());
         Context tmpContext = failedContext.copy(tmpRoot);
         tmpGoal.setRootContext(tmpContext);
 
@@ -611,7 +613,7 @@ public class PerformanceAssessment {
   private static Pair<Goal, Context> executeSimulation(Goal goal, StateMachine stateMachine) {
     long t0 = System.currentTimeMillis();
     // clone the original goal for simulation
-    Goal simGoal = new Goal(goal.getGoalPredicate().clone());
+    Goal simGoal = Goal.createGoal(goal.getGoalPredicate().clone());
     // clone state machine from cloned goal's root context -- should point to the correct starting state
     Context goalRootContext = goal.getRootContext();
     StateMachine simStateMachine = new StateMachine(stateMachine, false);

@@ -10,7 +10,6 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.*;
 
 import java.io.File;
@@ -28,7 +27,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import ai.thinkingrobots.trade.*;
 
-public class TLDLParserComponent extends DiarcComponent implements NLUInterface {
+public class TLDLParserComponent extends DiarcComponent {
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
   /**
@@ -137,7 +136,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * @param input
    * @return
    */
-  @Override
+  @TRADEService
+  @Action
   public Utterance parseUtterance(Utterance input) {
     chartParser.resetChart();
 
@@ -205,20 +205,18 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     Symbol speaker = input.getSpeaker();
     Symbol addressee = input.getAddressee();
 
-    Utterance output = null;
-
     // generate Utterances for all valid parses
     List<Utterance> utterances = new ArrayList<>();
     if (finalParses != null) {
       for (Node parse : finalParses) {
-        utterances.addAll(createUtterances(parse, speaker, addressee));
+        utterances.addAll(createUtterances(input, parse, speaker, addressee));
       }
     }
 
     if (utterances.isEmpty()) {
       log.warn("[buildPartialUtterance] No valid parses found.");
       if (chartParser.hasUnkownTokens()) {
-        Utterance errorSemantics = generateErrorSemantics(speaker, addressee, chartParser.getFirstUnknownTokens());
+        Utterance errorSemantics = generateErrorSemantics(input, speaker, addressee, chartParser.getFirstUnknownTokens());
         errorSemantics.setWords(input.getWords());
         return errorSemantics;
       } else {
@@ -256,7 +254,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * @return An Utterance object constructed based on the rules, semantics, and other properties of the node.
    * Returns null if no valid Utterance could be created from the node's rules.
    */
-  public List<Utterance> createUtterances(Node finalNode, Symbol speaker, Symbol addressee) {
+  public List<Utterance> createUtterances(Utterance input, Node finalNode, Symbol speaker, Symbol addressee) {
     List<Utterance> utterances = new ArrayList<>();
     for (NodeEntry nodeRule : finalNode.getRules()) {
 
@@ -295,7 +293,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       log.debug("Bindings: " + diarcSemantics);
 
       // build utterance
-      Utterance utterance = new Utterance.Builder()
+      Utterance utterance = new Utterance.Builder(input)
               .setSpeaker(speaker)
               .setAddressee(intendedAddressee)
               .setSemantics(mainSemantics)
@@ -454,10 +452,10 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    *                      the generated semantics will not reference specific unknown words.
    * @return An Utterance object containing the error message along with the appropriate semantics and addressee.
    */
-  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String unknownWords) {
+  private Utterance generateErrorSemantics(Utterance input, Symbol speaker, Symbol addressee, String unknownWords) {
     log.debug("sending error message");
 
-    Utterance.Builder utterance = new Utterance.Builder();
+    Utterance.Builder utterance = new Utterance.Builder(input);
     utterance.setSpeaker(speaker);
     if (useAddressHistory && addressHistory.containsKey(speaker)) {
       utterance.setAddressee(addressHistory.get(speaker));

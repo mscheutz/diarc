@@ -29,7 +29,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
     public MockYumiComponent leftArm;
     public MockYumiComponent rightArm;
     String service = "llamahf";
-    String model = "Meta-Llama-3-70B-Instruct";
+    String model = "Meta-Llama-3.1-70B-Instruct";
 
     @Override
     public void runConfiguration() {
@@ -72,8 +72,8 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
             log.error("error registering location consultant in DIARC config" + e);
         }
 
-        DiarcComponent.createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
-        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
+        createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
+        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickandplace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
         createInstance(edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent.class, "-service pickAndPlaceLLMParser");
         //createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -patternMatching -llm pickAndPlaceLLMParser");
 
@@ -96,6 +96,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
                         + "-asl dialogue/nlg.asl "
                         + "-asl dialogue/nlu.asl "
                         + "-asl dialogue/handleSemantics.asl "
+                        + "-asl demos/queueEM.asl "
                         + "-asl demos/foodOrdering/prepareFood.asl "
                         + "-asl demos/foodOrdering/prepareFoodPerception.asl "
                         + "-asl demos/foodOrdering/cookingActions.asl "

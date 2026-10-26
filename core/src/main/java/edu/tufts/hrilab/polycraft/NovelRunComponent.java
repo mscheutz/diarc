@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.polycraft;
 
+import edu.tufts.hrilab.action.goal.GoalFilter;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -213,7 +214,7 @@ public class NovelRunComponent extends DiarcComponent {
 
   private void cancelCurrentGoals() {
     try {
-      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentGoals").argTypes(Symbol.class)).call(List.class, actor);
+      List<Predicate> currGoals = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalPredicates").argTypes(GoalFilter.class, Symbol.class)).call(List.class, GoalFilter.CURRENT, actor);
       for (Predicate goal : currGoals) {
         log.info("Terminating current goal: " + goal);
         Predicate cancelGoal = Factory.createPredicate("cancelGoal", actor, goal);

@@ -69,9 +69,9 @@ public class FetchPerformanceTestComparator extends GenerativeTestComparator {
 
     if (expectedSayText.contains(probText) && observedSayText.contains(probText)) {
       String[] splitText = expectedSayText.split(" ");
-      double expProbValue = Double.parseDouble(splitText[splitText.length - 1]);
+      double expProbValue = Double.parseDouble(splitText[splitText.length - 1].split("\"")[0]);
       String[] splitObs = observedSayText.split(" ");
-      double obsProbValue = Double.parseDouble(splitText[splitObs.length - 1]);
+      double obsProbValue = Double.parseDouble(splitText[splitObs.length - 1].split("\"")[0]);
       matches = Math.abs(expProbValue - obsProbValue) < 0.05;
     } else if (expectedSayText.contains(durText) && observedSayText.contains(durText)) {
       // it will take about X minutes and Y seconds

@@ -49,6 +49,19 @@ public class VisionMessage {
             this.text = text;
         }
 
+        public Content (String type, String content) {
+            this.type = type;
+            if (type.equals("text")) {
+                this.text = content;
+            } else if (type.equals("image_url")) {
+                this.image_url = new ImageUrl(content);
+            } else {
+                log.warn("[VisionMessage] unexpected type {}, considering text", type);
+                this.type = "text";
+                this.text = content;
+            }
+        }
+
         public Content (byte[] image, Dimension imageSize) {
             byte[] raw = null;
             WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
@@ -60,9 +73,9 @@ public class VisionMessage {
             try {
                 raw = CompressionUtil.decompress(image);
             } catch (IOException ex) {
-                log.error("Error decompressing image");
+                log.error("Error decompressing image", ex);
             } catch (DataFormatException ex) {
-                log.error("Error in image format while decompressing");
+                log.error("Error in image format while decompressing", ex);
             }
             if (raw != null) {
                 raster.setDataElements(0, 0, imageSize.width, imageSize.height, raw);
@@ -105,6 +118,12 @@ public class VisionMessage {
         }
     }
 
+    public VisionMessage (String role, String text, String url) {
+        this.role = role;
+        content = new Content[2];
+        content[0] = new Content(text);
+        content[1] = new Content("image_url",url);
+    }
     public VisionMessage (String role, String text, byte[] image, Dimension imageSize) {
         this.role = role;
         content = new Content[2];

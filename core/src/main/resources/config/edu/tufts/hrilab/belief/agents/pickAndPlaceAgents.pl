@@ -1,0 +1,27 @@
+%% agents the system should know about.
+name(robotone,robotone).
+name(robottwo,robottwo).
+
+actor(eric).
+actor(pete).
+
+diarcAgent(self).
+diarcAgent(robotone).
+diarcAgent(robottwo).
+
+object(self,agent).
+
+memberOf(X,X).
+memberOf(robotone, self).
+memberOf(robottwo, self).
+team(self).
+
+/*rules about who the agent is obliged to listen to */
+%% supervisors
+supervisor(pete).
+supervisor(user).
+supervisor(eric).
+
+%% admin
+admin(eric).
+admin(user).

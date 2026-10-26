@@ -14,6 +14,11 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TwoNaoDemo extends DiarcConfiguration {
   /**
@@ -25,6 +30,28 @@ public class TwoNaoDemo extends DiarcConfiguration {
    */
   public boolean mockNao = true;
   public boolean useSphinx = false;
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("mockNao").hasArg().argName("bool").desc("Use mock nao components.").build());
+    options.add(Option.builder("simSpeechGui").hasArg().argName("bool").desc("Use sim speech input gui.").build());
+    options.add(Option.builder("useSphinx").hasArg().argName("bool").desc("Use sphinx component for speech recognition").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("mockNao")) {
+      mockNao = Boolean.parseBoolean(cmdLine.getOptionValue("mockNao"));
+    }
+    if (cmdLine.hasOption("simSpeechGui")) {
+      simSpeech = Boolean.parseBoolean(cmdLine.getOptionValue("simSpeechGui"));
+    }
+    if (cmdLine.hasOption("useSphinx")) {
+      useSphinx = Boolean.parseBoolean(cmdLine.getOptionValue("useSphinx"));
+    }
+  }
 
   // start the configuration
   @Override

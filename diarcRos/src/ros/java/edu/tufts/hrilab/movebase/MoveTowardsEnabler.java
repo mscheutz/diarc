@@ -23,9 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-
-import static edu.tufts.hrilab.diarcros.util.Convert.YAW;
 
 public class MoveTowardsEnabler {
     private static Logger log = LoggerFactory.getLogger(MoveTowardsEnabler.class);
@@ -133,7 +132,7 @@ public class MoveTowardsEnabler {
         boolean ret = false;
 
         try {
-            Point startPos = movebase.getPose().getPosition();
+            Point3d startPos = movebase.getPose().getLeft();
             log.info("Got 'forwardMove' request: " + distance_lim + " at " + move_speed + "m/s");
             boolean keepMovingTowards = false;
             double distance_limit = distance_lim; // don't go beyond 1 meter
@@ -144,15 +143,15 @@ public class MoveTowardsEnabler {
             double hz = 30.0;
             int offset = 35;
             long start = System.currentTimeMillis();
-            Point currPos = movebase.getPose().getPosition();
-            while (dist(startPos, currPos) < Math.abs(distance_lim)) {
+            Point3d currPos = movebase.getPose().getLeft();
+            while (startPos.distance(currPos) < Math.abs(distance_lim)) {
                 long currTime = System.currentTimeMillis();
                 log.info("Elapsed: " + ((currTime - start) / 1000.0));
                 if ((currTime - start) / 1000.0 > timeout) {
                     log.info("Spot move timeout");
                     return false;
                 }
-                currPos = movebase.getPose().getPosition();
+                currPos = movebase.getPose().getLeft();
                 // guesstimated and hard-coded x-val for now
                 double lidar_distance = 0;//getRangeDistance();
 
@@ -243,7 +242,7 @@ public class MoveTowardsEnabler {
         try {
             double[] pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseGlobalQuat")).call(double[].class);
             Quat4d poseQuat = new Quat4d(Arrays.copyOfRange(pose, 2, 6));
-            orient = edu.tufts.hrilab.util.Convert.convertToEuler(poseQuat).getY();
+            orient = edu.tufts.hrilab.util.Convert.convertToEuler(poseQuat)[edu.tufts.hrilab.util.Convert.YAW];
         } catch (TRADEException e) {
             log.error("Error calling getPose.", e);
         }
@@ -257,8 +256,8 @@ public class MoveTowardsEnabler {
             return null;
         }
         Pose p = new Pose(new Point(pose[0], pose[1], pose[2]), new Quaternion(pose[3], pose[4], pose[5], pose[6]));
-        double[] e = Convert.quaternionToEuler(p.getOrientation());
-        double yaw = e[YAW];
+        double[] euler = Convert.convertToEuler(p.getOrientation());
+        double yaw = euler[edu.tufts.hrilab.util.Convert.YAW];
         double x_component = Math.cos(yaw);
         double y_component = Math.sin(yaw);
 

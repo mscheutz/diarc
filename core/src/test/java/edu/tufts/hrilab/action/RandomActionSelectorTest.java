@@ -48,7 +48,7 @@ public class RandomActionSelectorTest {
     ActionConstraints constraints = new ActionConstraints();
     ActionSelector actionSelector = new RandomActionSelector();
 
-    ParameterizedAction action = actionSelector.selectActionForGoal(new Goal(predicate), constraints, sm);
+    ParameterizedAction action = actionSelector.selectActionForGoal(Goal.createGoal(predicate), constraints, sm);
 
     assertNotNull(action);
     assertNotNull(action.getEntry());
@@ -63,7 +63,7 @@ public class RandomActionSelectorTest {
     ActionConstraints constraints = new ActionConstraints();
     ActionSelector actionSelector = new RandomActionSelector();
 
-    ParameterizedAction action = actionSelector.selectActionForGoal(new Goal(predicate), constraints, sm);
+    ParameterizedAction action = actionSelector.selectActionForGoal(Goal.createGoal(predicate), constraints, sm);
 
     assertNotNull(action);
     assertNotNull(action.getEntry());

@@ -49,7 +49,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "suspendSystemGoalsBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "resumeSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeCurrentTask": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

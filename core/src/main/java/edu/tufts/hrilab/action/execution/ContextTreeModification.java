@@ -38,7 +38,7 @@ public class ContextTreeModification {
     StateMachine stateMachine = context.getStateMachine();
     if (modType.equals("insert")) {
       Predicate goalPred = Factory.createPredicate(modification.getArgs().get(0).toString());
-      Context newGoalContext = new GoalContext(actionContext, stateMachine, new Goal(goalPred), context.getExecType());
+      Context newGoalContext = new GoalContext(actionContext, stateMachine, Goal.createGoal(goalPred), context.getExecType());
       //TODO: need better way to insert action prior to failure for post analysis
       if (actionContext.isFailure()) {
         resetIndex = actionContext.childContexts.findFirstIndexOf(Context::isFailure);
@@ -77,7 +77,7 @@ public class ContextTreeModification {
       actionContext.childContexts.remove(child);
       if (modType.equals("replace")) {
         Predicate newGoalPred = (Predicate) modification.getArgs().get(1);
-        Context newGoalContext = new GoalContext(actionContext, stateMachine, new Goal(newGoalPred), context.getExecType());
+        Context newGoalContext = new GoalContext(actionContext, stateMachine, Goal.createGoal(newGoalPred), context.getExecType());
         actionContext.childContexts.insert(newGoalContext, resetIndex);
       }
     } else {

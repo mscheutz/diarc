@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 
 abstract public class DiarcConfiguration {
   /**
@@ -39,6 +40,21 @@ abstract public class DiarcConfiguration {
   public DiarcConfiguration() {
     log = LoggerFactory.getLogger(this.getClass());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownConfiguration()));
+  }
+
+  public DiarcConfiguration(String... args) {
+    this();
+
+    if (args.length > 0) {
+      collectAdditionalUsageInfo();
+
+      // put input args into the expected form for component arg parsing
+      StringJoiner joiner = new StringJoiner(" ");
+      Arrays.stream(args).forEach(arg -> joiner.add(arg.trim()));
+      String[] cliArgs = joiner.toString().split(" ");
+
+      parseDiarcArgs(cliArgs);
+    }
   }
 
   public void shutdownConfiguration() {
@@ -116,19 +132,6 @@ abstract public class DiarcConfiguration {
   }
 
   /**
-   * Convenience method when no additional component args are needed. Automatically register with TRADE.
-   *
-   * @param clazz class to be instantiated (must extend DiarcComponent)
-   * @param <T>
-   * @return
-   */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz) {
-    T component = DiarcComponent.createInstance(clazz, "", true);
-    diarcComponents.add(component);
-    return component;
-  }
-
-  /**
    * Convenience method to automatically register with TRADE.
    *
    * @param clazz class to be instantiated (must extend DiarcComponent)
@@ -136,37 +139,21 @@ abstract public class DiarcConfiguration {
    * @param <T>
    * @return
    */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args) {
-    T component = DiarcComponent.createInstance(clazz, args, true);
-    diarcComponents.add(component);
-    return component;
+  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String... args) {
+    return createInstance(clazz, true, args);
   }
 
   /**
-   * Convenience method to pass all args as a single String, and automatically registers with TRADE.
-   *
-   * @param clazz class to be instantiated (must extend DiarcComponent)
-   * @param args  command line arguments
-   * @param <T>
-   * @return
-   */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), true);
-    diarcComponents.add(component);
-    return component;
-  }
-
-  /**
-   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
+   * Create a new DiarcComponent instance, and optionally registers with TRADE.
    *
    * @param clazz             class to be instantiated (must extend DiarcComponent)
-   * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
+   * @param args              command line arguments
    * @param <T>
    * @return
    */
-  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), registerWithTrade);
+  public final <T extends DiarcComponent> T createInstance(Class<T> clazz, boolean registerWithTrade, String... args) {
+    T component = DiarcComponent.createInstance(clazz, registerWithTrade, false, args);
     diarcComponents.add(component);
     return component;
   }

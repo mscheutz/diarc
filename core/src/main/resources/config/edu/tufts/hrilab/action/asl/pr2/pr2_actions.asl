@@ -2,8 +2,6 @@
     javax.vecmath.Point3d !location;
     edu.tufts.hrilab.fol.Predicate !failCond;
 
-    locks : motionLock;
-
     op:log("debug", "In look(?direction) script for PR2.");
 
     if (op:equalsValue(?direction, straight) || op:equalsValue(?direction, forward)) {

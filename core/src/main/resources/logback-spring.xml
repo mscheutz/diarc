@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
+  <import class="ch.qos.logback.core.ConsoleAppender"/>
+
+  <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="PatternLayoutEncoder">
+      <pattern>%highlight(%-5level) %gray(%-32logger{0}) -- %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="info">
+    <appender-ref ref="Console"/>
+  </root>
+
+  <!--  Turn off INFO level logging for quartz scheduler library-->
+  <logger name="org.quartz" level="WARN"/>
+  
+  <!--  Turn down Spring Boot startup noise-->
+  <logger name="org.springframework.boot" level="WARN"/>
+  <logger name="org.springframework.web" level="WARN"/>
+  <logger name="org.apache.catalina" level="WARN"/>
+  <logger name="org.apache.tomcat" level="WARN"/>
+  
+  <!--  Keep DiarcConfiguration at INFO to see startup message-->
+  <logger name="edu.tufts.hrilab.diarc.DiarcConfiguration" level="INFO"/>
+</configuration>
+

@@ -8,15 +8,8 @@ import java.io.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.net.URL;
-import java.net.URI;
-import java.net.URISyntaxException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,20 +24,17 @@ import ai.thinkingrobots.trade.TRADEService;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 
 import edu.tufts.hrilab.slug.common.Utterance;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import edu.tufts.hrilab.consultant.pose.*;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.Prompt;
-import edu.tufts.hrilab.slug.parsing.llm.ParserResponse;
 import edu.tufts.hrilab.slug.parsing.llm.AlternateResponse;
 import edu.tufts.hrilab.util.resource.Resources;
 
@@ -110,10 +100,10 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   }
 
   @TRADEService
-  public void LLMListenSpaceStationFinetune (String message) {
+  public void LLMListenSpaceStationFinetune(String message) {
     log.warn("Deprecated for new NLU pipeline");
     /*
-    Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Object oResponse = null;
     String jsonString = "";
@@ -159,9 +149,9 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   }
 
   @TRADEService
-  public AlternateResponse spaceStationLLMParser (Utterance utterance) {
+  public AlternateResponse spaceStationLLMParser(Utterance utterance) {
     String utteranceWords = utterance.getWordsAsString();
-    Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
     String jsonString = "";
@@ -191,7 +181,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     return new AlternateResponse(lssRes.toParserResponse(), lssRes.toAddressee());
   }
 
-  private String getAgent () {
+  private String getAgent() {
     List<String> groups = getMyGroups();
     for (String group : groups) {
       agentMatcher.reset(group);
@@ -238,9 +228,9 @@ public class UnitySpaceStationLLM extends DiarcComponent {
 
   @TRADEService
   @Action
-  public void stylizeUnitySpeak (Symbol original) {
-    Prompt prompt = Prompts.getPrompt("spaceStationSpeechStyle");
-    Symbol model = Factory.createSymbol("gpt-3.5-turbo");
+  public void stylizeUnitySpeak(Symbol original) {
+    Prompt prompt = Prompts.getPrompt("lab/spaceStationSpeechStyle");
+    String model = "gpt-3.5-turbo";
     Symbol actor = Factory.createSymbol("robot1");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
@@ -248,7 +238,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     chat.addUserMessage(original.toString());
 
     try {
-      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, model, chat);
+      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, chat, model);
     } catch (TRADEException e) {
       log.error("Error getting a completion.", e);
     }
@@ -260,7 +250,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     log.info("Response: " + strResponse);
 
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(Symbol.class,String.class)).call(void.class, actor, statement);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(Symbol.class, String.class)).call(void.class, actor, statement);
     } catch (TRADEException e) {
       log.error("Error calling sayText.", e);
     }

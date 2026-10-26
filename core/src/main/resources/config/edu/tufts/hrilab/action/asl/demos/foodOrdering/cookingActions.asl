@@ -35,7 +35,7 @@ import java.lang.Boolean;
     !itemAtArea = act:getBinding(!queryPred);
     op:log(debug, "[cook] item at area : !itemAtArea");
 
-    !cooktopProperty = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "\"cooktop\"");
+    !cooktopProperty = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "cooktop");
 
     act:generateResponseFromString("cooking");
     act:cook(?refId, ?seconds, !itemAtArea, !agentLocation, !cooktopProperty);
@@ -88,7 +88,7 @@ import java.lang.Boolean;
     !itemAtArea = act:getBinding(!queryPred);
     op:log(debug, "[saute] item at area : !itemAtArea");
 
-    !hotplateProperty = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "\"hot plate\"");
+    !hotplateProperty = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "hot plate");
 
     act:saute(?refId, ?seconds, !itemAtArea, !agentLocation, !hotplateProperty);
 

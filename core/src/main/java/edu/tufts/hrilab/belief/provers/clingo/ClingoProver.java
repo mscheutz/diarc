@@ -297,4 +297,9 @@ public class ClingoProver implements Prover {
     return toClingo.convertTerm(term);
   }
 
+  @Override
+  public Symbol unsanitize(Term term) {
+    return term;
+  }
+
 }

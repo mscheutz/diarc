@@ -182,7 +182,7 @@ public abstract class ArgumentBasedContext extends Context {
     Class<?> clazz = null;
 
     // first check if bname is an argument name
-    ActionBinding argument = getArgument(bname);
+    ActionBinding argument = getArgumentSilent(bname);
     if (argument != null) {
       clazz = argument.getBindingTypeDeep();
     }
@@ -220,16 +220,46 @@ public abstract class ArgumentBasedContext extends Context {
   protected ActionBinding getArgumentSilent(String bname) {
     ActionBinding target = arguments.get(bname);
     if (target == null) {
-      if (caller != null) {
-        // to enforce proper variable scoping, don't recurse into parent actions
-        if (caller.isAction()) {
-          target = caller.getLocalArgument(bname);
-        } else {
-          target = caller.getArgumentSilent(bname);
+      target = searchArgumentsForBinding(bname);
+      if (target == null) {
+        if (caller != null) {
+          // to enforce proper variable scoping, don't recurse into parent actions
+          if (caller.isAction()) {
+            target = caller.getLocalArgument(bname);
+          } else {
+            target = caller.getArgumentSilent(bname);
+          }
         }
       }
     }
     return target;
+  }
+
+  //EW: Is there a reason this should not be done this way?
+  private ActionBinding searchArgumentsForBinding(String bname) {
+    ActionBinding actionBinding = null;
+    for (ActionBinding argument : arguments.values()) {
+      actionBinding = getInnerBinding(argument,bname);
+      if (actionBinding != null) {
+        break;
+      }
+    }
+    return actionBinding;
+  }
+
+  private ActionBinding getInnerBinding(Object binding, String bname) {
+    ActionBinding actionBinding;
+    if (binding instanceof ActionBinding) {
+      actionBinding = (ActionBinding) binding;
+    } else {
+      return null;
+    }
+
+    if (actionBinding.name.equals(bname)) {
+      return actionBinding;
+    } else {
+      return getInnerBinding(actionBinding.getBinding(), bname);
+    }
   }
 
   @Override

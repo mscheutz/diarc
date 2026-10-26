@@ -11,6 +11,7 @@ import java.util.List;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.gui.SimSpeechProductionComponentVis;
+import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 

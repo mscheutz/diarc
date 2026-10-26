@@ -140,15 +140,18 @@ public class Prolog implements Prover {
     String plQuery = sanitize(query) + ".";
     List<Map<Variable, Symbol>> tmpResults = queryString(plQuery);
 
-    // apply variable map to query results (if needed)
-    List<Map<Variable, Symbol>> finalResults = new ArrayList<>();
-    for (Map<Variable, Symbol> result : tmpResults) {
-      Map<Variable, Symbol> tmpBinding = new HashMap<>();
-      result.forEach((k, v) -> tmpBinding.put(Utilities.prologToAction(k), PrologUtil.undoMakePrologSafe(v)));
-      finalResults.add(tmpBinding);
+    if (tmpResults != null) {
+      // apply variable map to query results (if needed)
+      List<Map<Variable, Symbol>> finalResults = new ArrayList<>();
+      for (Map<Variable, Symbol> result : tmpResults) {
+        Map<Variable, Symbol> tmpBinding = new HashMap<>();
+        result.forEach((k, v) -> tmpBinding.put(Utilities.prologToAction(k), PrologUtil.undoMakePrologSafe(v)));
+        finalResults.add(tmpBinding);
+      }
+      return finalResults;
     }
 
-    return finalResults;
+    return new ArrayList<>();
   }
 
   /**
@@ -354,7 +357,12 @@ public class Prolog implements Prover {
     types.putAll(getTypeMap(term));
 
     //don't want type info
-    String sanitized = PrologUtil.makePrologSafe(term);
+    String sanitized = "";
+    try {
+      sanitized = PrologUtil.makePrologSafe(term);
+    } catch (ClassCastException e) {
+      log.error("Exception trying to sanitize term: {}", term, e);
+    }
 
     //regex to find all strings that precede "()" and don't contain "," or "("
     Matcher m = Pattern.compile("([^,\\(]*)(?=\\(\\))")
@@ -370,6 +378,11 @@ public class Prolog implements Prover {
     sanitized = sanitized.replace("()", "");
     log.debug("sanitized term: " + sanitized);
     return sanitized;
+  }
+
+  @Override
+  public Symbol unsanitize(Term term) {
+    return PrologUtil.undoMakePrologSafe(term);
   }
 
   /**

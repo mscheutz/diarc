@@ -74,9 +74,13 @@ import edu.tufts.hrilab.fol.Predicate;
 () = open(Symbol ?doorRef) {
     // search for handle
     Symbol !handleRef;
-    Predicate !props = op:createPredicate("and(handle(X:physobj))");
+    Predicate !props = op:createPredicate("and(doorhandle(X:physobj))");
     !handleRef = act:positReference(!props);
 
     // call primitive openDoor
     act:openDoor(?doorRef, !handleRef);
+
+    // stop visual searches
+    act:stopVisualSearch(?doorRef);
+    act:stopVisualSearch(!handleRef);
 }

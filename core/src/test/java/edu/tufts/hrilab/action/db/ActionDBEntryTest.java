@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import edu.tufts.hrilab.action.Condition;
@@ -276,7 +275,7 @@ public class ActionDBEntryTest {
   public void testGetType() {
     ActionDBEntry.Builder adbeBuilder = new ActionDBEntry.Builder("liftup");
     ActionDBEntry adb = adbeBuilder.build(false);
-    assertEquals("liftup", adb.getType());
+    assertEquals("liftup", adb.getMethodName());
   }
 
   @TRADEService

@@ -52,7 +52,7 @@ public class FailedToPlanPolicy {
    * Main entry point for executing recovery policy.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
@@ -60,7 +60,7 @@ public class FailedToPlanPolicy {
    */
   @TRADEService
   @Action
-  public Justification executeFailedToPlanPolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
+  public Justification executeFailedToPlanPolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
     // explorations should depend on the goal that can't be planned for. Failing to plan for break_and_pickup(diamond)
     // for example, might be because there's no diamond in the world. Failing to plan for crafting a pogostick, however,
     // should generate lots of potential explorations.

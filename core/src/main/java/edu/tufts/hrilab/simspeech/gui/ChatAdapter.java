@@ -11,6 +11,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.GuiAdapter;
 import edu.tufts.hrilab.slug.common.Utterance;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -31,6 +32,8 @@ public class ChatAdapter extends GuiAdapter {
   private TRADEServiceInfo diarcAgentsService;
 
   private TRADEServiceInfo dialogueHistoryService;
+
+  private Set<String> diarcAgents = new HashSet<>();
 
 
   //==========================================================================
@@ -80,8 +83,15 @@ public class ChatAdapter extends GuiAdapter {
     try {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
-      Set<String> diarcAgents = new HashSet<>();
-      agents.forEach(agent -> diarcAgents.add(agent.getName()));
+      //Set<String> diarcAgents = new HashSet<>();
+      //todo (pete): ava-deploy specific. fix in general -- agent groups?
+      boolean hideSelf = !TRADE.getAvailableServices(new TRADEServiceConstraints().name("usingValidation").argTypes()).isEmpty();
+      diarcAgents.clear();
+      agents.forEach(agent -> {
+        if (!hideSelf || !agent.getName().equals("self")) {
+          diarcAgents.add(agent.getName());
+        }
+      });
       sendDiarcAgents(diarcAgents);
       log.debug("DIARC agents received");
     } catch (TRADEException e) {
@@ -136,7 +146,7 @@ public class ChatAdapter extends GuiAdapter {
 
     // register to be notified of dialogue changes
     TRADEServiceInfo sendUtteranceService = TRADE.getAvailableService(
-            new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class)
+            new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class,Boolean.class)
     );
     service.call(void.class, sendUtteranceService);
     log.debug("Dialogue registered");
@@ -148,13 +158,22 @@ public class ChatAdapter extends GuiAdapter {
    * @param utterance what the robot is saying.
    */
   @TRADEService
-  public void sendUtterance(Utterance utterance) {
+  public void sendUtterance(Utterance utterance, boolean newUtterance) {
+    if (!newUtterance) {
+      return;
+    }
+    String sender = utterance.getSpeaker().toUntypedString();
+    String recipient = utterance.getAddressee().toUntypedString();
     // send to client
     try {
       JsonObject json = new JsonObject();
       json.addProperty("message", utterance.getWordsAsString());
-      json.addProperty("sender", utterance.getSpeaker().toString());
-      json.addProperty("recipient", utterance.getAddressee().toString());
+      json.addProperty("sender", sender);
+      json.addProperty("recipient", recipient);
+      // no per-utterance time exists, so this is send time -- accurate for live messages, and the
+      // robot's own zone so the dashboard can show robot-local time regardless of the viewer
+      json.addProperty("timestamp", System.currentTimeMillis());
+      json.addProperty("timezone", java.time.ZoneId.systemDefault().getId());
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {
@@ -173,7 +192,7 @@ public class ChatAdapter extends GuiAdapter {
   }
 
   private void sendDialogueHistory(List<Utterance> dialogueHistory) {
-    dialogueHistory.forEach(utterance -> sendUtterance(utterance));
+    dialogueHistory.forEach(utterance -> sendUtterance(utterance,true));
   }
 
   //==========================================================================
@@ -215,10 +234,36 @@ public class ChatAdapter extends GuiAdapter {
       populateDiarcAgents(diarcAgentsService);
     }
 
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException ignored) {}
+
     // send existing dialogue history
     if (dialogueHistoryService != null) {
       populateDialogueHistory(dialogueHistoryService);
     }
+  }
+
+  private void signalAvaExternalCommandReceived() {
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+      service.call(void.class,"Received External Command...");
+    } catch (TRADEException e) {
+      log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    }
+    new Thread(() -> {
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        log.error("[handleMessage] exception sleeping in clearDisplay thread");
+      }
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[handleMessage] Exception displaying text", e);
+      }
+    }).start();
   }
 
   /**
@@ -230,6 +275,9 @@ public class ChatAdapter extends GuiAdapter {
   protected void handleMessage(JsonObject message) {
     if (message.has("method") && message.get("method").getAsString().equals("startup")) {
       onConnect();
+      return;
+    } else if (message.has("method") && message.get("method").getAsString().equals("sendAgents")) {
+      sendDiarcAgents(diarcAgents);
       return;
     }
 
@@ -243,6 +291,8 @@ public class ChatAdapter extends GuiAdapter {
             .setAddressee(recipient)
             .setIsInputUtterance(true)
             .build();
+
+    //signalAvaExternalCommandReceived();
 
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints()

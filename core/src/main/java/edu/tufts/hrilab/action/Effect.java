@@ -121,9 +121,9 @@ public class Effect implements Serializable {
             }
           }
         }
-        Goal obs = new Goal(actor, predicate, observable);
+        Goal obs = Goal.createGoal(actor, predicate, observable);
         ActionInterpreter observer = ActionInterpreter.createInterpreterFromContext(obs, observationContext);
-        log.debug("Starting observer goal: " + observer.getGoal());
+        log.debug("Starting observer goal: {}", observer.getGoal());
         observer.call();
 
         // return results if was able to observe
@@ -132,9 +132,9 @@ public class Effect implements Serializable {
         }
       } else {
         if (observable == Observable.TRUE) {
-          log.error("No observer for '" + this + "'");
+          log.error("No observer for '{}'", this);
         } else {
-          log.trace("No observer for '" + this + "'");
+          log.trace("No observer for '{}'", this);
         }
       }
     }

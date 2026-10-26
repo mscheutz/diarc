@@ -32,7 +32,7 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
     private ABBAreaConsultant areaConsultant;
     private ABBLocationConsultant locationConsultant;
     String service = "llamahf";
-    String model = "Meta-Llama-3-70B-Instruct";
+    String model = "Meta-Llama-3.1-70B-Instruct";
 
     @Override
     public void runConfiguration() {
@@ -74,7 +74,7 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
         }
 
         createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.01", service, model));
-        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
+        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickandplace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
         createInstance(edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent.class, "-service pickAndPlaceLLMParser");
 
         createInstance(ReferenceResolutionComponent.class);
@@ -95,14 +95,15 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
                         + "-asl dialogue/nlg.asl "
                         + "-asl dialogue/nlu.asl "
                         + "-asl dialogue/handleSemantics.asl "
+                        + "-asl demos/queueEM.asl "
                         + "-asl demos/foodOrdering/prepareFood.asl "
                         + "-asl demos/foodOrdering/prepareFoodPerception.asl "
                         + "-asl demos/foodOrdering/cookingActions.asl "
                         + "-asl demos/foodOrdering/humanActions.asl "
                         + "-asl demos/foodOrdering/ordering.asl "
                         + "-asl demos/foodOrdering/yumiInitPickAndPlace.asl "
-                        + "-goal listen(self:agent) "
-                        + "-goal init(self:agent) ";
+                        + "-goal listen(self:agent) ";
+                        //+ "-goal init(self:agent) ";
 
         createInstance(GoalManagerComponent.class, gmArgs);
 

@@ -6,6 +6,7 @@ package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.MultiRobotCaddyDemoMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -40,9 +41,9 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         PerformanceMeasures.setSeed(randomNumberSeed);
         addServiceToObserve("reportRecognizedSpeech", Utterance.class);
         addServiceToObserve("submitGoal", Predicate.class);
-        addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
-        //TODO:brad: is this signature used in this test?
+        addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class,Long.class,Symbol.class);
         addServiceToObserve("sayText", String.class);
+        addServiceToObserve("sayText", String.class, Boolean.class);
         addServiceToObserve("assertBelief", Term.class);
         addServiceToObserve("retractBelief", Term.class);
         addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
@@ -62,9 +63,9 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("goToPose", String.class, Symbol.class);
         addServiceToObserve("goToPose", Symbol.class);
         addServiceToObserve("releaseObject", String.class, Symbol.class, Float.class);
-        addServiceToObserve("waitForResponse", Predicate.class);
-        addServiceToObserve("waitForResponse", Predicate.class, Long.class);
-        addServiceToObserve("goToPose", Symbol.class);
+        addServiceToObserve("waitForResponse", String.class, List.class, Symbol.class);
+        addServiceToObserve("waitForResponse", String.class, List.class, Symbol.class, Symbol.class);
+        addServiceToObserve("waitForResponse", String.class, List.class, Symbol.class, Symbol.class, Long.class);
         addServiceToObserve("goToLocation", Symbol.class);
         addServiceToObserve("goToLoc", Symbol.class, Boolean.class);
         addServiceToObserve("moveTo", String.class, Symbol.class);

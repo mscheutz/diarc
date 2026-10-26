@@ -4,17 +4,12 @@
 
 package edu.tufts.hrilab.map;
 
-import edu.tufts.hrilab.map.PathAction;
 import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.vecmath.Matrix4d;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PathPlanner {

@@ -66,9 +66,16 @@
 
 () = finallyTest5() {
     try {
-      exit(FAIL)
+      exit(FAIL);
     } finally {
       tsc:cacheTestString("finallyTest5");
     }
 }
 
+() = tryCatchReturnTest() {
+    try {
+      return;
+    } finally {
+      tsc:cacheTestString("tryCatchReturnTest");
+    }
+}

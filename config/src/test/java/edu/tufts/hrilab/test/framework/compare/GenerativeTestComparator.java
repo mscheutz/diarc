@@ -55,7 +55,7 @@ public class GenerativeTestComparator extends DiarcTestComparator {
 
         //check if they match
         if (expectedOutput.serviceName.equals("submitGoal")) {
-          List<String> newExpected = new ArrayList(Arrays.stream(observedOutput.serviceArgs).toList());
+          List<String> newExpected = new ArrayList(Arrays.stream(expectedOutput.serviceArgs).toList());
           newExpected.set(newExpected.size()-1, "GOALID");
           List<String> newObserved = new ArrayList(Arrays.stream(observedOutput.serviceArgs).toList());
           newObserved.set(newObserved.size()-1, "GOALID");

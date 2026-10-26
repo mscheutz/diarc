@@ -63,12 +63,9 @@ public class ExecutionManagerTest {
     RootContext rootContext = new RootContext(new ActionConstraints(), sm);
     em = ExecutionManager.createInstance(ExecutionManager.class, sm, rootContext, new ArrayList<>());
 
-//    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
-
     ActionDBEntry.Builder lookforBuilder = new ActionDBEntry.Builder("lookfor");
     lookforBuilder.addRole(new ActionBinding.Builder("?loc", Symbol.class).build());
     lookforBuilder.addRole(new ActionBinding.Builder("?obj", Symbol.class).build());
-//    lookforBuilder.addResourceLock("motionLock");
     lookforBuilder.setTimeout(1L);
     lookforBuilder.setCost("0.23");
     Predicate pc = Factory.createPredicate("located(?obj)");
@@ -81,7 +78,6 @@ public class ExecutionManagerTest {
     doneBuilder.addRole(new ActionBinding.Builder("!value", Double.class).setIsLocal(true).build());
     doneBuilder.addRole(new ActionBinding.Builder("!theta", Double.class).setIsLocal(true).build());
     doneBuilder.addRole(new ActionBinding.Builder("!phi", Double.class).setIsLocal(true).build());
-//    doneBuilder.addResourceLock("motionLock");
     doneBuilder.setCost("0.5");
     Predicate pc2 = Factory.createPredicate("done(?actor, ?partner)");
     Effect ef2 = new Effect(pc2, EffectType.ALWAYS);
@@ -91,19 +87,15 @@ public class ExecutionManagerTest {
     //TODO: Update actions to use new resources when integrated.
 
     ActionDBEntry.Builder driveBuilder = new ActionDBEntry.Builder("drive");
-    //driveBuilder.addResourceLock("driveLock");
     driveBuilder.build(true);
 
     ActionDBEntry.Builder lookBuilder = new ActionDBEntry.Builder("look");
-    //lookBuilder.addResourceLock("visionLock");
     lookBuilder.build(true);
 
     ActionDBEntry.Builder speakBuilder = new ActionDBEntry.Builder("speak");
-    //speakBuilder.addResourceLock("speakerLock");
     speakBuilder.build(true);
 
     ActionDBEntry.Builder grabBuilder = new ActionDBEntry.Builder("grab");
-    //grabBuilder.addResourceLock("armLock");
     grabBuilder.build(true);
 
     ActionDBEntry.Builder updateSettingsBuilder = new ActionDBEntry.Builder("updateSettings");
@@ -118,14 +110,14 @@ public class ExecutionManagerTest {
   @Test
   public void testSubmitActionGoal() {
     Predicate goalPred = Factory.createPredicate("lookfor(self:agent,kitchen,ball)");
-    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     assertNotNull(goal);
   }
 
   @Test
   public void testSubmitStateGoal() {
     Predicate goalPred = Factory.createPredicate("goal(self:agent,located(ball))");
-    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     assertNotNull(goal);
   }
 
@@ -136,7 +128,7 @@ public class ExecutionManagerTest {
   public void testSubmitGoalNoActionFound() {
     log.warn("[testSubmitGoalNoActionFound] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,locatd(ball))"); // intentionally misspelled
-    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     em.joinOnGoal(goal.getId());
     assertTrue(goal.getStatus() == GoalStatus.FAILED);
     assertTrue(em.getActionStatus(goal.getId()) == ActionStatus.FAIL_NOTFOUND);
@@ -147,7 +139,7 @@ public class ExecutionManagerTest {
   public void testSubmitDone() {
     log.warn("[testSubmitDone] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,done(ball, ball))");
-    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     em.joinOnGoal(goal.getId());
     long gid = goal.getId();
     assertTrue(gid >= 0);
@@ -227,11 +219,11 @@ public class ExecutionManagerTest {
     } else if (goalPred.getName().equals("endActionLearning")) {
       priorityTier = PriorityTier.SKIPPENDING;
     }
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriorityTier(priorityTier);
     g.setPriority(priority);
 
-    em.submitGoal(g, ExecutionType.ACT);
+    em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -241,10 +233,11 @@ public class ExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
-    em.submitGoal(g, executionType);
+    g.setExecutionType(executionType);
+    em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {

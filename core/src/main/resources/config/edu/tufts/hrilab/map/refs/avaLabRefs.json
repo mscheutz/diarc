@@ -1,0 +1,184 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_5:location",
+      "variable": "X",
+      "properties": [
+        "evans office(X)"
+      ],
+      "position": [
+        4.879565937760985,
+        -0.9520983869870403,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.7222051225231458,
+        0.6916789435867828
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "X",
+      "properties": [
+        "marlows office(X)"
+      ],
+      "position": [
+        -4.169613576360732,
+        -0.125546749928052,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.736046249849263,
+        0.6769312506324673
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "X",
+      "properties": [
+        "hall door(X)"
+      ],
+      "position": [
+        -9.862335615892137,
+        0.06918162964362193,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9237599657125468,
+        0.3829719647007525
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "X",
+      "properties": [
+        "front door(X)"
+      ],
+      "position": [
+        10.2817123065347,
+        -2.355298922811134,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.8042602956933788,
+        0.5942771884997766
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X",
+      "properties": [
+        "spot(X)"
+      ],
+      "position": [
+        0.5930774679167791,
+        4.765040743330316,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.8692320717678385,
+        0.49440429347871895
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "fetch(X)"
+      ],
+      "position": [
+        -3.82839785532903,
+        6.127327781219208,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.7156756020914111,
+        0.6984328404156667
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "back desk(X)"
+      ],
+      "position": [
+        -3.588877078438104,
+        9.681683158043134,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.5061439919515802,
+        0.8624489894546336
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "control room(X)"
+      ],
+      "position": [
+        -10.80632285834037,
+        1.31833200796242,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.1930164856931207,
+        0.9811955137742313
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        0.01844189890799627,
+        0.8192509848405358,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7211023729570372,
+        0.6928285269211496
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "X",
+      "properties": [
+        "petes desk(X)"
+      ],
+      "position": [
+        -3.35464590363716,
+        3.316396572676445,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.969613786346868,
+        0.24464076791510095
+      ]
+    }
+  ]
+}

@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.cognex.consultant;
 
-import edu.tufts.hrilab.abb.AbbCognexResult;
 import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
@@ -12,6 +11,10 @@ import edu.tufts.hrilab.fol.Variable;
 public class CognexReference extends Reference {
   public CognexResult result = null; //token
   public CognexJob cognexJob; //type
+
+  public CognexReference() {
+    super(null, null);
+  }
 
   @Override
   public String toString() {

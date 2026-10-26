@@ -19,10 +19,11 @@ team(self).
 /*rules about who the agent is obliged to listen to */
 %% supervisors
 supervisor(brad).
-supervisor(james).
+supervisor(pete).
+supervisor(user).
 supervisor(eric).
 
 %% admin
 admin(brad).
-admin(james).
 admin(eric).
+admin(user).

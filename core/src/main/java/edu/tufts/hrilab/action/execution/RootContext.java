@@ -65,8 +65,8 @@ public class RootContext extends Context {
   }
 
   @Override
-  public void setStatus(ActionStatus eStatus, Justification justification) {
-
+  public boolean setStatus(ActionStatus eStatus, Justification justification) {
+    return true;
   }
 
   /**

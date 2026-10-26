@@ -6,14 +6,15 @@ package edu.tufts.hrilab.nao;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.vecmath.Point3d;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import javax.vecmath.Point3d;
 
 import static java.lang.Math.abs;
 

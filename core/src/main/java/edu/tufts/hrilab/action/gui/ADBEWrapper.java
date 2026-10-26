@@ -23,7 +23,7 @@ public class ADBEWrapper {
 
   public ADBEWrapper(ActionDBEntry adbe) {
     action = adbe;
-    name = adbe.getType();
+    name = adbe.getMethodName();
   }
 
   public String getID() {

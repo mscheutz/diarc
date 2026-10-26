@@ -186,7 +186,7 @@ public class ObservationContext extends ArgumentBasedContext {
 
     // get possible observations
 //    List<ActionDBEntry> obsDBEntries = Database.getInstance().getObservers(actor, boundStateToObserve);
-    Goal goal = new Goal(actor, boundStateToObserve, Observable.TRUE);
+    Goal goal = Goal.createGoal(actor, boundStateToObserve, Observable.TRUE);
     ParameterizedAction obsAction = ActionSelector.getInstance()
                                    .selectActionForGoal(goal, this.constraints, this.stateMachine);
 

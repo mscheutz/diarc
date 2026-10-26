@@ -1,0 +1,12 @@
+{
+  "testName" : "currentLocationITKTest",
+  "testlets" : [ {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  }, {
+    "serviceCalls" : [ ]
+  } ]
+}

@@ -15,8 +15,6 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
-import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 
@@ -64,12 +62,10 @@ public class ActionContextTest {
   @BeforeClass
   public static void setupClass() {
     Database.getInstance();
-    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
 
     ActionDBEntry.Builder lookforBuilder = new ActionDBEntry.Builder("lookfor");
     lookforBuilder.addRole(new ActionBinding.Builder("?loc",edu.tufts.hrilab.fol.Symbol.class).build());
     lookforBuilder.addRole(new ActionBinding.Builder("?obj",edu.tufts.hrilab.fol.Symbol.class).build());
-    lookforBuilder.addResourceLock("motionLock");
     lookforBuilder.setCost("0.23");
     lookforBuilder.addEffect(new Effect(Factory.createPredicate("located(?loc,?obj)"), EffectType.SUCCESS));
     lookforBuilder.addEffect(new Effect(Factory.createPredicate("located(?obj)"), EffectType.SUCCESS));
@@ -104,7 +100,6 @@ public class ActionContextTest {
     ActionDBEntry.Builder searchforBuilder = new ActionDBEntry.Builder("searchfor");
     searchforBuilder.addRole(new ActionBinding.Builder("?loc",edu.tufts.hrilab.fol.Symbol.class).build());
     searchforBuilder.addRole(new ActionBinding.Builder("?obj",edu.tufts.hrilab.fol.Symbol.class).build());
-    searchforBuilder.addResourceLock("motionLock");
     searchforBuilder.setCost("0.23");
 
     searchforBuilder.addEventSpec(new EventSpec(EventSpec.EventType.CONTROL, "if"));
@@ -118,7 +113,7 @@ public class ActionContextTest {
   }
 
   private Context setupActionContext(Predicate goalPredicate) {
-    Goal g = new Goal(actor, goalPredicate);
+    Goal g = Goal.createGoal(actor, goalPredicate);
     Context goalContext = root.addEvent(g, sm);
     goalContext.setupNextStep(); // perform action selection for goal
     Context actionContext = goalContext.getChildContexts().get(0);
@@ -129,7 +124,6 @@ public class ActionContextTest {
   private Context setupUnallowedAction() {
     ActionDBEntry.Builder unallowedBuilder = new ActionDBEntry.Builder("hit");
     unallowedBuilder.addRole(new ActionBinding.Builder("?target",edu.tufts.hrilab.fol.Symbol.class).build());
-    unallowedBuilder.addResourceLock("motionLock");
     unallowedBuilder.setCost("0.23");
 
     unallowedBuilder.addEffect(new Effect(Factory.createPredicate("moved(?target)"), EffectType.ALWAYS));
@@ -205,20 +199,6 @@ public class ActionContextTest {
     root.getConstraints().addForbiddenAction("hit");
     Context badContext = setupUnallowedAction();
     assertTrue(badContext instanceof FailureContext);
-  }
-
-  @Ignore
-  @Test
-  public void testResourceLocks() {
-    Context lookforContext = setupActionContext(Factory.createPredicate("located(ball)"));
-
-    Goal g = new Goal(actor, Factory.createPredicate("located(ball)"));
-    ActionInterpreter ai = ActionInterpreter.createInterpreterFromGoal(g, root, sm, ExecutionType.ACT);
-    assertNotNull(ai);
-    assertTrue(lookforContext.acquireLocks(ai, true));
-
-    ActionResourceLock lock = ActionResourceLock.getLock("motionLock");
-    assertEquals(lock.owner.peek(), ai);
   }
 
   @Test

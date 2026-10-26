@@ -41,12 +41,17 @@ public class Resolver {
   static class ConsultantInfo {
     final String kbName;
     final TRADEServiceInfo tsi;
-    final TRADEServiceConstraints tsc;
+    final String[] groups;
 
-    ConsultantInfo(String kbName, TRADEServiceInfo tsi, TRADEServiceConstraints tsc) {
+    ConsultantInfo(String kbName, TRADEServiceInfo tsi, String[] groups) {
       this.kbName = kbName;
       this.tsi = tsi;
-      this.tsc = tsc;
+      this.groups = groups;
+    }
+
+    // a fresh one per lookup, the setters on it mutate in place and lookups run on several threads
+    TRADEServiceConstraints tsc() {
+      return new TRADEServiceConstraints().inGroups(groups);
     }
 
     @Override
@@ -70,8 +75,7 @@ public class Resolver {
           log.error("[updateConsultCache] exception calling getKBName", e);
         }
         String[] groupArr = c.getGroups().toArray(new String[0]);
-        TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
-        consultants.add(new ConsultantInfo(name, c, tsc));
+        consultants.add(new ConsultantInfo(name, c, groupArr));
       }
     } else {
       // filter available consultants based on group information
@@ -114,8 +118,7 @@ public class Resolver {
             log.error("[updateConsultCache] exception calling getKBName", e);
           }
           String[] groupArr = cGroups.toArray(new String[0]);
-          TRADEServiceConstraints tsc = new TRADEServiceConstraints().inGroups(groupArr);
-          consultants.add(new ConsultantInfo(name, c, tsc));
+          consultants.add(new ConsultantInfo(name, c, groupArr));
         }
       }
     }
@@ -127,7 +130,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         List<Term> handled = TRADE.getAvailableService(
-            c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+            c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
         List<Property> props = handled.stream().map(Property::new).collect(Collectors.toList());
         propertyCache.put(c, props);
       } catch (Exception e) {
@@ -148,7 +151,7 @@ public class Resolver {
     //call convertToType va tsi, return results
     try {
       return TRADE.getAvailableService(
-          matching.get(0).tsc.name("convertToType").argTypes(Symbol.class, Class.class))
+          matching.get(0).tsc().name("convertToType").argTypes(Symbol.class, Class.class))
           .call(entityJavaType, ref, entityJavaType);
     } catch (TRADEException e) {
       log.error("[getEntityForReference] exception calling convertToType", e);
@@ -166,7 +169,7 @@ public class Resolver {
     boolean success = false;
     try {
       success = TRADE.getAvailableService(
-          matching.get(0).tsc.name("assertProperties").argTypes(Symbol.class, List.class))
+          matching.get(0).tsc().name("assertProperties").argTypes(Symbol.class, List.class))
           .call(Boolean.class, ref, properties);
     } catch (Exception e) {
       log.error("exception calling assertProperties on: " + matching.get(0).kbName, e);
@@ -180,7 +183,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         List<Term> handled = TRADE.getAvailableService(
-            c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+            c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
 
         //check if all of the members of properties match (name and arg semantic type) the properties handled by any of the consultants
         boolean matches = properties.stream().anyMatch(q ->
@@ -204,10 +207,10 @@ public class Resolver {
     List<Variable> vars = Utilities.getUnboundVariables(properties);
     try {
       Map<Variable, Symbol> m = TRADE.getAvailableService(
-          matchingConsultants.get(0).tsc.name("createReferences").argTypes(List.class))
+          matchingConsultants.get(0).tsc().name("createReferences").argTypes(List.class))
           .call(Map.class, vars);
       TRADE.getAvailableService(
-          matchingConsultants.get(0).tsc.name("assertProperties").argTypes(Map.class, Double.class, List.class))
+          matchingConsultants.get(0).tsc().name("assertProperties").argTypes(Map.class, Double.class, List.class))
           .call(Boolean.class, m, 1.0, properties);
       if (m.size() > 1) {
         log.warn("[positReference] created more than 1 reference. Returning first reference. Properties: " + properties);
@@ -276,7 +279,7 @@ public class Resolver {
         for (ConsultantInfo c : consultants) {
           try {
             List<Term> handled = TRADE.getAvailableService(
-                c.tsc.name("getPropertiesHandled").argTypes()).call(List.class);
+                c.tsc().name("getPropertiesHandled").argTypes()).call(List.class);
             boolean matches = handled.stream().map(Property::new).anyMatch(cp -> cp.matches(p));
             if (matches) {
               cons.add(c);
@@ -298,7 +301,7 @@ public class Resolver {
       vars.add(new Variable(v.getName(), c.kbName));
       try {
         Map<Variable, Symbol> created = TRADE.getAvailableService(
-            c.tsc.name("createReferences").argTypes(List.class))
+            c.tsc().name("createReferences").argTypes(List.class))
             .call(Map.class, vars);
         newAssignments.putAll(created);
       } catch (Exception e) {
@@ -312,7 +315,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         TRADE.getAvailableService(
-            c.tsc.name("assertProperties").argTypes(Map.class, Double.class, List.class))
+            c.tsc().name("assertProperties").argTypes(Map.class, Double.class, List.class))
             .call(Boolean.class, new HashMap<>(newAssignments), 1.0, nonDSTerms);
       } catch (TRADEException e) {
         log.error("[completeSolutions] exception calling assertProperties", e);
@@ -429,7 +432,7 @@ public class Resolver {
         .findFirst();
     if (!match.isPresent()) throw new Exception("No consultant keyed with name " + v);
     return TRADE.getAvailableService(
-        match.get().tsc.name("getInitialDomain").argTypes(List.class))
+        match.get().tsc().name("getInitialDomain").argTypes(List.class))
         .call(List.class, new ArrayList<>());
   }
 
@@ -444,7 +447,7 @@ public class Resolver {
       log.debug("Chose consultant: " + consultantInfo.kbName);
       try {
         propLikelihood = TRADE.getAvailableService(
-            consultantInfo.tsc.name("process").argTypes(Term.class, Map.class))
+            consultantInfo.tsc().name("process").argTypes(Term.class, Map.class))
             .call(Double.class, prop.nonDSPredicateForm(), new HashMap<>(h.assignments()));
       } catch (Exception e) {
         log.error("[Assess] Exception calling process", e);
@@ -462,7 +465,7 @@ public class Resolver {
     for (ConsultantInfo c : consultants) {
       try {
         Map<Symbol, Double> entities = TRADE.getAvailableService(
-            c.tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+            c.tsc().name("getActivatedEntities").argTypes()).call(Map.class);
         result.putAll(entities);
       } catch (Exception e) {
         log.error("[getAllActivatedEntities] consultant: " + c.kbName, e);
@@ -479,7 +482,7 @@ public class Resolver {
     if (!match.isPresent()) throw new RuntimeException("No consultant keyed with groups " + groups);
     try {
       return TRADE.getAvailableService(
-          match.get().tsc.name("getActivatedEntities").argTypes()).call(Map.class);
+          match.get().tsc().name("getActivatedEntities").argTypes()).call(Map.class);
     } catch (TRADEException e) {
       log.error("[getActivatedEntities] consultant: " + match.get().kbName, e);
       return new HashMap<>();
@@ -532,7 +535,7 @@ public class Resolver {
         if (consultant.isPresent()) {
           try {
             List<Symbol> domain = TRADE.getAvailableService(
-                consultant.get().tsc.name("getInitialDomain").argTypes(List.class))
+                consultant.get().tsc().name("getInitialDomain").argTypes(List.class))
                 .call(List.class, new ArrayList<>());
             List<Map<Symbol, Symbol>> entries = new ArrayList<>();
             for (Symbol id : domain) {
@@ -577,7 +580,7 @@ public class Resolver {
     if (!consultantOpt.isPresent()) return new ArrayList<>();
     try {
       return TRADE.getAvailableService(
-          consultantOpt.get().tsc.name("getAssertedProperties").argTypes(Symbol.class))
+          consultantOpt.get().tsc().name("getAssertedProperties").argTypes(Symbol.class))
           .call(List.class, ref);
     } catch (TRADEException e) {
       log.error("[getProperties] call of getAssertedProperties for ref: " + ref + " from: " + consultantOpt.get().kbName, e);
@@ -635,7 +638,7 @@ public class Resolver {
     for (ConsultantInfo c : filteredConsultants) {
       try {
         List<Symbol> d = TRADE.getAvailableService(
-            c.tsc.name("getInitialDomain").argTypes(List.class))
+            c.tsc().name("getInitialDomain").argTypes(List.class))
             .call(List.class, new ArrayList<>());
         domain.addAll(d);
       } catch (Exception e) {
@@ -650,7 +653,7 @@ public class Resolver {
     for (ConsultantInfo c : filteredConsultants) {
       try {
         List<Term> asserted = TRADE.getAvailableService(
-            c.tsc.name("getAssertedProperties").argTypes(Symbol.class))
+            c.tsc().name("getAssertedProperties").argTypes(Symbol.class))
             .call(List.class, ref);
         asserted.stream().map(Property::new).forEach(propsList::add);
       } catch (Exception e) {

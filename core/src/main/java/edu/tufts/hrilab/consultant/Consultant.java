@@ -56,7 +56,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * Subscribers that must be notified when a new property is added to the consultant.
    */
-  private HashSet<TRADEServiceInfo> propertyNotificationSubscribers;
+  private Set<TRADEServiceInfo> propertyNotificationSubscribers;
 
   // TODO: consider replacing Class<T> with Factory<T> interface.
 
@@ -109,7 +109,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    * @param properties list of candidate properties
    * @return true if propertiesHandled is modified
    */
-  public boolean addPropertiesHandled(List<Term> properties) {
+  public boolean addPropertiesHandled(List<? extends Term> properties) {
     boolean propertiesAdded = false;
     for (Term property : properties) {
       if (propertiesHandled.stream().noneMatch(p -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(p, property))) {
@@ -245,13 +245,14 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   }
 
   /**
-   * A convenience method for creating references from within a DIARC component housing a Consultant instance.
+   * A convenience method for creating references from within a DIARC component housing a Consultant instance. The
+   * new reference is automatically added to this consultant.
    *
    * @param var        Variable associated with new reference (only important if properties contain more than one Variable)
    * @param properties semantic properties of reference
    * @return reference of type T
    */
-  public T createReference(Variable var, List<Term> properties) {
+  public T createReference(Variable var, List<? extends Term> properties) {
     T newRef = null;
 
     if (refConstructor == null) {
@@ -480,7 +481,11 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    */
   @Override
   public void registerForNewPropertyNotification(TRADEServiceInfo callback) {
-    propertyNotificationSubscribers.add(callback);
+    if (propertyNotificationSubscribers.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerForNewPropertyNotification] attempt to register duplicate callback, not adding");
+    } else {
+      propertyNotificationSubscribers.add(callback);
+    }
   }
 
   /**
@@ -498,12 +503,23 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    */
   @Override
   public void notifyNewPropertySubscribers() {
+    List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
     for (TRADEServiceInfo subscriber : propertyNotificationSubscribers) {
       try {
         subscriber.call(void.class);
       } catch (TRADEException e) {
         log.error("Could not make callback to: " + subscriber, e);
+        //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+          servicesToRemove.add(subscriber);
+        }
       }
+    }
+    //If a remote container has gone down without unregistering for notifications,
+    // then remove the service rather than continuously log errors.
+    for (TRADEServiceInfo service: servicesToRemove) {
+      log.info("[notifyDialogueHistorySubscribers] unregistering unavailable service from dialogue history notifications ");
+      unregisterForNewPropertyNotification(service);
     }
   }
 

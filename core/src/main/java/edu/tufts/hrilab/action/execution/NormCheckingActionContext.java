@@ -79,7 +79,7 @@ public class NormCheckingActionContext extends ActionContext {
 //        Simulation should reset its world state to the current state
 //        Try to perform a rollout in the simulated world; if it violates the norms, go to MCTS mode
     Predicate goalPred = getSignatureInPredicateForm();
-    Goal rolloutGoal = new Goal(getActor("?actor"), goalPred, Observable.FALSE);
+    Goal rolloutGoal = Goal.createGoal(getActor("?actor"), goalPred);
     Context newThis = createSimulatedEquivalent(false);
 
     //Get the observation from the real agent, and set the simagent's observation to it

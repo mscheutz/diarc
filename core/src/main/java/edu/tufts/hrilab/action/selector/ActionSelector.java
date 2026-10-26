@@ -62,6 +62,9 @@ public abstract class ActionSelector {
     return instance;
   }
 
+  /**
+   * Destroy ActionSelector singleton.
+   */
   public static void destroyInstance() {
     instanceLock.lock();
     try {
@@ -168,7 +171,7 @@ public abstract class ActionSelector {
 
   public ActionDBEntry selectActionForCommand(Symbol actor, String command, List<String> inputArguments, ActionConstraints constraints, StateMachine stateMachine){
 
-    return selectActionForGoal(new Goal(actor, Factory.createPredicate(command,inputArguments.toArray(new String[0]))),constraints,stateMachine).getEntry();
+    return selectActionForGoal(Goal.createGoal(actor, Factory.createPredicate(command,inputArguments.toArray(new String[0]))),constraints,stateMachine).getEntry();
 
   }
 }

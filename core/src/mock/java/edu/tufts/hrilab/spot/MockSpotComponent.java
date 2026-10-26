@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MockSpotComponent extends DiarcComponent implements SpotInterface {
-  MockMoveBaseComponent moveBase = createInstance(MockMoveBaseComponent.class, "", false);
+  MockMoveBaseComponent moveBase = createInstance(MockMoveBaseComponent.class, false);
 
   private String mapDescriptor = "location";
   private String refsConfigFile;
@@ -231,6 +231,11 @@ public class MockSpotComponent extends DiarcComponent implements SpotInterface {
 
   @Override
   public Justification goToPose(Symbol poseName) {
+    return new ConditionJustification(true);
+  }
+
+  @Override
+  public Justification goToSpecificPose(double x, double y, double z, double qx, double qy, double qz, double qw) {
     return new ConditionJustification(true);
   }
 

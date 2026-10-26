@@ -54,19 +54,19 @@ import java.lang.Integer;
     edu.tufts.hrilab.fol.Symbol !detectionArea;
 
     //TODO: resolve Japanese and English versions of this teaching template for respective demos/configs
-    //!bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pattern(area(X)));
-    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(area(X)));
+    //!bindings = act:askQuestionFromString("それはどこにありますか？", pattern(area(X)));
+    !bindings = act:askQuestionFromString("Where is it located?", pattern(area(X)));
     !area= op:get(!bindings, !x);
 
-    !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
-    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    !bindings = act:askQuestionFromString("Okay, what vision job is used to detect it?", job(X));
+    //!bindings = act:askQuestionFromString("OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!area,!job);
 
-    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
-    //!bindings = act:askQuestionFromString(?actor,"OK、どのあたりで?descriptorを探せばいいですか？", job(X));
-    !bindings = act:askQuestionFromString(?actor,"At which area should I look for a ?descriptor?", pattern(area(X)));
+    //!bindings = act:askQuestionFromString("OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString("OK、どのあたりで?descriptorを探せばいいですか？", job(X));
+    !bindings = act:askQuestionFromString("At which area should I look for a ?descriptor?", pattern(area(X)));
     !detectionArea = op:get(!bindings, !x);
 
     !right.act:goTo(!detectionArea);
@@ -117,7 +117,7 @@ import java.lang.Integer;
 
     act:perceiveEntityFromSymbol(?refId);
 
-    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", hold(X));
+    !bindings = act:askQuestionFromString("I see a ?itemType, can you show me how to grasp it?", hold(X));
     !response = op:get(!bindings, !x);
     if (~op:equalsValue(!response, none())) {
         act:defineGraspPointForDescriptor(?refId, ?itemType);
@@ -130,11 +130,6 @@ import java.lang.Integer;
 
 //Item definition
 () = defineItem[""](edu.tufts.hrilab.fol.Symbol ?itemName){
-    //TODO: implement methods that actually clean up various learning processes correctly
-    onInterrupt :{
-        suspend: tsc:pauseActionLearning(?actor,!scriptID);
-        resume: tsc:resumeActionLearning(?actor,!scriptID);
-    }
 
     java.lang.Integer !i =0;
     java.lang.Integer !optionIndex =0;
@@ -181,7 +176,7 @@ import java.lang.Integer;
         act:learnAction(!scriptID);
     }
     act:waitForActionLearningStart(!scriptID);
-    !bindings = act:askQuestionFromString(?actor,"Okay. How do I prepare a ?itemName ?",!endQuery);
+    !bindings = act:askQuestionFromString("Okay. How do I prepare a ?itemName ?",!endQuery);
 
     //generate new signature that is unique to model name
     op:log(warn, "[defineItem] ending learning for: !scriptID");
@@ -226,7 +221,7 @@ import java.lang.Integer;
 
   ?newItem=act:addItem(?newItem);
 
-  !bindings = act:askQuestionFromString(?actor,"What item is it like?", item(X));
+  !bindings = act:askQuestionFromString("What item is it like?", item(X));
   !oldItem = op:get(!bindings, !x);
   !oldScriptGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "prepare!oldItem(?actor)");
   op:log(debug, "osg !oldScriptGoal");
@@ -237,20 +232,20 @@ import java.lang.Integer;
   !likeGoal =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "like", !newScriptGoal,!oldScriptGoal);
   op:log(debug, "lg !likeGoal");
 
-  !bindings = act:askQuestionFromString(!speaker,"okay. what are the differences", mod(X,Y));
+  !bindings = act:askQuestionFromString("okay. what are the differences", mod(X,Y));
   !modification = op:get(!bindings, !x);
   !location = op:get(!bindings, !y);
   op:log(debug, "modification !modification location !location");
   act:modifyAction(!likeGoal,!modification,!location);
 
-  !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
+  !bindings = act:askQuestionFromString("okay. are there any more differences?", mod(X,Y));
   !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
   !modName = op:getName(!modification);
   while(op:!=(!modName,"none")){
     op:log(debug, "modification !modification location !location");
     act:modifyAction(!newScriptGoal,!modification,!location);
-    !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
+    !bindings = act:askQuestionFromString("okay. are there any more differences?", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
     !modName = op:getName(!modification);
@@ -268,44 +263,6 @@ import java.lang.Integer;
   act:modifyAction(!newScriptGoal,!modification,!location);
 
   act:generateResponseFromString("okay");
-}
-
-() = describeCurrentGoal["describes ?actor's current active task(s)"](){
-
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-    java.lang.String !status;
-    Predicate !goalPred;
-
-    !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:size(!goalPreds);
-    if(op:gt(!resultsSize,0)){
-        foreach(!goalPred: !goalPreds){
-            !status= op:getName(!goalPred);
-            !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
-            act:generateResponse(!goalPred);
-        }
-    } else {
-        act:generateResponseFromString("no current task");
-    }
-}
-
-() = describePendingGoals["describes ?actor's pending goals task"](){
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-
-    !goalPreds = act:getPendingGoals();
-    !resultsSize = op:size(!goalPreds);
-
-    if(op:gt(!resultsSize,0)){
-       foreach(!goalPred: !goalPreds){
-           act:generateResponse(!goalPred);
-       }
-    } else{
-       act:generateResponseFromString("no pending tasks");
-    }
-
 }
 
 () = resetDomain(){
@@ -329,3 +286,39 @@ import java.lang.Integer;
          }
     }
 }
+
+//Example of Script which would have to be used if allowing language like "do X now" alongside freeze functionality.
+//Currently using that language, but we have implemented a more comprehensive suspend which prevents need for freeze.
+//() = submitWithUrgentPriority(Predicate ?goalPredicate) {
+//    java.util.List !goalPreds;
+//    java.lang.Integer !resultsSize=0;
+//    Predicate !goalPred;
+//    java.lang.String !name;
+//    java.lang.Boolean !isFrozen = false;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = URGENT;
+
+//    op:log("info","[submitWithUrgentPriority] ?goalPredicate");
+
+//    !goalPreds = tsc:getSystemGoalsPredicates();
+//    op:log("info","[submitWithUrgentPriority] !goalPreds");
+//    !resultsSize = op:size(!goalPreds);
+//    if(op:gt(!resultsSize,0)){
+//        foreach(!goalPred: !goalPreds){
+//            !goalPred= op:getArg(!goalPred,0);
+//            !name = op:getName(!goalPred);
+//            op:log("info","[submitWithUrgentPriority] !name");
+//            if (op:equalsValue(!name,"freeze")) {
+//                !isFrozen = op:newObject("java.lang.Boolean", "true");
+//            }
+//        }
+//    }
+
+      //TODO: what to do here? Ask to unfreeze? Report status as frozen and say submitted with high priority?
+//    if (op:equals(!isFrozen,true)) {
+//        op:log("info","[submitWithUrgentPriority] ending freeze so goal can be executed immediately");
+//        act:endFreeze();
+//    }
+
+//    act:submitGoal(?goalPredicate,!execType,!priorityTier);
+//}

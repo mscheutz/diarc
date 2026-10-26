@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.action.goal;
 
-import edu.tufts.hrilab.action.execution.ExecutionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,10 +13,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+// TODO: why doesn't this extend Goal?
 public class PendingGoal {
   private static final Logger log = LoggerFactory.getLogger(PendingGoal.class);
   private final Goal goal;
-  private final ExecutionType executionType;
   private volatile boolean isPending = true;
   private final Lock pendingLock = new ReentrantLock();
   private final Condition pendingLockCondition = pendingLock.newCondition();
@@ -25,17 +24,12 @@ public class PendingGoal {
   private Future previousAIFuture = null;
   private GoalStatus previousAIStatus;
 
-  public PendingGoal(Goal goal, ExecutionType executionType) {
+  public PendingGoal(Goal goal) {
     this.goal = goal;
-    this.executionType = executionType;
   }
 
   public Goal getGoal() {
     return goal;
-  }
-
-  public ExecutionType getExecutionType() {
-    return executionType;
   }
 
   /**

@@ -43,6 +43,8 @@ public class AgentTeam {
         resources.put(name, new Resource(this, name));
         Symbol learningResource = Factory.createSymbol("learning");
         resources.put(learningResource, new Resource(this,learningResource));
+        Symbol freezeResource = Factory.createSymbol("freeze");
+        resources.put(freezeResource, new Resource(this,freezeResource));
         actionLearning = new ActionLearning(em, em.getActionLearningGuiFlag());
     }
 
@@ -55,7 +57,11 @@ public class AgentTeam {
         members.put(member.getName(), member);
     }
 
-    protected void addParentTeam(AgentTeam parentTeam) {
+    protected void removeMember(AgentTeam member) {
+        members.remove(member.name);
+    }
+
+    protected void setParentTeam(AgentTeam parentTeam) {
         this.parentTeam = parentTeam;
     }
 
@@ -69,6 +75,10 @@ public class AgentTeam {
 
     public Set<Symbol> getMemberNames() {
         return getMembers().keySet();
+    }
+
+    public boolean isMember(Symbol agent) {
+        return members.containsKey(agent.toUntyped());
     }
 
     public AgentTeam getMember(Symbol memberName) {
@@ -127,7 +137,7 @@ public class AgentTeam {
     public Set<Goal> getActiveGoals() {
         try {
             goalsLock.lock();
-            return activeGoals.keySet();
+            return new HashSet<>(activeGoals.keySet());
         } finally {
             goalsLock.unlock();
         }
@@ -192,8 +202,20 @@ public class AgentTeam {
         actionLearning.addGoal(g);
     }
 
+    protected boolean waitForLearningStateUpdate(Predicate action) {
+        return actionLearning.waitForLearningStateUpdate(action);
+    }
+
+    protected void interruptWaitForLearningStateUpdate(Predicate action) {
+        actionLearning.interruptWaitForLearningStateUpdate(action);
+    }
+
     protected boolean shouldExecute() {
         return actionLearning.shouldExecute();
+    }
+
+    protected Predicate getActiveLearningSignature() {
+        return actionLearning.getActiveLearningSignature();
     }
 
     //// Resources ////

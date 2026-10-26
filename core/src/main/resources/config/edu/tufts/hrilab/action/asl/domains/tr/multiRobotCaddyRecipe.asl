@@ -37,14 +37,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Predicate !tmp;
     Predicate !question;
 
-    !bindings = act:askQuestionFromString(?actor,"What container does it use?", val(X));
+    !bindings = act:askQuestionFromString("What container does it use?", val(X));
     !containerPred = op:get(!bindings, !x);
 
     //check if we know about any container of the specified type, if not ask
     if(act:knowsContainerLocation(!containerPred)){
         op:log(debug,"don't know the location of any !containerPred , need to ask");
         (!question) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","where(is(there,num(1,!containerPred)))");
-        (!bindings) = act:askQuestion(?actor,!question, val(X));
+        (!bindings) = act:askQuestion(!question, val(X));
         (!contentLocation) = op:get(!bindings, !x);
         (!newRefsList) = act:positContents(!contentLocation);
 
@@ -77,7 +77,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Symbol !number;
     Symbol !contained;
 
-    !bindings = act:askQuestionFromString(?actor,"Okay. What does a ?descriptor contain?", val(X));
+    !bindings = act:askQuestionFromString("Okay. What does a ?descriptor contain?", val(X));
     !contentType = op:get(!bindings, !x);
     op:log("debug","contentType: !contentType");
 
@@ -88,13 +88,13 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
             (!number) = op:invokeMethod(!contentType, "get", 0);
             (!contained) = op:invokeMethod(!contentType, "get", 1);
             (!question) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","where(are(there,num(!number,!contained)))");
-            (!bindings) = act:askQuestion(?actor,!question, val(X));
-            //(!bindings) = act:askQuestionFromString(?actor,"where are there !contentType", val(X));
+            (!bindings) = act:askQuestion(!question, val(X));
+            //(!bindings) = act:askQuestionFromString("where are there !contentType", val(X));
             (!contentLocation) = op:get(!bindings, !x);
             act:positContents(!contentLocation);
             //TODO:brad: ask where item can be found
         }
-        (!bindings) = act:askQuestionFromString(?actor,"does it contain anything else?", val(X));
+        (!bindings) = act:askQuestionFromString("does it contain anything else?", val(X));
         (!contentType) = op:get(!bindings, !x);
         op:log("debug","contentType: !contentType");
     }
@@ -348,16 +348,11 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 // generates a recovery plan for a failure, runs performance assessment, and submits the plan
-() = generateRecoveryPlanAndAssess(Predicate ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = generateRecoveryPlanAndAssess(List ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
 
     recovery: {
       actionStatuses: {FAIL_POSTCONDITIONS}
     }
-
-    edu.tufts.hrilab.action.ActionConstraints !ac;
-    edu.tufts.hrilab.action.state.StateMachine !sm;
-    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
-    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
 
     Predicate !plannedActionFull;
     Predicate !goalPred;
@@ -369,14 +364,15 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Symbol !planningActor;
 
     // use self:agent as planning actor so all diarc agents can be used in planning -- is this necessary?
-    !planningActor = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "self", "agent");
+    !planningActor = op:createSymbol("self", "agent");
 
-    !bradAsHumanActor = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(brad, human)");
-    !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", !planningActor);
+    !bradAsHumanActor = op:createPredicate("object(brad, human)");
+    !plannedActionFull = op:createPredicate("planned", !planningActor);
+    op:log("info", ">>>> 1 plannedActionFull: !plannedActionFull");
 
     Predicate !goalState;
-    !goalState = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", ?failureReasons);
-    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal", !planningActor, !goalState);
+    !goalState = op:createPredicate("and", ?failureReasons);
+    !goalPred = op:createPredicate("goal", !planningActor, !goalState);
 
     Predicate !actionDescription;
 
@@ -393,6 +389,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     java.util.Map !bindings;
     Predicate !shouldExecuteResponse;
 
+    // for submitting the planned action on behalf of whoever asked for the original goal
+    Symbol !submitter = this:getOriginalSubmitter();
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
+    java.lang.Long !priority;
+
     op:log(debug, "[generateRecoveryPlanAndAssess] generated goal predicate !goalPred");
 
     //Generate failure response so it can be said if need be.
@@ -407,21 +409,16 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !executionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "execution(!planningActor)");
     !reportFailurePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "failed", !executionPred, !becausePred);
 
-    //get the plan with goal ?goalPred
-    !sm = tsc:getStateMachine();
-    !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
-    !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
+    //get the plan with goal !goalPred
+    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction = tsc:selectActionForGoal(!goalPred);
 
-    if (op:isNull(!actionSelector)) {
-        op:log(error, "[generateRecoveryPlanAndAssess] action selector is null!");
-    }
-    !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", !goalPred);
-    !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
     //check if there was a valid plan using diarc agents. otherwise add "brad" as an actor to the domain and resubmit, then remove brad from the domain
     if (~op:isNull(!parameterizedAction)) {
         op:log(debug, "[generateRecoveryPlanAndAssess] successfully got planned parameterizedAction for !goalPred for self");
         //do performance assessment on this goal
+    op:log("info", ">>>> 2 plannedActionFull: !plannedActionFull");
         act:estimatePerformanceMeasures(!plannedActionFull, before);
+    op:log("info", ">>>> 2 plannedActionFull: !plannedActionFull");
         op:log(debug, "[generateRecoveryPlanAndAssess] performances measures run for planned action for goal !goalPred");
 
         //say that it failed
@@ -447,12 +444,17 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
         //Ask user for desire to execute the found plan
 
-        (!bindings) = act:askQuestionFromString(!planningActor,"Do you want me to execute it?", val(X));
+        (!bindings) = act:askQuestionFromString("Do you want me to execute it?", val(X));
         (!shouldExecuteResponse) = op:get(!bindings, !x);
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            op:log("info", ">>>> 4 plannedActionFull: !plannedActionFull");
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            op:log("info", ">>>> 5 plannedActionFull: !plannedActionFull");
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            op:log("info", ">>>> 6 plannedActionFull: !plannedActionFull");
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
@@ -471,9 +473,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         op:log(debug, "[generateRecoveryPlanAndAssess] failed to get valid plan for self, re-generating plan with brad added to domain");
         act:assertBelief(!bradAsHumanActor);
 
-        !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", "fetch:fetch");
+        !plannedActionFull = op:createPredicate("planned", "fetch:fetch");
 
-        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+        !parameterizedAction = tsc:selectActionForGoal(!goalPred);
 
         act:retractBelief(!bradAsHumanActor);
         if (op:isNull(!parameterizedAction)) {
@@ -485,12 +487,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         act:generateResponse(!reportFailurePred);
 
         //Ask user for desire to execute the found plan
-        (!bindings) = act:askQuestionFromString(!planningActor,"I have found a plan to recover, but it requires your help, can you help execute it now?", val(X));
+        (!bindings) = act:askQuestionFromString("I have found a plan to recover, but it requires your help, can you help execute it now?", val(X));
         (!shouldExecuteResponse) = op:get(!bindings, !x);
 
         if (op:equalsValue(!shouldExecuteResponse,yes())) {
             //finally, execute the planned action
-            !gid = act:submitGoal(!plannedActionFull);
+            !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
+            !priority = act:getPriorityForGoal(!plannedActionFull);
+            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
             !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
@@ -522,7 +526,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !locStr = op:invokeMethod(?area, "getName");
 
     // "Could you put a bandagebox at table E"
-    !bindings = act:askQuestionFromString(?actor, "Could you put a !propertyStr at !locStr ?", val(X));
+    !bindings = act:askQuestionFromString( "Could you put a !propertyStr at !locStr ?", val(X));
     !shouldExecuteResponse = op:get(!bindings, !x);
     if (~op:equalsValue(!shouldExecuteResponse,yes())) {
       op:log("info", "?actor refused to put ?propertyType at ?area");
@@ -532,7 +536,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
 () = describeYourPlan() {
 
-    Symbol !plannedActionFull;
+    Predicate !plannedActionFull;
     Predicate !actionDescription;
 
     !plannedActionFull = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "planned", ?actor);

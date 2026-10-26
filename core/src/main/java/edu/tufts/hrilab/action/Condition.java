@@ -140,7 +140,7 @@ public class Condition implements Serializable {
       ObservationContext observationContext = context.getConditionObserver(this, predicate);
       if (observationContext != null) {
         Symbol actor = (Symbol) context.getArgumentValue("?actor");
-        Goal goal = new Goal(actor, predicate, observe);
+        Goal goal = Goal.createGoal(actor, predicate, observe);
         ActionInterpreter observer = ActionInterpreter.createInterpreterFromContext(goal, observationContext);
         log.debug("Starting observer goal:" + observer.getGoal());
         observer.call();

@@ -78,11 +78,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -968,7 +965,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     final_transform.mul(pose_transform);
     final_transform.mul(ee_transform);
     Pose ee_adjusted_pose = Convert.convertToPose(final_transform);
-    return Convert.convertToPose(ee_adjusted_pose);
+    return Convert.convertToPair(ee_adjusted_pose);
   }
 
   @Override
@@ -1089,7 +1086,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     final_y -= start_y;
     double final_z = 0;
 
-    Quat4d quat = edu.tufts.hrilab.util.Convert.eulerToQuat4d(final_x, final_y, final_z);
+    Quat4d quat = edu.tufts.hrilab.util.Convert.convertToQuat4d(final_x, final_y, final_z);
 
     // Find a point sufficiently far away from the starting object from which to begin the push
 
@@ -1109,7 +1106,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       return null;
     }
 
-    return Convert.convertToPose(poses_ros.get(0));
+    return Convert.convertToPair(poses_ros.get(0));
   }
 
   protected List<Pose> getPoses(List<String> list_names) {

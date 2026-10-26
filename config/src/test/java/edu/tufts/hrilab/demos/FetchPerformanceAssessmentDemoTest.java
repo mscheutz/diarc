@@ -38,6 +38,7 @@ public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrati
     PerformanceMeasures.setSeed(randomNumberSeed);
     addServiceToObserve("reportRecognizedSpeech", Utterance.class);
     addServiceToObserve("sayText", String.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);
   }
 
   @After

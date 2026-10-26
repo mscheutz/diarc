@@ -6,6 +6,8 @@ package edu.tufts.hrilab.asr.sphinx4;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -14,6 +16,8 @@ import edu.cmu.sphinx.api.SpeechResult;
 import edu.cmu.sphinx.api.SphinxRecognizer;
 import edu.cmu.sphinx.api.Configuration;
 
+import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -24,6 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import edu.cmu.sphinx.result.WordResult;
 
 import edu.tufts.hrilab.asr.sphinx4.gui.Sphinx4GUIPanel;
+import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -36,48 +41,47 @@ import javax.sound.sampled.Mixer;
 public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface {
 
   private String recognizerConfig;
-  private Configuration configuration;
+  private Configuration configuration = new Configuration();;
   private SphinxRecognizer recognizer;
   private RecordLoop recLoop = null;
   private ProcessingLoop processLoop = null;
 
   private Queue<SpeechResult> speechResults = new LinkedList<>();
 
-  boolean useDefaultConfig;
+  private boolean useDefaultConfig = true;
   private final String defaultRecognizerConfig = "resource:/config/edu/tufts/hrilab/asr/sphinx4/defaultConfig.xml";
 
   private final String defaultAcousticModel = "resource:/edu/cmu/sphinx/models/en-us/en-us";
-  private final String defaultDictionary = "resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict";
+  private String dictionary = "resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict";
   private final String defaultLanguageModel = "resource:/edu/cmu/sphinx/models/en-us/en-us.lm.bin";
-  private boolean useGrammar;
+  private boolean useGrammar = false;
   private String grammarName;
 
-  private boolean selectMixer;
-  private int mixerID;
+  private int mixerID = -1;
 
-  private boolean shouldRecord;
-  private boolean tempIgnore;
+  private boolean shouldRecord = false;
+  private boolean tempIgnore = false;
 
   //  //this holds the most recently recognized text
 //  private final Object mostRecentTextLock = new Object();
-  private String mostRecentText;
+  private String mostRecentText = "";
 //  private boolean recievedResult;
 
   public enum ControlState {
     ACCEPT, CONFIRM, REJECT
   }
 
-  private ControlState controlState;
-  private final Queue<String> recognizedQ;
+  private ControlState controlState = ControlState.ACCEPT;
+  private final Queue<String> recognizedQ = new LinkedBlockingQueue<>();
 
   private boolean useOOV;
-  private int segmentCount;
+  private int segmentCount = 0;
 
-  private Lock recognizedQEmptyLock;
-  private Condition recognizedQNotEmpty;
+  private Lock recognizedQEmptyLock = new ReentrantLock();;
+  private Condition recognizedQNotEmpty = recognizedQEmptyLock.newCondition();
 
-  private Symbol speaker;
-  private Symbol addressee;
+  private Symbol speaker = new Symbol("commX");
+  private Symbol addressee = new Symbol("self");
 
   private boolean useGui = false;
   private Sphinx4GUIPanel gui;
@@ -89,39 +93,14 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
    */
   public Sphinx4Component() {
     super();
-
-    shouldRecord = false;
-    tempIgnore = true;
-    mostRecentText = "";
-
-    // default accept all state
-    controlState = ControlState.ACCEPT;
-
-    useDefaultConfig = true;
-    useGrammar = false;
-    selectMixer = false;
-    mixerID = -1;
-
-    recognizedQ = new LinkedBlockingQueue<>();
-
-    speaker = new Symbol("commX");
-    addressee = new Symbol("self");
   }
 
   protected void init() {
 
-    recognizedQEmptyLock = new ReentrantLock();
-    recognizedQNotEmpty = recognizedQEmptyLock.newCondition();
-
-    segmentCount = 0;
-
-    configuration = new Configuration();
-
     // Set path to acoustic model.
     configuration.setAcousticModelPath(defaultAcousticModel);
     // Set path to dictionary.
-    configuration.setDictionaryPath(defaultDictionary);
-
+    configuration.setDictionaryPath(dictionary);
 
     if (useGrammar) {
       configuration.setGrammarPath("resource:/config/edu/tufts/hrilab/asr/sphinx4/");
@@ -139,7 +118,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
     try {
       log.debug("recognizer config " + recognizerConfig);
-      recognizer = new SphinxRecognizer(recognizerConfig, configuration, selectMixer, mixerID);
+      recognizer = new SphinxRecognizer(recognizerConfig, configuration, mixerID);
     } catch (Exception e) {
       log.error("unable to load SphinxRecognizer.", e);
     }
@@ -169,25 +148,32 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     }
   }
 
-  public void setMixer(String ID) {
+  /**
+   * Given the path to a new dictionary it concats it to the default dictionary in a new temp file
+   *
+   * @param path The relative path of the new dictionary with new phonetic pronunciations
+   * @throws IOException If an I/O error occurs
+   */
+  public void setDictionary(String path) throws IOException {
+    File tempFile = Files.createTempFile("mergedDictionary", ".dict").toFile();
+    tempFile.deleteOnExit();
 
-    int id = Integer.valueOf(ID);
-    Mixer.Info[] mixers = AudioSystem.getMixerInfo();
-
-    if (id > mixers.length || id < 0) {
-      log.error("Invalid mixer Id: " + id + " Total mixer count: " + mixers.length + " Using Default mixer instead.");
-    } else {
-      log.info("Selected mixer:" + mixers[id].getDescription());
-      selectMixer = true;
-      mixerID = id;
+    try (BufferedWriter writer = Files.newBufferedWriter(tempFile.toPath())) {
+      copyDictFile("edu/cmu/sphinx/models/en-us/cmudict-en-us.dict", writer);
+      copyDictFile("config/edu/tufts/hrilab/asr/sphinx4/dict/" + path, writer);
     }
+
+    dictionary = tempFile.getAbsolutePath();
   }
 
-  public void showMixerOptions() {
-    Mixer.Info[] mixers = AudioSystem.getMixerInfo();
-
-    for (int i = 0; i < mixers.length; ++i) {
-      log.info("Mixer: " + i + " : " + mixers[i]);
+  private void copyDictFile(String filePath, BufferedWriter writer) throws IOException {
+    try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
+         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        writer.write(line);
+        writer.newLine();
+      }
     }
   }
 
@@ -199,6 +185,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
     @Override
     public void run() {
+      log.debug("start record thread");
       recognizer.startRecognition(true);
       while (shouldRecord) {
         SpeechResult mostRecentResult = recognizer.getResult();
@@ -228,6 +215,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
     @Override
     public void run() {
+      log.debug("start processing loop");
       while (shouldRecord) {
         // pop stuff of the recogntion queue and send it out
 
@@ -257,8 +245,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
           SpeechResult nextResult = speechResults.remove();
 
-          mostRecentText = nextResult.getHypothesis().trim();
-
+          mostRecentText = Util.numbersTextToDigits(nextResult.getHypothesis().trim());
           List<WordResult> words = nextResult.getWords();
 
 //          for (WordResult w : words) {
@@ -291,19 +278,16 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
           switch (controlState) {
             case ACCEPT:
-                Utterance utterance = new Utterance.Builder()
-                        .setSpeaker(speaker)
-                        .setAddressee(addressee)
-                        .setWords(Arrays.asList(mostRecentText.split(" ")))
-                        .setUtteranceType(UtteranceType.UNKNOWN)
-                        .setIsInputUtterance(true)
-                        .build();
+              Utterance utterance = new Utterance.Builder()
+                      .setSpeaker(speaker)
+                      .setAddressee(addressee)
+                      .setWords(Arrays.asList(mostRecentText.split(" ")))
+                      .setUtteranceType(UtteranceType.UNKNOWN)
+                      .setIsInputUtterance(true)
+                      .build();
 
-                try {
-                  TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
-                } catch (TRADEException e) {
-                  log.warn("Failed to call reportRecognizedSpeech service", e);
-                }
+
+              reportRecognizedSpeech(utterance);
               break;
             case CONFIRM:
               recognizedQ.add(mostRecentText);
@@ -332,7 +316,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
    * Parses command line arguments specific to this DIARCComponent.
    *
    * @param cmdLine The custom command line arguments
-   * {@code false} otherwise
+   *                {@code false} otherwise
    */
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -355,16 +339,26 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
       }
       useDefaultConfig = false;
     }
-    if (cmdLine.hasOption("showmixers")) {
-      showMixerOptions();
+    if (cmdLine.hasOption("showMixers")) {
+      ConfigurableMicrophone.showMixers();
     }
+
     if (cmdLine.hasOption("mixer")) {
-      try {
-        setMixer(cmdLine.getOptionValue("mixer"));
-      } catch (Exception e) {
-        log.error("unable to call set config", e);
-      }
+      mixerID = Integer.parseInt(cmdLine.getOptionValue("mixer"));
+    } else if (cmdLine.hasOption("matchMixer")) {
+      String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+      mixerID = ConfigurableMicrophone.matchMixer(matchString);
+      log.debug("Matching mixer string \"" + matchString + "\"");
     }
+
+    // log selected mixer
+    Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+    if (mixerID == -1) {
+      log.info("Using mixer: {}", mixers[0]);
+    } else {
+      log.info("Using default mixer.");
+    }
+
     if (cmdLine.hasOption("control")) {
       String controlLevel = cmdLine.getOptionValue("control");
       try {
@@ -388,6 +382,14 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     if (cmdLine.hasOption("gui")) {
       useGui = true;
     }
+
+    if (cmdLine.hasOption("dict")) {
+      try {
+        setDictionary(cmdLine.getOptionValue("dict"));
+      } catch (IOException e) {
+        log.error("Error processing dictionary file", e);
+      }
+    }
   }
 
   /**
@@ -399,6 +401,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("grammar").hasArg().argName("path").desc("set grammar. File must be located in /resources/config/edu/tufts/hrilab/asr/sphinx4/").build());
+    options.add(Option.builder("dict").hasArg().argName("path").desc("set phonetic dictionary. File must be located in /resources/config/edu/tufts/hrilab/asr/sphinx4/dict").build());
     options.add(Option.builder("nlp").desc("use nlp").build());
     options.add(Option.builder("oov").desc("use ASR for OOV detection").build());
     options.add(Option.builder("config").hasArg().argName("path").desc("set relative path to Sphinx4 config file (if not specified, will use a default config)").build());
@@ -406,9 +409,21 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     options.add(Option.builder("speaker").hasArg().argName("name").desc("set speaker name").build());
     options.add(Option.builder("addressee").hasArg().argName("name").desc("set addressee name").build());
     options.add(Option.builder("mixer").hasArg().argName("id").desc("set mixer id").build());
-    options.add(Option.builder("showmixers").desc("Display all mixer options.").build());
+    options.add(Option.builder("showMixers").desc("Display all mixer options.").build());
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
     options.add(Option.builder("gui").desc("Display GUI.").build());
     return options;
+  }
+
+  private void reportRecognizedSpeech(Utterance utterance) {
+    try {
+      List<TRADEServiceInfo> services = new ArrayList<>(TRADE.getAvailableServices(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)));
+      if (!services.isEmpty()) {
+        services.get(0).call(void.class, utterance);
+      }
+    } catch (TRADEException e) {
+      log.warn("Failed to call reportRecognizedSpeech service", e);
+    }
   }
 
   @Override
@@ -433,11 +448,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
             .setIsInputUtterance(true)
             .build();
 
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
-    } catch (TRADEException e) {
-      log.warn("Failed to call reportRecognizedSpeech service", e);
-    }
+    reportRecognizedSpeech(utterance);
     log.info("accepted utterance " + utt);
   }
 
@@ -464,4 +475,37 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     recognizedQ.clear();
   }
 
+  /**
+   * Takes in an array of data and gives the transcribed string.
+   *
+   * @param samples Array of values representing the incoming sound
+   * @return The string of the transcribed speech
+   */
+  @Override
+  public String transcribeSpeech(float[] samples) {
+    log.warn("[transcribeSpeech] is not implemented for Sphinx4");
+    return "";
+  }
+
+  /**
+   * Takes in an array of data and reports it to the rest of the language pipeline
+   *
+   * @param samples Array of values representing the incoming sound
+   */
+  @Override
+  public void transcribeAndReportSpeech(float[] samples) {
+    log.warn("[transcribeAndReportSpeech] is not implemented for Sphinx4");
+  }
+
+  @Override
+  public void disableMicrophone() {
+    log.debug("[disableMicrophone]");
+    recognizer.stopRecognition();
+  }
+
+  @Override
+  public void enableMicrophone() {
+    log.debug("[enableMicrophone]");
+    recognizer.startRecognition(true);
+  }
 }

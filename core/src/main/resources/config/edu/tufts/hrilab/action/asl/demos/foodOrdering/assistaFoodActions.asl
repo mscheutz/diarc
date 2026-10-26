@@ -158,7 +158,7 @@ import java.util.Map;
     !elem = op:get(!bindings, 0);
     op:log(debug, "[gotocamerapose] cameraHeight found for query !queryPred: !bindings");
     !cameraHeight = op:get(!elem, !bindingVar);
-    act:goToPose(?pose1, !cameraHeight);
+    act:goToPosePrimitive(?pose1, !cameraHeight);
     op:log(debug, "Finished going to pose ?pose1");
 }
 
@@ -194,12 +194,12 @@ import java.util.Map;
     Symbol !pose;
     Symbol !job;
 
-    !bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pose(X));
-    //!bindings = act:askQuestionFromString(?actor,"Where is it located?", pose(X));
+    !bindings = act:askQuestionFromString("それはどこにありますか？", pose(X));
+    //!bindings = act:askQuestionFromString("Where is it located?", pose(X));
     !pose= op:get(!bindings, !x);
 
-    !bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
-    //!bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    !bindings = act:askQuestionFromString("OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString("Okay, what vision job is used to detect it?", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!pose,!job);
@@ -261,10 +261,10 @@ import java.util.Map;
 
     !questionString = act:getQuestionFromRefs(?itemType, ?perceptionArea, ?putdownArea);
 
-    //!bindings = act:askQuestionFromString(?actor, !questionString, got(X));
+    //!bindings = act:askQuestionFromString( !questionString, got(X));
     //TODO: hardcoded to pantry/corn/cooktop for this demo - don't know how to generally do ref replacement in Japanese but theoretically could
     //      in the method above
-    !bindings = act:askQuestionFromString(?actor, "鶏肉を食料庫からクックトップまで持ってきてくれませんか？", got(X));
+    !bindings = act:askQuestionFromString( "鶏肉を食料庫からクックトップまで持ってきてくれませんか？", got(X));
 
     !response = op:get(!bindings, !x);
 }

@@ -73,4 +73,8 @@ public interface SpotInterface extends DockingInterface, MoveBaseInterface, ArmI
   @TRADEService
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification openDoor(Symbol doorRef, Symbol handleRef);
+
+  @Action
+  @TRADEService
+  Justification goToSpecificPose(double x, double y, double z, double qx, double qy, double qz, double qw);
 }

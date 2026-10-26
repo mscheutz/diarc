@@ -296,7 +296,8 @@ public class Utilities {
         // if already of target type, we're done
         output = value;
       } else if (clazz.equals(String.class) && value instanceof Symbol) {
-        output = ((Symbol) value).toUntypedString();
+//        output = ((Symbol) value).toUntypedString();
+        output = value.toString();
       } else if (value == null || (value instanceof String && value.toString().equalsIgnoreCase("null"))) {
         // if value is "null" just return null, no need to instantiate null object of specified type
         return null;
@@ -487,11 +488,31 @@ public class Utilities {
       return Factory.createSymbol(val.toString());
     } else if (String.class.isAssignableFrom(val.getClass())) {
       // Strings
-      return Factory.createFOL(val.toString());
+      String str = val.toString();
+      if (str.contains(")") && !isTermString(str)) {
+        // free text with parens, e.g. a conversation history passed as an action arg: the arg tokenizer
+        // backtracks exponentially on its quotes and commas, so it goes in as one quoted symbol
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+          return Factory.createSymbol(str);
+        }
+        return Factory.createSymbol("\"" + str + "\"");
+      }
+      return Factory.createFOL(str);
     } else {
       // some non-fol object -- for now all we can do is put its string value in a symbol
       return Factory.createSymbol("\""+val.toString()+"\"");
     }
+  }
+
+  // functor directly followed by "(" and closed at the end, e.g. at(cramer,breakroom)
+  private static boolean isTermString(String str) {
+    String s = str.trim();
+    int open = s.indexOf('(');
+    if (open <= 0 || !s.endsWith(")")) {
+      return false;
+    }
+    String functor = s.substring(0, open);
+    return !functor.contains(" ") && !functor.contains(",") && !functor.contains("\"");
   }
 
 }

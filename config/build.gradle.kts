@@ -37,6 +37,7 @@ sourceSets {
       exclude(
               "edu/tufts/hrilab/config/llm/*",
               "edu/tufts/hrilab/demos/llm/*",
+              "edu/tufts/hrilab/demos/SocialAvaLLMTest.java",
       )
     }
   }
@@ -49,6 +50,11 @@ dependencies {
   implementation(project(":vision","mockJar"))
 //  implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
+  if(project.hasProperty("diarc.enableMtracs") && project.property("diarc.enableMtracs").toString().toBoolean()) {
+    implementation("ai.thinkingrobots:mtracs:1.12.55-SNAPSHOT") {
+      exclude(group = "edu.tufts.hrilab", module = "diarc-core")
+    }
+  }
 
   if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     implementation(project(":diarcRos"))
@@ -58,8 +64,8 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.1") {
-    exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.57-gm-api-refactor") {
+    exclude(group = "edu.tufts.hrilab", module = "diarc-core")
   }
 
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
@@ -89,6 +95,7 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.register("fatJar", Jar::class) {
+  isZip64 = true
   archiveFileName.set("${rootProject.name}-fat.jar") // Naming the fat jar
   manifest {
     attributes("Main-Class" to "edu.tufts.hrilab.diarc.DiarcConfiguration") // Replace with your main class
@@ -96,6 +103,7 @@ tasks.register("fatJar", Jar::class) {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   from(sourceSets.main.get().output)
   dependsOn(configurations.runtimeClasspath)
+  dependsOn("compileConfig")
   from({
     configurations.runtimeClasspath.get().filter { it.exists() }.map { zipTree(it) }
   })
@@ -284,4 +292,8 @@ repositories {
     name = "DIARC Third Party Maven Host"
     url = uri("https://hrilabtufts.github.io/diarc-dependencies")
   }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }

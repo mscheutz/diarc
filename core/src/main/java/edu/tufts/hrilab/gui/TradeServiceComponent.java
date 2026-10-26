@@ -6,6 +6,7 @@ package edu.tufts.hrilab.gui;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
+import javax.annotation.Nonnull;
 
 /**
  * TradeServiceComponent. A DIARC component that just serves as a marker in a
@@ -19,6 +20,7 @@ public class TradeServiceComponent extends DiarcComponent implements GuiProvider
     //==========================================================================
     // Implement methods | GuiProvider
     //==========================================================================
+    @Nonnull
     @Override
     public String[] getAdapterClassNames() {
         return new String[]{

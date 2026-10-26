@@ -1,0 +1,257 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "i want you to learn a new task sequence",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_c2e95297a3904dd282a40f41",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"i want you to learn a new task sequence\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_c2e95297a3904dd282a40f41\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"learnTaskSequence\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should learn a new task sequence?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"What would you like to name this task sequence?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"\",\"locationActionPairs\":[]}}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "the task should be called measurement patrol",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Great, I\\u0027ll call it \\\"measurement patrol\\\". What is the first location and action for this task?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[]}}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "the path of locations should be reception, pavilion, elevator, and then the dock",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Got it. What action should be performed at reception:location?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{}}]}}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "at the first three locations you should measure the temperature and the wifi",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Understood. At reception:location, I\\u0027ll measure temperature and wifi. What should be done at pavilion:location?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{}}]}}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "back at the dock you should report the wifi and the temperature of the other three locations",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Got it. At the dock, I\\u0027ll report wifi and temperature for reception, pavilion, and elevator. What action should be performed at the elevator:location?\",\"currentTaskSequenceDefinition\":\"{\\\"taskName\\\": \\\"measurement patrol\\\", \\\"locationActionPairs\\\": [{\\\"location\\\": \\\"reception:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureTemperatureAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"reception:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureWifiAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"pavilion:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureTemperatureAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"pavilion:location\\\", \\\"action\\\": {\\\"name\\\": \\\"measureWifiAtCurrentLocation\\\", \\\"arguments\\\": {}}}, {\\\"location\\\": \\\"elevator:location\\\", \\\"action\\\": {}}, {\\\"location\\\": \\\"dock:location\\\", \\\"action\\\": {\\\"name\\\": \\\"reportPreviouslyMeasuredWifiOfLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\", \\\"pavilion:location\\\", \\\"elevator:location\\\"]}}}, {\\\"location\\\": \\\"dock:location\\\", \\\"action\\\": {\\\"name\\\": \\\"reportPreviouslyMeasuredTemperatureOfLocations\\\", \\\"arguments\\\": {\\\"locations\\\": [\\\"reception:location\\\", \\\"pavilion:location\\\", \\\"elevator:location\\\"]}}}]}}\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "that is all",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_400912fb8b6f42508dfbb563",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"elevator:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"elevator:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"reportPreviouslyMeasuredWifiOfLocations\",\"arguments\":{\"locations\":[\"reception:location\",\"pavilion:location\",\"elevator:location\"]}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"reportPreviouslyMeasuredTemperatureOfLocations\",\"arguments\":{\"locations\":[\"reception:location\",\"pavilion:location\",\"elevator:location\"]}}}]}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence under the name measurement patrol with the following steps: measure temperature and wifi at reception, pavilion, and elevator; then at the dock, report the wifi and temperatures from those three locations.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "forget how to perform the measurement patrol",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_25da128aea9c4f79a2163263",
+        "type" : "function",
+        "function" : {
+          "name" : "forgetTaughtAction",
+          "arguments" : "{\"actionPredicate\":\"{\\\"name\\\":\\\"measurement_patrol\\\"}\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should forget how to perform the measurement patrol?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}
