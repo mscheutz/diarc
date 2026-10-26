@@ -91,6 +91,35 @@ goal needs a resource held by the other, or both would hold the
 same resource. Only higher-priority pending goals participate in
 this check.
 
+The same conflict rule applies to active goals. Required-only claims
+are shared readers; held claims are exclusive. Acquisition checks the
+entire claim before allocating anything, and completion releases the
+acquired snapshot rather than recomputing claims from mutable goal
+metadata.
+
+All status changes use one goal transition operation. Failure reasons
+and timestamps are committed together, terminal states cannot be
+reopened, and repeated completion is harmless. The owning manager
+finishes collection and resource bookkeeping before external goal
+listeners receive their individual GoalInfo snapshots. These snapshots
+copy metadata fields; nested predicates and justifications are not
+deep-copied. Cancellation and suspension of a running interpreter
+remain requests until the interpreter acknowledges them.
+
+Ordinary, metric, and scheduled-occurrence submissions share priority
+and metadata preparation. Scheduled occurrences use directly configured
+priority providers, not calls back through TRADE. Periodic occurrences
+remain LOW priority except for SKIPPENDING. Direct Goal submissions
+retain caller-supplied priorities. Repeated submission of the same Goal
+does not start another interpreter; action learning has an explicit
+one-time handoff back into execution. A Goal still has only one
+interpreter, including when suspended and resumed; retries and new
+execution attempts are not introduced by this revision.
+
+This stage retains the existing manager locks and policy subclasses.
+Serialized coordination, versioned waits, and new scheduling policies
+are separate revisions.
+
 When the \texttt{getViolations(Symbol, StateMachine)} TRADE service
 is available, completion verifies norms and propagates a violation
 or service error as a failure rather than assuming success.

@@ -315,6 +315,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
     //Load goal priorities
     loadGoalPriorities();
+    em.configureGoalPriorities(this::getPriorityTierForGoal, this::getPriorityForGoal);
 
     PerformanceAssessment.setExecutionManager(em, false);
 
@@ -553,8 +554,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public long submitGoal(Predicate g, ExecutionType type) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type);
-    PriorityTier priorityTier = getPriorityTierForGoal(g);
-    return submitGoal(g, type, priorityTier);
+    return submitPreparedGoal(g, type, null, null, Factory.createSymbol("unknown"), null);
   }
 
   /**
@@ -570,11 +570,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + " and priority tier: " + priorityTier);
 
-    long priority = getPriorityForGoal(g);
-    if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
-      priorityTier = getPriorityTierForGoal(g);
-    }
-    return submitGoal(g, type, priorityTier, priority);
+    return submitPreparedGoal(g, type, priorityTier, null, Factory.createSymbol("unknown"), null);
   }
 
   /**
@@ -609,17 +605,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority, Symbol submitter) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
 
-    Goal goal = Goal.createGoal(g);
-    goal.addListener(this.notifier);
-    goal.setPriority(priority);
-    goal.setPriorityTier(priorityTier);
-    goal.setExecutionType(type);
-    goal.setSubmitter(submitter);
-    goal = em.submitGoal(goal);
-    if (goal != null) {
-      return goal.getId();
-    }
-    return -1;
+    return submitPreparedGoal(g, type, priorityTier, priority, submitter, null);
   }
 
   /**
@@ -633,14 +619,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public long submitGoalWithMetric(Predicate g, Predicate metric) {
     log.debug("[submitGoal]: " + g);
-    PriorityTier priorityTier = getPriorityTierForGoal(g);
-    long priority = getPriorityForGoal(g);
-    Goal goal = Goal.createGoal(g);
-    goal.addListener(this.notifier);
-    goal.setPriorityTier(priorityTier);
-    goal.setPriority(priority);
-    goal.setMetric(metric);
-    goal = em.submitGoal(goal);
+    return submitPreparedGoal(g, ExecutionType.ACT, null, null, Factory.createSymbol("unknown"), metric);
+  }
+
+  private long submitPreparedGoal(Predicate predicate, ExecutionType type, PriorityTier tier,
+                                 Long priority, Symbol submitter, Predicate metric) {
+    Goal goal = em.submitGoal(predicate, type, tier, priority, submitter, metric);
     if (goal != null) {
       return goal.getId();
     }

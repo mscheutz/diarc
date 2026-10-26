@@ -4,18 +4,16 @@
 
 package edu.tufts.hrilab.action.manager;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.schedule.JoinOnGoalListener;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalJob;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalListener;
 import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -49,8 +47,6 @@ public class ScheduledGoalManager {
 
   private String scheduledGoalsFile = null;
 
-  private GoalManagerNotifier notifier;
-
   public ScheduledGoalManager(ExecutionManager executionManager) {
     this.em = executionManager;
 
@@ -71,56 +67,29 @@ public class ScheduledGoalManager {
    * @param goal ScheduledGoal to execute
    */
   public void executeScheduledGoal(ScheduledGoal goal) {
-    // set to active goal status
-    goal.setStatus(GoalStatus.ACTIVE);
-
     JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class)
             .withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals")
             .setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
                     (Runnable) () -> {
                       Goal newGoal = goal.getNextGoalToSubmit();
                       if (newGoal != null) {
-                        // Issue with scheduled goals triggering instantly on startup - GM is not registered with TRADE yet
-                        int numAttempts = 0;
-                        while (numAttempts < 3) {
-                          //TODO: issue with submitting goals through the EM directly rather than the GM. Skips attaching
-                          // goalStatus listeners, all priority calculations, etc.
-                          try {
-                            PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getGoalStatePredicate());
-                            //TODO: discussion to be had about whether we want this to be something standard, configurable, at all, ...
-                            if (priorityTier != PriorityTier.SKIPPENDING && goal.isPeriodic()) {
-                              priorityTier = PriorityTier.LOW;
-                            }
-                            long priority = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getGoalStatePredicate());
-                            newGoal.addListener(notifier);
-                            newGoal.setPriority(priority);
-                            newGoal.setPriorityTier(priorityTier);
-                            newGoal.setScheduledState(2);
-                            break;
-                          } catch (TRADEException e) {
-                            log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted. Trying again...", e);
-                            numAttempts += 1;
-                            try {
-                              Thread.sleep(5000);
-                            } catch (InterruptedException ignored) {
-                            }
-                          }
-                        }
-                        em.submitGoal(newGoal);
+                        em.submitScheduledOccurrence(goal, newGoal);
                       }
                     })));
 
     // schedule the goal
     JobDetail jobDetail = jobBuilder.build();
     Trigger trigger = createTrigger(goal, jobDetail.getKey());
+    scheduledGoals.put(goal, jobDetail.getKey());
     try {
       goalScheduler.scheduleJob(jobDetail, trigger);
+      goal.setStatus(GoalStatus.ACTIVE);
     } catch (SchedulerException e) {
+      scheduledGoals.remove(goal);
       log.error("Error scheduling goal: {}", goal, e);
+      goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+              Factory.createPredicate("scheduleRejected", goal.getGoalPredicate())));
     }
-
-    // add scheduled goals
-    scheduledGoals.put(goal, jobDetail.getKey());
   }
 
   /**
@@ -428,7 +397,7 @@ public class ScheduledGoalManager {
   }
 
   public void setGoalManagerNotifier(GoalManagerNotifier notifier) {
-    this.notifier = notifier;
+    em.setGoalManagerNotifier(notifier);
   }
 
   public void writeScheduledGoalsToFile() {
