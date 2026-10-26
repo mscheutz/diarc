@@ -4,11 +4,15 @@
 package edu.tufts.hrilab.action.execution;
 
 import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.ActionStack;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.state.StateMachine;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,18 +179,18 @@ public class StepExecution {
    * @return justification for success/failure
    */
   public Justification finishStep(Context context) {
-    // Check if current state allows the step to succeed.
-    if (context.isFailure()) {
-      // if this context is the root of the failure, and failed with pre- or post-condtion failure, don't check effects,
-      // otherwise check effects. also, check effects of all ancestor contexts as we move up the tree
-      if ((context.getStatus() != ActionStatus.FAIL_PRECONDITIONS && context.getStatus() != ActionStatus.FAIL_POSTCONDITIONS) || !context.causedFailure()) {
-        // still want to observe which effects hold, except when FAIL_POSTCONDITONS because they've already been checked
-        context.verifyEffects();
+    while (true) {
+      // Check if current state allows the step to succeed.
+      if (context.isFailure()) {
+        // Avoid repeating effects checks for failures whose effects have already been checked.
+        if ((context.getStatus() != ActionStatus.FAIL_PRECONDITIONS && context.getStatus() != ActionStatus.FAIL_POSTCONDITIONS) || !context.causedFailure()) {
+          context.verifyEffects();
+        }
+        context.caller.setStatus(context.getStatus(), context.getJustification());
+        context.performAdditionalStatusUpdates();
+        return context.getJustification();
       }
-      context.caller.setStatus(context.getStatus(), context.getJustification());
-      context.performAdditionalStatusUpdates();
-      return context.getJustification();
-    } else {
+
       Justification verification;
       switch (context.getStatus()) {
         case SUCCESS:
@@ -221,7 +225,8 @@ public class StepExecution {
           // TODO: this is potentially problematic -- shouldn't all children need to finish before effects are verified
           verification = context.verifyEffects();
           if (verification.getValue()) {
-            if (!TRADE.getAvailableServices(new TRADEServiceConstraints().name("getViolations")).isEmpty()) {
+            if (!TRADE.getAvailableServices(new TRADEServiceConstraints().name("getViolations")
+                    .argTypes(Symbol.class, StateMachine.class)).isEmpty()) {
               log.trace("Setting VERIFYING_NORMS: {}", context.getSignatureInPredicateForm());
               context.setStatus(ActionStatus.VERIFYING_NORMS, verification);
             } else {
@@ -234,17 +239,19 @@ public class StepExecution {
           }
           break;
         case VERIFYING_NORMS:
-          //todo: Check norms
-//          try {
-//            verification = (Justification) TRADE.callThe("getViolations", context.getActor("?actor"), context.stateMachine);
-//            if (verification.getValue()) {
-//              context.setStatus(ActionStatus.SUCCESS, verification);
-//            } else {
-//              context.setStatus(ActionStatus.FAIL_NORMS, verification);
-//            }
-//          } catch (TRADEException e) {
-//            throw new RuntimeException(e);
-//          }
+          try {
+            verification = TRADE.getAvailableService(new TRADEServiceConstraints().name("getViolations")
+                    .argTypes(Symbol.class, StateMachine.class))
+                    .call(Justification.class, context.getActor("?actor"), context.getStateMachine());
+            if (verification == null) {
+              throw new IllegalStateException("Norm verification returned no justification");
+            }
+            context.setStatus(verification.getValue() ? ActionStatus.SUCCESS : ActionStatus.FAIL_NORMS, verification);
+          } catch (TRADEException e) {
+            log.error("Error verifying norms for {}", context.getSignatureInPredicateForm(), e);
+            context.setStatus(ActionStatus.FAIL_NORMS, new ConditionJustification(false,
+                    Factory.createPredicate("normVerificationFailed", context.getSignatureInPredicateForm())));
+          }
           break;
         case PARENT_SUSPEND:
         case SUSPEND:
@@ -261,9 +268,5 @@ public class StepExecution {
           return new ConditionJustification(false);
       }
     }
-
-    // resursively call finishStep until it bottoms out with SUCCESS, isFailure(), or some unhandled case (i.e., default switch)
-    // TODO: make this tail-recursive
-    return finishStep(context);
   }
 }

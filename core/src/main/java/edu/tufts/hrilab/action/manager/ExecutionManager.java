@@ -99,6 +99,7 @@ public class ExecutionManager implements GoalListener {
    */
   protected final Map<Symbol, AgentTeam> agentTeams = new HashMap<>();
 
+  // When nested, acquire pendingGoalsLock, resourceLock, then goalsLock.
   protected final Object resourceLock = new Object();
 
   protected final Object goalsLock = new Object();
@@ -333,9 +334,13 @@ public class ExecutionManager implements GoalListener {
       int i = 0;
       while (pendingGoalsIterator.hasNext() && i < maxIndex) {
         PendingGoal pg = pendingGoalsIterator.next();
+        i++;
         //If either goal execution would lock resources that need to be
         // available for the other to be executed, then there is a conflict
-        if (getRequiredResourcesForGoal(pg.getGoal()).stream().anyMatch(requiredResources::contains) || getHeldResourcesForGoal(pg.getGoal()).stream().anyMatch(heldResources::contains)) {
+        Set<Resource> otherHeld = getHeldResourcesForGoal(pg.getGoal());
+        if (otherHeld.stream().anyMatch(requiredResources::contains)
+                || otherHeld.stream().anyMatch(heldResources::contains)
+                || getRequiredResourcesForGoal(pg.getGoal()).stream().anyMatch(heldResources::contains)) {
           log.debug("[resourceConflictInPending] found conflicting goal in pending collection");
           return true;
         }
@@ -1081,20 +1086,29 @@ public class ExecutionManager implements GoalListener {
    */
   private void startActionInterpreter(ActionInterpreter ai) {
     log.debug("Starting interpreter for goal " + ai.getGoal() + "...");
-    Future aiFuture = executor.submit(ai);
+    FutureTask<ActionStatus> aiFuture = new FutureTask<>(ai);
 
     Goal goal = ai.getGoal();
     addActiveGoal(goal, aiFuture);
     onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
+    try {
+      executor.execute(aiFuture);
+    } catch (RejectedExecutionException e) {
+      log.error("Executor rejected interpreter for goal {}", goal, e);
+      aiFuture.cancel(false);
+      goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+              Factory.createPredicate("interpreterRejected", goal.getGoalPredicate())));
+      throw e;
+    }
     //updatePriorities();
   }
 
   //TODO: reimplement this, was in a rush
   //Needs to be more specific to each call
   public void interruptWaitForNextGoalStatusUpdate(long gid) {
-    interruptWaitForStatusUpdateGids.add(gid);
     goalStatusUpdateLock.lock();
     try {
+      interruptWaitForStatusUpdateGids.add(gid);
       goalStatusUpdateCondition.signalAll();
     } finally {
       goalStatusUpdateLock.unlock();
@@ -1114,16 +1128,15 @@ public class ExecutionManager implements GoalListener {
   public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
     Goal goal = getGoal(gid);
 
+    if (goal == null) {
+      return null;
+    }
     if (startStatus == null && goal.getStatus().isTerminated()) {
       //TODO: think a lot of functionality using this was written assuming returning null could mean the goal terminated
       //  already. But if a start status is explicitly supplied, it should always be done by checking for a terminal
       //  status instead. Make sure nothing breaks as a result of this change.
       return null;
     }
-    if (goal == null ) {//|| goal.getStatus().isTerminated()) {
-      return null;
-    }
-
     if (startStatus == null) {
       startStatus = goal.getStatus();
     }
@@ -1140,9 +1153,9 @@ public class ExecutionManager implements GoalListener {
    */
   protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout, GoalStatus startStatus) {
     goalStatusUpdateLock.lock();
-    long startTime = System.currentTimeMillis();
+    long remaining = TimeUnit.MILLISECONDS.toNanos(timeout);
     try {
-      while (goal.getStatus() == startStatus && (timeout == 0 || (System.currentTimeMillis() - startTime < timeout))) {
+      while (goal.getStatus() == startStatus) {
         //TODO: even with this impl, doesn't handle if there are multiple listeners on the same goal
         if (interruptWaitForStatusUpdateGids.contains(goal.getId())) {
           interruptWaitForStatusUpdateGids.remove(goal.getId());
@@ -1151,13 +1164,16 @@ public class ExecutionManager implements GoalListener {
         if (timeout == 0) {
           goalStatusUpdateCondition.await();
         } else {
-          if (!goalStatusUpdateCondition.await(timeout - (System.currentTimeMillis() - startTime), TimeUnit.SECONDS)) {
+          if (remaining <= 0) {
             return null;
           }
+          remaining = goalStatusUpdateCondition.awaitNanos(remaining);
         }
       }
     } catch (InterruptedException e) {
-      log.error("Error waiting on new status for goal {}", goal);
+      log.error("Error waiting on new status for goal {}", goal, e);
+      Thread.currentThread().interrupt();
+      return null;
     } finally {
       goalStatusUpdateLock.unlock();
     }
@@ -1209,11 +1225,7 @@ public class ExecutionManager implements GoalListener {
         return;
       }
 
-      synchronized (goalsLock) {
-        log.trace("[goalStatusChanged] {} have goalsLock", goal);
-        transferGoalToPastGoals(goal);
-      }
-      log.trace("[goalStatusChanged] {} release goalsLock", goal);
+      transferGoalToPastGoals(goal);
     }
   }
 
@@ -1233,17 +1245,18 @@ public class ExecutionManager implements GoalListener {
         log.trace("[transferGoalToPastGoals] {} releasing pendingGoalsLock", goal);
         return;
       }
-    }
-
-    synchronized (goalsLock) {
-      log.trace("[transferGoalToPastGoals] {} have goalsLock", goal);
-      // goal is an active goal
-      if (getActiveGoal(goal.getId()) != null) {
-        unlockResources(goal);
-        removeActiveGoal(goal);
-        pastGoals.add(goal);
-        log.trace("[transferGoalToPastGoals] {} releasing goalsLock", goal);
-        return;
+      synchronized (resourceLock) {
+        synchronized (goalsLock) {
+          log.trace("[transferGoalToPastGoals] {} have goalsLock", goal);
+          // goal is an active goal
+          if (getActiveGoal(goal.getId()) != null) {
+            unlockResources(goal);
+            removeActiveGoal(goal);
+            pastGoals.add(goal);
+            log.trace("[transferGoalToPastGoals] {} releasing goalsLock", goal);
+            return;
+          }
+        }
       }
     }
 

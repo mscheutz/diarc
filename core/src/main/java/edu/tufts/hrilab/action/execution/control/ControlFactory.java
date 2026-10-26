@@ -66,6 +66,12 @@ public class ControlFactory {
             log.error("Syntax error: Unexpected argument to TRUE");
           }
           break;
+        case FALSE:
+          controlContext = new FalseContext(parent, sm);
+          if (parser.getBody() != null) {
+            log.error("Syntax error: Unexpected argument to FALSE");
+          }
+          break;
         case AND:
           controlContext = new AndContext(parent, sm);
           ScriptParser andParser = parser.getBody();
@@ -138,6 +144,7 @@ public class ControlFactory {
     ENDTRY(false),
     ENDWHILE(false),
     EXIT(true),
+    FALSE(true),
     FINALLY(false),
     FOR(true),
     FOREACH(true),

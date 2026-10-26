@@ -56,6 +56,8 @@ itself (like global variable).
         m. booleanExpression
         Evaluate the boolean value of multiple specs, true and false with different boolean operators.
         The priority of boolean operators are () > ~ > && > ||.
+        Both boolean literals execute successfully; false has a false logical value, not a failure
+        status. For example, while(false) succeeds without executing its body.
 
 3. Adding key words
 Find the reserved words list, define new key words, add new key words to "reserved".

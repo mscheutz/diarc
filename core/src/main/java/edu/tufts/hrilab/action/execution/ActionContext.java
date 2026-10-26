@@ -888,17 +888,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
     observationContext = effectObservers.get(effect);
     if (observationContext == null) {
-      Symbol actor = (Symbol) getArgumentValue("?actor");
-      if (!Database.getInstance().isDiarcAgent(actor)) {
-        Context parentContext = getParentContext();
-        while (parentContext != null) {
-          parentContext = getParentContext();
-          actor = (Symbol) parentContext.getArgumentValue("?actor");
-          if (Database.getInstance().isDiarcAgent(actor)) {
-            break;
-          }
-        }
-      }
+      Symbol actor = getObserverActor();
       observationContext = new ObservationContext(this, this.stateMachine, effect.getPredicate(), actor, Observable.TRUE);
       if (observationContext.hasObserver()) {
         // observer found
@@ -911,6 +901,20 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       observationContext.resetContext();
     }
     return observationContext;
+  }
+
+  /**
+   * Find the nearest DIARC actor, falling back to this action's actor if none is available.
+   */
+  public Symbol getObserverActor() {
+    Symbol actor = (Symbol) getArgumentValue("?actor");
+    for (Context context = this; context != null; context = context.getParentContext()) {
+      Object candidate = context.getArgumentValue("?actor");
+      if (candidate instanceof Symbol && Database.getInstance().isDiarcAgent((Symbol) candidate)) {
+        return (Symbol) candidate;
+      }
+    }
+    return actor;
   }
 
   // **************************************************************************

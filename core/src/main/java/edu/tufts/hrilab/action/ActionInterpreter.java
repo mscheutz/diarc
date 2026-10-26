@@ -7,10 +7,13 @@ import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.listener.ActionListener;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 
 import edu.tufts.hrilab.action.priority.PriorityCalculator;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Factory;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -439,24 +442,24 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    */
   @Override
   public ActionStatus call() {
+    boolean started = false;
     try {
       // Make sure Action Interpreter is valid and not already running
       isRunningLock.lock();
       try {
-        if (this.isValid() && !isRunning) {
-          // (Try to) Start goal execution with this interpreter
-          if (goal.setAsStarted()) {
-            log.debug("Started Action Interpreter for goal: {}. Context id: {}", goal.getGoalPredicate(), rootStep.getId());
-          } else {
-            log.error("Could not start Action Interpreter (goal refused to start): {}", goal.getGoalPredicate());
-            return rootStep.getStatus();
-          }
-        } else {
+        if (!this.isValid() || isRunning) {
           log.error("Could not start Action Interpreter (not valid or already running): {}", goal.getGoalPredicate());
           return rootStep.getStatus();
         }
 
         isRunning = true;
+        started = true;
+        if (goal.setAsStarted()) {
+          log.debug("Started Action Interpreter for goal: {}. Context id: {}", goal.getGoalPredicate(), rootStep.getId());
+        } else {
+          log.error("Could not start Action Interpreter (goal refused to start): {}", goal.getGoalPredicate());
+          return rootStep.getStatus();
+        }
       } finally {
         isRunningLock.unlock();
       }
@@ -480,11 +483,39 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
 
       // goal termination
-      isRunning = false;
       return rootStep.getStatus();
     } catch (Exception e) {
       log.error("Exception caught during ActionInterpreter execution.", e);
+      if (started) {
+        Justification failure = new ConditionJustification(false,
+                Factory.createPredicate("executionException", goal.getGoalPredicate()));
+        try {
+          if (rootStep.getStatus() == ActionStatus.SUSPEND) {
+            rootStep.setStatus(ActionStatus.RESUME);
+          }
+          rootStep.setStatus(ActionStatus.FAIL, failure);
+          if (shouldUpdate.get()) {
+            halt();
+          }
+        } finally {
+          if (!goal.getStatus().isTerminated()) {
+            goal.setFailureStatus(GoalStatus.FAILED, failure);
+          }
+        }
+      }
       return ActionStatus.FAIL;
+    } finally {
+      if (started) {
+        isRunningLock.lock();
+        try {
+          isRunning = false;
+        } finally {
+          isRunningLock.unlock();
+        }
+        if (goal.getStatus().isTerminated()) {
+          asyncExecutor.shutdown();
+        }
+      }
     }
   }
 
@@ -730,12 +761,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     shouldUpdate.set(false);
 
     // cancel/suspend sub-AIs
-    if (rootStep.getStatus() == ActionStatus.SUSPEND || rootStep.getStatus() == ActionStatus.CANCEL) {
+    if (rootStep.getStatus() == ActionStatus.SUSPEND || rootStep.getStatus() == ActionStatus.CANCEL
+            || rootStep.getStatus().isFailure()) {
       for (ActionInterpreter ai : asyncAIs.values()) {
-        if (ai.isRunning) {
+        if (!ai.getGoal().getStatus().isTerminated()) {
           switch (rootStep.getStatus()) {
             case SUSPEND -> ai.suspend();
-            case CANCEL -> ai.cancel();
+            default -> ai.cancel();
           }
         }
       }
