@@ -27,7 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
-import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class ScheduledGoalManager {
   private final Logger log = LoggerFactory.getLogger(ScheduledGoalManager.class);
@@ -43,7 +43,7 @@ public class ScheduledGoalManager {
    * TODO: move this into AgentTeam?
    * TODO: should active goals include scheduled goals? currently they do not
    */
-  private final Map<ScheduledGoal, JobKey> scheduledGoals = new LinkedHashMap<>();
+  private final Map<ScheduledGoal, JobKey> scheduledGoals = Collections.synchronizedMap(new LinkedHashMap<>());
 
   private final ExecutionManager em;
 
@@ -159,21 +159,29 @@ public class ScheduledGoalManager {
       //Find first matching future start date on periodic interval
       if (startDate.before(currentDate)) {
         log.warn("[createTrigger] scheduled goal's start date is in the past. Finding first matching future time based on periodic interval");
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startDate);
-        while (calendar.getTime().before(currentDate)) {
-          calendar.add(Calendar.MILLISECOND, (int)goal.getScheduledPeriod());
-        }
-        if (goal.hasEndDate() && calendar.getTime().after(goal.getEndDate())) {
+        Date nextStart = nextScheduledStart(startDate, currentDate, goal.getScheduledPeriod());
+        if (goal.hasEndDate() && nextStart.after(goal.getEndDate())) {
           log.warn("[createTrigger] next matching scheduled interval time is past the configured end date");
         } else {
-          triggerBuilder.startAt(calendar.getTime());
+          triggerBuilder.startAt(nextStart);
         }
       }
     }
 
     triggerBuilder.forJob(jobKey);
     return triggerBuilder.build();
+  }
+
+  static Date nextScheduledStart(Date start, Date now, long period) {
+    if (period <= 0) {
+      throw new IllegalArgumentException("Scheduled period must be positive");
+    }
+    if (!start.before(now)) {
+      return start;
+    }
+    long elapsed = Math.subtractExact(now.getTime(), start.getTime());
+    long remainder = elapsed % period;
+    return new Date(Math.addExact(now.getTime(), remainder == 0 ? 0 : period - remainder));
   }
 
   /**
@@ -219,18 +227,28 @@ public class ScheduledGoalManager {
       return;
     }
     JobKey jobKey = scheduledGoals.get(goal);
+    if (jobKey == null) {
+      return;
+    }
     JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
     try {
-      goalScheduler.getListenerManager().addSchedulerListener(listener);
-      if (listener.joinOnGoal()) {
-        Goal lastGoal = goal.getLastSubmittedGoal();
-        if (lastGoal != null) {
-          em.joinOnGoal(lastGoal.getId());
+      ListenerManager listeners = goalScheduler.getListenerManager();
+      listeners.addSchedulerListener(listener);
+      try {
+        if (!goalScheduler.checkExists(jobKey)) {
+          listener.jobDeleted(jobKey);
         }
+        if (listener.joinOnGoal()) {
+          Goal lastGoal = goal.getLastSubmittedGoal();
+          if (lastGoal != null) {
+            em.joinOnGoal(lastGoal.getId());
+          }
+        }
+      } finally {
+        listeners.removeSchedulerListener(listener);
       }
-      goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {
-      log.error("Error trying to register new schedule listener.");
+      log.error("Error waiting for scheduled goal {}", gid, e);
     }
   }
 
@@ -244,20 +262,30 @@ public class ScheduledGoalManager {
       return;
     }
     JobKey jobKey = scheduledGoals.get(goal);
+    if (jobKey == null) {
+      return;
+    }
     JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
     try {
-      goalScheduler.getListenerManager().addSchedulerListener(listener);
-      long startTime = System.currentTimeMillis();
-      if (listener.joinOnGoal(millis)) {
-        millis = millis - (System.currentTimeMillis() - startTime);
-        Goal lastGoal = goal.getLastSubmittedGoal();
-        if (lastGoal != null) {
-          em.joinOnGoal(lastGoal.getId(), millis);
+      ListenerManager listeners = goalScheduler.getListenerManager();
+      listeners.addSchedulerListener(listener);
+      long startTime = System.nanoTime();
+      try {
+        if (!goalScheduler.checkExists(jobKey)) {
+          listener.jobDeleted(jobKey);
         }
+        if (listener.joinOnGoal(millis)) {
+          long remaining = Math.max(0, millis - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+          Goal lastGoal = goal.getLastSubmittedGoal();
+          if (lastGoal != null) {
+            em.joinOnGoal(lastGoal.getId(), remaining);
+          }
+        }
+      } finally {
+        listeners.removeSchedulerListener(listener);
       }
-      goalScheduler.getListenerManager().removeSchedulerListener(listener);
     } catch (SchedulerException e) {
-      log.error("Error trying to register new schedule listener.");
+      log.error("Error waiting for scheduled goal {}", gid, e);
     }
   }
 
@@ -268,10 +296,12 @@ public class ScheduledGoalManager {
    * @return
    */
   public ScheduledGoal getScheduledGoal(long goalId) {
-    return scheduledGoals.keySet().stream()
+    synchronized (scheduledGoals) {
+      return scheduledGoals.keySet().stream()
             .filter(goal -> goal.getInfo().gid == goalId)
             .findFirst()
             .orElse(null);
+    }
   }
 
   /**

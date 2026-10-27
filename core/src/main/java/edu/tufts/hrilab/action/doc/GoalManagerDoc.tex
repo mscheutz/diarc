@@ -73,8 +73,33 @@ actions.
 
 \subsection{Building, testing and launching the Goal Manager}
 
-The Goal Manager component can be built with the \texttt{action}. The
-tests action be built with the \texttt{action-test} target.
+Use Java 17 and the repository Gradle wrapper to build the core with
+\texttt{./gradlew :core:compileJava}. Focused execution and scheduling
+regressions can be run with
+\texttt{./gradlew :core:test --tests '*RegressionTest' --tests '*JoinOnGoalListenerTest'}.
+
+\subsection{Execution and waiting guarantees}
+
+Goal-status wait timeouts are measured in milliseconds; zero means
+wait indefinitely. An unknown goal ID returns \texttt{null} from
+\texttt{waitForNextGoalStatusUpdate}. A wait timeout does not cancel
+the goal itself.
+
+Resources that are only required to be available can be shared.
+A pending goal conflicts with a higher-priority goal when either
+goal needs a resource held by the other, or both would hold the
+same resource. Only higher-priority pending goals participate in
+this check.
+
+When the \texttt{getViolations(Symbol, StateMachine)} TRADE service
+is available, completion verifies norms and propagates a violation
+or service error as a failure rather than assuming success.
+Unexpected interpreter exceptions terminate the goal as failed and
+invoke terminal bookkeeping, including resource release.
+
+Recurring schedules retain their full millisecond period when
+advancing a past start date. Scheduled-goal joins remember job
+deletion even if it happens before the caller begins waiting.
 
 \subsection{Arguments\label{subsec:Arguments}}
 

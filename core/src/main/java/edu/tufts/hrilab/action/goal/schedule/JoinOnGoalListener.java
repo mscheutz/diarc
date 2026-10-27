@@ -21,6 +21,7 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
   private JobKey jobKey;
   private ReentrantLock lock = new ReentrantLock();
   private Condition condition = lock.newCondition();
+  private boolean deleted;
 
   public JoinOnGoalListener(JobKey jobKey) {
     this.jobKey = jobKey;
@@ -29,9 +30,17 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
   public boolean joinOnGoal(long millis) {
     lock.lock();
     try {
-      return condition.await(millis, TimeUnit.MILLISECONDS);
+      long remaining = TimeUnit.MILLISECONDS.toNanos(millis);
+      while (!deleted) {
+        if (remaining <= 0) {
+          return false;
+        }
+        remaining = condition.awaitNanos(remaining);
+      }
+      return true;
     } catch (InterruptedException e) {
-      log.error("Interrupted while waiting for goal to finish.");
+      log.error("Interrupted while waiting for goal to finish.", e);
+      Thread.currentThread().interrupt();
       return false;
     } finally {
       lock.unlock();
@@ -41,9 +50,12 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
   public boolean joinOnGoal() {
     lock.lock();
     try {
-      condition.await();
+      while (!deleted) {
+        condition.await();
+      }
     } catch (InterruptedException e) {
-      log.error("Interrupted while waiting for goal to finish.");
+      log.error("Interrupted while waiting for goal to finish.", e);
+      Thread.currentThread().interrupt();
       return false;
     } finally {
       lock.unlock();
@@ -59,6 +71,7 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
     if (jobKey.equals(this.jobKey)) {
       lock.lock();
       try {
+        deleted = true;
         condition.signalAll();
       } finally {
         lock.unlock();
