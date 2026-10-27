@@ -1,7 +1,5 @@
 # The Distributed Interactive Affect Reflection Cognition (DIARC) Architecture
 
-**Alpha release (updates will come over the next few weeks)**
-
 # Introduction
 
 DIARC is a component-based cognitive robotic architecture with deeply

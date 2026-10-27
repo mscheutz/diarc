@@ -1,0 +1,5 @@
+() = validBeforeError() {}
+
+() = invalidSyntax() {
+    act:move()
+}

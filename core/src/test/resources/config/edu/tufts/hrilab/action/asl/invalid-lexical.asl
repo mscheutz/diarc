@@ -1,0 +1,3 @@
+() = invalidLexical() {
+    @ act:move();
+}
