@@ -9,10 +9,8 @@
 package edu.tufts.hrilab.action;
 
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.ActionContext;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
-import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.execution.ObservationContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Predicate;
@@ -110,17 +108,7 @@ public class Effect implements Serializable {
 
       ObservationContext observationContext = context.getEffectObserver(this);
       if (observationContext != null) {   // Check that there is an observer available
-        Symbol actor = (Symbol) context.getArgumentValue("?actor");
-        if (!Database.getInstance().isDiarcAgent(actor)) {
-          Context parentContext = context.getParentContext();
-          while (parentContext != null) {
-            parentContext = context.getParentContext();
-            actor = (Symbol) parentContext.getArgumentValue("?actor");
-            if (Database.getInstance().isDiarcAgent(actor)) {
-              break;
-            }
-          }
-        }
+        Symbol actor = context.getDiarcActor();
         Goal obs = Goal.createGoal(actor, predicate, observable);
         ActionInterpreter observer = ActionInterpreter.createInterpreterFromContext(obs, observationContext);
         log.debug("Starting observer goal: {}", observer.getGoal());

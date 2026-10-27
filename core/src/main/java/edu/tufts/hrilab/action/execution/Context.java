@@ -219,7 +219,7 @@ public abstract class Context {
         log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
         return false;
       } else if (actionStatus == ActionStatus.SUSPEND) {
-        if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
+        if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL || status == ActionStatus.FAIL) {
           actionStatus = status;
           this.justification = justification;
         } else {

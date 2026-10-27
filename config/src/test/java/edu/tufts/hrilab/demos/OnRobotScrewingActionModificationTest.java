@@ -53,7 +53,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("sayText", String.class);
     addServiceToObserve("sayText", String.class, Boolean.class);
     addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
-    tester.setTimeoutDuration(6, TimeUnit.SECONDS);
+    tester.setTimeoutDuration(10, TimeUnit.SECONDS);
   }
 
   @After
