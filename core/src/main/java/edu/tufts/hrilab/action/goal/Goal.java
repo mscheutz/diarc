@@ -446,6 +446,19 @@ public class Goal {
     return transitionStatus(GoalStatus.ACTIVE, null, true);
   }
 
+  /** Configure before admission. Deadlines do not interrupt already dispatched work. */
+  public void setStartDeadline(long epochMillis) {
+    if (epochMillis < 0 || isScheduled()) {
+      throw new IllegalArgumentException("Start deadlines require a nonnegative time and an ordinary goal");
+    }
+    synchronized (statusLock) {
+      if (lifecycleListener != null || info.start >= 0 || info.status.isTerminated()) {
+        throw new IllegalStateException("Start deadline must be set before goal admission");
+      }
+      info.startDeadline = epochMillis;
+    }
+  }
+
   /**
    * Set the status of this goal. Does not directly change the
    * actual execution of this goal.

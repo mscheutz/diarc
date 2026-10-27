@@ -31,6 +31,8 @@ public class ScheduledGoal extends Goal {
   private final ScheduleInfo scheduleInfo = new ScheduleInfo();
 
   private final List<Goal> submittedGoals = new ArrayList<>();
+  private boolean missedTick;
+  private boolean recurrenceClosed;
 
   /**
    * Scheduled goal form: scheduled(goalPred, startPred, periodPred, endPred)
@@ -59,12 +61,15 @@ public class ScheduledGoal extends Goal {
     if (end != null && period == null) {
       log.error("Invalid scheduled goal predicate. End time only valid with periodic goals. Goal: {}", goalState);
     }
+    if (scheduleInfo.coalesce && scheduleInfo.period <= 0) {
+      throw new IllegalArgumentException("Coalescing requires a periodic scheduled goal");
+    }
 
     info.schedulingInfo = scheduleInfo;
     setScheduledState(1);
   }
 
-  public Predicate getDisplayPredicate() {
+  public synchronized Predicate getDisplayPredicate() {
     List<Symbol> args = new ArrayList<>();
     args.add(super.getGoalStatePredicate());
     if (start != null && scheduleInfo.startTime != null) {
@@ -110,6 +115,7 @@ public class ScheduledGoal extends Goal {
                 new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH).format(scheduleInfo.endTime)));
       }
     }
+    addOverlapPredicate(args);
     return Factory.createPredicate("scheduled", args);
   }
 
@@ -134,7 +140,7 @@ public class ScheduledGoal extends Goal {
     return getGoalPredicate(false);
   }
 
-  public Predicate getGoalPredicate(boolean reformatDateString) {
+  public synchronized Predicate getGoalPredicate(boolean reformatDateString) {
     List<Symbol> args = new ArrayList<>();
     args.add(super.getGoalStatePredicate()); // goal state
     SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
@@ -158,14 +164,21 @@ public class ScheduledGoal extends Goal {
       }
     }
 
+    addOverlapPredicate(args);
     return Factory.createPredicate("scheduled", args);
+  }
+
+  private void addOverlapPredicate(List<Symbol> args) {
+    if (scheduleInfo.coalesce) {
+      args.add(Factory.createPredicate("overlap(coalesce)"));
+    }
   }
 
   /**
    * Get shallow copy of the submitted goals for this scheduled goal.
    * @return
    */
-  public List<Goal> getSubmittedGoals() {
+  public synchronized List<Goal> getSubmittedGoals() {
     return new ArrayList<>(submittedGoals);
   }
 
@@ -174,11 +187,15 @@ public class ScheduledGoal extends Goal {
    *
    * @return
    */
-  public Goal getNextGoalToSubmit() {
+  public synchronized Goal getNextGoalToSubmit() {
+    if (recurrenceClosed || getStatus().isTerminated()) {
+      return null;
+    }
     // if last goal is not terminated yet, return null so overlapping goals aren't submitted
     if (!submittedGoals.isEmpty()) {
       Goal lastGoal = submittedGoals.get(submittedGoals.size() - 1);
       if (!lastGoal.getStatus().isTerminated()) {
+        missedTick = scheduleInfo.coalesce;
         return null;
       }
     }
@@ -188,6 +205,7 @@ public class ScheduledGoal extends Goal {
       submittedGoals.remove(0);
     }
     Goal nextGoal = createGoal(super.getGoalPredicate());
+    missedTick = false;
     submittedGoals.add(nextGoal);
     return nextGoal;
   }
@@ -197,12 +215,31 @@ public class ScheduledGoal extends Goal {
    *
    * @return
    */
-  public Goal getLastSubmittedGoal() {
+  public synchronized Goal getLastSubmittedGoal() {
     if (submittedGoals.isEmpty()) {
       log.warn("[getLastSubmittedGoal] no goal found");
       return null;
     }
     return submittedGoals.get(submittedGoals.size() - 1);
+  }
+
+  /** Reserve at most one catch-up occurrence, never one per missed tick. */
+  public synchronized Goal takeCoalescedGoal() {
+    if (!missedTick || !scheduleInfo.coalesce || recurrenceClosed
+            || (scheduleInfo.endTime != null && System.currentTimeMillis() >= scheduleInfo.endTime.getTime())) {
+      missedTick = false;
+      return null;
+    }
+    return getNextGoalToSubmit();
+  }
+
+  public synchronized void closeRecurrence() {
+    recurrenceClosed = true;
+    missedTick = false;
+  }
+
+  public synchronized boolean isRecurrenceClosed() {
+    return recurrenceClosed;
   }
 
   /**
@@ -275,7 +312,7 @@ public class ScheduledGoal extends Goal {
    * @param update predicate specifying update details
    * @return if update was successful
    */
-  public boolean update(Predicate update) {
+  public synchronized boolean update(Predicate update) {
     return switch (update.getName()) {
       case "and" -> {
         AtomicBoolean result = new AtomicBoolean(true);
@@ -285,6 +322,17 @@ public class ScheduledGoal extends Goal {
       case "start" -> updateStartDate(update);
       case "period" -> updatePeriod(update);
       case "end" -> updateEndDate(update);
+      case "overlap" -> {
+        if (update.size() != 1
+                || !(update.get(0).getName().equals("skip") || update.get(0).getName().equals("coalesce"))
+                || (info.schedulingInfo != null && scheduleInfo.period <= 0 && update.get(0).getName().equals("coalesce"))) {
+          log.error("Invalid overlap policy: {}", update);
+          yield false;
+        }
+        scheduleInfo.coalesce = update.get(0).getName().equals("coalesce");
+        missedTick = false;
+        yield true;
+      }
       default -> {
         log.error("Invalid scheduled goal predicate: {}", update);
         yield false;
@@ -334,7 +382,12 @@ public class ScheduledGoal extends Goal {
     if (period.size() == 2) {
       // "period(num, time-unit)"
       long delay = (long)Double.parseDouble(period.get(0).toString());
-      scheduleInfo.period = TimeUnit.valueOf(period.get(1).toString().toUpperCase()).toMillis(delay);
+      long millis = TimeUnit.valueOf(period.get(1).toString().toUpperCase()).toMillis(delay);
+      if (scheduleInfo.coalesce && millis <= 0) {
+        log.error("Coalescing requires a positive period: {}", period);
+        return false;
+      }
+      scheduleInfo.period = millis;
     } else {
       log.error("Invalid periodicity predicate: {}", period);
       return false;

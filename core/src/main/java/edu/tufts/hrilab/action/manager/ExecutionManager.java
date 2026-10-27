@@ -61,7 +61,8 @@ public class ExecutionManager implements GoalListener {
    * Comparison method determining the order goals get placed into the pendingGoals queue.
    */
   protected GoalComparator goalComparator = (g1, g2) -> {
-    return compareGoal(g1.getPriorityTier(), g1.getPriority(), g1.getId(), g2.getPriorityTier(), g2.getPriority(), g2.getId());
+    return compareGoal(g1.getPriorityTier(), effectivePriority(g1), g1.getId(),
+            g2.getPriorityTier(), effectivePriority(g2), g2.getId());
   };
 
   private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
@@ -82,6 +83,17 @@ public class ExecutionManager implements GoalListener {
   private final Set<Goal> cancelingGoals = new HashSet<>();
   private final Set<Goal> resumingGoals = new HashSet<>();
   private boolean shuttingDown;
+  private final ScheduledThreadPoolExecutor policyTimer = new ScheduledThreadPoolExecutor(1, r -> {
+    Thread thread = new Thread(r, "goal-manager-policy-timer");
+    thread.setDaemon(true);
+    return thread;
+  });
+  private final Map<Goal, ScheduledFuture<?>> deadlineTimers = new HashMap<>();
+  private final Map<Goal, Long> pendingSince = new HashMap<>();
+  private final Map<Goal, Long> agedPriorities = new ConcurrentHashMap<>();
+  private long agingIntervalMillis;
+  private ScheduledFuture<?> agingTimer;
+  private final ConcurrentMap<Long, CompletableFuture<Void>> scheduledContinuations = new ConcurrentHashMap<>();
 
   public ExecutionManager() {
     this(SchedulingPolicy.CONCURRENT);
@@ -89,6 +101,7 @@ public class ExecutionManager implements GoalListener {
 
   ExecutionManager(SchedulingPolicy schedulingPolicy) {
     this.schedulingPolicy = Objects.requireNonNull(schedulingPolicy);
+    policyTimer.setRemoveOnCancelPolicy(true);
   }
 
   /**
@@ -388,6 +401,11 @@ public class ExecutionManager implements GoalListener {
    * Activate as many pending goals as possible in order of priority while avoiding resource conflicts
    */
   protected void activateValidPendingGoals() {
+    if (!coordinator.isOwner()) {
+      coordinator.run(this::activateValidPendingGoals);
+      return;
+    }
+    refreshPendingOrder();
     log.trace("[activateNextPendingGoals] in method");
     int goalIndex = activateNextValidPendingGoal(0);
     while (goalIndex != -1) {
@@ -617,6 +635,10 @@ public class ExecutionManager implements GoalListener {
 
     //If a pending goal was newly added, check if it should be forwarded straight to execution or left in the queue
     if (updateType == UpdateType.ADDED) {
+      refreshPendingOrder();
+      if (expireUnstartedGoal(g)) {
+        return;
+      }
       PendingGoal entry = getPendingGoal(g.getId());
       if (entry == null || g.getStatus().isTerminated() || cancelingGoals.contains(g) || shuttingDown) {
         return;
@@ -716,10 +738,17 @@ public class ExecutionManager implements GoalListener {
    * @return The duplicate goal if present, otherwise the newly submitted goal
    */
   public Goal submitGoal(Goal g) {
+    return submitGoal(g, null);
+  }
+
+  private Goal submitGoal(Goal g, ScheduledGoal schedule) {
     log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, g.getExecutionType(), g.getPriority(), g.getPriorityTier());
 
     CompletableFuture<Void> submission = new CompletableFuture<>();
     int admission = coordinator.call(() -> {
+      if (schedule != null && scheduledAdmissionClosed(schedule)) {
+        return -1;
+      }
       if (registerGoal(g)) {
         submissionsInFlight.put(g, submission);
         return 1;
@@ -730,6 +759,10 @@ public class ExecutionManager implements GoalListener {
       }
       return 0;
     });
+    if (admission == -1) {
+      g.setStatus(GoalStatus.CANCELED);
+      return g;
+    }
     if (admission == 0) {
       log.debug("[submitGoal] goal {} was already submitted", g.getId());
       return g;
@@ -801,6 +834,12 @@ public class ExecutionManager implements GoalListener {
     if (notifier != null) {
       goal.addListener(notifier);
     }
+    long deadline = goal.getInfo().startDeadline;
+    if (deadline > 0) {
+      if (!expireUnstartedGoal(goal)) {
+        armDeadlineTimer(goal);
+      }
+    }
     return true;
   }
 
@@ -823,6 +862,10 @@ public class ExecutionManager implements GoalListener {
    */
   public GoalStatus joinOnGoal(long gid) {
     log.debug("[joinOnGoal] waiting for goal to terminate. gid: " + gid);
+    if (!awaitScheduledContinuation(gid, null)) {
+      Goal goal = getGoal(gid);
+      return goal == null ? GoalStatus.PENDING : goal.getStatus();
+    }
 
     // first wait for goal to no longer be pending
     joinOnPendingGoal(gid);
@@ -871,14 +914,19 @@ public class ExecutionManager implements GoalListener {
     log.debug("[joinOnGoal] waiting for goal to terminate (millis). gid: " + gid);
 
     // first wait for goal to no longer be pending
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
+    if (!awaitScheduledContinuation(gid, millis)) {
+      Goal goal = getGoal(gid);
+      return goal == null ? GoalStatus.PENDING : goal.getStatus();
+    }
+    millis = Math.max(0, millis - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
+    startTime = System.nanoTime();
     if (!joinOnPendingGoal(gid, millis)) {
       log.trace("[joinOnGoal] timed out for gid {}", gid);
       // returned while waiting for pending goal to no longer be pending
       return GoalStatus.PENDING;
     }
-    long endTime = System.currentTimeMillis();
-    millis = millis - (endTime - startTime); // update wait time to account for time already waited
+    millis = Math.max(0, millis - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime));
 
     // goal no longer pending -- wait for goal to be in terminal state
     Goal goal = getGoal(gid);
@@ -931,6 +979,8 @@ public class ExecutionManager implements GoalListener {
         return;
       }
       pendingGoals.add(pg);
+      pendingSince.putIfAbsent(pg.getGoal(), schedulingTimeNanos());
+      refreshPendingOrder();
 
       if (pg.getPreviousAIFuture() != null) {
         coordinator.defer(() -> onActiveGoalUpdated(pg.getGoal(), pg.getGoal().getStatus(), UpdateType.REMOVED));
@@ -1045,7 +1095,7 @@ public class ExecutionManager implements GoalListener {
       coordinator.run(() -> transferGoalToActive(goal));
       return;
     }
-    if (shuttingDown) {
+    if (shuttingDown || expireUnstartedGoal(goal)) {
       return;
     }
     log.debug("[transferGoalToActive] in method with goal: " + goal);
@@ -1284,13 +1334,15 @@ public class ExecutionManager implements GoalListener {
       synchronized (pendingGoalsLock) {
         synchronized (resourceLock) {
           synchronized (goalsLock) {
-            if (shuttingDown || goal.getStatus().isTerminated() || (starting != null && starting.cancelRequested)) {
+            if (expireUnstartedGoal(goal) || shuttingDown || cancelingGoals.contains(goal)
+                    || goal.getStatus().isTerminated() || (starting != null && starting.cancelRequested)) {
               return false;
             }
             if (starting != null) {
               starting.dispatched = true;
               startingGoals.remove(goal, starting);
             }
+            cancelDeadlineTimer(goal);
             addActiveGoal(goal, aiFuture);
             return true;
           }
@@ -1492,7 +1544,7 @@ public class ExecutionManager implements GoalListener {
             }
           }
           return new GoalSchedulingExplanation(gid, getClass().getName(), snapshot, location,
-                  position, reasons, resources, blockers);
+                  position, reasons, resources, blockers, effectivePriority(goal), agingIntervalMillis);
         }
       }
     }
@@ -1655,6 +1707,7 @@ public class ExecutionManager implements GoalListener {
       cancelingGoals.remove(goal);
       resumingGoals.remove(goal);
       startingGoals.remove(goal);
+      cancelDeadlineTimer(goal);
       StartingGoal starting = executionAttempts.get(goal);
       if (starting != null && !starting.dispatched) {
         coordinator.defer(() -> starting.completion.complete(
@@ -1664,6 +1717,7 @@ public class ExecutionManager implements GoalListener {
       PendingGoal existing = getPendingGoal(goal.getId());
       pendingIndex = existing == null ? -1 : getIndexOfPendingGoal(existing);
       pg = removePendingGoal(goal);
+      agedPriorities.remove(goal);
       synchronized (resourceLock) {
         synchronized (goalsLock) {
           wasActive = getActiveGoal(goal.getId()) != null;
@@ -1735,6 +1789,7 @@ public class ExecutionManager implements GoalListener {
         if (pendingGoal.getGoal().getId() == g.getId()) {
           log.trace("[removePendingGoal] {} found goal", g);
           pendingGoalIterator.remove();
+          pendingSince.remove(g);
           return pendingGoal;
         }
       }
@@ -3332,7 +3387,10 @@ public class ExecutionManager implements GoalListener {
     try {
       List<CompletableFuture<?>> admissions = coordinator.call(() -> {
         shuttingDown = true;
-        return new ArrayList<>(submissionsInFlight.values());
+        policyTimer.shutdownNow();
+        List<CompletableFuture<?>> inFlight = new ArrayList<>(submissionsInFlight.values());
+        inFlight.addAll(scheduledContinuations.values());
+        return inFlight;
       });
       interrupted |= awaitShutdownCompletions(admissions);
       List<CompletableFuture<?>> completions = coordinator.call(() -> {
@@ -3457,6 +3515,145 @@ public class ExecutionManager implements GoalListener {
     return submitGoal(goal);
   }
 
+  public Goal submitGoalWithDeadline(Predicate predicate, long epochMillis) {
+    Goal goal = Goal.createGoal(predicate);
+    prepareGoal(goal, predicate, ExecutionType.ACT, null, null, Factory.createSymbol("unknown"), null);
+    goal.setStartDeadline(epochMillis);
+    return submitGoal(goal);
+  }
+
+  /** One priority point per interval of pending time, within the original tier. Zero disables aging. */
+  public void configurePriorityAging(long intervalMillis) {
+    if (intervalMillis < 0) {
+      throw new IllegalArgumentException("Aging interval must be nonnegative");
+    }
+    coordinator.run(() -> {
+      if (shuttingDown) {
+        throw new RejectedExecutionException("Goal manager is shutting down");
+      }
+      if (agingTimer != null) {
+        agingTimer.cancel(false);
+        agingTimer = null;
+      }
+      agingIntervalMillis = intervalMillis;
+      synchronized (pendingGoalsLock) {
+        List<PendingGoal> entries = new ArrayList<>(pendingGoals);
+        pendingGoals.clear();
+        agedPriorities.clear();
+        pendingSince.replaceAll((goal, since) -> schedulingTimeNanos());
+        pendingGoals.addAll(entries);
+      }
+      if (intervalMillis > 0) {
+        agingTimer = policyTimer.scheduleWithFixedDelay(
+                () -> runPolicyTask(this::refreshSchedulingPolicies), 100, 100, TimeUnit.MILLISECONDS);
+      }
+      refreshPendingOrder();
+    });
+  }
+
+  protected long schedulingTimeMillis() {
+    return System.currentTimeMillis();
+  }
+
+  protected long schedulingTimeNanos() {
+    return System.nanoTime();
+  }
+
+  private long effectivePriority(Goal goal) {
+    return agedPriorities.getOrDefault(goal, goal.getPriority());
+  }
+
+  private void refreshPendingOrder() {
+    if (agingIntervalMillis == 0) {
+      return;
+    }
+    synchronized (pendingGoalsLock) {
+      List<PendingGoal> entries = new ArrayList<>(pendingGoals);
+      pendingGoals.clear();
+      long now = schedulingTimeNanos();
+      for (PendingGoal entry : entries) {
+        Goal goal = entry.getGoal();
+        long elapsed = TimeUnit.NANOSECONDS.toMillis(Math.max(0, now - pendingSince.getOrDefault(goal, now)));
+        long credit = elapsed / agingIntervalMillis;
+        long priority = goal.getPriority();
+        agedPriorities.put(goal, priority > Long.MAX_VALUE - credit ? Long.MAX_VALUE : priority + credit);
+      }
+      pendingGoals.addAll(entries);
+    }
+  }
+
+  /** Timer and decision-boundary entry point; aging alone does not interrupt running work. */
+  protected void refreshSchedulingPolicies() {
+    coordinator.run(() -> {
+      if (shuttingDown) {
+        return;
+      }
+      for (Goal goal : new ArrayList<>(deadlineTimers.keySet())) {
+        expireUnstartedGoal(goal);
+      }
+      activateValidPendingGoals();
+    });
+  }
+
+  private boolean expireUnstartedGoal(Goal goal) {
+    GoalInfo info = goal.getInfo();
+    StartingGoal attempt = executionAttempts.get(goal);
+    if (info.status.isTerminated() || cancelingGoals.contains(goal)) {
+      return true;
+    }
+    if (info.startDeadline == 0 || info.start >= 0 || (attempt != null && attempt.dispatched)
+            || schedulingTimeMillis() < info.startDeadline) {
+      return false;
+    }
+    cancelingGoals.add(goal);
+    cancelDeadlineTimer(goal);
+    coordinator.defer(() -> goal.setFailureStatus(GoalStatus.FAILED,
+            new ConditionJustification(false, Factory.createPredicate("startDeadlineMissed", goal.getGoalPredicate()))));
+    return true;
+  }
+
+  private void cancelDeadlineTimer(Goal goal) {
+    ScheduledFuture<?> timer = deadlineTimers.remove(goal);
+    if (timer != null) {
+      timer.cancel(false);
+    }
+  }
+
+  private void armDeadlineTimer(Goal goal) {
+    deadlineTimers.put(goal, policyTimer.schedule(() -> runPolicyTask(() -> coordinator.run(() -> {
+      if (!shuttingDown && !expireUnstartedGoal(goal) && goal.getInfo().start < 0
+              && deadlineTimers.containsKey(goal)) {
+        // A wall-clock correction can make a previously scheduled deadline wake too early.
+        armDeadlineTimer(goal);
+      } else {
+        cancelDeadlineTimer(goal);
+      }
+    })), Math.max(0, goal.getInfo().startDeadline - schedulingTimeMillis()), TimeUnit.MILLISECONDS));
+  }
+
+  private void runPolicyTask(Runnable task) {
+    try {
+      executor.execute(() -> {
+        if (policyTimer.isShutdown()) {
+          return;
+        }
+        try {
+          task.run();
+        } catch (RejectedExecutionException e) {
+          if (!policyTimer.isShutdown()) {
+            log.error("Goal scheduling policy task was rejected", e);
+          }
+        } catch (RuntimeException e) {
+          log.error("Goal scheduling policy task failed", e);
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      if (!policyTimer.isShutdown()) {
+        log.error("Goal scheduling policy task was rejected", e);
+      }
+    }
+  }
+
   private void prepareGoal(Goal goal, Predicate predicate, ExecutionType type, PriorityTier tier,
                            Long priority, Symbol submitter, Predicate metric) {
     PriorityTier resolvedTier = Objects.requireNonNull(tier == null || tier == PriorityTier.UNINITIALIZED
@@ -3476,10 +3673,18 @@ public class ExecutionManager implements GoalListener {
     } catch (RuntimeException e) {
       log.error("Could not prepare scheduled occurrence {}", occurrence, e);
       CompletableFuture<Void> submission = new CompletableFuture<>();
-      coordinator.run(() -> {
+      boolean admitted = coordinator.call(() -> {
+        if (scheduledAdmissionClosed(schedule)) {
+          return false;
+        }
         registerGoal(occurrence);
         submissionsInFlight.put(occurrence, submission);
+        return true;
       });
+      if (!admitted) {
+        occurrence.setStatus(GoalStatus.CANCELED);
+        return;
+      }
       try {
         occurrence.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
                 Factory.createPredicate("submissionPreparationFailed", occurrence.getGoalPredicate())));
@@ -3496,6 +3701,76 @@ public class ExecutionManager implements GoalListener {
       occurrence.setPriorityTier(PriorityTier.LOW);
     }
     occurrence.setScheduledState(2);
-    submitGoal(occurrence);
+    submitGoal(occurrence, schedule);
+  }
+
+  private boolean scheduledAdmissionClosed(ScheduledGoal schedule) {
+    return shuttingDown || schedule.isRecurrenceClosed() || schedule.getStatus().isTerminated()
+            || cancelingGoals.contains(schedule);
+  }
+
+  void runScheduledContinuation(Goal occurrence, Runnable submission) {
+    CompletableFuture<Void> finished = new CompletableFuture<>();
+    boolean accepted = coordinator.call(() -> {
+      if (shuttingDown) {
+        return false;
+      }
+      scheduledContinuations.put(occurrence.getId(), finished);
+      return true;
+    });
+    if (!accepted) {
+      occurrence.setStatus(GoalStatus.CANCELED);
+      return;
+    }
+    try {
+      executor.execute(() -> {
+        try {
+          submission.run();
+        } catch (RuntimeException e) {
+          log.error("Coalesced occurrence submission failed for {}", occurrence, e);
+        } finally {
+          finishScheduledContinuation(occurrence, finished);
+        }
+      });
+    } catch (RejectedExecutionException e) {
+      try {
+        occurrence.setStatus(GoalStatus.CANCELED);
+        log.error("Coalesced occurrence submission was rejected for {}", occurrence, e);
+      } finally {
+        finishScheduledContinuation(occurrence, finished);
+      }
+    }
+  }
+
+  private void finishScheduledContinuation(Goal occurrence, CompletableFuture<Void> finished) {
+    try {
+      coordinator.run(() -> scheduledContinuations.remove(occurrence.getId(), finished));
+    } finally {
+      finished.complete(null);
+    }
+  }
+
+  private boolean awaitScheduledContinuation(long gid, Long millis) {
+    CompletableFuture<Void> submitting = scheduledContinuations.get(gid);
+    if (submitting == null) {
+      return true;
+    }
+    try {
+      if (millis == null) {
+        submitting.get();
+      } else {
+        submitting.get(Math.max(0, millis), TimeUnit.MILLISECONDS);
+      }
+      return true;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.error("Interrupted while waiting for coalesced occurrence admission: {}", gid, e);
+      return false;
+    } catch (ExecutionException e) {
+      log.error("Coalesced occurrence admission failed: {}", gid, e);
+      return true;
+    } catch (TimeoutException e) {
+      return false;
+    }
   }
 }

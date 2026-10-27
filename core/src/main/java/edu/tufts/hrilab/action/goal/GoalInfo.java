@@ -51,6 +51,8 @@ public class GoalInfo implements Serializable {
    * Monotonic transition version, including repeated notifications of the same status.
    */
   public long statusVersion = 0;
+  /** Latest permitted dispatch time in epoch milliseconds; zero disables expiration. */
+  public long startDeadline = 0;
   /**
    * Actor responsible for this goal.
    */
@@ -113,6 +115,7 @@ public class GoalInfo implements Serializable {
     this.end = other.end;
     this.status = other.status;
     this.statusVersion = other.statusVersion;
+    this.startDeadline = other.startDeadline;
     this.actor = other.actor;
     this.isAction = other.isAction;
     this.isObservation = other.isObservation;
@@ -120,7 +123,7 @@ public class GoalInfo implements Serializable {
     this.persistent = other.persistent;
     this.priority = other.priority;
     this.priorityTier = other.priorityTier;
-    this.schedulingInfo = other.schedulingInfo;
+    this.schedulingInfo = other.schedulingInfo == null ? null : new ScheduleInfo(other.schedulingInfo);
     this.isLearningGoal = other.isLearningGoal;
     this.submitter = other.submitter;
   }

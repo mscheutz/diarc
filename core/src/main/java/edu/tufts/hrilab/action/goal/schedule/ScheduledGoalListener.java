@@ -4,12 +4,15 @@
 
 package edu.tufts.hrilab.action.goal.schedule;
 
+import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
 import org.quartz.Trigger;
 import org.quartz.listeners.SchedulerListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class ScheduledGoalListener extends SchedulerListenerSupport {
   private Logger log = LoggerFactory.getLogger(ScheduledGoalListener.class);
@@ -37,8 +40,12 @@ public class ScheduledGoalListener extends SchedulerListenerSupport {
       return;
     }
 
-    // wait for all submitted goals to finish
-    goal.getSubmittedGoals().forEach(g -> em.joinOnGoal(g.getId()));
+    // Completion can submit a coalesced occurrence before the previous future finishes.
+    List<Goal> submitted;
+    do {
+      submitted = goal.getSubmittedGoals();
+      submitted.forEach(g -> em.joinOnGoal(g.getId()));
+    } while (!submitted.equals(goal.getSubmittedGoals()));
 
     // set scheduled goal status
     if (!goal.getStatus().isTerminated()) {

@@ -71,10 +71,7 @@ public class ScheduledGoalManager {
             .withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals")
             .setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
                     (Runnable) () -> {
-                      Goal newGoal = goal.getNextGoalToSubmit();
-                      if (newGoal != null) {
-                        em.submitScheduledOccurrence(goal, newGoal);
-                      }
+                      submitOccurrence(goal, goal.getNextGoalToSubmit());
                     })));
 
     // schedule the goal
@@ -90,6 +87,25 @@ public class ScheduledGoalManager {
       goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
               Factory.createPredicate("scheduleRejected", goal.getGoalPredicate())));
     }
+  }
+
+  private void submitOccurrence(ScheduledGoal schedule, Goal occurrence) {
+    if (occurrence == null) {
+      return;
+    }
+    occurrence.addListener(info -> {
+      if (info.status.isTerminated()) {
+        Goal next = schedule.takeCoalescedGoal();
+        if (next != null) {
+          Date end = schedule.getEndDate();
+          if (end != null) {
+            next.setStartDeadline(end.getTime());
+          }
+          em.runScheduledContinuation(next, () -> submitOccurrence(schedule, next));
+        }
+      }
+    });
+    em.submitScheduledOccurrence(schedule, occurrence);
   }
 
   /**
@@ -316,6 +332,9 @@ public class ScheduledGoalManager {
     if (!em.coordinateSchedulingState(() -> goal.update(update))) {
       return false;
     }
+    if (update.getName().equals("overlap")) {
+      return true;
+    }
 
     // reschedule goal with new trigger
     JobKey jobKey = scheduledGoals.get(goal);
@@ -345,6 +364,10 @@ public class ScheduledGoalManager {
    * @return
    */
   public boolean cancelScheduledGoal(ScheduledGoal goal) {
+    em.coordinateSchedulingState(() -> {
+      goal.closeRecurrence();
+      return null;
+    });
     // cancel scheduling more tasks for this goal
     JobKey key = scheduledGoals.get(goal);
     try {
@@ -387,7 +410,10 @@ public class ScheduledGoalManager {
    * @return
    */
   public boolean removeGoal(ScheduledGoal goal) {
-    return em.coordinateSchedulingState(() -> scheduledGoals.remove(goal) != null);
+    return em.coordinateSchedulingState(() -> {
+      goal.closeRecurrence();
+      return scheduledGoals.remove(goal) != null;
+    });
   }
 
   public void setScheduledGoalsFile(String filepath) {

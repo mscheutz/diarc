@@ -622,6 +622,20 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return submitPreparedGoal(g, ExecutionType.ACT, null, null, Factory.createSymbol("unknown"), metric);
   }
 
+  /** Submit with an opt-in latest dispatch time (epoch milliseconds); zero disables expiration. */
+  @TRADEService
+  @Action
+  public long submitGoalWithDeadline(Predicate goal, long epochMillis) {
+    return em.submitGoalWithDeadline(goal, epochMillis).getId();
+  }
+
+  /** Zero disables aging. Positive intervals add one priority point per interval spent pending. */
+  @TRADEService
+  @Action
+  public void configurePriorityAging(long intervalMillis) {
+    em.configurePriorityAging(intervalMillis);
+  }
+
   private long submitPreparedGoal(Predicate predicate, ExecutionType type, PriorityTier tier,
                                  Long priority, Symbol submitter, Predicate metric) {
     Goal goal = em.submitGoal(predicate, type, tier, priority, submitter, metric);

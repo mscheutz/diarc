@@ -237,7 +237,61 @@ ordering: priority tier, numeric priority, then older goal ID. Learning,
 freeze, SKIPPENDING, explicit resource overrides, and periodic-goal
 priorities retain their previous behavior. Public ASL/TRADE services
 and class selection do not change; no new fairness or deadline policy
-is enabled.
+is enabled by default.
+
+\subsection{Opt-in scheduling extensions}
+
+The ASL/TRADE action \texttt{submitGoalWithDeadline(goal, epochMillis)}
+uses the normal submission defaults and attaches a latest permitted
+dispatch time in epoch milliseconds. Zero disables expiration; negative
+times are rejected. Direct Java callers may call
+\texttt{Goal.setStartDeadline} before admission, including before
+\texttt{submitGoalContext}. Scheduled definitions cannot carry this
+deadline: it applies to individual ordinary goals, not an entire recurring
+definition. An unstarted goal expires as FAILED with the
+\texttt{startDeadlineMissed(goal)} justification, including during slow
+startup before dispatch. The final dispatch decision rechecks expiration.
+Once dispatch is accepted, the deadline never cancels or suspends that
+execution, including if it is later preempted or manually suspended.
+GoalInfo snapshots and scheduling explanations include the deadline.
+
+\texttt{configurePriorityAging(intervalMillis)} enables one additional
+numeric priority point per interval spent pending. Zero disables aging;
+negative intervals are rejected. Timing is monotonic, priority credit
+saturates at the largest long value, and priority tiers always take
+precedence. Base priorities are unchanged. Credit is frozen for an
+activated goal and a new pending interval begins if it is preempted.
+Reconfiguration resets accumulated credits. Queue ordering is rebuilt
+under the coordinator with fixed comparison keys, rather than allowing a
+clock-dependent comparator to corrupt the pending tree. Scheduling
+decisions refresh credits; a background tick also refreshes ordering
+approximately every 100 milliseconds. Aging alone does not interrupt
+running goals and does not guarantee a wait bound for unavailable
+resources or higher-tier work. Rejecting managers still reject conflicts;
+queuing managers gain the most benefit. Explanations report effective
+numeric priority separately from the original priority and identify the
+configured aging interval.
+
+Recurring predicates accept an optional \texttt{overlap(coalesce)}, for
+example \texttt{scheduled(patrol(self),period(5,MINUTES),overlap(coalesce))}.
+The default remains skip-overlap. Coalescing remembers at most one tick
+while an occurrence is still pending or executing, then submits one
+catch-up occurrence through normal admission after it terminates. It does
+not accumulate a backlog, overlap executions, or replay downtime.
+Catch-up admission runs on a worker rather than recursively on the
+previous occurrence's notification stack. Joins and shutdown track this
+queued admission, and schedule finalization also waits for an occurrence
+created during the previous completion.
+If an end time is configured when catch-up work is reserved, it becomes
+that occurrence's start deadline, so neither queued admission nor
+resource contention can make it dispatch after that cutoff.
+\texttt{updateScheduledGoal(id,overlap(skip))} restores the default and
+discards any remembered tick without resetting the recurrence cadence.
+Cancellation, definition removal, and the
+configured end time discard deferred work; an occurrence reserved before
+cancellation cannot subsequently enter execution. The overlap policy is
+included in saved schedule predicates and defensive scheduling snapshots.
+These options do not change resource claims or acknowledgment rules.
 
 Shutdown closes admission, cancels current work, and waits for tracked
 startup and interpreter completion, including superseded interpreters,

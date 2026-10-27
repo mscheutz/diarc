@@ -72,10 +72,22 @@ public final class GoalSchedulingExplanation implements Serializable {
   public final List<Reason> reasons;
   public final List<ResourceClaim> claims;
   public final List<Blocker> blockers;
+  /** Numeric priority including the last scheduling decision's aging credit. */
+  public final long effectivePriority;
+  /** Milliseconds per priority point; zero means aging is disabled. */
+  public final long agingIntervalMillis;
 
   public GoalSchedulingExplanation(long goalId, String policy, GoalInfo goalInfo, Location location,
                                    int queuePosition, List<Reason> reasons,
                                    List<ResourceClaim> claims, List<Blocker> blockers) {
+    this(goalId, policy, goalInfo, location, queuePosition, reasons, claims, blockers,
+            goalInfo == null ? 0 : goalInfo.priority, 0);
+  }
+
+  public GoalSchedulingExplanation(long goalId, String policy, GoalInfo goalInfo, Location location,
+                                   int queuePosition, List<Reason> reasons,
+                                   List<ResourceClaim> claims, List<Blocker> blockers,
+                                   long effectivePriority, long agingIntervalMillis) {
     this.goalId = goalId;
     this.policy = policy;
     this.goalInfo = goalInfo == null ? null : new GoalInfo(goalInfo);
@@ -84,6 +96,8 @@ public final class GoalSchedulingExplanation implements Serializable {
     this.reasons = List.copyOf(reasons);
     this.claims = List.copyOf(claims);
     this.blockers = List.copyOf(blockers);
+    this.effectivePriority = effectivePriority;
+    this.agingIntervalMillis = agingIntervalMillis;
   }
 
   public GoalInfo getGoalInfo() {
