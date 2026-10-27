@@ -1,1177 +1,1918 @@
-%% LyX 2.2.2 created this file.  For more info, see http://www.lyx.org/.
-%% Do not edit unless you really know what you are doing.
-\documentclass[english]{scrartcl}
+\documentclass[11pt,english]{scrartcl}
 \usepackage[T1]{fontenc}
-\usepackage[latin9]{inputenc}
-\usepackage{geometry}
-\geometry{verbose,tmargin=2cm,bmargin=2cm,lmargin=3cm,rmargin=3cm,headheight=1cm,headsep=1cm,footskip=1cm}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
 \usepackage{babel}
-\usepackage{calc}
-\usepackage{graphicx}
-\usepackage[unicode=true,pdfusetitle,
- bookmarks=true,bookmarksnumbered=false,bookmarksopen=false,
- breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
- {hyperref}
-\usepackage{breakurl}
-
-\makeatletter
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
-\usepackage{tikz}
-\usepackage{changepage}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
 \usepackage{listings}
-\addtokomafont{disposition}{\rmfamily}
-\addtokomafont{descriptionlabel}{\ttfamily}
-\usetikzlibrary{shapes.geometric}
+\usepackage[hidelinks,breaklinks=true]{hyperref}
 
-% Definitions for XML syntax highlighting.
-\definecolor{maroon}{rgb}{0.5,0,0}
-\definecolor{darkgreen}{rgb}{0,0.5,0}
-\lstdefinelanguage{XML}
-{
-basicstyle=\ttfamily,
-morestring=[s]{"}{"},
-morecomment=[s]{?}{?},
-morecomment=[s]{!--}{--},
-commentstyle=\color{darkgreen},
-moredelim=[s][\color{black}]{>}{<},
-moredelim=[s][\color{red}]{\ }{=},
-stringstyle=\color{blue},
-identifierstyle=\color{maroon}
+\addtokomafont{disposition}{\rmfamily}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.5em}
+\setlength{\emergencystretch}{3em}
+\newcommand{\code}[1]{\nolinkurl{#1}}
+\newcommand{\source}[1]{\par{\footnotesize\textbf{Source:} \nolinkurl{#1}}\par}
+\makeatletter
+\g@addto@macro\UrlBreaks{\do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h
+  \do\i\do\j\do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t
+  \do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D\do\E\do\F
+  \do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N\do\O\do\P\do\Q\do\R
+  \do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z}
+\makeatother
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\definecolor{commentgreen}{rgb}{0.1,0.4,0.15}
+\lstdefinelanguage{ASL}{
+  morekeywords={import,as,conditions,pre,overall,obligation,or,effects,
+    always,success,failure,nonperf,infer,observes,onInterrupt,cancel,
+    suspend,resume,reset,recovery,actionRecovery,catchingActions,
+    postRecovery,retry,continue,goals,excludedGoals,failedActions,
+    excludedFailedActions,failureReasons,excludedFailureReasons,
+    actionStatuses,maximumAttempts,if,elseif,else,while,for,foreach,
+    try,catch,finally,return,exit,async,join,noInterrupt,true,false},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]"
+}
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  commentstyle=\color{commentgreen},
+  stringstyle=\color{blue!60!black},
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  rulecolor=\color{black!20},
+  xleftmargin=0.4em,
+  xrightmargin=0.4em,
+  captionpos=b
 }
 
-\makeatother
-
-\usepackage{listings}
-
-\usepackage{float}
-\usepackage{caption}
-\newfloat{Annotation}{htbp}{loa}
+\title{DIARC Goal Manager and Action Script Language\\
+  Implementation Guide and API Reference}
+\author{DIARC contributors\\
+  \small Based on the original documentation by Luca Brusatin}
+\date{\today}
 
 \begin{document}
-
-\title{Goal Manager Documentation}
-
-\author{Luca Brusatin}
-
-\date{\today}
 \maketitle
+
 \begin{abstract}
-The Goal Manager (also called the Action Manager or simply ``Action'')
-manages and executes agents' tasks (goals) in ADE. In addition to
-simple action execution, the Goal Manager keeps track of the agents'
-state (using the Belief Component) and verifies that all goals and
-actions are acceptable and that the conditions for their execution
-are met. When interfaced with a Planner Component\footnote{TODO: Currently the (RPI) planner is integrated within Action},
-the Goal Manager can plan as well as avoid and resolve conflicting
-actions.
+The Goal Manager connects symbolic task descriptions to executable DIARC
+capabilities. It loads action models, selects actions or plans, manages
+concurrent goals, interprets Action Script Language (ASL), checks conditions
+and effects, updates belief, and supports interruption, recovery, scheduling,
+and action learning. This guide describes the implementation in this
+repository rather than a proposed architecture. It separates behavior that
+is provided by default from behavior requiring a particular execution
+manager, selector, observer, or robot component.
 \end{abstract}
-\tableofcontents{}
-
-\pagebreak{}
-
-\section{Using the Goal Manager}
-
-\subsection{Building, testing and launching the Goal Manager}
-
-Use Java 17 and the repository Gradle wrapper to build the core with
-\texttt{./gradlew :core:compileJava}. Focused execution and scheduling
-regressions can be run with
-\texttt{./gradlew :core:test --tests '*RegressionTest' --tests '*JoinOnGoalListenerTest'}.
-
-\subsection{Execution and waiting guarantees}
-
-Goal-status wait timeouts are measured in milliseconds; zero means
-wait indefinitely. An unknown goal ID returns \texttt{null} from
-\texttt{waitForNextGoalStatusUpdate}. A wait timeout does not cancel
-the goal itself.
-
-Resources that are only required to be available can be shared.
-A pending goal conflicts with a higher-priority goal when either
-goal needs a resource held by the other, or both would hold the
-same resource. Only higher-priority pending goals participate in
-this check.
-
-When the \texttt{getViolations(Symbol, StateMachine)} TRADE service
-is available, completion verifies norms and propagates a violation
-or service error as a failure rather than assuming success.
-Unexpected interpreter exceptions terminate the goal as failed and
-invoke terminal bookkeeping, including resource release.
-
-Recurring schedules retain their full millisecond period when
-advancing a past start date. Scheduled-goal joins remember job
-deletion even if it happens before the caller begins waiting.
-
-\subsection{Arguments\label{subsec:Arguments}}
-
-The Goal Manager requires/supports the following arguments: 
-\begin{description}
-\item [{-agentname~{[}name{]}}] (optional, default: self)\\
-Specifies the name of the agent for which the Goal Manager is responsible.
-The Goal Manager will default to this name if no specific agent name
-is provided during the execution of an action (\texttt{?actor} variable).
-Sometimes referred to as ``super agent name'' in multi-agent settings.
-\item [{-badaction~{[}name{]}}] (optional, repeatable)\\
-Forbids the Goal Manager from using this action.
-\item [{-badstate~{[}predicate{]}}] (optional, repeatable)\\
-Forbids the Goal Manager from ending up in a state described by the
-predicate.
-\item [{-belief}] (optional)\\
-Register for Belief Component notifications.
-\item [{-beliefargs~{[}args{]}}] (optional)\\
-Arguments to provide to the Belief Component instances spawned by
-the Goal Manager.
-\item [{-beliefcomponent}] (optional)\\
-Specifies the name of the Belief Component to be used by the Goal
-Manager for the first (``main''/''real'') state machine. If this
-argument is used, the associated Belief Component has to be manually
-started.
-\item [{-dbfile~{[}path{]}}] (optional, repeatable)\\
-Loads the contests of the file into the Action Database.
-\item [{-selector~{[}class{]}}] (optional, default: \texttt{com.action.selector.UtilitarianActionSelector})\\
-Uses the specified Action Selector mechanism to choose the best action
-to execute.
-\item [{-editor}] (optional)\\
-Shows the Goal Manager GUI. Shows the contents of the Action Database
-and provides a script editor.
-\item [{-goal~{[}predicate{]}}] (optional, repeatable)\\
-Executes the specified goal as an initial goal.
-\end{description}
-
-\subsection{Interfacing with the Goal Manager}
-
-The Goal Manager interface provides a set of methods that allow other
-ADE components to submit goals and query for the currently running
-goals and their status. See \texttt{com/action/GoalManager.java}
-
-\subsection{Goal Manager GUI/Editor}
-
-The GoalManager GUI (figure \ref{fig:Goal-Manager-GUI/Editor.}) has
-functionality for exporting existing entries to new files, deleting
-entries, adding, duplicating, editing, and saving ActionDBEntries.
-
-\medskip{}
-
-In order to run the GUI, run the and the Goal Manager:
-
-\noindent\begin{minipage}[t]{1\columnwidth}%
-\begin{center}
-\texttt{ant launch -Dmain=com.action.GoalManagerComponent -Dargs=\textquotedbl{}-editor\textquotedbl{}}
-\par\end{center}%
-\end{minipage}
-
-\medskip{}
-
-\begin{figure}
-\begin{centering}
-\includegraphics[width=0.8\columnwidth]{figures/editor}
-\par\end{centering}
-\caption{\label{fig:Goal-Manager-GUI/Editor.}Goal Manager GUI/Editor. The
-editor has access to the Action Database and shows the available actions
-in the top-left tree view. The bottom-left tree view shows the available
-actions scripts. Double-clicking a file loads it into the editor and
-the file appears in the top-left tree view, where nodes can be expanded.
-Double-clicking on an action opens the script editor (right). Context
-menus (right-click) provide additional functionality, such as loading
-a script file into the Action Database, or removing an action from
-the Database.}
-
-\end{figure}
-
-
-\section{Understanding the Goal Manager}
-
-\subsection{Goals}
-
-Goals are described by DIARC first order logic (FOL) predicates. They represent a desired state
-that the Goal Manager has to achieve using the actions available to
-it. Goals are sometimes called ``post-conditions''. If multiple
-actions can achieve the same goal, the Goal Manager will choose one
-using the Action Selector mechanism.
-
-\medskip{}
-
-A central principle in Goal Manager is the execution of goals, not
-``actions''. By this, we mean that it is the end effect that we're
-interested in, not the specific implementation of the action. Instead
-of telling the robot to \texttt{moveTo X}, we'd rather have the robot
-be \texttt{at(X)}. Let's expand our \texttt{moveTo} example a little
-bit to explain things. Say the robot has a \texttt{moveTo} action
-that requires the robot to be at a specific starting location for
-it to work. Now let's say the robot also has another \texttt{moveTo}
-action that does not require a specific starting location, but would
-for instance be slower to execute. Both actions result in \texttt{at(X)}.
-By submitting a task through a goal specification, e.g. \texttt{at(home)},
-we give the Goal Manager the freedom to choose the most appropriate
-action to fulfill this goal. It would, in this case, look up actions
-that result in at(\texttt{X}) and, for each action, check if it is
-permissible. If the starting location condition of \texttt{moveTo}
-is met, the Goal Manager would have the choice between both \texttt{moveTo}
-implementation and \textendash{} if the Action Selector is setup appropriately
-\textendash{} choose the faster one. If now the starting location
-condition is not met, the Goal Manager would choose the slower but
-more generic \texttt{moveTo} action.
-
-\subsubsection{\label{subsec:Post-conditions}Post-conditions}
-
-A post-condition is a predicate that represents an effect of an action. 
-The term ``post-condition'' is used because we would like to check that 
-the execution of an action actually resulted in the \textbf{intended} 
-effect; it is a condition necessary for the success of an action. 
-Currently, post-conditions are only checked if they are observable
-(i.e. an observer exists for the predicate). Otherwise the effects are 
-just assumed to hold.
-
-\subsubsection{\label{subsec:Generic-post-conditions} Submitting goals by action signature}
-
-As explained prevously, actions are executed when a corresponding
-goal is submitted to the Goal Manager. Sometimes we would like to
-be able to ``call'' an action by name, generally because we do not
-have a post-condition. This is the case for instance when a goal is
-submitted through speech input (Dialogue), where the user input might
-be ``walk forward''. Before the use of generic post-conditions,
-we would translate ``walk forward'' to ``walking forward'' or
-``walked forward'' which would be the post-condition of an action.
-This required manual coding of the present progressive or past tense
-for each action submitted through Dialogue. To avoid this, we allow
-goals to be action signatures as well as post-conditions.
-
-This used to be handled by auto-generating generic post-conditions for
-every action, but this is no longer how the Goal Manage handles
-this case. The Goal Manager now automatically detects if a goal
-is a post-condition or an action signature.
-
-
-\subsubsection{Goal submission}
-
-As explained above, goals \textendash{} described by predicates \textendash{}
-are submitted to the Goal Manager for execution. Figure \ref{fig:Goal-sumission-process.}
-describes the goal submission process. Note that the execution of
-actions associated with a Goal happens in a separate thread (ActionInterpreter).
-Goals can therefore be executed simultaneously, in parallel.
-
-\begin{figure}
-\include{figures/submitGoal}
-
-\caption{Goal sumission process.\label{fig:Goal-sumission-process.}}
-
-\end{figure}
-
-
-\subsubsection{Goal status}
-
-Using the getGoalStatus() method, DIARC Components can query the state
-of the execution of a goal. The following states are defined:
-\begin{description}
-\item [{UNKNOWN}] when a goal is not found
-\item [{PENDING}] submitted but not yet being executed
-\item [{ACTIVE}] execution of goal is in progress
-\item [{SUSPENDED}] execution of goal has been suspended
-\item [{CANCELED}] execution of goal has been cancelled
-\item [{SUCCEEDED}] goal executed successfully
-\item [{FAILED}] execution failed
-\end{description}
-
-\subsection{Actions\label{subsec:Actions}}
-
-Actions can be defined in two different ways, as ``primitives''
-or ``scripts''. An action primitive is nothing more than a Java
-method annotated with the \texttt{@Action} (and \texttt{@TRADEService})
-annotation (directly in the java interface). An action script is an
-ASL (action script language) file describing a sequence of instructions which can be actions
-(primitives or scripts), operators (e.g +, \texttt{-}, ...) or control-flow
-elements (\texttt{if}, \texttt{while}, ...).
-
-\subsubsection{Action status}
-
-Actions are executed as steps towards achieving a desired goal state.
-Using the getActionStatus() method, DIARC Components can query the state
-of the execution of an action (which is being executed as part of some goal). The following states are defined:
-\begin{description}
-\item [{UNKNOWN}] when an action is not found
-\item [{INITIALIZED}] execution of the action just started
-\item [{APPROVED}] execution of action is approved
-\item [{PROGRESS}] execution of action is in progress
-\item [{VERIFYING\_EFFECTS}] observable effects are being verified
-\item [{SUCCESS}] action executed successfully
-\item [{FAIL}] execution failed
-\item [{FAIL\_FORBIDDEN}] action is not permitted or no permissible action
-found
-\item [{FAIL\_PRECONDITIONS}] pre conditions for action do not hold
-\item [{FAIL\_OVERALLCONDITIONS}] overall conditions for action do not
-hold
-\item [{FAIL\_POSTCONDITIONS}] post conditions for action do not hold (observation of effects failed)
-\item [{FAIL\_NOTFOUND}] could not find action
-\item [{FAIL\_ANCESTOR}] an ancestor action failed
-\item [{FAIL\_CHILD}] a child action failed
-\item [{FAIL\_SYNTAX}] action failed because of syntax error in script
-\item [{CANCEL}] action is cancelled
-\item [{SUSPEND}] action execution is suspended
-\end{description}
-
-\subsubsection{Action primitives}
-
-Action primitives reside in Java classes (usually DIARC Components) and are available to the Goal
-Manager when annotated with the \texttt{@Action} annotation. Action primitives
-are only available to the Goal Manager if the Java class that provides
-them are instantiated and available in TRADE. Actions
-are dynamically added or removed whenever components/classes come up or go down.
-
-\subsubsection{Annotations for action primitives}
 
-Java annotations are used to identify action primitves and to list conditions, 
-effects and observations. The following annotations are available:
+\tableofcontents
+\clearpage
+
+\section{Scope, terminology, and source map}
+\label{sec:architecture}
+
+\subsection{The main concepts}
+
+A \textbf{goal} is a request with an actor, a symbolic predicate, an ID,
+priority information, and a lifecycle. An \textbf{action} is a reusable
+capability with typed arguments and optional conditions, effects, and
+interruption behavior. Actions are either Java primitives exposed through
+TRADE or ASL scripts composed from other capabilities. A \textbf{condition}
+must hold for execution to be acceptable; an \textbf{effect} describes a
+modeled result. An \textbf{observer} tests a predicate and returns variable
+bindings. A \textbf{context} is one node in the runtime execution tree,
+not necessarily an action: loops, observations, subgoals, and service calls
+also have contexts.
+
+The Goal Manager is not itself a navigation, manipulation, perception, or
+dialogue implementation. Loading an ASL file that calls a robot capability
+does not provide that capability. The corresponding Java/TRADE provider,
+belief facts, reference-resolution services, and hardware or simulator
+must be supplied by the configuration.
+
+\begin{longtable}{L{0.29\textwidth}L{0.65\textwidth}}
+\textbf{Class or subsystem} & \textbf{Responsibility}\\ \hline
+\endhead
+\code{GoalManagerComponent} &
+DIARC component, command-line configuration, public goal services,
+notifications, and GUI adapters.\\
+\code{manager/ExecutionManager} &
+Actor/team hierarchy, pending/active/past goal collections, priorities,
+resource arbitration, interpreter threads, learning, and history pruning.\\
+\code{goal/Goal}, \code{GoalInfo} &
+Goal-form interpretation, actor, identity, status, failure information,
+and links to execution contexts.\\
+\code{db/Database}, \code{ActionDBEntry} &
+Action models loaded from ASL and dynamically discovered TRADE services;
+separate action, observer, recovery-policy, and performance databases.\\
+\code{selector/ActionSelector} &
+Chooses a parameterized action using the selected strategy. Planning is
+strategy-dependent, not an automatic property of every submission.\\
+\code{ActionInterpreter}, \code{execution/StepExecution} &
+Traverses context trees and drives approval, execution, verification,
+interruption, and terminal bookkeeping.\\
+\code{execution/ActionContext}, \code{GoalContext} &
+Action arguments and checks; subgoal selection, goal verification,
+and recovery.\\
+\code{state/StateMachine} &
+Belief-backed state queries and updates, execution history, and branched
+states used by non-\code{ACT} executions.\\
+\code{asl/ASL.g4}, \code{ActionScriptLanguageParser} &
+Language syntax and conversion into \code{ActionDBEntry} roles, metadata,
+and \code{EventSpec} instructions.\\
+\code{goal/schedule}, \code{manager/ScheduledGoalManager} &
+Quartz-backed timed submissions and schedule lifecycle.\\
+\end{longtable}
+
+Unless a full repository path is given, Java source paths in this guide
+are relative to
+\nolinkurl{core/src/main/java/edu/tufts/hrilab/action/}.
+ASL resource paths are relative to
+\nolinkurl{core/src/main/resources/config/edu/tufts/hrilab/action/asl/}.
+Test ASL resources have the corresponding prefix under
+\nolinkurl{core/src/test/resources/}.
+
+\subsection{Initialization and runtime organization}
+
+\code{GoalManagerComponent.init()} initializes the state machine and
+execution manager before loading the action database. It then loads ASL,
+persisted learned actions, optional PDDL and performance models, attaches
+notifications, loads priorities, registers the context consultant,
+submits command-line goals, and restores configured schedules.
+
+The state machine creates a Belief component using the forwarded belief
+arguments. The execution manager obtains the agent/team hierarchy through
+\code{getAllAgentTeams}. Consequently, the actor hierarchy must be available
+when the execution manager initializes. Merely putting an actor's name in
+a goal does not create that actor.
+
+TRADE discovery makes primitives available as providers register.
+Execution still requires a live provider; the discovery code registers
+for joins and does not provide a matching automatic removal path for
+departed primitive providers. Agent-specific capabilities can be
+associated with \code{agent:<name>} TRADE groups. The database and action
+selector use singleton instances; do not assume that several Goal Manager
+components in one JVM have independent action catalogs and selectors.
+
+\source{GoalManagerComponent.java: init, initializeGM, initializeDB}
+\source{manager/ExecutionManager.java: init, createInstance}
+\source{db/Database.java: addPrimitiveActions, addActionFromTSI}
+
+\section{Getting started and configuring a system}
+\label{sec:configuration}
+
+\subsection{Build and launch}
+
+The core uses Java 17 and the repository Gradle wrapper:
+\begin{lstlisting}[language=bash]
+./gradlew :core:compileJava
+\end{lstlisting}
+
+The following small script needs no robot-specific primitives. Save it as
+\nolinkurl{core/src/main/resources/config/edu/tufts/hrilab/action/asl/quickstart.asl}:
+\begin{lstlisting}[language=ASL,caption={A hardware-independent first script.}]
+() = demo["Count three iterations and finish."]() {
+  for (!i = 0; !i lt 3; !i++) {
+    op:log("info", "Iteration !i");
+  }
+}
+\end{lstlisting}
+
+From the repository root, launch the component with the supplied agent
+knowledge base and this script:
+\begin{lstlisting}[language=bash]
+./gradlew launch \
+  -Pmain=edu.tufts.hrilab.action.GoalManagerComponent \
+  --args="-beliefinitfile agents/agents.pl -asl quickstart.asl -goal demo(self)"
+\end{lstlisting}
+
+The \code{demo(self)} goal explicitly names the actor. Inside ASL,
+\code{?actor} is inherited, so the script does not declare or pass an
+actor argument to \code{op:log}. The loop prints iterations 0, 1, and 2.
+This example demonstrates execution only; an interactive application
+normally starts additional components in a Java DIARC configuration.
+See, for example,
+\nolinkurl{config/src/main/java/edu/tufts/hrilab/config/kinova/KinovaFlexConfig.java}
+for loading the Goal Manager alongside capability providers.
+
+\subsection{Action and belief resources}
+
+By default, ASL filenames resolve under the classpath resource directory
+\nolinkurl{config/edu/tufts/hrilab/action/asl}. For example,
+\code{-asl navigation.asl} loads the resource with that suffix, not an
+arbitrary file relative to the shell's working directory. The parser's
+file-loading entry point uses \code{getResourceAsStream}.
+\code{-dbfileDir} changes the resource-directory prefix.
+
+\code{-asl self:quickstart.asl} restricts actions from that file to
+\code{self}; comma-separated actor names before the colon are also
+supported. Without a prefix, the file is loaded without an explicit
+agent restriction. Restrictions affect selection; they do not create
+agents or instantiate robot services.
+
+Belief initialization is separate from ASL loading. At a minimum, supply
+appropriate actor/team knowledge. The repository's
+\nolinkurl{core/src/main/resources/config/edu/tufts/hrilab/belief/agents/agents.pl}
+contains \code{diarcAgent}, \code{memberOf}, \code{object}, and \code{team}
+facts/rules used by configurations. It describes many agents and is an
+example resource, not a requirement to use that exact hierarchy.
+
+\source{db/Database.java: loadDatabaseFiles, loadDatabaseFromFile}
+\source{asl/ActionScriptLanguageParser.java: parseFromFile}
+
+\subsection{Implemented component options}
+
+These are Goal Manager options, in addition to the options inherited from
+\code{DiarcComponent}. A filename below means a resource unless persistence
+under the user's home directory is explicitly stated.
+
+\begin{longtable}{L{0.36\textwidth}L{0.58\textwidth}}
+\textbf{Option} & \textbf{Meaning}\\ \hline
+\endhead
+\code{-asl <files...>} or \code{--dbfile <files...>} &
+Load ASL files, optionally prefixed with \code{agent1,agent2:}.\\
+\code{-dbfileDir <dir>} &
+Override the default ASL resource prefix.\\
+\code{-goal <predicates...>} &
+Submit initial goals after initialization. Use
+\code{action(actor,args)} or \code{goal(actor,state)} syntax.\\
+\code{-selector <class>} &
+Fully qualified \code{ActionSelector} subclass. Default:
+\code{edu.tufts.hrilab.action.selector.UtilitarianActionSelector}.\\
+\code{-executionManagerType <class>} &
+Fully qualified execution-manager class. Default:
+\code{edu.tufts.hrilab.action.manager.ExecutionManager}.\\
+\code{-priorityFile <files...>} &
+Priority JSON resources under
+\nolinkurl{config/edu/tufts/hrilab/action/manager/priority}.
+Default is \code{default.json}. Later files overwrite earlier map entries.\\
+\code{-badaction <name>} &
+Add an action name to initial forbidden-action constraints.\\
+\code{-badstate <predicate>} &
+Intended to add a forbidden state. This checkout's \code{parseArgs}
+reads the \code{badaction} value in this branch; do not rely on this
+option as a working state-safety configuration.\\
+\code{-pddl <domain> <problem>} &
+Load PDDL actions into the action database, facts into belief, and the
+problem goal as an initial goal for \code{self}. The default PDDL
+resource prefix is \nolinkurl{config/edu/tufts/hrilab/action/pddl}.\\
+\code{-performancefile <files...>} &
+Load performance models. Default prefix:
+\nolinkurl{config/edu/tufts/hrilab/action/performancemodels}.\\
+\code{-performancefileDir <dir>} &
+Declared directory override. The current argument parser checks a
+lowercase spelling of this option; verify that an override is applied
+before relying on it.\\
+\code{-learningGui} &
+Enable the action-learning GUI flag. This is not the obsolete
+\code{-editor} option.\\
+\code{-nomemorymanager} &
+Disable automatic pruning of old goals, contexts, and state.\\
+\code{-historylength <milliseconds>} &
+Retention length, default 60000 ms. The pruning cycle is also 60000 ms;
+retention is not an exact deletion deadline.\\
+\code{-scheduledGoalsFile <filename>} &
+Restore/save schedules at
+\nolinkurl{~/.diarc/scheduledGoals/<filename>}.\\
+\code{-learnedActionsFile <filename>} &
+Load and persist taught ASL at
+\nolinkurl{~/.diarc/learnedActions/<filename>}.\\
+\end{longtable}
+
+The component forwards \code{-beliefinitfile}, \code{-beliefworking},
+\code{-beliefepisodic}, \code{-beliefuniversal}, \code{-beliefprover},
+\code{-beliefdisk}, \code{-beliefg}, and \code{-beliefgroups} to its local
+Belief component. Its own TRADE groups are also added to that component.
+The old \code{-agentname}, \code{-beliefcomponent}, \code{-beliefargs},
+and \code{-editor} interface described in earlier documentation is not
+implemented by this class.
+
+The provided web GUI integration consists of \code{GoalViewerAdapter}
+and \code{GoalManagerAdapter}; \code{ActionProgrammerAdapter} and
+\code{GoalQueueViewerAdapter} also exist in the action GUI package.
+GUI availability depends on the surrounding GUI configuration.
+
+\source{GoalManagerComponent.java: additionalUsageInfo, parseArgs, getAdapterClassNames}
+
+\section{Goal forms and the execution lifecycle}
+\label{sec:goals}
+
+\subsection{Action, state, observation, persistent, and scheduled goals}
+
+The outer predicate is significant. The implementation does \emph{not}
+guess whether a bare predicate is an effect or an action:
+
+\begin{longtable}{L{0.43\textwidth}L{0.51\textwidth}}
+\textbf{Submission predicate} & \textbf{Interpretation}\\ \hline
+\endhead
+\code{goToLocation(self,kitchen)} &
+Explicit action request. Match an action signature, with \code{self} as
+the first (actor) argument.\\
+\code{goal(self,at(self,kitchen))} &
+Desired-state request. Select by effect or use the configured planner
+to achieve the inner predicate.\\
+\code{obs(self,at(self,kitchen))} &
+Observation request. Find an observer for the inner predicate;
+\code{observe} is also accepted as the wrapper name.\\
+\code{persistent(patrol(self))} &
+Repeat the selected execution through a \code{PersistentContext}.
+The wrapper takes one complete goal/action predicate.\\
+\code{scheduled(patrol(self),period(5,MINUTES))} &
+Create a schedule that submits separate executions; see
+Section~\ref{sec:scheduling}.\\
+\end{longtable}
+
+These navigation/patrol names are illustrative: they must be supplied by
+the chosen domain. For an explicit action request the actor is always the
+first argument, even if the underlying Java method has no actor parameter.
+In \code{goal(actor,state)} the actor is a separate argument from the
+desired state, which may itself mention one or more actors.
+
+\code{persistent} means repeated execution, not ``keep a condition true
+using an arbitrary maintenance planner.'' In normal acting modes the
+persistent context resets its child for another iteration; suspension,
+cancellation, and failures still matter. Give repeating behaviors a
+blocking operation or an appropriate delay to avoid a tight loop.
+The old \code{sti} and \code{did} goal forms are explicitly unsupported.
+
+\source{goal/Goal.java: createGoal, constructors, getGoalPredicate}
+\source{execution/PersistentContext.java}
+
+\subsection{What happens after submission}
 
-\paragraph{@Action}
-
-Annotation used to identify which ADE Component methods are available to 
-the Goal Manager. No arguments.
-
-\paragraph{@Condition}
-
-Annotation used to specify a condition for an action. Can be repeated. 
-
-\medskip{}
-
-We use the conjunctive normal form (CNF) to specify. Each \texttt{@Condition} 
-annotation has to hold true for the action to be executed. Within the 
-\texttt{@Condition} annotation, at least one predicate has to hold true 
-(disjunction). To put it simply, we're doing ANDs of ORs: (C1 and (C2.1 
-or C2.2) and C3).
-
-\medskip{}
-
-By default, each predicate part of the condition will tentatively be observed 
-first, and, if not found, inferred in the StateMachine/Belief Component. It is
-possible to force the observation of a predicate by adding it to the 
-\texttt{observable} array. In this case, the predicate will only be observed. 
-If it can't be found, the StateMachine/Belief will not be checked. It is also 
-possible to force a predicate to be only checked in Belief by adding it to the 
-\texttt{inferable} array. Examples:
- 
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Condition(condition=\{\textquotedbl{}on(table,?object)\textquotedbl{}\},
-type = ConditionType.PRE})
-
-\texttt{public void pickUp(String object);}%
-\end{minipage}}
-
-\captionof{Annotation}{Standard condition. The free variable (\texttt{?object}) will 
-be bound to the passed-in value with the corresponding name (\texttt{String object})}
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Condition(condition=\{\textquotedbl{}on(table,?object)\textquotedbl{},
-\textquotedbl{}on(shelf,?object)\textquotedbl{}\},}
-
-\texttt{~~~~~~~~~~~type = ConditionType.PRE)}
-
-\texttt{public void pickUp(String object);}%
-\end{minipage}}
-
-\captionof{Annotation}{Condition with two predicates. At least one of them has 
-to hold true (disjunction).}
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Condition(condition=\{\textquotedbl{}on(table,?object)\textquotedbl{},
-\textquotedbl{}on(shelf,?object)\textquotedbl{}\},}
-
-\texttt{~~~~~~~~~~~type = ConditionType.PRE,}
-
-\texttt{~~~~~~~~~~~observable = \{\textquotedbl{}on(table,?object)\textquotedbl{}\})}
-
-\texttt{public void pickUp(String object);}%
-\end{minipage}}
-
-\captionof{Annotation}{Same as above but \texttt{on(table,?object)} has to be 
-observed, e.g. through Vision and will not be checked in Belief.}
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Condition(condition=\{\textquotedbl{}on(table,?object)\textquotedbl{},
-\textquotedbl{}on(shelf,?object)\textquotedbl{}\},}
-
-\texttt{~~~~~~~~~~~type = ConditionType.PRE,}
-
-\texttt{~~~~~~~~~~~inferable = \{\textquotedbl{}on(table,?object)\textquotedbl{}\})}
-
-\texttt{public void pickUp(String object);}%
-\end{minipage}}
-
-\captionof{Annotation}{This time \texttt{on(table,?object)} has to be inferred 
-(in StateMachine/Belief) and will not be observed.}
-
-\paragraph{@Effect}
-
-Annotation used to specify an effect of an action. Can be repeated.
-
-\medskip{}
-
-The predicates in the \texttt{effect} array will be added to the StateMachine/Belief.
-A predicate can be specified as observable, by adding it to the \texttt{observable}
-array. In this case, it will first be observed that the effect does indeed
-apply by calling an observer, e.g. Vision. If the predicate cannot be observed,
-it will not be added to the StateMachine/Belief and the corresponding action
-will fail.
-
-\medskip{}
-
-A predicate can be specified as a side-effect by adding it to the \texttt{sideEffect}
-array. In this case, the predicate will not be a part of the post condition
-of an action and will not be available to call the action.
-
-\medskip{}
-
-An effect can retract a predicate by placing it within a \texttt{not()} operator, e.g.
-\texttt{not(on(table,mug))} will retract \texttt{on(table,mug)}. Examples:
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Effect(effect=\{\textquotedbl{}at(?object,?locB)\textquotedbl{},
-\textquotedbl{}not(at(?object,?locA))\textquotedbl{}\},}
-
-\texttt{~~~~~~~~type = EffectType.SUCCESS)}
-
-
-\texttt{public void moveTo(String object, String locA, String locB);}%
-\end{minipage}}
-
-\captionof{Annotation}{Standard effect. The free variables (\texttt{?object}, 
-\texttt{locA}, \texttt{?locB}) will be bound to their respective values before 
-assertion/retraction.}
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Effect(effect=\{\textquotedbl{}at(?object,?locB)\textquotedbl{},
-\textquotedbl{}not(at(?object,?locA))\textquotedbl{}\},}
-
-\texttt{~~~~~~~~type = EffectType.SUCCESS,}
-
-\texttt{~~~~~~~~observable=\{\textquotedbl{}at(?object,?locB)\textquotedbl{}\}}
-
-
-\texttt{public void moveTo(String object, String locA, String locB);}%
-\end{minipage}}
-
-\captionof{Annotation}{Same as above but \texttt{at(?object,?locB)} has to be 
-observed before assertion, e.g. through Vision.}
-
-\paragraph{@Observes}
-
-Annotation used to specify an observation that an action can make. Cannot be repeated.
-
-\medskip{}
-
-Should only be used with java methods of the following form:
-
-\texttt{~~~~List<Map<Variable,Symbol>> method(Term term);}
-
-i.e., the method has to take a single Term (or Predicate) as an argument and return
-a list of maps from Variable to Symbol. Methods that do not respect this will not
-be available as observers in action and a warning will be shown.
-
-\medskip{}
-
-\noindent\fbox{\begin{minipage}[t]{1\columnwidth - 2\fboxsep - 2\fboxrule}%
-\texttt{@Action}
-
-\texttt{@Observes(\{\textquotedbl{}on(table,?object)\textquotedbl{}, 
-\textquotedbl{}on(shelf,?object)\textquotedbl{}\})}
-
-\texttt{public List<Map<Variable,Symbol>> lookforObject(Term object);}%
-\end{minipage}}
-
-\captionof{Annotation}{Annotation for an action that will observe if \texttt{?object}
-is on the table or on the shelf.}
-
-\subsubsection{Action scripts}
-
-Action scripts are programs, written in a custom ASL (action script language), that are interpreted
-by the Goal Manager. Scripts are currently stored in the \texttt{com/action/db/scripts}
-folder. 
-
-\medskip{}
-The following is an example ASL script showing the basic language features available:
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/template.asl}%
-\end{minipage}}
-
-\begin{description}
-\item [{import}] import java class. See \ref{subsec:import_aliasing} (optional)
-\item [{actionName}] name of the action (required)
-\item [{description}] description (optional)
-\item [{roles (arguments)}] (optional), with the following properties
-\begin{description}
-\item [{name}] has to start with ``?'' (input or return variable) or ``!'' (local variable)
-\item [{type}] has to be a java type, e.g. \texttt{java.lang.String},
-\texttt{int}, \texttt{double}, ...
-\item [{default value}] default value if not provided when calling action (optional)
-\item [{return}] return variable (optional), there can be multiple return variables
-\end{description}
-\item [{benefit}] benefit of action (optional)
-\item [{cost}] cost of action (optional)
-\item [{minurg}] min urgency of action (optional)
-\item [{maxurg}] max urgency of action (optional)
-\item [{timeout}] timeout (optional) {[}currently not implemented{]}
-\item [{conditions}] set of predicates (optional) that must hold for
-the action to execute
-\begin{description}
-\item [{pre}] pre-condition (optional), checked right before execution
-of the action
-\item [{overall}] overall-condition (optional), continuously checked
-during the execution of the action
-\item [{or}] disjunction operator
-\footnote{\label{fn:disjunction} Used to specify
-disjunctions in the conjunctive normal form. By default, all conditions are chained 
-together in a conjunction (C1 and C2 and ...). The \texttt{or} element chains
-conditions together in a disjunction (C3 or C4 or ...). It is thus
-possible to have conditions such as (C1 and (C2 or C3) and C4).}
-, has to contain at least two \texttt{pre}
-or \texttt{overall} conditions. Different types of conditions cannot be mixed.
-
-optional arguments for \texttt{pre} or \texttt{overall}:
-
-\begin{description}
-\item[{observable}] boolean, specifies whether a condition should be observed (only)
-or inferred (only). By default a condition is observed if possible, otherwise inferred.
-\end{description}
-
-\end{description}
-\item [{effects}] set of predicates (optional) that represent the result
-of an action, will be asserted into the action State Machine/Belief
-Component
-\begin{description}
-\item [{always}] always effect, applies as soon as the action is in progress
-(optional) 
-\item [{success}] success effect, applies if the action is a success
-(optional) 
-\item [{failure}] failure effect, applies if the action failed (optional)
-\item [{nonperf}] non performance effect, applies if the action is not
-executed (optional) {[}not implemented{]}
-
-optional arguments for \texttt{always}, \texttt{success}, \texttt{failure}, and
-\texttt{nonperf}:
-
-\begin{description}
-\item[{observable}] boolean, specifies whether an effect has to be observed before
-getting asserted. By default effects are verified if possible, otherwise just assumed
-to hold.
-
-\end{description}
-
-\end{description}
-
-\item [{observes}] indicates what predicates this action can observe, can be
-repeated if different predicates can be observed.
-\item [{locks}] resource locks (optional) {[}currently not implemented{]}
-\item [{goal}] (previously state:) goal state specification (optional), see section \ref{subsec:TODO}
-\item [{obs}] observation specification (optional), see section \ref{subsec:TODO}
-\item [{act}] action specification (optional), see section \ref{subsec:Action-and-Operator}
-\item [{op}] operator specification (optional), see section \ref{subsec:Action-and-Operator}
-and \ref{subsec:Operators}
-\item [{control}] control-flow specification (optional), see section
-\ref{subsec:Control-elements}
-\end{description}
-
-\subsubsection{Action and Operator Specification\label{subsec:Action-and-Operator}}
-
-Action and operator specifications (\texttt{act:} and \texttt{op:})
-are used to invoke actions (or operators) in scripts. The usual syntax
-is the following: 
-\begin{itemize}
-\item for an action,
-
-\texttt{?returnvalue = act:actionName(?argument1, ?argument2);}
-
-\texttt{(?returnvalue1, ?returnvalue2) = act:actionName(?argument1, ?argument2);}
-\item for an operator,
-
-\texttt{?returnvalue = op:operatorName(?argument1, ?argument2);}
-\item
-\texttt{(?returnvalue1, ?returnvalue2) = op:operatorName(?argument1, ?argument2);}
-\end{itemize}
-
-Action names are either script names (actionName) or primitive
-(method) names. Operator names are the method names or symbols defined
-in \texttt{com.action.operators}. Only actions or operators that are
-available in the Action Database can be called at run-time, i.e. all
-necessary action scripts have to be parsed and all necessary ADE components
-have to be up. If an action is not available at run-time, the execution
-of the action/goal will fail. A list of operator names is available
-in section \ref{subsec:Operators}. Arguments need to be provided
-in the same order as they are declared in scripts or in a method's
-parameter list. Arguments can be variables (as shown above) or values
-in String form (e.g. \texttt{3.1415}, \texttt{\textquotedbl{}text\textquotedbl{}},
-\texttt{myPredicate(?arg)}). Variables inside strings (\texttt{\textquotedbl{}\textquotedbl{}})
-are bound to their value if possible, e.g. \texttt{\textquotedbl{}Hello
-?subject\textquotedbl{}} will be bound to \texttt{\textquotedbl{}Hello
-Jim\textquotedbl{}} if a \texttt{?subject} variable is present and
-has a value (\texttt{Jim}). Variable binding can be avoided if the
-\texttt{?} or ! is escaped with a \texttt{\textbackslash{}}. Return
-values of actions or operators are available after the arguments being
-passed in. Note that action scripts can return multiple values.
-
-\medskip{}
-
-As explained in section \ref{subsec:Handling-multiple-agents}, it
-is possible to call an action on an agent in particular if there is
-more than a single agent handled by the Goal Manager. In that case,
-prefixing the agent name will indicate that the action has to be
-executed for that agent:
-
-\medskip{}
-\texttt{agentName.act:actionName(?argument1, ?argument2);}
-
-\medskip{}
-\texttt{?actor.act:actionName(?argument1, ?argument2);}
-
-\medskip{}
-
-The agent name can be a string constant or a string variable. The
-\texttt{?actor} variable is reserved for that purpose and contains
-the name of the agent for the current execution context. See section
-\ref{subsec:Handling-multiple-agents} fore more details.
-
-\subsection{Operators\label{subsec:Operators}}
-
-The following operators are available in action: 
-\begin{description}
-\item [{\textrm{Arithmetic~Operators}}]~
-\begin{description}
-\item [{+}] addition, arguments: java.lang.Number, java.lang.Number, returns
-double 
-\item [{-}] subtraction, arguments: java.lang.Number, java.lang.Number,
-returns double 
-\item [{{*}}] multiplication, arguments: java.lang.Number, java.lang.Number,
-returns double 
-\item [{/}] division, arguments: java.lang.Number, java.lang.Number, returns
-double 
-\item [{\%}] modulus, arguments: java.lang.Number, java.lang.Number, returns
-double 
-\item [{++}] increment, arguments: int, returns int -{}- decrement, arguments:
-int, returns int 
-\item [{round}] rounding, arguments: java.lang.Number, returns int 
-\end{description}
-\item [{\textrm{Comparison~Operators}}]~
-\begin{description}
-\item [{==}] equal, arguments: java.lang.Object, java.lang.Object, returns
-boolean 
-\item [{!=}] not equal, arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{gt}] greater than (>), arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{ge}] greater or equal (>=), arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{lt}] lower than (<), arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{le}] lower or equal (<=), arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{equals}] java's equals, arguments: java.lang.Object, java.lang.Object,
-returns boolean 
-\item [{notEquals}] java's (not) equals, arguments: java.lang.Object, java.lang.Object,
-returns boolean
-\end{description}
-\item [{\textrm{Logical~Operators}}]~
-\begin{description}
-\item [{!}] not, arguments: java.lang.Boolean, returns boolean 
-\item [{and}] and, arguments: java.lang.Boolean, returns boolean 
-\item [{||}] or, arguments: java.lang.Boolean, java.lang.Boolean, returns
-boolean 
-\end{description}
-\item [{\textrm{Misc~Operators}}]~
-\begin{description}
-\item [{sleep}] sleep, arguments: long delay 
-\item [{randomInt}] random integer, arguments: int lower, int upper, returns
-int 
-\item [{randomDouble}] random double, arguments: int lower, int upper,
-returns double 
-\item [{log}] log text using standard log4j2 mechanism, arguments: java.lang.String (logging level), java.lang.String (logging message)
-\end{description}
-
-\item [{\textrm{Standard~Java~Methods~Operators}}]~
-\begin{description}
-\item [{newObject}] instantiate new java object via class constructor.
-       \begin{description}
-       \item Arguments: java.lang.String (specifying java class), Object...(optional constructor arguments).
-       \item Returns: java.lang.Object
-       \end{description}
-\item [{invokeMethod}] invoke method on a java object.
-       \begin{description}
-       \item Arguments: java.lang.Object (java object instance), java.lang.String (methodname), Object... (optional method args).
-       \item Optionally returns: java.lang.Object
-       \end{description}
-\item [{invokeStaticMethod}] invoke a java static method.
-       \begin{description}
-        \item Arguments: java.lang.String (specifying java class), java.lang.String (methodname), Object... (optional method args).
-        \item Optionally returns: java.lang.Object
-       \end{description}
-\end{description}
-
-\item [{\textrm{Collections~operators}}]~
-\begin{description}
-\item [{\textrm{Generic}}]~
-\begin{description}
-\item [{clear}] arguments: java.util.Collection 
-\item [{isEmpty}] arguments: java.util.Collection, returns boolean 
-\item [{size}] arguments: java.util.Collection, returns int size 
-\end{description}
-\item [{\textrm{List}}]~
-\begin{description}
-\item [{add}] arguments: java.util.List<T> list, T element, returns boolean 
-\item [{add}] arguments: java.util.List<T> list, int index, T element 
-\item [{contains}] arguments: java.util.List list, java.lang.Object element,
-returns boolean 
-\item [{get}] arguments: java.util.List<T> list, int index, returns T element 
-\item [{remove}] arguments: java.util.List<T> list, int index, returns
-T element 
-\item [{remove}] arguments: java.util.List<T> list, T element, returns
-boolean 
-\item [{set}] arguments: java.util.List<T> list, int index, T element,
-returns T element 
-\end{description}
-\item [{\textrm{Set}}]~
-\begin{description}
-\item [{add}] arguments: java.util.Set<T> set, T element, returns boolean 
-\item [{contains}] arguments: java.util.Set set, java.lang.Object element,
-returns boolean 
-\item [{remove}] arguments: java.util.Set<T> set, T element, returns boolean 
-\end{description}
-\item [{\textrm{Map}}]~
-\begin{description}
-\item [{containsKey}] arguments: java.util.Map map, java.lang.Object key,
-returns boolean 
-\item [{containsValue}] arguments: java.util.Map map, java.lang.Object
-value, returns boolean 
-\item [{entrySet}] arguments: java.util.Map<K,V> map, returns java.util.Map.Entry<K,V> 
-\item [{get}] arguments: java.util.Map<K,V> map, K key, returns V value 
-\item [{keySet}] arguments: java.util.Map<K,?> map, returns java.util.Set<K> 
-\item [{put}] arguments: java.util.Map<K,V> map, K key, V value, returns
-V 
-\item [{remove}] arguments: java.util.Map<K,V> map, K key, returns V value 
-\end{description}
-\end{description}
-\end{description}
-Operators are called with the op: specification.
-
-\subsection{Control elements\label{subsec:Control-elements}}
-
-The flow of control \textendash{} the order in which statements or
-instructions are executed \textendash{} can be controlled with the
-following elements. In a script, control elements are similar to those
-used in Java. The following subsections show examples of each.
-
-\subsubsection{If, Elseif, Else}
-
-The \texttt{if}, \texttt{elseif}, and \texttt{else}
-elements execute the corresponding set of statements
-only if some statement (condition) evaluates to \texttt{true} (short:
-``is true''). A statement is true if the evaluated instruction returns
-true (e.g. an action or operator returns true). A statement is false
-if the execution of the instruction fails or it evaluates to false
-(e.g. an action or operator returns false).
-
-\medskip{}
-
-The syntax of the if, elseif, else control element is
-as follows:
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/if.asl}%
-\end{minipage}}
-
-\subsubsection{For}
-
-The for statement provides a compact way to iterate over a range of
-values.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/for.asl}%
-\end{minipage}}
-
-\subsubsection{For Each}
-
-The for-each statement provides a compact way to iterate over all
-the items in a collection.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/foreach.asl}%
-\end{minipage}}
-
-
-\subsubsection{While, do}
-
-Instructions can be executed repeatedly while a condition is true.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/while.asl}%
-\end{minipage}}
-
-\subsubsection{And, Or}
-
-The \texttt{and} and \texttt{or}
-elements evaluate to true if the conjunction or disjunction of contained
-the statements evaluate to true. These elements can be used like this:
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/and-or.asl}%
-\end{minipage}}
-
-\subsubsection{Not}
-
-The \texttt{\~} element inverts the result of
-the evaluation of a statement. It can be combined with the \texttt{and}
-and \texttt{or} operators.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/not.asl}%
-\end{minipage}}
-
-\subsubsection{Try, Catch, Finally}
-
-The \texttt{try}, \texttt{catch}, and \texttt{finally} elements allow handling
-of errors in action scripts. Action scripts stop executing as soon
-as an error happens unless the error is caught and handled by a try-catch
-block. The instructions between try and the first catch element are
-executed sequentially. If an instruction fails, the execution jumps
-to the catch block corresponding to the failure status. The catch
-statement can take two (optional) arguments. The first argument is
-the failure status to catch in this block and the second is the name
-of the variable in which to store information about the failure (currently
-a simply a predicate, the "fail condition"). This variable does not have to
-be declared as a local variable in the usual way. Just like in Java, the finally block
-will be executed regardless of failure or success in the try block.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/trycatch.asl}%
-\end{minipage}}
-
-\subsubsection{Exit}
-
-The \texttt{exit} control element stops the execution of an action script.
-It takes two (optional) arguments, the ActionStatus Enum to exit with and
-a predicate ("fail condition"). Refer to the example
-given for the try, catch block and have a look at how the \texttt{exit} control
-is used.
-
-\subsubsection{Return}
-
-The \texttt{return} control element will return from a script in much the same way
-as in Java or most other languages.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/return.asl}%
-\end{minipage}}
-
-\subsubsection{Async and Join}
-
-The \texttt{async} control element is used to launch an asynchronous execution within
-an action script. Code within an async block is all executed in a new child ActionInterpreter
-which is executed inside a new thread. Async returns a single argument that gets bound to a unique identifier
-for the async context.
-
-The \texttt{join} control element provides a mechanism to wait on an async context to finish execution and
-takes up to two args. The first arg is required and specifies the particular async context to join on (identifier
-returned from the async element). The second (optional) arg specifies the time to wait before returning (in ms).
-If no timeout is passed in, the join will wait until termination of the async context. The ActionStatus of the
-completed (or timed-out) async context is returned.
-
-\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
-\lstinputlisting[]{asl/async.asl}%
-\end{minipage}}
-
-\subsubsection{True}
-
-The \texttt{true} control element evaluates to true (hence its name). It can
-be used for things like infinite while loops, using the \texttt{true} element
-as a condition.
-
-\subsection{\label{subsec:import_aliasing}Imports and Name Aliasing}
-You can import classes you want to use later to avoid typing the full name repeatedly. This is only useful
-for declaring variables (input variable, local variable, or return variable).
-
-\medskip{}
-\texttt{import java.lang.String;}
-
-\medskip{}
-\texttt{String !str;}
-
-\medskip{}
-You can also rename an imported class as another name (this will reduce the readability of code).
-
-\medskip{}
-\texttt{import java.lang.String as MyStr;}
-
-\medskip{}
-\texttt{MyStr !str;}
-
-\subsection{Beliefs, Conditions and Effects}
-
-Part of the Goal Manager's task is to keep track of the current state
-of the world, check if actions are permissible and update the state
-with the effects of actions. Action's StateMachine does all of this
-and also keeps a history of states to be able to justify its choices.
-The logic reasoning happens in the Belief Component, which is automatically
-instantiated by the StateMachine; there is no need to start a separate
-Belief Component. As explained in section \ref{subsec:Actions}, conditions 
-and effects can be specified with java annotations or within an
-action script.
-
-\subsubsection{Conditions}
-
-Conditions are a set of predicates that must hold at certain points
-in time in order for an action to be executed. These predicates will
-be observed (if possible) or inferred using the StateMachine and the 
-associated Belief Component.
-The following condition types exist: 
-\begin{itemize}
-\item Pre Conditions: conditions that must hold before the execution of
-an action 
-\item OverAll Conditions: conditions that must hold during the execution
-of an action
-\item Post Conditions: conditions that must hold after the execution of
-an action
-\end{itemize}
-Note that post conditions cannot be directly specified, they consist
-of a subset of effects (union of Always and Success effects), see
-section \ref{subsec:Effects} as well as sections \ref{subsec:Post-conditions}
-and \ref{subsec:Generic-post-conditions}. If a post condition is
-observable (i.e. there is an observer mechanism available), it will 
-be checked and the action will fail if the observation
-is not successful. If a post condition is not observable, it is just
-assumed to hold, unless it is explicitely flagged as observable, in which
-case the post condition check will fail.
-
-\subsubsection{\label{subsec:Effects}Effects}
-
-Effects are a set of predicates that represent the result of an action.
-The following types of effects exist: 
-\begin{itemize}
-\item Always Effects: effects that are true from the start of an action
-(no matter the outcome, success or fail). 
-\item Success Effects: effects that are true at the end of an action if
-it succeeds. 
-\item Failure Effects: effects that are true from the point in time when
-an action fails. 
-\item Non Performance Effects: effects that are true if an action is not
-executed (not implemented). 
-\end{itemize}
-
-Effects will be observed if possible and the action will fail if the 
-observation if not successful. If there is no observer mechanism available
-for an effect, the effect is just assumed to be true, unless it is explicitely
-flagged as observable, in which case the effect will not be applied and the 
-action will fail (post-condition failure).
-
-\medskip{}
-
-Effects (predicates) can be retracted (removed) from the State Machine
-and the Belief Component by wrapping the predicate in a \texttt{not().}Currently,
-because of this retraction mechanism, there is no way to directly
-assert (add) \texttt{not} predicates.
-
-\subsubsection{Binding of predicates in conditions and effects}
-
-Arguments in predicates are bound to their respective variables. For
-instance, an action named \texttt{moveTo} with arguments \texttt{?start}
-and \texttt{?destination} can have the following conditions and effects: 
-\begin{itemize}
-\item Pre Condition: \texttt{at(?start)}
-\item Success Effect: \texttt{at(?destination)}
-\item Success Side Effect: \texttt{not(at(?start))}
-\end{itemize}
-When executing such an action with the following actspec: 
-
-\noindent\begin{minipage}[t]{1\columnwidth}%
-\begin{center}
-\texttt{act:moveTo(A,B);}
-\par\end{center}%
-\end{minipage}
-
-the Goal Manager will first check that the agent is \texttt{at(A)},
-then execute the action and finally, if the move was successful, add
-the effect \texttt{at(B)} and retract \texttt{at(A)} (because of the
-\texttt{not()})to the agent's State. Note that the variable binding
-happens when the condition or effect is used, i.e. at check-time or
-state-update-time (which depends on effect type). 
-
-\medskip{}
-
-Unbound variables in conditions are treated as free variables during
-condition checking and bound to a value if a solution is found. If
-more than a single solution is found for a condition, the first result
-is used. This mechanism can be used in the following way, again taking
-the example of a moveTo action: 
-\begin{itemize}
-\item Pre Condition: \texttt{at(!start)} 
-\item Success Effect: \texttt{at(?destination)} 
-\item Success Side Effect: \texttt{not(at(!start))}
-\end{itemize}
-Here, the \texttt{!start} (local) variable can be looked up during
-pre-condition checking, bound to a value found in Belief (e.g. \texttt{A})
-and then retracted as a success side effect, without having to pass
-in its value during an action call: \texttt{act:moveTo(B);.}
-
-\subsection{Handling multiple agents\label{subsec:Handling-multiple-agents}}
-
-The Goal Manager is capable of handling multiple agents running at
-the same time within a single instance. Each action has an implicit
-\texttt{?actor} variable that tracks the actor executing this action.
-When \texttt{the ?actor} binding is looked up, it will recurse up
-to the nearest context where it is defined. If the lookup reaches
-the RootContext, \texttt{?actor} is set to the ``super'' agent name
-set with the \texttt{-agentname} command line argument (see section
-\ref{subsec:Arguments}).
-
-\medskip{}
-The actor name can be set in two different ways: 
-\begin{itemize}
-\item Calling an action through a postcondition containing the \texttt{?actor}
-variable. The generic post condition always has \texttt{?actor} as
-the first argument (see section \ref{subsec:Generic-post-conditions}). 
-\item Calling an action the \textquotedbl{}object-oriented\textquotedbl{}
-way: \texttt{?actor.act:standUp();} will ask \texttt{?actor}
-to stand up (can be a string constant). Effects of actions can (should)
-contain this \texttt{?actor} variable to be agent-specific. This way,
-it is possible to keep track of each agent's state of the world. The
-\textquotedbl{}nao shared mental model\textquotedbl{} demo uses this
-to allow robots to reason about other robot's state.
-\end{itemize}
-
-\subsubsection{Agent-specific action primitives}
-
-It is possible to identify DIARC components (and their action primitives)
-as belonging to an agent in particular. This can be useful when two
-robots of the same type are running simultaneously. For instance,
-in the \textquotedbl{}nao shared mental model\textquotedbl{} demo,
-two naos and their NaoComponents are up and running at the same time.
-In order to allow action to call the action primitives on the right
-components, each component is placed in a group corresponding to the
-agent it is in charge of, with the following syntax: \texttt{agent:robotname}.
-In the \textquotedbl{}nao shared mental model\textquotedbl{} case,
-one NaoComponent is in the group \texttt{agent:shafer} and the other
-in the group \texttt{agent:dempster}. In the event where no agent-specific
-action can be found, a generic action (not belonging to any agent
-in particular) will be used, if available. Otherwise the execution
-will fail.
-
-\subsection{Observations and Observer actions}
-
-The observer mechanism in action provides functionality to explicitely
-check if a fact holds by observing the world, through an DIARC Component
-such as Vision. Actions can provide observations, either by specifiyng 
-a predicate in the \texttt{@Observes} annotation in the case of an action
-primitive or with the \texttt{observes} element in the case of a script.
-
-\medskip{}
-
-Actions that can observe if a predicate holds ("observers") have to
-take a single Term (or Predicate) as an argument and return a list
-of maps between Symbols and Variables. The passed in predicate
-is what has to be observed and the returned list of maps provides the 
-bindings in the case when free variables are present in the predicate, similarly 
-to how the Belief Component works.
-
-\medskip{}
-
-By default, Action will always try to observe a condition or effect. If no
-observer is available for a condition or effect it will be inferred via 
-Belief. This mechanism can be changed by explicitely specifing the condition or 
-effect as "observable", in which case it has to be observed and the action will 
-fail if an observation cannot be made. A condition or effect can also be specified
-as "inferrable", in which case it will only be inferred through Belief.If a condition 
-or effect cannot be observed the action will fail with thecorresponding error (FAIL).
-
-\medskip{}
-
-Just like regular conditions, observable conditions can be used to get bindings
-for free variables. For instance a \texttt{on(!object, table)} pre-condition can
-be used to retrieve the object that is on the table via an observation. The observer
-will return a binding for the \texttt{!object} variable if there is such an object
-on the table.
-
-
-\section{Internal workings of the Goal Manager}
-
-The section describes the inner workings of the Goal Manager. It is
-intended for the developer interested in understanding, debugging
-and expanding the Goal Manager.
-
-\medskip{}
-
-The GoalManager code can be divided in two parts: 
 \begin{enumerate}
-\item The ``goal management'' part, which initializes the Action Database
-by reading action scripts and importing action primitives,
-handles the submission of new goals and responds to queries
-for currently running goals. Other DIARC Components interface with this
-part of the Goal Manager.
-\item The ``action execution'' part, which sets up the instructions and
-contexts (scopes) for the ActionIntepreter to run. This side is not
-exposed to external DIARC Components.
+\item The component creates a \code{Goal}, attaches its notifier, and
+sets execution type, tier, numeric priority, and submitter metadata.
+Submission returns an ID; it does not wait for success.
+\item The execution manager validates the actor against its hierarchy.
+An unknown actor produces a failed goal with an
+\code{actorInHierarchy(actor)} justification. A returned positive ID
+therefore does not imply that execution started.
+\item Scheduled goals go to the scheduler. Ordinary goals may instead be
+handed to an active action-learning session. Other goals enter resource
+arbitration as pending goals.
+\item When allowed by priority and resource policy, the goal becomes
+active. Root constraints are checked, a state machine is chosen, and
+an \code{ActionInterpreter} is submitted to the executor.
+\item A \code{GoalContext} binds the goal and selects an action, or creates
+an observation context. Action contexts bind typed arguments and check
+constraints, preconditions, and obligations.
+\item The interpreter executes primitives or traverses ASL child
+contexts. Overall conditions are monitored during progress.
+\item Completion verifies return values, effects, and, when the
+appropriately typed service is available, norms. State changes are
+recorded. State goals additionally verify the desired predicate in the
+state machine; explicit action goals do not add a separate desired-state
+test beyond the action's own verification.
+\item Failures can trigger a catch block or matching recovery policy.
+Terminal bookkeeping moves the goal to history, releases resources,
+notifies waiters/listeners, and considers other pending goals.
+Unexpected interpreter exceptions also fail the goal and run terminal
+bookkeeping rather than leaving resources occupied indefinitely.
 \end{enumerate}
 
-\subsection{Goal Management}
+Subgoals inside an ASL context tree are not the same thing as separately
+submitted top-level goals with independently managed public IDs. In
+particular, \code{goal:...} composes a subgoal into the current execution;
+\code{submitGoal(...)} explicitly asks the execution manager to create
+another managed goal.
 
-The Goal Manager (DIARC Component) initializes the Action Database and
-collects information about the action primtives provided
-by the DIARC Components currently registered with TRADE. It also parses action
-scripts and loads them into the Action Database. The Basic Goal Manager,
-which is responsible of goal submission and goal tracking, is instantiated
-by the Goal Manager.
+\source{manager/ExecutionManager.java: submitGoal, executeGoal, goalStatusChanged}
+\source{ActionInterpreter.java: call}
+\source{execution/GoalContext.java: selectAction, verifyEffects}
+\source{execution/StepExecution.java: canDoStep, doStep, finishStep}
 
-\subsubsection{GoalManager(Impl)}
+\subsection{Goal status versus action status}
 
-The GoalManager is the top-level DIARC Component. It provides
-the functionality to set up the Action system (parsing action scripts,
-searching for action primitives, instantiating the BasicGoalManager). 
+\code{GoalStatus} is the public task lifecycle:
+\begin{description}
+\item[\code{UNKNOWN}] No retained goal with this ID was found.
+\item[\code{PENDING}] Waiting to begin or to regain execution resources.
+\item[\code{ACTIVE}] Managed execution is active.
+\item[\code{SUSPENDED}] Execution was paused. A superseded goal can be in
+the pending collection while retaining a suspended execution state.
+\item[\code{CANCELED}] Terminal cancellation, not successful completion.
+\item[\code{SUCCEEDED}] Terminal successful completion.
+\item[\code{FAILED}] Terminal failure; inspect the justification.
+\end{description}
 
-\subsubsection{BasicGoalManager}
+Only \code{CANCELED}, \code{SUCCEEDED}, and \code{FAILED} are terminal.
+Collection membership and status answer different questions: the active
+collection can include explicitly suspended goals, while the scheduled
+collection represents schedule controllers.
 
-The BasicGoalManager handles goal submission and tracking. Eventually,
-we would like to have one BasicGoalManager instance in each DIARC Component,
-to allow the components to locally manage goals. When the BasicGoalManager
-in instantiated, it creates a StateMachine which will track the state
-of the world, using a BeliefComponent (automatically spawned). When
-a goal is submitted, it verifies the goal against the constraints
-and, if it is acceptable, instantiates a new ActionInterpreter. If
-the goal is to be simulated, the StateMachine is cloned, a new Belief
-Component is instantiated and used for tracking the state in the ActionInterpreter
-for that goal, see figure \ref{fig:Goal-sumission-process}.
+\code{ActionStatus} is the finer-grained execution/context state. Its
+normal phases include \code{INITIALIZED}, \code{CHECKINGAPPROVAL},
+\code{APPROVED}, \code{PROGRESS}, \code{VERIFYING_RETURNVALUE},
+\code{VERIFYING_EFFECTS}, \code{VERIFYING_NORMS}, and \code{SUCCESS}.
+\code{RECOVERY}, \code{SATISFYING_PRECONDITIONS}, and
+\code{SATISFYING_OBLIGATIONS} describe recovery/planning-related phases.
 
-\begin{figure}
-\include{figures/basicGMsubmitGoal}
+Failure statuses include \code{FAIL}, \code{FAIL_FORBIDDEN},
+\code{FAIL_CONSTRAINTS}, \code{FAIL_PRECONDITIONS},
+\code{FAIL_OVERALLCONDITIONS}, \code{FAIL_OBLIGATIONS},
+\code{FAIL_POSTCONDITIONS}, \code{FAIL_ARGUMENTS},
+\code{FAIL_ARGUMENTUNBOUND}, \code{FAIL_RETURNVALUE},
+\code{FAIL_NOTFOUND}, \code{FAIL_ANCESTOR}, \code{FAIL_CHILD},
+\code{FAIL_SYNTAX}, \code{FAIL_RECOVERY}, \code{FAIL_NORMS},
+and \code{EXIT_RECOVERY}. Interruption/control states include
+\code{CANCEL}, \code{PARENT_CANCEL}, \code{SUSPEND},
+\code{PARENT_SUSPEND}, \code{RESUME}, and \code{RETURN};
+\code{UNKNOWN} is also defined.
 
-\caption{Goal sumission process within BasicGoalManager.\label{fig:Goal-sumission-process}}
-\end{figure}
+Do not compare the two enums as if their names or granularity matched.
+\code{getActionStatus(gid)} reports the goal's root context status, not
+necessarily the currently executing leaf primitive.
 
+\source{goal/GoalStatus.java}
+\source{ActionStatus.java}
 
-\subsection{Action Execution}
+\section{Selection, planning, priorities, and concurrency}
+\label{sec:selection}
 
-\subsubsection{ActionInterpeter}
+\subsection{How actions are found}
 
-The ActionInterpreter executes the action scripts, step-by-step. It
-implements the \texttt{Callable} interface to execute the goals in a concurrent,
-non-blocking manner. For each cycle, the runCycle() method is called.
-It handles the action execution stack, calls the context execution
-method and fetches the next step, if there's one.
+Candidate lookup uses the goal's kind: observation predicates query the
+observer database, explicit action requests query action signatures, and
+state goals query effects. Candidates are converted to
+\code{ParameterizedAction} instances, checked for valid Java argument
+types, and annotated with constraint justifications.
+
+The default \code{UtilitarianActionSelector} sorts candidates using
+\code{benefit - cost} and chooses the first constraint-supported candidate,
+or a candidate with a failing justification if none is supported. The
+latter is rejected during goal execution. \textbf{Implementation caveat:}
+the current comparator orders increasing \code{benefit - cost}, despite
+the utility-oriented class name. Do not assume it chooses the highest
+utility or the fastest action.
+
+The default selector does not solve unsatisfied preconditions, synthesize
+arbitrary multistep plans, or guarantee that it will try a second
+applicable action after a precondition failure. Preconditions are checked
+when the selected action is approved. Use an appropriate planning selector
+or explicit recovery if that behavior is required.
+
+\code{PreconditionPlanningSelector} supports planning for a selected
+action's preconditions. \code{GoalPlanningActionSelector} first uses that
+strategy and then falls back to its \code{FFPlanner} for a goal plan.
+The repository also contains random, typed, and MCTS selection strategies.
+These are different policies, not interchangeable guarantees.
+
+For FF-based planning, configure the external planner executable using the
+repository's \code{diarc.planner.ff} property and provide an adequate
+symbolic domain/belief state. Merely loading PDDL or selecting a planner
+does not supply missing robot implementations or accurate models of the
+physical world. A planning metric supplied with
+\code{submitGoalWithMetric} is meaningful only if the selected planning
+backend supports that metric.
+
+\source{selector/ActionSelector.java: getCandidateActions}
+\source{selector/UtilitarianActionSelector.java}
+\source{selector/PreconditionPlanningSelector.java}
+\source{selector/GoalPlanningActionSelector.java}
+
+\subsection{Priority assignment and ordering}
+
+Priority is a pair consisting of a \code{PriorityTier} and a \code{long}
+value. Higher tiers win before numeric priority is considered. In
+ascending order the enum defines:
+\begin{lstlisting}
+UNINITIALIZED, KIOSK, LOW, NORMAL, HIGH, URGENT, SKIPPENDING
+\end{lstlisting}
+
+Within a tier, larger numeric values win; exact ties favor older goals
+(smaller IDs). This scheduling priority is separate from an action's
+\code{benefit} and \code{cost} selection metadata.
+
+Priority JSON is indexed by the submitted predicate's name and has the
+following shape:
+\begin{lstlisting}
+{
+  "default": {"priority": 1, "priorityTier": "NORMAL"},
+  "inspect": {"priority": 10, "priorityTier": "HIGH"}
+}
+\end{lstlisting}
+
+Without an entry, the default is used. If a loaded configuration lacks a
+\code{default} entry, the component inserts \code{NORMAL}/1. The supplied
+\code{default.json} gives \code{freeze} an urgent priority and puts many
+control, dialogue, and introspection operations in \code{SKIPPENDING}.
+The current persistent-goal priority helper only unwraps when it sees
+more than one argument, although valid persistent goals have one
+argument; for deterministic persistent-task priority use an explicit
+submission overload rather than expecting inner-name priority lookup.
+
+\source{GoalManagerComponent.java: loadGoalPriorities, getPriorityTierForGoal, getPriorityForGoal}
+\source{manager/ExecutionManager.java: compareGoal}
+
+\subsection{Execution-manager choices and resources}
+
+\begin{longtable}{L{0.31\textwidth}L{0.63\textwidth}}
+\textbf{Manager} & \textbf{Actual policy}\\ \hline
+\endhead
+\code{ExecutionManager} &
+Default. Ordinary goals generally do not hold an agent-wide execution
+resource, so several can execute concurrently. Learning and freeze
+resources still constrain execution. A newly submitted blocked,
+lower-priority goal is normally failed with an
+\code{availableResources(...)} justification; a previously superseded
+goal can remain pending for resumption.\\
+\code{QueueExecutionManager} &
+Uses agent-wide resources for ordinary goals and leaves blocked goals
+pending. Disjoint agents can execute concurrently; overlapping
+agent/team goals compete. Higher-priority work can supersede lower
+priority work. This is a priority/resource queue, not strict FIFO.\\
+\code{SingleGoalExecutionManager} &
+Adds agent-wide exclusion but inherits the base rejection policy for
+new blocked work, rather than the queue manager's wait policy.\\
+\end{longtable}
+
+A goal can \emph{require} a resource to be available without holding it,
+or \emph{hold} it for exclusive use. Two required-only uses can coexist.
+A held resource conflicts with another goal's required or held use.
+Pending-goal conflict checks consider higher-priority pending work, not
+all pending work indiscriminately.
+
+In the current managers, resources are principally agent/team-wide,
+learning, and freeze resources. A team goal accounts for descendants in
+the configured hierarchy. This is not a general ASL mechanism for
+declaring arbitrary gripper, camera, or room locks. Implement specialized
+resource policy in a manager/provider if those distinctions are needed.
+
+A goal can supersede conflicting active goals only if it outranks all of
+them. Ordinary superseded executions are suspended, their resources
+released, and their interpreter futures retained for later continuation.
+Kiosk-tier goals have special cancellation behavior on supersession.
+\code{SKIPPENDING} goals bypass the normal resource dependencies in
+these managers; reserve that tier for control/background operations that
+are safe to run concurrently, not as a workaround for conflicting motion.
+
+\source{manager/ExecutionManager.java: getRequiredResourcesForGoal, getHeldResourcesForGoal, shouldSupersede, supersedeGoals}
+\source{manager/QueueExecutionManager.java}
+\source{manager/SingleGoalExecutionManager.java}
+
+\section{Goal Manager service reference}
+\label{sec:api}
+
+Services in this section are exposed by \code{GoalManagerComponent}
+unless otherwise stated. For TRADE, match both the service name and the
+exact argument types, especially \code{long.class} versus
+\code{Long.class}. A method being a Java method does not by itself make it
+a TRADE service, and a TRADE service is not necessarily an \code{@Action}.
+
+\subsection{Submitting work}
+
+\begin{lstlisting}[language=Java]
+long submitGoal(Predicate g)
+long submitGoal(Predicate g, ExecutionType type)
+long submitGoal(Predicate g, ExecutionType type,
+                PriorityTier tier)
+long submitGoal(Predicate g, ExecutionType type,
+                PriorityTier tier, long priority)
+long submitGoal(Predicate g, ExecutionType type,
+                PriorityTier tier, long priority, Symbol submitter)
+long submitGoalWithMetric(Predicate g, Predicate metric)
+\end{lstlisting}
+
+The shortest overload uses \code{ACT}; omitted priorities come from the
+priority map. In the tier-only overload, \code{null} or
+\code{UNINITIALIZED} requests the configured default tier. The fully
+specified overload does not repeat that normalization: supply a valid
+tier. An omitted submitter is recorded as \code{unknown}.
+
+The metric form stores a predicate such as \code{minimize(totalCost)}
+or \code{maximize(reward)} for the planning layer. All forms return a
+goal ID, or \code{-1} if the execution manager returns no goal. As
+described above, a goal can already have failed by the time its ID is
+returned. Retain the ID rather than relying on a later predicate lookup
+to identify one particular submission.
+
+\subsection{Waiting without canceling}
+\label{sec:waiting}
+
+\begin{lstlisting}[language=Java]
+GoalStatus joinOnGoal(long gid)
+GoalStatus joinOnGoal(long gid, long millis)
+GoalStatus waitForNextGoalStatusUpdate(long gid)
+GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout)
+GoalStatus waitForNextGoalStatusUpdate(
+    long gid, long timeout, GoalStatus startStatus)
+void interruptWaitForNextGoalStatusUpdate(long gid)
+\end{lstlisting}
+
+\code{joinOnGoal(gid)} waits through pending time and execution until the
+managed goal finishes. The timed overload spends its millisecond budget
+on both stages and can return \code{PENDING}, \code{ACTIVE}, or another
+nonterminal status. An unknown ID returns \code{UNKNOWN}. Use the
+no-timeout overload for an indefinite join; do not assume that passing
+zero to every timed API has identical semantics.
+
+\code{waitForNextGoalStatusUpdate} waits for a status different from the
+starting status, not necessarily a terminal status. Its timeout is in
+milliseconds; zero explicitly means indefinite. It returns \code{null}
+for an unknown goal, timeout, or interrupted wait, and also for an already
+terminal goal when no starting status was supplied. With an explicit
+\code{startStatus}, a different current status can be returned
+immediately, including a terminal one. This overload avoids a race between
+checking a status and beginning the wait, but is not an event history:
+rapid intermediate transitions may not be observed.
+
+The interrupt service wakes a status-update wait; it does not cancel the
+target goal. The implementation tracks interruption by goal ID, not by
+independent waiter identity, so multiple simultaneous waiters for the same
+ID should not treat it as a per-caller cancellation channel.
+
+\textbf{A timeout is not goal cancellation.} Inspect the returned status
+and explicitly call \code{cancelGoal} if the application requires it.
+Joining a recurring schedule waits on the schedule, not merely its first
+execution; see Section~\ref{sec:scheduling}.
+
+\subsection{Canceling, suspending, and resuming}
+
+\begin{lstlisting}[language=Java]
+boolean cancelGoal(long gid)
+void cancelGoals(GoalFilter filter)
+boolean suspendGoal(long gid)
+boolean resumeGoal(long gid)
+List<Long> suspendSystemGoals()
+List<Long> suspendSystemGoals(Symbol agentTeam)
+List<Long> resumeSystemGoals()
+List<Long> resumeSystemGoals(Symbol agentTeam)
+List<Long> cancelSystemGoals(Symbol agentTeam)
+boolean cancelPendingGoalByIndex(int index)
+boolean cancelPendingGoalsByIndices(Predicate indices)
+boolean cancelScheduledGoalsByIndices(Predicate indices)
+\end{lstlisting}
+
+\code{cancelGoal} searches managed goals and cancels work according to its
+current location; cancellation of a schedule also cancels its unfinished
+submitted executions. \code{suspendGoal} pauses an existing execution;
+a newly pending goal cannot be suspended because it has not started.
+\code{resumeGoal} resumes a suspended execution or updates the continuation
+state of superseded work. These methods return whether the operation was
+accepted, not a promise of instantaneous physical stopping or completion.
+Use status observation when synchronization is required.
+
+\code{cancelGoals} is the preferred bulk interface. \code{ACTIVE},
+\code{PENDING}, \code{SYSTEM}, and \code{SCHEDULED} select their respective
+operations. \code{ALL} and \code{CURRENT} dispatch to the manager's
+current-goal cancellation, not deletion of past records.
+\code{PAST} and \code{NEXT} are not supported cancellation filters.
+Current-goal cancellation also cancels schedules. Active-goal bulk
+cancellation preserves actions named \code{listen}; this is a name-based
+exclusion, not a blanket exemption for every \code{SKIPPENDING} goal.
+
+System-goal control operations target an unambiguous active task set at an
+actor or a single relevant descendant, excluding \code{SKIPPENDING} goals
+and schedule controllers. Ordinary child executions created by a schedule
+are still ordinary active tasks. These controls are not ``stop every
+agent'' operations. If several
+descendants have disjoint active tasks, system-goal selection can fail;
+use explicit IDs for deterministic multi-agent control.
+
+Pending indices are zero-based in descending priority order; the
+multi-index predicate is \code{and(0,2,...)}. Scheduled-goal indices refer
+to the scheduler's returned collection, not the pending priority queue.
+Indices can change as work completes; ID-based control is preferable.
+
+The no-argument \code{cancelSystemGoals()} and the old
+\code{cancelAllCurrentGoals()}, \code{cancelAllActiveGoals()}, and
+\code{cancelAllPendingGoals()} remain present but are deprecated for
+removal. \code{getCurrentGoalId(Symbol,int)} is also deprecated.
+
+\subsection{Inspecting one goal and its priority}
+
+\begin{lstlisting}[language=Java]
+GoalStatus getGoalStatus(long gid)
+ActionStatus getActionStatus(long gid)
+Justification getGoalFailConditions(long gid)
+GoalInfo getGoalInfo(long gid)
+Predicate getGoalPredicate(Long gid)
+PriorityTier getGoalPriorityTier(long gid)
+long getGoalPriority(long gid)
+PriorityTier getPriorityTierForGoal(Predicate g)
+long getPriorityForGoal(Predicate g)
+boolean hasGreaterPriority(long gid, PriorityTier tier, long priority)
+Long getGoalId(Predicate pattern)
+List<Long> getGoalIds(Predicate pattern)
+\end{lstlisting}
+
+\code{GoalInfo} contains \code{gid}, actor, bound/unbound goal fields,
+status, start/end timestamps, failure justification, priority/tier,
+submitter, metric, persistent/action/observation/learning flags, and
+scheduling information when applicable. It is the metadata object
+delivered in status notifications.
+
+\code{getGoalPriorityTier} returns \code{UNINITIALIZED} for an unknown
+ID; \code{getGoalPriority} returns \code{-1}.
+\code{hasGreaterPriority} compares an existing goal against a speculative
+new submission, making the existing goal win an exact priority tie.
+It returns \code{true} if the ID is unknown, so it is not an existence test.
+
+\code{getGoalId(pattern)} returns \code{-1} if no match exists and one
+matching ID otherwise; the choice is not a deterministic ``newest''
+selection when several match. Matching uses the submitted goal
+predicate's \code{instanceOf} relation, allowing variable patterns.
+Use the list form or retain submission IDs when duplicates are possible.
+
+\textbf{Not all queries are null-safe.}
+\code{getGoalInfo} and \code{getGoalPredicate} dereference the goal
+directly. \code{getActionStatus} returns \code{UNKNOWN} for an unknown ID,
+but a known goal without a root context can still make it unsuitable
+before execution starts. The unknown-ID failure-conditions query returns
+a placeholder justification with \code{reason(unknown)}, not a reliable
+failure/existence indicator. Prefer \code{getGoalStatus} or filtered lists
+to establish availability, and handle history expiry.
+
+\subsection{Finding collections of goals}
+
+Each of the following families has the same three selection forms:
+\begin{lstlisting}[language=Java]
+List<Long> getGoalIds(GoalFilter filter)
+List<Long> getGoalIds(GoalFilter filter, Predicate pattern)
+List<Long> getGoalIdsForActor(GoalFilter filter, Symbol actor)
+
+List<Predicate> getGoalPredicates(GoalFilter filter)
+List<Predicate> getGoalPredicates(GoalFilter filter, Predicate pattern)
+List<Predicate> getGoalPredicatesForActor(GoalFilter filter, Symbol actor)
+
+List<GoalInfo> getGoalInfos(GoalFilter filter)
+List<GoalInfo> getGoalInfos(GoalFilter filter, Predicate pattern)
+List<GoalInfo> getGoalInfosForActor(GoalFilter filter, Symbol actor)
+\end{lstlisting}
+
+\begin{longtable}{L{0.20\textwidth}L{0.74\textwidth}}
+\textbf{Filter} & \textbf{Collection meaning}\\ \hline
+\endhead
+\code{ACTIVE} & Active collection, including executions explicitly suspended there.\\
+\code{PENDING} & Waiting or superseded work.\\
+\code{SCHEDULED} & Schedule controllers, not just executions created by them.\\
+\code{CURRENT} & Active, pending, and scheduled collections.\\
+\code{PAST} & Retained terminal goals.\\
+\code{ALL} & Active, pending, past, and scheduled collections.\\
+\code{NEXT} & Manager-selected next pending goal.\\
+\code{SYSTEM} & Active non-\code{SKIPPENDING} tasks aggregated across the
+root actor and its descendants; unlike system-goal controls, this query
+does not require a single unambiguous task branch.\\
+\end{longtable}
+
+Actor filtering compares actor names while ignoring semantic type; it
+does not automatically include all goals of a team's descendants.
+Predicate filtering uses \code{instanceOf}. List ordering is not a
+general chronological contract. In this checkout the \code{NEXT} filter
+can include a null manager result when no next goal exists, so prefer a
+\code{PENDING} query for robust empty-queue handling.
+
+\subsection{Preview, introspection, notifications, and local utilities}
+
+\begin{lstlisting}[language=Java]
+ParameterizedAction selectActionForGoal(Predicate goalPredicate)
+Predicate getActionSteps(Predicate goalPredicate)
+void registerGoalManagerNotification(
+    TRADEServiceInfo callback, NotificationType type)
+void unregisterGoalManagerNotification(
+    TRADEServiceInfo callback, NotificationType type)
+\end{lstlisting}
+
+\code{selectActionForGoal} invokes the configured selector without
+submitting a managed execution. It can return \code{null}.
+\code{getActionSteps} uses the selector and returns
+\code{steps(step1,step2,...)} for the selected action, or \code{null}.
+This describes selected top-level instructions, not a guaranteed,
+fully expanded future trace, and does not reserve resources.
+
+Callbacks must be registered TRADE services with these signatures:
+\begin{lstlisting}[language=Java]
+void onGoalStatus(GoalInfo info)          // GOAL_STATUS_CHANGE
+void onActionAdded(ActionDBEntry entry)  // DATABASE_ADDITION
+void onActionRemoved(ActionDBEntry entry)// DATABASE_REMOVAL
+\end{lstlisting}
+
+Pass the callback's \code{TRADEServiceInfo} and the corresponding
+\code{NotificationType}; callback names are application-defined.
+Registration is not a request for a historical snapshot. Combine a
+snapshot query with notifications when building a UI, and unregister
+when the subscriber shuts down. Keep callbacks short: notification
+delivery invokes the registered service synchronously in the notifying
+thread. \code{getGoalManagerNotifier()} exposes the notifier for internal
+integration; ordinary clients should use registration services instead.
+
+The Java method
+\code{getActionContextSteps(Predicate goal, Predicate location)}
+requires a uniquely matching \code{CURRENT} goal and returns steps at
+a location in its context tree. Unlike \code{getActionSteps}, it has no
+\code{@TRADEService} annotation in this checkout.
+\code{setState(Predicate)} and \code{getGoal(long)} are local testing
+utilities, also not public TRADE services.
+
+\source{GoalManagerComponent.java: public service methods, getFilteredGoals}
+\source{notification/GoalManagerNotifier.java}
+\source{goal/GoalInfo.java}
+
+\section{ASL: action definitions, values, and dispatch}
+\label{sec:asl}
+
+\subsection{What ASL compiles into}
+
+ASL is a domain-specific interpreted language, not Java source and not
+the AgentSpeak language used by unrelated systems. ANTLR parses a file
+into one or more action definitions. The listener builds action-database
+roles, metadata, and a linear list of \code{EventSpec} instructions;
+runtime control contexts interpret the nested control structure.
+
+Lexical and syntax errors are collected before conversion. A malformed
+file is rejected, with parser entry points logging the error and returning
+\code{null}; do not expect valid definitions earlier in an invalid file
+to be partially loaded.
+
+\subsection{Definition shape, imports, and arguments}
+
+\begin{lstlisting}[language=ASL,caption={Typed inputs, optional input, and an output role.}]
+import java.lang.Double;
+import java.lang.String;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Predicate as Pred;
+
+(Double ?answer) = addOffset["Add an optional offset."](
+    Double ?value, Double ?offset = 1.0) {
+  ?answer = op:add(?value, ?offset);
+}
+
+() = calculationDemo() {
+  Double !result;
+  !result = act:addOffset(2.0);
+  op:log("info", "Result: !result");
+}
+\end{lstlisting}
+
+The parentheses to the left of \code{=} declare output roles; empty
+\code{()} means no outputs. The parentheses after the action name declare
+inputs. The optional bracketed string is a human-readable description.
+Inputs and outputs use \code{?name}; script-local variables normally use
+\code{!name}. A default value makes an input optional. Keep optional
+inputs after required inputs and use distinct signatures for meaningful
+overloads.
+
+The database inserts a first \code{?actor} role if it is not explicitly
+declared. That role has Java type \code{Symbol} and is inherited by ASL
+calls by default. It is not a process-wide global variable and does not
+require a component \code{-agentname} option. If explicitly declaring
+\code{?actor}, it must be the first role.
+
+Imports resolve Java type names; \code{as} provides an alias. They do
+not import ASL actions or instantiate components. Actions in any loaded
+file are looked up through the database. Use resolvable Java types and
+read parser warnings: unresolved type names currently fall back to
+\code{String}, which can conceal a type error until dispatch.
+
+\subsection{Variables, bindings, and expressions}
+
+The grammar supports Java type names, generic type syntax, numeric
+literals, booleans, quoted strings, symbols, and nested predicates.
+However, runtime type resolution uses Java class names directly and does
+not erase generic syntax: use raw imported types such as \code{List}
+for roles rather than assuming \code{List<Symbol>} resolves to a Java
+class. The grammar accepting a type is not proof of runtime support.
+Variable names after \code{?} or \code{!} begin with a lowercase letter.
+A semantic annotation such as \code{Symbol ?object:physobj} is distinct
+from the Java type: \code{Symbol} controls Java dispatch and
+\code{physobj} supplies FOL type information.
+
+Declare ordinary locals at the top level of the action body, before
+using them:
+\begin{lstlisting}[language=ASL]
+import java.lang.Double;
+
+(Double ?sum, Double ?difference) = sumAndDifference(
+    Double ?left, Double ?right) {
+  ?sum = op:add(?left, ?right);
+  ?difference = op:subtract(?left, ?right);
+}
+
+() = useResults() {
+  Double !sum;
+  Double !difference;
+  (!sum, !difference) = act:sumAndDifference(8.0, 3.0);
+  op:log("info", "sum=!sum difference=!difference");
+}
+\end{lstlisting}
+
+Bindings are shared through \code{ActionBinding} objects; assigning a
+callee output can update the caller's destination role. Assign outputs
+before normal completion or \code{return;}. There is no
+\code{return expression;} construct and no general Java-style statement
+\code{!x = !y + 1;}. Use an operator/action/service call on the right-hand
+side, for example \code{!x = op:add(!y,1);}. A literal initializer is
+allowed in a declaration, such as \code{Double !x = 0.0;}.
+
+Ordinary declarations are not allowed directly inside control blocks by
+the \code{controlContent} grammar. Loop variables and catch details have
+their own runtime binding rules. A declaration initialized by a call is
+translated into a role plus an event; put initialization before its first
+use rather than assuming ordinary Java block scope.
+
+Conditions can bind otherwise unbound local or output roles through
+their justifications. If several bindings are possible, approval may
+choose one arbitrarily with a warning. This is not automatic iteration
+over all solutions; use an observer returning a collection and explicit
+iteration when all results matter.
+
+The runtime substitutes script variables in strings, as used in the log
+examples. For structured arguments prefer actual variables or predicates
+over constructing predicate text inside strings. A quoted string and a
+\code{Symbol}/\code{Predicate} value are not interchangeable Java types,
+even when conversion is available.
+
+\source{asl/ASL.g4: definition, parameter, localvar, specFunction, controlContent}
+\source{asl/ActionScriptLanguageParser.java: addRole, enterSpecFunction}
+\source{ActionBinding.java}
+\source{execution/ActionContext.java: isApproved}
+
+\subsection{The six instruction prefixes}
+
+\begin{longtable}{L{0.25\textwidth}L{0.69\textwidth}}
+\textbf{Instruction} & \textbf{Meaning}\\ \hline
+\endhead
+\code{act:pickUp(?object);} &
+Call a named action/script directly. Uses its action model and normal
+action verification; does not ask a selector to achieve a state.\\
+\code{goal:holding(?actor,?object);} &
+Create a desired-state subgoal and invoke goal selection/recovery.
+The actor is inherited; \code{?actor} here is part of the desired predicate.\\
+\code{obs:visible(?object);} &
+Observe a predicate through the observer database. The predicate
+arguments are not the observer Java method's explicit parameter list.\\
+\code{tsc:someService(?object);} &
+Call a TRADE service directly, even if it is not an action.
+Does not supply the action model's condition/effect checks.\\
+\code{op:add(1,2)} &
+Invoke a registered built-in operator, optionally binding its result.
+Arithmetic, comparison, collections, FOL, and reflection helpers live
+under \code{operators/}.\\
+\code{this:getCommand()} &
+Invoke a method on the enclosing action context, for introspection.
+This is not a method call on a robot component or Java \code{this}.\\
+\end{longtable}
+
+Action, goal, observation, and service calls can qualify the actor before
+the prefix, for example \code{robotone.act:inspect(?object);} or
+\code{?worker.goal:ready(?worker);}. Without qualification the event's
+actor is \code{?actor}. Do not add a second actor argument merely because
+the external submission form was \code{inspect(robotone,object)}.
+For raw \code{tsc} calls, pass exactly the arguments of the Java service;
+actor qualification helps service/provider selection and is not an
+extra Java argument.
+
+Prefer \code{act} for operations whose modeled success/failure matters.
+Use \code{tsc} for deliberate low-level service access. Neither prefix
+turns a false boolean data return into a universal exception:
+primitive \code{Justification} failures are explicitly verified, while
+boolean values can be tested in ASL boolean expressions.
+
+\source{EventSpec.java: EventType, getActor}
+\source{execution/Context.java: setupNextStep}
+\source{execution/TradeServiceContext.java}
+\source{execution/ThisContext.java}
+
+\subsection{Comments and metadata}
+
+Use \code{//} line comments and \code{/* ... */} block comments.
+Recognized numeric action settings are \code{benefit}, \code{cost},
+\code{minurg}, \code{maxurg}, and \code{timeout}, for example:
+\begin{lstlisting}[language=ASL]
+() = modeledStep() {
+  benefit = 2;
+  cost = 1;
+  timeout = 5000;
+  op:log("info", "Executing modeledStep");
+}
+\end{lstlisting}
+
+The parser recognizes these names and stores them in the database
+entry; arbitrary setting names are not application configuration.
+\code{timeout} is timing metadata used by execution/observation paths,
+not a guaranteed hard deadline that forcibly interrupts a blocking
+hardware service. For bounded external work, implement a timeout and
+interruption protocol in the provider and use timed waits appropriately.
+Likewise, storing urgency metadata does not change the execution
+manager's tier/priority ordering by itself.
+
+\section{Conditions, effects, belief, and observations}
+\label{sec:models}
+
+\subsection{Conditions: approval and monitoring}
+
+\begin{lstlisting}[language=ASL,caption={A modeled manipulation action; capability names are illustrative.}]
+import edu.tufts.hrilab.fol.Symbol;
+
+() = pickUp(Symbol ?object) {
+  conditions: {
+    pre infer: gripperOpen(?actor);
+    or: {
+      pre: on(?object,table);
+      pre: on(?object,shelf);
+    }
+    overall infer: workspaceSafe(?actor);
+    obligation infer: permitted(?actor,?object);
+  }
+  effects: {
+    success obs: holding(?actor,?object);
+    success infer: not(on(?object,table));
+    failure infer: pickupFailed(?actor,?object);
+    nonperf infer: pickupCanceled(?actor,?object);
+  }
+  act:closeGripperOn(?object);
+}
+\end{lstlisting}
+
+All condition entries must hold (conjunction). An \code{or} block
+contains alternatives of a single condition type and requires at least
+two entries; one alternative suffices. Separate \code{or} blocks are
+conjoined. The grammar accepts \code{pre}, \code{overall}, and
+\code{obligation}; it does not currently have a \code{post:} condition
+production, even though \code{post} is a reserved token.
+
+\code{pre} conditions are checked during action approval.
+\code{obligation} conditions are also checked at approval and fail with
+\code{FAIL_OBLIGATIONS} if unmet. They are not a general-purpose automatic
+norm-enforcement engine. \code{overall} conditions are monitored while
+the action is in progress, with a 250 ms sleep between checks; a false
+check produces \code{FAIL_OVERALLCONDITIONS}. This polling interval and
+provider latency preclude treating the monitor as a real-time safety
+controller.
+
+The example's preconditions do not themselves open a gripper, locate an
+object, or grant permission. The selected primitive or a preceding script,
+planner, or recovery policy must make the state appropriate.
+
+\subsection{Observation policy: default, forced observation, and inference}
+
+The policy suffix goes between the condition/effect type and the colon.
+The following is a model fragment to place inside an action definition:
+\begin{lstlisting}[language=ASL]
+conditions: {
+  pre: visible(?object);
+  pre obs: reachable(?object);
+  pre infer: authorized(?actor);
+}
+effects: {
+  success: delivered(?object);
+  success obs: at(?object,table);
+  success infer: recorded(?object);
+}
+\end{lstlisting}
+
+For a \textbf{condition}, no suffix means: try an observer, and fall
+back to \code{StateMachine.holds} if no successful observation execution
+is available. A successful observation with a false result is a false
+condition; it is not overridden by belief. \code{obs} requires observation
+and does not permit a belief-only fallback. \code{infer} queries belief
+without requesting an observer. Non-executing simulation paths use state
+checks rather than ordinary physical condition observations.
+
+For an \textbf{effect}, no suffix means: try observation, but if no
+successful observer execution is available, assume the modeled effect.
+\code{infer} also assumes the effect rather than proving it was already
+true in belief. \code{obs} requires successful observation of the effect.
+This distinction is crucial: a modeled success is not necessarily a
+sensor-confirmed physical success. A successfully executed observer that
+reports the effect false causes effect verification to fail.
+
+\source{Condition.java: observeCondition}
+\source{Effect.java: verify}
+
+\subsection{Effects and state changes}
+
+\code{success} effects apply on action success, \code{failure} effects on
+failure, and \code{nonperf} effects on \code{CANCEL}. \code{always} effects
+are included independently of the status-specific effect set; they are
+not a ``finally'' code block. Effects are interpreted by status-update
+paths, so avoid using them to represent irreversible physical operations.
+
+Positive predicates are asserted into the state representation and
+\code{not(predicate(...))} represents a negative/retraction update.
+These are symbolic changes, not calls to actuators. Observations update
+belief through observation contexts; action state updates omit effects
+already handled by those observers.
+
+Verified success effects and the resulting state support desired-state
+goals and planning. Internal generated \code{succeeded(...)} and
+\code{failed(...)} predicates also record execution outcomes; application
+state goals should normally refer to domain predicates such as
+\code{holding} or \code{at}, not depend on generated bookkeeping shapes.
+
+When an observed postcondition fails, other unobserved modeled success
+effects can still be recorded by the action context. Neither
+\code{FAILED} nor \code{CANCELED} means ``the world was rolled back.''
+Recovery must account for partial physical and symbolic changes.
+
+At completion, if TRADE exposes
+\code{getViolations(Symbol, StateMachine)}, the step executor checks its
+\code{Justification}; violations and service-call errors fail the step
+instead of silently declaring norm success. Without that service,
+completion does not perform that norm check.
+
+\source{db/ActionDBEntry.java: getEffects}
+\source{execution/ActionContext.java: getStateUpdates, verifyEffects}
+\source{execution/StepExecution.java: finishStep}
+\source{state/StateMachine.java}
+
+\subsection{Implementing an observer}
+
+An observer is a TRADE service annotated with \code{@Observes}; it takes
+one \code{Term} or \code{Predicate} query and returns
+\code{List<Map<Variable,Symbol>>}. The query is a predicate to evaluate,
+not simply an object name:
+\begin{lstlisting}[language=Java]
+@TRADEService
+@Observes({"at(?object,?place)"})
+public List<Map<Variable, Symbol>> observeAt(Term query) {
+  // Query the configured sensor or world model.
+  // Return bindings for every solution matching query.
+  return sensorBindings(query);
+}
+\end{lstlisting}
+
+Here \code{sensorBindings} is application-specific pseudocode, not a
+repository helper. A nonempty list means the positive predicate was
+observed and supplies its bindings. For a true ground query, return a
+list containing one empty map. An empty list means no positive solution;
+\code{null} means observation execution failed or could not be completed.
+These are not equivalent. Negated queries are evaluated using the
+positive observer results.
+
+An ASL observer can declare \code{observes: predicate(...);} and must
+provide compatible query/result roles. For working patterns consult
+\nolinkurl{core/src/test/resources/config/edu/tufts/hrilab/action/asl/observation_tests.asl}.
+The grammar accepts one predicate per \code{observes} declaration.
+
+\source{annotations/Observes.java}
+\source{execution/ObservationContext.java: verifyReturnValue, getBoundObservationResults}
+
+\section{ASL control flow and concurrency}
+\label{sec:control}
+
+\subsection{Boolean expressions and branching}
+
+\begin{lstlisting}[language=ASL]
+() = conditionalDemo() {
+  if (op:gt(4,2) && ~op:equals("a","b")) {
+    op:log("info", "First branch");
+  } elseif (false) {
+    exit(FAIL);
+  } else {
+    op:log("info", "Fallback branch");
+  }
+}
+\end{lstlisting}
+
+Boolean expressions accept \code{true}, \code{false}, prefixed calls,
+parentheses, \code{~}, \code{&&}, and \code{||}. Conjunction binds more
+tightly than disjunction, and the control contexts short-circuit.
+The keyword is \code{elseif}, not Java's two-word \code{else if}.
+Arithmetic and comparisons are calls such as \code{op:lt(!x,10)};
+ordinary infix Java expressions are not accepted as arbitrary conditions.
+An action's boolean return can decide a branch even though a false boolean
+return is not generally a primitive-action failure outside a boolean test.
+
+\subsection{Loops}
+
+\begin{lstlisting}[language=ASL]
+import java.lang.Integer;
+import java.util.List;
+
+() = loopDemo() {
+  Integer !remaining = 3;
+  while (op:gt(!remaining,0)) {
+    op:log("info", "remaining=!remaining");
+    !remaining = op:decrement(!remaining);
+  }
+  for (!i = 0; !i lt 3; !i++) {
+    op:log("info", "index=!i");
+  }
+}
+
+() = visitItems(List ?items) {
+  foreach (!item : ?items) {
+    op:log("info", "item=!item");
+  }
+}
+\end{lstlisting}
+
+\code{for} is an integer loop, not a general Java \code{for} clause.
+The initialization, comparison, and update must use the same loop
+variable; the parser rejects a mismatch. Supported runtime comparisons
+include \code{lt}, \code{leq}, \code{gt}, and \code{geq}; updates include
+\code{++}, \code{--}, \code{+=}, \code{-=}, \code{*=}, and \code{/=}.
+The initial value can be omitted for an existing loop variable.
+
+\code{foreach} expects a variable bound to a Java \code{Collection}.
+It binds one element per iteration; order follows the supplied
+collection, so a set does not imply deterministic order.
+The grammar has no \code{break} or \code{continue} statements.
+\code{return;} exits the enclosing action rather than only the loop.
+Loops discard previous iteration child contexts, so the context tree is
+not a complete per-iteration event log.
+
+\subsection{Return, explicit failure, and structured handling}
+
+\code{return;} completes the current script early, using already bound
+output roles. \code{exit(FAIL);} explicitly fails; a more specific
+\code{ActionStatus} and predicates/justifications may be supplied for
+diagnostics, for example \code{exit(FAIL_PRECONDITIONS,ready(?actor));}.
+These arguments are used to construct failure justifications, not simply
+printed as error strings.
+
+\begin{lstlisting}[language=ASL,caption={Catch an expected action status and run cleanup.}]
+() = handlingDemo() {
+  try {
+    exit(FAIL_NOTFOUND);
+  } catch(FAIL_NOTFOUND, !details) {
+    op:log("warn", "Handled missing capability: !details");
+  } finally {
+    op:log("info", "Cleanup");
+  }
+}
+\end{lstlisting}
+
+\code{catch(STATUS)} handles that status; \code{catch()} is a catch-all.
+\code{catch(!details)} or \code{catch(STATUS,!details)} binds a local
+\code{Justification}. This is status-based ASL handling, not Java's
+exception-type syntax. An unmatched failure propagates.
+\code{finally} runs for normal completion and failure, and the repository
+also tests return-through-finally behavior. Cleanup can itself fail.
+Do not swallow a failure unless the handler actually repairs it or the
+failure is intentionally acceptable.
+
+\subsection{Asynchronous blocks and joins}
+
+\begin{lstlisting}[language=ASL]
+import java.lang.Long;
+import edu.tufts.hrilab.action.ActionStatus;
+
+() = parallelDemo() {
+  Long !asyncId;
+  ActionStatus !status;
+  ActionStatus !expected = SUCCESS;
+  !asyncId = async {
+    op:sleep(100);
+    op:log("info", "Background work complete");
+  }
+  op:log("info", "Foreground work");
+  !status = join(!asyncId);
+  if (~op:equals(!status,!expected)) {
+    exit(FAIL);
+  }
+}
+\end{lstlisting}
+
+\code{async} starts a child context on another interpreter thread and can
+return its \code{Long} context ID. \code{join(!asyncId)} waits for that
+context; \code{join(!asyncId,timeout)} uses a millisecond timeout.
+The optional return value is \code{ActionStatus}, potentially nonterminal
+after a timeout. Check it explicitly when the result matters.
+
+An ASL async ID is \emph{not} a managed goal ID:
+\code{join(...)} searches the enclosing action's context tree, whereas
+\code{joinOnGoal(...)} joins an execution-manager goal. Do not interchange
+the IDs. Concurrent child contexts also do not independently acquire
+top-level agent resources. Avoid concurrent calls to the same hardware or
+unsynchronized mutation of shared bindings; joining is not mutual exclusion.
+
+\subsection{Interruption hooks and protected-looking blocks}
+
+\begin{lstlisting}[language=ASL,caption={Illustrative provider-specific interruption protocol.}]
+import edu.tufts.hrilab.fol.Symbol;
+
+() = driveTo(Symbol ?destination) {
+  onInterrupt: {
+    cancel: tsc:stopMotion();
+    suspend: tsc:pauseMotion();
+    resume: reset;
+  }
+  act:performDrive(?destination);
+}
+\end{lstlisting}
+
+The application must provide the named services/actions. A hook specifies
+one \code{act}, \code{goal}, or \code{tsc} call per event, optionally
+actor-qualified. \code{resume: reset;} requests reinitialization of the
+action execution rather than assuming an interrupted primitive can resume
+where it stopped. Design retries to account for already completed side
+effects.
+
+The grammar also recognizes a \code{noInterrupt} block and creates a
+\code{NoInterruptContext}. In this checkout that context is essentially
+a sequential block: it does not implement a general cancellation mask or
+resource lock. Do not use its name as evidence that hardware operations
+cannot be interrupted, or that concurrent goals are excluded.
+Actual stopping/resuming remains a provider/interpreter integration
+responsibility.
+
+\source{execution/control/IfContext.java, AndContext.java, OrContext.java}
+\source{execution/control/ForContext.java, ForeachContext.java}
+\source{execution/control/TryContext.java, CatchContext.java, FinallyContext.java}
+\source{execution/control/AsynchronousContext.java, JoinContext.java, NoInterruptContext.java}
+\source{asl/ActionScriptLanguageParser.java: enterOnCancel, enterOnSuspend, enterOnResume}
+
+\section{Writing Java primitives}
+\label{sec:primitives}
+
+Register a service with TRADE and mark it with \code{@Action} to make it
+an ordinary action primitive. The example below is a provider template;
+the motion driver is application-specific:
+\begin{lstlisting}[language=Java]
+@TRADEService
+@Action
+@Condition(
+    condition = {"connected(?actor)"},
+    type = ConditionType.PRE,
+    inferable = {"connected(?actor)"})
+@Effect(
+    effect = {"at(?actor,?destination)"},
+    type = EffectType.SUCCESS,
+    observable = {"at(?actor,?destination)"})
+@OnInterrupt(
+    onCancelServiceCall = "stopMotion()",
+    onSuspendServiceCall = "pauseMotion()")
+public Justification navigate(Symbol destination) {
+  return motionDriver.navigate(destination);
+}
+\end{lstlisting}
+
+The provider must be instantiated and registered, not merely on the
+classpath. The repository compiles with \code{-parameters}; role names
+are derived from Java parameter names, so keep annotation variables in
+sync with those names. The database inserts an actor role if the Java
+method does not have one; when the Java method's first parameter is named
+\code{actor}, that explicit actor is passed through instead.
+
+Use the annotations from \code{edu.tufts.hrilab.action.annotations} and
+\code{ai.thinkingrobots.trade.TRADEService}. The relevant enum types are
+\code{ConditionType} and \code{EffectType}. Place annotations where TRADE
+can discover them on the registered provider/interface.
+
+\begin{description}
+\item[\code{@Action}] Makes the service an action primitive.
+\item[\code{@Condition}] Repeatable. Each annotation is conjoined with the
+others; its \code{condition} array is a disjunction. \code{observable}
+forces observation of listed strings, and \code{inferable} forces belief
+checks. The strings must match the condition entries.
+\item[\code{@Effect}] Repeatable. Its \code{effect} array describes
+status-specific state changes. \code{observable} forces observation;
+the inference-only array is named \code{infer}, not \code{inferable}.
+The old \code{sideEffect} attribute is not in this annotation.
+\item[\code{@Observes}] Declares observer predicate patterns; follow the
+query/result contract in Section~\ref{sec:models}.
+\item[\code{@OnInterrupt}] Names service calls for cancellation, suspension,
+and resumption. The methods must actually unblock/stop the provider as
+appropriate; changing a goal status is not a physical stop command.
+\end{description}
+
+For execution failure with an explanation, return a false
+\code{Justification}; \code{ActionContext.verifyReturnValue} propagates
+it as a failure. A false \code{boolean} is often useful as data or a
+branch test, but is not generally verified as a failed primitive action
+at completion. A \code{void} primitive with no conditions or observed
+effects can appear successful once the service returns; choose a richer
+contract for fallible operations.
+
+Although an \code{@RecoveryPolicy} annotation type exists, the primitive
+annotation-import path in \code{Database.addActionFromTSI} handles
+conditions, effects, observations, and interrupts, not that annotation.
+Use the implemented ASL recovery-policy mechanism below rather than
+assuming the annotation automatically installs a policy.
+
+\source{db/Database.java: addActionFromTSI, addCondition, addEffect}
+\source{db/ActionDBEntry.java: executeAction}
+\source{execution/ActionContext.java: verifyReturnValue}
+\source{annotations/Action.java, Condition.java, Effect.java, Observes.java, OnInterrupt.java}
+
+\section{Recovery: repairing failure rather than hiding it}
+\label{sec:recovery}
+
+Recovery is separate from a local \code{try}/\code{catch}. Runtime
+contexts consult the \code{Recovery} machinery, match registered policies
+against failure information, and execute a policy under a recovery
+context. A recovery policy is an action definition with a \code{recovery}
+block; the database stores it in the recovery-policy database rather than
+as an ordinary selectable domain action.
+
+\begin{lstlisting}[language=ASL,caption={Action recovery template; assumes openGripper is available.}]
+import java.util.List;
+import edu.tufts.hrilab.fol.Predicate;
+
+() = repairPickup(List ?failedActionPredicates,
+                  List ?failureReasons,
+                  Predicate ?failedGoal) {
+  recovery: {
+    actionRecovery: {
+      postRecovery: retry
+    }
+    failedActions: {pickUp(X,Y)}
+    actionStatuses: {FAIL_PRECONDITIONS}
+    maximumAttempts: 2
+  }
+  act:openGripper();
+}
+\end{lstlisting}
+
+This template matches the \code{pickUp(actor,object)} signature. Capital
+\code{X} and \code{Y} are FOL pattern variables in recovery matching,
+not automatically bound ASL \code{?} roles. Policy execution receives
+the failed-action predicates, failure reasons, and failed goal through
+the three input roles shown. Supply domain-specific checks if opening a
+gripper is not an appropriate repair for every matched precondition
+failure.
+
+\subsection{Policy matching and attempt limits}
+
+The following fields constrain applicability:
+\begin{description}
+\item[\code{goals} / \code{excludedGoals}] Goal patterns to include or exclude.
+\item[\code{failedActions} / \code{excludedFailedActions}] Failed action
+signature patterns to include or exclude.
+\item[\code{failureReasons} / \code{excludedFailureReasons}] Predicate
+patterns describing acceptable/unacceptable failure reasons. A policy
+must account for all reasons of a multi-reason failure.
+\item[\code{actionStatuses}] An optional set of \code{ActionStatus} names.
+\item[\code{maximumAttempts}] Positive integer, default 1, limiting repeated
+use for the same failure reasons under the same context.
+\end{description}
+
+An include field and its exclude counterpart must not be specified
+together; the parser warns and ignores the exclusion when the inclusion
+is present. Empty constraints are broad, not a safe default for an
+arbitrary robot recovery. Narrow policies to failures they can repair.
+
+Recovery metadata uses predicates in braces separated by commas and does
+not use ordinary statement semicolons after fields. This differs from
+\code{conditions} and \code{effects} syntax.
+
+\subsection{Goal recovery versus action recovery}
+
+Without an \code{actionRecovery} block, a policy is a goal-recovery policy:
+after repair, the goal context can select/plan again and must still
+satisfy a desired-state goal.
+
+An \code{actionRecovery} block selects action-level recovery and requires
+\code{postRecovery: retry} or \code{postRecovery: continue}.
+\code{retry} resets and reattempts the caught action. \code{continue}
+treats recovery as having handled that action and permits execution to
+continue. Optional \code{catchingActions} patterns in braces delay application
+until failure reaches a matching enclosing action, rather than always
+repairing the nearest failed call.
+
+For action retry, attempt accounting can reset after the retried action
+succeeds; goal-recovery attempt counts do not have that success reset.
+Policies may also return \code{PostRecoveryExecutionType} to override the
+configured action-recovery continuation. See the executable examples in
+\nolinkurl{core/src/test/resources/config/edu/tufts/hrilab/action/asl/recovery/},
+particularly \code{actionRecoveryTests.asl},
+\code{goalRecoveryTests.asl}, and \code{shouldAttemptRecoveryTest.asl}.
+
+A successful recovery policy is not proof that the original physical
+task succeeded. Choose \code{continue} only when it is semantically
+correct to skip retrying the caught action. Repeated retries of a
+non-idempotent action can duplicate deliveries, motion, or assertions.
+
+\source{recovery/Recovery.java}
+\source{recovery/PolicyConstraints.java}
+\source{db/RecoveryPolicyDatabase.java}
+\source{execution/GoalContext.java, ActionContext.java}
+
+\section{Timed, periodic, and persistent behavior}
+\label{sec:scheduling}
+
+\subsection{Schedule predicates}
+
+Submit \code{scheduled(innerGoal,timing...)} using the normal
+\code{submitGoal} service. The inner predicate is a complete action or
+goal request with its actor:
+\begin{lstlisting}
+scheduled(inspect(self),start(10,SECONDS))
+scheduled(inspect(self),period(5,MINUTES))
+scheduled(inspect(self),start(10,SECONDS),
+          period(5,MINUTES),end(1,HOURS))
+\end{lstlisting}
+
+Provide a start or a period (or both). With only a period, scheduling
+starts immediately. An end requires a period. Numeric time-unit forms
+use \code{java.util.concurrent.TimeUnit} names, case-insensitively:
+\code{MILLISECONDS}, \code{SECONDS}, \code{MINUTES}, \code{HOURS}, etc.
+Use plural enum names such as \code{MINUTES}, not natural-language
+\code{minute}. Numeric inputs are converted to integral counts before
+conversion to milliseconds: use \code{period(1500,MILLISECONDS)} rather
+than \code{period(1.5,SECONDS)} for a 1.5-second interval.
+
+Start and end can also use date strings, including
+\code{MM-dd-yyyy HH-mm-ss}; consult \code{ScheduledGoal.parseDateString}
+for supported alternatives and local-time behavior. A period is a
+numeric amount plus a unit, not an arbitrary date string. Validate
+inputs before submission; malformed forms may throw during construction
+or leave invalid timing state, rather than reliably returning a failed
+managed goal.
+
+\subsection{Controller IDs and execution IDs}
+
+A schedule is a long-lived controller with its own ID and a Quartz job.
+Each trigger creates a new ordinary goal with a different ID. If the
+previous execution has not terminated, the trigger does not submit
+another overlapping execution of that schedule. This is not an unbounded
+backlog of missed ticks.
+
+Periodic child executions are assigned \code{LOW} tier unless the
+configured priority helper returns \code{SKIPPENDING}; their numeric
+priority is looked up separately. The controller's explicitly supplied
+priority is therefore not a general override for every child execution.
+Do not assume other submission metadata, such as a simulation execution
+type, is automatically inherited by scheduled children.
+
+When restoring a periodic schedule whose start is in the past, the
+scheduler advances to a matching future interval using the full
+millisecond period. It does not truncate intervals to whole seconds.
+
+\subsection{Schedule-control services and persistence}
+
+\begin{lstlisting}[language=Java]
+boolean updateScheduledGoal(long goalId, Predicate update)
+Date getNextScheduledExecutionDate(long goalId)
+\end{lstlisting}
+
+Updates accept \code{start(...)}, \code{period(...)}, \code{end(...)}, or
+a conjunction, for example
+\code{and(start(30,SECONDS),period(10,MINUTES))}. The service returns
+\code{false} for a missing schedule or unsuccessful update/reschedule.
+Updates are not transactional: a conjunction can update earlier fields
+before a later field fails. The next-date query returns \code{null} for
+a non-scheduled ID or a schedule with no future firing.
+
+\code{cancelGoal(controllerId)} deletes the schedule and cancels its
+unfinished submitted goals. Canceling only one child ID does not remove
+the recurring schedule. Joining the controller waits for schedule
+completion/deletion, not merely one child; use a timeout for an
+unbounded recurring schedule. Scheduled joins retain deletion
+notifications even if deletion preceded the wait.
+
+With \code{-scheduledGoalsFile}, schedule predicates are restored at
+startup and written through the scheduler's persistence path at shutdown.
+This file is a Java-serialized collection of predicates, not an ASL
+script or a text calendar. It persists timing/task descriptions, not
+live interpreter threads or stable execution IDs across restarts.
+
+For continuous patrol use a persistent action with explicit delay;
+for periodic inspection use a schedule. Combining persistence and a
+periodic schedule often prevents later ticks from running because the
+first child never terminates.
+
+\source{goal/schedule/ScheduledGoal.java}
+\source{manager/ScheduledGoalManager.java}
+\source{goal/schedule/JoinOnGoalListener.java}
+
+\section{Action learning, freezing, simulation, and history}
+\label{sec:advanced}
+
+\subsection{Teaching and editing actions}
+
+Action learning is managed per \code{AgentTeam}. During an active
+learning session, ordinary submitted goals for that actor or an
+appropriate ancestor can be recorded as taught steps rather than
+executed as independent requests. Learning resources keep incompatible
+work from silently changing the teaching state; overlapping
+ancestor/descendant learning sessions are restricted.
+
+The following services are registered by \code{ExecutionManager}:
+\begin{lstlisting}[language=Java]
+boolean learnAction(Symbol actor, Predicate newAction)
+void waitForActionLearningStart(Symbol actor, Predicate newAction)
+boolean pauseActionLearning(Symbol actor, Predicate newAction)
+boolean resumeActionLearning(Symbol actor, Predicate newAction)
+boolean endActionLearning(Symbol actor, Predicate newAction)
+boolean cancelActionLearning(Symbol actor, Predicate newAction)
+boolean pauseActionLearning(Symbol actor)
+boolean resumeActionLearning(Symbol actor)
+boolean endActionLearning(Symbol actor)
+boolean cancelActionLearning(Symbol actor)
+ActionLearningStatus getLearningStatus(Symbol actor)
+void changeLearningExecution(Symbol actor, Symbol status)
+void modifyAction(Symbol actor, Predicate action,
+                  Predicate modification, Predicate location)
+boolean waitForLearningStateUpdate(Symbol actor, Predicate action)
+void interruptWaitForLearningStateUpdate(Symbol actor, Predicate action)
+Justification forgetTaughtAction(Predicate actionSignature)
+List<ActionDBEntry> getLearnedActions()
+boolean isLearnedAction(Predicate actionSignature)
+\end{lstlisting}
+
+\code{learnAction} is a blocking teaching operation; ending/canceling
+the session must be possible from another execution/control path.
+The \code{waitForActionLearningStart} service allows the teacher to
+synchronize before sending steps. Pause stops accepting steps into the
+active teaching state; resume continues it. End builds the taught
+action; cancel abandons the current learning operation. The actor-only
+overloads use that actor's active teaching signature.
+
+\code{changeLearningExecution(actor,execute)} enables execution while
+learning; other status names disable it in the current implementation.
+\code{modifyAction} edits a learning state's conditions, effects, or
+steps using predicate operations. Consult
+\code{learning/ActionLearning.java} for accepted edit/location shapes
+and unsupported argument edits rather than treating it as arbitrary
+ASL source replacement.
+
+The \code{getLearnedActions} service reads the configured persisted
+definitions, rather than returning every action in the live database.
+\code{isLearnedAction} checks matching database entries against the taught
+action/file criteria. The Java helper \code{loadLearnedActions(boolean)}
+is not a TRADE service. With \code{-learnedActionsFile}, taught
+definitions are loaded and persisted as ASL. \code{forgetTaughtAction}
+is intended for this persisted taught-action workflow and returns a
+justification; it is not a generic deletion mechanism for primitives.
+Teaching builds action structure from supplied steps, not an automatic
+learned motion controller or a complete physical effect model.
+
+\source{manager/ExecutionManager.java: action-learning services}
+\source{learning/ActionLearning.java}
+\source{learning/LearningState.java}
+
+\subsection{Freeze and unfreeze}
+
+\code{freeze(Symbol actor)} and \code{endFreeze(Symbol actor)} are
+execution-manager action services. Freeze blocks through an actor/team
+freeze mechanism and interacts with the freeze resource; unfreeze
+signals it. In the supplied priorities, freeze is urgent and endFreeze
+skips normal pending/resource gating so the frozen system can be
+released. This mechanism is for coordinated task control, not a hardware
+emergency stop.
+
+\subsection{Execution types}
+
+\begin{longtable}{L{0.30\textwidth}L{0.64\textwidth}}
+\textbf{Type} & \textbf{Intended execution path}\\ \hline
+\endhead
+\code{ACT} & Execute primitives and update the main state machine.\\
+\code{OBSERVE} & Nominal observation path for modeled actors, subject to
+the actor-based conversion described below. Not the same as submitting
+one \code{obs(actor,predicate)} query.\\
+\code{SIMULATE} & Use branched symbolic state without ordinary physical
+primitive execution.\\
+\code{SIMULATE_ACT} & Acting simulation path; primitives can execute.
+Requires correctly routed simulation services/environment.\\
+\code{SIMULATE_PERFORMANCE} & Use performance models to sample effects
+and timing for assessment rather than ordinary execution.\\
+\end{longtable}
+
+The execution manager branches state for any submission whose type is
+not \code{ACT}. This does not make arbitrary provider code side-effect
+free, nor does it fully simulate sensors, Java services, or physical
+dynamics. In particular \code{SIMULATE_ACT} is explicitly allowed to
+execute calls. Validate provider routing before using it with real
+hardware.
+
+Action contexts adapt execution based on actor membership:
+\code{setExecType} switches non-DIARC actors to \code{OBSERVE}, and
+switches \code{OBSERVE} back to \code{ACT} for DIARC actors. Consequently,
+submitting a DIARC actor with \code{OBSERVE} is \emph{not} a reliable
+``never actuate'' mode. Actor identity and DIARC-agent membership affect
+execution semantics as well as dispatch; use an explicit observation
+goal when the intent is to query a predicate.
+
+\subsection{History and shutdown}
+
+Past goals, terminated context trees, and state history are pruned on the
+manager's periodic memory task when enabled. The default retention window
+is 60000 ms; configure \code{-historylength} or
+\code{-nomemorymanager} for longer introspection sessions, with the
+corresponding memory cost. A previously valid goal ID can become
+\code{UNKNOWN} after pruning; task IDs are not durable audit records.
+
+Component shutdown cancels pending and active goals, waits for active
+interpreters, deregisters the context consultant and execution-manager
+services, shuts down manager infrastructure, and destroys the database
+and selector singletons. A provider that never responds to cancellation
+can delay shutdown; implement interruption protocols for blocking work.
+
+\source{execution/ExecutionType.java}
+\source{execution/ActionContext.java: setExecType}
+\source{manager/ExecutionManager.java: freeze, endFreeze, pruneOldData, shutdown}
+\source{GoalManagerComponent.java: shutdownComponent}
+
+\section{Worked integration scenarios}
+\label{sec:usecases}
+
+\subsection{A Java client that submits and checks a task}
+
+The following client fragment uses the hardware-independent
+\code{demo} script from Section~\ref{sec:configuration}; it assumes
+TRADE and the Goal Manager have already initialized:
+\begin{lstlisting}[language=Java]
+Predicate request = Factory.createPredicate("demo(self)");
+long gid = TRADE.getAvailableService(new TRADEServiceConstraints()
+    .name("submitGoal").argTypes(Predicate.class))
+    .call(Long.class, request);
+if (gid < 0) {
+  throw new IllegalStateException("Goal submission rejected");
+}
+
+GoalStatus status = TRADE.getAvailableService(
+    new TRADEServiceConstraints().name("joinOnGoal")
+        .argTypes(long.class, long.class))
+    .call(GoalStatus.class, gid, 5000L);
+
+if (status == GoalStatus.FAILED) {
+  Justification reason = TRADE.getAvailableService(
+      new TRADEServiceConstraints().name("getGoalFailConditions")
+          .argTypes(long.class))
+      .call(Justification.class, gid);
+  throw new IllegalStateException("Goal failed: " + reason);
+}
+if (status != GoalStatus.SUCCEEDED) {
+  throw new IllegalStateException("Goal did not succeed: " + status);
+}
+\end{lstlisting}
+
+This fragment propagates \code{TRADEException} to its caller. In an
+application, handle it through the component's logging/error protocol.
+A nonterminal result after 5000 ms is not a failed goal; the last branch
+reports that this client did not obtain successful completion within its
+wait. It deliberately does not cancel the still-running task.
+To cancel on timeout, explicitly call \code{cancelGoal(long)} and then
+observe the terminal status.
+
+When multiple managers or providers advertise the same service, add
+appropriate TRADE group constraints rather than relying on an arbitrary
+match.
+
+\subsection{Navigation: command versus requested outcome}
+
+Suppose a provider offers \code{navigate(Symbol destination)} with an
+effect \code{at(?actor,?destination)}. A client submits
+\code{navigate(self,kitchen)} to request that particular capability, or
+\code{goal(self,at(self,kitchen))} to request the outcome. A navigation
+observer can confirm the latter predicate from localization.
+
+The outcome form allows the configured selector/planner to choose an
+appropriate modeled method. It does not by itself guarantee shortest
+paths, automatic obstacle avoidance, or precondition repair. The
+navigation subsystem handles motion; the Goal Manager handles task-level
+selection and verification. Use observed effects when the physical
+arrival must be confirmed instead of assumed.
+
+\subsection{Pick-and-place: compose goals and recover locally}
+
+For a manipulation domain, a script can request
+\code{goal:holding(?actor,?object)} and then
+\code{goal:on(?object,?destination)} rather than hard-coding every motor
+step. Domain actions must advertise corresponding effects, an observer
+must confirm the required physical results, and belief must contain
+the relevant symbolic objects and relations.
+
+An expected, local sensor failure can be handled in an ASL catch block.
+A reusable repair such as opening a gripper before retrying pickup
+belongs in a narrowly matched recovery policy. Do not let a catch-all
+turn a failed grasp into successful delivery. Repository domain examples
+are in \code{demos/pickAndPlace/} and \code{manipulation.asl}; their
+capabilities require the associated robot/perception configuration.
+
+\subsection{Multiple robots and operator interruption}
+
+With \code{QueueExecutionManager}, submit independent tasks for
+\code{robotone} and \code{robottwo} to allow concurrent work on disjoint
+agent resources. A task for their parent team can conflict with both.
+An urgent task can supersede lower-priority conflicts only if it outranks
+every affected goal; the suspended tasks can later resume.
+
+Use \code{robotone.act:...} and \code{robottwo.act:...} for actor-qualified
+steps inside a team script, and implement provider interruption hooks.
+Inside-script \code{async} adds context concurrency, not additional
+top-level resource arbitration. For operator controls, keep cancel,
+resume, and unfreeze paths runnable while the main task is blocked.
+Consult \code{demos/multiagent.asl}, \code{demos/queueEM.asl}, and
+\code{nao/dance_multiagent.asl} as domain examples, not universal hardware
+independence.
+
+\subsection{Recurring inspection and background listening}
+
+Use \code{scheduled(inspect(self),period(5,MINUTES))} for a periodic
+inspection that should not overlap its own previous execution.
+Keep the controller ID for changing or canceling the recurring task;
+track child execution IDs to report individual failures.
+
+For a long-running listener or patrol loop, a persistent goal can repeat
+a blocking/delayed action. The provided priority map gives \code{listen}
+\code{SKIPPENDING} status so dialogue can coexist with task execution.
+Do not copy this bypass priority to arbitrary motion tasks. Dialogue
+scripts require their speech/language providers; \code{core.asl} alone
+is not a complete spoken-interaction configuration.
+
+\subsection{Teaching a reusable procedure}
+
+Start \code{learnAction(actor,newAction)} through a separate control
+execution, wait until learning starts, and submit the intended steps for
+that actor. Choose whether the steps should also execute during teaching.
+End the session to construct the action, inspect its steps/model, and
+use the learned-actions persistence option if the procedure should survive
+restart. Learning a step sequence does not automatically infer all
+conditions, effects, observability requirements, or safe retry behavior.
+
+\section{Diagnostics, validation, and maintenance}
+\label{sec:diagnostics}
+
+\subsection{Common symptoms and concrete checks}
+
+\begin{longtable}{L{0.30\textwidth}L{0.64\textwidth}}
+\textbf{Symptom} & \textbf{Check}\\ \hline
+\endhead
+No action found &
+Confirm provider registration, \code{@Action}, ASL resource loading,
+actor restrictions/groups, action signature, and Java argument types.
+Distinguish \code{act} from \code{goal}.\\
+Unknown actor failure &
+Load the agent/team belief facts before manager initialization; check
+\code{getAllAgentTeams} and the requested actor name.\\
+Precondition failure despite a loaded action &
+Inspect the justification and its bindings. Loading an action does not
+make its preconditions true; the default selector does not plan them.\\
+Postcondition failure &
+Check observer availability, the query/result contract, and \code{obs}
+versus inference policy. Verify that the effect represents the actual
+physical result.\\
+Success without physical confirmation &
+Look for unobserved or \code{infer} effects, \code{void}/boolean primitive
+contracts, and raw \code{tsc} calls bypassing an action model.\\
+Goal stays pending &
+Inspect priority, held resources, team overlap, freeze, learning, and
+superseded work. Confirm which execution-manager class was selected.\\
+Wait returned but task continues &
+Timed waits do not cancel. Distinguish a timeout, a status transition,
+an async context join, and a managed goal join.\\
+Goal ID disappeared &
+Check history pruning and restarts. IDs are not persistent records.\\
+Cancel does not stop motion &
+Verify provider interruption services and blocking calls. Symbolic
+cancellation is not a hardware stop implementation.\\
+Schedule does not run again &
+Check whether the previous child is still nonterminal, whether the
+end date has passed, and whether a persistent child prevents new ticks.\\
+\end{longtable}
+
+\subsection{Focused repository checks}
+
+The following command exercises existing language and execution
+regressions without launching a robot:
+\begin{lstlisting}[language=bash]
+./gradlew :core:test \
+  --tests '*ActionASLTest' \
+  --tests '*RegressionTest' \
+  --tests '*JoinOnGoalListenerTest'
+\end{lstlisting}
+
+Useful language fixtures include \code{controlTest.asl},
+\code{for-loop.asl}, \code{for-each.asl}, \code{async_tests.asl},
+\code{trycatch_tests.asl}, \code{multiple-returns-test.asl},
+\code{observation_tests.asl}, \code{actor_dynamic_setting.asl}, and the
+\code{recovery/} test directory. Some older documentation examples and
+domain scripts can lag the current grammar; for a syntax question,
+consult \code{ASL.g4}, its parser listener, and the relevant regression
+before copying a historical example.
+
+\subsection{Building this document}
+
+This TeX source is self-contained and does not require the old editor
+screenshot, TikZ figures, or external ASL listing files. With a LaTeX
+installation providing KOMA-Script, listings, geometry, and hyperref:
+\begin{lstlisting}[language=bash]
+cd core/src/main/java/edu/tufts/hrilab/action/doc
+pdflatex -interaction=nonstopmode -halt-on-error GoalManagerDoc.tex
+pdflatex -interaction=nonstopmode -halt-on-error GoalManagerDoc.tex
+\end{lstlisting}
+
+Run twice to resolve the contents and cross-references. The TeX file is
+the editable reference; an older checked-in PDF must be regenerated to
+reflect changes.
+
+\subsection{Maintaining implementation accuracy}
+
+When extending the system, update the corresponding surface rather than
+only the prose: a new ASL construct needs grammar, generated parser,
+listener/writer support, a runtime context, and regression coverage.
+A new public operation needs the relevant TRADE annotation and callback/
+argument contract. A new action model needs coherent conditions,
+effects, observation policy, and interruption behavior.
+
+In particular, preserve the distinctions documented here: submitted
+action versus desired state, model assertion versus sensed result,
+selection utility versus scheduling priority, top-level goal ID versus
+context ID, and acceptance of a control request versus completed physical
+execution. These boundaries explain most otherwise surprising Goal
+Manager behavior.
+
 \end{document}
