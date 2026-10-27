@@ -80,12 +80,12 @@ public class ScheduledGoalManager {
     // schedule the goal
     JobDetail jobDetail = jobBuilder.build();
     Trigger trigger = createTrigger(goal, jobDetail.getKey());
-    scheduledGoals.put(goal, jobDetail.getKey());
+    em.coordinateSchedulingState(() -> scheduledGoals.put(goal, jobDetail.getKey()));
     try {
       goalScheduler.scheduleJob(jobDetail, trigger);
       goal.setStatus(GoalStatus.ACTIVE);
     } catch (SchedulerException e) {
-      scheduledGoals.remove(goal);
+      em.coordinateSchedulingState(() -> scheduledGoals.remove(goal));
       log.error("Error scheduling goal: {}", goal, e);
       goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
               Factory.createPredicate("scheduleRejected", goal.getGoalPredicate())));
@@ -313,7 +313,7 @@ public class ScheduledGoalManager {
       return false;
     }
 
-    if (!goal.update(update)) {
+    if (!em.coordinateSchedulingState(() -> goal.update(update))) {
       return false;
     }
 
@@ -387,9 +387,7 @@ public class ScheduledGoalManager {
    * @return
    */
   public boolean removeGoal(ScheduledGoal goal) {
-    synchronized (scheduledGoals) {
-      return scheduledGoals.remove(goal) != null;
-    }
+    return em.coordinateSchedulingState(() -> scheduledGoals.remove(goal) != null);
   }
 
   public void setScheduledGoalsFile(String filepath) {
@@ -428,7 +426,7 @@ public class ScheduledGoalManager {
 
   public void shutdown() {
     try {
-      goalScheduler.shutdown();
+      goalScheduler.shutdown(true);
     } catch (SchedulerException e) {
       log.error("[shutdown] a scheduled goal was not correctly canceled during shutdown", e);
     }

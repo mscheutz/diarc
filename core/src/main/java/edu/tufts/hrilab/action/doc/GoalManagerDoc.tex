@@ -116,9 +116,9 @@ one-time handoff back into execution. A Goal still has only one
 interpreter, including when suspended and resumed; retries and new
 execution attempts are not introduced by this revision.
 
-This stage retains the existing manager locks and policy subclasses.
-Serialized coordination and new scheduling policies
-are separate revisions.
+Existing manager class names and resource behavior remain supported;
+their scheduling choices are separated from execution mechanics as
+described below. New scheduling policies remain a separate revision.
 
 When the \texttt{getViolations(Symbol, StateMachine)} TRADE service
 is available, completion verifies norms and propagates a violation
@@ -190,7 +190,61 @@ deliberately suspended goal. Status changes can be in flight while
 collection bookkeeping completes; versions identify the observed
 metadata, not a transaction across the entire interpreter and manager.
 Failure justifications remain available in the included GoalInfo.
-No new scheduling policy or coordinator is introduced.
+
+\subsection{Serialized coordination and compatibility policies}
+
+ManagerCoordinator serializes admission records, pending/active/past
+membership, resource reservations, preemption bookkeeping, scheduled
+definition registration, and pruning on one state thread. Existing
+collection locks remain for compatible snapshot readers and protected
+extension points. Scheduling explanations execute as coordinator
+commands; goal status and interpreter state can still change
+independently, as described above.
+
+Commands record effects and finish before those effects run on the
+calling thread. Constraint checks, interpreter construction and
+dispatch, interruption/resumption, learning handoffs, Quartz operations,
+and notification hooks therefore do not run while the state thread
+owns a transition or collection locks. A slow effect can delay its own
+synchronous caller, but not unrelated state commands. Calls from
+interpreter workers and callbacks can reenter the manager. Submitted
+commands finish their committed effects even if their caller is
+interrupted; interruption and command/effect failures are preserved.
+
+Preemption is a request/acknowledgment protocol, not a blocking wait
+inside a scheduling decision. An interpreter retains its acquired
+claims until it reports SUSPENDED or a terminal status. Superseded kiosk
+goals are canceled rather than requeued. Other suspended interpreters
+return to the pending queue with their original future and resume
+intent. Repeated requests are coalesced, stale status notifications
+cannot reapply an old suspension, and failed interruption requests
+retain their claims. Canceling the replacement does not strand the
+previous interpreter. Explicitly suspended work does not automatically
+resume, and manually resuming queued work first reacquires its claims.
+
+Startup reserves an active entry and claims before running external
+construction/constraint work. STARTING explanations distinguish this
+interval from execution. Cancellation during startup is remembered and
+checked before dispatch; claims are not prematurely released while
+construction is still in flight. Late repeated PENDING notifications
+are conditional on the goal still being pending.
+
+ExecutionManager, SingleGoalExecutionManager, and QueueExecutionManager
+are compatibility entry points for the concurrent, exclusive/rejecting,
+and exclusive/queuing policies, respectively. SchedulingPolicy supplies
+the existing resource and conflict-disposition rules and the shared
+ordering: priority tier, numeric priority, then older goal ID. Learning,
+freeze, SKIPPENDING, explicit resource overrides, and periodic-goal
+priorities retain their previous behavior. Public ASL/TRADE services
+and class selection do not change; no new fairness or deadline policy
+is enabled.
+
+Shutdown closes admission, cancels current work, and waits for tracked
+startup and interpreter completion, including superseded interpreters,
+before closing the coordinator. This remains a blocking controller
+operation, not an action/callback operation. Bounded cancellation,
+shutdown escalation, admission/history limits, and restart recovery
+are not introduced here.
 
 \subsection{Arguments\label{subsec:Arguments}}
 

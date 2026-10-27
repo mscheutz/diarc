@@ -45,6 +45,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
@@ -64,6 +65,31 @@ public class ExecutionManager implements GoalListener {
   };
 
   private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
+  private final ManagerCoordinator coordinator = new ManagerCoordinator();
+  private final SchedulingPolicy schedulingPolicy;
+
+  private static final class StartingGoal {
+    final CompletableFuture<ActionStatus> completion = new CompletableFuture<>();
+    final CompletableFuture<Void> startupFinished = new CompletableFuture<>();
+    boolean cancelRequested;
+    boolean dispatched;
+  }
+
+  private final Map<Goal, StartingGoal> startingGoals = new HashMap<>();
+  private final Map<Goal, StartingGoal> executionAttempts = new HashMap<>();
+  private final Map<Goal, CompletableFuture<Void>> submissionsInFlight = new HashMap<>();
+  private final Map<Goal, GoalStatus> preemptions = new HashMap<>();
+  private final Set<Goal> cancelingGoals = new HashSet<>();
+  private final Set<Goal> resumingGoals = new HashSet<>();
+  private boolean shuttingDown;
+
+  public ExecutionManager() {
+    this(SchedulingPolicy.CONCURRENT);
+  }
+
+  ExecutionManager(SchedulingPolicy schedulingPolicy) {
+    this.schedulingPolicy = Objects.requireNonNull(schedulingPolicy);
+  }
 
   /**
    * How often the memory pruning thread should execute pruning mechanism (in milliseconds).
@@ -156,7 +182,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * External components to be notified of action execution step progress
    */
-  private final List<ActionListener> aiListeners = new ArrayList<>();
+  private final List<ActionListener> aiListeners = new CopyOnWriteArrayList<>();
 
   /**
    * Lock for waitForGoalStatus method.
@@ -377,6 +403,12 @@ public class ExecutionManager implements GoalListener {
    * valid goal existed, returns null.
    */
   protected int activateNextValidPendingGoal(int startSearchIndex) {
+    if (!coordinator.isOwner()) {
+      return coordinator.call(() -> activateNextValidPendingGoal(startSearchIndex));
+    }
+    if (shuttingDown) {
+      return -1;
+    }
     log.trace("[activateNextPendingGoal] in method");
     synchronized (pendingGoalsLock) {
       log.trace("[activateNextPendingGoal] have pendingGoals lock");
@@ -387,6 +419,10 @@ public class ExecutionManager implements GoalListener {
         int goalIndex = 0;
         while (pendingGoalsIterator.hasNext()) {
           PendingGoal pg = pendingGoalsIterator.next();
+          if (pg.getGoal().getStatus().isTerminated() || cancelingGoals.contains(pg.getGoal())) {
+            goalIndex++;
+            continue;
+          }
           if (goalIndex >= startSearchIndex) {
             if (!resourceConflictInPending(pg.getGoal(), goalIndex)
                     && lockResources(pg.getGoal())) {
@@ -489,13 +525,14 @@ public class ExecutionManager implements GoalListener {
     } else {
       Set<Resource> resourceSet = new HashSet<>();
 
-      for (Symbol agent : getDescendants(goal.getActor())) {
-        if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          if (!goal.isLearningGoal()) {
-            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+      if (schedulingPolicy == SchedulingPolicy.SINGLE_GOAL) {
+        resourceSet.addAll(getHeldResourcesForGoal(goal));
+      } else {
+        GoalInfo snapshot = goal.getInfo();
+        for (Symbol agent : getDescendants(goal.getActor())) {
+          for (Symbol resource : schedulingPolicy.requiredResources(snapshot, agent)) {
+            resourceSet.add(agentTeams.get(agent).getResource(resource));
           }
-          //Always requires the agent to be unfrozen
-          resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
         }
       }
       goal.setRequiredResources(resourceSet);
@@ -513,16 +550,10 @@ public class ExecutionManager implements GoalListener {
     } else {
       Set<Resource> resourceSet = new HashSet<>();
 
+      GoalInfo snapshot = goal.getInfo();
       for (Symbol agent : getDescendants(goal.getActor())) {
-        if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          if (!goal.isLearningGoal()) {
-            //TODO: Not sure if we want to ever teach teaching or teach freeze? If not, get rid of above conditional block
-          if (goal.getGoalStatePredicate().getName().equals("learnAction")) {
-            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
-            } else if (goal.getGoalStatePredicate().getName().equals("freeze")) {
-              resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
-            }
-          }
+        for (Symbol resource : schedulingPolicy.heldResources(snapshot, agent)) {
+          resourceSet.add(agentTeams.get(agent).getResource(resource));
         }
       }
       goal.setHeldResources(resourceSet);
@@ -578,10 +609,19 @@ public class ExecutionManager implements GoalListener {
    *              updateType indicates whether the active goal was newly added, already existed, or removed
    */
   protected void onPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
-    log.trace("[onPendingGoalUpdated] {} at index {}", g, index);
+    coordinator.run(() -> updatePendingGoal(g, updateType));
+  }
+
+  private void updatePendingGoal(Goal g, UpdateType updateType) {
+    log.trace("[onPendingGoalUpdated] {}", g);
 
     //If a pending goal was newly added, check if it should be forwarded straight to execution or left in the queue
     if (updateType == UpdateType.ADDED) {
+      PendingGoal entry = getPendingGoal(g.getId());
+      if (entry == null || g.getStatus().isTerminated() || cancelingGoals.contains(g) || shuttingDown) {
+        return;
+      }
+      int currentIndex = getIndexOfPendingGoal(entry);
       log.trace("[onPendingGoalUpdated] pending goal has been added");
       synchronized (resourceLock) {
         //Gather required resources for the added goal
@@ -593,7 +633,7 @@ public class ExecutionManager implements GoalListener {
         if (conflictingGoals.isEmpty()) {
           log.trace("[onPendingGoalUpdated] no conflicting active goals");
           //2. Does not share relevant resources with any higher priority goal currently in the queue
-          if (!resourceConflictInPending(g, index)) {
+          if (!resourceConflictInPending(g, currentIndex)) {
             log.debug("[onPendingGoalUpdated] no conflicting goals, transferring to active");
             if (lockResources(g)) {
               transferGoalToActive(g);
@@ -630,6 +670,12 @@ public class ExecutionManager implements GoalListener {
    * @param g the goal that was added
    */
   protected void handleConflictingLowerPriorityGoal(Goal g) {
+    if (schedulingPolicy.queueConflicts) {
+      if (g.getStatus() == GoalStatus.PENDING) {
+        coordinator.defer(() -> g.notifyIfStatus(GoalStatus.PENDING));
+      }
+      return;
+    }
     log.trace("[handleConflictingLowerPriorityGoal] {}", g);
     //TODO: is this check specific enough? And do we want this?
     //If the goal was superseded due to resource conflicts with a higher priority
@@ -652,7 +698,8 @@ public class ExecutionManager implements GoalListener {
     List<Symbol> lockedResources = getLockedResourceNames(getRequiredResourcesForGoal(g));
     //TODO: make sure this is sensible and add pragrule
     Justification justification = new ConditionJustification(false, Factory.createPredicate("availableResources", lockedResources));
-    g.setFailureStatus(GoalStatus.FAILED, justification);
+    cancelingGoals.add(g);
+    coordinator.defer(() -> g.setFailureStatus(GoalStatus.FAILED, justification));
   }
 
   //////////////////////////////////////////////
@@ -671,14 +718,34 @@ public class ExecutionManager implements GoalListener {
   public Goal submitGoal(Goal g) {
     log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, g.getExecutionType(), g.getPriority(), g.getPriorityTier());
 
-    boolean learningContinuation = false;
-    if (!registerGoal(g)) {
-      learningContinuation = g.isLearningGoal() && learningGoals.remove(g.getId(), g);
-      if (!learningContinuation) {
-        log.debug("[submitGoal] goal {} was already submitted", g.getId());
-        return g;
+    CompletableFuture<Void> submission = new CompletableFuture<>();
+    int admission = coordinator.call(() -> {
+      if (registerGoal(g)) {
+        submissionsInFlight.put(g, submission);
+        return 1;
+      }
+      if (g.isLearningGoal() && learningGoals.remove(g.getId(), g)) {
+        submissionsInFlight.put(g, submission);
+        return 2;
+      }
+      return 0;
+    });
+    if (admission == 0) {
+      log.debug("[submitGoal] goal {} was already submitted", g.getId());
+      return g;
+    }
+    try {
+      return submitRegisteredGoal(g, admission == 2);
+    } finally {
+      try {
+        coordinator.run(() -> submissionsInFlight.remove(g, submission));
+      } finally {
+        submission.complete(null);
       }
     }
+  }
+
+  private Goal submitRegisteredGoal(Goal g, boolean learningContinuation) {
     if (g.getStatus().isTerminated()) {
       transferGoalToPastGoals(g);
       return g;
@@ -716,6 +783,12 @@ public class ExecutionManager implements GoalListener {
   }
 
   private boolean registerGoal(Goal goal) {
+    if (!coordinator.isOwner()) {
+      return coordinator.call(() -> registerGoal(goal));
+    }
+    if (shuttingDown) {
+      throw new RejectedExecutionException("Goal manager is shutting down");
+    }
     if (registeredGoals.putIfAbsent(goal.getId(), goal) != null) {
       return false;
     }
@@ -845,6 +918,10 @@ public class ExecutionManager implements GoalListener {
    * Add the supplied PendingGoal to the pending collection and notify of update
    */
   private void addPendingGoal(PendingGoal pg) {
+    if (!coordinator.isOwner()) {
+      coordinator.run(() -> addPendingGoal(pg));
+      return;
+    }
     log.trace("[addPendingGoal] in method with goal {}", pg.getGoal().getId());
     synchronized (pendingGoalsLock) {
       log.trace("[addPendingGoal] have pendingGoalsLock");
@@ -856,11 +933,11 @@ public class ExecutionManager implements GoalListener {
       pendingGoals.add(pg);
 
       if (pg.getPreviousAIFuture() != null) {
-        onActiveGoalUpdated(pg.getGoal(), pg.getGoal().getStatus(), UpdateType.REMOVED);
+        coordinator.defer(() -> onActiveGoalUpdated(pg.getGoal(), pg.getGoal().getStatus(), UpdateType.REMOVED));
       }
       int index = getIndexOfPendingGoal(pg); //not ideal, see if we want to change UI hook signature
       //Notify of new goal submission
-      onPendingGoalUpdated(pg.getGoal(), index, UpdateType.ADDED);
+      coordinator.defer(() -> onPendingGoalUpdated(pg.getGoal(), index, UpdateType.ADDED));
     }
   }
 
@@ -898,82 +975,62 @@ public class ExecutionManager implements GoalListener {
    * @param activeGoals a list of currently active goals to be pushed back to pending
    */
   protected void supersedeGoals(Goal newGoal, Set<Goal> activeGoals) {
-    log.info("[supersedeGoals] {} superseding {}", newGoal, activeGoals);
-    //TODO: wary about concurrency here. Can't lock on both collections around suspension of goals because deadlock can
-    //  occur if onInterrupt methods do anything involving interruption of other/subgoals. If this is only called through
-    //  onPendingGoalUpdated, are we safe here without worrying about new goals coming in? If interruption behaviors
-    //  act on pending goals (which shouldn't really ever happen?), are we still in trouble?
-    //Send active goals back to pending
-    synchronized (pendingGoalsLock) {
-      log.trace("[supersedeGoals] have pendingGoalsLock");
-      synchronized (goalsLock) {
-        log.trace("[supersedeGoals] have goalsLock");
-        //Suspend and remove active goals back to pending first
-        List<Goal> supersededGoals = new ArrayList<>();
-        List<Future> aiFutures = new ArrayList<>();
-        List<GoalStatus> goalStatuses = new ArrayList<>(); //track original status to know whether to resume when returned to active
-        //TODO: should to-be-superseded goal interruption occur in parallel threads?
-        for (Goal activeGoal : activeGoals) {
-          if (!activeGoal.getStatus().isTerminated()) {
-            GoalStatus currentStatus = activeGoal.getStatus();
-            //TODO: Revisit this - kiosk goals cannot be canceled within this function properly due to held locks and multithreaded
-            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself.
-            //      The goal will be canceled, but not move collections or release resources
-            if (activeGoal.getPriorityTier() == PriorityTier.KIOSK) {
-              //superseded kiosk goals can be canceled and discarded rather than suspended and added to pending
-              if (cancelActiveGoal(activeGoal)) {
-                waitForGoalStatus(activeGoal, GoalStatus.CANCELED);
-                if (activeGoal.getStatus().isTerminated()) {
-                  unlockResources(activeGoal);
-                }
-              }
-            } else {
-              if (currentStatus != GoalStatus.SUSPENDED) {
-                log.debug("[supersedeGoals] suspending active goal {}", activeGoal);
-                if (suspendActiveGoal(activeGoal)) {
-                  // wait for goal to be suspended
-                  waitForGoalStatus(activeGoal, GoalStatus.SUSPENDED);
-                }
-              }
-              if (activeGoal.getStatus().isTerminated()) {
-                continue;
-              }
-              if (activeGoal.getStatus() != GoalStatus.SUSPENDED) {
-                log.warn("[supersedeGoals] goal {} has not acknowledged suspension; retaining its resources", activeGoal);
-                continue;
-              }
-              log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
-              unlockResources(activeGoal);
-              Future aiFuture = removeActiveGoal(activeGoal);
-              if (aiFuture == null) {
-                log.warn("[supersedeGoals] goal to supersede may have terminated on its own...");
-              } else {
-                supersededGoals.add(activeGoal);
-                goalStatuses.add(currentStatus);
-                aiFutures.add(aiFuture);
-              }
-            }
+    if (!coordinator.isOwner()) {
+      coordinator.run(() -> supersedeGoals(newGoal, activeGoals));
+      return;
+    }
+    for (Goal activeGoal : activeGoals) {
+      if (activeGoal.getStatus().isTerminated() || startingGoals.containsKey(activeGoal)
+              || preemptions.containsKey(activeGoal) || resumingGoals.contains(activeGoal)
+              || cancelingGoals.contains(activeGoal)) {
+        continue;
+      }
+      preemptions.put(activeGoal, activeGoal.getStatus());
+      coordinator.defer(() -> {
+        boolean accepted;
+        try {
+          accepted = activeGoal.getPriorityTier() == PriorityTier.KIOSK
+                  ? cancelActiveGoal(activeGoal)
+                  : activeGoal.getStatus() == GoalStatus.SUSPENDED || suspendActiveGoal(activeGoal);
+        } catch (RuntimeException | Error e) {
+          coordinator.run(() -> preemptions.remove(activeGoal));
+          log.error("Could not interrupt goal {} for preemption", activeGoal, e);
+          throw e;
+        }
+        coordinator.run(() -> {
+          if (!accepted) {
+            preemptions.remove(activeGoal);
+          } else {
+            acknowledgePreemption(activeGoal);
           }
-        }
+        });
+      });
+    }
+  }
 
-        //Set new Goal as active
-        log.debug("[supersedeGoals] setting new goal to active {}", newGoal);
-        if (lockResources(newGoal)) {
-          transferGoalToActive(newGoal);
-        }
-
-        //Add superseded goals back to pending
-        int i = 0;
-        for (Goal activeGoal : supersededGoals) {
-          log.debug("[supersedeGoals] returning superseded goal to pending {}", activeGoal);
-          PendingGoal pg = new PendingGoal(activeGoal);
-          pg.setPreviousAIFuture(aiFutures.get(i));
-          pg.setPreviousStatus(goalStatuses.get(i));
-          addPendingGoal(pg);
-          i++;
+  private void acknowledgePreemption(Goal goal) {
+    GoalStatus previous = preemptions.get(goal);
+    if (previous == null || goal.getStatus() != GoalStatus.SUSPENDED
+            || goal.getPriorityTier() == PriorityTier.KIOSK) {
+      return;
+    }
+    preemptions.remove(goal);
+    synchronized (pendingGoalsLock) {
+      synchronized (resourceLock) {
+        synchronized (goalsLock) {
+          Future future = removeActiveGoal(goal);
+          if (future == null) {
+            return;
+          }
+          unlockResources(goal);
+          PendingGoal pending = new PendingGoal(goal);
+          pending.setPreviousAIFuture(future);
+          pending.setPreviousStatus(previous);
+          addPendingGoal(pending);
         }
       }
     }
+    activateValidPendingGoals();
   }
 
   /**
@@ -984,6 +1041,13 @@ public class ExecutionManager implements GoalListener {
    * @param goal the goal to transfer and execute
    */
   protected void transferGoalToActive(Goal goal) {
+    if (!coordinator.isOwner()) {
+      coordinator.run(() -> transferGoalToActive(goal));
+      return;
+    }
+    if (shuttingDown) {
+      return;
+    }
     log.debug("[transferGoalToActive] in method with goal: " + goal);
 
     synchronized (pendingGoalsLock) {
@@ -1014,33 +1078,63 @@ public class ExecutionManager implements GoalListener {
         //Automatically resume the goal which was suspended when superseded
         if (goal.getStatus() != GoalStatus.SUSPENDED) {
           log.warn("[transferGoalToActive] encountered goal with a non-null ActionInterpreter and is not suspended");
-          onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
+          coordinator.defer(() -> onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED));
         } else {
           if (pg.getPreviousStatus() == GoalStatus.ACTIVE || pg.getPreviousStatus() == GoalStatus.PENDING) {
             log.debug("[transferGoalToActive] Resuming goal with previous AI");
-            goal.resume();
-            onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
+            resumingGoals.add(goal);
+            coordinator.defer(() -> {
+              performResume(goal);
+              onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
+            });
           } else {
             log.debug("[transferGoalToActive] Leaving goal with current status {}", goal.getStatus());
-            onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
+            coordinator.defer(() -> onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED));
           }
         }
-        onPendingGoalUpdated(goal, index, UpdateType.REMOVED);
+        coordinator.defer(() -> onPendingGoalUpdated(goal, index, UpdateType.REMOVED));
         return;
       }
 
-      try {
-        executeGoal(goal);
-      } catch (RuntimeException e) {
-        log.error("Could not start execution of goal {}", goal, e);
-        goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
-                Factory.createPredicate("executionStartupFailed", goal.getGoalPredicate())));
-        throw e;
-      } finally {
-        pg.notifyOfNoLongerPending();
-        onPendingGoalUpdated(goal, index, UpdateType.REMOVED);
-      }
+      StartingGoal starting = new StartingGoal();
+      startingGoals.put(goal, starting);
+      executionAttempts.put(goal, starting);
+      addActiveGoal(goal, starting.completion);
+      coordinator.defer(() -> {
+        try {
+          if (!goal.getStatus().isTerminated()) {
+            executeGoal(goal);
+          }
+        } catch (RuntimeException | Error e) {
+          log.error("Could not start execution of goal {}", goal, e);
+          goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+                  Factory.createPredicate("executionStartupFailed", goal.getGoalPredicate())));
+          throw e;
+        } finally {
+          try {
+            finishStarting(goal, starting);
+          } finally {
+            try {
+              pg.notifyOfNoLongerPending();
+              onPendingGoalUpdated(goal, index, UpdateType.REMOVED);
+            } finally {
+              starting.startupFinished.complete(null);
+            }
+          }
+        }
+      });
     }
+  }
+
+  private void finishStarting(Goal goal, StartingGoal starting) {
+    boolean cancel = coordinator.call(() -> {
+      startingGoals.remove(goal, starting);
+      return starting.cancelRequested && !starting.dispatched && !goal.getStatus().isTerminated();
+    });
+    if (cancel) {
+      goal.cancel();
+    }
+    reconsiderPendingGoals();
   }
 
   /**
@@ -1062,6 +1156,9 @@ public class ExecutionManager implements GoalListener {
 
   private boolean lockResources(Goal g) {
     synchronized (resourceLock) {
+      if (cancelingGoals.contains(g) || g.getStatus().isTerminated()) {
+        return false;
+      }
       if (resourceAllocations.containsKey(g)) {
         return true;
       }
@@ -1164,28 +1261,64 @@ public class ExecutionManager implements GoalListener {
    */
   private void startActionInterpreter(ActionInterpreter ai) {
     log.debug("Starting interpreter for goal " + ai.getGoal() + "...");
-    FutureTask<ActionStatus> aiFuture = new FutureTask<>(ai);
-
     Goal goal = ai.getGoal();
-    synchronized (pendingGoalsLock) {
-      synchronized (resourceLock) {
-        synchronized (goalsLock) {
-          if (goal.getStatus().isTerminated()) {
-            aiFuture.cancel(false);
-            return;
+    StartingGoal starting = coordinator.call(() -> startingGoals.get(goal));
+    FutureTask<ActionStatus> aiFuture = new FutureTask<>(ai) {
+      @Override
+      protected void done() {
+        if (starting != null) {
+          try {
+            starting.completion.complete(get());
+          } catch (CancellationException e) {
+            starting.completion.cancel(false);
+          } catch (ExecutionException e) {
+            starting.completion.completeExceptionally(e.getCause());
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            starting.completion.completeExceptionally(e);
           }
-          addActiveGoal(goal, aiFuture);
         }
       }
+    };
+    boolean dispatch = coordinator.call(() -> {
+      synchronized (pendingGoalsLock) {
+        synchronized (resourceLock) {
+          synchronized (goalsLock) {
+            if (shuttingDown || goal.getStatus().isTerminated() || (starting != null && starting.cancelRequested)) {
+              return false;
+            }
+            if (starting != null) {
+              starting.dispatched = true;
+              startingGoals.remove(goal, starting);
+            }
+            addActiveGoal(goal, aiFuture);
+            return true;
+          }
+        }
+      }
+    });
+    if (!dispatch) {
+      try {
+        if (!goal.getStatus().isTerminated()) {
+          goal.setStatus(GoalStatus.CANCELED);
+        }
+      } finally {
+        aiFuture.cancel(false);
+      }
+      return;
     }
-    onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
     try {
+      onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
       executor.execute(aiFuture);
-    } catch (RejectedExecutionException e) {
-      log.error("Executor rejected interpreter for goal {}", goal, e);
-      aiFuture.cancel(false);
-      goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
-              Factory.createPredicate("interpreterRejected", goal.getGoalPredicate())));
+    } catch (RuntimeException | Error e) {
+      log.error("Could not dispatch interpreter for goal {}", goal, e);
+      try {
+        goal.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+                Factory.createPredicate(e instanceof RejectedExecutionException
+                        ? "interpreterRejected" : "executionStartupFailed", goal.getGoalPredicate())));
+      } finally {
+        aiFuture.cancel(false);
+      }
       throw e;
     }
     //updatePriorities();
@@ -1261,6 +1394,9 @@ public class ExecutionManager implements GoalListener {
    * Status metadata is a versioned snapshot; interpreter transitions can still be in flight.
    */
   public GoalSchedulingExplanation explainGoalScheduling(long gid) {
+    if (!coordinator.isOwner()) {
+      return coordinator.call(() -> explainGoalScheduling(gid));
+    }
     synchronized (pendingGoalsLock) {
       synchronized (resourceLock) {
         synchronized (goalsLock) {
@@ -1338,7 +1474,7 @@ public class ExecutionManager implements GoalListener {
                 if (snapshot.status == GoalStatus.SUSPENDED) {
                   reasons.add(GoalSchedulingExplanation.Reason.SUSPENDED);
                 } else {
-                  reasons.add(snapshot.status == GoalStatus.PENDING
+                  reasons.add(startingGoals.containsKey(goal) || snapshot.status == GoalStatus.PENDING
                           ? GoalSchedulingExplanation.Reason.STARTING : GoalSchedulingExplanation.Reason.EXECUTING);
                 }
                 break;
@@ -1479,18 +1615,20 @@ public class ExecutionManager implements GoalListener {
       goalStatusUpdateLock.unlock();
     }
 
-    // transfer terminated goals to past goals
-    if (info.status.isTerminated()) {
+    coordinator.run(() -> {
       Goal goal = getGoal(info.gid);
       if (goal == null) {
-        log.warn("[goalStatusChanged] Could not find goal: {}", info.goal);
+        if (info.status.isTerminated()) {
+          log.warn("[goalStatusChanged] Could not find goal: {}", info.goal);
+        }
         return;
       }
-
-      if (goal.getStatus() == info.status) {
+      if (goal.getStatus().isTerminated()) {
         transferGoalToPastGoals(goal);
+      } else if (goal.getInfo().statusVersion == info.statusVersion) {
+        acknowledgePreemption(goal);
       }
-    }
+    });
   }
 
   /**
@@ -1498,6 +1636,10 @@ public class ExecutionManager implements GoalListener {
    * the relevant bookkeeping if found
    */
   protected void transferGoalToPastGoals(Goal goal) {
+    if (!coordinator.isOwner()) {
+      coordinator.run(() -> transferGoalToPastGoals(goal));
+      return;
+    }
     if (!goal.getStatus().isTerminated()) {
       return;
     }
@@ -1509,6 +1651,16 @@ public class ExecutionManager implements GoalListener {
         return;
       }
       learningGoals.remove(goal.getId(), goal);
+      preemptions.remove(goal);
+      cancelingGoals.remove(goal);
+      resumingGoals.remove(goal);
+      startingGoals.remove(goal);
+      StartingGoal starting = executionAttempts.get(goal);
+      if (starting != null && !starting.dispatched) {
+        coordinator.defer(() -> starting.completion.complete(
+                goal.getStatus() == GoalStatus.SUCCEEDED ? ActionStatus.SUCCESS
+                        : goal.getStatus() == GoalStatus.CANCELED ? ActionStatus.CANCEL : ActionStatus.FAIL));
+      }
       PendingGoal existing = getPendingGoal(goal.getId());
       pendingIndex = existing == null ? -1 : getIndexOfPendingGoal(existing);
       pg = removePendingGoal(goal);
@@ -1530,10 +1682,10 @@ public class ExecutionManager implements GoalListener {
     }
     if (pg != null) {
       pg.notifyOfNoLongerPending();
-      onPendingGoalUpdated(goal, pendingIndex, UpdateType.REMOVED);
+      coordinator.defer(() -> onPendingGoalUpdated(goal, pendingIndex, UpdateType.REMOVED));
     }
     if (wasActive) {
-      onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.REMOVED);
+      coordinator.defer(() -> onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.REMOVED));
     }
   }
 
@@ -1622,34 +1774,34 @@ public class ExecutionManager implements GoalListener {
    * @return boolean indicating whether the goal was found in one of the collections or not
    */
   public boolean cancelGoal(long gid) {
-    // if goal to cancel is pending
-    PendingGoal pg = getPendingGoal(gid);
-    if (pg != null) {
-      log.debug("[cancelGoal] {} canceling pending goal {}", gid, pg.getGoal());
-      cancelPendingGoal(pg);
-      return true;
-    }
-
-    // else if goal to cancel is active
-    Goal goal = getActiveGoal(gid);
-    if (goal != null) {
-      log.debug("[cancelGoal] {} canceling active goal {}", gid, goal);
-      return cancelActiveGoal(goal);
-    }
-
-    Goal learning = learningGoals.get(gid);
-    if (learning != null) {
-      return learning.cancel();
-    }
-    // if goal is scheduled goal
-    ScheduledGoal scheduledGoal = scheduledGoalManager == null ? null : scheduledGoalManager.getScheduledGoal(gid);
-    if (scheduledGoal != null) {
-      log.debug("[cancelGoal] {} canceling scheduled goal {}", gid, goal);
-      return scheduledGoalManager.cancelScheduledGoal(scheduledGoal);
-    }
-
-    log.warn("[cancelGoal] cannot find current goal for gid {}", gid);
-    return false;
+    Supplier<Boolean> effect = coordinator.call(() -> {
+      Goal goal = getGoal(gid);
+      if (goal == null || goal.getStatus().isTerminated()) {
+        log.warn("[cancelGoal] cannot find a nonterminal goal for gid {}", gid);
+        return () -> false;
+      }
+      cancelingGoals.add(goal);
+      StartingGoal starting = startingGoals.get(goal);
+      if (starting != null) {
+        starting.cancelRequested = true;
+        return () -> true;
+      }
+      return () -> {
+        boolean accepted;
+        try {
+          accepted = goal.isScheduled()
+                  ? scheduledGoalManager.cancelScheduledGoal((ScheduledGoal) goal) : goal.cancel();
+        } catch (RuntimeException | Error e) {
+          coordinator.run(() -> cancelingGoals.remove(goal));
+          throw e;
+        }
+        if (!accepted) {
+          coordinator.run(() -> cancelingGoals.remove(goal));
+        }
+        return accepted;
+      };
+    });
+    return effect.get();
   }
 
   /**
@@ -1658,16 +1810,7 @@ public class ExecutionManager implements GoalListener {
    * @param pg
    */
   private void cancelPendingGoal(PendingGoal pg) {
-    // cancel pending goal
-    Goal goal = pg.getGoal();
-    log.debug("[cancelPendingGoal] {}", goal);
-    if (goal.getActionInterpreter() == null) {
-      goal.setStatus(GoalStatus.CANCELED);
-    } else {
-      //If this goal was previously superseded and has an associated AI, it needs to be canceled
-      log.debug("[cancelPendingGoal] {} canceling superseded goal", goal);
-      cancelActiveGoal(goal);
-    }
+    cancelGoal(pg.getGoal().getId());
   }
 
   /**
@@ -1779,6 +1922,15 @@ public class ExecutionManager implements GoalListener {
       log.warn("[suspendGoal] goal is null.");
       return false;
     }
+    if (coordinator.call(() -> {
+      if (preemptions.containsKey(g)) {
+        preemptions.put(g, GoalStatus.SUSPENDED);
+        return true;
+      }
+      return false;
+    })) {
+      return true;
+    }
     if (g.getStatus() == GoalStatus.PENDING) {
       log.warn("[suspendGoal] attempting to suspend a pending goal");
       return false;
@@ -1789,12 +1941,20 @@ public class ExecutionManager implements GoalListener {
       // EW: Should this explicitly live in a separate method?
       // Functionality required for social LLM "OffContext" dialogue goal interactions - set a currently superseded
       //  pending goal to stay suspended when returning to the current collection
-      PendingGoal pg = getPendingGoal(gid);
-      if (pg != null) {
-        if (pg.getPreviousAIFuture() != null) {
+      boolean pending = coordinator.call(() -> {
+        PendingGoal pg = getPendingGoal(gid);
+        if (preemptions.containsKey(g)) {
+          preemptions.put(g, GoalStatus.SUSPENDED);
+          return true;
+        }
+        if (pg != null && pg.getPreviousAIFuture() != null) {
           pg.setPreviousStatus(GoalStatus.SUSPENDED);
           return true;
         }
+        return false;
+      });
+      if (pending) {
+        return true;
       }
       return suspendActiveGoal(g);
     } else {
@@ -1880,6 +2040,22 @@ public class ExecutionManager implements GoalListener {
       log.warn("[resumeGoal] attempting to resume an already terminated goal");
       return false;
     } else {
+      boolean pending = coordinator.call(() -> {
+        if (preemptions.containsKey(g)) {
+          preemptions.put(g, GoalStatus.ACTIVE);
+          return true;
+        }
+        PendingGoal pg = getPendingGoal(gid);
+        if (pg == null) {
+          return false;
+        }
+        pg.setPreviousStatus(GoalStatus.ACTIVE);
+        activateValidPendingGoals();
+        return true;
+      });
+      if (pending) {
+        return true;
+      }
       log.debug("[resumeGoal] resuming active goal {}", g);
       return resumeActiveGoal(g);
     }
@@ -1894,15 +2070,50 @@ public class ExecutionManager implements GoalListener {
    */
   private boolean resumeActiveGoal(Goal goal) {
     log.trace("[resumeGoal] " + goal);
-    if (goal == null) {
-      log.warn("[resumeGoal] goal is null.");
-    } else {
-      if (goal.resume()) {
-        onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.UPDATED);
-        return true;
+    boolean accepted = coordinator.call(() -> {
+      if (goal == null || goal.getStatus().isTerminated() || cancelingGoals.contains(goal)
+              || resumingGoals.contains(goal) || preemptions.containsKey(goal)
+              || getActiveGoal(goal.getId()) != goal) {
+        return false;
+      }
+      resumingGoals.add(goal);
+      return true;
+    });
+    if (!accepted) {
+      return false;
+    }
+    return performResume(goal);
+  }
+
+  private boolean performResume(Goal goal) {
+    try {
+      if (!coordinator.call(() -> resumingGoals.contains(goal)
+              && getActiveGoal(goal.getId()) == goal && !cancelingGoals.contains(goal)
+              && !goal.getStatus().isTerminated())) {
+        return false;
+      }
+      if (!goal.resume()) {
+        return false;
+      }
+      onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.UPDATED);
+      return true;
+    } finally {
+      coordinator.run(() -> resumingGoals.remove(goal));
+      reconsiderPendingGoals();
+    }
+  }
+
+  private void reconsiderPendingGoals() {
+    for (Goal pending : getPendingGoals()) {
+      Set<Goal> conflicts = coordinator.call(() -> getResourceConflictingActiveGoals(pending));
+      if (conflicts.isEmpty() || shouldSupersede(pending, conflicts)) {
+        onPendingGoalUpdated(pending, -1, UpdateType.ADDED);
       }
     }
-    return false;
+  }
+
+  <T> T coordinateSchedulingState(Supplier<T> command) {
+    return coordinator.call(command);
   }
 
   public List<Long> resumeSystemGoals() {
@@ -2059,12 +2270,14 @@ public class ExecutionManager implements GoalListener {
    * @return list of Goals
    */
   public List<Goal> getPendingGoals() {
-    List<Goal> goals = new ArrayList<>();
-    Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
-    while (pendingGoalsIterator.hasNext()) {
-      goals.add(pendingGoalsIterator.next().getGoal());
+    synchronized (pendingGoalsLock) {
+      List<Goal> goals = new ArrayList<>();
+      Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
+      while (pendingGoalsIterator.hasNext()) {
+        goals.add(pendingGoalsIterator.next().getGoal());
+      }
+      return goals;
     }
-    return goals;
   }
 
   /**
@@ -2073,7 +2286,9 @@ public class ExecutionManager implements GoalListener {
    * @return list of Goals
    */
   public List<Goal> getPastGoals() {
-    return new ArrayList<>(pastGoals);
+    synchronized (pastGoals) {
+      return new ArrayList<>(pastGoals);
+    }
   }
 
   /**
@@ -2135,7 +2350,7 @@ public class ExecutionManager implements GoalListener {
       }
     }
     for (Goal g : goalsToCancel) {
-      cancelActiveGoal(g);
+      cancelGoal(g.getId());
     }
   }
 
@@ -2448,19 +2663,7 @@ public class ExecutionManager implements GoalListener {
    * Comparison method determining the order goals get placed into the pendingGoals queue.
    */
   private int compareGoal(PriorityTier pt1, long p1, long gid1, PriorityTier pt2, long p2, long gid2) {
-    //1st Decider: priority tier
-    int val = pt1.compareTo(pt2);
-
-    //2nd Decider: priority value
-    if (val == 0) {
-      val = Long.compare(p1, p2);
-    }
-
-    //3rd Decider: Older goal (lower id) is greater
-    if (val == 0) {
-      val = Long.compare(gid2, gid1);
-    }
-    return val;
+    return SchedulingPolicy.comparePriority(pt1, p1, gid1, pt2, p2, gid2);
   }
 
   /**
@@ -2881,8 +3084,17 @@ public class ExecutionManager implements GoalListener {
           log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
         }
         log.debug("[handOffToLearning] handing {} off to action learning", g);
-        learningGoals.put(g.getId(), g);
-        agentTeam.addLearningGoal(g);
+        AgentTeam learningTeam = agentTeam;
+        boolean accepted = coordinator.call(() -> {
+          if (g.getStatus().isTerminated()) {
+            return false;
+          }
+          learningGoals.put(g.getId(), g);
+          return true;
+        });
+        if (accepted && !g.getStatus().isTerminated()) {
+          learningTeam.addLearningGoal(g);
+        }
         return true;
       }
       agentTeam = agentTeam.getParentTeam();
@@ -3039,15 +3251,23 @@ public class ExecutionManager implements GoalListener {
 
     try {
       // must synchronize explicitly while iterating over synchronizedSet
-      synchronized (pastGoals) {
-        pastGoals.removeIf(pastGoal -> {
-          if (pastGoal.getStatus().isTerminated() && pastGoal.getEndTime() < pruneTime) {
-            registeredGoals.remove(pastGoal.getId(), pastGoal);
-            return true;
-          }
-          return false;
-        });
-      }
+      coordinator.run(() -> {
+        synchronized (pastGoals) {
+          pastGoals.removeIf(pastGoal -> {
+            StartingGoal attempt = executionAttempts.get(pastGoal);
+            if (submissionsInFlight.containsKey(pastGoal)
+                    || (attempt != null && (!attempt.startupFinished.isDone() || !attempt.completion.isDone()))) {
+              return false;
+            }
+            if (pastGoal.getStatus().isTerminated() && pastGoal.getEndTime() < pruneTime) {
+              registeredGoals.remove(pastGoal.getId(), pastGoal);
+              executionAttempts.remove(pastGoal);
+              return true;
+            }
+            return false;
+          });
+        }
+      });
 
       // prune old state
       sm.prune(historyLength);
@@ -3108,19 +3328,66 @@ public class ExecutionManager implements GoalListener {
   public void shutdown() {
     log.info("Shutting down and cancelling all goals...");
 
-    // cancel all scheduled and pending and active goals and wait for them to terminate
-    writeScheduledGoalsToFile();
-    getScheduledGoals().forEach(goal -> cancelGoal(goal.getId()));
-    getPendingGoals().forEach(goal -> cancelGoal(goal.getId()));
-    new ArrayList<>(learningGoals.values()).forEach(goal -> cancelGoal(goal.getId()));
-    List<Goal> activeGoals = getActiveGoals();
-    activeGoals.forEach(goal -> cancelGoal(goal.getId()));
-    activeGoals.forEach(goal -> joinOnGoal(goal.getId()));
+    boolean interrupted = Thread.interrupted();
+    try {
+      List<CompletableFuture<?>> admissions = coordinator.call(() -> {
+        shuttingDown = true;
+        return new ArrayList<>(submissionsInFlight.values());
+      });
+      interrupted |= awaitShutdownCompletions(admissions);
+      List<CompletableFuture<?>> completions = coordinator.call(() -> {
+        List<CompletableFuture<?>> futures = new ArrayList<>();
+        for (StartingGoal attempt : executionAttempts.values()) {
+          futures.add(attempt.startupFinished);
+          futures.add(attempt.completion);
+        }
+        return futures;
+      });
+      writeScheduledGoalsToFile();
+      getScheduledGoals().forEach(goal -> cancelGoal(goal.getId()));
+      getPendingGoals().forEach(goal -> cancelGoal(goal.getId()));
+      new ArrayList<>(learningGoals.values()).forEach(goal -> cancelGoal(goal.getId()));
+      getActiveGoals().forEach(goal -> cancelGoal(goal.getId()));
+      interrupted |= awaitShutdownCompletions(completions);
 
-    scheduledGoalManager.shutdown();
-    memoryManager.shutdown();
-    sm.shutdown();
-    executor.shutdown();
+      scheduledGoalManager.shutdown();
+      memoryManager.shutdown();
+      while (!memoryManager.isTerminated()) {
+        try {
+          memoryManager.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+      sm.shutdown();
+      executor.shutdown();
+      coordinator.close();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private boolean awaitShutdownCompletions(List<CompletableFuture<?>> completions) {
+    boolean interrupted = false;
+    for (CompletableFuture<?> completion : completions) {
+      boolean finished = false;
+      while (!finished) {
+        try {
+          completion.get();
+          finished = true;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        } catch (ExecutionException e) {
+          log.error("Goal execution failed while shutting down", e.getCause());
+          finished = true;
+        } catch (CancellationException e) {
+          finished = true;
+        }
+      }
+    }
+    return interrupted;
   }
 
   /**
@@ -3134,14 +3401,23 @@ public class ExecutionManager implements GoalListener {
    * @return the context which will be executed first
    */
   public Context submitGoalContext(Goal g, Context context) {
-    if (!registerGoal(g)) {
-      throw new IllegalStateException("Context goal was already submitted: " + g.getId());
-    }
-    if (g.getStatus().isTerminated()) {
-      transferGoalToPastGoals(g);
+    StartingGoal starting = coordinator.call(() -> {
+      if (!registerGoal(g)) {
+        throw new IllegalStateException("Context goal was already submitted: " + g.getId());
+      }
+      if (g.getStatus().isTerminated()) {
+        transferGoalToPastGoals(g);
+        return null;
+      }
+      StartingGoal reservation = new StartingGoal();
+      startingGoals.put(g, reservation);
+      executionAttempts.put(g, reservation);
+      addActiveGoal(g, reservation.completion);
+      return reservation;
+    });
+    if (starting == null) {
       throw new IllegalStateException("Cannot execute a terminal context goal: " + g.getId());
     }
-
     try {
       ActionInterpreter ai = ActionInterpreter.createInterpreterFromExecutionTree(g, context);
       Context simulationStartStep = ai.getCurrentStep();
@@ -3151,11 +3427,17 @@ public class ExecutionManager implements GoalListener {
       }
       startActionInterpreter(ai);
       return simulationStartStep;
-    } catch (RuntimeException e) {
+    } catch (RuntimeException | Error e) {
       log.error("Could not start execution tree for goal {}", g, e);
       g.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
               Factory.createPredicate("executionStartupFailed", g.getGoalPredicate())));
       throw e;
+    } finally {
+      try {
+        finishStarting(g, starting);
+      } finally {
+        starting.startupFinished.complete(null);
+      }
     }
   }
 
@@ -3192,10 +3474,22 @@ public class ExecutionManager implements GoalListener {
       prepareGoal(occurrence, occurrence.getGoalStatePredicate(), schedule.getExecutionType(),
               null, null, schedule.getSubmitter(), schedule.getMetric());
     } catch (RuntimeException e) {
-      registerGoal(occurrence);
-      occurrence.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
-              Factory.createPredicate("submissionPreparationFailed", occurrence.getGoalPredicate())));
       log.error("Could not prepare scheduled occurrence {}", occurrence, e);
+      CompletableFuture<Void> submission = new CompletableFuture<>();
+      coordinator.run(() -> {
+        registerGoal(occurrence);
+        submissionsInFlight.put(occurrence, submission);
+      });
+      try {
+        occurrence.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+                Factory.createPredicate("submissionPreparationFailed", occurrence.getGoalPredicate())));
+      } finally {
+        try {
+          coordinator.run(() -> submissionsInFlight.remove(occurrence, submission));
+        } finally {
+          submission.complete(null);
+        }
+      }
       throw e;
     }
     if (schedule.isPeriodic() && occurrence.getPriorityTier() != PriorityTier.SKIPPENDING) {

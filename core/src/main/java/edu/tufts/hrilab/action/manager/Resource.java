@@ -22,20 +22,20 @@ public class Resource {
         this.name = name;
     }
 
-    public boolean isAvailable() {
+    public synchronized boolean isAvailable() {
         return available;
     }
 
-    public Goal getHolder() {
+    public synchronized Goal getHolder() {
         return holder;
     }
 
-    protected void setHolder(Goal holder) {
+    protected synchronized void setHolder(Goal holder) {
         this.holder = holder;
         available = false;
     }
 
-    protected void releaseHolder() {
+    protected synchronized void releaseHolder() {
         holder = null;
         available = true;
     }
@@ -48,15 +48,15 @@ public class Resource {
         return name;
     }
 
-    public boolean addUser(Goal g) {
+    public synchronized boolean addUser(Goal g) {
         return users.add(g);
     }
 
-    public boolean removeUser(Goal g) {
+    public synchronized boolean removeUser(Goal g) {
         return users.remove(g);
     }
 
-    public Set<Goal> getUsers() {
+    public synchronized Set<Goal> getUsers() {
         return Set.copyOf(users);
     }
 

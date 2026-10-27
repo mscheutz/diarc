@@ -101,7 +101,7 @@ public class Goal {
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
    */
-  private ActionInterpreter ai = null;
+  private volatile ActionInterpreter ai = null;
   /**
    * The current node in the context tree. This can be null.
    */
@@ -456,10 +456,22 @@ public class Goal {
     transitionStatus(status, null, false);
   }
 
+  /** Publish a repeated status notification only if the goal still has that status. */
+  public boolean notifyIfStatus(GoalStatus status) {
+    return transitionStatus(status, null, false, status);
+  }
+
   private boolean transitionStatus(GoalStatus status, Justification failure, boolean started) {
+    return transitionStatus(status, failure, started, null);
+  }
+
+  private boolean transitionStatus(GoalStatus status, Justification failure, boolean started, GoalStatus expected) {
     java.util.Objects.requireNonNull(status);
     GoalInfo snapshot;
     synchronized (statusLock) {
+      if (expected != null && info.status != expected) {
+        return false;
+      }
       if (info.status.isTerminated()) {
         if (info.status != status) {
           log.debug("Ignoring transition of terminal goal {} from {} to {}", getId(), info.status, status);
