@@ -35,12 +35,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -82,7 +84,7 @@ public class ExecutionManager implements GoalListener {
   private final Map<Goal, GoalStatus> preemptions = new HashMap<>();
   private final Set<Goal> cancelingGoals = new HashSet<>();
   private final Set<Goal> resumingGoals = new HashSet<>();
-  private boolean shuttingDown;
+  private volatile boolean shuttingDown;
   private final ScheduledThreadPoolExecutor policyTimer = new ScheduledThreadPoolExecutor(1, r -> {
     Thread thread = new Thread(r, "goal-manager-policy-timer");
     thread.setDaemon(true);
@@ -94,6 +96,19 @@ public class ExecutionManager implements GoalListener {
   private long agingIntervalMillis;
   private ScheduledFuture<?> agingTimer;
   private final ConcurrentMap<Long, CompletableFuture<Void>> scheduledContinuations = new ConcurrentHashMap<>();
+  private final Map<Long, Goal> continuationGoals = new HashMap<>();
+  private final ConcurrentMap<Thread, AtomicInteger> operationThreads = new ConcurrentHashMap<>();
+  private final Object operationMonitor = new Object();
+  private int maxManagedGoals;
+  private volatile int maxPastGoals;
+  private final Object shutdownLock = new Object();
+  private CompletableFuture<Void> shutdownCompletion;
+  private volatile boolean shutdownEscalated;
+  private volatile String shutdownPhase = "RUNNING";
+  private final String recoverySessionId = UUID.randomUUID().toString();
+  private volatile GoalRecoveryStore recoveryStore;
+  private volatile String recoveryFailure;
+  private final List<GoalRecoveryRecord> recoveryRecords = new ArrayList<>();
 
   public ExecutionManager() {
     this(SchedulingPolicy.CONCURRENT);
@@ -170,7 +185,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * Handles thread(s) that execute ActionInterpreters.
    */
-  private final ExecutorService executor = Executors.newCachedThreadPool();
+  private final ExecutorService executor = new GoalManagerExecutor();
 
   /**
    * Handles currently scheduled goals.
@@ -753,7 +768,9 @@ public class ExecutionManager implements GoalListener {
         submissionsInFlight.put(g, submission);
         return 1;
       }
-      if (g.isLearningGoal() && learningGoals.remove(g.getId(), g)) {
+      if (g.isLearningGoal() && learningGoals.get(g.getId()) == g) {
+        checkRecoveryReady();
+        learningGoals.remove(g.getId(), g);
         submissionsInFlight.put(g, submission);
         return 2;
       }
@@ -768,12 +785,23 @@ public class ExecutionManager implements GoalListener {
       return g;
     }
     try {
+      beginManagerOperation();
+      checkpointRecovery(false);
       return submitRegisteredGoal(g, admission == 2);
+    } catch (UncheckedIOException e) {
+      g.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+              Factory.createPredicate("goalRecoveryUnavailable", g.getGoalPredicate())));
+      throw e;
     } finally {
       try {
         coordinator.run(() -> submissionsInFlight.remove(g, submission));
       } finally {
-        submission.complete(null);
+        try {
+          submission.complete(null);
+          trimGoalHistory();
+        } finally {
+          endManagerOperation();
+        }
       }
     }
   }
@@ -822,9 +850,11 @@ public class ExecutionManager implements GoalListener {
     if (shuttingDown) {
       throw new RejectedExecutionException("Goal manager is shutting down");
     }
-    if (registeredGoals.putIfAbsent(goal.getId(), goal) != null) {
+    if (registeredGoals.containsKey(goal.getId())) {
       return false;
     }
+    checkAdmissionCapacity(goal);
+    registeredGoals.put(goal.getId(), goal);
     try {
       goal.setLifecycleListener(this);
     } catch (IllegalStateException e) {
@@ -1152,6 +1182,7 @@ public class ExecutionManager implements GoalListener {
       addActiveGoal(goal, starting.completion);
       coordinator.defer(() -> {
         try {
+          beginManagerOperation();
           if (!goal.getStatus().isTerminated()) {
             executeGoal(goal);
           }
@@ -1168,7 +1199,12 @@ public class ExecutionManager implements GoalListener {
               pg.notifyOfNoLongerPending();
               onPendingGoalUpdated(goal, index, UpdateType.REMOVED);
             } finally {
-              starting.startupFinished.complete(null);
+              try {
+                starting.startupFinished.complete(null);
+                trimGoalHistory();
+              } finally {
+                endManagerOperation();
+              }
             }
           }
         }
@@ -1326,6 +1362,8 @@ public class ExecutionManager implements GoalListener {
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             starting.completion.completeExceptionally(e);
+          } finally {
+            trimGoalHistory();
           }
         }
       }
@@ -1335,6 +1373,7 @@ public class ExecutionManager implements GoalListener {
         synchronized (resourceLock) {
           synchronized (goalsLock) {
             if (expireUnstartedGoal(goal) || shuttingDown || cancelingGoals.contains(goal)
+                    || recoveryFailure != null || !recoveryRecords.isEmpty()
                     || goal.getStatus().isTerminated() || (starting != null && starting.cancelRequested)) {
               return false;
             }
@@ -1657,6 +1696,15 @@ public class ExecutionManager implements GoalListener {
    */
   @Override
   public void goalStatusChanged(GoalInfo info) {
+    trackManagerOperation();
+    try {
+      handleGoalStatusChanged(info);
+    } finally {
+      endManagerOperation();
+    }
+  }
+
+  private void handleGoalStatusChanged(GoalInfo info) {
     log.debug("[goalStatusChanged] goal: {} status: {}", info.goal, info.status);
 
     // notify everyone waiting on goal status notifications
@@ -1681,6 +1729,9 @@ public class ExecutionManager implements GoalListener {
         acknowledgePreemption(goal);
       }
     });
+    if (recoveryFailure == null) {
+      checkpointRecovery(false);
+    }
   }
 
   /**
@@ -1731,6 +1782,7 @@ public class ExecutionManager implements GoalListener {
             scheduledGoalManager.removeGoal((ScheduledGoal) goal);
           }
           pastGoals.add(goal);
+          trimGoalHistory();
         }
       }
     }
@@ -1740,6 +1792,9 @@ public class ExecutionManager implements GoalListener {
     }
     if (wasActive) {
       coordinator.defer(() -> onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.REMOVED));
+    }
+    if (maxPastGoals > 0) {
+      coordinator.defer(this::trimGoalHistory);
     }
   }
 
@@ -3298,6 +3353,105 @@ public class ExecutionManager implements GoalListener {
     historyLength = pastHistoryLength;
   }
 
+  /** Zero leaves the corresponding bound disabled. Existing work is never canceled to meet a new limit. */
+  public void configureGoalLimits(int managedGoals, int pastGoals) {
+    if (managedGoals < 0 || pastGoals < 0) {
+      throw new IllegalArgumentException("Goal limits must be nonnegative");
+    }
+    coordinator.run(() -> {
+      if (shuttingDown) {
+        throw new RejectedExecutionException("Goal manager is shutting down");
+      }
+      maxManagedGoals = managedGoals;
+      maxPastGoals = pastGoals;
+      trimGoalHistory();
+    });
+  }
+
+  private boolean hasUnfinishedWork(Goal goal) {
+    StartingGoal attempt = executionAttempts.get(goal);
+    return !goal.getStatus().isTerminated() || submissionsInFlight.containsKey(goal)
+            || scheduledContinuations.containsKey(goal.getId())
+            || (attempt != null && (!attempt.startupFinished.isDone() || !attempt.completion.isDone()));
+  }
+
+  private void checkAdmissionCapacity(Goal candidate) {
+    checkRecoveryReady();
+    if (maxManagedGoals == 0) {
+      return;
+    }
+    Set<Goal> occupied = new HashSet<>(continuationGoals.values());
+    registeredGoals.values().stream().filter(this::hasUnfinishedWork).forEach(occupied::add);
+    occupied.remove(candidate);
+    if (occupied.size() >= maxManagedGoals) {
+      log.warn("Goal admission limit {} reached; rejecting goal {}", maxManagedGoals, candidate.getId());
+      throw new RejectedExecutionException("Goal admission limit reached: " + maxManagedGoals);
+    }
+  }
+
+  private void checkRecoveryReady() {
+    if (recoveryFailure != null || !recoveryRecords.isEmpty()) {
+      log.warn("Goal admission blocked by unreconciled or unavailable recovery state");
+      throw new RejectedExecutionException("Goal recovery requires operator reconciliation: " + recoveryFailure);
+    }
+  }
+
+  private void trimGoalHistory() {
+    if (maxPastGoals == 0) {
+      return;
+    }
+    if (!coordinator.isOwner()) {
+      try {
+        coordinator.run(this::trimGoalHistory);
+      } catch (RejectedExecutionException e) {
+        if (!shuttingDown) {
+          throw e;
+        }
+        log.debug("History cleanup completed after manager shutdown");
+      }
+      return;
+    }
+    List<Goal> history;
+    synchronized (pastGoals) {
+      history = new ArrayList<>(pastGoals);
+    }
+    history.sort(Comparator.comparingLong(Goal::getEndTime).thenComparingLong(Goal::getId));
+    for (Goal goal : history) {
+      if (pastGoals.size() <= maxPastGoals) {
+        break;
+      }
+      if (!hasUnfinishedWork(goal)) {
+        pastGoals.remove(goal);
+        registeredGoals.remove(goal.getId(), goal);
+        executionAttempts.remove(goal);
+        if (rootContext != null && goal.getRootContext() != null) {
+          Context context = goal.getRootContext();
+          coordinator.defer(() -> rootContext.discardTerminatedChild(context));
+        }
+      }
+    }
+  }
+
+  private void beginManagerOperation() {
+    trackManagerOperation();
+    if (shutdownEscalated) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void endManagerOperation() {
+    operationThreads.computeIfPresent(Thread.currentThread(), (thread, depth) -> depth.decrementAndGet() == 0 ? null : depth);
+    synchronized (operationMonitor) {
+      operationMonitor.notifyAll();
+    }
+  }
+
+  private void trackManagerOperation() {
+    if (!coordinator.isOwner()) {
+      operationThreads.computeIfAbsent(Thread.currentThread(), thread -> new AtomicInteger()).incrementAndGet();
+    }
+  }
+
   public void pruneOldData() {
     log.debug("Pruning...");
 
@@ -3309,9 +3463,7 @@ public class ExecutionManager implements GoalListener {
       coordinator.run(() -> {
         synchronized (pastGoals) {
           pastGoals.removeIf(pastGoal -> {
-            StartingGoal attempt = executionAttempts.get(pastGoal);
-            if (submissionsInFlight.containsKey(pastGoal)
-                    || (attempt != null && (!attempt.startupFinished.isDone() || !attempt.completion.isDone()))) {
+            if (hasUnfinishedWork(pastGoal)) {
               return false;
             }
             if (pastGoal.getStatus().isTerminated() && pastGoal.getEndTime() < pruneTime) {
@@ -3376,23 +3528,218 @@ public class ExecutionManager implements GoalListener {
   public void writeScheduledGoalsToFile() {
     scheduledGoalManager.writeScheduledGoalsToFile();
   }
+
+  /** Configure once, before admission. Recovered records block all new work until explicitly reconciled. */
+  public void configureGoalRecovery(String filename) {
+    if (filename == null || filename.isBlank()) {
+      throw new IllegalArgumentException("Goal recovery filename must not be blank");
+    }
+    GoalRecoveryStore store = new GoalRecoveryStore(Path.of(filename));
+    coordinator.run(() -> {
+      if (shuttingDown || recoveryStore != null || !registeredGoals.isEmpty() || !continuationGoals.isEmpty()) {
+        throw new IllegalStateException("Configure recovery once, before goal admission");
+      }
+      recoveryStore = store;
+      recoveryFailure = "Recovery initialization in progress";
+    });
+    try {
+      store.acquireWriter();
+      List<GoalRecoveryRecord> recovered = store.load();
+      coordinator.run(() -> {
+        recoveryRecords.addAll(recovered);
+        recoveryFailure = null;
+      });
+      checkpointRecovery(false);
+    } catch (IOException e) {
+      try {
+        store.close();
+      } catch (IOException closeFailure) {
+        e.addSuppressed(closeFailure);
+      }
+      recoveryFailure = e.toString();
+      log.error("Goal recovery initialization failed; admission remains closed", e);
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public List<GoalRecoveryRecord> getGoalRecoveryRecords() {
+    return coordinator.call(() -> List.copyOf(recoveryRecords));
+  }
+
+  public boolean acknowledgeRecoveredGoal(String sessionId, long goalId) {
+    Objects.requireNonNull(sessionId);
+    boolean removed = coordinator.call(() -> {
+      if (shuttingDown || recoveryFailure != null) {
+        throw new IllegalStateException("Goal recovery is not available for reconciliation");
+      }
+      return recoveryRecords.removeIf(record -> record.sessionId.equals(sessionId) && record.goalId == goalId);
+    });
+    if (removed) {
+      checkpointRecovery(false);
+    } else {
+      log.warn("No recovered goal matched session {} and goal {}", sessionId, goalId);
+    }
+    return removed;
+  }
+
+  private void checkpointRecovery(boolean cleanShutdown) {
+    GoalRecoveryStore store = recoveryStore;
+    if (store == null) {
+      return;
+    }
+    if (coordinator.isOwner()) {
+      coordinator.defer(() -> checkpointRecovery(cleanShutdown));
+      return;
+    }
+    if (recoveryFailure != null) {
+      throw new UncheckedIOException(new IOException("Goal recovery unavailable: " + recoveryFailure));
+    }
+    try {
+      store.save(() -> coordinator.call(() -> {
+        List<GoalRecoveryRecord> records = new ArrayList<>(recoveryRecords);
+        for (Goal goal : registeredGoals.values()) {
+          GoalInfo snapshot = goal.getInfo();
+          if (!snapshot.status.isTerminated()) {
+            ResourceClaims acquired = resourceAllocations.get(goal);
+            List<GoalSchedulingExplanation.ResourceClaim> claims = new ArrayList<>();
+            if (acquired != null) {
+              for (Resource resource : orderedResources(acquired.used)) {
+                claims.add(new GoalSchedulingExplanation.ResourceClaim(resourceProvider(resource),
+                        resource.getName().toString(), acquired.required.contains(resource), acquired.held.contains(resource)));
+              }
+            }
+            String predicate = goal instanceof ScheduledGoal schedule
+                    ? schedule.getGoalPredicate(true).toString() : goal.getGoalPredicate().toString();
+            records.add(new GoalRecoveryRecord(recoverySessionId, snapshot.gid, predicate, snapshot.status, claims));
+          }
+        }
+        return records;
+      }), cleanShutdown);
+    } catch (IOException e) {
+      recoveryFailure = e.toString();
+      log.error("Could not checkpoint goal recovery; new execution is blocked", e);
+      throw new UncheckedIOException(e);
+    }
+  }
+
   /**
    * Shutdown this ExecutionManager. All currently managed goals are canceled, ending the ActionInterpreter.
    * Note: the goals are automagically moved to the pastGoals list by the ActionListener mechanism.
    */
   public void shutdown() {
+    CompletableFuture<Void> completion = beginShutdown();
+    boolean interrupted = awaitShutdownCompletions(List.of(completion));
+    try {
+      completion.join();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  /** Controller API: timing out never cancels a Future or releases unacknowledged resource claims. */
+  public GoalManagerShutdownReport shutdownWithTimeout(long gracefulMillis, long interruptionMillis) {
+    if (gracefulMillis < 0 || interruptionMillis < 0) {
+      throw new IllegalArgumentException("Shutdown timeouts must be nonnegative");
+    }
+    CompletableFuture<Void> completion = beginShutdown();
+    GoalManagerShutdownReport.Outcome outcome;
+    String failure = null;
+    try {
+      try {
+        completion.get(gracefulMillis, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException gracefulTimeout) {
+        shutdownEscalated = true;
+        if (executor instanceof GoalManagerExecutor workers) {
+          workers.requestInterruption();
+        }
+        operationThreads.keySet().forEach(Thread::interrupt);
+        completion.get(interruptionMillis, TimeUnit.MILLISECONDS);
+      }
+      outcome = GoalManagerShutdownReport.Outcome.COMPLETE;
+    } catch (TimeoutException e) {
+      outcome = GoalManagerShutdownReport.Outcome.TIMED_OUT;
+      log.warn("Shutdown timed out in phase {}; unconfirmed work retains its claims", shutdownPhase);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      outcome = GoalManagerShutdownReport.Outcome.INTERRUPTED;
+      log.warn("Shutdown caller interrupted; background shutdown continues");
+    } catch (ExecutionException e) {
+      outcome = GoalManagerShutdownReport.Outcome.FAILED;
+      failure = e.getCause().toString();
+    }
+    List<GoalInfo> unfinished = new ArrayList<>();
+    if (outcome != GoalManagerShutdownReport.Outcome.COMPLETE) {
+      try {
+        unfinished = coordinator.call(() -> {
+          Set<Goal> goals = new HashSet<>(continuationGoals.values());
+          registeredGoals.values().stream().filter(this::hasUnfinishedWork).forEach(goals::add);
+          return goals.stream().sorted(Comparator.comparingLong(Goal::getId)).map(Goal::getInfo).toList();
+        });
+      } catch (RejectedExecutionException e) {
+        if (!completion.isDone()) {
+          throw e;
+        }
+      }
+    }
+    return new GoalManagerShutdownReport(outcome, shutdownEscalated, failure, shutdownPhase, unfinished);
+  }
+
+  private CompletableFuture<Void> beginShutdown() {
+    synchronized (shutdownLock) {
+      if (shutdownCompletion == null) {
+        coordinator.run(() -> {
+          shuttingDown = true;
+          policyTimer.shutdownNow();
+        });
+        shutdownCompletion = new CompletableFuture<>();
+        Thread controller = new Thread(() -> {
+          try {
+            finishShutdown();
+            shutdownPhase = "COMPLETE";
+            shutdownCompletion.complete(null);
+          } catch (RuntimeException | Error failure) {
+            log.error("Goal manager shutdown failed in phase {}", shutdownPhase, failure);
+            shutdownCompletion.completeExceptionally(failure);
+          }
+        }, "goal-manager-shutdown");
+        controller.setDaemon(true);
+        controller.start();
+      }
+      return shutdownCompletion;
+    }
+  }
+
+  private void finishShutdown() {
     log.info("Shutting down and cancelling all goals...");
 
     boolean interrupted = Thread.interrupted();
     try {
+      shutdownPhase = "CHECKPOINTING";
+      writeScheduledGoalsToFile();
+      shutdownPhase = "CANCELING";
+      List<Goal> cancel = new ArrayList<>(registeredGoals.values());
+      List<CompletableFuture<?>> cancellations = new ArrayList<>();
+      for (Goal goal : cancel) {
+        if (!goal.isScheduled() && !goal.getStatus().isTerminated()) {
+          cancellations.add(CompletableFuture.runAsync(() -> cancelGoal(goal.getId()), executor));
+        }
+      }
+      shutdownPhase = "DRAINING_ADMISSIONS";
       List<CompletableFuture<?>> admissions = coordinator.call(() -> {
-        shuttingDown = true;
-        policyTimer.shutdownNow();
         List<CompletableFuture<?>> inFlight = new ArrayList<>(submissionsInFlight.values());
         inFlight.addAll(scheduledContinuations.values());
         return inFlight;
       });
       interrupted |= awaitShutdownCompletions(admissions);
+      for (Goal goal : registeredGoals.values()) {
+        if (goal.isScheduled() && !goal.getStatus().isTerminated()) {
+          cancellations.add(CompletableFuture.runAsync(() -> cancelGoal(goal.getId()), executor));
+        }
+      }
+      interrupted |= awaitShutdownCompletions(cancellations);
+      shutdownPhase = "DRAINING_EXECUTIONS";
       List<CompletableFuture<?>> completions = coordinator.call(() -> {
         List<CompletableFuture<?>> futures = new ArrayList<>();
         for (StartingGoal attempt : executionAttempts.values()) {
@@ -3401,13 +3748,21 @@ public class ExecutionManager implements GoalListener {
         }
         return futures;
       });
-      writeScheduledGoalsToFile();
-      getScheduledGoals().forEach(goal -> cancelGoal(goal.getId()));
-      getPendingGoals().forEach(goal -> cancelGoal(goal.getId()));
-      new ArrayList<>(learningGoals.values()).forEach(goal -> cancelGoal(goal.getId()));
-      getActiveGoals().forEach(goal -> cancelGoal(goal.getId()));
       interrupted |= awaitShutdownCompletions(completions);
 
+      goalStatusUpdateLock.lock();
+      try {
+        while (registeredGoals.values().stream().anyMatch(goal -> !goal.getStatus().isTerminated())) {
+          try {
+            goalStatusUpdateCondition.await();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      } finally {
+        goalStatusUpdateLock.unlock();
+      }
+      shutdownPhase = "CLOSING_INFRASTRUCTURE";
       scheduledGoalManager.shutdown();
       memoryManager.shutdown();
       while (!memoryManager.isTerminated()) {
@@ -3419,6 +3774,30 @@ public class ExecutionManager implements GoalListener {
       }
       sm.shutdown();
       executor.shutdown();
+      while (!executor.isTerminated()) {
+        try {
+          executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+      synchronized (operationMonitor) {
+        while (!operationThreads.isEmpty()) {
+          try {
+            operationMonitor.wait();
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+      }
+      checkpointRecovery(true);
+      if (recoveryStore != null) {
+        try {
+          recoveryStore.close();
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
       coordinator.close();
     } finally {
       if (interrupted) {
@@ -3477,6 +3856,8 @@ public class ExecutionManager implements GoalListener {
       throw new IllegalStateException("Cannot execute a terminal context goal: " + g.getId());
     }
     try {
+      beginManagerOperation();
+      checkpointRecovery(false);
       ActionInterpreter ai = ActionInterpreter.createInterpreterFromExecutionTree(g, context);
       Context simulationStartStep = ai.getCurrentStep();
       log.debug("Starting step " + simulationStartStep.getSignatureInPredicateForm());
@@ -3494,7 +3875,12 @@ public class ExecutionManager implements GoalListener {
       try {
         finishStarting(g, starting);
       } finally {
-        starting.startupFinished.complete(null);
+        try {
+          starting.startupFinished.complete(null);
+          trimGoalHistory();
+        } finally {
+          endManagerOperation();
+        }
       }
     }
   }
@@ -3667,6 +4053,23 @@ public class ExecutionManager implements GoalListener {
   }
 
   void submitScheduledOccurrence(ScheduledGoal schedule, Goal occurrence) {
+    beginManagerOperation();
+    try {
+      prepareAndSubmitScheduledOccurrence(schedule, occurrence);
+    } catch (RejectedExecutionException e) {
+      log.warn("Scheduled occurrence {} rejected by admission policy", occurrence.getId(), e);
+      occurrence.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+              Factory.createPredicate("goalAdmissionRejected", occurrence.getGoalPredicate())));
+    } finally {
+      endManagerOperation();
+    }
+  }
+
+  private void prepareAndSubmitScheduledOccurrence(ScheduledGoal schedule, Goal occurrence) {
+    if (coordinator.call(() -> scheduledAdmissionClosed(schedule))) {
+      occurrence.setStatus(GoalStatus.CANCELED);
+      return;
+    }
     try {
       prepareGoal(occurrence, occurrence.getGoalStatePredicate(), schedule.getExecutionType(),
               null, null, schedule.getSubmitter(), schedule.getMetric());
@@ -3711,13 +4114,23 @@ public class ExecutionManager implements GoalListener {
 
   void runScheduledContinuation(Goal occurrence, Runnable submission) {
     CompletableFuture<Void> finished = new CompletableFuture<>();
-    boolean accepted = coordinator.call(() -> {
-      if (shuttingDown) {
-        return false;
-      }
-      scheduledContinuations.put(occurrence.getId(), finished);
-      return true;
-    });
+    boolean accepted;
+    try {
+      accepted = coordinator.call(() -> {
+        if (shuttingDown) {
+          return false;
+        }
+        checkAdmissionCapacity(occurrence);
+        continuationGoals.put(occurrence.getId(), occurrence);
+        scheduledContinuations.put(occurrence.getId(), finished);
+        return true;
+      });
+    } catch (RejectedExecutionException e) {
+      log.warn("Coalesced occurrence {} rejected by admission policy", occurrence.getId(), e);
+      occurrence.setFailureStatus(GoalStatus.FAILED, new ConditionJustification(false,
+              Factory.createPredicate("goalAdmissionRejected", occurrence.getGoalPredicate())));
+      return;
+    }
     if (!accepted) {
       occurrence.setStatus(GoalStatus.CANCELED);
       return;
@@ -3744,9 +4157,13 @@ public class ExecutionManager implements GoalListener {
 
   private void finishScheduledContinuation(Goal occurrence, CompletableFuture<Void> finished) {
     try {
-      coordinator.run(() -> scheduledContinuations.remove(occurrence.getId(), finished));
+      coordinator.run(() -> {
+        scheduledContinuations.remove(occurrence.getId(), finished);
+        continuationGoals.remove(occurrence.getId(), occurrence);
+      });
     } finally {
       finished.complete(null);
+      trimGoalHistory();
     }
   }
 

@@ -117,6 +117,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * (root will be user.home/.diarc)
    */
   private String scheduledGoalsFile = null;
+  private String goalRecoveryFile;
+  private int maxManagedGoals;
+  private int maxPastGoals;
+  private volatile long[] shutdownTimeouts;
   /**
    * Path to the file which will have asl for all newly taught actions written to it (can be loaded on startup
    * separately for persistence of taught actions)
@@ -178,6 +182,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
     options.add(Option.builder("scheduledGoalsFile").hasArg().argName("file").desc("File containing the set of persisted scheduled goals to load from on startup and write to on shutdown").build());
+    options.add(Option.builder("goalLimits").numberOfArgs(2).argName("managed past").desc("Goal count bounds; zero disables a bound").build());
+    options.add(Option.builder("shutdownTimeouts").numberOfArgs(2).argName("grace-ms interrupt-ms").desc("Bounded shutdown with interruption escalation").build());
+    options.add(Option.builder("goalRecoveryFile").hasArg().argName("file").desc("Opt-in atomic recovery checkpoint; unresolved work blocks startup admission").build());
     options.add(Option.builder("learnedActionsFile").hasArg().argName("file").desc("File to write newly learned asl scripts to").build());
 
     // local belief component options
@@ -243,6 +250,21 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     if (cmdLine.hasOption("historylength")) {
       historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
+    }
+    if (cmdLine.hasOption("goalLimits")) {
+      String[] limits = cmdLine.getOptionValues("goalLimits");
+      maxManagedGoals = Integer.parseInt(limits[0]);
+      maxPastGoals = Integer.parseInt(limits[1]);
+      if (maxManagedGoals < 0 || maxPastGoals < 0) {
+        throw new IllegalArgumentException("Goal limits must be nonnegative");
+      }
+    }
+    if (cmdLine.hasOption("shutdownTimeouts")) {
+      String[] timeouts = cmdLine.getOptionValues("shutdownTimeouts");
+      configureShutdownTimeouts(Long.parseLong(timeouts[0]), Long.parseLong(timeouts[1]));
+    }
+    if (cmdLine.hasOption("goalRecoveryFile")) {
+      goalRecoveryFile = cmdLine.getOptionValue("goalRecoveryFile");
     }
     if (cmdLine.hasOption("scheduledGoalsFile")) {
       String filename = cmdLine.getOptionValue("scheduledGoalsFile");
@@ -332,9 +354,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     // sleep here to give GM time to populate with primitive actions
     //TODO:brad: do we actually need to sleep?
     Util.Sleep(2000);
-    submitInitGoals();
-    if (scheduledGoalsFile != null) {
-      loadScheduledGoals(scheduledGoalsFile);
+    if (em.getGoalRecoveryRecords().isEmpty()) {
+      submitInitGoals();
+      if (scheduledGoalsFile != null) {
+        loadScheduledGoals(scheduledGoalsFile);
+      }
+    } else {
+      log.warn("Startup goals and saved schedules paused until recovered work is explicitly reconciled");
     }
   }
 
@@ -353,6 +379,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     em.setActionLearningGuiFlag(displayActionLearningGui);
     em.setScheduledGoalsFile(scheduledGoalsFile);
     em.setLearnedActionsFile(learnedActionsFile);
+    em.configureGoalLimits(maxManagedGoals, maxPastGoals);
+    if (goalRecoveryFile != null) {
+      em.configureGoalRecovery(goalRecoveryFile);
+    }
   }
 
   private void initializeDB() {
@@ -634,6 +664,40 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public void configurePriorityAging(long intervalMillis) {
     em.configurePriorityAging(intervalMillis);
+  }
+
+  @TRADEService
+  @Action
+  public void configureGoalLimits(int managed, int past) {
+    em.configureGoalLimits(managed, past);
+  }
+
+  @TRADEService
+  public void configureShutdownTimeouts(long gracefulMillis, long interruptionMillis) {
+    if (gracefulMillis < 0 || interruptionMillis < 0) {
+      throw new IllegalArgumentException("Shutdown timeouts must be nonnegative");
+    }
+    shutdownTimeouts = new long[]{gracefulMillis, interruptionMillis};
+  }
+
+  @TRADEService
+  public GoalManagerShutdownReport shutdownGoalManager(long gracefulMillis, long interruptionMillis) {
+    return em.shutdownWithTimeout(gracefulMillis, interruptionMillis);
+  }
+
+  @TRADEService
+  public void configureGoalRecovery(String filename) {
+    em.configureGoalRecovery(filename);
+  }
+
+  @TRADEService
+  public List<GoalRecoveryRecord> getGoalRecoveryRecords() {
+    return em.getGoalRecoveryRecords();
+  }
+
+  @TRADEService
+  public boolean acknowledgeRecoveredGoal(String sessionId, long goalId) {
+    return em.acknowledgeRecoveredGoal(sessionId, goalId);
   }
 
   private long submitPreparedGoal(Predicate predicate, ExecutionType type, PriorityTier tier,
@@ -1409,11 +1473,17 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Override
   public void shutdownComponent() {
     if (this.em != null) {
-      // cancel all pending and active goals and wait for them to terminate
-      em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      List<Goal> activeGoals = em.getActiveGoals();
-      activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
-      activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
+      long[] timeouts = shutdownTimeouts;
+      if (timeouts == null) {
+        em.shutdown();
+      } else {
+        GoalManagerShutdownReport report = em.shutdownWithTimeout(timeouts[0], timeouts[1]);
+        if (report.outcome != GoalManagerShutdownReport.Outcome.COMPLETE) {
+          log.error("Goal manager shutdown {}; retaining services and shared infrastructure: {}",
+                  report.outcome, report.phase);
+          return;
+        }
+      }
 
       try {
         TRADE.deregister(contextConsultant);
@@ -1421,7 +1491,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       } catch (Exception e) {
         log.error("[shutdown]", e);
       }
-      em.shutdown();
     }
     Database.destroyInstance();
     ActionSelector.destroyInstance();

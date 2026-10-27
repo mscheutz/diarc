@@ -83,10 +83,13 @@ public class RootContext extends Context {
     log.debug("Removed " + (prePruneSize - postPruneSize) + " of " + prePruneSize + " children.");
   }
 
+  public void discardTerminatedChild(Context context) {
+    childContexts.removeIf(child -> child == context && child.isTerminated());
+  }
+
   // this probably shouldn't be called
   @Override
   public RootContext copy(Context newParent) {
     return createSimulationRoot(newParent.stateMachine, getExecType());
   }
 }
-

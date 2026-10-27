@@ -296,9 +296,92 @@ These options do not change resource claims or acknowledgment rules.
 Shutdown closes admission, cancels current work, and waits for tracked
 startup and interpreter completion, including superseded interpreters,
 before closing the coordinator. This remains a blocking controller
-operation, not an action/callback operation. Bounded cancellation,
-shutdown escalation, admission/history limits, and restart recovery
-are not introduced here.
+operation, not an action/callback operation. Optional bounds, escalation,
+and recovery are described below.
+
+\subsection{Admission and history bounds}
+
+Defaults remain unchanged. The ASL/TRADE action
+\texttt{configureGoalLimits(managed, past)} or the command-line option
+\texttt{-goalLimits managed past} enables count bounds. Zero disables a
+bound; negative values are rejected. Admission is atomic across normal,
+metric, deadline, execution-tree, teaching, and scheduled submissions.
+Managed capacity includes scheduled definitions, active/pending/learning
+goals, startup/submission work not yet finished, and reserved coalesced
+occurrences. A scheduled definition therefore needs room for its
+occurrence as well. Duplicates and teaching continuations do not consume
+another slot. Reducing a bound never cancels admitted work.
+
+Capacity rejection raises RejectedExecutionException before an ordinary
+goal is registered. Scheduled occurrences instead receive FAILED with a
+\texttt{goalAdmissionRejected} justification, allowing the definition to
+try again on its next tick. No rejected physical action is executed.
+The history cap removes the oldest eligible terminal records and their
+completed direct context traces. In-flight submissions, startups, and
+interpreter futures are pinned until finished, even if this temporarily
+exceeds the history cap. A lookup can return UNKNOWN after eviction.
+The existing time-based pruning still applies; this count bound is not
+a total heap, belief-history, or nested-context memory bound.
+
+\subsection{Bounded shutdown and retained uncertainty}
+
+The Java controller API
+\texttt{shutdownWithTimeout(graceMillis, interruptMillis)} and TRADE
+service \texttt{shutdownGoalManager(graceMillis, interruptMillis)}
+close admission immediately and initiate cancellation outside the state
+thread. After the graceful budget, escalation directly interrupts
+interpreter, cancellation, and in-flight submission workers. It does
+not cancel execution futures or manufacture terminal goal statuses.
+After the second budget, the caller receives a GoalManagerShutdownReport:
+COMPLETE, TIMED\_OUT, INTERRUPTED, or FAILED, together with the phase,
+failure information, escalation flag, and defensive unfinished-goal
+snapshots. Time budgets are nonnegative milliseconds, and each applies
+to its phase, not separately to every goal.
+
+An unacknowledged goal retains its acquired resources. The coordinator
+and shared execution infrastructure remain available for late
+acknowledgments, and the background shutdown finishes cleanup only after
+the tracked work and lifecycle callbacks drain. Interruption is a best
+effort request, not proof of physical stop or a guarantee of JVM exit.
+These are controller APIs, not ASL actions that should shut down their
+own interpreter. Legacy \texttt{shutdown()} remains unbounded and
+idempotent. Component shutdown can opt in using
+\texttt{-shutdownTimeouts graceMillis interruptMillis} or
+\texttt{configureShutdownTimeouts}. Its old preliminary unbounded joins
+are removed. If shutdown is incomplete, the component retains its manager
+services, action database, and selector; cleanup may be retried after
+acknowledgment rather than destroying infrastructure still in use.
+
+\subsection{Conservative restart recovery}
+
+\texttt{-goalRecoveryFile path} or the TRADE service
+\texttt{configureGoalRecovery(path)} enables recovery before any
+admission. The JSON checkpoint contains session-scoped goal identifiers,
+predicates, statuses, and acquired resource claims, never runnable
+interpreters or Java object streams. It records admission intent
+synchronously before construction/dispatch and updates on lifecycle
+notifications. Snapshot capture and file replacement are serialized;
+temporary files are flushed, atomically renamed, and the containing
+directory is flushed. A separate exclusive writer lock prevents two
+managers from replacing each other's intent. Checkpoints are limited to
+16 MiB. Invalid, unsupported, or unwritable checkpoints surface an error
+and block further admission rather than silently starting afresh.
+Checkpoint I/O is outside the state coordinator but can delay its caller.
+
+On restart, every retained record requires operator reconciliation,
+including formerly pending work. No action, schedule, interpreter,
+resource ownership, or old numeric goal ID is automatically restored.
+All admission is quarantined while records remain, and component startup
+goals and legacy saved-schedule loading are paused. Inspect records with
+\texttt{getGoalRecoveryRecords()}, verify the actual robot/environment
+state, then explicitly acknowledge each using
+\texttt{acknowledgeRecoveredGoal(sessionId, goalId)}. This acknowledgment
+is a controller assertion of reconciliation, not a physical stop command
+or an automatic resubmission. After all records are acknowledged, callers
+may explicitly submit new goals or schedules. Unresolved records carry
+forward across further restarts and even otherwise clean shutdowns;
+completed current work disappears from the checkpoint. Storage failures
+leave admission closed and require operator repair/restart.
 
 \subsection{Arguments\label{subsec:Arguments}}
 
