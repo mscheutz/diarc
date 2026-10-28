@@ -1,0 +1,20 @@
+{
+  "Record": {
+    "action": "btLearnRecord",
+    "synchronous": true,
+    "result": "action",
+    "inputs": [{"name": "label", "type": "Symbol"}]
+  },
+  "Check": {
+    "action": "btLearnCheck",
+    "synchronous": true,
+    "result": "boolean",
+    "inputs": [{"name": "value", "type": "Boolean"}]
+  },
+  "LearnedLinear": {
+    "action": "btLearnedLinear",
+    "synchronous": true,
+    "result": "action",
+    "inputs": []
+  }
+}

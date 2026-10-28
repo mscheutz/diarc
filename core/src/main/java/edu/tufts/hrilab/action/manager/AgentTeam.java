@@ -158,6 +158,10 @@ public class AgentTeam {
     }
 
     //// Action Learning ////
+    protected edu.tufts.hrilab.action.learning.BehaviorTreeLearning getBehaviorTreeLearning() {
+        return actionLearning.getBehaviorTreeLearning();
+    }
+
     protected boolean learnAction(Predicate newAction) {
         return actionLearning.learnAction(newAction);
     }

@@ -780,6 +780,8 @@ void registerGoalManagerNotification(
     TRADEServiceInfo callback, NotificationType type)
 void unregisterGoalManagerNotification(
     TRADEServiceInfo callback, NotificationType type)
+void loadBehaviorTree(String xmlFile, String bindingsFile,
+    String actionName) throws IOException
 \end{lstlisting}
 
 \code{selectActionForGoal} invokes the configured selector without
@@ -788,6 +790,8 @@ submitting a managed execution. It can return \code{null}.
 \code{steps(step1,step2,...)} for the selected action, or \code{null}.
 This describes selected top-level instructions, not a guaranteed,
 fully expanded future trace, and does not reserve resources.
+\code{loadBehaviorTree} compiles filesystem XML plus JSON leaf bindings
+into ordinary ASL actions; see Section~\ref{sec:behavior-trees}.
 
 Callbacks must be registered TRADE services with these signatures:
 \begin{lstlisting}[language=Java]
@@ -1176,7 +1180,10 @@ The grammar accepts one predicate per \code{observes} declaration.
 
 Boolean expressions accept \code{true}, \code{false}, prefixed calls,
 parentheses, \code{~}, \code{&&}, and \code{||}. Conjunction binds more
-tightly than disjunction, and the control contexts short-circuit.
+tightly than disjunction. The current \code{AndContext} and
+\code{OrContext} evaluate their children before aggregating logical
+values; do not rely on short-circuit evaluation for side-effecting calls.
+Use explicit nested branches when later calls must not execute.
 The keyword is \code{elseif}, not Java's two-word \code{else if}.
 Arithmetic and comparisons are calls such as \code{op:lt(!x,10)};
 ordinary infix Java expressions are not accepted as arbitrary conditions.
@@ -1279,6 +1286,9 @@ return its \code{Long} context ID. \code{join(!asyncId)} waits for that
 context; \code{join(!asyncId,timeout)} uses a millisecond timeout.
 The optional return value is \code{ActionStatus}, potentially nonterminal
 after a timeout. Check it explicitly when the result matters.
+Invalid argument declarations fail with \code{FAIL\_ARGUMENTS};
+a missing enclosing action or context ID fails with
+\code{FAIL\_NOTFOUND}, rather than continuing as if the join succeeded.
 
 An ASL async ID is \emph{not} a managed goal ID:
 \code{join(...)} searches the enclosing action's context tree, whereas
@@ -1822,6 +1832,450 @@ End the session to construct the action, inspect its steps/model, and
 use the learned-actions persistence option if the procedure should survive
 restart. Learning a step sequence does not automatically infer all
 conditions, effects, observability requirements, or safe retry behavior.
+
+\section{BehaviorTree.CPP XML to native ASL}
+\label{sec:behavior-trees}
+
+\subsection{Loading and composing trees}
+
+\code{bt/BehaviorTreeConverter} compiles a supported subset of
+BehaviorTree.CPP format-4 XML into ordinary ASL database entries.
+The Goal Manager and Action Interpreter remain the execution engine:
+there is no separate Java behavior-tree scheduler. The generated root
+action supervises native \code{async} interpreters, checks their goal
+states, and implements branch selection in ASL.
+
+Load a tree alongside existing scripts using:
+\begin{lstlisting}
+-asl bt-examples.asl
+-bt core/src/main/resources/config/edu/tufts/hrilab/action/bt/reactive_navigation.xml
+    core/src/main/resources/config/edu/tufts/hrilab/action/bt/example-bindings.json
+    navigateTree
+-goal "navigateTree(self)"
+\end{lstlisting}
+The three \code{-bt} values are filesystem XML path, filesystem bindings
+path, and exported ASL action name. Put them on one command line.
+For programmatic loading, call
+\code{loadBehaviorTree(xmlFile, bindingsFile, actionName)}, then submit
+\code{navigateTree(self)} through \code{submitGoal}. Existing ASL scripts
+can call \code{act:navigateTree();}. The exported signature also accepts
+an initial JSON blackboard string (default \code{\{\}}) and a positive
+supervision interval in milliseconds (default 10).
+
+Alternatively, run \code{BehaviorTreeConverter.main} with
+\code{input.xml bindings.json actionName output.asl} to produce a
+standalone ASL file, then load that file with \code{-asl}.
+The generated entries are reparsed with the repository's ASL parser.
+Their names use the exported name plus \code{_bt_} and a node-instance
+number; loading fails if a generated name already exists.
+
+\subsection{Leaf bindings and ports}
+
+Custom C++ implementations cannot be inferred from XML. A JSON object
+maps registered XML node IDs to DIARC actions:
+\begin{lstlisting}
+{
+  "BatteryOK": {
+    "action": "exampleBatteryOK",
+    "result": "boolean",
+    "synchronous": true
+  },
+  "MoveBase": {
+    "action": "exampleMoveBase",
+    "inputs": [{"name": "goal", "type": "Symbol"}]
+  }
+}
+\end{lstlisting}
+The actor comes from the calling ASL execution. \code{inputs} lists
+ports in DIARC input-role order, excluding the actor.
+\code{outputs} lists ports in return-role order; mapped outputs must
+use \code{\{key\}} references. Unmapped outputs are ignored.
+Input ports may specify \code{defaultValue}.
+Supported types are String, Symbol, Predicate, boolean, int, long,
+and double, including their documented boxed/canonical spellings.
+Typed collections use \code{List<int>}, \code{Queue<double>}, etc.,
+with int, long, double, boolean, or String element types.
+Queues are shared mutable deques; lists are copied when a loop begins.
+Java integrations can register a named converter with
+\code{BehaviorTreeExecution.registerPortConverter(name, javaClass, function)}
+before conversion and execution. The binding's \code{type} names that
+converter; generated ASL still passes the actual Java class.
+Registrations are capabilities supplied by the application, not Java
+code loaded from an XML attribute.
+Missing blackboard inputs and invalid conversions fail execution.
+
+The default \code{result: "action"} uses native interpreter
+success/failure. \code{boolean} interprets the first return as the
+BT outcome; \code{justification} uses its justification value.
+\code{synchronous: true} waits for that leaf before traversing a later
+sibling, preserving the ordering of synchronous source nodes.
+Boolean/justification conditions and explicit \code{Condition} elements
+are synchronous. Long-running action leaves normally omit this flag.
+The original action's conditions, effects, observers, and interruption
+hooks still execute normally.
+
+Each root invocation owns its blackboard and progress data.
+Subtrees have separate local scopes; explicit remapping aliases the
+parent entry rather than copying its value. \code{_autoremap="true"}
+shares otherwise-unmapped non-private keys, while leading-underscore
+keys stay local. A leading \code{@}, in a script name or a port reference
+such as \code{\{@destination\}}, resolves directly in that invocation's
+root frame. It does not create cross-goal global storage.
+
+\subsection{Local bindings versus shared Belief state}
+
+BT data follows the same separation as ASL execution. Arguments,
+temporary values, subtree-local entries, and interpreter progress are
+execution-local; they are not automatically asserted as beliefs.
+Shared world/task state and the semantic state described by action
+conditions/effects use the execution's existing StateMachine and Belief
+component. Bound actions retain ordinary precondition, overall-condition,
+postcondition, observation, and effect processing. Testing a condition
+does not assert it. Runtime cursors, queue positions, and native goal
+handles are bookkeeping, not substitute world-state facts.
+
+An optional \code{\$beliefs} section in the bindings JSON explicitly
+connects root-frame names to semantic predicates:
+\begin{lstlisting}
+{
+  "$enums": {"INSPECT": 2},
+  "$beliefs": {
+    "done": {
+      "predicate": "inspectionComplete(self:agent)",
+      "type": "boolean"
+    },
+    "destination": {
+      "predicate": "inspectionDestination(self:agent,Value)",
+      "type": "Symbol"
+    }
+  }
+}
+\end{lstlisting}
+Add ordinary leaf bindings to this same object as needed.
+A ground boolean predicate is queried for its truth value.
+A predicate with one free variable supplies a typed value; reads require
+exactly one solution, otherwise execution fails explicitly.
+Writes use native StateMachine belief assertion/retraction operations;
+a value write replaces matching old values, while a boolean false
+write retracts the positive fact. These updates remain visible to
+subsequent goals, unlike ordinary local variables. Subtree remapping
+and \code{@} access can reference these explicitly bound root names.
+An initial local JSON value may not shadow a declared belief binding.
+These scripts are explicit state writes, not automatically verified
+action effects; use declared effects/observers on ASL actions when
+effect verification is required. Memory lifetime across process
+restarts still depends on the application's Belief configuration.
+
+\code{\$enums} registers signed integer scripting constants without
+requiring C++ code. They can be used in scripts, mixed string/numeric
+comparisons, and switch cases. The programmatic equivalent is
+\code{BehaviorTreeBindings.registerEnum(name,value)}.
+
+\subsection{Control semantics and native lifecycle}
+
+Supported controls are Sequence, SequenceWithMemory, Fallback,
+ReactiveSequence, ReactiveFallback, AsyncSequence, AsyncFallback,
+Parallel, ParallelAll, IfThenElse, WhileDoElse, TryCatch, and
+Switch2 through Switch6.
+Supported decorators are Inverter, ForceSuccess, ForceFailure,
+RetryUntilSuccessful, Repeat, Timeout, Delay, and
+KeepRunningUntilFailure, plus RunOnce, Precondition, LoopInt, LoopBool,
+LoopDouble, LoopString, SkipUnlessUpdated, and WaitValueUpdate.
+AlwaysSuccess and AlwaysFailure are constant leaves; Script and
+ScriptCondition execute inline blackboard expressions.
+SetBlackboard, UnsetBlackboard, Sleep, and WasEntryUpdated are also
+implemented.
+Compact tags and explicit Action/Condition/Control/Decorator
+elements are accepted. Includes are relative to their containing file,
+restricted to the original input directory, and checked for cycles.
+Unknown nodes, invalid arities, and unsupported execution attributes
+are rejected rather than approximated.
+
+A Sequence advances through successful children and retains its current
+running child. A Fallback advances through failures. Reactive variants
+reevaluate earlier children on each supervision pass and halt obsolete
+branches. SequenceWithMemory retains its failed-child position even
+across a halt, matching the pinned BehaviorTree.CPP 4.10.0 behavior;
+full success resets that position.
+AsyncSequence and AsyncFallback retain the same ordering and outcome
+rules as their ordinary counterparts but yield between newly completed
+advancing children. They are not parallel controls.
+
+Parallel traverses children in source order, caches completed child
+results, checks success/failure thresholds after each child, and
+cancels remaining work when a threshold resolves. Negative thresholds
+are relative to child count. Retry/repeat retain attempt/cycle counters
+across supervision passes and reset the child between attempts,
+including the completion-boundary yields of the pinned engine.
+A Timeout cancels its child,
+rather than merely abandoning a timed wait. Timing has the configured
+supervision resolution, not hard real-time guarantees.
+Timeout and Delay use monotonic elapsed time, including time spent
+externally suspended; an expired deadline is handled on the next
+supervision pass after resumption.
+
+IfThenElse evaluates its first child until a condition outcome is
+available, then retains the selected second or optional third child
+until that branch completes. WhileDoElse reevaluates the condition
+and halts an obsolete branch. Switch2--Switch6 compare
+\code{variable} against \code{case_1}, \code{case_2}, etc.,
+with the final child as the default. Selection is reevaluated while
+running, and an obsolete branch is halted.
+ParallelAll waits for every non-skipped child to complete before
+applying its \code{max_failures} threshold, unlike Parallel's
+early threshold termination.
+RunOnce remembers the first completed outcome even across branch
+halts: subsequent visits return SKIPPED by default, or the remembered
+outcome with \code{then_skip="false"}.
+Precondition evaluates its \code{if} script before starting its child
+and retains that decision while the child runs; its \code{else}
+port defaults to FAILURE and may also specify SUCCESS or SKIPPED.
+
+SKIPPED is distinct from SUCCESS and FAILURE. Ordered controls bypass
+skipped children and return SKIPPED if all their children were skipped;
+decorators preserve skipped outcomes rather than inverting or forcing
+them into success/failure. The generated root treats a fully skipped
+tree as a successful no-op because Goal Manager has no separate
+SKIPPED terminal status.
+
+TryCatch sequences all but its last child as a try block. A failure
+starts the last child as cleanup; after cleanup completes, the result
+remains FAILURE even if cleanup succeeds. With
+\code{catch_on_halt="true"}, halting an active try block first halts
+its descendants, then ticks cleanup once and halts cleanup if it
+remains RUNNING. Cleanup is not restarted if the node was already
+handling a failure.
+
+LoopInt/Bool/Double/String pop a value from \code{queue}, publish it
+through the \code{value} output port, and retain that item while the
+child runs. A failed child terminates the loop with FAILURE; other
+child outcomes yield before the next item. Empty queues return the
+\code{if_empty} outcome, default SUCCESS. Literal semicolon-separated
+queues and list values are copied per activation; a shared Queue port
+is consumed in place, including across halts. A completed iteration
+does not silently consume the next item in the same supervision pass.
+
+SetBlackboard writes a literal string or copies the typed value of a
+referenced entry to \code{output_key}; UnsetBlackboard removes the
+local entry named by \code{key}. As in the pinned engine, removing a
+subtree-local name does not delete the entry aliased in its parent;
+\code{UnsetBlackboard} does not interpret \code{@} as a root lookup.
+Sleep retains a monotonic deadline and
+returns RUNNING while waiting, without blocking parallel siblings.
+WasEntryUpdated compares entry-write versions, not values, so writing
+the same value still counts as an update. Each update watcher retains
+its last-seen version across branch resets. Deleting and recreating an
+entry restarts that entry's counter, matching the pinned engine rather
+than introducing a global change sequence. SkipUnlessUpdated returns
+SKIPPED without a new write; WaitValueUpdate returns RUNNING.
+The pinned 4.10.0 implementation checks these gates again on subsequent
+passes even when their child previously returned RUNNING.
+These are local blackboard-entry versions, not belief revision stamps:
+semantic belief changes should use native belief conditions/observers
+and notifications, rather than treating Belief as a Java blackboard.
+
+For example, \code{reactive_navigation.xml} starts movement only once
+while the battery condition holds. Later reevaluations query the same
+native asynchronous execution. If the battery condition becomes false,
+the movement's native cancellation hook runs and the Fallback proceeds
+to Recharge. \code{inspection.xml} additionally demonstrates retries,
+parallel work, repetition, a timeout, and a remapped subtree.
+The accompanying \code{bt-examples.asl} supplies harmless demonstration
+leaves; the battery check deliberately always succeeds.
+The \code{native_features.xml} example, loaded with
+\code{native-feature-bindings.json}, combines queue iteration,
+TryCatch, async sequencing, update watchers, runtime script source,
+and an enum-selected branch. Its \code{inspectionFinished} entry is
+explicitly belief-backed; its counters, queue items, and script
+source remain local to the invocation.
+
+The root is a first-class Goal Manager goal. Cancellation, suspension,
+resumption, execution-manager priorities/resource blocking, introspection,
+and composition with existing scripts use the existing machinery.
+Leaves are native async subinterpreters within that goal, not independently
+queued top-level submissions; this avoids a queued parent holding an
+actor resource while waiting for a child that needs the same resource.
+Native suspension preserves these subinterpreters rather than
+restarting the tree. Explicit branch halts cancel/reset only that branch.
+Physical stopping still requires cooperative primitive interruption hooks,
+just as for any other ASL action.
+
+\subsection{Embedded scripts and execution hooks}
+
+Scripts are compiled into ASL helper actions, not evaluated by a
+separate scripting scheduler. Script returns SUCCESS after executing
+its \code{code}; ScriptCondition maps the expression's checked boolean
+value to SUCCESS or FAILURE. Supported expressions include numeric
+and single-quoted string literals, blackboard identifiers, arithmetic,
+string concatenation (\code{..}), bitwise operators, comparisons
+(including chains), logical operators, and conditional
+\code{condition ? value : alternative} expressions. Assignments use
+\code{:=} to create an entry, \code{=} to update an existing entry,
+or \code{+=}, \code{-=}, \code{*=}, and \code{/=}.
+Separate expressions with semicolons. For example:
+\begin{lstlisting}
+<Sequence>
+  <Script code="attempts := 0; enabled := true"/>
+  <AlwaysSuccess _skipIf="!enabled"
+                 _onSuccess="attempts += 1"
+                 _post="last := 'completed'"/>
+  <ScriptCondition code="attempts == 1"/>
+</Sequence>
+\end{lstlisting}
+XML escaping is still required: use \code{\&amp;\&amp;} for
+logical AND and \code{\&lt;} for a less-than comparison in attributes.
+As in the pinned upstream grammar, logical AND/OR evaluate both
+operands from left to right; ternaries evaluate only the selected
+branch, and comparison chains stop at the first false comparison.
+Existing entries use checked conversions; as in upstream scripting,
+assigning a numeric string to a numeric entry without a registered
+converter produces a double value.
+Missing entries, invalid assignments/conversions, and malformed
+expressions fail explicitly.
+
+All supported nodes accept the following execution attributes:
+\begin{longtable}{L{0.25\textwidth}L{0.69\textwidth}}
+\textbf{Attribute} & \textbf{Execution semantics}\\ \hline
+\endhead
+\code{_failureIf}, \code{_successIf}, \code{_skipIf} &
+Checked in that order when the node is idle. A true expression
+returns the indicated outcome without starting the node. They are
+not continuously reevaluated while the node runs.\\
+\code{_while} &
+Checked when idle and while running. False returns SKIPPED; a running
+child is first halted through its native cancellation machinery.\\
+\code{_onSuccess}, \code{_onFailure} &
+Execute on the corresponding completed outcome, including an outcome
+selected by a precondition hook.\\
+\code{_post} &
+Executes after the corresponding success/failure hook, on either
+completed outcome; it does not run for RUNNING or SKIPPED.\\
+\code{_onHalted} &
+Executes only when a running node is halted, after descendant cleanup.
+Normal completion is not a halt of that node. Root cancellation
+performs the same generated cleanup from its ASL \code{finally} block.\\
+\end{longtable}
+Scripts on a SubTree element execute in its caller's blackboard scope;
+scripts inside the referenced tree execute in the callee's scope.
+These XML hooks supplement, rather than replace, the bound DIARC
+action's native conditions, effects, and interruption hooks.
+
+\subsection{Callable and recursive subtrees}
+
+Each reachable BehaviorTree definition becomes a reusable ASL action
+family. A SubTree node calls that family with a lazily created,
+per-call blackboard/progress frame rather than copying the XML body.
+Direct and mutual recursion therefore use native ASL calls. Different
+call sites and recursive depths have distinct local entries; explicit
+remappings still alias the immediate caller. Halting resets execution
+progress but retains subtree blackboards and persistent RunOnce state,
+so resuming a later invocation does not silently erase local data.
+Recursion requires an explicit terminating condition; a runtime bound
+of 128 nested subtree frames rejects excessive descent.
+
+The distributed \code{scripted_recursive_inspection.xml} combines these
+features:
+\begin{lstlisting}
+<BehaviorTree ID="InspectLevels">
+  <IfThenElse>
+    <ScriptCondition code="remaining &gt; 0"/>
+    <Sequence>
+      <InspectCamera/>
+      <Script code="next := remaining - 1"/>
+      <SubTree ID="InspectLevels" remaining="{next}"/>
+    </Sequence>
+    <AlwaysSuccess/>
+  </IfThenElse>
+</BehaviorTree>
+\end{lstlisting}
+Its Main tree initializes depth to three, selects this subtree through
+Switch2, and sets a completion flag in \code{_onSuccess}. Three camera
+inspections execute; the original depth remains unchanged because
+each recursive call remaps \code{remaining} to a fresh local
+\code{next}. Load this XML with the same example bindings and
+\code{bt-examples.asl} used above.
+Recursive XML is a DIARC extension: BehaviorTree.CPP statically
+instantiates subtree bodies and does not provide equivalent recursive
+XML execution. Finite nonrecursive uses retain the tested upstream
+control semantics; recursive behavior is verified directly in DIARC.
+
+Dynamic scripts may instead use \code{code="\{source\}"}; hooks can
+likewise read source through a blackboard reference.
+The source is compiled to a transient native ASL action and appended
+to the current interpreter context, with normal lexical return binding,
+cancellation, and error propagation. No top-level queued goal, global
+action registration, or separate expression scheduler is introduced.
+Changed sources are recompiled; up to 256 distinct source/predicate
+combinations are cached in each frame. The static compiler's expression
+size and nesting checks apply equally to runtime source.
+
+\subsection{Remaining boundaries}
+
+The registered built-in node set of the pinned BehaviorTree.CPP
+version is covered. Arbitrary custom C++ node implementations,
+custom control algorithms, and C++ converter/plugin binaries are
+not translated; applications provide corresponding DIARC actions
+or explicit Java converters instead.
+Exact wakeup/thread scheduling and hard real-time timing are not
+promised. Such features must not be silently approximated.
+Generated ASL remains available to normal ASL tooling and action-learning composition. Structured teaching and
+XML export are described below; they reuse explicit instruction/action
+services rather than guessing control structure from a linear trace.
+
+\subsection{Execution and reference-engine tests}
+
+From the repository root, run:
+\begin{lstlisting}
+./gradlew --configure-on-demand :core:test \
+  --tests 'edu.tufts.hrilab.action.bt.*Test'
+\end{lstlisting}
+The converter tests check generated ASL and malformed/unsupported XML.
+The execution tests load the generated database entries into real Goal
+Managers with both ExecutionManager and QueueExecutionManager. They
+exercise ordering, reactive preemption, parallel cancellation, retries,
+memory, timeout/delay, output remapping, isolated concurrent invocations,
+native suspension, priority blocking, existing overall/postcondition
+observers, and calls from ordinary ASL. Additional cases exercise
+scripts/hooks, SKIPPED, the added controls, direct/mutual recursion,
+lexical scope isolation, and descendant-before-ancestor halt hooks
+during cancellation. They also execute all four distributed
+examples through startup \code{-bt} and runtime loading.
+
+An optional differential test runs an actual BehaviorTree.CPP 4.10.0
+engine, rather than a second Java implementation. Obtain that upstream
+release and build its library and the included test driver on Linux:
+\begin{lstlisting}
+BTCPP=/absolute/path/to/BehaviorTree.CPP
+cmake -S "$BTCPP" -B "$BTCPP/build" \
+  -DBUILD_TESTING=OFF -DBTCPP_EXAMPLES=OFF \
+  -DBTCPP_BUILD_TOOLS=OFF -DBTCPP_GROOT_INTERFACE=OFF \
+  -DBTCPP_SQLITE_LOGGING=OFF -DBTCPP_SHARED_LIBS=ON
+cmake --build "$BTCPP/build" --parallel 2
+g++ -std=c++17 -O2 core/src/test/resources/bt/reference.cpp \
+  -I"$BTCPP/include" -L"$BTCPP/build" \
+  -Wl,-rpath,"$BTCPP/build" -lbehaviortree_cpp -pthread \
+  -o /tmp/diarc-bt-reference
+DIARC_BT_REFERENCE=/tmp/diarc-bt-reference \
+  ./gradlew --configure-on-demand :core:test \
+  --tests 'edu.tufts.hrilab.action.bt.*ExecutionTest'
+\end{lstlisting}
+Without \code{DIARC\_BT\_REFERENCE}, only the differential test is skipped.
+It compares leaf record/start/halt events and root terminal outcomes
+for 43 scenarios under each execution manager, covering ordered,
+reactive, parallel, retry/memory/repeat, scripts/hooks, conditional
+selection, SKIPPED, all remaining built-ins, dynamic source, global
+references, enum conversions, and decorator behavior.
+Condition-poll counts, elapsed wall time, and worker-thread entry order
+are not equated with upstream tick timing; parallel starts are normalized
+only for permitted worker-thread interleavings. The separate integration
+tests assert condition reevaluation and cancellation explicitly.
+
+\source{bt/BehaviorTreeConverter.java; bt/BehaviorTreeExecution.java;
+bt/BehaviorTreeScript.java;
+GoalManagerComponent.java: loadBehaviorTree; ActionInterpreter.java:
+getAsynchronousGoal, releaseAsynchronousGoal}
+
+\input{BehaviorTreeLearningDoc.tex}
 
 \section{Diagnostics, validation, and maintenance}
 \label{sec:diagnostics}

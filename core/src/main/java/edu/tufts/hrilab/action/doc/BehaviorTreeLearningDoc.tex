@@ -1,0 +1,152 @@
+\subsection{Explicit structured behavior-tree teaching}
+
+Structured teaching complements, rather than replaces, ordinary action learning.
+Ordinary instruction teaching still builds a linear ASL action. It does not infer
+arbitrary control structure. An instruction script must explicitly select a
+parent node, control kind, stable node identifier, and insertion index.
+The structured learner is owned by each agent's existing ActionLearning instance.
+It does not intercept ordinary execution goals or add another language interpreter.
+
+The root node has identifier \texttt{root}. Native controls, decorators, and
+built-in leaves can be taught with the generic node API:
+sequence/fallback variants (including async and reactive variants), parallel
+controls, conditionals, \texttt{TryCatch}, \texttt{Switch2}--\texttt{Switch6},
+all native decorators (including typed loops and update watchers), and
+\texttt{AlwaysSuccess}, \texttt{AlwaysFailure}, \texttt{Script},
+\texttt{ScriptCondition}, \texttt{SetBlackboard}, \texttt{UnsetBlackboard},
+\texttt{Sleep}, and \texttt{WasEntryUpdated}.
+Unknown kinds are rejected, not flattened into a sequence.
+Existing ASL actions, including actions produced by ordinary action learning,
+are leaves through the existing explicit BT binding format.
+Their native conditions, effects, and Belief interaction are unchanged.
+No persistent world-state store is introduced.
+
+\paragraph{Instruction services.}
+The implemented GoalManager services delegate to
+\texttt{em.getBehaviorTreeLearning(actor)}. With \texttt{Symbol actor},
+\texttt{String name}, and all other textual fields of type \texttt{String},
+the service signatures and learner delegates are:
+\begin{verbatim}
+boolean beginBehaviorTreeLearning(actor, name, kind, bindingsFile)
+  -> beginFromFile(name, actor, kind, bindingsFile)
+boolean beginBehaviorTreeLearning(actor, name, kind, bindingsFile, attributesJson)
+  -> beginFromFile(name, actor, kind, bindingsFile, attributesJson)
+boolean addBehaviorTreeNode(actor, name, parent, id, kind, attributesJson, int index)
+  -> addNode(name, parent, id, kind, attributesJson, index)
+boolean addBehaviorTreeDefinition(actor, name, treeId, rootId, kind, attributesJson)
+  -> addDefinition(name, treeId, rootId, kind, attributesJson)
+boolean addBehaviorTreeSubtree(actor, name, parent, id, treeId, remapsJson, int index)
+  -> addSubtree(name, parent, id, treeId, remapsJson, index)
+boolean addBehaviorTreeControl(actor, name, parent, id, kind, int index)
+  -> addControl(name, parent, id, kind, index)
+boolean addBehaviorTreeLeaf(actor, name, parent, id, binding, portsJson, int index)
+  -> addLeaf(name, parent, id, binding, portsJson, index)
+boolean recordBehaviorTreeStep(actor, name, parent, id, binding,
+                              Predicate step, int index)
+  -> record(name, parent, id, binding, step, index)
+boolean removeBehaviorTreeNode(actor, name, id) -> remove(name, id)
+boolean moveBehaviorTreeNode(actor, name, id, parent, int index)
+  -> move(name, id, parent, index)
+boolean endBehaviorTreeLearning(actor, name) -> finish(name)
+boolean cancelBehaviorTreeLearning(actor, name) -> cancel(name)
+boolean exportBehaviorTree(actor, name, xmlFile, bindingsFile)
+  -> export(name, xmlFile, bindingsFile)
+String getLearnedBehaviorTreeXml(actor, name) -> getXml(name)
+\end{verbatim}
+Mutation services have \texttt{@Action} and \texttt{@TRADEService};
+the XML query has only \texttt{@TRADEService}. File operations may throw
+\texttt{IOException}; malformed edits throw \texttt{IllegalArgumentException}.
+These service signatures are excluded from legacy linear goal recording.
+Actor lookup uses the existing ExecutionManager agent/team registry; null or
+unknown actors are explicit errors rather than creating unowned teaching state.
+
+\paragraph{Complete teaching example.}
+After starting GoalManager with \texttt{-asl bt-examples.asl}, the supplied
+binding \texttt{MoveBase} resolves to the existing ASL action
+\texttt{exampleMoveBase}. The following Java client teaches and publishes a
+one-step sequence, exports both artifacts, then executes the learned action.
+The output directory must already exist. These same services can be called
+from instruction ASL using the action dispatch prefix.
+\begin{verbatim}
+Symbol actor = Factory.createSymbol("self:agent");
+String bindings =
+    "core/src/main/resources/config/edu/tufts/hrilab/action/bt/"
+    + "example-bindings.json";
+manager.beginBehaviorTreeLearning(actor, "taughtVisit",
+    "Sequence", bindings);
+manager.addBehaviorTreeLeaf(actor, "taughtVisit", "root",
+    "visit", "MoveBase", "{\"goal\":\"inspection_station\"}", 0);
+manager.endBehaviorTreeLearning(actor, "taughtVisit");
+manager.exportBehaviorTree(actor, "taughtVisit",
+    "taughtVisit.xml", "taughtVisit-bindings.json");
+long id = manager.submitGoal(
+    Factory.createPredicate("taughtVisit", actor));
+GoalStatus result = manager.joinOnGoal(id);
+// A later session can reload the exported pair under a fresh action name:
+manager.loadBehaviorTree("taughtVisit.xml",
+    "taughtVisit-bindings.json", "reloadedVisit");
+\end{verbatim}
+The binding path above is relative to the repository root; when launching
+from the \texttt{core} directory, omit its leading \texttt{core/}.
+To teach fallback instead of a linear sequence, explicitly add a
+\texttt{Fallback} control and its ordered alternatives; no such structure is
+inferred from the example's single ordinary action call.
+
+\paragraph{Editing and recording.}
+Root parameters use the overloaded begin service. For example, a root
+\texttt{Repeat} uses \texttt{\{"num\_cycles":"3"\}} as attributes.
+The generic node API accepts the same attributes as the native converter,
+including scripts, pre/postcondition hooks, thresholds, queue and update ports,
+and explicit leaf bindings. Its attributes and child arities are validated
+through the converter at export/publication, not during partial editing.
+For example, a \texttt{TryCatch} can be created before its catch branch, and
+a decorator can be created before its single child.
+The existing add-control/add-leaf/record services remain supported.
+Explicit callable definitions use \texttt{addBehaviorTreeDefinition}; their roots
+are addressed by \texttt{rootId}. The main definition ID remains the taught action
+name, and its root node remains \texttt{root}. Every node ID must be unique across
+all definitions in the taught model, so existing parent/edit APIs also address
+definition bodies without introducing implicit namespaces.
+Definition roots cannot be removed or moved. Ordinary nodes can be moved between
+definitions; structural parent/child cycles remain invalid.
+
+\texttt{addBehaviorTreeSubtree} adds a retained \texttt{SubTree} call node with an
+explicit target \texttt{treeId} and JSON remappings, for example
+\texttt{\{"depth":"\{next\}"\}}. Calls can refer forward, directly recurse, or
+mutually recurse. Those call-graph cycles are intentional and are distinct from
+invalid structural edit cycles. Target references, remappings, and child arities
+are validated through the converter at export/publication. Even unused retained
+definitions are validated, rather than allowing invalid instructions to hide.
+All definitions and call nodes are exported in the same XML without inlining.
+External include-file editing is not inferred; define the required trees
+explicitly or bind an existing ASL action as a leaf.
+
+Indices are zero-based. Moving a node uses the destination list after removal;
+removing a control removes its entire subtree. Duplicate identifiers, cycles,
+leaf parents, bad indices, unknown bindings, missing inputs, and unknown ports
+are rejected without applying the edit by the explicit leaf API. Generic-node
+attributes and required inputs are retained and rejected at export/publication
+if invalid. Incomplete branches are permitted while editing but not at export
+or publication.
+\texttt{portsJson} is a JSON object mapping registered port names to values;
+explicit blackboard mappings such as \texttt{\{"label":"\{target\}"\}} are retained.
+They remain invocation-local BT/ASL data, not a second representation of world state.
+
+Recording takes an existing action predicate with the actor as its first
+argument, matches it against the selected binding, and preserves ordered concrete
+arguments using the existing EventSpec convention. It does not infer input roles,
+output mappings, actor changes, consultant declarations, or branching.
+Instructions requiring role abstraction or output mappings must use explicit
+leaf ports. A separately learned ASL action can encapsulate richer existing
+learning behavior without losing its structure or metadata.
+
+\paragraph{Publication and persistence.}
+Finishing validates through the native converter, rejects conflicting action
+names, installs the resulting ASL actions, and seals the retained model.
+Failed publication leaves the draft editable.
+Both finished trees and complete drafts can be exported as format-4 XML and
+the snapshotted bindings JSON. Both files are required for later
+\texttt{loadBehaviorTree(xmlFile, bindingsFile, actionName)}.
+XML is generated from retained nested structure, not reconstructed from the
+flattened generated action database. Finished models cannot be edited or
+cancelled; export them before discarding their owning execution manager.

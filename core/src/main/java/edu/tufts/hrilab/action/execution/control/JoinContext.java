@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
 import edu.tufts.hrilab.action.execution.Context;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.util.Utilities;
 
 import java.util.ArrayList;
@@ -32,12 +33,13 @@ public class JoinContext extends ArgumentBasedContext {
       case 2:
         // timeout
         String arg = (String) inputArgs.get(1);
-        if (Utilities.isScriptVariable(arg) && getArgumentType(arg).equals(Long.class)) {
+        if (Utilities.isScriptVariable(arg) && Long.class.equals(getArgumentType(arg))) {
           addArgument("timeout", Long.class, arg, false, false);
         } else if (Utilities.isLong(arg) || Utilities.isInteger(arg)) {
           addArgument("timeout", Long.class, arg, false, false);
         } else {
           log.error("[setupArguments] invalid arg. Second arg must be a timeout (Long). arg: " + arg);
+          setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
           return;
         }
 
@@ -45,8 +47,9 @@ public class JoinContext extends ArgumentBasedContext {
       case 1:
         // first arg must be context id
         arg = (String) inputArgs.get(0);
-        if (!Utilities.isScriptVariable(arg) || !getArgumentType(arg).equals(Long.class)) {
+        if (!Utilities.isScriptVariable(arg) || !Long.class.equals(getArgumentType(arg))) {
           log.error("[setupArguments] invalid arg. Must be a variable of type Long. arg: " + arg);
+          setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
           return;
         }
         // add new argument to this context
@@ -54,6 +57,8 @@ public class JoinContext extends ArgumentBasedContext {
         break;
       default:
         log.error("[setupArguments] invalid number of args. Must pass in single arg specifying Context ID.");
+        setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
+        return;
     }
 
     switch (returnArgs.size()) {
@@ -62,8 +67,9 @@ public class JoinContext extends ArgumentBasedContext {
       case 1:
         // must be ActionStatus
         String arg = (String) returnArgs.get(0);
-        if (!Utilities.isScriptVariable(arg) || !getArgumentType(arg).equals(ActionStatus.class)) {
+        if (!Utilities.isScriptVariable(arg) || !ActionStatus.class.equals(getArgumentType(arg))) {
           log.error("[setupArguments] invalid arg. Return arg must be a variable of ActionStatus type. arg: " + arg);
+          setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
           return;
         }
 
@@ -72,6 +78,7 @@ public class JoinContext extends ArgumentBasedContext {
         break;
       default:
         log.error("[setupArguments] invalid arg. JOIN only accepts a single (optional) return arg.");
+        setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
     }
 
   }
@@ -91,6 +98,7 @@ public class JoinContext extends ArgumentBasedContext {
 
         if (startContext == null) {
           log.error("[doStep] could not find parent action.");
+          setStatus(ActionStatus.FAIL_NOTFOUND, new ConditionJustification(false));
           return;
         }
 
@@ -98,6 +106,7 @@ public class JoinContext extends ArgumentBasedContext {
 
         if (targetContext == null) {
           log.error("[doStep] no matching context found for id: " + targetId);
+          setStatus(ActionStatus.FAIL_NOTFOUND, new ConditionJustification(false));
           return;
         }
 

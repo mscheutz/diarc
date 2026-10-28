@@ -11,6 +11,7 @@ import edu.tufts.hrilab.action.ScriptParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
+import edu.tufts.hrilab.action.execution.control.JoinContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
@@ -69,6 +70,92 @@ public class EngineRegressionTest {
     @Override
     public Context copy(Context parent) {
       return new ActorContext(parent, actor);
+    }
+  }
+
+  private static class BindingScope extends ArgumentBasedContext {
+    BindingScope(Context parent) {
+      super(parent, null, "bindingScope");
+    }
+
+    @Override
+    protected void setupArguments(List<? extends Object> inputs, List<? extends Object> outputs) {
+    }
+
+    @Override
+    public Context copy(Context parent) {
+      return new BindingScope(parent);
+    }
+  }
+
+  @Test
+  public void lexicalLocalsShadowNamesInsideInputBindingChains() {
+    BindingScope outer = new BindingScope(root);
+    outer.addArgument("!frame", String.class, "outer", true, false);
+    BindingScope recursive = new BindingScope(outer);
+    recursive.addArgument("?input", String.class, "!frame", false, false);
+    recursive.addArgument("!frame", String.class, "inner", true, false);
+    BindingScope operator = new BindingScope(recursive);
+    operator.addArgument("operand", String.class, "?input", false, false);
+    operator.getArgument("!frame").bindDeep("changed");
+    assertEquals("changed", recursive.getArgumentValue("!frame"));
+    assertEquals("outer", outer.getArgumentValue("!frame"));
+    assertEquals("outer", recursive.getArgumentValue("?input"));
+  }
+
+  @Test(timeout = 2000)
+  public void validJoinStillReturnsCompletedChildStatus() {
+    ActionDBEntry action = new ActionDBEntry.Builder("joinSuccessRegression").build(false);
+    ActionContext parent = new ActionContext(root, null, action, List.of(), List.of(), actor);
+    parent.setStatus(ActionStatus.PROGRESS);
+    ActionContext child = parent.addAction(action, List.of(), List.of(), actor);
+    child.setStatus(ActionStatus.SUCCESS);
+    parent.addArgument("!id", Long.class, child.getId(), true, false);
+    parent.addArgument("!result", ActionStatus.class, ActionStatus.UNKNOWN, true, false);
+
+    JoinContext join = new JoinContext(parent, null, List.of("!id", "100"), List.of("!result"));
+    join.setStatus(ActionStatus.PROGRESS);
+    join.doStep();
+
+    assertFalse(join.getStatus().isFailure());
+    assertEquals(ActionStatus.SUCCESS, parent.getArgumentValue("!result"));
+  }
+
+  @Test(timeout = 2000)
+  public void joiningUnknownContextFailsInsteadOfContinuingSuccessfully() {
+    ActionContext parent = new ActionContext(root, null,
+        new ActionDBEntry.Builder("joinRegression").build(false), List.of(), List.of(), actor);
+    parent.addArgument("!missingId", Long.class, Long.MAX_VALUE, true, false);
+    JoinContext join = new JoinContext(parent, null, List.of("!missingId"), List.of());
+    join.setStatus(ActionStatus.PROGRESS);
+    join.doStep();
+    assertEquals(ActionStatus.FAIL_NOTFOUND, join.getStatus());
+  }
+
+  @Test(timeout = 2000)
+  public void joiningWithoutAnEnclosingActionFailsExplicitly() {
+    BindingScope parent = new BindingScope(root);
+    parent.addArgument("!id", Long.class, 1L, true, false);
+    JoinContext join = new JoinContext(parent, null, List.of("!id"), List.of());
+    join.setStatus(ActionStatus.PROGRESS);
+    join.doStep();
+    assertEquals(ActionStatus.FAIL_NOTFOUND, join.getStatus());
+  }
+
+  @Test(timeout = 2000)
+  public void invalidJoinArgumentsFailWithoutNullDereferences() {
+    BindingScope parent = new BindingScope(root);
+    parent.addArgument("!id", Long.class, 1L, true, false);
+    parent.addArgument("!wrongType", String.class, "bad", true, false);
+    for (List<String> inputs : List.of(List.<String>of(), List.of("!undeclared"),
+        List.of("!wrongType"), List.of("!id", "!undeclared"), List.of("!id", "invalid"))) {
+      assertEquals(ActionStatus.FAIL_ARGUMENTS,
+          new JoinContext(parent, null, inputs, List.of()).getStatus());
+    }
+    for (List<String> outputs : List.of(List.of("!undeclared"), List.of("!wrongType"),
+        List.of("!id", "!id"))) {
+      assertEquals(ActionStatus.FAIL_ARGUMENTS,
+          new JoinContext(parent, null, List.of("!id"), outputs).getStatus());
     }
   }
 

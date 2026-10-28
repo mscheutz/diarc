@@ -4,6 +4,8 @@
 package edu.tufts.hrilab.action;
 
 import edu.tufts.hrilab.action.execution.*;
+import edu.tufts.hrilab.action.execution.control.FinallyContext;
+import edu.tufts.hrilab.action.execution.control.TryContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.listener.ActionListener;
@@ -19,6 +21,7 @@ import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,8 +94,46 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * Handles thread(s) that execute ActionInterpreters.
    */
   private final ExecutorService asyncExecutor = Executors.newCachedThreadPool();
-  private final Map<Long, Future<ActionStatus>> asyncFutures = new HashMap<>();
-  private final Map<Long, ActionInterpreter> asyncAIs = new HashMap<>();
+  private final Map<Long, Future<ActionStatus>> asyncFutures = new ConcurrentHashMap<>();
+  private final Map<Long, ActionInterpreter> asyncAIs = new ConcurrentHashMap<>();
+
+  /**
+   * Retrieve the native goal associated with an async context, including nested
+   * asynchronous interpreters. Context IDs, unlike goal IDs, identify async blocks.
+   */
+  public Goal getAsynchronousGoal(long contextId) {
+    ActionInterpreter interpreter = asyncAIs.get(contextId);
+    if (interpreter != null) {
+      return interpreter.getGoal();
+    }
+    for (ActionInterpreter child : asyncAIs.values()) {
+      Goal found = child.getAsynchronousGoal(contextId);
+      if (found != null) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Join and release an async execution that its owner no longer needs. The
+   * caller must cancel unfinished work first if it should not run to completion.
+   */
+  public boolean releaseAsynchronousGoal(long contextId) throws ExecutionException, InterruptedException {
+    Future<ActionStatus> future = asyncFutures.get(contextId);
+    if (future != null) {
+      future.get();
+      asyncFutures.remove(contextId);
+      asyncAIs.remove(contextId);
+      return true;
+    }
+    for (ActionInterpreter child : asyncAIs.values()) {
+      if (child.releaseAsynchronousGoal(contextId)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Create a new ActionInterpreter instance to execute a goal.
@@ -542,8 +583,12 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         }
         nextStep.setStatus(ActionStatus.SUSPEND);
       } else if (!alreadyCancelled && canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
-        if (currentStep.getStatus() == ActionStatus.CANCEL) {
-          // this should only happen when executing a finally block, which we want to execute before cancelling
+        boolean cancellationCleanup = nextStep instanceof FinallyContext
+            && nextStep.getParentContext() instanceof TryContext
+            && ((TryContext) nextStep.getParentContext()).isHandlingCancellation();
+        if (currentStep.getStatus() == ActionStatus.CANCEL || cancellationCleanup) {
+          // TryContext can intercept cancellation without retaining CANCEL on the current step.
+          // Let its finally block finish before the intercepted status propagates.
           alreadyCancelled = true;
         } else {
           nextStep.setStatus(ActionStatus.PARENT_CANCEL);

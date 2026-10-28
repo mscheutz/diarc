@@ -11,6 +11,9 @@ import com.google.gson.reflect.TypeToken;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.bt.BehaviorTreeBindings;
+import edu.tufts.hrilab.action.bt.BehaviorTreeConverter;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.*;
@@ -44,6 +47,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,6 +100,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * PDDL domain and problem file to load into the DIARC.
    */
   private Pair<String, String> pddlFiles;
+  private String[] behaviorTreeFiles;
   /**
    * Action Performance Measures files to load into the database
    */
@@ -165,6 +171,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("asl").longOpt("dbfile").hasArgs().argName("agent1,agentN:file").desc("parse ASL file for (optional) agent(s) agent1,agentN").build());
     options.add(Option.builder("pddl").numberOfArgs(2).argName("domainFile problemFile").desc("parse PDDL domain and problem file").build());
+    options.add(Option.builder("bt").numberOfArgs(3).argName("tree.xml bindings.json actionName")
+        .desc("compile a BehaviorTree.CPP XML file into native ASL actions").build());
     options.add(Option.builder("dbfileDir").hasArg().argName("dir").desc("set default db file directory so filenames (without path) can be passed with -dbfile").build());
     options.add(Option.builder("performancefile").hasArgs().argName("file").desc("parse performance models file").build());
     options.add(Option.builder("performancefileDir").hasArg().argName("dir").desc("set default action performance directory so filenames (without path) can be passed with -performancefile").build());
@@ -228,6 +236,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     if (cmdLine.hasOption("pddl")) {
       String[] files = cmdLine.getOptionValues("pddl");
       pddlFiles = new ImmutablePair<>(files[0], files[1]);
+    }
+    if (cmdLine.hasOption("bt")) {
+      behaviorTreeFiles = cmdLine.getOptionValues("bt");
     }
     if (cmdLine.hasOption("performancefile")) {
       performanceFiles.addAll(Arrays.asList(cmdLine.getOptionValues("performancefile")));
@@ -363,6 +374,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
       loadPDDLFiles(Resources.createFilepath(pddlFireDir, pddlFiles.getLeft()), Resources.createFilepath(pddlFireDir, pddlFiles.getRight()));
+    }
+    if (behaviorTreeFiles != null) {
+      try {
+        loadBehaviorTree(behaviorTreeFiles[0], behaviorTreeFiles[1], behaviorTreeFiles[2]);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Could not load behavior tree", e);
+      }
     }
 
     // Add performance models
@@ -1389,6 +1407,122 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   public Goal getGoal(long gid) {
     return em.getGoal(gid);
+  }
+
+  /**
+   * Compile and load a behavior tree as ordinary ASL database entries. Files are
+   * filesystem paths; leaf capabilities must be registered before execution.
+   */
+  @TRADEService
+  public synchronized void loadBehaviorTree(String xmlFile, String bindingsFile, String actionName) throws IOException {
+    BehaviorTreeBindings bindings;
+    try (java.io.Reader reader = Files.newBufferedReader(Path.of(bindingsFile))) {
+      bindings = BehaviorTreeBindings.read(reader);
+    }
+    String asl = new BehaviorTreeConverter(bindings).convert(Path.of(xmlFile), actionName);
+    List<ActionDBEntry> entries = BehaviorTreeConverter.parse(asl);
+    synchronized (Database.getActionDB()) {
+      for (ActionDBEntry entry : entries) {
+        if (Database.getActionDB().getAction(entry.getName()) != null) {
+          throw new IllegalArgumentException("Behavior-tree action already exists: " + entry.getName());
+        }
+      }
+      entries.forEach(Database.getInstance()::addActionDBEntry);
+    }
+  }
+
+  /** Begin actor-scoped structured teaching without enabling linear goal interception. */
+  @TRADEService
+  @Action
+  public boolean beginBehaviorTreeLearning(Symbol actor, String name, String kind,
+                                            String bindingsFile) throws IOException {
+    return em.getBehaviorTreeLearning(actor).beginFromFile(name, actor, kind, bindingsFile);
+  }
+
+  @TRADEService
+  @Action
+  public boolean beginBehaviorTreeLearning(Symbol actor, String name, String kind,
+                                            String bindingsFile, String attributesJson) throws IOException {
+    return em.getBehaviorTreeLearning(actor).beginFromFile(name, actor, kind, bindingsFile, attributesJson);
+  }
+
+  /** Native node attributes and final arity are validated at publication/export. */
+  @TRADEService
+  @Action
+  public boolean addBehaviorTreeNode(Symbol actor, String name, String parent, String id,
+                                     String kind, String attributesJson, int index) {
+    return em.getBehaviorTreeLearning(actor).addNode(name, parent, id, kind, attributesJson, index);
+  }
+
+  @TRADEService
+  @Action
+  public boolean addBehaviorTreeDefinition(Symbol actor, String name, String treeId, String rootId,
+                                            String kind, String attributesJson) {
+    return em.getBehaviorTreeLearning(actor).addDefinition(name, treeId, rootId, kind, attributesJson);
+  }
+
+  @TRADEService
+  @Action
+  public boolean addBehaviorTreeSubtree(Symbol actor, String name, String parent, String id,
+                                         String treeId, String remapsJson, int index) {
+    return em.getBehaviorTreeLearning(actor).addSubtree(name, parent, id, treeId, remapsJson, index);
+  }
+
+  @TRADEService
+  @Action
+  public boolean addBehaviorTreeControl(Symbol actor, String name, String parent, String id,
+                                        String kind, int index) {
+    return em.getBehaviorTreeLearning(actor).addControl(name, parent, id, kind, index);
+  }
+
+  @TRADEService
+  @Action
+  public boolean addBehaviorTreeLeaf(Symbol actor, String name, String parent, String id,
+                                     String binding, String portsJson, int index) {
+    return em.getBehaviorTreeLearning(actor).addLeaf(name, parent, id, binding, portsJson, index);
+  }
+
+  @TRADEService
+  @Action
+  public boolean recordBehaviorTreeStep(Symbol actor, String name, String parent, String id,
+                                        String binding, Predicate step, int index) {
+    return em.getBehaviorTreeLearning(actor).record(name, parent, id, binding, step, index);
+  }
+
+  @TRADEService
+  @Action
+  public boolean removeBehaviorTreeNode(Symbol actor, String name, String id) {
+    return em.getBehaviorTreeLearning(actor).remove(name, id);
+  }
+
+  @TRADEService
+  @Action
+  public boolean moveBehaviorTreeNode(Symbol actor, String name, String id, String parent, int index) {
+    return em.getBehaviorTreeLearning(actor).move(name, id, parent, index);
+  }
+
+  @TRADEService
+  @Action
+  public synchronized boolean endBehaviorTreeLearning(Symbol actor, String name) {
+    return em.getBehaviorTreeLearning(actor).finish(name);
+  }
+
+  @TRADEService
+  @Action
+  public boolean cancelBehaviorTreeLearning(Symbol actor, String name) {
+    return em.getBehaviorTreeLearning(actor).cancel(name);
+  }
+
+  @TRADEService
+  @Action
+  public boolean exportBehaviorTree(Symbol actor, String name, String xmlFile,
+                                    String bindingsFile) throws IOException {
+    return em.getBehaviorTreeLearning(actor).export(name, xmlFile, bindingsFile);
+  }
+
+  @TRADEService
+  public String getLearnedBehaviorTreeXml(Symbol actor, String name) {
+    return em.getBehaviorTreeLearning(actor).getXml(name);
   }
 
   @Override

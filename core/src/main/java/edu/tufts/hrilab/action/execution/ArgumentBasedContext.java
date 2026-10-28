@@ -220,16 +220,17 @@ public abstract class ArgumentBasedContext extends Context {
   protected ActionBinding getArgumentSilent(String bname) {
     ActionBinding target = arguments.get(bname);
     if (target == null) {
-      target = searchArgumentsForBinding(bname);
-      if (target == null) {
-        if (caller != null) {
-          // to enforce proper variable scoping, don't recurse into parent actions
-          if (caller.isAction()) {
-            target = caller.getLocalArgument(bname);
-          } else {
-            target = caller.getArgumentSilent(bname);
-          }
+      if (caller != null) {
+        // Lexical locals shadow names inside an input argument's binding chain.
+        // This matters when recursive calls reuse the same local names.
+        if (caller.isAction()) {
+          target = caller.getLocalArgument(bname);
+        } else {
+          target = caller.getArgumentSilent(bname);
         }
+      }
+      if (target == null) {
+        target = searchArgumentsForBinding(bname);
       }
     }
     return target;

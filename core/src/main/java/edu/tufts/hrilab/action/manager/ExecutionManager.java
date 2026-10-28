@@ -2284,6 +2284,18 @@ public class ExecutionManager implements GoalListener {
   }
 
   ////////// Action Learning //////////
+  /** Actor-scoped structured teaching state, separate from linear goal interception. */
+  public edu.tufts.hrilab.action.learning.BehaviorTreeLearning getBehaviorTreeLearning(Symbol actor) {
+    if (actor == null) {
+      throw new IllegalArgumentException("Learning actor is required");
+    }
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      throw new IllegalArgumentException("Unknown learning actor: " + actor);
+    }
+    return agentTeam.getBehaviorTreeLearning();
+  }
+
   @Action
   @TRADEService
   public void waitForActionLearningStart(Symbol actor, Predicate newAction) {

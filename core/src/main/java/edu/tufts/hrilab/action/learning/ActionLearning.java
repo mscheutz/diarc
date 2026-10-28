@@ -59,6 +59,15 @@ public class ActionLearning {
   private Map<Predicate,Boolean> learningStateUpdateListenerInterrupted = new HashMap<>();
   private final AtomicBoolean consumerBusy = new AtomicBoolean(false);
   private ActionLearningGui learningGui;
+  private final BehaviorTreeLearning behaviorTreeLearning = new BehaviorTreeLearning();
+
+  /**
+   * Explicit structured teaching is separate from the linear instruction queue:
+   * ordinary learned steps are not interpreted as implicit BT controls.
+   */
+  public BehaviorTreeLearning getBehaviorTreeLearning() {
+    return behaviorTreeLearning;
+  }
 
   /**
    * Learning status lock.
@@ -100,6 +109,20 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("beginBehaviorTreeLearning(?actor,?name,?kind,?bindings)"));
+    ignoreActionSet.add(Factory.createPredicate("beginBehaviorTreeLearning(?actor,?name,?kind,?bindings,?attributes)"));
+    ignoreActionSet.add(Factory.createPredicate("addBehaviorTreeNode(?actor,?name,?parent,?id,?kind,?attributes,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("addBehaviorTreeDefinition(?actor,?name,?treeId,?rootId,?kind,?attributes)"));
+    ignoreActionSet.add(Factory.createPredicate("addBehaviorTreeSubtree(?actor,?name,?parent,?id,?treeId,?remaps,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("addBehaviorTreeControl(?actor,?name,?parent,?id,?kind,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("addBehaviorTreeLeaf(?actor,?name,?parent,?id,?binding,?ports,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("recordBehaviorTreeStep(?actor,?name,?parent,?id,?binding,?step,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("removeBehaviorTreeNode(?actor,?name,?id)"));
+    ignoreActionSet.add(Factory.createPredicate("moveBehaviorTreeNode(?actor,?name,?id,?parent,?index)"));
+    ignoreActionSet.add(Factory.createPredicate("endBehaviorTreeLearning(?actor,?name)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelBehaviorTreeLearning(?actor,?name)"));
+    ignoreActionSet.add(Factory.createPredicate("exportBehaviorTree(?actor,?name,?xml,?bindings)"));
+    ignoreActionSet.add(Factory.createPredicate("getLearnedBehaviorTreeXml(?actor,?name)"));
 
     ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor)"));

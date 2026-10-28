@@ -80,6 +80,13 @@ public class TryContext extends Context {
   }
 
   /**
+   * Whether cancellation has been intercepted until the finally block completes.
+   */
+  public boolean isHandlingCancellation() {
+    return statusToPropagate == ActionStatus.CANCEL || statusToPropagate == ActionStatus.PARENT_CANCEL;
+  }
+
+  /**
    * Exit the current event. Note that this is always called from the child
    * event, setting its execution status before it returns.
    * <p>

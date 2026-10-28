@@ -1,0 +1,18 @@
+<root BTCPP_format="4" main_tree_to_execute="Navigate">
+  <BehaviorTree ID="Navigate">
+    <Fallback>
+      <ReactiveSequence>
+        <BatteryOK/>
+        <MoveBase goal="kitchen"/>
+      </ReactiveSequence>
+      <Recharge/>
+    </Fallback>
+  </BehaviorTree>
+  <TreeNodesModel>
+    <Condition ID="BatteryOK"/>
+    <Action ID="MoveBase">
+      <input_port name="goal" type="Symbol"/>
+    </Action>
+    <Action ID="Recharge"/>
+  </TreeNodesModel>
+</root>

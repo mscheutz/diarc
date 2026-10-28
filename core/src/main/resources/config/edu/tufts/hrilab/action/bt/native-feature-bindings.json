@@ -1,0 +1,13 @@
+{
+  "$enums": {"INSPECT": 2},
+  "$beliefs": {
+    "inspectionFinished": {
+      "predicate": "exampleInspectionFinished(self:agent)",
+      "type": "boolean"
+    }
+  },
+  "InspectCamera": {
+    "action": "exampleInspectCamera",
+    "synchronous": true
+  }
+}

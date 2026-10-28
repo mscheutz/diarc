@@ -915,6 +915,19 @@ public abstract class Context {
   }
 
   /**
+   * Append a native action without registering a transient definition globally.
+   * The caller must append it before this context finishes execution.
+   */
+  public ActionContext addAction(ActionDBEntry action, List<?> inputs, List<?> returns, Symbol actor) {
+    if (getStatus() != ActionStatus.PROGRESS) {
+      throw new IllegalStateException("Actions can only be appended to a progressing context");
+    }
+    ActionContext child = new ActionContext(this, stateMachine, action, inputs, returns, actor);
+    childContexts.add(child);
+    return child;
+  }
+
+  /**
    * Create new context instance with "this" as the parent, but does NOT add the new Context as a child
    * to "this". This is useful for attaching "child" contexts to other non-childContexts data structures
    * (e.g.,  interruption contexts, effect/condition contexts, etc.).

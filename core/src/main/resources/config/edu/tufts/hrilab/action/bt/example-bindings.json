@@ -1,0 +1,18 @@
+{
+  "BatteryOK": {
+    "action": "exampleBatteryOK",
+    "result": "boolean",
+    "synchronous": true
+  },
+  "MoveBase": {
+    "action": "exampleMoveBase",
+    "inputs": [{"name": "goal", "type": "Symbol"}]
+  },
+  "Recharge": {
+    "action": "exampleRecharge"
+  },
+  "InspectCamera": {
+    "action": "exampleInspectCamera",
+    "synchronous": true
+  }
+}

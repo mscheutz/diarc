@@ -1,0 +1,33 @@
+<root BTCPP_format="4" main_tree_to_execute="Main">
+  <BehaviorTree ID="Main">
+    <AsyncSequence>
+      <Script code="inspectionFinished = false; mode := INSPECT; count := 0"/>
+      <TryCatch>
+        <Sequence>
+          <Switch2 variable="{mode}" case_1="INSPECT" case_2="3">
+            <LoopString queue="left;right" value="{camera}">
+              <Sequence>
+                <InspectCamera/>
+                <Script code="count += 1"/>
+              </Sequence>
+            </LoopString>
+            <AlwaysFailure/>
+            <AlwaysFailure/>
+          </Switch2>
+          <WasEntryUpdated entry="count"/>
+          <SkipUnlessUpdated entry="count"><InspectCamera/></SkipUnlessUpdated>
+          <ParallelAll>
+            <WaitValueUpdate entry="ready"><InspectCamera/></WaitValueUpdate>
+            <Sequence><Sleep msec="5"/><Script code="ready := true"/></Sequence>
+          </ParallelAll>
+          <SetBlackboard output_key="check" value="count == 2"/>
+          <ScriptCondition code="{check}"/>
+          <UnsetBlackboard key="check"/>
+          <Script code="inspectionFinished = true"/>
+        </Sequence>
+        <Script code="inspectionFinished = false"/>
+      </TryCatch>
+      <ScriptCondition code="inspectionFinished"/>
+    </AsyncSequence>
+  </BehaviorTree>
+</root>

@@ -1,0 +1,24 @@
+<root BTCPP_format="4" main_tree_to_execute="Main">
+  <BehaviorTree ID="Main">
+    <Sequence>
+      <Script code="depth := 3; completed := false; mode := 'inspect'"/>
+      <Switch2 variable="{mode}" case_1="inspect" case_2="move">
+        <SubTree ID="InspectLevels" remaining="{depth}" _onSuccess="completed = true"/>
+        <MoveBase goal="laboratory"/>
+        <AlwaysFailure/>
+      </Switch2>
+      <ScriptCondition code="completed &amp;&amp; depth == 3"/>
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="InspectLevels">
+    <IfThenElse>
+      <ScriptCondition code="remaining &gt; 0"/>
+      <Sequence>
+        <InspectCamera/>
+        <Script code="next := remaining - 1"/>
+        <SubTree ID="InspectLevels" remaining="{next}"/>
+      </Sequence>
+      <AlwaysSuccess/>
+    </IfThenElse>
+  </BehaviorTree>
+</root>
