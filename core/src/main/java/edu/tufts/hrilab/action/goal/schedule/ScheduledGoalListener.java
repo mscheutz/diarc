@@ -32,6 +32,10 @@ public class ScheduledGoalListener extends SchedulerListenerSupport {
 
     long goalId = Long.parseLong(trigger.getJobKey().getName()); // jobKey name should always be the goal ID
     ScheduledGoal goal = em.getScheduledGoal(goalId);
+    if (goal == null) {
+      log.debug("Ignoring finalized trigger for removed goal {}", goalId);
+      return;
+    }
 
     // wait for all submitted goals to finish
     goal.getSubmittedGoals().forEach(g -> em.joinOnGoal(g.getId()));

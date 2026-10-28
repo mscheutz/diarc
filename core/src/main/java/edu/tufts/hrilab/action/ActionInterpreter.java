@@ -491,6 +491,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    */
   @Override
   public ActionStatus call() {
+    boolean started = false;
     try {
       // Make sure Action Interpreter is valid and not already running
       isRunningLock.lock();
@@ -500,9 +501,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           return rootStep.getStatus();
         }
 
+        isRunning = true;
+        started = true;
         if (goal.setAsStarted()) {
           log.debug("Started Action Interpreter for goal: {}. Context id: {}", goal.getGoalPredicate(), rootStep.getId());
-          isRunning = true;
         } else {
           log.error("Could not start Action Interpreter (goal refused to start): {}", goal.getGoalPredicate());
           return rootStep.getStatus();
@@ -533,28 +535,35 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       return rootStep.getStatus();
     } catch (Exception e) {
       log.error("Exception caught during ActionInterpreter execution.", e);
-      Justification failure = new ConditionJustification(false,
-              Factory.createPredicate("executionException", goal.getGoalPredicate()));
-      try {
-        rootStep.setStatus(ActionStatus.FAIL, failure);
-        if (shouldUpdate.get()) {
-          halt();
-        }
-      } finally {
-        if (!goal.getStatus().isTerminated()) {
-          goal.setFailureStatus(GoalStatus.FAILED, failure);
+      if (started) {
+        Justification failure = new ConditionJustification(false,
+                Factory.createPredicate("executionException", goal.getGoalPredicate()));
+        try {
+          if (rootStep.getStatus() == ActionStatus.SUSPEND) {
+            rootStep.setStatus(ActionStatus.RESUME);
+          }
+          rootStep.setStatus(ActionStatus.FAIL, failure);
+          if (shouldUpdate.get()) {
+            halt();
+          }
+        } finally {
+          if (!goal.getStatus().isTerminated()) {
+            goal.setFailureStatus(GoalStatus.FAILED, failure);
+          }
         }
       }
       return ActionStatus.FAIL;
     } finally {
-      isRunningLock.lock();
-      try {
-        isRunning = false;
-      } finally {
-        isRunningLock.unlock();
-      }
-      if (goal.getStatus().isTerminated()) {
-        asyncExecutor.shutdown();
+      if (started) {
+        isRunningLock.lock();
+        try {
+          isRunning = false;
+        } finally {
+          isRunningLock.unlock();
+        }
+        if (goal.getStatus().isTerminated()) {
+          asyncExecutor.shutdown();
+        }
       }
     }
   }

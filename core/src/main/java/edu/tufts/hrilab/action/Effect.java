@@ -108,7 +108,7 @@ public class Effect implements Serializable {
 
       ObservationContext observationContext = context.getEffectObserver(this);
       if (observationContext != null) {   // Check that there is an observer available
-        Symbol actor = context.getDiarcActor();
+        Symbol actor = context.getObserverActor();
         Goal obs = Goal.createGoal(actor, predicate, observable);
         ActionInterpreter observer = ActionInterpreter.createInterpreterFromContext(obs, observationContext);
         log.debug("Starting observer goal: {}", observer.getGoal());

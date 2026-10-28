@@ -293,10 +293,13 @@ public class EngineRegressionTest {
       ActionDBEntry action = new ActionDBEntry.Builder("observerRegression").build(false);
       ActionContext context = new ActionContext(parent, null, action, List.of(), List.of(), actor);
       assertEquals(robot, context.getDiarcActor());
+      assertEquals(robot, context.getObserverActor());
       ActionContext ownActor = new ActionContext(parent, null, action, List.of(), List.of(), robot);
+      assertEquals(robot, ownActor.getObserverActor());
       assertEquals(robot, ownActor.getDiarcActor());
       ActionContext noRobot = new ActionContext(new ActorContext(root, actor), null,
               action, List.of(), List.of(), actor);
+      assertEquals(actor, noRobot.getObserverActor());
       assertEquals(actor, noRobot.getDiarcActor());
     } finally {
       Database.destroyInstance();

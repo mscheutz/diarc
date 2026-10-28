@@ -1,12 +1,14 @@
 package edu.tufts.hrilab.action.manager;
 
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
+import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.fol.Factory;
 import org.junit.Test;
 import org.quartz.JobKey;
 import org.quartz.ListenerManager;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerListener;
+import org.quartz.SchedulerException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -58,6 +60,57 @@ public class ScheduledGoalManagerRegressionTest {
   @Test(timeout = 3000)
   public void joinsHandleDeletionBetweenExistenceCheckAndWait() throws Exception {
     assertJoinHandlesDeletion(true);
+  }
+
+  @Test(timeout = 3000)
+  public void schedulingFailureBecomesTerminalWithoutLeavingScheduledEntry() throws Exception {
+    assertImmediateSchedulingResult(true);
+  }
+
+  @Test(timeout = 3000)
+  public void immediateCompletionCannotBeReopenedOrReinsertedAfterSchedulingReturns() throws Exception {
+    assertImmediateSchedulingResult(false);
+  }
+
+  private void assertImmediateSchedulingResult(boolean reject) throws Exception {
+    ExecutionManager execution = new ExecutionManager();
+    execution.rootAgent = Factory.createSymbol("self");
+    execution.agentTeams.put(execution.rootAgent, new AgentTeam(execution.rootAgent, execution));
+    ScheduledGoalManager manager = new ScheduledGoalManager(execution);
+    Field managerField = ExecutionManager.class.getDeclaredField("scheduledGoalManager");
+    managerField.setAccessible(true);
+    managerField.set(execution, manager);
+    Field schedulerField = ScheduledGoalManager.class.getDeclaredField("goalScheduler");
+    schedulerField.setAccessible(true);
+    Scheduler original = (Scheduler) schedulerField.get(manager);
+    ScheduledGoal goal = new ScheduledGoal(
+            Factory.createPredicate("scheduled(regression(self),start(1,DAYS))"));
+    goal.addListener(info -> {
+      assertTrue(info.status.isTerminated());
+      assertSame(goal, execution.getPastGoal(goal.getId()));
+      assertNull(manager.getScheduledGoal(goal.getId()));
+    });
+    try {
+      Scheduler scheduler = (Scheduler) Proxy.newProxyInstance(
+              getClass().getClassLoader(), new Class<?>[]{Scheduler.class}, (proxy, method, args) -> {
+                if (!method.getName().equals("scheduleJob")) {
+                  throw new AssertionError("Unexpected scheduler operation: " + method.getName());
+                }
+                assertSame(goal, manager.getScheduledGoal(goal.getId()));
+                if (reject) {
+                  throw new SchedulerException("Schedule rejected");
+                }
+                goal.setStatus(GoalStatus.SUCCEEDED);
+                return new Date();
+              });
+      schedulerField.set(manager, scheduler);
+      execution.submitGoal(goal);
+      assertEquals(reject ? GoalStatus.FAILED : GoalStatus.SUCCEEDED, goal.getStatus());
+      assertSame(goal, execution.getPastGoal(goal.getId()));
+      assertTrue(manager.getScheduledGoals().isEmpty());
+    } finally {
+      original.shutdown();
+    }
   }
 
   private void assertJoinHandlesDeletion(boolean deleteAfterCheck) throws Exception {

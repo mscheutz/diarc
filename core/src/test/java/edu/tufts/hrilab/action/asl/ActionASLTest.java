@@ -101,18 +101,30 @@ public class ActionASLTest {
         assertRoundTrip("""
                 () = negated() {
                     conditions: {
-                        pre: not(ready());
-                        or: { pre: not(first()); pre obs: second(); }
-                        overall obs: not(blocked(?actor));
-                        obligation infer: not(forbidden(?actor));
+                        pre: ~ready();
+                        or: { pre: ~first(); pre obs: second(); }
+                        overall obs: ~blocked(?actor);
+                        obligation infer: ~forbidden(?actor);
                     }
                     effects: {
-                        always: not(before());
-                        success obs: not(after());
-                        failure infer: not(failed());
-                        nonperf: not(performed());
+                        always: ~before();
+                        success obs: ~after();
+                        failure infer: ~failed();
+                        nonperf: ~performed();
                     }
+                    observes: ~visible(?actor);
+                }
+                """);
+    }
+
+    @Test
+    public void testFunctionalNegationRemainsCompatibleWithCanonicalWriter() {
+        assertRoundTrip("""
+                () = functionalNegation() {
+                    conditions: { pre: not(ready()); }
+                    effects: { success: not(done()); }
                     observes: not(visible(?actor));
+                    recovery: { goals: {not(done())} }
                 }
                 """);
     }
@@ -123,12 +135,12 @@ public class ActionASLTest {
                 () = recover() {
                     recovery: {
                         actionRecovery: {
-                            catchingActions: {move(?actor), not(blocked(?actor))}
+                            catchingActions: {move(?actor), ~blocked(?actor)}
                             postRecovery: retry
                         }
-                        goals: {arrived(?actor), not(blocked(?actor))}
+                        goals: {arrived(?actor), ~blocked(?actor)}
                         failedActions: {move(?actor)}
-                        failureReasons: {obstacle(?actor), not(clear(?actor))}
+                        failureReasons: {obstacle(?actor), ~clear(?actor)}
                         actionStatuses: {FAIL, FAIL_PRECONDITIONS}
                         maximumAttempts: 3
                     }
@@ -136,7 +148,7 @@ public class ActionASLTest {
                         actionRecovery: { postRecovery: continue }
                         excludedGoals: {unrelated(?actor)}
                         excludedFailedActions: {waitFor(?actor)}
-                        excludedFailureReasons: {not(recoverable(?actor))}
+                        excludedFailureReasons: {~recoverable(?actor)}
                         maximumAttempts: 2
                     }
                     recovery: {

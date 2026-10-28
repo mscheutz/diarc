@@ -889,7 +889,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
     observationContext = effectObservers.get(effect);
     if (observationContext == null) {
-      Symbol actor = getDiarcActor();
+      Symbol actor = getObserverActor();
       observationContext = new ObservationContext(this, this.stateMachine, effect.getPredicate(), actor, Observable.TRUE);
       if (observationContext.hasObserver()) {
         // observer found
@@ -907,7 +907,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   /**
    * Find the nearest DIARC actor, falling back to this action's actor if none is available.
    */
-  public Symbol getDiarcActor() {
+  public Symbol getObserverActor() {
     Symbol actor = (Symbol) getArgumentValue("?actor");
     for (Context context = this; context != null; context = context.getParentContext()) {
       Object candidate = context.getArgumentValue("?actor");
@@ -916,6 +916,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       }
     }
     return actor;
+  }
+
+  public Symbol getDiarcActor() {
+    return getObserverActor();
   }
 
   // **************************************************************************

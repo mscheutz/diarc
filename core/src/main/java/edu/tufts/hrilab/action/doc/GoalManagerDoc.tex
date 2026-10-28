@@ -349,8 +349,10 @@ The old \code{sti} and \code{did} goal forms are explicitly unsupported.
 \subsection{What happens after submission}
 
 \begin{enumerate}
-\item The component creates a \code{Goal}, attaches its notifier, and
-sets execution type, tier, numeric priority, and submitter metadata.
+\item The component delegates to the execution manager's common
+submission preparation, which creates a \code{Goal} and sets execution
+type, tier, numeric priority, submitter, and optional metric metadata.
+The manager installs its lifecycle callback and notifier.
 Submission returns an ID; it does not wait for success.
 \item The execution manager validates the actor against its hierarchy.
 An unknown actor produces a failed goal with an
@@ -389,6 +391,26 @@ another managed goal.
 \source{ActionInterpreter.java: call}
 \source{execution/GoalContext.java: selectAction, verifyEffects}
 \source{execution/StepExecution.java: canDoStep, doStep, finishStep}
+
+\subsection{Lifecycle and notification guarantees}
+
+Goal status, failure justification, and timestamps are committed together.
+Terminal goals cannot be reopened, and repeated completion is harmless.
+The owning execution manager completes collection and resource bookkeeping
+before external listeners receive individual \code{GoalInfo} snapshots.
+These snapshots copy metadata fields; nested predicates and justifications
+are not deep-copied. Cancellation and suspension of a running interpreter
+remain requests until the interpreter acknowledges them.
+
+Submitting the same \code{Goal} object again does not create another
+interpreter. A learning session can hand a goal back to execution once;
+canceled learning work cannot reenter execution.
+Suspension and resumption retain the same interpreter rather than starting
+a second attempt. This does not disable native ASL catch/recovery policies
+or BT repeat/retry controls within an execution.
+
+\source{goal/Goal.java: transitionStatus, setLifecycleListener}
+\source{manager/ExecutionManager.java: registerGoal, submitGoal, transferGoalToPastGoals}
 
 \subsection{Goal status versus action status}
 
@@ -492,6 +514,12 @@ Within a tier, larger numeric values win; exact ties favor older goals
 (smaller IDs). This scheduling priority is separate from an action's
 \code{benefit} and \code{cost} selection metadata.
 
+Ordinary submissions, metric submissions, and scheduled occurrences use
+the same metadata preparation. The component configures priority providers
+directly on the manager; scheduled occurrences do not call back through
+TRADE to obtain priorities. Direct \code{Goal} submissions retain
+caller-supplied priorities.
+
 Priority JSON is indexed by the submitted predicate's name and has the
 following shape:
 \begin{lstlisting}
@@ -540,6 +568,11 @@ or \emph{hold} it for exclusive use. Two required-only uses can coexist.
 A held resource conflicts with another goal's required or held use.
 Pending-goal conflict checks consider higher-priority pending work, not
 all pending work indiscriminately.
+
+Acquisition checks the complete resource claim before allocating any part
+of it. Completion releases the acquired snapshot, not claims recomputed
+from subsequently modified goal metadata. Required-only users are tracked
+until all have finished, so an exclusive claimant cannot start prematurely.
 
 In the current managers, resources are principally agent/team-wide,
 learning, and freeze resources. A team goal accounts for descendants in

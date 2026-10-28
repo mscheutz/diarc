@@ -182,10 +182,8 @@ public class StepExecution {
     while (true) {
       // Check if current state allows the step to succeed.
       if (context.isFailure()) {
-        // if this context is the root of the failure, and failed with pre- or post-condtion failure, don't check effects,
-        // otherwise check effects. also, check effects of all ancestor contexts as we move up the tree
+        // Avoid repeating effects checks for failures whose effects have already been checked.
         if ((context.getStatus() != ActionStatus.FAIL_PRECONDITIONS && context.getStatus() != ActionStatus.FAIL_POSTCONDITIONS) || !context.causedFailure()) {
-          // still want to observe which effects hold, except when FAIL_POSTCONDITONS because they've already been checked
           context.verifyEffects();
         }
         if (!(context instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext)

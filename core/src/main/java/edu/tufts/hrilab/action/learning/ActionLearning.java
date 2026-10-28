@@ -167,6 +167,9 @@ public class ActionLearning {
           continue;
         }
         try {
+          if (g.getStatus().isTerminated()) {
+            continue;
+          }
           if (shouldExecute()) {
             //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
             ignoreActionSet.add(g.getGoalStatePredicate());

@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class SingleGoalExecutionManager extends ExecutionManager {
@@ -27,15 +28,10 @@ public class SingleGoalExecutionManager extends ExecutionManager {
    */
   @Override
   protected Set<Resource> getRequiredResourcesForGoal(Goal goal) {
-    if (goal.getHeldResources() != null) {
-      return goal.getHeldResources();
+    if (goal.getRequiredResources() != null) {
+      return goal.getRequiredResources();
     } else {
-      Set<Resource> resourceSet = super.getHeldResourcesForGoal(goal);
-      if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-        for (Symbol agent : getDescendants(goal.getActor())) {
-          resourceSet.add(agentTeams.get(agent).getResource(agent));
-        }
-      }
+      Set<Resource> resourceSet = new HashSet<>(getHeldResourcesForGoal(goal));
       goal.setRequiredResources(resourceSet);
 
       return resourceSet;

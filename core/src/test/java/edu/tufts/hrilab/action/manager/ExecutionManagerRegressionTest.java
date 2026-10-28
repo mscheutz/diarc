@@ -106,6 +106,18 @@ public class ExecutionManagerRegressionTest {
   }
 
   @Test
+  public void pendingScanChecksEveryEntryWithinThePriorityPrefix() {
+    TestManager manager = new TestManager();
+    Resource shared = new Resource(null, Factory.createSymbol("shared"));
+    manager.pendingGoals.add(new PendingGoal(goal(30, Set.of(), Set.of())));
+    manager.pendingGoals.add(new PendingGoal(goal(20, Set.of(), Set.of())));
+    manager.pendingGoals.add(new PendingGoal(goal(10, Set.of(), Set.of(shared))));
+    Goal candidate = goal(1, Set.of(shared), Set.of());
+    assertFalse(manager.resourceConflictInPending(candidate, 2));
+    assertTrue(manager.resourceConflictInPending(candidate, 3));
+  }
+
+  @Test
   public void pendingConflictsUseHeldResourcesInBothDirections() {
     TestManager manager = new TestManager();
     Resource resource = new Resource(null, Factory.createSymbol("shared"));

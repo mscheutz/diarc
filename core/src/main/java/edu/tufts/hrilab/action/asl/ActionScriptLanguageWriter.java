@@ -213,9 +213,12 @@ public class ActionScriptLanguageWriter {
         obs = "";
         break;
     }
-    cat(prefix + obs + " : " + predicate.toString() + ";");
+    cat(prefix + obs + " : " + predicateString(predicate) + ";");
   }
 
+  private String predicateString(Predicate predicate) {
+    return predicate.isNegated() ? "~" + predicate.toUnnegatedForm() : predicate.toString();
+  }
 
   private void writeRecovery(ActionDBEntry entry) {
     for (PolicyConstraints constraints : entry.getPolicyConstraints()) {
@@ -243,7 +246,7 @@ public class ActionScriptLanguageWriter {
 
   private void writeRecoveryPredicates(String name, Set<Predicate> predicates) {
     if (!predicates.isEmpty()) {
-      cat(name + " : {" + predicates.stream().map(p -> p.toString())
+      cat(name + " : {" + predicates.stream().map(this::predicateString)
               .sorted().collect(Collectors.joining(", ")) + "}");
     }
   }

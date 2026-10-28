@@ -57,7 +57,7 @@ public class Resource {
     }
 
     public Set<Goal> getUsers() {
-        return users;
+        return Set.copyOf(users);
     }
 
     @Override

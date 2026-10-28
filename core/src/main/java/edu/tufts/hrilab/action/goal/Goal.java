@@ -22,8 +22,8 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -82,7 +82,9 @@ public class Goal {
    * is reset and executed again, this predicate can be rebound to different variable bindings.
    */
 
-  private Set<GoalListener> listeners = new HashSet<>();
+  private final Set<GoalListener> listeners = new CopyOnWriteArraySet<>();
+  private final Object statusLock = new Object();
+  private volatile GoalListener lifecycleListener;
   protected GoalInfo info;
   private Observable observable = Observable.FALSE;
   private static final IdGenerator idGenerator = new IdGenerator();
@@ -346,19 +348,27 @@ public class Goal {
   }
 
   public Justification getFailConditions() {
-    return info.failConditions;
+    synchronized (statusLock) {
+      return info.failConditions;
+    }
   }
 
   public GoalStatus getStatus() {
-    return info.status;
+    synchronized (statusLock) {
+      return info.status;
+    }
   }
 
   public long getStartTime() {
-    return info.start;
+    synchronized (statusLock) {
+      return info.start;
+    }
   }
 
   public long getEndTime() {
-    return info.end;
+    synchronized (statusLock) {
+      return info.end;
+    }
   }
 
   /**
@@ -433,12 +443,7 @@ public class Goal {
    * @return
    */
   public boolean setAsStarted() {
-    if (!info.status.isTerminated()) {
-      info.start = System.currentTimeMillis();
-      setStatus(GoalStatus.ACTIVE);
-      return true;
-    }
-    return false;
+    return transitionStatus(GoalStatus.ACTIVE, null, true);
   }
 
   /**
@@ -448,18 +453,46 @@ public class Goal {
    * @param status
    */
   public void setStatus(GoalStatus status) {
-    if (this.info.status.isTerminated()) {
-      log.error("Goal already has terminal status. Goal: {} Status: {}", getGoalPredicate(), status);
-    } else {
-      this.info.status = status;
+    transitionStatus(status, null, false);
+  }
 
-      if (this.info.status.isTerminated()) {
+  private boolean transitionStatus(GoalStatus status, Justification failure, boolean started) {
+    java.util.Objects.requireNonNull(status);
+    GoalInfo snapshot;
+    synchronized (statusLock) {
+      if (info.status.isTerminated()) {
+        if (info.status != status) {
+          log.debug("Ignoring transition of terminal goal {} from {} to {}", getId(), info.status, status);
+        }
+        return false;
+      }
+      if (status == GoalStatus.UNKNOWN
+              || (status == GoalStatus.PENDING && info.status != GoalStatus.PENDING)) {
+        throw new IllegalArgumentException("Invalid goal transition: " + info.status + " -> " + status);
+      }
+      if (started && info.start < 0) {
+        info.start = System.currentTimeMillis();
+      }
+      info.status = status;
+      if (failure != null) {
+        info.failConditions = failure;
+      }
+      if (status.isTerminated()) {
         info.end = System.currentTimeMillis();
       }
-
-      // notify listeners
-      listeners.forEach(l -> l.goalStatusChanged(info));
+      snapshot = new GoalInfo(info);
     }
+    // Bookkeeping must finish before publishing the transition to external listeners.
+    GoalListener lifecycle = lifecycleListener;
+    if (lifecycle != null) {
+      lifecycle.goalStatusChanged(new GoalInfo(snapshot));
+    }
+    for (GoalListener listener : listeners) {
+      if (listener != lifecycle) {
+        listener.goalStatusChanged(new GoalInfo(snapshot));
+      }
+    }
+    return true;
   }
 
   /**
@@ -472,10 +505,10 @@ public class Goal {
     if (!status.isFailure()) {
       log.error("[setFailureStatus] status is not a failure type: {}", status);
       setStatus(status);
+      return;
     }
 
-    info.failConditions = failureJustification;
-    setStatus(status);
+    transitionStatus(status, failureJustification, false);
   }
 
   //TODO: Have computePriority() method, compute priority externally and pass in single value here, or have separate
@@ -629,11 +662,26 @@ public class Goal {
    * @return
    */
   public GoalInfo getInfo() {
-    return new GoalInfo(info);
+    synchronized (statusLock) {
+      return new GoalInfo(info);
+    }
+  }
+
+  /**
+   * Install the owning manager's bookkeeping callback, ahead of external listeners.
+   * Goals executed without a manager do not need a lifecycle listener.
+   */
+  public void setLifecycleListener(GoalListener listener) {
+    synchronized (statusLock) {
+      if (lifecycleListener != null && lifecycleListener != listener) {
+        throw new IllegalStateException("Goal already belongs to a lifecycle manager: " + getId());
+      }
+      lifecycleListener = java.util.Objects.requireNonNull(listener);
+    }
   }
 
   public void addListener(GoalListener listener) {
-    listeners.add(listener);
+    listeners.add(java.util.Objects.requireNonNull(listener));
   }
 
   public void removeListener(GoalListener listener) {
