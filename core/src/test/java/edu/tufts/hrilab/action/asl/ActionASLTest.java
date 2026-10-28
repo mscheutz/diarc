@@ -78,6 +78,18 @@ public class ActionASLTest {
     }
 
     @Test
+    public void testRejectsUnknownDeclarationType() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        assertNull(parser.parseFromString(TEST_DB, null, "() = invalid() { not.a.Type !x; }"));
+        try {
+            parser.parseStrict(TEST_DB, null, "() = invalid() { not.a.Type !x; }");
+            org.junit.Assert.fail("Expected parseStrict to reject unknown declaration type");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Class not found for type"));
+        }
+    }
+
+    @Test
     public void testFileParserRejectsErrors() {
         ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
         for (String filename : List.of("invalid-lexical.asl", "invalid-syntax.asl")) {
@@ -277,6 +289,37 @@ public class ActionASLTest {
                     }
                 }
                 """);
+    }
+
+    @Test
+    public void testBlockLocalDeclarationsRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = scopedLocals() {
+                    int !outer = 1;
+                    if (true) {
+                        int !inner = 2;
+                        !outer = !outer + !inner;
+                    } else {
+                        int !alt = 3;
+                        !outer = !outer + !alt;
+                    }
+                }
+                """);
+
+        assertTrue(restored.getEventSpecs().stream().anyMatch(es -> "declare".equals(es.getCommand())));
+        assertTrue(restored.getRoles().stream().noneMatch(role -> "!inner".equals(role.getName())));
+        assertTrue(restored.getRoles().stream().noneMatch(role -> "!alt".equals(role.getName())));
+    }
+
+    @Test
+    public void testRejectsOutOfScopeBlockLocalReference() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        assertNull(parser.parseFromString(TEST_DB, null, """
+                () = invalidScope() {
+                    if (true) { int !tmp = 1; }
+                    !tmp = 2;
+                }
+                """));
     }
 
     @Test

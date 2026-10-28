@@ -187,7 +187,7 @@ dependencies {
   testImplementation("org.skyscreamer:jsonassert:1.5.1")
 
   //action
-  implementation("org.antlr:antlr4-runtime:4.13.1")
+  implementation("org.antlr:antlr4-runtime:4.7.2")
   implementation("com.github.pellierd:pddl4j:3.8.3")
   implementation("org.quartz-scheduler:quartz:2.5.0")
 

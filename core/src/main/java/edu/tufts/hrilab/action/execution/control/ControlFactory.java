@@ -117,6 +117,9 @@ public class ControlFactory {
         case ASSIGN:
           controlContext = new ExpressionContext(parent, sm, parser.getEventSpec());
           break;
+        case DECLARE:
+          controlContext = new DeclarationContext(parent, sm, parser.getEventSpec());
+          break;
         case INVOKE:
           controlContext = new InvokeContext(parent, sm, parser.getEventSpec());
           break;
@@ -145,6 +148,7 @@ public class ControlFactory {
     END(false),
     ENDAND(false),
     ENDASYNC(false),
+    ENDBLOCK(false),
     ENDFOR(false),
     ENDIF(false),
     ENDNOT(false),
@@ -160,6 +164,7 @@ public class ControlFactory {
     JOIN(true),
     ASSIGN(true),
     EVALUATE(true),
+    DECLARE(true),
     INVOKE(true),
     NOT(true),
     OR(true),
@@ -202,7 +207,7 @@ public class ControlFactory {
         case ASYNC:
           return Collections.singletonList(ENDASYNC);
         case BLOCK:
-          return Collections.singletonList(END);
+          return Arrays.asList(ENDBLOCK, END);
         case IF:
         case ELSEIF:
           return Collections.singletonList(THEN);

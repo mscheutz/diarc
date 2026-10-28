@@ -156,6 +156,8 @@ public class ActionScriptLanguageParser {
 
     private Builder curr_dbe_builder;
     private List<ActionDBEntry> parsed_actions;
+    private int controlContentDepth = 0;
+    private record ParsedVar(String name, String semanticType) {}
 
     private Map<String, String> aliasingMap;
     private Condition.Disjunction orCondition = null;
@@ -167,7 +169,19 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterActionScript(ASLParser.ActionScriptContext ctx) {
       aliasingMap = new HashMap<>();
+      installDefaultTypeAliases();
       parsed_actions = new ArrayList<>();
+      controlContentDepth = 0;
+    }
+
+    private void installDefaultTypeAliases() {
+      aliasingMap.put("Predicate", "edu.tufts.hrilab.fol.Predicate");
+      aliasingMap.put("Symbol", "edu.tufts.hrilab.fol.Symbol");
+      aliasingMap.put("Variable", "edu.tufts.hrilab.fol.Variable");
+      aliasingMap.put("Term", "edu.tufts.hrilab.fol.Term");
+      aliasingMap.put("List", "java.util.List");
+      aliasingMap.put("Map", "java.util.Map");
+      aliasingMap.put("Set", "java.util.Set");
     }
 
     @Override
@@ -211,7 +225,13 @@ public class ActionScriptLanguageParser {
 
     @Override
     public void exitDefinition(ASLParser.DefinitionContext ctx) {
-      parsed_actions.add(curr_dbe_builder.build(false));
+      ActionDBEntry entry = curr_dbe_builder.build(false);
+      List<String> predeclaredLocals = entry.getRoles().stream()
+          .filter(ActionBinding::isLocal)
+          .map(ActionBinding::getName)
+          .collect(java.util.stream.Collectors.toList());
+      AslScopeValidator.validate(entry.getEventSpecs(), predeclaredLocals);
+      parsed_actions.add(entry);
     }
 
     @Override
@@ -222,11 +242,41 @@ public class ActionScriptLanguageParser {
 
     @Override
     public void enterLocalvar(ASLParser.LocalvarContext ctx) {
-      if (ctx.LOCALVAR() != null) {
-        addRole(ctx.LOCALVAR().getText(), ctx.javaType().getText(), ctx.assignment(), true, false);
+      String roleName = ctx.LOCALVAR() != null ? ctx.LOCALVAR().getText() : ctx.GLOBALVAR().getText();
+      ParsedVar parsedVar = parseVar(roleName);
+      if (controlContentDepth == 0) {
+        addRole(roleName, ctx.javaType().getText(), ctx.assignment(), true, false);
       } else {
-        addRole(ctx.GLOBALVAR().getText(), ctx.javaType().getText(), ctx.assignment(), true, false);
+        emitBlockLocalDeclaration(parsedVar.name(), parsedVar.semanticType(), ctx.javaType().getText(), ctx.assignment());
       }
+    }
+
+    @Override
+    public void enterControlContent(ASLParser.ControlContentContext ctx) {
+      controlContentDepth++;
+      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL);
+      ParserRuleContext r = ctx.getParent();
+      if (r instanceof ASLParser.IfStatementContext || r instanceof ASLParser.ElifStatementContext) {
+        esBuilder.setCommand("then");
+      } else if (r instanceof ASLParser.WhileStatementContext) {
+        esBuilder.setCommand("do");
+      } else if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
+        esBuilder.setCommand("block");
+      } else {
+        return;
+      }
+
+      curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
+    @Override
+    public void exitControlContent(ASLParser.ControlContentContext ctx) {
+      ParserRuleContext r = ctx.getParent();
+      if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
+        EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endblock");
+        curr_dbe_builder.addEventSpec(esBuilder.build());
+      }
+      controlContentDepth = Math.max(0, controlContentDepth - 1);
     }
 
     @Override
@@ -818,32 +868,6 @@ public class ActionScriptLanguageParser {
       }
     }
 
-    @Override
-    public void enterControlContent(ASLParser.ControlContentContext ctx) {
-      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL);
-      ParserRuleContext r = ctx.getParent();
-      if (r instanceof ASLParser.IfStatementContext || r instanceof ASLParser.ElifStatementContext) {
-        esBuilder.setCommand("then");
-      } else if (r instanceof ASLParser.WhileStatementContext) {
-        esBuilder.setCommand("do");
-      } else if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
-        esBuilder.setCommand("block");
-      } else {
-        return;
-      }
-
-      curr_dbe_builder.addEventSpec(esBuilder.build());
-    }
-
-    @Override
-    public void exitControlContent(ASLParser.ControlContentContext ctx) {
-      ParserRuleContext r = ctx.getParent();
-      if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
-        EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endblock");
-        curr_dbe_builder.addEventSpec(esBuilder.build());
-      }
-    }
-
     @Override public void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) {
       EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("nointerrupt");
       curr_dbe_builder.addEventSpec(esBuilder.build());
@@ -898,6 +922,58 @@ public class ActionScriptLanguageParser {
       addRole(ctx.GLOBALVAR().getText(), ctx.javaType().getText(), ctx.assignment(), false, roleReturn);
     }
 
+    private void emitBlockLocalDeclaration(String roleName, String semanticType, String javaType, ASLParser.AssignmentContext assignmentContext) {
+      Class<?> varType = resolveJavaTypeOrThrow(javaType);
+      curr_dbe_builder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+          .addInputArg(roleName).addInputArg(varType.getCanonicalName()).addInputArg(semanticType == null ? "" : semanticType).build());
+
+      if (assignmentContext == null) {
+        return;
+      }
+      if (assignmentContext.valueExpression() != null) {
+        curr_dbe_builder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+            .addInputArg(expressionText(assignmentContext.valueExpression())).addReturnArg(roleName).build());
+      } else if (assignmentContext.input() != null) {
+        curr_dbe_builder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+            .addInputArg(assignmentContext.input().getText()).addReturnArg(roleName).build());
+      } else if (assignmentContext.specType() != null) {
+        EventSpec.Builder esBuilder = new EventSpec.Builder(getEventType(assignmentContext.specType()));
+        if (assignmentContext.specType().name() != null) {
+          esBuilder.setActor(assignmentContext.specType().name().getText());
+        }
+        esBuilder.setCommand(assignmentContext.function().name().getText());
+        esBuilder.setInputArgs(getInputArgs(assignmentContext.function().inputList()));
+        esBuilder.addReturnArg(roleName);
+        curr_dbe_builder.addEventSpec(esBuilder.build());
+      }
+    }
+
+    private Class<?> resolveJavaTypeOrThrow(String javaType) {
+      String typeName = resolveTypeNameForLookup(javaType);
+      Class<?> varType = Utilities.getClass(typeName);
+      if (varType == null) {
+        throw new IllegalArgumentException("Class not found for type: " + typeName);
+      }
+      return varType;
+    }
+
+    private String resolveTypeNameForLookup(String javaType) {
+      String typeName = aliasingMap.getOrDefault(javaType, javaType);
+      int genericStart = typeName.indexOf('<');
+      if (genericStart >= 0) {
+        typeName = typeName.substring(0, genericStart).trim();
+      }
+      return aliasingMap.getOrDefault(typeName, typeName);
+    }
+
+    private ParsedVar parseVar(String token) {
+      int idx = token.indexOf(':');
+      if (idx < 0) {
+        return new ParsedVar(token, "");
+      }
+      return new ParsedVar(token.substring(0, idx), token.substring(idx + 1));
+    }
+
     /**
      * Helper method to add input/output roles and local roles.
      *
@@ -908,11 +984,10 @@ public class ActionScriptLanguageParser {
      * @param isReturn
      */
     private void addRole(String roleName, String javaType, ASLParser.AssignmentContext assignmentContext, boolean isLocal, boolean isReturn) {
-      String typeName = aliasingMap.containsKey(javaType) ? aliasingMap.get(javaType) : javaType;
+      String typeName = resolveTypeNameForLookup(javaType);
       Class<?> varType = Utilities.getClass(typeName);
       if (varType == null) {
-        log.error("Class not found found for type: " + typeName + ". Role (" + roleName + ") will use default to String representation.");
-        varType = String.class;
+        throw new IllegalArgumentException("Class not found for type: " + typeName + " (role " + roleName + ")");
       }
 
       ActionBinding.Builder newRole = new ActionBinding.Builder(roleName, varType).setIsLocal(isLocal).setIsReturn(isReturn);

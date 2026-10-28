@@ -131,6 +131,21 @@ public class ActionScriptLanguageWriter {
     return varNamePlusType + assign;
   }
 
+  private String declarationString(EventSpec declare) {
+    if (declare.getInputArgs().size() < 2) {
+      return "java.lang.Object !invalidDeclaration";
+    }
+    String name = declare.getInputArgs().get(0);
+    String javaType = declare.getInputArgs().get(1);
+    String semanticType = declare.getInputArgs().size() > 2 ? declare.getInputArgs().get(2) : "";
+    if (name.contains(":")) {
+      return javaType + " " + name;
+    }
+    return semanticType == null || semanticType.isEmpty()
+        ? javaType + " " + name
+        : javaType + " " + name + ":" + semanticType;
+  }
+
   private void writeSettings(ActionDBEntry entry) {
     if (entry.getBenefit() != 0.0) {
       cat("benefit = " + entry.getBenefit() + ";");
@@ -278,6 +293,8 @@ public class ActionScriptLanguageWriter {
       StringBuilder conditionString = new StringBuilder();
       ArrayDeque<String> conditionNameStack = new ArrayDeque<>();
       ArrayDeque<StringJoiner> conditionStack = new ArrayDeque<>();
+      int pendingLoopBodyBlocks = 0;
+      int openLoopBodyBlocks = 0;
       String lastOrigin = null;
       for (EventSpec es : entry.getEventSpecs()) {
         if (!inConditioning && es.getSourceLocation() != null && es.getSourceLocation().origin() != null
@@ -377,6 +394,7 @@ public class ActionScriptLanguageWriter {
                   }
                   break;
                 case BLOCK:
+                case ENDBLOCK:
                 case END:
                 case ASYNC:
                 case ENDASYNC:
@@ -435,6 +453,7 @@ public class ActionScriptLanguageWriter {
                   conditionString = new StringBuilder("while ");
                   break;
                 case FOR:
+                  pendingLoopBodyBlocks++;
                   String name = es.getInputArgs().get(0);
                   if (es.getInputArgs().size() == 4) {
                     openBlock("for (" + name + "; "
@@ -447,8 +466,12 @@ public class ActionScriptLanguageWriter {
                   }
                   break;
                 case FOREACH:
-                  String[] tokens = es.toString().split(" ");
-                  openBlock(tokens[0] + "(" + tokens[1] + " : " + tokens[2] +")");
+                  pendingLoopBodyBlocks++;
+                  if (es.getInputArgs().size() != 2) {
+                    log.error("Malformed FOREACH control EventSpec: {}", es);
+                  } else {
+                    openBlock("foreach(" + es.getInputArgs().get(0) + " : " + es.getInputArgs().get(1) + ")");
+                  }
                   break;
                 case TRY:
                   openBlock("try");
@@ -471,6 +494,22 @@ public class ActionScriptLanguageWriter {
                 case ENDNOINTERRUPT:
                   closeBlock();
                   break;
+                case BLOCK:
+                  if (pendingLoopBodyBlocks > 0) {
+                    pendingLoopBodyBlocks--;
+                    openLoopBodyBlocks++;
+                  } else {
+                    openBlock("block");
+                  }
+                  break;
+                case ENDBLOCK:
+                case END:
+                  if (openLoopBodyBlocks > 0) {
+                    openLoopBodyBlocks--;
+                  } else {
+                    closeBlock();
+                  }
+                  break;
                 case EXIT:
                   StringJoiner exitArgs = new StringJoiner(", ", "(", ")");
                   es.getInputArgs().forEach(exitArgs::add);
@@ -492,11 +531,12 @@ public class ActionScriptLanguageWriter {
                 case ASSIGN:
                   cat(es.getReturnArgs().get(0) + " = " + es.getInputArgs().get(0) + ";");
                   break;
+                case DECLARE:
+                  cat(declarationString(es) + ";");
+                  break;
                 case RETURN:
                   cat("return;");
                   break;
-                case BLOCK:
-                case END:
                 case DO:
                 case AND:
                 case OR:

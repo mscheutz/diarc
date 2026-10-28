@@ -408,6 +408,18 @@ public abstract class ArgumentBasedContext extends Context {
   }
 
   /**
+   * Declare a local variable in this lexical scope.
+   *
+   * @param name variable name
+   * @param javaType declared type
+   * @param semanticType optional semantic type
+   * @return true if newly declared in this scope, false if name already exists in this scope
+   */
+  public boolean declareLocalArgument(String name, Class<?> javaType, String semanticType) {
+    return addArgument(name, javaType, semanticType, null, null, true, false, false);
+  }
+
+  /**
    * Given the original Predicate, for each argument that is an unbound
    * variable, create a binding and put it in a new Predicate.
    *

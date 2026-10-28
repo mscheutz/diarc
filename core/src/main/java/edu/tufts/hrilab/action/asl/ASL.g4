@@ -284,7 +284,7 @@ andExpression : primaryExpression (ANDOPT primaryExpression)*;
 
 primaryExpression : '(' booleanExpression ')' | TRUE | FALSE | specFunction | NOT primaryExpression | valueExpression;
 
-controlContent : '{' (control|spec|valueAssignment)* '}';
+controlContent : '{' (control|spec|valueAssignment|localvar)* '}';
 
 elifStatement : ELIF '(' booleanExpression ')' controlContent;
 

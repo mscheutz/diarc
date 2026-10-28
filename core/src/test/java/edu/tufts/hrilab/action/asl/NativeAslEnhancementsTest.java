@@ -239,6 +239,28 @@ public class NativeAslEnhancementsTest {
     fails("() = ROOT() { java.lang.Boolean !flag; !flag = 1; }");
   }
 
+  @Test(timeout = 15000)
+  public void blockLocalDeclarationsHaveLexicalScopeAndShadowing() {
+    succeeds("""
+        () = ROOT() {
+          long !value = 1;
+          if (true) {
+            long !value = 2;
+            if (!value == 2) { } else { exit(FAIL); }
+          } else {
+            long !other = 3;
+          }
+          if (!value == 1) { } else { exit(FAIL); }
+        }
+        """);
+    rejects(() -> run("""
+        () = ROOT() {
+          if (true) { long !temp = 1; }
+          !temp = 2;
+        }
+        """));
+  }
+
   @Test
   public void newSyntaxSurvivesWriterRoundTrip() {
     var entry = new ActionScriptLanguageParser().parseStrict("roundtrip.asl", null, IMPORTS + """

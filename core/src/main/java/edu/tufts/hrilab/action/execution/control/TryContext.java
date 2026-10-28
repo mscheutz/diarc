@@ -10,13 +10,15 @@ package edu.tufts.hrilab.action.execution.control;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.ScriptParser;
 import edu.tufts.hrilab.action.state.StateMachine;
+import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
+import java.util.List;
 
 /**
  * This represents the semantics of the TRY control in an action script.
  */
-public class TryContext extends Context {
+public class TryContext extends ArgumentBasedContext {
 
   /**
    * The action status of the action that was caught.
@@ -58,8 +60,14 @@ public class TryContext extends Context {
    */
   public TryContext(Context c, StateMachine sm, ScriptParser parser) {
     super(c, sm, "TRY");
+    setupArguments(List.of(), List.of());
     this.parser = parser;
     init();
+  }
+
+  @Override
+  protected void setupArguments(List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
+    // lexical scope only
   }
 
   /**
@@ -256,6 +264,7 @@ public class TryContext extends Context {
   public TryContext copy(Context newParent) {
     TryContext newTry = new TryContext(newParent, newParent.getStateMachine(), parser);
     copyInternal(newTry);
+    newTry.copyArguments(this.arguments);
     newTry.statusToCatch = statusToCatch;
     newTry.justificationToPropagate = justificationToPropagate;
     newTry.statusToPropagate = statusToPropagate;
