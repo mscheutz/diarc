@@ -63,6 +63,14 @@ public final class BehaviorTreeExecution {
   private final Map<String, CompiledAction> scripts = new HashMap<>();
   private final Map<String, Long> enums = new HashMap<>();
   private final Map<String, BehaviorTreeBindings.Belief> beliefs = new HashMap<>();
+  private static final Map<String, Class<?>> PORT_TYPES = Map.ofEntries(
+      Map.entry("String", String.class), Map.entry("java.lang.String", String.class),
+      Map.entry("Symbol", Symbol.class), Map.entry("edu.tufts.hrilab.fol.Symbol", Symbol.class),
+      Map.entry("Predicate", Predicate.class), Map.entry("edu.tufts.hrilab.fol.Predicate", Predicate.class),
+      Map.entry("boolean", Boolean.class), Map.entry("Boolean", Boolean.class), Map.entry("java.lang.Boolean", Boolean.class),
+      Map.entry("int", Integer.class), Map.entry("Integer", Integer.class), Map.entry("java.lang.Integer", Integer.class),
+      Map.entry("long", Long.class), Map.entry("Long", Long.class), Map.entry("java.lang.Long", Long.class),
+      Map.entry("double", Double.class), Map.entry("Double", Double.class), Map.entry("java.lang.Double", Double.class));
   private static final Map<String, Conversion<?>> converters = new ConcurrentHashMap<>();
   private record Conversion<T>(Class<T> type, Function<String, T> convert) { }
   private boolean closed;
@@ -102,11 +110,18 @@ public final class BehaviorTreeExecution {
     }
   }
 
+  /** Register once per JVM, using a dotted application namespace (for example, my.robot.Point). */
   public static <T> void registerPortConverter(String name, Class<T> type, Function<String, T> converter) {
-    if (!name.matches("[A-Za-z_][A-Za-z_0-9]*")
-        || converters.putIfAbsent(name, new Conversion<>(java.util.Objects.requireNonNull(type),
+    if (name == null || PORT_TYPES.containsKey(name)
+        || Set.of("java.util.List", "java.util.Queue", "java.util.Deque").contains(name)) {
+      throw new IllegalArgumentException("Reserved or missing BT port converter name: " + name);
+    }
+    if (!name.matches("[A-Za-z_][A-Za-z_0-9]*(\\.[A-Za-z_][A-Za-z_0-9]*)+")) {
+      throw new IllegalArgumentException("BT port converter requires a dotted namespaced identifier: " + name);
+    }
+    if (converters.putIfAbsent(name, new Conversion<>(java.util.Objects.requireNonNull(type),
         java.util.Objects.requireNonNull(converter))) != null) {
-      throw new IllegalArgumentException("Invalid or duplicate BT port converter: " + name);
+      throw new IllegalArgumentException("Duplicate BT port converter: " + name);
     }
   }
 
@@ -276,9 +291,17 @@ public final class BehaviorTreeExecution {
     }
     if (type.matches("(List|Queue)<(int|long|double|boolean|String)>")) {
       String element = type.substring(type.indexOf('<') + 1, type.length() - 1);
-      if (type.startsWith("Queue") && raw instanceof Deque<?>) {
-        ((Deque<?>) raw).forEach(v -> convertValue(v, element));
-        return raw;
+      if (type.startsWith("Queue") && raw instanceof Deque<?> queue) {
+        Class<?> elementType = portType(element);
+        synchronized (queue) {
+          for (Object value : queue) {
+            if (!elementType.isInstance(value)) {
+              throw new IllegalArgumentException("Shared " + type + " requires " + elementType.getName()
+                  + " elements, not " + (value == null ? "null" : value.getClass().getName()));
+            }
+          }
+        }
+        return queue;
       }
       Collection<?> source = raw instanceof Collection<?> ? (Collection<?>) raw :
           raw.toString().isEmpty() ? List.of() : List.of(raw.toString().split(";", -1));
@@ -323,22 +346,18 @@ public final class BehaviorTreeExecution {
   }
 
   public static Class<?> portType(String type) {
-    if (converters.containsKey(type)) {
-      return converters.get(type).type;
+    Class<?> builtin = PORT_TYPES.get(type);
+    if (builtin != null) {
+      return builtin;
     }
     if (type.matches("(List|Queue)<(int|long|double|boolean|String)>")) {
       return type.startsWith("Queue") ? Deque.class : List.class;
     }
-    switch (type) {
-      case "String": case "java.lang.String": return String.class;
-      case "Symbol": case "edu.tufts.hrilab.fol.Symbol": return Symbol.class;
-      case "Predicate": case "edu.tufts.hrilab.fol.Predicate": return Predicate.class;
-      case "boolean": case "Boolean": case "java.lang.Boolean": return Boolean.class;
-      case "int": case "Integer": case "java.lang.Integer": return Integer.class;
-      case "long": case "Long": case "java.lang.Long": return Long.class;
-      case "double": case "Double": case "java.lang.Double": return Double.class;
-      default: throw new IllegalArgumentException("Unsupported BT port type: " + type);
+    Conversion<?> converter = converters.get(type);
+    if (converter != null) {
+      return converter.type;
     }
+    throw new IllegalArgumentException("Unsupported BT port type: " + type);
   }
 
   public synchronized int integer(String path, String field) {
@@ -709,8 +728,8 @@ public final class BehaviorTreeExecution {
       }
       String output = decoded(encodedOutput);
       Object value = convertValue(queue.getFirst(), type);
-      queue.removeFirst();
       write(output.substring(1, output.length() - 1), value);
+      queue.removeFirst();
       return true;
     }
   }

@@ -30,13 +30,34 @@ public class BehaviorTreeConverterTest {
     return "<root BTCPP_format=\"4\"><BehaviorTree ID=\"Main\">" + body + "</BehaviorTree></root>";
   }
 
-  private static void rejects(java.util.concurrent.Callable<?> conversion) throws Exception {
+  private static IllegalArgumentException rejects(java.util.concurrent.Callable<?> conversion) throws Exception {
     try {
       conversion.call();
     } catch (IllegalArgumentException expected) {
-      return;
+      return expected;
     }
-    fail("Expected conversion to reject unsupported or malformed input");
+    throw new AssertionError("Expected conversion to reject unsupported or malformed input");
+  }
+
+  @Test
+  public void bindingRegistrationRejectsAllNativeKindsAndWrapperNames() throws Exception {
+    for (String name : List.of("Sequence", "SequenceWithMemory", "Fallback", "ReactiveSequence",
+        "ReactiveFallback", "Parallel", "ParallelAll", "IfThenElse", "WhileDoElse", "AsyncSequence",
+        "AsyncFallback", "TryCatch", "Switch2", "Switch3", "Switch4", "Switch5", "Switch6",
+        "Inverter", "ForceSuccess", "ForceFailure", "RetryUntilSuccessful", "Repeat", "Timeout", "Delay",
+        "KeepRunningUntilFailure", "RunOnce", "Precondition", "LoopInt", "LoopBool", "LoopDouble",
+        "LoopString", "SkipUnlessUpdated", "WaitValueUpdate", "AlwaysSuccess", "AlwaysFailure",
+        "Script", "ScriptCondition", "SetBlackboard", "UnsetBlackboard", "Sleep", "WasEntryUpdated",
+        "SubTree", "Action", "Condition", "Control", "Decorator")) {
+      IllegalArgumentException error = rejects(
+          () -> new BehaviorTreeBindings().bind(name, new BehaviorTreeBindings.Leaf("nativeLeaf", true, "action")));
+      assertTrue(error.getMessage(), error.getMessage().contains("reserved"));
+      assertTrue(error.getMessage(), error.getMessage().contains(name));
+    }
+    BehaviorTreeBindings bindings = new BehaviorTreeBindings()
+        .bind("CustomSequence", new BehaviorTreeBindings.Leaf("nativeLeaf", true, "action"));
+    assertTrue(new BehaviorTreeConverter(bindings).convert(xml("<CustomSequence/>"), "tree")
+        .contains("act:nativeLeaf"));
   }
 
   @Test

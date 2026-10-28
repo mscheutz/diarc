@@ -218,7 +218,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       initialConstraints.addForbiddenAction(cmdLine.getOptionValue("badaction"));
     }
     if (cmdLine.hasOption("badstate")) {
-      Predicate bad = Factory.createPredicate(cmdLine.getOptionValue("badaction"));
+      Predicate bad = Factory.createPredicate(cmdLine.getOptionValue("badstate"));
       initialConstraints.addForbiddenState(bad);
     }
     if (cmdLine.hasOption("selector")) {
@@ -243,7 +243,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     if (cmdLine.hasOption("performancefile")) {
       performanceFiles.addAll(Arrays.asList(cmdLine.getOptionValues("performancefile")));
     }
-    if (cmdLine.hasOption("performancefiledir")) {
+    if (cmdLine.hasOption("performancefileDir")) {
       performanceFileDir = cmdLine.getOptionValue("performancefileDir");
     }
     if (cmdLine.hasOption("learningGui")) {
@@ -1201,7 +1201,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
         goals.addAll(em.getScheduledGoals());
       }
       case PENDING -> goals.addAll(em.getPendingGoals());
-      case NEXT -> goals.add(em.getNextGoal());
+      case NEXT -> {
+        Goal next = em.getNextGoal();
+        if (next != null) {
+          goals.add(next);
+        }
+      }
       case PAST -> goals.addAll(em.getPastGoals());
       case SYSTEM -> goals.addAll(em.getSystemGoals());
       case SCHEDULED -> goals.addAll(em.getScheduledGoals());

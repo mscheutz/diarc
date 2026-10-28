@@ -41,6 +41,9 @@ public final class BehaviorTreeConverter {
   private static final Set<String> DECORATORS = Set.of("Inverter", "ForceSuccess", "ForceFailure",
       "RetryUntilSuccessful", "Repeat", "Timeout", "Delay", "KeepRunningUntilFailure", "RunOnce", "Precondition",
       "LoopInt", "LoopBool", "LoopDouble", "LoopString", "SkipUnlessUpdated", "WaitValueUpdate");
+  private static final Set<String> BUILTINS = Set.of("AlwaysSuccess", "AlwaysFailure", "Script", "ScriptCondition",
+      "SetBlackboard", "UnsetBlackboard", "Sleep", "WasEntryUpdated");
+  private static final Set<String> WRAPPERS = Set.of("Action", "Condition", "Control", "Decorator");
   private static final Set<String> HOOKS = Set.of("_failureIf", "_successIf", "_skipIf", "_while",
       "_onSuccess", "_onFailure", "_post", "_onHalted");
 
@@ -51,6 +54,11 @@ public final class BehaviorTreeConverter {
   private final Set<String> referencedTrees = new java.util.LinkedHashSet<>();
   private final List<CompiledNode> nodes = new ArrayList<>();
   private String action;
+
+  static boolean isReservedNodeId(String id) {
+    return CONTROLS.contains(id) || DECORATORS.contains(id) || BUILTINS.contains(id)
+        || WRAPPERS.contains(id) || id.equals("SubTree") || id.matches("Switch[2-6]");
+  }
 
   private static final class Scope {
     String resolve(String expression) {
@@ -274,7 +282,7 @@ public final class BehaviorTreeConverter {
     node.xml = xml;
     node.path = path;
     node.scope = scope;
-    node.kind = Set.of("Action", "Condition", "Control", "Decorator").contains(tag)
+    node.kind = WRAPPERS.contains(tag)
         ? xml.getAttribute("ID") : tag;
     nodes.add(node);
     Set<String> allowed = new HashSet<>(Set.of("name"));
@@ -358,8 +366,7 @@ public final class BehaviorTreeConverter {
       for (int i = 0; i < children.size(); i++) {
         node.children.add(compile(children.get(i), path + "/" + i, scope));
       }
-    } else if (Set.of("AlwaysSuccess", "AlwaysFailure", "Script", "ScriptCondition",
-        "SetBlackboard", "UnsetBlackboard", "Sleep", "WasEntryUpdated").contains(node.kind)) {
+    } else if (BUILTINS.contains(node.kind)) {
       if (!children(xml).isEmpty()) {
         throw error(xml, "A constant leaf cannot have children");
       }

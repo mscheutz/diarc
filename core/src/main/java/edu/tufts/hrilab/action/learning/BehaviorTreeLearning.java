@@ -17,7 +17,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -293,18 +296,115 @@ public final class BehaviorTreeLearning {
     return draft(name).bindingsJson;
   }
 
-  /** Export both artifacts required by loadBehaviorTree, in UTF-8. */
+  /**
+   * Stage and validate both UTF-8 artifacts before replacement, restoring the
+   * previous pair on publication failure. This is not a two-file transaction
+   * for concurrent readers or process crashes; deploy versioned pairs instead.
+   */
   public synchronized boolean export(String name, String xmlFile, String bindingsFile) throws IOException {
-    Path xmlPath = Path.of(xmlFile).toAbsolutePath().normalize();
-    Path bindingPath = Path.of(bindingsFile).toAbsolutePath().normalize();
+    return export(name, xmlFile, bindingsFile, BehaviorTreeLearning::replaceExportFile);
+  }
+
+  @FunctionalInterface
+  interface FileReplacer {
+    void replace(Path source, Path destination) throws IOException;
+  }
+
+  private record ExportTarget(Path destination, Path staged, Path backup) { }
+
+  synchronized boolean export(String name, String xmlFile, String bindingsFile, FileReplacer replacer)
+      throws IOException {
+    Path xmlPath = exportPath(xmlFile);
+    Path bindingPath = exportPath(bindingsFile);
     if (xmlPath.equals(bindingPath)
         || (Files.exists(xmlPath) && Files.exists(bindingPath) && Files.isSameFile(xmlPath, bindingPath))) {
       throw new IllegalArgumentException("XML and bindings require distinct files");
     }
     String xml = getXml(name);
-    Files.writeString(bindingPath, getBindingsJson(name), StandardCharsets.UTF_8);
-    Files.writeString(xmlPath, xml, StandardCharsets.UTF_8);
-    return true;
+    List<Path> temporaryFiles = new ArrayList<>();
+    List<ExportTarget> targets = new ArrayList<>();
+    List<ExportTarget> attempted = new ArrayList<>();
+    Throwable failure = null;
+    try {
+      for (Path destination : List.of(bindingPath, xmlPath)) {
+        if (Files.exists(destination) && !Files.isRegularFile(destination)) {
+          throw new IOException("Export destination is not a regular file: " + destination);
+        }
+        Path staged = Files.createTempFile(destination.getParent(), ".diarc-bt-stage-", ".tmp");
+        temporaryFiles.add(staged);
+        Path backup = null;
+        if (Files.exists(destination)) {
+          backup = Files.createTempFile(destination.getParent(), ".diarc-bt-backup-", ".tmp");
+          temporaryFiles.add(backup);
+          Files.copy(destination, backup, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+          Files.copy(backup, staged, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        Files.writeString(staged, destination.equals(xmlPath) ? xml : getBindingsJson(name), StandardCharsets.UTF_8);
+        targets.add(new ExportTarget(destination, staged, backup));
+      }
+      try (var reader = Files.newBufferedReader(targets.get(0).staged, StandardCharsets.UTF_8)) {
+        new BehaviorTreeConverter(BehaviorTreeBindings.read(reader)).convert(targets.get(1).staged, name);
+      }
+      for (ExportTarget target : targets) {
+        // A failed move can have changed its destination, so restore attempted moves too.
+        attempted.add(target);
+        replacer.replace(target.staged, target.destination);
+      }
+      return true;
+    } catch (IOException | RuntimeException e) {
+      failure = e;
+      for (int i = attempted.size() - 1; i >= 0; i--) {
+        ExportTarget target = attempted.get(i);
+        try {
+          if (target.backup == null) {
+            Files.deleteIfExists(target.destination);
+          } else {
+            replacer.replace(target.backup, target.destination);
+          }
+        } catch (IOException | RuntimeException recovery) {
+          temporaryFiles.remove(target.backup);
+          e.addSuppressed(new IOException("Could not restore " + target.destination
+              + (target.backup == null ? "; remove the incomplete export manually"
+              : "; recovery copy retained at " + target.backup), recovery));
+        }
+      }
+      throw e;
+    } finally {
+      IOException cleanupFailure = null;
+      for (Path temporary : temporaryFiles) {
+        try {
+          Files.deleteIfExists(temporary);
+        } catch (IOException | RuntimeException e) {
+          IOException cleanup = new IOException("Could not remove export temporary file: " + temporary, e);
+          if (cleanupFailure == null) {
+            cleanupFailure = cleanup;
+          } else {
+            cleanupFailure.addSuppressed(cleanup);
+          }
+        }
+      }
+      if (cleanupFailure != null) {
+        if (failure != null) {
+          failure.addSuppressed(cleanupFailure);
+        } else {
+          throw cleanupFailure;
+        }
+      }
+    }
+  }
+
+  private static Path exportPath(String file) throws IOException {
+    Path path = Path.of(file).toAbsolutePath().normalize();
+    return Files.exists(path, LinkOption.NOFOLLOW_LINKS) ? path.toRealPath()
+        : path.getParent().toRealPath().resolve(path.getFileName());
+  }
+
+  private static void replaceExportFile(Path source, Path destination) throws IOException {
+    try {
+      Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    } catch (AtomicMoveNotSupportedException e) {
+      Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 
   private static void validateLeaf(Draft draft, Node leaf) {

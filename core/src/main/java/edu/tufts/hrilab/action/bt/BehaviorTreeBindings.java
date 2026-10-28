@@ -101,6 +101,9 @@ public final class BehaviorTreeBindings {
     if (!id.matches("[A-Za-z_][A-Za-z_0-9]*")) {
       throw new IllegalArgumentException("Invalid BT node ID: " + id);
     }
+    if (BehaviorTreeConverter.isReservedNodeId(id)) {
+      throw new IllegalArgumentException("BT node ID is reserved for a native control, decorator, built-in, or wrapper: " + id);
+    }
     Objects.requireNonNull(leaf, "leaf");
     if (leaf.action == null || !leaf.action.matches("[A-Za-z_][A-Za-z_0-9]*")) {
       throw new IllegalArgumentException("Invalid DIARC action for " + id);

@@ -325,7 +325,7 @@ public class BehaviorTreeExecutionTest {
 
   @Test(timeout = 15000)
   public void typedQueuesAreConsumedAndCustomConvertersUseNativeLeafTypes() {
-    String pointType = "Point" + names.incrementAndGet();
+    String pointType = "diarc.tests.Point" + names.incrementAndGet();
     BehaviorTreeExecution.registerPortConverter(pointType, java.awt.Point.class, text -> {
       String[] parts = text.split(",");
       if (parts.length != 2) {
@@ -351,6 +351,21 @@ public class BehaviorTreeExecutionTest {
         """), bindings));
     assertEquals(List.of("record:1", "record:2", "record:a", "record:b", "record:a", "record:b",
         "point:3,4"), trace);
+  }
+
+  @Test(timeout = 15000)
+  public void mismatchedSharedQueueFailsBeforeCallingAnIntegerConsumingNativeLeaf() {
+    BehaviorTreeBindings bindings = BehaviorTreeConverterTest.bindings();
+    var producer = new BehaviorTreeBindings.Leaf("btProduceStringQueue", true, "action");
+    producer.outputs.add(new BehaviorTreeBindings.Port("queue", "Queue<int>"));
+    bindings.bind("Produce", producer).bind("Consume",
+        new BehaviorTreeBindings.Leaf("btConsumeIntegerQueue", true, "action",
+            new BehaviorTreeBindings.Port("queue", "Queue<int>")));
+    fails(submitXml(BehaviorTreeConverterTest.xml("""
+        <Sequence><Produce queue="{queue}"/><Consume queue="{queue}"/></Sequence>
+        """), bindings));
+    assertEquals("The producer must run, but its invalid queue must not reach the native consumer",
+        List.of("produce:strings"), trace);
   }
 
   @Test(timeout = 15000)
@@ -433,6 +448,22 @@ public class BehaviorTreeExecutionTest {
   @TRADEService
   public java.util.Deque<Integer> btProduceQueue() {
     return new java.util.ArrayDeque<>(List.of(1, 2));
+  }
+
+  @Action
+  @TRADEService
+  public java.util.Deque<String> btProduceStringQueue() {
+    trace.add("produce:strings");
+    return new java.util.ArrayDeque<>(List.of("1", "2"));
+  }
+
+  @Action
+  @TRADEService
+  public void btConsumeIntegerQueue(java.util.Deque<Integer> queue) {
+    trace.add("consume");
+    for (Integer item : queue) {
+      trace.add("integer:" + item);
+    }
   }
 
   @Action
