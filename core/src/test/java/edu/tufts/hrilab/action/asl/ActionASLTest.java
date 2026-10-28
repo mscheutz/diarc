@@ -357,6 +357,64 @@ public class ActionASLTest {
     }
 
     @Test
+    public void testNestedStandaloneBlocksInsideLoopsRoundTrip() {
+        String source = """
+                () = nestedLoopBlocks(java.util.List ?items) {
+                    for (!i=0; !i lt 3; !i++) {
+                        block {
+                            int !temporary = !i;
+                            block { int !nested = !temporary; }
+                        }
+                        act:afterForBlock();
+                        block { op:log("info", "sibling one"); }
+                        block { op:log("info", "sibling two"); }
+                        if (true) {
+                            block { int !thenLocal = 1; }
+                            act:afterThenBlock();
+                        } else {
+                            block { int !elseLocal = 2; }
+                            act:afterElseBlock();
+                        }
+                        foreach (!item : ?items) {
+                            block { int !foreachLocal = 3; }
+                            act:afterForeachBlock();
+                        }
+                        for (!j=0; !j lt 1; !j++) {
+                            foreach (!nestedItem : ?items) {
+                                block { int !deepLocal = 4; }
+                                act:afterDeepBlock();
+                            }
+                        }
+                    }
+                }
+                """;
+
+        ActionDBEntry original = parseAction(source);
+        String written = new ActionScriptLanguageWriter().writeAction(original);
+        int followingAction = written.indexOf("act:afterForBlock();");
+        assertTrue("writer must close the lexical block before the following loop action",
+                followingAction > 0 && written.substring(0, followingAction).trim().endsWith("}"));
+        ActionDBEntry restored = parseAction(written);
+        assertEquals(original.getEventSpecs(), restored.getEventSpecs());
+    }
+
+    @Test
+    public void testForWithoutInitializerRequiresVisibleIntegerCounter() {
+        ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+        try {
+            parser.parseStrict(TEST_DB, null, """
+                    () = invalidForCounter() {
+                        java.lang.String !i = "not an integer";
+                        for (!i; !i lt 3; !i++) { }
+                    }
+                    """);
+            org.junit.Assert.fail("Expected incompatible FOR counter type to be rejected");
+        } catch (IllegalArgumentException expected) {
+                        assertTrue(expected.getMessage(), expected.getMessage().contains("FOR loop variable"));
+        }
+    }
+
+    @Test
     public void testRejectsOutOfScopeBlockLocalReference() {
         ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
         assertNull(parser.parseFromString(TEST_DB, null, """

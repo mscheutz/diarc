@@ -230,7 +230,9 @@ public class ActionScriptLanguageParser {
           .filter(ActionBinding::isLocal)
           .map(ActionBinding::getName)
           .collect(java.util.stream.Collectors.toList());
-      AslScopeValidator.validate(entry.getEventSpecs(), predeclaredLocals);
+      Map<String, Class<?>> predeclaredTypes = new HashMap<>();
+      entry.getRoles().forEach(role -> predeclaredTypes.put(role.getName(), role.getJavaType()));
+      AslScopeValidator.validate(entry.getEventSpecs(), predeclaredLocals, predeclaredTypes);
       parsed_actions.add(entry);
     }
 

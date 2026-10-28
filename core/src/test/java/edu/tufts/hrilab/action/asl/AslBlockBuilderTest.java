@@ -492,23 +492,106 @@ public class AslBlockBuilderTest {
     SourceLocation location = new SourceLocation("test.asl", 12, 3, "origin-node");
     EventSpec declare = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
         .addInputArg("!item").addInputArg("java.lang.String").setSourceLocation(location).build();
+    EventSpec similarDeclaration = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+        .addInputArg("!item2").addInputArg("java.lang.String").setSourceLocation(location).build();
     EventSpec assign = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
         .addInputArg("!item").addReturnArg("!item").setSourceLocation(location).build();
+    EventSpec process = new EventSpec.Builder(EventSpec.EventType.ACTION).setActor("worker").setCommand("process")
+        .addInputArg("wrapper(!item)").addInputArg("!item2")
+        .addReturnArg("!item")
+        .setSourceLocation(location).build();
     EventSpec log = new EventSpec.Builder(EventSpec.EventType.OPERATOR).setCommand("log")
         .addInputArg("\"Processing !item\"").addInputArg("!item").setSourceLocation(location).build();
 
     AslBlockBuilder builder = new AslBlockBuilder(List.of(
         AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
-        declare, assign, log,
+        declare, similarDeclaration, assign, process, log,
         AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK)
     ));
     builder.renameBlockLocalVariable(1, "!object");
     List<EventSpec> renamed = builder.build();
 
-    EventSpec renamedLog = renamed.get(3);
+    assertEquals(location, renamed.get(1).getSourceLocation());
+    assertEquals("!object", renamed.get(1).getInputArgs().get(0));
+    EventSpec renamedProcess = renamed.get(4);
+    assertEquals("worker", renamedProcess.getActor());
+    assertEquals("process", renamedProcess.getCommand());
+    assertEquals("wrapper(!object)", renamedProcess.getInputArgs().get(0));
+    assertEquals("!item2", renamedProcess.getInputArgs().get(1));
+    assertEquals(List.of("!object"), renamedProcess.getReturnArgs());
+    assertEquals(location, renamedProcess.getSourceLocation());
+    EventSpec renamedLog = renamed.get(5);
     assertEquals("\"Processing !item\"", renamedLog.getInputArgs().get(0));
     assertEquals("!object", renamedLog.getInputArgs().get(1));
     assertEquals(location, renamedLog.getSourceLocation());
+  }
+
+  @Test
+  public void failedRenameIsTransactionalForUnsafeArgumentsAndCollisions() {
+    EventSpec declare = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+        .addInputArg("!item").addInputArg("java.lang.String").build();
+    EventSpec malformed = new EventSpec.Builder(EventSpec.EventType.ACTION).setCommand("process")
+        .addInputArg("\"unterminated !item").build();
+    AslBlockBuilder unsafe = new AslBlockBuilder(List.of(
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        declare, malformed,
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK)
+    ));
+    List<EventSpec> beforeUnsafeRename = unsafe.specs();
+    expectThrows(IllegalArgumentException.class, () -> unsafe.renameBlockLocalVariable(1, "!object"));
+    assertEquals(beforeUnsafeRename, unsafe.specs());
+
+    AslBlockBuilder collision = new AslBlockBuilder();
+    collision.beginBlock()
+        .addBlockLocalDeclaration(1, "!item", "java.lang.String", "", null)
+        .beginBlock()
+        .addBlockLocalDeclaration(collision.specs().size(), "!object", "java.lang.String", "", null)
+        .endBlock()
+        .endBlock();
+    List<EventSpec> beforeCollision = collision.specs();
+    expectThrows(IllegalArgumentException.class, () -> collision.renameBlockLocalVariable(1, "!object"));
+    assertEquals(beforeCollision, collision.specs());
+  }
+
+  @Test
+  public void forValidationRequiresInitializationForNewCounterAndChecksTypes() {
+    List<EventSpec> uninitialized = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for")
+            .addInputArg("!i").addInputArg("lt").addInputArg("3").addInputArg("++").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDFOR)
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(uninitialized));
+
+    List<EventSpec> initialized = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for")
+            .addInputArg("!i").addInputArg("0").addInputArg("lt").addInputArg("3").addInputArg("++").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDFOR)
+    );
+    AslScopeValidator.validate(initialized);
+
+    List<EventSpec> reused = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for")
+            .addInputArg("!i").addInputArg("lt").addInputArg("3").addInputArg("++").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDFOR)
+    );
+    AslScopeValidator.validate(reused, List.of("!i"));
+
+    List<EventSpec> wrongType = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+            .addInputArg("!i").addInputArg("java.lang.String").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for")
+            .addInputArg("!i").addInputArg("lt").addInputArg("3").addInputArg("++").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDFOR)
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(wrongType));
   }
 
   @Test

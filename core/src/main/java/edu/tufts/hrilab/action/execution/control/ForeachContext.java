@@ -162,6 +162,7 @@ public class ForeachContext extends ArgumentBasedContext {
   public ForeachContext copy(Context newParent) {
     ForeachContext newFor = new ForeachContext(newParent, newParent.getStateMachine(), parser);
     copyInternal(newFor);
+    arguments.forEach((name, binding) -> newFor.arguments.put(name, binding.clone()));
     newFor.collectionVarName = collectionVarName;
     newFor.elementVarName = elementVarName;
     newFor.index = index;

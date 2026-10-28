@@ -33,6 +33,22 @@ public class ActionScriptLanguageWriter {
 
   private final static Logger log = LoggerFactory.getLogger(ActionScriptLanguageWriter.class);
 
+  private enum BlockMarkerType {
+    LOOP,
+    STANDALONE
+  }
+
+  private static final class BlockMarker {
+    private final BlockMarkerType type;
+    private boolean awaitingLoopBodyMarker;
+    private boolean loopBodyMarkerOpen;
+
+    private BlockMarker(BlockMarkerType type, boolean awaitingLoopBodyMarker) {
+      this.type = type;
+      this.awaitingLoopBodyMarker = awaitingLoopBodyMarker;
+    }
+  }
+
   private StringBuilder sb;
 
   public void writeToFile(List<ActionDBEntry> actionScripts, String filename) {
@@ -293,8 +309,7 @@ public class ActionScriptLanguageWriter {
       StringBuilder conditionString = new StringBuilder();
       ArrayDeque<String> conditionNameStack = new ArrayDeque<>();
       ArrayDeque<StringJoiner> conditionStack = new ArrayDeque<>();
-      int pendingLoopBodyBlocks = 0;
-      int openLoopBodyBlocks = 0;
+      ArrayDeque<BlockMarker> blockMarkers = new ArrayDeque<>();
       String lastOrigin = null;
       for (EventSpec es : entry.getEventSpecs()) {
         if (!inConditioning && es.getSourceLocation() != null && es.getSourceLocation().origin() != null
@@ -453,7 +468,6 @@ public class ActionScriptLanguageWriter {
                   conditionString = new StringBuilder("while ");
                   break;
                 case FOR:
-                  pendingLoopBodyBlocks++;
                   String name = es.getInputArgs().get(0);
                   if (es.getInputArgs().size() == 4) {
                     openBlock("for (" + name + "; "
@@ -464,13 +478,14 @@ public class ActionScriptLanguageWriter {
                         + name + " " + es.getInputArgs().get(2) + " " + es.getInputArgs().get(3) + "; "
                         + name + " " + es.getInputArgs().get(4) + ")");
                   }
+                  blockMarkers.push(new BlockMarker(BlockMarkerType.LOOP, true));
                   break;
                 case FOREACH:
-                  pendingLoopBodyBlocks++;
                   if (es.getInputArgs().size() != 2) {
                     log.error("Malformed FOREACH control EventSpec: {}", es);
                   } else {
                     openBlock("foreach(" + es.getInputArgs().get(0) + " : " + es.getInputArgs().get(1) + ")");
+                    blockMarkers.push(new BlockMarker(BlockMarkerType.LOOP, true));
                   }
                   break;
                 case TRY:
@@ -489,23 +504,36 @@ public class ActionScriptLanguageWriter {
                 case ENDIF:
                 case ENDWHILE:
                 case ENDTRY:
-                case ENDFOR:
                 case ENDASYNC:
                 case ENDNOINTERRUPT:
                   closeBlock();
                   break;
+                case ENDFOR:
+                  if (blockMarkers.isEmpty() || blockMarkers.peek().type != BlockMarkerType.LOOP) {
+                    log.error("FOR/FOREACH block marker stack mismatch at {}", es);
+                  } else {
+                    blockMarkers.pop();
+                  }
+                  closeBlock();
+                  break;
                 case BLOCK:
-                  if (pendingLoopBodyBlocks > 0) {
-                    pendingLoopBodyBlocks--;
-                    openLoopBodyBlocks++;
+                  if (!blockMarkers.isEmpty() && blockMarkers.peek().type == BlockMarkerType.LOOP
+                      && blockMarkers.peek().awaitingLoopBodyMarker) {
+                    blockMarkers.peek().awaitingLoopBodyMarker = false;
+                    blockMarkers.peek().loopBodyMarkerOpen = true;
                   } else {
                     openBlock("block");
+                    blockMarkers.push(new BlockMarker(BlockMarkerType.STANDALONE, false));
                   }
                   break;
                 case ENDBLOCK:
                 case END:
-                  if (openLoopBodyBlocks > 0) {
-                    openLoopBodyBlocks--;
+                  if (!blockMarkers.isEmpty() && blockMarkers.peek().type == BlockMarkerType.STANDALONE) {
+                    blockMarkers.pop();
+                    closeBlock();
+                  } else if (!blockMarkers.isEmpty() && blockMarkers.peek().type == BlockMarkerType.LOOP
+                      && blockMarkers.peek().loopBodyMarkerOpen) {
+                    blockMarkers.peek().loopBodyMarkerOpen = false;
                   } else {
                     closeBlock();
                   }

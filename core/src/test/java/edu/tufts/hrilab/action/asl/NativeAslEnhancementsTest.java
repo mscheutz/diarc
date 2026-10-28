@@ -55,6 +55,14 @@ public class NativeAslEnhancementsTest {
     return goal;
   }
 
+  private long run(ActionDBEntry action) {
+    actions.add(action);
+    Database.getInstance().addActionDBEntry(action);
+    long goal = manager.submitGoal(Factory.createPredicate(action.getName() + "(self:agent)"));
+    goals.add(goal);
+    return goal;
+  }
+
   private void succeeds(String source) {
     long goal = run(source);
     assertEquals(String.valueOf(manager.getGoalExecutionDiagnostic(goal)),
@@ -91,6 +99,34 @@ public class NativeAslEnhancementsTest {
           } else { exit(FAIL); }
         }
         """);
+  }
+
+  @Test(timeout = 20000)
+  public void standaloneBlocksInsideForSerializeAndExecuteWithTheSameScope() {
+    String originalName = "aslNestedBlockLoop" + names.incrementAndGet();
+    String restoredName = originalName + "Reloaded";
+    String source = """
+        () = ROOT() {
+          int !iterations = 0;
+          for (!i=0; !i lt 3; !i++) {
+            block { int !temporary = !i; }
+            !iterations = !iterations + 1;
+          }
+          if (!iterations == 3) { } else { exit(FAIL); }
+        }
+        """.replace("ROOT", originalName);
+    ActionDBEntry original = new ActionScriptLanguageParser()
+        .parseStrict("nested-block-runtime.asl", null, IMPORTS + source).get(0);
+    String written = new ActionScriptLanguageWriter().writeAction(original);
+    ActionDBEntry restored = new ActionScriptLanguageParser()
+        .parseStrict("nested-block-runtime.asl", null, written.replace(originalName, restoredName)).get(0);
+
+    long originalGoal = run(original);
+    long restoredGoal = run(restored);
+    assertEquals(String.valueOf(manager.getGoalExecutionDiagnostic(originalGoal)),
+        GoalStatus.SUCCEEDED, manager.joinOnGoal(originalGoal, 5000));
+    assertEquals(String.valueOf(manager.getGoalExecutionDiagnostic(restoredGoal)),
+        GoalStatus.SUCCEEDED, manager.joinOnGoal(restoredGoal, 5000));
   }
 
   @Test(timeout = 15000)

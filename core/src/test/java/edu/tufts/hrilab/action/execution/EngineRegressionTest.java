@@ -12,6 +12,8 @@ import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.control.JoinContext;
+import edu.tufts.hrilab.action.execution.control.ForContext;
+import edu.tufts.hrilab.action.execution.control.ForeachContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
@@ -280,6 +282,52 @@ public class EngineRegressionTest {
       assertFalse(loop.getChildContexts().get(0).getLogicalValue());
       loop.resetContext();
     }
+  }
+
+  @Test
+  public void activeLoopContextCopiesPreserveIterationAndOwnBindings() throws Exception {
+    BindingScope parent = new BindingScope(root);
+    List<EventSpec> forScript = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("for")
+            .addInputArg("!i").addInputArg("0").addInputArg("lt").addInputArg("3").addInputArg("++").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("block").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endblock").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endfor").build());
+    ForContext forContext = new ForContext(parent, null, new ScriptParser(forScript));
+    forContext.getArgument("!i").bind(2);
+    Field firstIteration = ForContext.class.getDeclaredField("firstIteration");
+    firstIteration.setAccessible(true);
+    firstIteration.setBoolean(forContext, false);
+
+    ForContext forCopy = forContext.copy(parent);
+    assertEquals(2, forCopy.getArgumentValue("!i"));
+    assertFalse(firstIteration.getBoolean(forCopy));
+    forCopy.getArgument("!i").bind(9);
+    assertEquals(2, forContext.getArgumentValue("!i"));
+    forCopy.resetContext();
+    assertEquals(0, forCopy.getArgumentValue("!i"));
+    assertTrue(firstIteration.getBoolean(forCopy));
+
+    parent.addArgument("?items", List.class, new ArrayList<>(List.of("first", "second")), false, false);
+    List<EventSpec> foreachScript = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("foreach")
+            .addInputArg("!item").addInputArg("?items").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("block").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endblock").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endfor").build());
+    ForeachContext foreachContext = new ForeachContext(parent, null, new ScriptParser(foreachScript));
+    foreachContext.getArgument("!item").bind("second");
+    Field index = ForeachContext.class.getDeclaredField("index");
+    index.setAccessible(true);
+    index.setInt(foreachContext, 1);
+
+    ForeachContext foreachCopy = foreachContext.copy(parent);
+    assertEquals(1, index.getInt(foreachCopy));
+    assertEquals("second", foreachCopy.getArgumentValue("!item"));
+    foreachCopy.getArgument("!item").bind("copy");
+    assertEquals("second", foreachContext.getArgumentValue("!item"));
+    foreachCopy.resetContext();
+    assertEquals(0, index.getInt(foreachCopy));
   }
 
   @Test(timeout = 2000)

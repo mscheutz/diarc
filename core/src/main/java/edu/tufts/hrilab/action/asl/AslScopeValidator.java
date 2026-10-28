@@ -5,10 +5,13 @@ package edu.tufts.hrilab.action.asl;
 
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.execution.control.ForContext;
+import edu.tufts.hrilab.action.util.Utilities;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,6 +31,11 @@ public final class AslScopeValidator {
   }
 
   public static void validate(List<EventSpec> specs, List<String> predeclaredLocals) {
+    validate(specs, predeclaredLocals, Map.of());
+  }
+
+  public static void validate(List<EventSpec> specs, List<String> predeclaredLocals,
+                              Map<String, Class<?>> predeclaredTypes) {
     Objects.requireNonNull(specs, "specs");
     AslBlockStructure.validateControlFlow(specs);
 
@@ -37,6 +45,10 @@ public final class AslScopeValidator {
       if (isLocal(local)) {
         root.locals.add(local);
       }
+    }
+    if (predeclaredTypes != null) {
+      root.types.putAll(predeclaredTypes);
+      root.locals.addAll(predeclaredTypes.keySet());
     }
     stack.push(root);
     ArrayDeque<Integer> ifGuardStarts = new ArrayDeque<>();
@@ -58,8 +70,16 @@ public final class AslScopeValidator {
             push(stack, "for");
             if (!spec.getInputArgs().isEmpty()) {
               String loopVar = spec.getInputArgs().get(0);
-              if (isLocal(loopVar) && !inScope(stack, loopVar)) {
-                declare(i, spec, stack.peek(), loopVar);
+              if (!inScope(stack, loopVar)) {
+                if (!isLocal(loopVar)) {
+                  throw fail(i, spec, "FOR loop variable must be declared in a visible scope: " + loopVar);
+                }
+                if (spec.getInputArgs().size() == 4) {
+                  throw fail(i, spec, "FOR loop variable has no initializer and is not declared in a visible scope: " + loopVar);
+                }
+                declare(i, spec, stack.peek(), loopVar, Integer.class);
+              } else {
+                validateIntegerType(i, spec, stack, loopVar, "FOR loop variable");
               }
             }
             checkForReferences(i, spec, stack);
@@ -71,7 +91,7 @@ public final class AslScopeValidator {
             if (!spec.getInputArgs().isEmpty()) {
               String loopVar = spec.getInputArgs().get(0);
               if (isLocal(loopVar) && !inScope(stack, loopVar)) {
-                declare(i, spec, stack.peek(), loopVar);
+                declare(i, spec, stack.peek(), loopVar, null);
               }
             }
             checkRefs(i, spec, stack, spec.getInputArgs().subList(Math.min(1, spec.getInputArgs().size()), spec.getInputArgs().size()));
@@ -131,7 +151,7 @@ public final class AslScopeValidator {
               for (int j = 0; j < catchArgs.size(); j++) {
                 String arg = catchArgs.get(j);
                 if (j == 1 && isLocal(arg)) {
-                  declare(i, spec, stack.peek(), arg);
+                  declare(i, spec, stack.peek(), arg, null);
                 } else {
                   checkRefs(i, spec, stack, List.of(arg));
                 }
@@ -240,15 +260,6 @@ public final class AslScopeValidator {
     }
   }
 
-  private static void declare(int index, EventSpec spec, ScopeFrame frame, String name) {
-    if (!isScriptVariable(name)) {
-      throw fail(index, spec, "invalid declaration name: " + name);
-    }
-    if (!frame.locals.add(name)) {
-      throw fail(index, spec, "duplicate declaration in same lexical scope: " + name);
-    }
-  }
-
   private static void validateDeclaration(int index, EventSpec spec, ScopeFrame frame) {
     if (spec.getInputArgs().size() < 2) {
       throw fail(index, spec, "declare requires variable name and java type");
@@ -264,7 +275,7 @@ public final class AslScopeValidator {
     if (!isResolvableJavaType(javaType)) {
       throw fail(index, spec, "unresolvable declaration type for " + name + ": " + javaType);
     }
-    declare(index, spec, frame, name);
+    declare(index, spec, frame, name, resolveJavaType(javaType));
   }
 
   private static void validateForSignature(int index, EventSpec spec) {
@@ -282,6 +293,13 @@ public final class AslScopeValidator {
     String update = args.get(args.size() - 1);
     if (!ForContext.isIncrementOperator(update)) {
       throw fail(index, spec, "invalid for update expression: " + update);
+    }
+    if (args.size() == 5 && !isScriptVariable(args.get(1)) && !Utilities.isInteger(args.get(1))) {
+      throw fail(index, spec, "FOR initializer must be an integer literal or visible variable: " + args.get(1));
+    }
+    String compareValue = args.get(args.size() == 5 ? 3 : 2);
+    if (!isScriptVariable(compareValue) && !Utilities.isInteger(compareValue)) {
+      throw fail(index, spec, "FOR comparison value must be an integer literal or visible variable: " + compareValue);
     }
   }
 
@@ -304,6 +322,7 @@ public final class AslScopeValidator {
     String compareValue = args.get(compareValueIndex);
     if (isScriptVariable(compareValue)) {
       checkRefs(index, spec, stack, List.of(compareValue));
+      validateIntegerType(index, spec, stack, compareValue, "FOR comparison value");
     } else {
       checkRefsInText(index, spec, stack, compareValue);
     }
@@ -313,9 +332,21 @@ public final class AslScopeValidator {
       String init = args.get(1);
       if (isScriptVariable(init)) {
         checkRefs(index, spec, stack, List.of(init));
+        validateIntegerType(index, spec, stack, init, "FOR initializer");
       } else {
         checkRefsInText(index, spec, stack, init);
       }
+    }
+    if (update.length() > 2 && isScriptVariable(update.substring(2))) {
+      validateIntegerType(index, spec, stack, update.substring(2), "FOR update amount");
+    }
+  }
+
+  private static void validateIntegerType(int index, EventSpec spec, ArrayDeque<ScopeFrame> stack,
+                                          String variable, String role) {
+    Class<?> type = typeInScope(stack, variable);
+    if (type != null && !Utilities.isIntegerType(type)) {
+      throw fail(index, spec, role + " must have int/Integer type, but " + variable + " has type " + type.getTypeName());
     }
   }
 
@@ -390,6 +421,31 @@ public final class AslScopeValidator {
     };
   }
 
+  private static Class<?> resolveJavaType(String rawType) {
+    String type = rawType.trim();
+    int genericStart = type.indexOf('<');
+    if (genericStart >= 0) {
+      type = type.substring(0, genericStart);
+    }
+    return switch (type) {
+      case "byte" -> byte.class;
+      case "short" -> short.class;
+      case "int" -> int.class;
+      case "long" -> long.class;
+      case "float" -> float.class;
+      case "double" -> double.class;
+      case "boolean" -> boolean.class;
+      case "char" -> char.class;
+      default -> {
+        try {
+          yield Class.forName(type);
+        } catch (ClassNotFoundException e) {
+          yield null;
+        }
+      }
+    };
+  }
+
   private static boolean inScope(ArrayDeque<ScopeFrame> stack, String name) {
     for (ScopeFrame frame : stack) {
       if (frame.locals.contains(name)) {
@@ -397,6 +453,15 @@ public final class AslScopeValidator {
       }
     }
     return false;
+  }
+
+  private static Class<?> typeInScope(ArrayDeque<ScopeFrame> stack, String name) {
+    for (ScopeFrame frame : stack) {
+      if (frame.locals.contains(name)) {
+        return frame.types.get(name);
+      }
+    }
+    return null;
   }
 
   private static void push(ArrayDeque<ScopeFrame> stack, String kind) {
@@ -453,9 +518,22 @@ public final class AslScopeValidator {
   private static final class ScopeFrame {
     private final String kind;
     private final Set<String> locals = new HashSet<>();
+    private final Map<String, Class<?>> types = new HashMap<>();
 
     private ScopeFrame(String kind) {
       this.kind = kind;
+    }
+  }
+
+  private static void declare(int index, EventSpec spec, ScopeFrame frame, String name, Class<?> type) {
+    if (!isScriptVariable(name)) {
+      throw fail(index, spec, "invalid declaration name: " + name);
+    }
+    if (!frame.locals.add(name)) {
+      throw fail(index, spec, "duplicate declaration in same lexical scope: " + name);
+    }
+    if (type != null) {
+      frame.types.put(name, type);
     }
   }
 }

@@ -52,30 +52,39 @@ public final class AslBlockBuilder {
 
   private final List<EventSpec> specs;
   private final List<String> predeclaredLocals;
+  private final Map<String, Class<?>> predeclaredTypes;
   private final ArrayDeque<OpenState> open = new ArrayDeque<>();
   private long mutationVersion = 0L;
 
   public AslBlockBuilder() {
-    this(List.of(), List.of());
+    this(List.of(), List.of(), Map.of());
   }
 
   public AslBlockBuilder(List<EventSpec> existing) {
-    this(existing, List.of());
+    this(existing, List.of(), Map.of());
   }
 
   public AslBlockBuilder(List<EventSpec> existing, List<String> predeclaredLocals) {
+    this(existing, predeclaredLocals, Map.of());
+  }
+
+  public AslBlockBuilder(List<EventSpec> existing, List<String> predeclaredLocals,
+                         Map<String, Class<?>> predeclaredTypes) {
     this.specs = new ArrayList<>(Objects.requireNonNull(existing, "existing"));
     this.predeclaredLocals = List.copyOf(predeclaredLocals == null ? List.of() : predeclaredLocals);
+    this.predeclaredTypes = Map.copyOf(predeclaredTypes == null ? Map.of() : predeclaredTypes);
     AslBlockStructure.validateControlFlow(this.specs);
   }
 
   public static AslBlockBuilder fromAction(ActionDBEntry action) {
     Objects.requireNonNull(action, "action");
+    Map<String, Class<?>> types = new HashMap<>();
+    action.getRoles().forEach(role -> types.put(role.getName(), role.getJavaType()));
     List<String> locals = action.getRoles().stream()
         .filter(ActionBinding::isLocal)
         .map(ActionBinding::getName)
         .toList();
-    return new AslBlockBuilder(action.getEventSpecs(), locals);
+    return new AslBlockBuilder(action.getEventSpecs(), locals, types);
   }
 
   public List<EventSpec> build() {
@@ -84,7 +93,7 @@ public final class AslBlockBuilder {
       throw new IllegalStateException("Unclosed block: " + top.type + " at index " + top.startIndex);
     }
     AslBlockStructure.validateControlFlow(specs);
-    AslScopeValidator.validate(specs, predeclaredLocals);
+    AslScopeValidator.validate(specs, predeclaredLocals, predeclaredTypes);
     return List.copyOf(specs);
   }
 
@@ -363,7 +372,7 @@ public final class AslBlockBuilder {
 
   public AslBlockBuilder validate() {
     AslBlockStructure.validateControlFlow(specs);
-    AslScopeValidator.validate(specs, predeclaredLocals);
+    AslScopeValidator.validate(specs, predeclaredLocals, predeclaredTypes);
     return this;
   }
 
@@ -469,10 +478,22 @@ public final class AslBlockBuilder {
         return;
       }
       AslBlockStructure.Snapshot snapshot = AslBlockStructure.validateControlFlow(copy);
+      int oldScopeEnd = declarationScopeEnd(snapshot, declarationIndex);
+      for (int i = 0; i < copy.size(); i++) {
+        EventSpec candidate = copy.get(i);
+        if (i != declarationIndex && candidate.getType() == EventSpec.EventType.CONTROL
+            && "declare".equals(candidate.getCommand()) && !candidate.getInputArgs().isEmpty()
+            && newName.equals(candidate.getInputArgs().get(0))) {
+          int candidateScopeEnd = declarationScopeEnd(snapshot, i);
+          if (i <= oldScopeEnd && declarationIndex <= candidateScopeEnd) {
+            throw new IllegalArgumentException("Renaming " + oldName + " to " + newName
+                + " collides with a declaration in an overlapping lexical scope");
+          }
+        }
+      }
       List<String> declArgs = new ArrayList<>(declaration.getInputArgs());
       declArgs.set(0, newName);
-      copy.set(declarationIndex, new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
-          .setInputArgs(declArgs).build());
+      copy.set(declarationIndex, cloneWith(declaration, declArgs, declaration.getReturnArgs()));
       int declarationScopeEnd = Math.min(declarationScopeEnd(snapshot, declarationIndex), copy.size() - 1);
       if (declarationScopeEnd < declarationIndex + 1) {
         return;
@@ -583,7 +604,7 @@ public final class AslBlockBuilder {
     List<EventSpec> candidate = new ArrayList<>(specs);
     mutator.apply(candidate);
     AslBlockStructure.validateControlFlow(candidate);
-    AslScopeValidator.validate(candidate, predeclaredLocals);
+    AslScopeValidator.validate(candidate, predeclaredLocals, predeclaredTypes);
     specs.clear();
     specs.addAll(candidate);
     mutationVersion++;
@@ -608,7 +629,7 @@ public final class AslBlockBuilder {
 
     for (int i = 0; i < inputArgs.size(); i++) {
       String before = inputArgs.get(i);
-      String after = renameInputArg(spec, i, before, oldName, newName);
+      String after = renameVariableTokens(before, oldName, newName);
       if (!before.equals(after)) {
         inputArgs.set(i, after);
         changed = true;
@@ -639,48 +660,20 @@ public final class AslBlockBuilder {
         .build();
   }
 
-  private static String renameInputArg(EventSpec spec, int index, String value, String oldName, String newName) {
+  private static String renameVariableTokens(String value, String oldName, String newName) {
     if (value == null || value.isEmpty()) {
       return value;
     }
-    if (value.equals(oldName)) {
-      return newName;
-    }
-    if (isQuotedLiteral(value)) {
-      return value;
-    }
-    if (spec.getType() != EventSpec.EventType.CONTROL) {
-      return value;
-    }
-    String command = spec.getCommand();
-    if (("assign".equals(command) || "evaluate".equals(command)) && index == 0) {
-      return renameVariableTokens(value, oldName, newName);
-    }
-    if ("for".equals(command)) {
-      if (index == spec.getInputArgs().size() - 1) {
-        return renameVariableTokens(value, oldName, newName);
-      }
-      return value;
-    }
-    return value;
-  }
-
-  private static boolean isQuotedLiteral(String value) {
-    return value.length() >= 2
-        && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")));
-  }
-
-  private static String renameVariableTokens(String text, String oldName, String newName) {
-    StringBuilder out = new StringBuilder(text.length());
+    StringBuilder out = new StringBuilder(value.length());
     int i = 0;
     boolean inDouble = false;
     boolean inSingle = false;
-    while (i < text.length()) {
-      char c = text.charAt(i);
+    while (i < value.length()) {
+      char c = value.charAt(i);
       if (c == '\\') {
         out.append(c);
-        if (i + 1 < text.length()) {
-          out.append(text.charAt(i + 1));
+        if (i + 1 < value.length()) {
+          out.append(value.charAt(i + 1));
         }
         i += 2;
         continue;
@@ -700,20 +693,23 @@ public final class AslBlockBuilder {
       if (!inDouble && !inSingle && (c == '!' || c == '?')) {
         int start = i;
         i++;
-        while (i < text.length()) {
-          char next = text.charAt(i);
+        while (i < value.length()) {
+          char next = value.charAt(i);
           if (Character.isLetterOrDigit(next) || next == '_') {
             i++;
           } else {
             break;
           }
         }
-        String token = text.substring(start, i);
+        String token = value.substring(start, i);
         out.append(token.equals(oldName) ? newName : token);
         continue;
       }
       out.append(c);
       i++;
+    }
+    if (inDouble || inSingle) {
+      throw new IllegalArgumentException("Cannot safely rename variable in argument with an unterminated string literal: " + value);
     }
     return out.toString();
   }
@@ -799,6 +795,11 @@ public final class AslBlockBuilder {
       return false;
     }
     return !renameVariableTokens(text, variable, "__probe__").equals(text);
+  }
+
+  private static boolean isQuotedLiteral(String value) {
+    return value.length() >= 2
+        && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")));
   }
 
   private OpenState push(AslBlockStructure.BlockType type) {

@@ -59,6 +59,7 @@ public class ForContext extends ArgumentBasedContext {
   private IncrOp incrementOperator = null;
   private int incrementAmount = 1; // default
   private String incrementAmountVar = null;
+  private String initialValue;
   private boolean firstIteration = true;
   private final ScriptParser parser;
   private ScriptParser currParserStep;
@@ -187,6 +188,7 @@ public class ForContext extends ArgumentBasedContext {
     if (inputArgs.size() >= 4) {
       loopVarName = inputArgs.get(0).toString();
       String initVal = (inputArgs.size() == 5) ? inputArgs.get(1).toString() : null;
+      initialValue = initVal;
       String comparOp = inputArgs.get((inputArgs.size() == 5) ? 2 : 1).toString();
       String comparVal = inputArgs.get((inputArgs.size() == 5) ? 3 : 2).toString();
       String incrOp = inputArgs.get((inputArgs.size() == 5) ? 4 : 3).toString();
@@ -323,6 +325,7 @@ public class ForContext extends ArgumentBasedContext {
   public ForContext copy(Context newParent) {
     ForContext newFor = new ForContext(newParent, newParent.getStateMachine(), parser);
     copyInternal(newFor);
+    arguments.forEach((name, binding) -> newFor.arguments.put(name, binding.clone()));
     newFor.loopVarName = loopVarName;
     newFor.compareOperator = compareOperator;
     newFor.compareValue = compareValue;
@@ -330,6 +333,28 @@ public class ForContext extends ArgumentBasedContext {
     newFor.incrementOperator = incrementOperator;
     newFor.incrementAmount = incrementAmount;
     newFor.incrementAmountVar = incrementAmountVar;
+    newFor.initialValue = initialValue;
+    newFor.firstIteration = firstIteration;
     return newFor;
+  }
+
+  @Override
+  protected void resetConcreteContext() {
+    firstIteration = true;
+    if (initialValue == null || loopVarName == null) {
+      return;
+    }
+    ActionBinding loopVariable = getArgument(loopVarName);
+    if (loopVariable == null) {
+      return;
+    }
+    if (Utilities.isScriptVariable(initialValue)) {
+      ActionBinding initialBinding = getArgument(initialValue);
+      if (initialBinding != null) {
+        loopVariable.bind(initialBinding);
+      }
+    } else if (Utilities.isInteger(initialValue)) {
+      loopVariable.bind(initialValue);
+    }
   }
 }
