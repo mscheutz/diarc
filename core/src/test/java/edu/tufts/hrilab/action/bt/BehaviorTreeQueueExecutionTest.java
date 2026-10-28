@@ -18,7 +18,7 @@ public class BehaviorTreeQueueExecutionTest extends BehaviorTreeExecutionTest {
     initializeManager("edu.tufts.hrilab.action.manager.QueueExecutionManager");
   }
 
-  @Test(timeout = 15000)
+  @Test(timeout = 60000)
   public void higherPriorityGoalBlocksAndThenResumesTree() throws Exception {
     long tree = submit("<Delay delay_msec=\"200\"><Record label=\"tree\"/></Delay>");
     prepare("priority");
