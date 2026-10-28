@@ -1264,6 +1264,40 @@ The grammar has no \code{break} or \code{continue} statements.
 Loops discard previous iteration child contexts, so the context tree is
 not a complete per-iteration event log.
 
+\subsection{Standalone lexical blocks and block-local declarations}
+
+\begin{lstlisting}[language=ASL]
+() = scopedBlockDemo(java.util.List ?items) {
+  int !count = 0;
+  block {
+    int !count = 2;
+    op:log("info", !count);
+  }
+  foreach (!item : ?items) {
+    block {
+      java.lang.String !status = "pending";
+      op:log("info", !status);
+    }
+  }
+  op:log("info", !count);
+}
+\end{lstlisting}
+
+\code{block \{...\}} introduces an explicit lexical scope and compiles to
+\code{block}/\code{endblock} control markers. Declarations inside a block
+are visible only from their declaration point to the end of that lexical
+scope (or to the end of the active \code{if}/\code{catch}/\code{finally}
+branch). Sibling branches do not share branch-local declarations.
+Nested scopes may shadow outer locals; after scope exit, the outer binding
+remains unchanged.
+
+For loop controls, static validation and runtime binding now follow the
+same rule: a \code{for}/\code{foreach} variable reuses an existing binding
+when one is already in scope, otherwise a new loop-local binding is
+created (for local \code{!name} variables). Loop-body declarations are
+recreated each iteration, while the loop control variable itself persists
+across iterations.
+
 \subsection{Return, explicit failure, and structured handling}
 
 \code{return;} completes the current script early, using already bound

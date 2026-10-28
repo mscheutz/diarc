@@ -265,6 +265,7 @@ control : (
         | forStatement
         | forEachStatement
         | whileStatement
+        | blockStatement
         | exitStatement
         | tryStatement
         | asyncStatement
@@ -273,6 +274,8 @@ control : (
         | returnStatement
         | noInterruptStatement
         );
+
+blockStatement : 'block' controlContent;
 
 ifStatement : IF '(' booleanExpression ')' controlContent elifStatement* elseStatement?;
 

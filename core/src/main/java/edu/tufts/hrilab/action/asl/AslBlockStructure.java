@@ -151,6 +151,7 @@ public final class AslBlockStructure {
     private boolean forBodyOpened = false;
     private boolean forBodyClosed = false;
     private boolean tryBodyStarted = false;
+    private boolean sawFinally = false;
 
     private Frame(BlockType type, int startIndex, Integer parentStartIndex) {
       this.type = type;
@@ -280,13 +281,20 @@ public final class AslBlockStructure {
         }
         case CATCH -> {
           Frame tryFrame = top(stack, BlockType.TRY, marker, i);
+          if (tryFrame.sawFinally) {
+            throw fail(marker, i, "catch cannot appear after finally");
+          }
           closeTryBranch(tryFrame, i - 1);
           tryFrame.activeBranchKind = "catch";
           tryFrame.activeBranchStart = i + 1;
         }
         case FINALLY -> {
           Frame tryFrame = top(stack, BlockType.TRY, marker, i);
+          if (tryFrame.sawFinally) {
+            throw fail(marker, i, "duplicate finally");
+          }
           closeTryBranch(tryFrame, i - 1);
+          tryFrame.sawFinally = true;
           tryFrame.activeBranchKind = "finally";
           tryFrame.activeBranchStart = i + 1;
         }

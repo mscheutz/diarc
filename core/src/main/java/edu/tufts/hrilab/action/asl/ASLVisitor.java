@@ -497,6 +497,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitControl(ASLParser.ControlContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ASLParser#blockStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockStatement(ASLParser.BlockStatementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ASLParser#ifStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

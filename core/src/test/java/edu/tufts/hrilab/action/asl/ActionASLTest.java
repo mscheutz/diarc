@@ -312,6 +312,51 @@ public class ActionASLTest {
     }
 
     @Test
+    public void testStandaloneLexicalBlocksRoundTrip() {
+        ActionDBEntry restored = assertRoundTrip("""
+                () = lexicalBlocks() {
+                    int !outer = 1;
+                    block {
+                        int !outer = 2;
+                        block {
+                            int !inner = !outer + 1;
+                            op:log("info", !inner);
+                        }
+                        op:log("info", !outer);
+                    }
+                    op:log("info", !outer);
+                }
+                """);
+        assertTrue(restored.getEventSpecs().stream().anyMatch(es -> "block".equals(es.getCommand())));
+        assertTrue(restored.getEventSpecs().stream().anyMatch(es -> "endblock".equals(es.getCommand())));
+    }
+
+    @Test
+    public void testStandaloneBlockInConditionalAndLoopRoundTrip() {
+        assertRoundTrip("""
+                () = nestedStandaloneBlocks(java.util.List ?items) {
+                    if (true) {
+                        block {
+                            int !a = 1;
+                            op:log("info", !a);
+                        }
+                    } else {
+                        op:log("info", "noop");
+                    }
+                    foreach (!item : ?items) {
+                        block {
+                            java.lang.String !status = "ok";
+                            op:log("info", !status);
+                        }
+                    }
+                    while (true) {
+                        block { op:log("info", "never"); }
+                    }
+                }
+                """);
+    }
+
+    @Test
     public void testRejectsOutOfScopeBlockLocalReference() {
         ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
         assertNull(parser.parseFromString(TEST_DB, null, """

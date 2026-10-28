@@ -4,6 +4,7 @@
 package edu.tufts.hrilab.action.asl;
 
 import edu.tufts.hrilab.action.EventSpec;
+import edu.tufts.hrilab.action.asl.SourceLocation;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import java.util.ArrayList;
 import java.util.List;
@@ -425,5 +426,138 @@ public class AslBlockBuilderTest {
       signature.add(spec.getType() + "|" + spec.getActor() + "|" + spec.getCommand() + "|" + spec.getInputArgs() + "|" + spec.getReturnArgs());
     }
     return signature;
+  }
+
+  @Test
+  public void scopeValidatorRejectsUndeclaredAndOutOfLifetimeReferences() {
+    List<EventSpec> valid = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!x").addInputArg("java.lang.Integer").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!x + 1").addReturnArg("!x").build()
+    );
+    AslScopeValidator.validate(valid);
+
+    List<EventSpec> undeclared = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!missing + 1").addReturnArg("!x").build()
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(undeclared));
+
+    List<EventSpec> laterDeclaration = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!x + 1").addReturnArg("!x").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!x").addInputArg("java.lang.Integer").build()
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(laterDeclaration));
+
+    List<EventSpec> branchLeak = List.of(
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.IF),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.TRUE),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.THEN),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!tmp").addInputArg("java.lang.Integer").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ELSE),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!tmp + 1").addReturnArg("!tmp").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDIF)
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(branchLeak));
+  }
+
+  @Test
+  public void scopeValidatorHandlesShadowingAndMalformedExpressions() {
+    List<EventSpec> shadowed = List.of(
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.IF),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.TRUE),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.THEN),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!v").addInputArg("java.lang.Integer").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("1").addReturnArg("!v").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.IF),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.TRUE),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.THEN),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!v").addInputArg("java.lang.Integer").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!v + 1").addReturnArg("!v").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDIF),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("!v + 1").addReturnArg("!v").build(),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDIF)
+    );
+    AslScopeValidator.validate(shadowed);
+
+    List<EventSpec> malformedExpression = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare").addInputArg("!x").addInputArg("java.lang.Integer").build(),
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign").addInputArg("(!x +").addReturnArg("!x").build()
+    );
+    AslScopeValidator.ValidationException ex =
+        expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(malformedExpression));
+    assertTrue(ex.getMessage().contains("malformed expression"));
+  }
+
+  @Test
+  public void renameDoesNotModifyStringLiteralsAndPreservesSourceLocation() {
+    SourceLocation location = new SourceLocation("test.asl", 12, 3, "origin-node");
+    EventSpec declare = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+        .addInputArg("!item").addInputArg("java.lang.String").setSourceLocation(location).build();
+    EventSpec assign = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+        .addInputArg("!item").addReturnArg("!item").setSourceLocation(location).build();
+    EventSpec log = new EventSpec.Builder(EventSpec.EventType.OPERATOR).setCommand("log")
+        .addInputArg("\"Processing !item\"").addInputArg("!item").setSourceLocation(location).build();
+
+    AslBlockBuilder builder = new AslBlockBuilder(List.of(
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.BLOCK),
+        declare, assign, log,
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK)
+    ));
+    builder.renameBlockLocalVariable(1, "!object");
+    List<EventSpec> renamed = builder.build();
+
+    EventSpec renamedLog = renamed.get(3);
+    assertEquals("\"Processing !item\"", renamedLog.getInputArgs().get(0));
+    assertEquals("!object", renamedLog.getInputArgs().get(1));
+    assertEquals(location, renamedLog.getSourceLocation());
+  }
+
+  @Test
+  public void builderSupportsPredeclaredActionLocalsDuringValidation() {
+    EventSpec useLocal = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+        .addInputArg("!actionLocal + 1").addReturnArg("!actionLocal").build();
+    expectThrows(AslScopeValidator.ValidationException.class,
+        () -> new AslBlockBuilder(List.of(useLocal)).build());
+
+    AslBlockBuilder builder = new AslBlockBuilder(List.of(useLocal), List.of("!actionLocal"));
+    builder.build();
+  }
+
+  @Test
+  public void rejectsTryCatchFinallyOrderingViolations() {
+    AslBlockBuilder builder = new AslBlockBuilder();
+    builder.beginTry().beginFinally();
+    expectThrows(IllegalStateException.class, () -> builder.beginCatch(List.of("FAIL", "!reason")));
+
+    AslBlockBuilder builder2 = new AslBlockBuilder();
+    builder2.beginTry().beginFinally();
+    expectThrows(IllegalStateException.class, builder2::beginFinally);
+  }
+
+  @Test
+  public void validatesGuardsAndDeclarationShape() {
+    List<EventSpec> missingIfGuard = List.of(
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.IF),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.THEN),
+        AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDIF)
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(missingIfGuard));
+
+    List<EventSpec> badDeclaration = List.of(
+        new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("declare")
+            .addInputArg("!x").addInputArg("not.a.RealType").build()
+    );
+    expectThrows(AslScopeValidator.ValidationException.class, () -> AslScopeValidator.validate(badDeclaration));
+  }
+
+  private static <T extends Throwable> T expectThrows(Class<T> type, Runnable operation) {
+    try {
+      operation.run();
+    } catch (Throwable t) {
+      if (type.isInstance(t)) {
+        return type.cast(t);
+      }
+      throw new AssertionError("Expected " + type.getSimpleName() + " but got " + t.getClass().getSimpleName(), t);
+    }
+    throw new AssertionError("Expected " + type.getSimpleName() + " but nothing was thrown");
   }
 }

@@ -818,6 +818,16 @@ public interface ASLListener extends ParseTreeListener {
 	 */
 	void exitControl(ASLParser.ControlContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ASLParser#blockStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterBlockStatement(ASLParser.BlockStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#blockStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitBlockStatement(ASLParser.BlockStatementContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ASLParser#ifStatement}.
 	 * @param ctx the parse tree
 	 */

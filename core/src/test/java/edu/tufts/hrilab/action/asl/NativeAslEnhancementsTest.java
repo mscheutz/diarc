@@ -261,6 +261,49 @@ public class NativeAslEnhancementsTest {
         """));
   }
 
+  @Test(timeout = 15000)
+  public void standaloneBlocksExecuteWithLexicalScope() {
+    succeeds("""
+        () = ROOT() {
+          long !value = 1;
+          block {
+            long !value = 2;
+            if (!value == 2) { } else { exit(FAIL); }
+            block {
+              long !inner = !value + 1;
+              if (!inner == 3) { } else { exit(FAIL); }
+            }
+          }
+          if (!value == 1) { } else { exit(FAIL); }
+        }
+        """);
+  }
+
+  @Test(timeout = 15000)
+  public void forLoopReusesExistingCounterBinding() {
+    succeeds("""
+        () = ROOT() {
+          int !i = 42;
+          for (!i=0; !i lt 3; !i++) { }
+          if (!i == 3) { } else { exit(FAIL); }
+        }
+        """);
+  }
+
+  @Test(timeout = 15000)
+  public void foreachReusesExistingElementBindingWhenPredeclared() {
+    succeeds("""
+        () = ROOT() {
+          java.lang.String !item = "outer";
+          java.util.List !items = op:newObject("java.util.ArrayList");
+          op:invokeMethod(!items, "add", "a");
+          op:invokeMethod(!items, "add", "b");
+          foreach (!item : !items) { }
+          if (!item == "b") { } else { exit(FAIL); }
+        }
+        """);
+  }
+
   @Test
   public void newSyntaxSurvivesWriterRoundTrip() {
     var entry = new ActionScriptLanguageParser().parseStrict("roundtrip.asl", null, IMPORTS + """

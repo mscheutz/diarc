@@ -3,7 +3,9 @@
  */
 package edu.tufts.hrilab.action.asl;
 
+import edu.tufts.hrilab.action.ActionBinding;
 import edu.tufts.hrilab.action.EventSpec;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * Builder/editor for ASL EventSpec sequences with structured control-flow operations.
@@ -39,6 +40,7 @@ public final class AslBlockBuilder {
     private final Integer parentStartIndex;
     private String activeBranch;
     private boolean hasElse;
+    private boolean hasFinally;
     private final LinkedHashSet<String> declaredLocals = new LinkedHashSet<>();
 
     private OpenState(AslBlockStructure.BlockType type, int startIndex, Integer parentStartIndex) {
@@ -49,16 +51,31 @@ public final class AslBlockBuilder {
   }
 
   private final List<EventSpec> specs;
+  private final List<String> predeclaredLocals;
   private final ArrayDeque<OpenState> open = new ArrayDeque<>();
   private long mutationVersion = 0L;
 
   public AslBlockBuilder() {
-    this(List.of());
+    this(List.of(), List.of());
   }
 
   public AslBlockBuilder(List<EventSpec> existing) {
+    this(existing, List.of());
+  }
+
+  public AslBlockBuilder(List<EventSpec> existing, List<String> predeclaredLocals) {
     this.specs = new ArrayList<>(Objects.requireNonNull(existing, "existing"));
+    this.predeclaredLocals = List.copyOf(predeclaredLocals == null ? List.of() : predeclaredLocals);
     AslBlockStructure.validateControlFlow(this.specs);
+  }
+
+  public static AslBlockBuilder fromAction(ActionDBEntry action) {
+    Objects.requireNonNull(action, "action");
+    List<String> locals = action.getRoles().stream()
+        .filter(ActionBinding::isLocal)
+        .map(ActionBinding::getName)
+        .toList();
+    return new AslBlockBuilder(action.getEventSpecs(), locals);
   }
 
   public List<EventSpec> build() {
@@ -67,7 +84,7 @@ public final class AslBlockBuilder {
       throw new IllegalStateException("Unclosed block: " + top.type + " at index " + top.startIndex);
     }
     AslBlockStructure.validateControlFlow(specs);
-    AslScopeValidator.validate(specs);
+    AslScopeValidator.validate(specs, predeclaredLocals);
     return List.copyOf(specs);
   }
 
@@ -268,7 +285,10 @@ public final class AslBlockBuilder {
   }
 
   public AslBlockBuilder beginCatch(List<String> catchArgs) {
-    ensureTop(AslBlockStructure.BlockType.TRY, "catch");
+    OpenState state = ensureTop(AslBlockStructure.BlockType.TRY, "catch");
+    if (state.hasFinally) {
+      throw new IllegalStateException("Cannot add catch branch after finally");
+    }
     specs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.CATCH,
         catchArgs == null ? List.of() : catchArgs, List.of()));
     touch();
@@ -276,7 +296,11 @@ public final class AslBlockBuilder {
   }
 
   public AslBlockBuilder beginFinally() {
-    ensureTop(AslBlockStructure.BlockType.TRY, "finally");
+    OpenState state = ensureTop(AslBlockStructure.BlockType.TRY, "finally");
+    if (state.hasFinally) {
+      throw new IllegalStateException("Cannot add duplicate finally branch");
+    }
+    state.hasFinally = true;
     specs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.FINALLY));
     touch();
     return this;
@@ -339,7 +363,7 @@ public final class AslBlockBuilder {
 
   public AslBlockBuilder validate() {
     AslBlockStructure.validateControlFlow(specs);
-    AslScopeValidator.validate(specs);
+    AslScopeValidator.validate(specs, predeclaredLocals);
     return this;
   }
 
@@ -430,6 +454,9 @@ public final class AslBlockBuilder {
 
   public AslBlockBuilder renameBlockLocalVariable(int declarationIndex, String newName) {
     Objects.requireNonNull(newName, "newName");
+    if (!newName.matches("![A-Za-z][A-Za-z0-9_]*")) {
+      throw new IllegalArgumentException("Invalid local variable identifier: " + newName);
+    }
     mutateTransactionally(copy -> {
       checkRange(copy, declarationIndex, declarationIndex + 1);
       EventSpec declaration = copy.get(declarationIndex);
@@ -556,7 +583,7 @@ public final class AslBlockBuilder {
     List<EventSpec> candidate = new ArrayList<>(specs);
     mutator.apply(candidate);
     AslBlockStructure.validateControlFlow(candidate);
-    AslScopeValidator.validate(candidate);
+    AslScopeValidator.validate(candidate, predeclaredLocals);
     specs.clear();
     specs.addAll(candidate);
     mutationVersion++;
@@ -572,8 +599,7 @@ public final class AslBlockBuilder {
         && !spec.getInputArgs().isEmpty() && spec.getInputArgs().get(0).equals(oldName)) {
       List<String> args = new ArrayList<>(spec.getInputArgs());
       args.set(0, newName);
-      return new EventSpec.Builder(spec.getType()).setActor(spec.getActor()).setCommand(spec.getCommand())
-          .setInputArgs(args).setReturnArgs(spec.getReturnArgs()).build();
+      return cloneWith(spec, args, spec.getReturnArgs());
     }
 
     List<String> inputArgs = new ArrayList<>(spec.getInputArgs());
@@ -582,7 +608,7 @@ public final class AslBlockBuilder {
 
     for (int i = 0; i < inputArgs.size(); i++) {
       String before = inputArgs.get(i);
-      String after = replaceToken(before, oldName, newName);
+      String after = renameInputArg(spec, i, before, oldName, newName);
       if (!before.equals(after)) {
         inputArgs.set(i, after);
         changed = true;
@@ -590,7 +616,7 @@ public final class AslBlockBuilder {
     }
     for (int i = 0; i < returnArgs.size(); i++) {
       String before = returnArgs.get(i);
-      String after = replaceToken(before, oldName, newName);
+      String after = before.equals(oldName) ? newName : before;
       if (!before.equals(after)) {
         returnArgs.set(i, after);
         changed = true;
@@ -600,19 +626,96 @@ public final class AslBlockBuilder {
     if (!changed) {
       return spec;
     }
-    return new EventSpec.Builder(spec.getType()).setActor(spec.getActor()).setCommand(spec.getCommand())
-        .setInputArgs(inputArgs).setReturnArgs(returnArgs).build();
+    return cloneWith(spec, inputArgs, returnArgs);
   }
 
-  private static String replaceToken(String value, String oldName, String newName) {
+  private static EventSpec cloneWith(EventSpec original, List<String> inputArgs, List<String> returnArgs) {
+    return new EventSpec.Builder(original.getType())
+        .setActor(original.getActor())
+        .setCommand(original.getCommand())
+        .setInputArgs(inputArgs)
+        .setReturnArgs(returnArgs)
+        .setSourceLocation(original.getSourceLocation())
+        .build();
+  }
+
+  private static String renameInputArg(EventSpec spec, int index, String value, String oldName, String newName) {
     if (value == null || value.isEmpty()) {
       return value;
     }
     if (value.equals(oldName)) {
       return newName;
     }
-    String pattern = "(?<![A-Za-z0-9_])" + Pattern.quote(oldName) + "(?![A-Za-z0-9_])";
-    return value.replaceAll(pattern, java.util.regex.Matcher.quoteReplacement(newName));
+    if (isQuotedLiteral(value)) {
+      return value;
+    }
+    if (spec.getType() != EventSpec.EventType.CONTROL) {
+      return value;
+    }
+    String command = spec.getCommand();
+    if (("assign".equals(command) || "evaluate".equals(command)) && index == 0) {
+      return renameVariableTokens(value, oldName, newName);
+    }
+    if ("for".equals(command)) {
+      if (index == spec.getInputArgs().size() - 1) {
+        return renameVariableTokens(value, oldName, newName);
+      }
+      return value;
+    }
+    return value;
+  }
+
+  private static boolean isQuotedLiteral(String value) {
+    return value.length() >= 2
+        && ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'")));
+  }
+
+  private static String renameVariableTokens(String text, String oldName, String newName) {
+    StringBuilder out = new StringBuilder(text.length());
+    int i = 0;
+    boolean inDouble = false;
+    boolean inSingle = false;
+    while (i < text.length()) {
+      char c = text.charAt(i);
+      if (c == '\\') {
+        out.append(c);
+        if (i + 1 < text.length()) {
+          out.append(text.charAt(i + 1));
+        }
+        i += 2;
+        continue;
+      }
+      if (!inSingle && c == '"') {
+        inDouble = !inDouble;
+        out.append(c);
+        i++;
+        continue;
+      }
+      if (!inDouble && c == '\'') {
+        inSingle = !inSingle;
+        out.append(c);
+        i++;
+        continue;
+      }
+      if (!inDouble && !inSingle && (c == '!' || c == '?')) {
+        int start = i;
+        i++;
+        while (i < text.length()) {
+          char next = text.charAt(i);
+          if (Character.isLetterOrDigit(next) || next == '_') {
+            i++;
+          } else {
+            break;
+          }
+        }
+        String token = text.substring(start, i);
+        out.append(token.equals(oldName) ? newName : token);
+        continue;
+      }
+      out.append(c);
+      i++;
+    }
+    return out.toString();
   }
 
   private static Map<Integer, Integer> declarationScopeEnds(AslBlockStructure.Snapshot snapshot, List<EventSpec> specs,
@@ -673,7 +776,7 @@ public final class AslBlockBuilder {
 
   private static boolean references(EventSpec spec, String variable) {
     for (String input : spec.getInputArgs()) {
-      if (input != null && !replaceToken(input, variable, "__x__").equals(input)) {
+      if (containsVariableReference(input, variable)) {
         return true;
       }
     }
@@ -683,6 +786,19 @@ public final class AslBlockBuilder {
       }
     }
     return false;
+  }
+
+  private static boolean containsVariableReference(String text, String variable) {
+    if (text == null || text.isEmpty()) {
+      return false;
+    }
+    if (text.equals(variable)) {
+      return true;
+    }
+    if (isQuotedLiteral(text)) {
+      return false;
+    }
+    return !renameVariableTokens(text, variable, "__probe__").equals(text);
   }
 
   private OpenState push(AslBlockStructure.BlockType type) {
