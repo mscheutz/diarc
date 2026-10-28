@@ -4,6 +4,7 @@
 package edu.tufts.hrilab.action;
 
 import edu.tufts.hrilab.action.util.Utilities;
+import edu.tufts.hrilab.action.asl.SourceLocation;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -34,6 +35,7 @@ public final class EventSpec implements Serializable {
   private String command = null;
   private final List<String> inputArgs = new ArrayList<>();
   private final List<String> returnArgs = new ArrayList<>();
+  private SourceLocation sourceLocation;
 
   public static class Builder {
     private EventType type;
@@ -41,13 +43,21 @@ public final class EventSpec implements Serializable {
     private String command = null;
     private List<String> inputArgs = new ArrayList<>();
     private List<String> returnArgs = new ArrayList<>();
+    private SourceLocation sourceLocation;
 
     public Builder(EventType type) {
       this.type = type;
     }
 
     public EventSpec build() {
-      return new EventSpec(type, actor, command, inputArgs, returnArgs);
+      EventSpec event = new EventSpec(type, actor, command, inputArgs, returnArgs);
+      event.sourceLocation = sourceLocation;
+      return event;
+    }
+
+    public Builder setSourceLocation(SourceLocation sourceLocation) {
+      this.sourceLocation = sourceLocation;
+      return this;
     }
 
     public Builder setActor(String actor) {
@@ -80,6 +90,15 @@ public final class EventSpec implements Serializable {
       return this;
     }
 
+  }
+
+  public SourceLocation getSourceLocation() {
+    return sourceLocation;
+  }
+
+  public EventSpec withSourceLocation(SourceLocation location) {
+    return new Builder(type).setActor(actor).setCommand(command).setInputArgs(inputArgs)
+        .setReturnArgs(returnArgs).setSourceLocation(location).build();
   }
 
   /**

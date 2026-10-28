@@ -337,6 +337,14 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       Future<ActionStatus> asyncFuture = asyncExecutor.submit(ai);
       asyncFutures.put(currentStep.getId(), asyncFuture);
       asyncAIs.put(currentStep.getId(), ai);
+      if (currentStep instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext) {
+        long contextId = currentStep.getId();
+        ((edu.tufts.hrilab.action.execution.control.AsynchronousContext) currentStep).getTask()
+            .attach(goal, asyncFuture, () -> {
+              asyncFutures.remove(contextId, asyncFuture);
+              asyncAIs.remove(contextId, ai);
+            });
+      }
     }
 
     Context nextStep = callStack.next();
@@ -583,9 +591,14 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         }
         nextStep.setStatus(ActionStatus.SUSPEND);
       } else if (!alreadyCancelled && canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
-        boolean cancellationCleanup = nextStep instanceof FinallyContext
-            && nextStep.getParentContext() instanceof TryContext
-            && ((TryContext) nextStep.getParentContext()).isHandlingCancellation();
+        boolean cancellationCleanup = false;
+        for (Context cleanup = nextStep; cleanup != null; cleanup = cleanup.getParentContext()) {
+          if (cleanup instanceof FinallyContext && cleanup.getParentContext() instanceof TryContext) {
+            cancellationCleanup = ((TryContext) cleanup.getParentContext()).deferCancellationForFinally();
+            break;
+          }
+          if (cleanup == rootStep) break;
+        }
         if (currentStep.getStatus() == ActionStatus.CANCEL || cancellationCleanup) {
           // TryContext can intercept cancellation without retaining CANCEL on the current step.
           // Let its finally block finish before the intercepted status propagates.

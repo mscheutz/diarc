@@ -275,7 +275,14 @@ public class ActionScriptLanguageWriter {
       StringBuilder conditionString = new StringBuilder();
       ArrayDeque<String> conditionNameStack = new ArrayDeque<>();
       ArrayDeque<StringJoiner> conditionStack = new ArrayDeque<>();
+      String lastOrigin = null;
       for (EventSpec es : entry.getEventSpecs()) {
+        if (!inConditioning && es.getSourceLocation() != null && es.getSourceLocation().origin() != null
+            && !es.getSourceLocation().origin().equals(lastOrigin)) {
+          lastOrigin = es.getSourceLocation().origin();
+          cat("// @diarc-origin " + java.util.Base64.getEncoder().encodeToString(
+              lastOrigin.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        }
         if (inConditioning) {
           switch (es.getType()) {
             case ACTION:
@@ -292,6 +299,13 @@ public class ActionScriptLanguageWriter {
               break;
             case CONTROL:
               switch (Control.fromString(es.getCommand())) {
+                case EVALUATE:
+                  if (conditionStack.isEmpty()) {
+                    conditionString.append("(").append(es.getInputArgs().get(0)).append(")");
+                  } else {
+                    conditionStack.peek().add("(" + es.getInputArgs().get(0) + ")");
+                  }
+                  break;
                 case OR:
                   conditionNameStack.push("or");
                   conditionStack.push(new StringJoiner(" || ", "(", ")"));
@@ -460,15 +474,20 @@ public class ActionScriptLanguageWriter {
                   cat("exit" + exitArgs.toString() + ";");
                   break;
                 case ASYNC:
-                  openBlock(generateReturnPrefix(es) + "async");
+                  openBlock(generateReturnPrefix(es) + "async" + (es.getInputArgs().isEmpty() ? ""
+                      : "(" + String.join(", ", es.getInputArgs()) + ")"));
                   break;
                 case NOINTERRUPT:
                   openBlock("noInterrupt");
                   break;
                 case JOIN:
+                case INVOKE:
                   StringJoiner joinArgs = new StringJoiner(", ", "(", ")");
                   es.getInputArgs().forEach(joinArgs::add);
-                  cat(generateReturnPrefix(es) + "join" + joinArgs.toString() + ";");
+                  cat(generateReturnPrefix(es) + es.getCommand() + joinArgs.toString() + ";");
+                  break;
+                case ASSIGN:
+                  cat(es.getReturnArgs().get(0) + " = " + es.getInputArgs().get(0) + ";");
                   break;
                 case RETURN:
                   cat("return;");

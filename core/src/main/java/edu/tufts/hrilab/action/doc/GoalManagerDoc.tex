@@ -912,10 +912,11 @@ import java.lang.Double;
 Bindings are shared through \code{ActionBinding} objects; assigning a
 callee output can update the caller's destination role. Assign outputs
 before normal completion or \code{return;}. There is no
-\code{return expression;} construct and no general Java-style statement
-\code{!x = !y + 1;}. Use an operator/action/service call on the right-hand
-side, for example \code{!x = op:add(!y,1);}. A literal initializer is
-allowed in a declaration, such as \code{Double !x = 0.0;}.
+\code{return expression;} construct. Assignments accept either explicit
+operator/action/service calls, such as \code{!x = op:add(!y,1);}, or pure
+typed expressions, such as \code{!x = !y + 1;}.
+Declarations also accept literal and expression initializers, such as
+\code{Double !x = 0.0;} or \code{long !n = 2 + 3 * 4;}.
 
 Ordinary declarations are not allowed directly inside control blocks by
 the \code{controlContent} grammar. Loop variables and catch details have
@@ -929,8 +930,9 @@ choose one arbitrarily with a warning. This is not automatic iteration
 over all solutions; use an observer returning a collection and explicit
 iteration when all results matter.
 
-The runtime substitutes script variables in strings, as used in the log
-examples. For structured arguments prefer actual variables or predicates
+Legacy call arguments substitute script variables in strings, as used in the log
+examples; typed expressions and literal source parameters do not.
+For structured arguments prefer actual variables or predicates
 over constructing predicate text inside strings. A quoted string and a
 \code{Symbol}/\code{Predicate} value are not interchangeable Java types,
 even when conversion is available.
@@ -1185,8 +1187,9 @@ tightly than disjunction. The current \code{AndContext} and
 values; do not rely on short-circuit evaluation for side-effecting calls.
 Use explicit nested branches when later calls must not execute.
 The keyword is \code{elseif}, not Java's two-word \code{else if}.
-Arithmetic and comparisons are calls such as \code{op:lt(!x,10)};
-ordinary infix Java expressions are not accepted as arbitrary conditions.
+Arithmetic and comparisons can use calls such as \code{op:lt(!x,10)}
+or pure typed expressions such as \code{!x lt 10}.
+Calls must remain explicit rather than embedded inside arithmetic expressions.
 An action's boolean return can decide a branch even though a false boolean
 return is not generally a primitive-action failure outside a boolean test.
 
@@ -1296,6 +1299,148 @@ An ASL async ID is \emph{not} a managed goal ID:
 the IDs. Concurrent child contexts also do not independently acquire
 top-level agent resources. Avoid concurrent calls to the same hardware or
 unsynchronized mutation of shared bindings; joining is not mutual exclusion.
+
+\subsection{Typed expressions and asynchronous task results}
+
+ASL supports typed value assignments and pure expressions in conditions.
+Arithmetic precedence is multiplication/division/remainder, addition/subtraction,
+comparison, conjunction, then disjunction; parentheses override it.
+Use \code{~} for Boolean negation and \code{gt}, \code{ge},
+\code{lt}, or \code{le} for ordered numeric comparisons.
+Logical operands remain eager, consistent with existing ASL controls.
+Native calls remain explicit \code{act:}, \code{op:}, and related statements,
+not implicit calls embedded in value expressions.
+
+\begin{lstlisting}[language=ASL,caption={Typed assignments and checked numeric conversions.}]
+import java.lang.Boolean;
+import java.lang.String;
+
+() = expressionExample() {
+  long !count = 2 + 3 * 4;
+  Boolean !ready;
+  String !message;
+  !ready = !count == 14;
+  !message = "count=" + !count;
+  while (!count gt 10) { !count = !count - 1; }
+  if (!ready && !count == 10) { }
+}
+\end{lstlisting}
+
+Assignment preserves object values and uses checked numeric conversions:
+fractional-to-integral assignments and overflow fail instead of truncating.
+Arithmetic uses decimal numbers with DECIMAL128 division; Boolean conditions
+require Boolean values, not numeric truthiness. String values read by these
+expressions are data, not implicitly interpolated templates.
+Expressions are limited to 16,384 characters, 2,048 lexer tokens including
+the end marker, 32 parenthesis levels, and 64 consecutive unary operators;
+exceeding a limit fails explicitly.
+This does not replace the BT script language or change its pinned-engine
+numeric and conversion rules.
+
+\code{AslTask} is an opt-in handle for a native asynchronous child
+interpreter. Existing \code{Long} async context IDs and their join syntax
+remain supported. Typed tasks snapshot the enclosing lexical bindings
+when the async context is created; mutable Java objects are shared references,
+not deep copies. Work within the block updates its private bindings.
+Only explicitly exported values are copied back by a successful join.
+
+\begin{lstlisting}[language=ASL,caption={Explicit typed results from an asynchronous task.}]
+import edu.tufts.hrilab.action.execution.AslTask;
+import edu.tufts.hrilab.action.ActionStatus;
+
+() = taskExample() {
+  AslTask !task;
+  ActionStatus !status;
+  long !input = 21;
+  long !answer = 0;
+  !task = async(!answer) {
+    !answer = !input * 2;
+  }
+  (!status, !answer) = join(!task);
+  if (!answer == 42) { } else { exit(FAIL); }
+}
+\end{lstlisting}
+
+Exports must be distinct, declared variables. Join returns
+\code{ActionStatus} first, followed by the exported values in declaration
+order. A status-only join is also valid. A timeout returns the current
+status without cancelling work or publishing partial results.
+All result conversions are checked before any exported value is published;
+failed or cancelled tasks do not publish their private intermediate values.
+Typed tasks isolate child failure/cancellation so callers can inspect the
+status and choose recovery. Legacy async blocks retain their existing
+failure propagation and direct-child binding-copy behavior.
+
+The Java handle also provides \code{getStatus()}, \code{cancel()},
+\code{await()}, timed \code{await(milliseconds)}, result names/types,
+and \code{getResult(name,Class<T>)}. Results require successful completion.
+These are child interpreters, not independently queued managed goals.
+Cancellation still uses native interruption and finally cleanup; cancelling
+a typed child does not by itself cancel its parent.
+
+\subsection{Invocation-local compiled ASL}
+
+\code{op:compileAsl(sourceName,source,entry)} strictly parses a source
+string into a \code{CompiledAction}. Malformed source, duplicate definition
+names, and missing entry names are explicit errors. Compilation does not
+register actions globally. The source parameter is literal data: it is
+neither interpolated using the caller's variables nor executed during parsing.
+Source strings are limited to 1,048,576 characters.
+
+\begin{lstlisting}[language=ASL,caption={Compile a private module and invoke it in the current interpreter.}]
+import edu.tufts.hrilab.action.asl.CompiledAction;
+
+() = scopedExample() {
+  CompiledAction !module;
+  long !answer;
+  !module = op:compileAsl("private-module.asl",
+      "(long ?result) = twice(long ?value) { ?result = ?value * 2; }",
+      "twice");
+  !answer = invoke(!module, ?actor, 21);
+  if (!answer == 42) { } else { exit(FAIL); }
+}
+\end{lstlisting}
+
+\code{invoke} receives the compiled module, an explicit actor, and entry
+inputs. Its outputs bind through the ordinary native action return machinery.
+The entry and private helpers execute as ActionContexts, with normal
+conditions, effects, interruption, introspection, and recovery.
+Private \code{act:} calls resolve inside the module, including recursion;
+other action calls use the existing global database. Different modules may
+use identical helper names without overwriting each other, and a globally
+defined script called by a module retains global action-name resolution.
+Private definitions are not global planning/goal-selection capabilities;
+belief predicates and effects retain their normal DIARC meanings.
+
+Java integrations can use \code{CompiledAction.compile(...)} and
+\code{Context.addCompiledAction(...)} while the caller is progressing.
+Dynamic BT scripts now use this shared native facility.
+The distributed \code{native-asl-features.asl} example combines compilation,
+typed tasks, invocation, and expressions. Load it with
+\code{-asl native-asl-features.asl} and submit
+\code{exampleNativeAslFeatures(self:agent)}.
+
+\subsection{Source-aware execution diagnostics}
+
+Parsed definitions and statements retain their source name, line, and column.
+The BT translator also records XML file/tree/node-path origins, retained
+when generated ASL is written and read again. Runtime errors can therefore
+identify both the generated ASL statement and the originating BT node.
+Runtime-compiled helpers inherit their calling BT origin.
+
+\code{getGoalExecutionDiagnostic(goalId)} returns the underlying failed
+step's status, source location, reason, argument-binding snapshot, and
+context call stack, or null when the root context has no failure.
+An unknown goal ID is an explicit error. Handled typed-task failures are not
+misreported as the cause of an unrelated parent failure.
+Diagnostic binding values are truncated after 256 characters, followed by
+an ellipsis, and the snapshot is returned only on explicit introspection.
+Existing provider and operator logging is unchanged.
+Ordinary failure justifications and Goal Manager statuses remain available.
+
+\source{asl/ASL.g4, asl/AslExpression.java, asl/CompiledAction.java,
+execution/AslTask.java, execution/control/ExpressionContext.java,
+execution/control/InvokeContext.java, execution/ExecutionDiagnostic.java}
 
 \subsection{Interruption hooks and protected-looking blocks}
 

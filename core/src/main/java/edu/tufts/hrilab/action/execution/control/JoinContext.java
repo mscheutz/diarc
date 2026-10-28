@@ -8,6 +8,8 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
 import edu.tufts.hrilab.action.execution.Context;
+import edu.tufts.hrilab.action.execution.AslTask;
+import edu.tufts.hrilab.action.asl.AslValues;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.util.Utilities;
 
@@ -17,23 +19,52 @@ import java.util.List;
 import java.util.Queue;
 
 public class JoinContext extends ArgumentBasedContext {
+  private final List<?> inputs;
+  private final List<?> outputs;
+  private boolean taskJoin;
+  private int resultCount;
 
   public JoinContext(Context c, StateMachine sm, List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
     super(c, sm, "JOIN");
+    inputs = List.copyOf(inputArgs);
+    outputs = List.copyOf(returnArgs);
     setupArguments(inputArgs, returnArgs);
-  }
-
-  private JoinContext(Context c, StateMachine sm) {
-    super(c, sm, "JOIN");
   }
 
   @Override
   protected void setupArguments(List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
+    if (!inputArgs.isEmpty() && AslTask.class.equals(getArgumentType(inputArgs.get(0).toString()))) {
+      taskJoin = true;
+      if (inputArgs.size() > 2) {
+        failExecution(ActionStatus.FAIL_ARGUMENTS, "Task join accepts a handle and optional timeout");
+        return;
+      }
+      addArgument("task", AslTask.class, inputArgs.get(0), false, false);
+      if (inputArgs.size() == 2) {
+        String timeout = inputArgs.get(1).toString();
+        if (!(Long.class.equals(AslValues.boxed(getArgumentType(timeout))) || Utilities.isLong(timeout) || Utilities.isInteger(timeout))) {
+          failExecution(ActionStatus.FAIL_ARGUMENTS, "Task timeout must be Long milliseconds");
+          return;
+        }
+        addArgument("timeout", Long.class, timeout, false, false);
+      }
+      for (int i = 0; i < returnArgs.size(); i++) {
+        String target = returnArgs.get(i).toString();
+        Class<?> type = getArgumentType(target);
+        if (!Utilities.isScriptVariable(target) || type == null || i == 0 && type != ActionStatus.class) {
+          failExecution(ActionStatus.FAIL_ARGUMENTS, "Task join returns ActionStatus followed by exported results");
+          return;
+        }
+        addArgument(i == 0 ? "contextStatus" : "result" + (i - 1), type, target, false, true);
+      }
+      resultCount = Math.max(0, returnArgs.size() - 1);
+      return;
+    }
     switch (inputArgs.size()) {
       case 2:
         // timeout
         String arg = (String) inputArgs.get(1);
-        if (Utilities.isScriptVariable(arg) && Long.class.equals(getArgumentType(arg))) {
+        if (Utilities.isScriptVariable(arg) && Long.class.equals(AslValues.boxed(getArgumentType(arg)))) {
           addArgument("timeout", Long.class, arg, false, false);
         } else if (Utilities.isLong(arg) || Utilities.isInteger(arg)) {
           addArgument("timeout", Long.class, arg, false, false);
@@ -47,7 +78,7 @@ public class JoinContext extends ArgumentBasedContext {
       case 1:
         // first arg must be context id
         arg = (String) inputArgs.get(0);
-        if (!Utilities.isScriptVariable(arg) || !Long.class.equals(getArgumentType(arg))) {
+        if (!Utilities.isScriptVariable(arg) || !Long.class.equals(AslValues.boxed(getArgumentType(arg)))) {
           log.error("[setupArguments] invalid arg. Must be a variable of type Long. arg: " + arg);
           setStatus(ActionStatus.FAIL_ARGUMENTS, new ConditionJustification(false));
           return;
@@ -88,6 +119,10 @@ public class JoinContext extends ArgumentBasedContext {
     switch (this.getExecType()) {
       case SIMULATE_ACT:
       case ACT:
+        if (taskJoin) {
+          joinTask();
+          return;
+        }
         long targetId = (Long) getArgumentValue("asyncId");
 
         // find the nearest parent action in the context tree to start search from
@@ -125,6 +160,32 @@ public class JoinContext extends ArgumentBasedContext {
         break;
     }
 
+  }
+
+  private void joinTask() {
+    try {
+      AslTask task = (AslTask) getArgumentValue("task");
+      if (resultCount != 0 && resultCount != task.getResultNames().size()) {
+        throw new IllegalArgumentException("Task result count does not match explicit exports");
+      }
+      ActionStatus status = hasLocalArgument("timeout")
+          ? task.await((Long) getArgumentValue("timeout")) : task.await();
+      List<Object> values = new ArrayList<>();
+      if (status == ActionStatus.SUCCESS) {
+        for (int i = 0; i < resultCount; i++) {
+          values.add(AslValues.convert(task.getResult(task.getResultNames().get(i)), getArgumentType("result" + i)));
+        }
+      }
+      if (hasLocalArgument("contextStatus")) setArgument("contextStatus", status);
+      for (int i = 0; i < values.size(); i++) setArgument("result" + i, values.get(i));
+    } catch (InterruptedException exception) {
+      Thread.currentThread().interrupt();
+      failExecution(ActionStatus.FAIL, "Interrupted while joining ASL task");
+    } catch (java.util.concurrent.ExecutionException exception) {
+      failExecution(ActionStatus.FAIL, exception.toString());
+    } catch (IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
+      failExecution(ActionStatus.FAIL_ARGUMENTS, exception.toString());
+    }
   }
 
   @Override
@@ -166,10 +227,9 @@ public class JoinContext extends ArgumentBasedContext {
     return matchingContext;
   }
 
-  //FIXME: properly set up args
   @Override
   public JoinContext copy(Context newParent) {
-    JoinContext newJoin = new JoinContext(newParent, newParent.getStateMachine(), new ArrayList<>(), new ArrayList<>());
+    JoinContext newJoin = new JoinContext(newParent, newParent.getStateMachine(), inputs, outputs);
     copyInternal(newJoin);
     return newJoin;
   }

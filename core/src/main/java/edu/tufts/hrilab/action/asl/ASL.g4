@@ -52,6 +52,7 @@ NOT : '~';
 RETURN : 'return';
 ASYNC : 'async';
 JOIN : 'join';
+INVOKE : 'invoke';
 INTERRUPT : 'onInterrupt';
 SUSPEND : 'suspend';
 CANCEL : 'cancel';
@@ -66,11 +67,16 @@ fragment LOWERCASELETTER : 'a'..'z';
 fragment DIGIT : '0'..'9';
 fragment NONZERO : '1'..'9';
 fragment DECIMAL : '.' DIGIT+;
-fragment INTEGER : '0' | '-'? NONZERO DIGIT*;
-fragment FLOAT : INTEGER DECIMAL | '-0' DECIMAL | '-'? DECIMAL;
+fragment INTEGER : '0' | NONZERO DIGIT*;
+fragment FLOAT : INTEGER DECIMAL | DECIMAL;
 
 // operator
-ARIOPT : '+' | '-' | '*' | '/' | '%' | 'round';
+PLUS : '+';
+MINUS : '-';
+MULTIPLY : '*';
+DIVIDE : '/';
+MODULO : '%';
+ROUND : 'round';
 OROPT : '||';
 ANDOPT : '&&';
 INCOPT : '++' | '--';
@@ -95,12 +101,12 @@ definitions : definition+;
 
 reserved : THIS | TSC | ACTION | OPERATOR | GOAL | OBSERVATION | VAR | SET | OR | PRE | POST | OVERALL | OBLIGATION | EFFECT
         | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
-        | FOR | FOREACH | TRUE | FALSE | EXIT | TRY | CATCH | FINALLY | NOT | RETURN | ASYNC | JOIN;
+        | FOR | FOREACH | TRUE | FALSE | EXIT | TRY | CATCH | FINALLY | NOT | RETURN | ASYNC | JOIN | INVOKE;
 
 // TODO: cleanup usage of name vs NAME
 name : NAME | GLOBALVAR | LOCALVAR | reserved | operation;
 
-definition : outputParameter '=' NAME description? inputParameter block;
+definition : outputParameter '=' (NAME | INVOKE) description? inputParameter block;
 
 outputParameter : parameterList;
 
@@ -124,7 +130,7 @@ javaTypeListTail : ',' javaType;
 
 generic : '<' javaType (','javaType)*'>';
 
-assignment : '=' (input | specType ':' function);
+assignment : '=' (input | specType ':' function | valueExpression);
 
 block : '{' content '}';
 
@@ -137,13 +143,14 @@ content : (
         | interrupts
         | recovery
         | spec
+        | valueAssignment
         | control
         )*;
 
 localvar : (javaType LOCALVAR assignment? | javaType GLOBALVAR assignment?) ';';
 
 // TODO: restrict to benefit, cost, minurg, maxurg, timeout instead of NAME
-setting : NAME '=' NUMBER ';';
+setting : NAME '=' numberLiteral ';';
 
 conditions : CONDITION ':' '{' (orCondition | preCondition | overallCondition | obligationCondition)* '}';
 
@@ -161,7 +168,9 @@ predicateList : '{' predicate (',' predicate)* '}';
 
 inputList : '(' ( | input inputTail*) ')';
 
-input : NUMBER | name | NAME ':' NAME+ | SENTENCE | TRUE | FALSE | javaType | predicate;
+numberLiteral : MINUS? NUMBER;
+
+input : numberLiteral | name | NAME ':' NAME+ | SENTENCE | TRUE | FALSE | javaType | predicate;
 
 inputTail : ',' input;
 
@@ -223,7 +232,7 @@ recoveryExcludedFailureReasons : 'excludedFailureReasons' ':' predicateList;
 // TODO: replace NAME here with allowed ACTION_STATUS values
 recoveryActionStatuses : 'actionStatuses' ':' '{' NAME (',' NAME)* '}';
 
-recoveryMaximumAttempts : 'maximumAttempts' ':' NUMBER;
+recoveryMaximumAttempts : 'maximumAttempts' ':' numberLiteral;
 
 spec : specFunction ';';
 
@@ -237,7 +246,19 @@ specType : THIS | TSC | ACTION | GOAL | OBSERVATION | OPERATOR | name '.' TSC | 
 
 function : name inputList?;
 
-operation : OROPT | ANDOPT | ARIOPT | CMPOPT | INCOPT | GRWOPT;
+operation : OROPT | ANDOPT | PLUS | MINUS | MULTIPLY | DIVIDE | MODULO | ROUND | CMPOPT | INCOPT | GRWOPT;
+
+valueAssignment : output '=' valueExpression ';';
+expressionUnit : valueExpression EOF;
+valueExpression : valueOr;
+valueOr : valueAnd (OROPT valueAnd)*;
+valueAnd : valueComparison (ANDOPT valueComparison)*;
+valueComparison : valueSum (CMPOPT valueSum)*;
+valueSum : valueProduct ((PLUS | MINUS) valueProduct)*;
+valueProduct : valueUnary ((MULTIPLY | DIVIDE | MODULO) valueUnary)*;
+valueUnary : (NOT | PLUS | MINUS) valueUnary | valueAtom;
+valueAtom : NUMBER | SENTENCE | TRUE | FALSE | LOCALVAR | GLOBALVAR
+          | NAME (':' NAME)? | '(' valueExpression ')';
 
 control : (
           ifStatement
@@ -248,6 +269,7 @@ control : (
         | tryStatement
         | asyncStatement
         | joinStatement
+        | invokeStatement
         | returnStatement
         | noInterruptStatement
         );
@@ -260,9 +282,9 @@ orExpression : andExpression (OROPT andExpression)*;
 
 andExpression : primaryExpression (ANDOPT primaryExpression)*;
 
-primaryExpression : '(' booleanExpression ')' | TRUE | FALSE | specFunction | NOT primaryExpression;
+primaryExpression : '(' booleanExpression ')' | TRUE | FALSE | specFunction | NOT primaryExpression | valueExpression;
 
-controlContent : '{' (control|spec)* '}';
+controlContent : '{' (control|spec|valueAssignment)* '}';
 
 elifStatement : ELIF '(' booleanExpression ')' controlContent;
 
@@ -272,11 +294,11 @@ whileStatement : WHILE '(' booleanExpression ')' controlContent;
 
 forStatement : FOR '(' forInitial ';' forCondition ';' forUpdate ')' controlContent;
 
-forInitial : name ('=' (name|NUMBER))?;
+forInitial : name ('=' (name|numberLiteral))?;
 
-forCondition : name CMPOPT (name|NUMBER);
+forCondition : name CMPOPT (name|numberLiteral);
 
-forUpdate : name (INCOPT | GRWOPT (name|NUMBER));
+forUpdate : name (INCOPT | GRWOPT (name|numberLiteral));
 
 forEachStatement : FOREACH '(' name ':' name ')' controlContent;
 
@@ -293,8 +315,10 @@ finallyStatement : FINALLY controlContent;
 
 returnStatement : RETURN ';';
 
-asyncStatement : singleArgReturn? ASYNC controlContent;
+asyncStatement : singleArgReturn? ASYNC inputList? controlContent;
 
-joinStatement : singleArgReturn? JOIN inputList ';';
+joinStatement : specReturn? JOIN inputList ';';
+
+invokeStatement : specReturn? INVOKE inputList ';';
 
 noInterruptStatement : NOINTERRUPT controlContent;

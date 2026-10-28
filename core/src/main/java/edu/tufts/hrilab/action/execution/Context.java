@@ -25,6 +25,7 @@ import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.util.Utilities;
+import edu.tufts.hrilab.action.asl.SourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +89,74 @@ public abstract class Context {
    * Command.
    */
   protected final String cmd;
+  private SourceLocation sourceLocation;
+  private String failureDetail;
+  private edu.tufts.hrilab.action.asl.CompiledAction compiledScope;
+
+  public void setCompiledScope(edu.tufts.hrilab.action.asl.CompiledAction scope) {
+    compiledScope = scope;
+  }
+
+  public SourceLocation getSourceLocation() {
+    if (sourceLocation != null) {
+      if (sourceLocation.origin() == null && caller != null) {
+        SourceLocation parentSource = caller.getSourceLocation();
+        if (parentSource != null && parentSource.origin() != null) {
+          return new SourceLocation(sourceLocation.source(), sourceLocation.line(), sourceLocation.column(), parentSource.origin());
+        }
+      }
+      return sourceLocation;
+    }
+    return caller == null ? null : caller.getSourceLocation();
+  }
+
+  public void setSourceLocation(SourceLocation sourceLocation) {
+    this.sourceLocation = sourceLocation;
+  }
+
+  public Object readValue(String name) {
+    ActionBinding binding = getArgumentSilent(name);
+    if (binding == null || !binding.isBound()) throw new IllegalArgumentException("Unbound variable: " + name);
+    return binding.getBindingDeep();
+  }
+
+  public void failExecution(ActionStatus status, String reason) {
+    if (!status.isFailure()) throw new IllegalArgumentException("Expected a failure status");
+    failureDetail = reason;
+    log.error("{} at {}: {}", status, getSourceLocation(), reason);
+    setStatus(status, new ConditionJustification(false));
+    setLogicalValue(false);
+  }
+
+  public ExecutionDiagnostic getFailureDiagnostic() {
+    if (!isFailure()) return null;
+    Context failed = this;
+    while (true) {
+      Context childFailure = failed.getChildContexts().getChildrenContexts().stream()
+          .filter(child -> child.isFailure()
+              && (!(child instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext)
+              || !((edu.tufts.hrilab.action.execution.control.AsynchronousContext) child).hasTaskHandle()))
+          .findFirst().orElse(null);
+      if (childFailure == null) break;
+      failed = childFailure;
+    }
+    java.util.Map<String, String> bindings = new java.util.LinkedHashMap<>();
+    Context argumentScope = failed;
+    while (argumentScope != null && !(argumentScope instanceof ArgumentBasedContext)) argumentScope = argumentScope.caller;
+    List<ActionBinding> arguments = argumentScope == null ? List.of()
+        : ((ArgumentBasedContext) argumentScope).getLocalArgumentBindings();
+    for (ActionBinding argument : arguments == null ? List.<ActionBinding>of() : arguments) {
+      String value = argument.isBound() ? String.valueOf(argument.getBindingDeep()) : "<unbound>";
+      bindings.put(argument.getName(), value.length() > 256 ? value.substring(0, 256) + "..." : value);
+    }
+    List<String> stack = new ArrayList<>();
+    for (Context frame = failed; frame != null && stack.size() < 64; frame = frame.caller) {
+      stack.add(frame.cmd + (frame.getSourceLocation() == null ? "" : " at " + frame.getSourceLocation()));
+    }
+    return new ExecutionDiagnostic(failed.getSourceLocation(), failed.cmd, failed.getStatus(),
+        failed.failureDetail != null ? failed.failureDetail : String.valueOf(failed.getJustification()),
+        java.util.Map.copyOf(bindings), List.copyOf(stack));
+  }
   /**
    * Status of this Context.
    */
@@ -881,8 +950,10 @@ public abstract class Context {
       // as they need to access subsequent script elements to control execution flow.
       Context control = ControlFactory.build(this, this.stateMachine, parser);
       if (control == null) {
-        control = new FailureContext(this, this.stateMachine, ActionStatus.FAIL_SYNTAX, null);
+        control = new FailureContext(this, this.stateMachine, ActionStatus.FAIL_SYNTAX,
+            new ConditionJustification(false));
       }
+      control.setSourceLocation(parser.getEventSpec().getSourceLocation());
       childContexts.add(control);
       return control;
     } else {
@@ -908,6 +979,7 @@ public abstract class Context {
    */
   public Context addEvent(EventSpec eSpec) {
     Context child = createContext(eSpec);
+    if (eSpec.getSourceLocation() != null) child.sourceLocation = eSpec.getSourceLocation();
 
     //add new child context to childContexts
     childContexts.add(child);
@@ -922,8 +994,16 @@ public abstract class Context {
     if (getStatus() != ActionStatus.PROGRESS) {
       throw new IllegalStateException("Actions can only be appended to a progressing context");
     }
+
     ActionContext child = new ActionContext(this, stateMachine, action, inputs, returns, actor);
     childContexts.add(child);
+    return child;
+  }
+
+  public ActionContext addCompiledAction(edu.tufts.hrilab.action.asl.CompiledAction program,
+                                        List<?> inputs, List<?> returns, Symbol actor) {
+    ActionContext child = addAction(program.getEntry(), inputs, returns, actor);
+    ((Context) child).compiledScope = program;
     return child;
   }
 
@@ -971,7 +1051,16 @@ public abstract class Context {
     switch (eSpec.getType()) {
       // action DB or postcondition DB
       case ACTION:
-        ActionDBEntry action = Database.getActionDB().getAction(command, actor, inputArgTypes);
+        edu.tufts.hrilab.action.asl.CompiledAction scope = null;
+        for (Context frame = this; frame != null; frame = frame.caller) {
+          if (frame instanceof ActionContext) {
+            scope = frame.compiledScope;
+            break;
+          }
+        }
+        ActionDBEntry localAction = scope == null ? null : scope.find(command);
+        ActionDBEntry action = localAction != null ? scope.find(command, actor, inputArgTypes)
+            : Database.getActionDB().getAction(command, actor, inputArgTypes);
 
         if (action != null) {
           log.debug("making action context in Context.addEvent");
@@ -982,6 +1071,7 @@ public abstract class Context {
             //TODO: pass on recovery type
             c = new ActionContext(this, this.stateMachine, action, inputArgs, eSpec.getReturnArgs(), actor);
           }
+          if (localAction != null) c.compiledScope = scope;
         } else {
           log.error("No action found for event " + eSpec);
           c = generateFailureContext(actor, command, inputArgs);
@@ -1101,6 +1191,9 @@ public abstract class Context {
   public abstract Context copy(Context newParent);
 
   protected void copyInternal(Context newContext) {
+    newContext.compiledScope = compiledScope;
+    newContext.sourceLocation = sourceLocation;
+    newContext.failureDetail = failureDetail;
     newContext.actionStatus = getStatus();
     newContext.justification = getJustification();
     newContext.logicalValue = logicalValue;

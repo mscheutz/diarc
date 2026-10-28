@@ -86,6 +86,16 @@ public class TryContext extends Context {
     return statusToPropagate == ActionStatus.CANCEL || statusToPropagate == ActionStatus.PARENT_CANCEL;
   }
 
+  /** Preserve a cancellation arriving as normal finally cleanup begins or progresses. */
+  public boolean deferCancellationForFinally() {
+    if (tryState != TryContextState.DONE || getStatus().isTerminated()) return false;
+    if (!isHandlingCancellation()) {
+      statusToPropagate = ActionStatus.PARENT_CANCEL;
+      justificationToPropagate = getJustification();
+    }
+    return true;
+  }
+
   /**
    * Exit the current event. Note that this is always called from the child
    * event, setting its execution status before it returns.

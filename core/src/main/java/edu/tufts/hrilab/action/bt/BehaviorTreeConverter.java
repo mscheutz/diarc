@@ -112,12 +112,7 @@ public final class BehaviorTreeConverter {
   }
 
   public static List<ActionDBEntry> parse(String asl) {
-    List<ActionDBEntry> entries = new ActionScriptLanguageParser()
-        .parseFromString("generated-behavior-tree.asl", null, asl);
-    if (entries == null) {
-      throw new IllegalArgumentException("Generated behavior-tree ASL could not be parsed");
-    }
-    return entries;
+    return new ActionScriptLanguageParser().parseStrict("generated-behavior-tree.asl", null, asl);
   }
 
   private void clear(String actionName) {
@@ -435,7 +430,7 @@ public final class BehaviorTreeConverter {
   }
 
   private static String equal(String variable, String text) {
-    return "op:invokeMethod(" + variable + ", \"equals\", \"" + text + "\")";
+    return "(" + variable + " == \"" + text + "\")";
   }
 
   private String reset(CompiledNode node) {
@@ -451,7 +446,7 @@ public final class BehaviorTreeConverter {
   }
 
   private static String result(String value) {
-    return "?result = op:bind(\"" + value + "\");\n";
+    return "?result = \"" + value + "\";\n";
   }
 
   private String parameter(CompiledNode node, String name, String fallback) {
@@ -611,7 +606,7 @@ public final class BehaviorTreeConverter {
           body.append("}\n");
       }
     }
-    StringBuilder locals = new StringBuilder("long !asyncId;\n");
+    StringBuilder locals = new StringBuilder("edu.tufts.hrilab.action.execution.AslTask !task;\n");
     if (node.binding != null) {
       for (int i = 0; i < node.binding.inputs.size(); i++) {
         locals.append(BehaviorTreeExecution.portType(node.binding.inputs.get(i).type).getCanonicalName())
@@ -620,7 +615,13 @@ public final class BehaviorTreeConverter {
     }
     String remember = invoke("text", quote(node.path + ":previous"), "?result") + ";\n";
     String instructions = body.toString().replace("return;", remember + "return;");
-    return "\n(String ?result = \"RUNNING\") = " + method(node) + "_tick(" + EXECUTION + " ?execution) {\n"
+    org.w3c.dom.Node definition = node.xml;
+    while (definition != null && !definition.getNodeName().equals("BehaviorTree")) definition = definition.getParentNode();
+    String tree = definition instanceof Element ? ((Element) definition).getAttribute("ID") : "";
+    String file = node.xml.getOwnerDocument().getDocumentURI();
+    String origin = (file == null ? "behavior-tree.xml" : file) + "#" + tree + ":" + node.path + " <" + node.kind + ">";
+    String marker = Base64.getEncoder().encodeToString(origin.getBytes(StandardCharsets.UTF_8));
+    return "\n// @diarc-origin " + marker + "\n(String ?result = \"RUNNING\") = " + method(node) + "_tick(" + EXECUTION + " ?execution) {\n"
         + locals
         + "int !index;\nint !count;\nint !limit;\nint !successes = 0;\nint !failures = 0;\n"
         + "int !skipped = 0;\nint !selected;\nboolean !negative;\nBoolean !condition;\n"
@@ -769,11 +770,11 @@ public final class BehaviorTreeConverter {
           .append(invoke("encodedValue", encoded(node.scope.resolve(value)), quote(port.type))).append(";\n");
       inputs.add("!input" + i);
     }
-    body.append("!asyncId = async {\nact:").append(method(node)).append("_execute(?execution");
+    body.append("!task = async {\nact:").append(method(node)).append("_execute(?execution");
     for (String input : inputs) {
       body.append(", ").append(input);
     }
-    body.append(");\n}\n").append(invoke("attach", path, "!asyncId")).append(";\n}\n")
+    body.append(");\n}\n").append(invoke("attachTask", path, "!task")).append(";\n}\n")
         .append("?result = ").append(invoke("status", path)).append(";\n");
     return body.toString();
   }

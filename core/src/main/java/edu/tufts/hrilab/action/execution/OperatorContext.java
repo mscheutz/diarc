@@ -22,6 +22,31 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class OperatorContext extends DatabaseEntryContext<OperatorDBEntry> {
+  @Override
+  protected boolean interpolateArgument(String name) {
+    Parameter[] parameters = getDBE().getImplementation().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      if (getDBE().getRoleName(i).equals(name)) {
+        return !parameters[i].isAnnotationPresent(edu.tufts.hrilab.action.operators.Literal.class);
+      }
+
+    }
+    return true;
+  }
+
+  @Override
+  protected void setupArguments(List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
+    List<Object> inputs = new ArrayList<>(inputArgs);
+    Parameter[] parameters = getDBE().getImplementation().getParameters();
+    for (int i = 0; i < Math.min(inputs.size(), parameters.length); i++) {
+      Object value = inputs.get(i);
+      if (parameters[i].isAnnotationPresent(edu.tufts.hrilab.action.operators.Literal.class)
+          && value instanceof String && ((String) value).startsWith("\"") && ((String) value).endsWith("\"")) {
+        inputs.set(i, edu.tufts.hrilab.action.asl.AslValues.stringLiteral((String) value));
+      }
+    }
+    super.setupArguments(inputs, returnArgs);
+  }
 
   public OperatorContext(Context parent, StateMachine sm, OperatorDBEntry operator, List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
     super(parent, sm, operator);
@@ -104,8 +129,9 @@ public class OperatorContext extends DatabaseEntryContext<OperatorDBEntry> {
       }
     } catch (Exception e) {
       log.error("Error executing operator " + getDBE().getName() + "  with arguments: " + argBindings, e);
-      this.setStatus(ActionStatus.FAIL, new ConditionJustification(false));
-      setLogicalValue(false);
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      while (cause instanceof InvocationTargetException && cause.getCause() != null) cause = cause.getCause();
+      failExecution(ActionStatus.FAIL, cause.toString());
     }
   }
 

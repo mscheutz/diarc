@@ -113,6 +113,13 @@ public class ControlFactory {
         case JOIN:
           controlContext = new JoinContext(parent, sm, parser.getEventSpec().getInputArgs(), parser.getEventSpec().getReturnArgs());
           break;
+        case EVALUATE:
+        case ASSIGN:
+          controlContext = new ExpressionContext(parent, sm, parser.getEventSpec());
+          break;
+        case INVOKE:
+          controlContext = new InvokeContext(parent, sm, parser.getEventSpec());
+          break;
         case NOINTERRUPT:
           controlContext = new NoInterruptContext(parent, sm, parser);
           break;
@@ -123,6 +130,7 @@ public class ControlFactory {
       log.error("Encountered error while setting up control: " + cmd, e);
       return null;
     }
+    if (controlContext != null) controlContext.setSourceLocation(parser.getEventSpec().getSourceLocation());
     return controlContext;
   }
 
@@ -150,6 +158,9 @@ public class ControlFactory {
     FOREACH(true),
     IF(true),
     JOIN(true),
+    ASSIGN(true),
+    EVALUATE(true),
+    INVOKE(true),
     NOT(true),
     OR(true),
     OTHER(false),

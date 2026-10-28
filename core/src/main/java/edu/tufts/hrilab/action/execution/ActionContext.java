@@ -104,6 +104,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   }
 
   private void initialize() {
+    setSourceLocation(getDBE().getSourceLocation());
     parser = new ScriptParser(getDBE().getEventSpecs());
     setTimeout();
   }

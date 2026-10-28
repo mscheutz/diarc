@@ -1,4 +1,4 @@
-// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
+// Generated from ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -196,6 +196,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitInputList(ASLParser.InputListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#numberLiteral}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNumberLiteral(ASLParser.NumberLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#input}.
 	 * @param ctx the parse tree
@@ -425,6 +431,66 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitOperation(ASLParser.OperationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueAssignment}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueAssignment(ASLParser.ValueAssignmentContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#expressionUnit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionUnit(ASLParser.ExpressionUnitContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueExpression(ASLParser.ValueExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueOr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueOr(ASLParser.ValueOrContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueAnd}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueAnd(ASLParser.ValueAndContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueComparison}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueComparison(ASLParser.ValueComparisonContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueSum}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueSum(ASLParser.ValueSumContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueProduct}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueProduct(ASLParser.ValueProductContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueUnary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueUnary(ASLParser.ValueUnaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#valueAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueAtom(ASLParser.ValueAtomContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ASLParser#control}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -562,6 +628,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitJoinStatement(ASLParser.JoinStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#invokeStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInvokeStatement(ASLParser.InvokeStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#noInterruptStatement}.
 	 * @param ctx the parse tree

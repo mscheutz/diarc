@@ -1409,6 +1409,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.getGoal(gid);
   }
 
+  @TRADEService
+  public edu.tufts.hrilab.action.execution.ExecutionDiagnostic getGoalExecutionDiagnostic(long gid) {
+    Goal goal = em.getGoal(gid);
+    if (goal == null) throw new IllegalArgumentException("Unknown goal ID: " + gid);
+    return goal.getRootContext() == null ? null : goal.getRootContext().getFailureDiagnostic();
+  }
+
   /**
    * Compile and load a behavior tree as ordinary ASL database entries. Files are
    * filesystem paths; leaf capabilities must be registered before execution.

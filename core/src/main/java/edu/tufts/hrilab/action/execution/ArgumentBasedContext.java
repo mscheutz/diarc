@@ -24,6 +24,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ArgumentBasedContext extends Context {
+  protected boolean interpolateArgument(String name) { return true; }
+
+  public List<ActionBinding> getLocalArgumentBindings() {
+    return arguments.values().stream().map(ActionBinding::clone).collect(java.util.stream.Collectors.toList());
+  }
 
   /**
    * Arguments defined in this context.
@@ -158,7 +163,7 @@ public abstract class ArgumentBasedContext extends Context {
           ActionBinding bound = argument.clone(); // cloning here to not permanently change underlying binding
           bound.bind(null);
           argument = bound;
-        } else if (variable.matcher(" " + bindingDeepString).find()) {
+        } else if (interpolateArgument(bname) && variable.matcher(" " + bindingDeepString).find()) {
           // TODO: the " " + inside the variable matcher is bc the regex is broken without it. fix this...
           Object value = bindText(bname, bindingDeepString);
           ActionBinding bound = argument.clone(); // cloning here to not permanently bind free variables to values that could change during execution
@@ -345,7 +350,9 @@ public abstract class ArgumentBasedContext extends Context {
           log.error(this + " No default value or passed in value found for argument: " + valueString);
         }
 
-        if (caller != null && caller.isAsynchronous()) {
+        if (caller != null && caller.isAsynchronous()
+            && !(bReturn && caller instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext
+            && ((edu.tufts.hrilab.action.execution.control.AsynchronousContext) caller).hasTaskHandle())) {
           // copy value of references (i.e., ActionBindings pointing to ActionBindings)
           // this is necessary to prevent references from changing values during execution (e.g., if the
           // async is inside a loop and an arg changes value during subsequent iterations)
@@ -359,7 +366,7 @@ public abstract class ArgumentBasedContext extends Context {
                   .setIsLocal(bLocal).setIsReturn(bReturn).setIsVarArg(bIsVarArg)
                   .build();
         }
-      } else if (bValue instanceof String && variable.matcher(" " + valueString).find()) {
+      } else if (bValue instanceof String && interpolateArgument(bName) && variable.matcher(" " + valueString).find()) {
         // TODO: the " " + inside the variable matcher is bc the regex is broken without it. fix this...
         String value = bindText(bName, valueString);
         newArg = new ActionBinding.Builder(bName, javaType).setSemanticType(semanticType)

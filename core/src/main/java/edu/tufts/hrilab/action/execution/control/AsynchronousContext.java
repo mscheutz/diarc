@@ -5,19 +5,28 @@
 package edu.tufts.hrilab.action.execution.control;
 
 import edu.tufts.hrilab.action.ScriptParser;
+import edu.tufts.hrilab.action.ActionBinding;
+import edu.tufts.hrilab.action.execution.AslTask;
+import edu.tufts.hrilab.action.asl.AslValues;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.util.Utilities;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Variable;
-
-import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AsynchronousContext extends ArgumentBasedContext {
   private ScriptParser parser;
   private ScriptParser currParserStep;
+  private AslTask task;
+  private final Map<String, Class<?>> exports = new LinkedHashMap<>();
+  private boolean taskHandle;
+
+  public AslTask getTask() { return task; }
+  public boolean hasTaskHandle() { return taskHandle; }
+
+  public boolean exports(String name) { return exports.containsKey(name); }
 
   public AsynchronousContext(Context c, StateMachine sm, ScriptParser parser) {
     super(c, sm, "ASYNC");
@@ -33,20 +42,51 @@ public class AsynchronousContext extends ArgumentBasedContext {
 
   @Override
   protected void setupArguments(List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
-    if (!inputArgs.isEmpty()) {
-      log.error("ASYNC does not accept input arguments: " + inputArgs);
+    for (Object input : inputArgs) {
+      String name = input.toString();
+      Class<?> type = getArgumentType(name);
+      if (!Utilities.isScriptVariable(name) || type == null || exports.putIfAbsent(name, type) != null) {
+        throw new IllegalArgumentException("Async exports must be distinct declared variables: " + name);
+      }
+      ActionBinding binding = new ActionBinding.Builder(name, type)
+          .setValue(getArgumentSilent(name).getBindingDeep()).setIsLocal(true).build();
+      arguments.put(name, binding);
     }
+    task = new AslTask(this, exports);
 
     if (returnArgs.size() == 1) {
       if (!Utilities.isScriptVariable(returnArgs.get(0).toString())) {
         log.error("[setupArguments] invalid arg. Must be a variable. arg: " + returnArgs.get(0));
         return;
       }
-      // add new argument to this context
-      addArgument("asyncId", Long.class, returnArgs.get(0), false, true);
-      setArgument("asyncId", getId());
+      Class<?> handleType = AslValues.boxed(getArgumentType(returnArgs.get(0).toString()));
+      if (handleType != Long.class && handleType != AslTask.class) {
+        throw new IllegalArgumentException("Async return must be Long or AslTask");
+      }
+      if (!exports.isEmpty() && handleType != AslTask.class) {
+        throw new IllegalArgumentException("Async exports require an AslTask handle");
+      }
+      addArgument("asyncId", handleType, returnArgs.get(0), false, true);
+      setArgument("asyncId", handleType == Long.class ? getId() : task);
+      taskHandle = handleType == AslTask.class;
     } else if (returnArgs.size() > 1) {
-      log.error("[setupArguments] invalid number of args.");
+      throw new IllegalArgumentException("Async accepts at most one handle");
+    } else if (!exports.isEmpty()) {
+      throw new IllegalArgumentException("Async exports require an AslTask handle");
+    }
+
+    if (returnArgs.size() == 1 && AslTask.class.equals(getArgumentType(returnArgs.get(0).toString()))) {
+      for (Context scope = caller; scope != null; scope = scope.getParentContext()) {
+        if (scope instanceof ArgumentBasedContext) {
+          for (ActionBinding source : ((ArgumentBasedContext) scope).getLocalArgumentBindings()) {
+            if (Utilities.isScriptVariable(source.getName())) {
+              arguments.putIfAbsent(source.getName(), new ActionBinding.Builder(source.getName(), source.getJavaType())
+                  .setValue(source.getBindingDeep()).setIsLocal(true).build());
+            }
+          }
+        }
+        if (scope.isAction()) break;
+      }
     }
 
     // zero return args is acceptable, no additional work needed
@@ -63,11 +103,8 @@ public class AsynchronousContext extends ArgumentBasedContext {
 
   @Override
   public AsynchronousContext copy(Context newParent) {
-    List<Object> newArgs = new ArrayList<>();
-    addArgument("asyncId", Long.class, getId(), true, false);
-    setArgument("asyncId", getId());
-    Variable newArg = Factory.createVariable(getId().toString());
-    newArgs.add(newArg);
-    return new AsynchronousContext(newParent, newParent.getStateMachine(), parser);
+    AsynchronousContext copy = new AsynchronousContext(newParent, newParent.getStateMachine(), parser);
+    copyInternal(copy);
+    return copy;
   }
 }

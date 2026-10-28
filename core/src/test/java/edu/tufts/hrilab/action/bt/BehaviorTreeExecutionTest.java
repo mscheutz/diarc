@@ -203,6 +203,19 @@ public class BehaviorTreeExecutionTest {
   }
 
   @Test(timeout = 15000)
+  public void failureDiagnosticsIdentifyOriginalXmlNodeAndGeneratedAslLine() {
+    long id = submit("<Script code=\"x := missing\"/>");
+    fails(id);
+    var diagnostic = manager.getGoalExecutionDiagnostic(id);
+    assertNotNull(diagnostic);
+    assertNotNull(diagnostic.source());
+    assertEquals("generated-behavior-tree.asl", diagnostic.source().source());
+    assertTrue(diagnostic.source().line() > 0);
+    assertTrue(diagnostic.source().origin(), diagnostic.source().origin().contains("#Main:0 <Script>"));
+    assertTrue(diagnostic.reason(), diagnostic.reason().contains("missing"));
+  }
+
+  @Test(timeout = 15000)
   public void dynamicScriptsPreserveCallingActorRatherThanRootActor() {
     RootContext root = new RootContext(new ActionConstraints(), null);
     GoalContext goal = new GoalContext(root, null,

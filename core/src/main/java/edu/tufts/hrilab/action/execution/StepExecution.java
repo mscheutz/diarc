@@ -188,7 +188,10 @@ public class StepExecution {
           // still want to observe which effects hold, except when FAIL_POSTCONDITONS because they've already been checked
           context.verifyEffects();
         }
-        context.caller.setStatus(context.getStatus(), context.getJustification());
+        if (!(context instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext)
+            || !((edu.tufts.hrilab.action.execution.control.AsynchronousContext) context).hasTaskHandle()) {
+          context.caller.setStatus(context.getStatus(), context.getJustification());
+        }
         context.performAdditionalStatusUpdates();
         return context.getJustification();
       }
@@ -262,7 +265,10 @@ public class StepExecution {
           return context.getJustification();
         case PARENT_CANCEL:
         case CANCEL:
-          context.caller.setStatus(ActionStatus.CANCEL, context.getJustification());
+          if (!(context instanceof edu.tufts.hrilab.action.execution.control.AsynchronousContext)
+              || !((edu.tufts.hrilab.action.execution.control.AsynchronousContext) context).hasTaskHandle()) {
+            context.caller.setStatus(ActionStatus.CANCEL, context.getJustification());
+          }
           context.performAdditionalStatusUpdates();
           return context.getJustification();
         default: // No state change for other cases.

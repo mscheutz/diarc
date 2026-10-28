@@ -83,6 +83,18 @@ public class ActionScriptLanguageParser {
       log.error("Error parsing file: " + dbFile, e);
       return null;
     }
+
+  }
+
+  /** Unlike the legacy nullable API, malformed source is reported to the caller. */
+  public List<ActionDBEntry> parseStrict(String source, List<Symbol> agents, String asl) {
+    this.dbFile = Objects.requireNonNull(source);
+    this.agents = agents;
+    try {
+      return parse(CharStreams.fromString(asl));
+    } catch (StackOverflowError error) {
+      throw new IllegalArgumentException("ASL syntax is too deeply nested in " + source, error);
+    }
   }
 
   private List<ActionDBEntry> parse(CharStream input) {
@@ -106,13 +118,41 @@ public class ActionScriptLanguageParser {
       throw new IllegalArgumentException("Invalid ASL: " + String.join("; ", errors));
     }
 
-    AsEmitter converter = new AsEmitter();
+    AsEmitter converter = new AsEmitter(input.toString());
     ParseTreeWalker.DEFAULT.walk(converter, tree);
     log.debug("Successfully parsed {} !", dbFile);
     return converter.getParsedAction();
   }
 
   private class AsEmitter extends ASLBaseListener {
+    private ParserRuleContext activeRule;
+    private final NavigableMap<Integer, String> origins = new TreeMap<>();
+
+    AsEmitter(String source) {
+      String[] lines = source.split("\\R", -1);
+      for (int i = 0; i < lines.length; i++) {
+        String line = lines[i].trim();
+        String marker = "// @diarc-origin ";
+        if (line.startsWith(marker)) {
+          origins.put(i + 1, new String(Base64.getDecoder().decode(line.substring(marker.length())),
+              java.nio.charset.StandardCharsets.UTF_8));
+        }
+      }
+    }
+
+    @Override public void enterEveryRule(ParserRuleContext ctx) { activeRule = ctx; }
+    @Override public void exitEveryRule(ParserRuleContext ctx) { activeRule = ctx.getParent(); }
+
+    private SourceLocation location() {
+      var origin = origins.floorEntry(activeRule.getStart().getLine());
+      return new SourceLocation(dbFile, activeRule.getStart().getLine(),
+          activeRule.getStart().getCharPositionInLine() + 1, origin == null ? null : origin.getValue());
+    }
+
+    private String expressionText(ParserRuleContext ctx) {
+      return ctx.getStart().getInputStream().getText(org.antlr.v4.runtime.misc.Interval.of(
+          ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex()));
+    }
 
     private Builder curr_dbe_builder;
     private List<ActionDBEntry> parsed_actions;
@@ -144,9 +184,14 @@ public class ActionScriptLanguageParser {
 
     @Override
     public void enterDefinition(ASLParser.DefinitionContext ctx) {
-      String methodName = ctx.NAME().getText();
-      curr_dbe_builder = new Builder(methodName);
+      String methodName = ctx.NAME() != null ? ctx.NAME().getText() : ctx.INVOKE().getText();
+      curr_dbe_builder = new Builder(methodName) {
+        @Override public Builder addEventSpec(EventSpec event) {
+          return super.addEventSpec(event.withSourceLocation(location()));
+        }
+      };
       curr_dbe_builder.setDBFile(dbFile);
+      curr_dbe_builder.setSourceLocation(location());
       if (agents != null) {
         for (Symbol agent:agents) {
           curr_dbe_builder.addAgent(agent);
@@ -187,7 +232,7 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterSetting(ASLParser.SettingContext ctx) {
       String attribute = ctx.NAME().getText();
-      String value = ctx.NUMBER().getText();
+      String value = ctx.numberLiteral().getText();
       switch (attribute) {
         case "benefit":
           curr_dbe_builder.setBenefit(value);
@@ -474,7 +519,7 @@ public class ActionScriptLanguageParser {
         if (ctx.recoveryMaximumAttempts().size() > 1) {
           log.warn("[enterRecovery] Multiple maximumAttempts fields detected, only using first");
         }
-        String numberText = ctx.recoveryMaximumAttempts(0).NUMBER().getText();
+        String numberText = ctx.recoveryMaximumAttempts(0).numberLiteral().getText();
         int number = -1;
         try {
           number = Integer.parseInt(numberText);
@@ -565,16 +610,16 @@ public class ActionScriptLanguageParser {
                 + ctx.getStart().getLine() + ":" + ctx.getStart().getCharPositionInLine());
       }
       esBuilder.addInputArg(loopVariable);
-      if (initial.NUMBER() != null) {
-        esBuilder.addInputArg(initial.NUMBER().getText());
+      if (initial.numberLiteral() != null) {
+        esBuilder.addInputArg(initial.numberLiteral().getText());
       } else if (initial.name().size() > 1) {
         esBuilder.addInputArg(initial.name().get(1).getText());
       }
 
       ASLParser.ForConditionContext condition = ctx.forCondition();
       esBuilder.addInputArg(condition.CMPOPT().getText());
-      if (condition.NUMBER() != null) {
-        esBuilder.addInputArg(condition.NUMBER().getText());
+      if (condition.numberLiteral() != null) {
+        esBuilder.addInputArg(condition.numberLiteral().getText());
       } else {
         esBuilder.addInputArg(condition.name().get(1).getText());
       }
@@ -585,8 +630,8 @@ public class ActionScriptLanguageParser {
         sb.append(update.INCOPT().getText());
       } else {
         sb.append(update.GRWOPT().getText());
-        if (update.NUMBER() != null) {
-          sb.append(update.NUMBER().getText());
+        if (update.numberLiteral() != null) {
+          sb.append(update.numberLiteral().getText());
         } else {
           sb.append(update.name().get(1).getText());
         }
@@ -669,6 +714,7 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterAsyncStatement(ASLParser.AsyncStatementContext ctx) {
       EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("async");
+      esBuilder.setInputArgs(getInputArgs(ctx.inputList()));
       if (ctx.singleArgReturn() != null) {
         esBuilder.addReturnArg(ctx.singleArgReturn().output().getText());
       }
@@ -688,11 +734,30 @@ public class ActionScriptLanguageParser {
       // input args
       esBuilder.setInputArgs(getInputArgs(ctx.inputList()));
 
-      if (ctx.singleArgReturn() != null) {
-        esBuilder.addReturnArg(ctx.singleArgReturn().output().getText());
-      }
+      addReturns(esBuilder, ctx.specReturn());
 
       curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
+    @Override
+    public void enterInvokeStatement(ASLParser.InvokeStatementContext ctx) {
+      EventSpec.Builder event = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("invoke")
+          .setInputArgs(getInputArgs(ctx.inputList()));
+      addReturns(event, ctx.specReturn());
+      curr_dbe_builder.addEventSpec(event.build());
+    }
+
+    private void addReturns(EventSpec.Builder event, ASLParser.SpecReturnContext returns) {
+      if (returns != null) {
+        event.addReturnArg(returns.outputList().output().getText());
+        returns.outputList().outputTail().forEach(tail -> event.addReturnArg(tail.output().getText()));
+      }
+    }
+
+    @Override
+    public void enterValueAssignment(ASLParser.ValueAssignmentContext ctx) {
+      curr_dbe_builder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+          .addInputArg(expressionText(ctx.valueExpression())).addReturnArg(ctx.output().getText()).build());
     }
 
     @Override
@@ -730,7 +795,9 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterPrimaryExpression(ASLParser.PrimaryExpressionContext ctx) {
       EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL);
-      if (ctx.TRUE() != null) {
+      if (ctx.valueExpression() != null) {
+        esBuilder.setCommand("evaluate").addInputArg(expressionText(ctx.valueExpression()));
+      } else if (ctx.TRUE() != null) {
         esBuilder.setCommand("true");
       } else if (ctx.FALSE() != null) {
         esBuilder.setCommand("false");
@@ -851,7 +918,11 @@ public class ActionScriptLanguageParser {
       ActionBinding.Builder newRole = new ActionBinding.Builder(roleName, varType).setIsLocal(isLocal).setIsReturn(isReturn);
 
       if (assignmentContext != null) {
-        if (assignmentContext.input() != null) {
+        if (assignmentContext.valueExpression() != null) {
+          if (!isLocal) throw new IllegalArgumentException("Signature defaults must be literals");
+          curr_dbe_builder.addEventSpec(new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("assign")
+              .addInputArg(expressionText(assignmentContext.valueExpression())).addReturnArg(roleName).build());
+        } else if (assignmentContext.input() != null) {
           // add default value
           newRole.setDefaultValue(stripQuotes(assignmentContext.input().getText()));
         } else if (assignmentContext.specType() != null) {

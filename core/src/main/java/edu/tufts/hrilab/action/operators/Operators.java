@@ -9,6 +9,7 @@ package edu.tufts.hrilab.action.operators;
 
 public class Operators {
   private final static Class[] operatorClasses = {
+          edu.tufts.hrilab.action.operators.Asl.class,
           edu.tufts.hrilab.action.operators.Arithmetic.class,
           edu.tufts.hrilab.action.operators.Collections.class,
           edu.tufts.hrilab.action.operators.Comparison.class,

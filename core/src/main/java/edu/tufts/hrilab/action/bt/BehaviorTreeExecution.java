@@ -10,6 +10,7 @@ import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.execution.GoalContext;
 import edu.tufts.hrilab.action.execution.ActionContext;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.asl.CompiledAction;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -59,7 +60,7 @@ public final class BehaviorTreeExecution {
   private final Map<String, Long> versions = new HashMap<>();
   private final Map<String, Long> seenVersions = new HashMap<>();
   private final Map<String, Deque<Object>> queues = new HashMap<>();
-  private final Map<String, ActionDBEntry> scripts = new HashMap<>();
+  private final Map<String, CompiledAction> scripts = new HashMap<>();
   private final Map<String, Long> enums = new HashMap<>();
   private final Map<String, BehaviorTreeBindings.Belief> beliefs = new HashMap<>();
   private static final Map<String, Conversion<?>> converters = new ConcurrentHashMap<>();
@@ -192,6 +193,14 @@ public final class BehaviorTreeExecution {
     if (child == null) {
       throw new IllegalStateException("No native asynchronous execution for context " + contextId);
     }
+    attachGoal(path, child);
+  }
+
+  public void attachTask(String path, edu.tufts.hrilab.action.execution.AslTask task) {
+    attachGoal(path, task.getNativeGoal());
+  }
+
+  private void attachGoal(String path, Goal child) {
     synchronized (this) {
       if (!closed) {
         children.put(path, child);
@@ -714,7 +723,7 @@ public final class BehaviorTreeExecution {
     }
     String source = value(decoded(encodedSource), "String").toString();
     String key = predicate + ":" + source;
-    ActionDBEntry entry = scripts.get(key);
+    CompiledAction entry = scripts.get(key);
     if (entry == null) {
       if (scripts.size() >= 256) {
         throw new IllegalStateException("Too many distinct dynamic scripts in one invocation");
@@ -724,14 +733,14 @@ public final class BehaviorTreeExecution {
           + BehaviorTreeScript.compile(source, "s", "!scriptResult", false)
           + "?answer = " + (predicate ? "op:invokeMethod(?execution, \"scriptTruthy\", !scriptResult)"
           : "op:equals(true, true)") + ";\n}\n";
-      entry = BehaviorTreeConverter.parse(body).get(0);
+      entry = CompiledAction.compile("dynamic-behavior-tree-script.asl", body, "btRuntimeScript");
       scripts.put(key, entry);
     }
     Object actor = caller.getArgumentValue("?actor");
     if (!(actor instanceof Symbol)) {
       throw new IllegalStateException("Dynamic script caller has no bound actor");
     }
-    caller.addAction(entry, List.of("?execution"), List.of("?answer"), (Symbol) actor);
+    caller.addCompiledAction(entry, List.of("?execution"), List.of("?answer"), (Symbol) actor);
   }
 
   public static void validateStatus(String status) {

@@ -108,6 +108,7 @@ public class ActionDBEntry extends DBEntry {
    * The file this DBEntry originates from, if it is a script.
    */
   private final String dbfile;
+  private final edu.tufts.hrilab.action.asl.SourceLocation sourceLocation;
 
   /**
    * Event to be executed when action is canceled/suspended/resumed.
@@ -142,6 +143,7 @@ public class ActionDBEntry extends DBEntry {
     private double maxUrg = 1.0;
     private TRADEServiceInfo tsi;
     private String dbfile = null;
+    private edu.tufts.hrilab.action.asl.SourceLocation sourceLocation;
     private ActionDBEntry builtEntry = null;
 
     /**
@@ -178,6 +180,7 @@ public class ActionDBEntry extends DBEntry {
       this.maxUrg = entryToCopy.maxUrg;
       this.tsi = entryToCopy.tsi;
       this.dbfile = entryToCopy.dbfile;
+      this.sourceLocation = entryToCopy.sourceLocation;
     }
 
     public Builder(String methodName) {
@@ -604,6 +607,11 @@ public class ActionDBEntry extends DBEntry {
       return this;
     }
 
+    public Builder setSourceLocation(edu.tufts.hrilab.action.asl.SourceLocation location) {
+      sourceLocation = location;
+      return this;
+    }
+
     /**
      * Generates the default post-condition defined as:
      * succeeded(?actor,action(?arg1, ?arg2, ...))
@@ -696,6 +704,7 @@ public class ActionDBEntry extends DBEntry {
     maxUrg = builder.maxUrg;
     tsi = builder.tsi;
     dbfile = builder.dbfile;
+    sourceLocation = builder.sourceLocation;
   }
 
   /**
@@ -1070,6 +1079,10 @@ public class ActionDBEntry extends DBEntry {
    */
   public String getDBFile() {
     return dbfile;
+  }
+
+  public edu.tufts.hrilab.action.asl.SourceLocation getSourceLocation() {
+    return sourceLocation;
   }
 
   /**
