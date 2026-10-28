@@ -129,6 +129,37 @@ public class NativeAslEnhancementsTest {
         GoalStatus.SUCCEEDED, manager.joinOnGoal(restoredGoal, 5000));
   }
 
+  @Test(timeout = 20000)
+  public void standaloneBlocksInsideForeachSerializeAndExecuteWithTheSameScope() {
+    String originalName = "aslNestedBlockForeach" + names.incrementAndGet();
+    String restoredName = originalName + "Reloaded";
+    String source = """
+        () = ROOT() {
+          int !iterations = 0;
+          java.util.List !items = op:newObject("java.util.ArrayList");
+          op:invokeMethod(!items, "add", "first");
+          op:invokeMethod(!items, "add", "second");
+          foreach (!item : !items) {
+            block { java.lang.String !temporary = !item; }
+            !iterations = !iterations + 1;
+          }
+          if (!iterations == 2) { } else { exit(FAIL); }
+        }
+        """.replace("ROOT", originalName);
+    ActionDBEntry original = new ActionScriptLanguageParser()
+        .parseStrict("nested-foreach-block-runtime.asl", null, IMPORTS + source).get(0);
+    String written = new ActionScriptLanguageWriter().writeAction(original);
+    ActionDBEntry restored = new ActionScriptLanguageParser()
+        .parseStrict("nested-foreach-block-runtime.asl", null, written.replace(originalName, restoredName)).get(0);
+
+    long originalGoal = run(original);
+    long restoredGoal = run(restored);
+    assertEquals(String.valueOf(manager.getGoalExecutionDiagnostic(originalGoal)),
+        GoalStatus.SUCCEEDED, manager.joinOnGoal(originalGoal, 5000));
+    assertEquals(String.valueOf(manager.getGoalExecutionDiagnostic(restoredGoal)),
+        GoalStatus.SUCCEEDED, manager.joinOnGoal(restoredGoal, 5000));
+  }
+
   @Test(timeout = 15000)
   public void taskResultsArePrivateUntilExplicitJoinAndIncludeDirectActionReturns() {
     succeeds("""
