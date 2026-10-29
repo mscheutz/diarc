@@ -18,6 +18,10 @@ import edu.tufts.hrilab.fol.Symbol;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -30,6 +34,126 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.Assert.*;
 
 public class ActionLearningConcurrencyHardeningTest {
+  private static List<ActionLearningStatus> recordStatusNotifications(ActionLearning learning) throws Exception {
+    Field field = ActionLearning.class.getDeclaredField("statusCondition");
+    field.setAccessible(true);
+    java.util.concurrent.locks.Condition original =
+        (java.util.concurrent.locks.Condition) field.get(learning);
+    List<ActionLearningStatus> notifications = java.util.Collections.synchronizedList(new ArrayList<>());
+    field.set(learning, Proxy.newProxyInstance(
+        java.util.concurrent.locks.Condition.class.getClassLoader(),
+        new Class<?>[]{java.util.concurrent.locks.Condition.class},
+        (proxy, method, args) -> {
+          if (method.getName().equals("signalAll")) {
+            notifications.add(learning.getLearningStatus());
+          }
+          try {
+            return method.invoke(original, args);
+          } catch (InvocationTargetException e) {
+            throw e.getCause();
+          }
+        }));
+    return notifications;
+  }
+
+  @Test(timeout = 15000)
+  public void delayedActivationCannotRestoreActiveAfterCancellation() throws Exception {
+    assertDelayedActivationCannotRestoreActive(false);
+  }
+
+  @Test(timeout = 15000)
+  public void delayedActivationCannotRestoreActiveAfterFinalization() throws Exception {
+    assertDelayedActivationCannotRestoreActive(true);
+  }
+
+  private void assertDelayedActivationCannotRestoreActive(boolean finalize) throws Exception {
+    ActionLearning learning = new ActionLearning(new ExecutionManager(), false);
+    Predicate action = signature("delayedActivation_" + System.nanoTime());
+    CountDownLatch activated = new CountDownLatch(1);
+    CountDownLatch releaseActivation = new CountDownLatch(1);
+    learning.setAfterSessionActivationHookForTest(() -> {
+      activated.countDown();
+      try {
+        await(releaseActivation, "Timed out waiting to release activation.");
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    });
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learn = executor.submit(() -> learning.learnAction(action));
+    try {
+      await(activated, "Activation did not reach the post-transition boundary.");
+      assertTrue(finalize ? learning.endActionLearning(action) : learning.cancelActionLearning(action));
+      releaseActivation.countDown();
+      assertTrue("The completed session must not start waiting again.", learn.get(3, TimeUnit.SECONDS));
+      assertEquals(finalize ? ActionLearningStatus.END : ActionLearningStatus.NONE, learning.getLearningStatus());
+      assertTrue(learning.waitForQueueWorkerStoppedForTest(3000));
+    } finally {
+      releaseActivation.countDown();
+      learning.setAfterSessionActivationHookForTest(null);
+      executor.shutdownNow();
+    }
+  }
+
+  @Test(timeout = 15000)
+  public void nestedCancellationDoesNotNotifyTransientInactiveStatus() throws Exception {
+    ActionLearning learning = new ActionLearning(new ExecutionManager(), false);
+    List<ActionLearningStatus> notifications = recordStatusNotifications(learning);
+    Predicate parent = signature("statusParent_" + System.nanoTime());
+    Predicate child = signature(parent.getName() + "_child");
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> parentFuture = executor.submit(() -> learning.learnAction(parent));
+    try {
+      learning.waitForActionLearningStart(parent);
+      Future<Boolean> childFuture = executor.submit(() -> learning.learnAction(child));
+      learning.waitForActionLearningStart(child);
+      notifications.clear();
+      assertTrue(learning.cancelActionLearning(child));
+      assertEquals(ActionLearningStatus.ACTIVE, learning.getLearningStatus());
+      assertFalse("Nested cancellation must not notify a temporary inactive status.",
+          notifications.stream().anyMatch(status -> status != ActionLearningStatus.ACTIVE));
+      assertFalse("Parent learning waiter must remain blocked.", parentFuture.isDone());
+      assertFalse("Child learning waiter follows the still-active parent lifecycle.", childFuture.isDone());
+      assertTrue(learning.endActionLearning(parent));
+      assertTrue(parentFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(childFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learning.waitForQueueWorkerStoppedForTest(3000));
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  @Test(timeout = 15000)
+  public void normalLifecycleNotifiesOnlyCommittedStatuses() throws Exception {
+    ActionLearning learning = new ActionLearning(new ExecutionManager(), false);
+    List<ActionLearningStatus> notifications = recordStatusNotifications(learning);
+    Predicate parent = signature("statusLifecycle_" + System.nanoTime());
+    Predicate child = signature(parent.getName() + "_child");
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      Future<Boolean> parentFuture = executor.submit(() -> learning.learnAction(parent));
+      learning.waitForActionLearningStart(parent);
+      assertTrue(learning.pauseActionLearning(parent));
+      assertTrue(parentFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learning.waitForQueueWorkerStoppedForTest(3000));
+
+      assertTrue(learning.resumeActionLearning(parent));
+      Future<Boolean> childFuture = executor.submit(() -> learning.learnAction(child));
+      learning.waitForActionLearningStart(child);
+      assertTrue(learning.cancelActionLearning(child));
+      assertFalse(childFuture.isDone());
+      assertTrue(learning.endActionLearning(parent));
+      assertTrue(childFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learning.waitForQueueWorkerStoppedForTest(3000));
+      assertEquals(List.of(ActionLearningStatus.ACTIVE, ActionLearningStatus.NONE,
+          ActionLearningStatus.ACTIVE, ActionLearningStatus.ACTIVE,
+          ActionLearningStatus.ACTIVE, ActionLearningStatus.END), notifications);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
   private static Predicate signature(String name) {
     return Factory.createPredicate(name, "self:agent", "?object");
   }

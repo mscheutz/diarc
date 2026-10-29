@@ -101,7 +101,7 @@ public class ActionLearning {
   private Goal currentGoal = null;
   private LearningState currentLearningState = null;
   /**
-   * Current action learning status. Only set this field via setLearningStatus method.
+   * Guarded with session state by goalQueueEmptyLock.
    */
   private ActionLearningStatus learningStatus = ActionLearningStatus.NONE;
   private Map<String, LearningState> pausedLearningStates = new HashMap<>();
@@ -111,6 +111,7 @@ public class ActionLearning {
   private volatile Runnable beforeFinalizationValidationHook;
   private volatile Runnable beforeQueuedGoalProcessingHook;
   private volatile Runnable beforeQueuedGoalCreateEventSpecHook;
+  private volatile Runnable afterSessionActivationHook;
   private ActionLearningGui learningGui;
   private final BehaviorTreeLearning behaviorTreeLearning = new BehaviorTreeLearning();
 
@@ -123,13 +124,9 @@ public class ActionLearning {
   }
 
   /**
-   * Learning status lock.
+   * Lifecycle waiters observe session and status changes under the queue lock.
    */
-  private Lock statusLock = new ReentrantLock();
-  /**
-   * Status lock condition that is signalled when the status changes.
-   */
-  private Condition statusCondition = statusLock.newCondition();
+  private Condition statusCondition = goalQueueEmptyLock.newCondition();
 
   /**
    * @param em Execution Manager instance to run executeWhileLearning and simulation goals
@@ -394,24 +391,16 @@ public class ActionLearning {
     }
   }
 
-  /**
-   * Helper method to lock when setting the action learning status. All code that sets this field should use
-   * this method instead of setting it directly.
-   *
-   * @param status
-   */
-  private void setLearningStatus(ActionLearningStatus status) {
-    statusLock.lock();
-    try {
-      learningStatus = status;
-      statusCondition.signalAll();
-    } finally {
-      statusLock.unlock();
-    }
+  /** Called under the queue lock after the session transition is complete. */
+  private void setLearningStatusLocked(ActionLearningStatus status) {
+    learningStatus = status;
+    statusCondition.signalAll();
+    goalQueueNotEmpty.signalAll();
+    learningStateUpdateCondition.signalAll();
   }
 
   public void waitForActionLearningStart(Predicate newAction) {
-    statusLock.lock();
+    goalQueueEmptyLock.lock();
     try {
       while (!(learningStatus == ActionLearningStatus.ACTIVE && currentLearningState != null && newAction.getName().equalsIgnoreCase(currentLearningState.getName()))) {
         try {
@@ -421,7 +410,7 @@ public class ActionLearning {
         }
       }
     } finally {
-      statusLock.unlock();
+      goalQueueEmptyLock.unlock();
     }
   }
 
@@ -435,6 +424,10 @@ public class ActionLearning {
 
   void setBeforeQueuedGoalCreateEventSpecHookForTest(Runnable hook) {
     beforeQueuedGoalCreateEventSpecHook = hook;
+  }
+
+  void setAfterSessionActivationHookForTest(Runnable hook) {
+    afterSessionActivationHook = hook;
   }
 
   Thread getQueueWorkerForTest() {
@@ -662,21 +655,21 @@ public class ActionLearning {
         log.warn("[learnAction] failed to activate session for {}", newAction);
         return false;
       }
-      learningStatus = ActionLearningStatus.ACTIVE;
-      goalQueueNotEmpty.signalAll();
-      learningStateUpdateCondition.signalAll();
+      setLearningStatusLocked(ActionLearningStatus.ACTIVE);
+      startQueuingGoals();
     } finally {
       goalQueueEmptyLock.unlock();
+    }
+    Runnable activationHook = afterSessionActivationHook;
+    if (activationHook != null) {
+      activationHook.run();
     }
     // TODO: spawn observers based on situation and task relevant info
     if (learningGui != null) {
       learningGui.setLearningState(currentLearningState);
     }
-    setLearningStatus(ActionLearningStatus.ACTIVE);
-    startQueuingGoals();
-
     //to keep the learning goal active while learning, wait here until status is no longer active
-    statusLock.lock();
+    goalQueueEmptyLock.lock();
     try {
       while (learningStatus == ActionLearningStatus.ACTIVE) {
         try {
@@ -686,7 +679,7 @@ public class ActionLearning {
         }
       }
     } finally {
-      statusLock.unlock();
+      goalQueueEmptyLock.unlock();
     }
 
     return true;
@@ -814,30 +807,18 @@ public class ActionLearning {
       log.warn("[endActionLearning] supplied action is null");
       return false;
     }
-    if (currentLearningState == null && !pausedLearningStates.containsKey(newAction.getName())) {
-      log.warn("[endActionLearning] no active or paused learning state for {}", newAction);
-      return false;
-    }
-
-    boolean currentState;
     LearningState learningState;
-    // check to see if the predicate action is same as action being learned
-    if (currentLearningState != null && newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      learningState = currentLearningState;
-      currentState = true;
-    } else {
-      learningState = pausedLearningStates.get(newAction.getName());
-      currentState = false;
-      if (learningState == null) {
-        log.error("[endActionLearning] called for action with no learning state: {}", newAction);
-        return false;
-      }
-    }
-
     long finalizedSessionId;
     SessionPhase previousPhase;
     goalQueueEmptyLock.lock();
     try {
+      learningState = currentLearningState != null
+          && newAction.getName().equalsIgnoreCase(currentLearningState.getName())
+          ? currentLearningState : pausedLearningStates.get(newAction.getName());
+      if (learningState == null) {
+        log.warn("[endActionLearning] no active or paused learning state for {}", newAction);
+        return false;
+      }
       previousPhase = sessionPhaseOfLocked(learningState);
       if (!transitionSessionPhaseLocked(learningState, SessionPhase.CLOSING, SessionPhase.ACTIVE, SessionPhase.PAUSED)) {
         log.warn("[endActionLearning] session already closing or closed for {}", newAction);
@@ -918,49 +899,30 @@ public class ActionLearning {
       }
       return false;
     }
-    LearningState previousLearningState = learningState.getPreviousLearningState();
     goalQueueEmptyLock.lock();
     try {
       retireSessionLocked(learningState, SessionPhase.CLOSED);
-    } finally {
-      goalQueueEmptyLock.unlock();
-    }
-    if (previousLearningState != null) {
-      log.debug("restoring previous action: " + learningState.getPreviousLearningState().getName());
-      if (currentState) {
-        currentLearningState = previousLearningState;
-        goalQueueEmptyLock.lock();
-        try {
-          transitionSessionPhaseLocked(currentLearningState, SessionPhase.ACTIVE, SessionPhase.PAUSED, SessionPhase.ACTIVE);
-        } finally {
-          goalQueueEmptyLock.unlock();
+      if (currentLearningState == learningState) {
+        LearningState parent = learningState.getPreviousLearningState();
+        currentLearningState = parent != null && transitionSessionPhaseLocked(parent,
+            SessionPhase.ACTIVE, SessionPhase.PAUSED, SessionPhase.ACTIVE) ? parent : null;
+        if (currentLearningState == null) {
+          executeAction = false;
         }
-        startQueuingGoals();
+        setLearningStatusLocked(currentLearningState == null
+            ? ActionLearningStatus.END : ActionLearningStatus.ACTIVE);
         if (learningGui != null) {
-          learningGui.setLearningState(currentLearningState);
-        }
-      } else {
-        pausedLearningStates.put(newAction.getName(), previousLearningState);
-      }
-    } else {
-      log.debug("ending learning for action {}", newAction);
-      if (currentState) {
-        setLearningStatus(ActionLearningStatus.END);
-        currentLearningState = null;
-        goalQueueEmptyLock.lock();
-        try {
-          goalQueueNotEmpty.signalAll();
-          learningStateUpdateCondition.signalAll();
-        } finally {
-          goalQueueEmptyLock.unlock();
-        }
-        executeAction = false;
-        if (learningGui != null) {
-          learningGui.clear();
+          if (currentLearningState == null) {
+            learningGui.clear();
+          } else {
+            learningGui.setLearningState(currentLearningState);
+          }
         }
       } else {
         pausedLearningStates.remove(newAction.getName());
       }
+    } finally {
+      goalQueueEmptyLock.unlock();
     }
     return true;
   }
@@ -979,9 +941,6 @@ public class ActionLearning {
       return false;
     }
     LearningState activeAfterCancel = null;
-    boolean canceled = false;
-    boolean activeSessionCanceled = false;
-    boolean endedAllLearning = false;
     goalQueueEmptyLock.lock();
     try {
       if (currentLearningState != null && action.getName().equalsIgnoreCase(currentLearningState.getName())) {
@@ -1008,17 +967,15 @@ public class ActionLearning {
             activeAfterCancel = parentLearningState;
           } else {
             currentLearningState = null;
-            endedAllLearning = true;
           }
         } else {
           currentLearningState = null;
-          endedAllLearning = true;
         }
-        learningStatus = activeAfterCancel == null ? ActionLearningStatus.NONE : ActionLearningStatus.ACTIVE;
-        goalQueueNotEmpty.signalAll();
-        learningStateUpdateCondition.signalAll();
-        canceled = true;
-        activeSessionCanceled = true;
+        if (activeAfterCancel == null) {
+          executeAction = false;
+        }
+        setLearningStatusLocked(activeAfterCancel == null
+            ? ActionLearningStatus.NONE : ActionLearningStatus.ACTIVE);
       } else {
         LearningState learningState = pausedLearningStates.remove(action.getName());
         if (learningState == null) {
@@ -1037,38 +994,19 @@ public class ActionLearning {
           purgeQueuedGoalsForSessionLocked(sessionId);
         }
         learningStateUpdateCondition.signalAll();
-        canceled = true;
+        return true;
       }
     } finally {
       goalQueueEmptyLock.unlock();
     }
 
-    if (!canceled) {
-      return false;
-    }
-
-    if (!activeSessionCanceled) {
-      return true;
-    }
-
-    setLearningStatus(ActionLearningStatus.CANCEL);
-    if (activeAfterCancel != null) {
-      setLearningStatus(ActionLearningStatus.ACTIVE);
-      if (learningGui != null) {
+    if (learningGui != null) {
+      if (activeAfterCancel != null) {
         learningGui.setLearningState(activeAfterCancel);
-      }
-      startQueuingGoals();
-      return true;
-    }
-    if (endedAllLearning) {
-      executeAction = false;
-      setLearningStatus(ActionLearningStatus.NONE);
-      if (learningGui != null) {
+      } else {
         learningGui.clear();
       }
-      return true;
     }
-    setLearningStatus(ActionLearningStatus.NONE);
     return true;
   }
 
@@ -1086,26 +1024,13 @@ public class ActionLearning {
       return false;
     }
 
-    if (currentLearningState == null) {
-      log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
-      return false;
-    } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      AtomicBoolean pausedTransitionApplied = new AtomicBoolean(false);
-      if (!runAfterQueueDrain(30000, () -> {
-        if (!transitionSessionPhaseLocked(currentLearningState, SessionPhase.ACTIVE, SessionPhase.PAUSED)) {
-          return;
-        }
+    if (!runAfterQueueDrainForActiveSession(action, 30000, () -> {
+        transitionSessionPhaseLocked(currentLearningState, SessionPhase.ACTIVE, SessionPhase.PAUSED);
         pausedLearningStates.put(action.getName(), currentLearningState);
         currentLearningState = null;
-        setLearningStatus(ActionLearningStatus.NONE);
-        goalQueueNotEmpty.signalAll();
-        pausedTransitionApplied.set(true);
-      }) || !pausedTransitionApplied.get()) {
-        log.error("[pauseActionLearning] timed out waiting for pending taught goals");
-        return false;
-      }
-    } else {
-      log.error("[pauseActionLearning] provided action is not equal to action currently being learned");
+        setLearningStatusLocked(ActionLearningStatus.NONE);
+      })) {
+      log.error("[pauseActionLearning] session is not active or pending taught goals did not drain: {}", action);
       return false;
     }
     return true;
@@ -1125,10 +1050,10 @@ public class ActionLearning {
       return false;
     }
 
-    LearningState resumedLearningState = pausedLearningStates.get(action.getName());
-    if (resumedLearningState != null) {
-      goalQueueEmptyLock.lock();
-      try {
+    goalQueueEmptyLock.lock();
+    try {
+      LearningState resumedLearningState = pausedLearningStates.get(action.getName());
+      if (resumedLearningState != null) {
         SessionPhase resumedPhase = sessionPhaseOfLocked(resumedLearningState);
         if (resumedPhase != SessionPhase.PAUSED) {
           log.error("cannot resume {} because session phase is {}", action.getName(), resumedPhase);
@@ -1149,19 +1074,14 @@ public class ActionLearning {
           pausedLearningStates.put(action.getName(), resumedLearningState);
           return false;
         }
-        goalQueueNotEmpty.signalAll();
-        learningStateUpdateCondition.signalAll();
-      } finally {
-        goalQueueEmptyLock.unlock();
+        setLearningStatusLocked(ActionLearningStatus.ACTIVE);
+        startQueuingGoals();
+      } else {
+        log.error("cannot resume {} because haven't started learning before", action.getName());
+        return false;
       }
-      setLearningStatus(ActionLearningStatus.ACTIVE);
-      startQueuingGoals();
-      // TODO: restart / create observers
-    } else {
-      //tmf: agent should convey that it hasn't started learning something.
-      // TODO: create interpreter to run say text to respond accordingly
-      log.error("cannot resume " + action.getName() + " because haven't started learning before");
-      return false;
+    } finally {
+      goalQueueEmptyLock.unlock();
     }
     return true;
   }
@@ -1383,7 +1303,12 @@ public class ActionLearning {
   }
 
   public ActionLearningStatus getLearningStatus() {
-    return learningStatus;
+    goalQueueEmptyLock.lock();
+    try {
+      return learningStatus;
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
   }
 
   public void changeLearningExecution(Symbol status) {

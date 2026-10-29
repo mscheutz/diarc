@@ -316,6 +316,7 @@ EventSpec-list ASL semantics.
 - Structured teaching/editing requires an **active (not paused)** learning session for the action.
 - **Instruction ordering:** acceptance is linearized at enqueue time into a specific learning session; queued commands retain that immutable session ownership through processing.
 - **Session transitions:** begin/pause/resume/nested begin/nested end/cancel/end first move session phase under queue lock, then drain affected accepted work before switching active state.
+- Global learning status, lifecycle waits, and session transitions share the queue lock. Notifications expose only the committed transition; restoring a valid parent keeps `ACTIVE` without an intermediate `CANCEL` or `NONE`.
 - **Finalization:** `endActionLearning` marks the session `CLOSING` atomically with acceptance checks, drains accepted session work, and only then validates/publishes; post-boundary instructions are rejected for that session.
 - `CLOSING` sessions are terminal for ordinary teaching/resume operations: they cannot be reactivated by `learnAction` or `resumeActionLearning`.
 - Nested learning can begin only while its parent is `ACTIVE`; a closing, canceled, or closed parent cannot acquire a child session.
