@@ -261,6 +261,250 @@ public class ActionLearningConcurrencyHardeningTest {
         childEntry.getEventSpecs().stream().map(EventSpec::getCommand).toList());
   }
 
+  @Test(timeout = 20000)
+  public void learnActionCannotReactivateClosingSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate action = signature("closingReactivationLearn_" + System.nanoTime());
+    ExecutorService executor = Executors.newFixedThreadPool(3);
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      learning.addGoal(taughtGoal("beforeClose"));
+
+      CountDownLatch hookEntered = new CountDownLatch(1);
+      CountDownLatch releaseHook = new CountDownLatch(1);
+      learning.setBeforeFinalizationValidationHookForTest(() -> {
+        hookEntered.countDown();
+        try {
+          await(releaseHook, "Timed out waiting to release finalization hook.");
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+      });
+
+      Future<Boolean> endFuture = executor.submit(() -> learning.endActionLearning(action));
+      await(hookEntered, "Timed out waiting for finalization to enter validation.");
+      Future<Boolean> reactivationFuture = executor.submit(() -> learning.learnAction(action));
+      assertFalse("learnAction must not reactivate a CLOSING session.", reactivationFuture.get(3, TimeUnit.SECONDS));
+      releaseHook.countDown();
+
+      assertTrue(endFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      learning.setBeforeFinalizationValidationHookForTest(null);
+      executor.shutdownNow();
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void resumeCannotReactivateClosingPausedSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate action = signature("closingReactivationResume_" + System.nanoTime());
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      learning.addGoal(taughtGoal("beforePause"));
+      assertTrue(learning.pauseActionLearning(action));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+
+      CountDownLatch hookEntered = new CountDownLatch(1);
+      CountDownLatch releaseHook = new CountDownLatch(1);
+      learning.setBeforeFinalizationValidationHookForTest(() -> {
+        hookEntered.countDown();
+        try {
+          await(releaseHook, "Timed out waiting to release finalization hook.");
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+      });
+
+      Future<Boolean> endFuture = executor.submit(() -> learning.endActionLearning(action));
+      await(hookEntered, "Timed out waiting for paused-session finalization boundary.");
+      assertFalse("resumeActionLearning must not reactivate a CLOSING session.",
+          learning.resumeActionLearning(action));
+      releaseHook.countDown();
+      assertTrue(endFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      learning.setBeforeFinalizationValidationHookForTest(null);
+      executor.shutdownNow();
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void structuralMutationRejectedOnceFinalizationBoundaryIsCrossed() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate action = signature("structuralClosingBoundary_" + System.nanoTime());
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      learning.addGoal(taughtGoal("beforeClose"));
+
+      CountDownLatch hookEntered = new CountDownLatch(1);
+      CountDownLatch releaseHook = new CountDownLatch(1);
+      learning.setBeforeFinalizationValidationHookForTest(() -> {
+        hookEntered.countDown();
+        try {
+          await(releaseHook, "Timed out waiting to release finalization hook.");
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+      });
+
+      Future<Boolean> endFuture = executor.submit(() -> learning.endActionLearning(action));
+      await(hookEntered, "Timed out waiting for finalization boundary.");
+      assertFalse("Structural teaching must be rejected after finalization boundary.",
+          learning.beginLearnedIf(action, Factory.createPredicate("true")));
+      releaseHook.countDown();
+      assertTrue(endFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      learning.setBeforeFinalizationValidationHookForTest(null);
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry learned = Database.getActionDB().getAction(action.getName());
+    assertNotNull(learned);
+    assertEquals(List.of("beforeClose"),
+        learned.getEventSpecs().stream().map(EventSpec::getCommand).toList());
+  }
+
+  @Test(timeout = 20000)
+  public void cancelingNestedChildRestoresParentAndKeepsParentBlockState() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String parentName = "nestedCancelParent_" + System.nanoTime();
+    String childName = parentName + "_child";
+    Predicate parent = signature(parentName);
+    Predicate child = signature(childName);
+
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> parentFuture = executor.submit(() -> learning.learnAction(parent));
+    Future<Boolean> childFuture = null;
+    try {
+      learning.waitForActionLearningStart(parent);
+      assertTrue(learning.beginLearnedIf(parent, Factory.createPredicate("true")));
+      learning.addGoal(taughtGoal("parentThen"));
+
+      childFuture = executor.submit(() -> learning.learnAction(child));
+      learning.waitForActionLearningStart(child);
+      learning.addGoal(taughtGoal("childPending"));
+      assertTrue(learning.cancelActionLearning(child));
+
+      assertTrue("Parent should be restored as active after child cancellation.",
+          learning.beginLearnedElse(parent));
+      learning.addGoal(taughtGoal("parentElse"));
+      assertTrue(learning.endLearnedIf(parent));
+      assertTrue(learning.endActionLearning(parent));
+      assertTrue(parentFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(childFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      if (childFuture != null && !childFuture.isDone()) {
+        childFuture.cancel(true);
+      }
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry parentEntry = Database.getActionDB().getAction(parentName);
+    ActionDBEntry childEntry = Database.getActionDB().getAction(childName);
+    assertNotNull(parentEntry);
+    assertNull("Canceled nested child must not publish.", childEntry);
+    assertEquals(List.of("if", "true", "then", "parentThen", "else", "parentElse", "endif"),
+        parentEntry.getEventSpecs().stream().map(EventSpec::getCommand).toList());
+  }
+
+  @Test(timeout = 20000)
+  public void cancelDuringInFlightInstructionPreventsRecordingAndAllowsCleanRestart() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String actionName = "cancelInFlight_" + System.nanoTime();
+    Predicate action = signature(actionName);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      CountDownLatch processingEntered = new CountDownLatch(1);
+      CountDownLatch releaseProcessing = new CountDownLatch(1);
+      AtomicBoolean first = new AtomicBoolean(true);
+      learning.setBeforeQueuedGoalProcessingHookForTest(() -> {
+        if (first.compareAndSet(true, false)) {
+          processingEntered.countDown();
+          try {
+            await(releaseProcessing, "Timed out waiting to release queued-goal processing.");
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          }
+        }
+      });
+      learning.addGoal(taughtGoal("willBeCanceled"));
+      await(processingEntered, "Timed out waiting for queued goal to start processing.");
+      assertTrue(learning.cancelActionLearning(action));
+      releaseProcessing.countDown();
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+      assertTrue("Cancel should wake and stop an idle worker.",
+          learning.waitForQueueWorkerStoppedForTest(3000));
+    } finally {
+      learning.setBeforeQueuedGoalProcessingHookForTest(null);
+      executor.shutdownNow();
+    }
+
+    assertNull("Canceled draft must not publish.", Database.getActionDB().getAction(actionName));
+
+    ExecutorService restartExecutor = Executors.newSingleThreadExecutor();
+    Future<Boolean> restartFuture = restartExecutor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      learning.addGoal(taughtGoal("afterRestart"));
+      assertTrue(learning.endActionLearning(action));
+      assertTrue(restartFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      restartExecutor.shutdownNow();
+    }
+    ActionDBEntry restarted = Database.getActionDB().getAction(actionName);
+    assertNotNull(restarted);
+    assertEquals(List.of("afterRestart"),
+        restarted.getEventSpecs().stream().map(EventSpec::getCommand).toList());
+  }
+
+  @Test(timeout = 20000)
+  public void acceptedInstructionFailureBlocksFinalizationUntilSessionIsCanceled() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String actionName = "instructionFailureTracking_" + System.nanoTime();
+    Predicate action = signature(actionName);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      AtomicBoolean failOnce = new AtomicBoolean(true);
+      learning.setBeforeQueuedGoalCreateEventSpecHookForTest(() -> {
+        if (failOnce.compareAndSet(true, false)) {
+          throw new IllegalStateException("forced EventSpec creation failure");
+        }
+      });
+      learning.addGoal(taughtGoal("failsToRecord"));
+      assertFalse("Finalization must fail when an accepted instruction failed to record.",
+          learning.endActionLearning(action));
+      assertEquals("Session should remain active/recoverable after failed finalization.",
+          ActionLearningStatus.ACTIVE, learning.getLearningStatus());
+      assertNull(Database.getActionDB().getAction(actionName));
+      assertTrue("Cancel should remain available after instruction-processing failure.",
+          learning.cancelActionLearning(action));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      learning.setBeforeQueuedGoalCreateEventSpecHookForTest(null);
+      executor.shutdownNow();
+    }
+  }
+
   @Test
   public void semanticEquivalenceComparesRoleDefaultsAndConditionMetadata() throws Exception {
     ActionLearning learning = new ActionLearning(null, false);
