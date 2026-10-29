@@ -331,9 +331,14 @@ public class ActionLearning {
           if (beforeCreateEventSpecHook != null) {
             beforeCreateEventSpecHook.run();
           }
-          sessionLearningState.createEventSpec(submitted);
           goalQueueEmptyLock.lock();
           try {
+            if (!canApplyToLearningStateLocked(sessionId, sessionLearningState)) {
+              recordInstructionOutcomeLocked(sessionId, InstructionOutcome.CANCELED,
+                  "Instruction canceled before recording execution result: " + goal.getGoalStatePredicate());
+              return;
+            }
+            sessionLearningState.createEventSpec(submitted);
             recordInstructionOutcomeLocked(sessionId, InstructionOutcome.SUCCEEDED, null);
           } finally {
             goalQueueEmptyLock.unlock();
@@ -361,12 +366,7 @@ public class ActionLearning {
                 "Instruction canceled before recording: " + goal.getGoalStatePredicate());
             return;
           }
-        } finally {
-          goalQueueEmptyLock.unlock();
-        }
-        sessionLearningState.createEventSpec(goal);
-        goalQueueEmptyLock.lock();
-        try {
+          sessionLearningState.createEventSpec(goal);
           recordInstructionOutcomeLocked(sessionId, InstructionOutcome.SUCCEEDED, null);
         } finally {
           goalQueueEmptyLock.unlock();
@@ -630,25 +630,28 @@ public class ActionLearning {
     goalQueueEmptyLock.lock();
     try {
       if (learningStatus == ActionLearningStatus.ACTIVE) {
-        try {
-          if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
-            currentLearningState = new LearningState(newAction, currentLearningState);
-            registerSessionLocked(currentLearningState, SessionPhase.ACTIVE);
-            activated = true;
-          } else {
-            SessionPhase phase = sessionPhaseOfLocked(currentLearningState);
-            if (!canReactivateToActive(phase)) {
-              log.warn("[learnAction] cannot reactivate session in phase {} for {}", phase, newAction);
-              return false;
-            }
-            activated = transitionSessionPhaseLocked(currentLearningState, SessionPhase.ACTIVE,
-                SessionPhase.PAUSED, SessionPhase.ACTIVE);
+        if (currentLearningState == null) {
+          log.warn("[learnAction] active status has no current learning session; rejecting {}", newAction);
+          return false;
+        }
+        if (!currentLearningState.getName().equalsIgnoreCase(actName)) {
+          SessionPhase parentPhase = sessionPhaseOfLocked(currentLearningState);
+          if (parentPhase != SessionPhase.ACTIVE) {
+            log.warn("[learnAction] cannot begin nested session {} while parent session {} is in phase {}",
+                newAction, currentLearningState.getName(), parentPhase);
+            return false;
           }
-        } catch (NullPointerException e) {
-          log.debug("[learnAction] supposedly already learning but LS is null... something is wrong");
-          currentLearningState = new LearningState(newAction);
+          currentLearningState = new LearningState(newAction, currentLearningState);
           registerSessionLocked(currentLearningState, SessionPhase.ACTIVE);
           activated = true;
+        } else {
+          SessionPhase phase = sessionPhaseOfLocked(currentLearningState);
+          if (!canReactivateToActive(phase)) {
+            log.warn("[learnAction] cannot reactivate session in phase {} for {}", phase, newAction);
+            return false;
+          }
+          activated = transitionSessionPhaseLocked(currentLearningState, SessionPhase.ACTIVE,
+              SessionPhase.PAUSED, SessionPhase.ACTIVE);
         }
       } else {
         currentLearningState = new LearningState(newAction);
@@ -977,8 +980,8 @@ public class ActionLearning {
     }
     LearningState activeAfterCancel = null;
     boolean canceled = false;
+    boolean activeSessionCanceled = false;
     boolean endedAllLearning = false;
-    ActionLearningStatus postCancelStatus = null;
     goalQueueEmptyLock.lock();
     try {
       if (currentLearningState != null && action.getName().equalsIgnoreCase(currentLearningState.getName())) {
@@ -1003,23 +1006,19 @@ public class ActionLearning {
               || transitionSessionPhaseLocked(parentLearningState, SessionPhase.PAUSED, SessionPhase.ACTIVE)) {
             currentLearningState = parentLearningState;
             activeAfterCancel = parentLearningState;
-            postCancelStatus = ActionLearningStatus.ACTIVE;
           } else {
             currentLearningState = null;
             endedAllLearning = true;
-            postCancelStatus = ActionLearningStatus.NONE;
           }
         } else {
           currentLearningState = null;
           endedAllLearning = true;
-          postCancelStatus = ActionLearningStatus.NONE;
         }
-        if (postCancelStatus != null) {
-          learningStatus = postCancelStatus;
-        }
+        learningStatus = activeAfterCancel == null ? ActionLearningStatus.NONE : ActionLearningStatus.ACTIVE;
         goalQueueNotEmpty.signalAll();
         learningStateUpdateCondition.signalAll();
         canceled = true;
+        activeSessionCanceled = true;
       } else {
         LearningState learningState = pausedLearningStates.remove(action.getName());
         if (learningState == null) {
@@ -1027,7 +1026,7 @@ public class ActionLearning {
           return false;
         }
         SessionPhase phase = sessionPhaseOfLocked(learningState);
-        if (!transitionSessionPhaseLocked(learningState, SessionPhase.CANCELED, SessionPhase.PAUSED, SessionPhase.ACTIVE)) {
+        if (!transitionSessionPhaseLocked(learningState, SessionPhase.PAUSED, SessionPhase.CANCELED)) {
           log.warn("[cancelActionLearning] cannot cancel paused session {} in phase {}", action, phase);
           pausedLearningStates.put(action.getName(), learningState);
           return false;
@@ -1037,7 +1036,6 @@ public class ActionLearning {
         if (sessionId != null) {
           purgeQueuedGoalsForSessionLocked(sessionId);
         }
-        goalQueueNotEmpty.signalAll();
         learningStateUpdateCondition.signalAll();
         canceled = true;
       }
@@ -1047,6 +1045,10 @@ public class ActionLearning {
 
     if (!canceled) {
       return false;
+    }
+
+    if (!activeSessionCanceled) {
+      return true;
     }
 
     setLearningStatus(ActionLearningStatus.CANCEL);

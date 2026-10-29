@@ -318,6 +318,7 @@ EventSpec-list ASL semantics.
 - **Session transitions:** begin/pause/resume/nested begin/nested end/cancel/end first move session phase under queue lock, then drain affected accepted work before switching active state.
 - **Finalization:** `endActionLearning` marks the session `CLOSING` atomically with acceptance checks, drains accepted session work, and only then validates/publishes; post-boundary instructions are rejected for that session.
 - `CLOSING` sessions are terminal for ordinary teaching/resume operations: they cannot be reactivated by `learnAction` or `resumeActionLearning`.
+- Nested learning can begin only while its parent is `ACTIVE`; a closing, canceled, or closed parent cannot acquire a child session.
 - **Worker lifecycle:** a single queue consumer is started with synchronized `STOPPED→STARTING→RUNNING` transitions, woken on shutdown/cancel/finalization transitions, and restarted cleanly for later sessions.
 - Learning uses a single queue consumer; structural commands and taught steps are serialized by accepted-command order.
 - Structural transitions wait for queued taught steps to drain before mutating the draft.
@@ -327,7 +328,7 @@ EventSpec-list ASL semantics.
 - Block-local declarations remain lexical (from `declare`/`assign` EventSpecs) and are not promoted into action-wide roles.
 - Explicit script-variable arguments are preserved only when lexically visible; undefined/out-of-scope references are rejected.
 - Publication/replacement is transactional across DB registration and persistence rollback.
-- Cancellation marks the target session canceled, invalidates queued records for that session, prevents in-flight canceled records from mutating the draft, and restores a valid nested parent session when available.
+- Cancellation marks the target session canceled, invalidates queued records for that session, and serializes the final session check with EventSpec insertion; active nested-child cancellation restores a valid parent. Canceling a paused session does not alter another active session or its worker.
 - Accepted instruction outcomes are tracked per session; finalization refuses publication unless every accepted instruction for that session was successfully recorded.
 - **Semantic validation:** round-trip equivalence compares signature, EventSpecs, role metadata (name/type/semantic type/local/return/vararg/default-presence/default-value), pre/overall conditions (including predicate+observable entries), and effects.
 - `endActionLearning` rejects publication when control blocks are unclosed and validates structural+scope integrity plus semantic writer→parser equivalence before publish/persist.

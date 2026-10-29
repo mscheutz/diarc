@@ -299,6 +299,45 @@ public class ActionLearningConcurrencyHardeningTest {
   }
 
   @Test(timeout = 20000)
+  public void closingParentCannotStartNestedLearningSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String parentName = "closingParent_" + System.nanoTime();
+    Predicate parent = signature(parentName);
+    Predicate child = signature(parentName + "_child");
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> parentFuture = executor.submit(() -> learning.learnAction(parent));
+    try {
+      learning.waitForActionLearningStart(parent);
+      CountDownLatch validationEntered = new CountDownLatch(1);
+      CountDownLatch releaseValidation = new CountDownLatch(1);
+      learning.setBeforeFinalizationValidationHookForTest(() -> {
+        validationEntered.countDown();
+        try {
+          await(releaseValidation, "Timed out waiting to release parent finalization.");
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+      });
+
+      Future<Boolean> finalizeParent = executor.submit(() -> learning.endActionLearning(parent));
+      await(validationEntered, "Timed out waiting for parent to enter finalization.");
+      assertFalse("A CLOSING parent must not acquire a nested child.", learning.learnAction(child));
+      releaseValidation.countDown();
+
+      assertTrue(finalizeParent.get(3, TimeUnit.SECONDS));
+      assertTrue(parentFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      learning.setBeforeFinalizationValidationHookForTest(null);
+      executor.shutdownNow();
+    }
+
+    assertNotNull(Database.getActionDB().getAction(parentName));
+    assertNull(Database.getActionDB().getAction(child.getName()));
+  }
+
+  @Test(timeout = 20000)
   public void resumeCannotReactivateClosingPausedSession() throws Exception {
     ExecutionManager manager = new ExecutionManager();
     ActionLearning learning = new ActionLearning(manager, false);
@@ -472,6 +511,92 @@ public class ActionLearningConcurrencyHardeningTest {
     assertNotNull(restarted);
     assertEquals(List.of("afterRestart"),
         restarted.getEventSpecs().stream().map(EventSpec::getCommand).toList());
+  }
+
+  @Test(timeout = 20000)
+  public void cancelPausedSessionDoesNotDisturbOtherActiveSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate actionA = signature("activeDuringPausedCancel_" + System.nanoTime());
+    Predicate actionB = signature(actionA.getName() + "_paused");
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> learnA = executor.submit(() -> learning.learnAction(actionA));
+    Future<Boolean> learnB = null;
+    try {
+      learning.waitForActionLearningStart(actionA);
+      assertTrue(learning.pauseActionLearning(actionA));
+      assertTrue(learnA.get(3, TimeUnit.SECONDS));
+
+      learnB = executor.submit(() -> learning.learnAction(actionB));
+      learning.waitForActionLearningStart(actionB);
+      assertTrue(learning.pauseActionLearning(actionB));
+      assertTrue(learnB.get(3, TimeUnit.SECONDS));
+
+      assertTrue("Resuming A should activate its paused session.", learning.resumeActionLearning(actionA));
+      assertTrue(learning.waitForQueueWorkerRunningForTest(3000));
+      Thread activeWorker = learning.getQueueWorkerForTest();
+      assertNotNull(activeWorker);
+      assertTrue(activeWorker.isAlive());
+
+      assertTrue("Canceling paused B should succeed.", learning.cancelActionLearning(actionB));
+      assertEquals("Canceling paused B must leave A active.",
+          ActionLearningStatus.ACTIVE, learning.getLearningStatus());
+      assertSame("Canceling paused B must not replace A's queue worker.",
+          activeWorker, learning.getQueueWorkerForTest());
+      assertTrue(activeWorker.isAlive());
+
+      learning.addGoal(taughtGoal("activeAStep"));
+      assertTrue(learning.endActionLearning(actionA));
+    } finally {
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry learnedA = Database.getActionDB().getAction(actionA.getName());
+    assertNotNull(learnedA);
+    assertEquals(List.of("activeAStep"),
+        learnedA.getEventSpecs().stream().map(EventSpec::getCommand).toList());
+    assertNull(Database.getActionDB().getAction(actionB.getName()));
+  }
+
+  @Test(timeout = 20000)
+  public void cancellationAtEventSpecInsertionBoundaryPreventsDraftMutation() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String actionName = "cancelAtInsertion_" + System.nanoTime();
+    Predicate action = signature(actionName);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(action));
+    try {
+      learning.waitForActionLearningStart(action);
+      java.lang.reflect.Field currentStateField = ActionLearning.class.getDeclaredField("currentLearningState");
+      currentStateField.setAccessible(true);
+      LearningState draft = (LearningState) currentStateField.get(learning);
+      CountDownLatch beforeInsertion = new CountDownLatch(1);
+      CountDownLatch releaseInsertion = new CountDownLatch(1);
+      learning.setBeforeQueuedGoalCreateEventSpecHookForTest(() -> {
+        beforeInsertion.countDown();
+        try {
+          await(releaseInsertion, "Timed out waiting to release pre-insertion hook.");
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
+      });
+
+      learning.addGoal(taughtGoal("mustNotBeRecorded"));
+      await(beforeInsertion, "Timed out waiting for instruction to reach insertion boundary.");
+      assertTrue(learning.cancelActionLearning(action));
+      releaseInsertion.countDown();
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(learning.waitForQueueWorkerStoppedForTest(3000));
+
+      assertTrue("Canceled instruction must not change the draft EventSpecs.",
+          draft.getEventSpecs().isEmpty());
+    } finally {
+      learning.setBeforeQueuedGoalCreateEventSpecHookForTest(null);
+      executor.shutdownNow();
+    }
+    assertNull(Database.getActionDB().getAction(actionName));
   }
 
   @Test(timeout = 20000)
