@@ -4,9 +4,13 @@
 
 package edu.tufts.hrilab.action.learning;
 
+import edu.tufts.hrilab.action.ActionBinding;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.EventSpec;
+import edu.tufts.hrilab.action.asl.AslBlockStructure;
+import edu.tufts.hrilab.action.asl.AslScopeValidator;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.execution.ExecutionType;
@@ -25,9 +29,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Queue;
 import java.util.Set;
@@ -39,6 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Top level class in charge of maintaining action learning, including the current learning state
@@ -164,6 +171,14 @@ public class ActionLearning {
   }
 
   public void startQueuingGoals() {
+    goalQueueEmptyLock.lock();
+    try {
+      if (goalQueueManager != null && goalQueueManager.isAlive()) {
+        return;
+      }
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
     goalQueueManager = new Thread(() -> {
       while (learningStatus.equals(ActionLearningStatus.ACTIVE)) {
         Goal g = null;
@@ -221,6 +236,7 @@ public class ActionLearning {
       }
     });
     //TODO:brad end this thread somewhere?
+    goalQueueManager.setName("action-learning-goal-queue");
     goalQueueManager.start();
   }
 
@@ -264,6 +280,10 @@ public class ActionLearning {
     if (learningStatus == ActionLearningStatus.ACTIVE) {
       try {
         if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
+          if (!awaitQueueDrained(30000)) {
+            log.error("[learnAction] timed out waiting for queue to drain before switching to nested learning state");
+            return false;
+          }
           currentLearningState = new LearningState(newAction, currentLearningState);
         } else {
           log.debug("Already learning new action: " + newAction);
@@ -299,6 +319,9 @@ public class ActionLearning {
   }
 
   private boolean awaitQueueDrained(long timeoutMillis) {
+    if (Thread.currentThread() == goalQueueManager) {
+      return goalQueue.isEmpty() && !consumerBusy.get();
+    }
     long deadline = System.currentTimeMillis() + timeoutMillis;
     goalQueueEmptyLock.lock();
     try {
@@ -310,6 +333,31 @@ public class ActionLearning {
         }
       }
       return goalQueue.isEmpty() && !consumerBusy.get();
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
+  }
+
+  private boolean runAfterQueueDrain(long timeoutMillis, Runnable mutation) {
+    if (Thread.currentThread() == goalQueueManager) {
+      mutation.run();
+      return true;
+    }
+    long deadline = System.currentTimeMillis() + timeoutMillis;
+    goalQueueEmptyLock.lock();
+    try {
+      while ((!goalQueue.isEmpty() || consumerBusy.get()) && System.currentTimeMillis() < deadline) {
+        long remaining = Math.max(1, deadline - System.currentTimeMillis());
+        try {
+          learningStateUpdateCondition.await(Math.min(remaining, 200), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ignored) {
+        }
+      }
+      if (!goalQueue.isEmpty() || consumerBusy.get()) {
+        return false;
+      }
+      mutation.run();
+      return true;
     } finally {
       goalQueueEmptyLock.unlock();
     }
@@ -339,6 +387,14 @@ public class ActionLearning {
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
     log.debug("[endActionLearning] " + newAction);
+    if (newAction == null) {
+      log.warn("[endActionLearning] supplied action is null");
+      return false;
+    }
+    if (currentLearningState == null && !pausedLearningStates.containsKey(newAction.getName())) {
+      log.warn("[endActionLearning] no active or paused learning state for {}", newAction);
+      return false;
+    }
     if (!awaitQueueDrained(30000)) {
       log.error("[endActionLearning] timed out waiting for learning goal queue to drain, preserving draft");
       return false;
@@ -347,7 +403,7 @@ public class ActionLearning {
     boolean currentState;
     LearningState learningState;
     // check to see if the predicate action is same as action being learned
-    if (newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+    if (currentLearningState != null && newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
       learningState = currentLearningState;
       currentState = true;
     } else {
@@ -364,33 +420,15 @@ public class ActionLearning {
       log.error("[endActionLearning] cannot publish action with unclosed control blocks: {}", newAction);
       return false;
     }
-    ActionDBEntry dbEntry;
-    String serialized;
+    PublicationCandidate candidate;
     try {
-      dbEntry = learningState.generateActionDBEntry(false);
-      ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
-      serialized = writer.writeAction(dbEntry);
-      ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
-      List<ActionDBEntry> parsedRoundTrip = parser.parseStrict("<learned:" + dbEntry.getName() + ">", List.of(), serialized);
-      if (parsedRoundTrip == null || parsedRoundTrip.size() != 1) {
-        log.error("[endActionLearning] round-trip parse validation failed for learned action {}", dbEntry.getName());
-        return false;
-      }
+      candidate = buildValidatedCandidate(learningState, "[endActionLearning]");
     } catch (Exception e) {
       log.error("[endActionLearning] failed to validate learned action {}", newAction, e);
       return false;
     }
-    Database.getInstance().addActionDBEntry(dbEntry);
-    if (executionManager.getLearnedActionsFile() != null) {
-      try {
-        Path out = Path.of(executionManager.getLearnedActionsFile());
-        String suffix = serialized.endsWith(System.lineSeparator()) ? serialized : serialized + System.lineSeparator();
-        Files.writeString(out, suffix, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-      } catch (Exception e) {
-        Database.getInstance().removeActionDBEntry(dbEntry);
-        log.error("[endActionLearning] failed to persist learned action to file; publication rolled back", e);
-        return false;
-      }
+    if (!publishCandidate(candidate, null, "[endActionLearning]")) {
+      return false;
     }
     LearningState previousLearningState = learningState.getPreviousLearningState();
     if (previousLearningState != null) {
@@ -471,9 +509,14 @@ public class ActionLearning {
       log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
       return false;
     } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      pausedLearningStates.put(action.getName(), currentLearningState);
-      currentLearningState = null;
-      setLearningStatus(ActionLearningStatus.NONE);
+      if (!runAfterQueueDrain(30000, () -> {
+        pausedLearningStates.put(action.getName(), currentLearningState);
+        currentLearningState = null;
+        setLearningStatus(ActionLearningStatus.NONE);
+      })) {
+        log.error("[pauseActionLearning] timed out waiting for pending taught goals");
+        return false;
+      }
     } else {
       log.error("[pauseActionLearning] provided action is not equal to action currently being learned");
       return false;
@@ -509,7 +552,7 @@ public class ActionLearning {
       //tmf: agent should convey that it hasn't started learning something.
       // TODO: create interpreter to run say text to respond accordingly
       log.error("cannot resume " + action.getName() + " because haven't started learning before");
-      setLearningStatus(ActionLearningStatus.NONE);
+      return false;
     }
     return true;
   }
@@ -517,11 +560,10 @@ public class ActionLearning {
   public boolean beginLearnedIf(Predicate action, Predicate guard) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.beginLearnedIf(guard))) {
         log.error("[beginLearnedIf] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedIf(guard);
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedIf] failed for {}", action, e);
@@ -532,11 +574,10 @@ public class ActionLearning {
   public boolean beginLearnedElseIf(Predicate action, Predicate guard) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.beginLearnedElseIf(guard))) {
         log.error("[beginLearnedElseIf] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedElseIf(guard);
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedElseIf] failed for {}", action, e);
@@ -547,11 +588,10 @@ public class ActionLearning {
   public boolean beginLearnedElse(Predicate action) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, learningState::beginLearnedElse)) {
         log.error("[beginLearnedElse] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedElse();
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedElse] failed for {}", action, e);
@@ -562,11 +602,10 @@ public class ActionLearning {
   public boolean endLearnedIf(Predicate action) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, learningState::endLearnedIf)) {
         log.error("[endLearnedIf] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.endLearnedIf();
       return true;
     } catch (Exception e) {
       log.error("[endLearnedIf] failed for {}", action, e);
@@ -577,11 +616,10 @@ public class ActionLearning {
   public boolean beginLearnedWhile(Predicate action, Predicate guard) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.beginLearnedWhile(guard))) {
         log.error("[beginLearnedWhile] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedWhile(guard);
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedWhile] failed for {}", action, e);
@@ -592,11 +630,10 @@ public class ActionLearning {
   public boolean endLearnedWhile(Predicate action) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, learningState::endLearnedWhile)) {
         log.error("[endLearnedWhile] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.endLearnedWhile();
       return true;
     } catch (Exception e) {
       log.error("[endLearnedWhile] failed for {}", action, e);
@@ -607,11 +644,10 @@ public class ActionLearning {
   public boolean beginLearnedForeach(Predicate action, String iteratorVariable, String collectionVariable) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.beginLearnedForeach(iteratorVariable, collectionVariable))) {
         log.error("[beginLearnedForeach] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedForeach(iteratorVariable, collectionVariable);
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedForeach] failed for {}", action, e);
@@ -622,11 +658,10 @@ public class ActionLearning {
   public boolean endLearnedForeach(Predicate action) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, learningState::endLearnedForeach)) {
         log.error("[endLearnedForeach] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.endLearnedForeach();
       return true;
     } catch (Exception e) {
       log.error("[endLearnedForeach] failed for {}", action, e);
@@ -638,11 +673,10 @@ public class ActionLearning {
                                  String comparisonOperator, String comparisonValue, String update) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.beginLearnedFor(loopVariable, initialValue, comparisonOperator, comparisonValue, update))) {
         log.error("[beginLearnedFor] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.beginLearnedFor(loopVariable, initialValue, comparisonOperator, comparisonValue, update);
       return true;
     } catch (Exception e) {
       log.error("[beginLearnedFor] failed for {}", action, e);
@@ -653,11 +687,10 @@ public class ActionLearning {
   public boolean endLearnedFor(Predicate action) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, learningState::endLearnedFor)) {
         log.error("[endLearnedFor] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.endLearnedFor();
       return true;
     } catch (Exception e) {
       log.error("[endLearnedFor] failed for {}", action, e);
@@ -669,11 +702,10 @@ public class ActionLearning {
                                      String semanticType, String initializer) {
     try {
       LearningState learningState = requireActiveLearningState(action);
-      if (!awaitQueueDrained(30000)) {
+      if (!runAfterQueueDrain(30000, () -> learningState.declareLearnedLocal(variableName, javaType, semanticType, initializer))) {
         log.error("[declareLearnedLocal] timed out waiting for pending taught goals");
         return false;
       }
-      learningState.declareLearnedLocal(variableName, javaType, semanticType, initializer);
       return true;
     } catch (Exception e) {
       log.error("[declareLearnedLocal] failed for {}", action, e);
@@ -726,10 +758,13 @@ public class ActionLearning {
    */
 
   public void addGoal(Goal goal) {
-    goalQueue.add(goal);
-
     goalQueueEmptyLock.lock();
     try {
+      if (learningStatus != ActionLearningStatus.ACTIVE || currentLearningState == null) {
+        log.warn("[addGoal] dropping goal because there is no active learning session: {}", goal);
+        return;
+      }
+      goalQueue.add(goal);
       goalQueueNotEmpty.signal();
       learningStateUpdateCondition.signal();
     } catch (Exception e) {
@@ -843,11 +878,11 @@ public class ActionLearning {
 
     // finally, modify the action
     modifyAction(modification, location, learningState);
-    if (existingEntry != null) {
-      Database.getActionDB().removeAction(existingEntry);
+
+    PublicationCandidate candidate = buildValidatedCandidate(learningState, "[modifyAction]");
+    if (!publishCandidate(candidate, existingEntry, "[modifyAction]")) {
+      throw new IllegalStateException("Failed to publish modified action candidate for " + action.getName());
     }
-    learningState.generateActionDBEntry(true);
-    //TODO: write new version of action to file?? Only for modified taught actions?
   }
 
   private void modifyAction(Predicate modification, Predicate location, LearningState ls) {
@@ -995,6 +1030,193 @@ public class ActionLearning {
         }
         break;
     }
+  }
+
+  private record PublicationCandidate(ActionDBEntry candidate, String serialized, ActionDBEntry reparsed) {}
+
+  private PublicationCandidate buildValidatedCandidate(LearningState learningState, String logContext) {
+    ActionDBEntry candidate = learningState.generateActionDBEntry(false);
+    validateCandidateStructureAndScope(candidate, logContext);
+    ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
+    String serialized = writer.writeAction(candidate);
+    ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+    List<ActionDBEntry> parsedRoundTrip = parser.parseStrict("<validated:" + candidate.getName() + ">", List.of(), serialized);
+    if (parsedRoundTrip == null || parsedRoundTrip.size() != 1) {
+      throw new IllegalStateException(logContext + " round-trip parse validation failed for action " + candidate.getName());
+    }
+    ActionDBEntry reparsed = parsedRoundTrip.get(0);
+    if (!semanticallyEquivalent(candidate, reparsed)) {
+      throw new IllegalStateException(logContext + " round-trip semantic mismatch for action " + candidate.getName());
+    }
+    return new PublicationCandidate(candidate, serialized, reparsed);
+  }
+
+  private void validateCandidateStructureAndScope(ActionDBEntry candidate, String logContext) {
+    List<EventSpec> specs = candidate.getEventSpecs();
+    AslBlockStructure.validateControlFlow(specs);
+    AslScopeValidator.validate(specs, actionLocalRoleNames(candidate), actionRoleTypes(candidate));
+    if (candidate.getSignature(true) == null) {
+      throw new IllegalStateException(logContext + " candidate action has no signature");
+    }
+  }
+
+  private List<String> actionLocalRoleNames(ActionDBEntry entry) {
+    return entry.getRoles().stream()
+        .filter(ActionBinding::isLocal)
+        .map(ActionBinding::getName)
+        .toList();
+  }
+
+  private Map<String, Class<?>> actionRoleTypes(ActionDBEntry entry) {
+    Map<String, Class<?>> types = new HashMap<>();
+    entry.getRoles().forEach(role -> types.put(role.getName(), role.getJavaType()));
+    return types;
+  }
+
+  private boolean publishCandidate(PublicationCandidate publicationCandidate, ActionDBEntry existingEntry, String logContext) {
+    ActionDBEntry candidate = publicationCandidate.candidate();
+    Database database = Database.getInstance();
+    boolean existingRemoved = false;
+    try {
+      if (existingEntry != null) {
+        database.removeActionDBEntry(existingEntry);
+        existingRemoved = true;
+      }
+      database.addActionDBEntry(candidate);
+      if (!persistCandidate(publicationCandidate, existingEntry)) {
+        database.removeActionDBEntry(candidate);
+        if (existingRemoved) {
+          database.addActionDBEntry(existingEntry);
+        }
+        return false;
+      }
+      return true;
+    } catch (Exception e) {
+      try {
+        database.removeActionDBEntry(candidate);
+      } catch (Exception ignored) {
+      }
+      if (existingRemoved) {
+        try {
+          database.addActionDBEntry(existingEntry);
+        } catch (Exception rollbackError) {
+          log.error("{} failed to roll back previous action after publish failure", logContext, rollbackError);
+        }
+      }
+      log.error("{} failed to publish action {}", logContext, candidate.getName(), e);
+      return false;
+    }
+  }
+
+  private boolean persistCandidate(PublicationCandidate publicationCandidate, ActionDBEntry existingEntry) {
+    if (executionManager == null || executionManager.getLearnedActionsFile() == null) {
+      return true;
+    }
+
+    Path outputPath = Path.of(executionManager.getLearnedActionsFile());
+    try {
+      List<ActionDBEntry> persistedEntries = new ArrayList<>();
+      if (Files.exists(outputPath)) {
+        String current = Files.readString(outputPath);
+        if (!current.isBlank()) {
+          persistedEntries.addAll(new ActionScriptLanguageParser()
+              .parseStrict(outputPath.toString(), List.of(), current));
+        }
+      }
+
+      if (existingEntry != null) {
+        persistedEntries.removeIf(entry -> sameSignature(entry, existingEntry));
+      }
+      persistedEntries.removeIf(entry -> sameSignature(entry, publicationCandidate.candidate()));
+      persistedEntries.add(publicationCandidate.reparsed());
+
+      StringBuilder contents = new StringBuilder();
+      ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
+      for (ActionDBEntry entry : persistedEntries) {
+        contents.append(writer.writeAction(entry)).append(System.lineSeparator());
+      }
+
+      Path directory = outputPath.toAbsolutePath().getParent();
+      if (directory == null) {
+        directory = Path.of(".");
+      }
+      Path temp = Files.createTempFile(directory, "learned-actions-", ".asl.tmp");
+      try {
+        Files.writeString(temp, contents.toString(), StandardOpenOption.TRUNCATE_EXISTING);
+        try {
+          Files.move(temp, outputPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (Exception atomicMoveError) {
+          Files.move(temp, outputPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+      } finally {
+        Files.deleteIfExists(temp);
+      }
+      return true;
+    } catch (Exception e) {
+      log.error("[persistCandidate] failed to persist action {}", publicationCandidate.candidate().getName(), e);
+      return false;
+    }
+  }
+
+  private boolean semanticallyEquivalent(ActionDBEntry expected, ActionDBEntry actual) {
+    if (!Objects.equals(expected.getName(), actual.getName())) {
+      return false;
+    }
+    if (!Objects.equals(expected.getSignature(true), actual.getSignature(true))) {
+      return false;
+    }
+    if (!normalizedRoles(expected).equals(normalizedRoles(actual))) {
+      return false;
+    }
+    if (!normalizedEventSpecs(expected).equals(normalizedEventSpecs(actual))) {
+      return false;
+    }
+    if (!normalizedConditions(expected.getPreConditions()).equals(normalizedConditions(actual.getPreConditions()))) {
+      return false;
+    }
+    if (!normalizedConditions(expected.getOverallConditions()).equals(normalizedConditions(actual.getOverallConditions()))) {
+      return false;
+    }
+    if (!normalizedEffects(expected.getEffects()).equals(normalizedEffects(actual.getEffects()))) {
+      return false;
+    }
+    return Objects.equals(expected.getDescription(), actual.getDescription());
+  }
+
+  private List<String> normalizedRoles(ActionDBEntry entry) {
+    return entry.getRoles().stream()
+        .map(role -> role.getName() + "|" + role.getJavaType().getTypeName() + "|"
+            + role.getSemanticType() + "|" + role.isLocal() + "|"
+            + role.isReturn() + "|" + role.hasDefaultValue())
+        .toList();
+  }
+
+  private List<String> normalizedEventSpecs(ActionDBEntry entry) {
+    return entry.getEventSpecs().stream()
+        .map(spec -> spec.getType() + "|" + spec.getActor() + "|" + spec.getCommand()
+            + "|" + spec.getInputArgs() + "|" + spec.getReturnArgs())
+        .toList();
+  }
+
+  private List<String> normalizedConditions(List<edu.tufts.hrilab.action.Condition> conditions) {
+    return conditions.stream()
+        .map(condition -> condition.getType() + ":" + condition.getPredicates().keySet())
+        .sorted(Comparator.naturalOrder())
+        .toList();
+  }
+
+  private List<String> normalizedEffects(List<Effect> effects) {
+    return effects.stream()
+        .map(effect -> effect.getType() + ":" + effect.getPredicate())
+        .sorted(Comparator.naturalOrder())
+        .toList();
+  }
+
+  private boolean sameSignature(ActionDBEntry left, ActionDBEntry right) {
+    if (left == null || right == null) {
+      return false;
+    }
+    return Objects.equals(left.getSignature(true), right.getSignature(true));
   }
 
   private static int parseIntArg(Symbol symbol, String label) {

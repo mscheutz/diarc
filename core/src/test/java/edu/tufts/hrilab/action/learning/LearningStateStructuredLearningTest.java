@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -100,5 +101,61 @@ public class LearningStateStructuredLearningTest {
         .map(es -> es.getType() + "|" + es.getActor() + "|" + es.getCommand() + "|" + es.getInputArgs() + "|" + es.getReturnArgs())
         .toList();
     assertEquals(learnedSignature, reparsedSignature);
+  }
+
+  @Test
+  public void blockLocalDeclarationsDoNotBecomeActionWideRoles() {
+    LearningState learningState = new LearningState(signature("scopedLocalLearned"));
+    learningState.beginLearnedIf(Factory.createPredicate("true"));
+    learningState.declareLearnedLocal("!status", "java.lang.String", "", "\"inside\"");
+    learningState.addEventSpec(learningState.getEventSpecs().size(),
+        Factory.createPredicate("useStatus", "self:agent", "!status"));
+    learningState.endLearnedIf();
+
+    ActionDBEntry learned = learningState.generateActionDBEntry();
+    assertFalse("Block-local declarations must not be promoted to action roles.",
+        learned.getRoles().stream().anyMatch(role -> role.getName().equals("!status")));
+    assertTrue(learned.getEventSpecs().stream()
+        .anyMatch(es -> "declare".equals(es.getCommand()) && es.getInputArgs().contains("!status")));
+  }
+
+  @Test
+  public void foreachIteratorReferenceIsPreservedAsVariable() {
+    LearningState learningState = new LearningState(signature("iteratorReferenceLearned"));
+    learningState.beginLearnedForeach("!item", "?object");
+    learningState.addEventSpec(learningState.getEventSpecs().size(),
+        Factory.createPredicate("inspect", "self:agent", "!item"));
+    learningState.endLearnedForeach();
+
+    ActionDBEntry learned = learningState.generateActionDBEntry();
+    EventSpec inspect = learned.getEventSpecs().stream()
+        .filter(es -> "inspect".equals(es.getCommand()))
+        .findFirst()
+        .orElseThrow();
+    assertEquals("!item", inspect.getInputArgs().get(0));
+  }
+
+  @Test
+  public void undefinedOrOutOfScopeVariableReferenceIsRejected() {
+    LearningState undefined = new LearningState(signature("undefinedVariableLearned"));
+    try {
+      undefined.addEventSpec(undefined.getEventSpecs().size(),
+          Factory.createPredicate("inspect", "self:agent", "!missing"));
+      fail("Expected undefined variable to be rejected.");
+    } catch (IllegalArgumentException expected) {
+      assertTrue(expected.getMessage().contains("undefined or out of scope"));
+    }
+
+    LearningState outOfScope = new LearningState(signature("outOfScopeVariableLearned"));
+    outOfScope.beginLearnedIf(Factory.createPredicate("true"));
+    outOfScope.declareLearnedLocal("!inside", "java.lang.String", "", "\"x\"");
+    outOfScope.endLearnedIf();
+    try {
+      outOfScope.addEventSpec(outOfScope.getEventSpecs().size(),
+          Factory.createPredicate("inspect", "self:agent", "!inside"));
+      fail("Expected out-of-scope variable to be rejected.");
+    } catch (IllegalArgumentException expected) {
+      assertTrue(expected.getMessage().contains("undefined or out of scope"));
+    }
   }
 }

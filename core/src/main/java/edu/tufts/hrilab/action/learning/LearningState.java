@@ -16,7 +16,9 @@ import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.asl.AslBlockBuilder;
+import edu.tufts.hrilab.action.asl.AslBlockStructure;
 import edu.tufts.hrilab.action.asl.AslControlSpecFactory;
+import edu.tufts.hrilab.action.asl.AslScopeValidator;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.util.Utilities;
@@ -128,14 +130,21 @@ public class LearningState {
   }
 
   private void refreshBuilder() {
-    List<String> predeclaredLocals = valueActBindingMap.values().stream()
+    aslBuilder = new AslBlockBuilder(eventSpecs, predeclaredLocalNames(), predeclaredTypes());
+    eventSpecs = new ArrayList<>(aslBuilder.specs());
+  }
+
+  private List<String> predeclaredLocalNames() {
+    return valueActBindingMap.values().stream()
         .filter(ActionBinding::isLocal)
         .map(ActionBinding::getName)
         .toList();
+  }
+
+  private Map<String, Class<?>> predeclaredTypes() {
     Map<String, Class<?>> predeclaredTypes = new HashMap<>();
     valueActBindingMap.values().forEach(binding -> predeclaredTypes.put(binding.getName(), binding.getJavaType()));
-    aslBuilder = new AslBlockBuilder(eventSpecs, predeclaredLocals, predeclaredTypes);
-    eventSpecs = new ArrayList<>(aslBuilder.specs());
+    return predeclaredTypes;
   }
 
   public String getName() {
@@ -563,11 +572,6 @@ public class LearningState {
       if (varClass == null) {
         throw new IllegalArgumentException("Unknown java type for local declaration: " + javaType);
       }
-      ActionBinding binding = new ActionBinding.Builder(variableName, varClass)
-          .setSemanticType(semanticType == null ? "" : semanticType)
-          .setIsLocal(true)
-          .build();
-      valueActBindingMap.put(Factory.createSymbol(variableName), binding);
       int insertIndex = aslBuilder.specs().size();
       aslBuilder.addBlockLocalDeclaration(insertIndex, variableName, javaType, semanticType, initializerExpression);
       eventSpecs = new ArrayList<>(aslBuilder.specs());
@@ -603,11 +607,6 @@ public class LearningState {
       if (varClass == null) {
         throw new IllegalArgumentException("Unknown java type for local declaration: " + javaType);
       }
-      ActionBinding binding = new ActionBinding.Builder(variableName, varClass)
-          .setSemanticType(semanticType == null ? "" : semanticType)
-          .setIsLocal(true)
-          .build();
-      valueActBindingMap.put(Factory.createSymbol(variableName), binding);
       aslBuilder.addBlockLocalDeclaration(insertIndex, variableName, javaType, semanticType, initializerExpression);
       eventSpecs = new ArrayList<>(aslBuilder.specs());
     }
@@ -621,18 +620,8 @@ public class LearningState {
         throw new IllegalArgumentException("No declaration at index " + declarationIndex);
       }
       String oldName = declaration.getInputArgs().get(0);
-      ActionBinding toRename = valueActBindingMap.values().stream()
-          .filter(ActionBinding::isLocal)
-          .filter(binding -> binding.getName().equals(oldName))
-          .findFirst()
-          .orElse(null);
       aslBuilder.renameBlockLocalVariable(declarationIndex, newName);
       eventSpecs = new ArrayList<>(aslBuilder.specs());
-      if (toRename != null) {
-        valueActBindingMap.values().removeIf(b -> b.isLocal() && b.getName().equals(oldName));
-        valueActBindingMap.put(Factory.createSymbol(newName),
-            new ActionBinding.Builder(newName, toRename.getJavaType()).setSemanticType(toRename.getSemanticType()).setIsLocal(true).build());
-      }
     }
 
     public void removeActionAt(int index) {
@@ -725,7 +714,7 @@ public class LearningState {
    */
   private EventSpec buildEventSpecForAction(Symbol actor, Predicate actionPredicate) {
     EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.ACTION);
-    esBuilder.setActor(processEventArgument(actor));
+    esBuilder.setActor(processEventActor(actor));
     esBuilder.setCommand(actionPredicate.getName());
 
     List<Symbol> args = actionPredicate.getArgs();
@@ -737,6 +726,21 @@ public class LearningState {
       esBuilder.addInputArg(paramName);
     }
     return esBuilder.build();
+  }
+
+  private String processEventActor(Symbol actor) {
+    String mapped = getRoleNameForValue(actor);
+    if (mapped != null) {
+      return mapped;
+    }
+    if (actor != null && "agent".equals(actor.getType()) && hasActorRole()) {
+      return "?actor";
+    }
+    return processEventArgument(actor);
+  }
+
+  private boolean hasActorRole() {
+    return valueActBindingMap.values().stream().anyMatch(binding -> "?actor".equals(binding.getName()));
   }
 
   //TODO:brad: combine this with ground args?
@@ -756,31 +760,72 @@ public class LearningState {
       }
       param.append(")");
     } else {
-
       String name = getRoleNameForValue(value);
-
-      if (name == null) { // if the value doesn't exist or no associated name
-        if(consultantTypes.contains(value.getType())) {//we want to declare a local value
-          List<Term> properties = getProperties(value);
-          if(getLocalVariableForProperties(properties)!=null){
-            name = getLocalVariableForProperties(properties);
-          } else {
-            declareLocalVariable(value);
-            name = getRoleNameForValue(value);
-          }
-        } else {
-          name = value.getName();
-          //TODO: Need to tell at this point whether the argument is a string or some other type in order to properly
-          //      escape it if necessary. Otherwise ASL writer/parser can break or have incorrect types supplied
-          if (needsEscaping(name)) {
-            name = "\"" + name + "\"";
-          }
-          name = value.hasType() ? name + ":" + value.getType() : name;
+      if (name != null) {
+        return name;
+      }
+      if (Utilities.isScriptVariable(value)) {
+        String variableName = value.getName();
+        if (!isVariableVisibleInCurrentScope(variableName)) {
+          throw new IllegalArgumentException("Variable reference is undefined or out of scope: " + variableName);
         }
+        return variableName;
+      }
+
+      // if the value doesn't exist or has no associated role name
+      if(consultantTypes.contains(value.getType())) {//we want to declare a local value
+        List<Term> properties = getProperties(value);
+        if(getLocalVariableForProperties(properties)!=null){
+          name = getLocalVariableForProperties(properties);
+        } else {
+          declareLocalVariable(value);
+          name = getRoleNameForValue(value);
+        }
+      } else {
+        name = value.getName();
+        //TODO: Need to tell at this point whether the argument is a string or some other type in order to properly
+        //      escape it if necessary. Otherwise ASL writer/parser can break or have incorrect types supplied
+        if (needsEscaping(name)) {
+          name = "\"" + name + "\"";
+        }
+        name = value.hasType() ? name + ":" + value.getType() : name;
       }
       param.append(name);
     }
     return param.toString();
+  }
+
+  private boolean isVariableVisibleInCurrentScope(String variableName) {
+    List<EventSpec> probeSpecs = new ArrayList<>(aslBuilder.specs());
+    EventSpec probe = new EventSpec.Builder(EventSpec.EventType.ACTION)
+        .setActor("?actor")
+        .setCommand("__scopeProbe__")
+        .addInputArg(variableName)
+        .build();
+    probeSpecs.add(probe);
+    List<AslBlockBuilder.OpenBlock> openBlocks = aslBuilder.getOpenBlocks();
+    for (int i = openBlocks.size() - 1; i >= 0; i--) {
+      AslBlockBuilder.OpenBlock open = openBlocks.get(i);
+      AslBlockStructure.BlockType type = open.type();
+      switch (type) {
+        case IF -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDIF));
+        case WHILE -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDWHILE));
+        case FOR, FOREACH -> {
+          probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK));
+          probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDFOR));
+        }
+        case TRY -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDTRY));
+        case ASYNC -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDASYNC));
+        case NOINTERRUPT -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDNOINTERRUPT));
+        case BLOCK -> probeSpecs.add(AslControlSpecFactory.control(AslControlSpecFactory.Marker.ENDBLOCK));
+      }
+    }
+    try {
+      AslScopeValidator.validate(probeSpecs, predeclaredLocalNames(), predeclaredTypes());
+      return true;
+    } catch (AslScopeValidator.ValidationException e) {
+      return false;
+    }
   }
 
   private boolean needsEscaping(String s) {

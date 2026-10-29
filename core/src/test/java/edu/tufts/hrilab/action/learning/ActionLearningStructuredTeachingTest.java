@@ -12,6 +12,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import org.junit.Test;
 
 import java.util.List;
+import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,6 +31,12 @@ public class ActionLearningStructuredTeachingTest {
 
   private static Goal taughtGoalNoArgs(String command) {
     return Goal.createGoal(Factory.createPredicate(command, "self:agent"));
+  }
+
+  private static Thread queueThread(ActionLearning learning) throws Exception {
+    Field field = ActionLearning.class.getDeclaredField("goalQueueManager");
+    field.setAccessible(true);
+    return (Thread) field.get(learning);
   }
 
   @Test(timeout = 15000)
@@ -305,5 +312,112 @@ public class ActionLearningStructuredTeachingTest {
     assertNotNull(learned);
     List<String> commands = learned.getEventSpecs().stream().map(es -> es.getCommand()).toList();
     assertEquals(List.of("if", "true", "then", "thenStep", "else", "elseStep", "endif"), commands);
+  }
+
+  @Test(timeout = 20000)
+  public void nestedLearningReusesSingleQueueConsumerAndPreservesSessionIsolation() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String parentName = "learnedParent_" + System.nanoTime();
+    String childName = parentName + "_child";
+    Predicate parent = actionSignature(parentName);
+    Predicate child = actionSignature(childName);
+
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    Future<Boolean> parentFuture = executor.submit(() -> learning.learnAction(parent));
+    Future<Boolean> childFuture = null;
+    try {
+      learning.waitForActionLearningStart(parent);
+      learning.addGoal(taughtGoal("parentBeforeChild"));
+      Thread consumerBefore = queueThread(learning);
+      assertNotNull(consumerBefore);
+
+      childFuture = executor.submit(() -> learning.learnAction(child));
+      learning.waitForActionLearningStart(child);
+      assertNotNull("Nested learning must keep a queue consumer available.", queueThread(learning));
+
+      learning.addGoal(taughtGoal("childStep"));
+      assertTrue(learning.endActionLearning(child));
+
+      learning.addGoal(taughtGoal("parentAfterChild"));
+      assertTrue(learning.endActionLearning(parent));
+      assertTrue(childFuture.get(3, TimeUnit.SECONDS));
+      assertTrue(parentFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      if (childFuture != null && !childFuture.isDone()) {
+        childFuture.cancel(true);
+      }
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry parentEntry = Database.getActionDB().getAction(parentName);
+    ActionDBEntry childEntry = Database.getActionDB().getAction(childName);
+    assertNotNull(parentEntry);
+    assertNotNull(childEntry);
+    List<String> parentCommands = parentEntry.getEventSpecs().stream().map(es -> es.getCommand()).toList();
+    List<String> childCommands = childEntry.getEventSpecs().stream().map(es -> es.getCommand()).toList();
+    assertEquals(List.of("parentBeforeChild", "parentAfterChild"), parentCommands);
+    assertEquals(List.of("childStep"), childCommands);
+  }
+
+  @Test(timeout = 15000)
+  public void pauseWaitsForPendingQueueWorkBeforeStashingSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String actionName = "learnedPauseDrain_" + System.nanoTime();
+    Predicate signature = actionSignature(actionName);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(signature));
+    try {
+      learning.waitForActionLearningStart(signature);
+      learning.addGoal(taughtGoal("queuedBeforePause"));
+      assertTrue("Pause should wait for queued taught steps before stashing.",
+          learning.pauseActionLearning(signature));
+      assertTrue(learning.resumeActionLearning(signature));
+      learning.addGoal(taughtGoal("afterResume"));
+      assertTrue(learning.endActionLearning(signature));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry learned = Database.getActionDB().getAction(actionName);
+    assertNotNull(learned);
+    List<String> commands = learned.getEventSpecs().stream().map(es -> es.getCommand()).toList();
+    assertEquals(List.of("queuedBeforePause", "afterResume"), commands);
+  }
+
+  @Test(timeout = 15000)
+  public void endWithoutActiveSessionReturnsFailure() {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate unknown = actionSignature("noActiveSession_" + System.nanoTime());
+    assertFalse("Ending learning without an active or paused session must fail.",
+        learning.endActionLearning(unknown));
+  }
+
+  @Test(timeout = 15000)
+  public void resumeUnknownSessionReturnsFailureAndKeepsActiveSession() throws Exception {
+    ExecutionManager manager = new ExecutionManager();
+    ActionLearning learning = new ActionLearning(manager, false);
+    String activeName = "activeResumeSession_" + System.nanoTime();
+    Predicate active = actionSignature(activeName);
+    Predicate unknown = actionSignature(activeName + "_missing");
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Boolean> learnFuture = executor.submit(() -> learning.learnAction(active));
+    try {
+      learning.waitForActionLearningStart(active);
+      assertFalse("Resuming a nonexistent paused action must fail.", learning.resumeActionLearning(unknown));
+      learning.addGoal(taughtGoal("stillLearning"));
+      assertTrue(learning.endActionLearning(active));
+      assertTrue(learnFuture.get(3, TimeUnit.SECONDS));
+    } finally {
+      executor.shutdownNow();
+    }
+
+    ActionDBEntry learned = Database.getActionDB().getAction(activeName);
+    assertNotNull(learned);
+    List<String> commands = learned.getEventSpecs().stream().map(es -> es.getCommand()).toList();
+    assertEquals(List.of("stillLearning"), commands);
   }
 }

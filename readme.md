@@ -314,9 +314,14 @@ EventSpec-list ASL semantics.
 
 **Lifecycle and failure semantics**
 - Structured teaching/editing requires an **active (not paused)** learning session for the action.
+- Learning uses a single queue consumer; structural commands and taught steps are serialized by accepted-command order.
 - Structural transitions wait for queued taught steps to drain before mutating the draft.
+- `resumeActionLearning` fails when no paused session exists; `endActionLearning` fails when no active/paused draft exists.
 - Structured edits are **transactional**: rejected edits (invalid indices/branches/scope/arity/location) do not mutate the source action.
-- `endActionLearning` rejects publication when control blocks are unclosed and validates writer→parser round-trip before publish/persist.
+- Block-local declarations remain lexical (from `declare`/`assign` EventSpecs) and are not promoted into action-wide roles.
+- Explicit script-variable arguments are preserved only when lexically visible; undefined/out-of-scope references are rejected.
+- Publication/replacement is transactional across DB registration and persistence rollback.
+- `endActionLearning` rejects publication when control blocks are unclosed and validates structural+scope integrity plus semantic writer→parser equivalence before publish/persist.
 
 ## Running a DIARC Configuration 
 

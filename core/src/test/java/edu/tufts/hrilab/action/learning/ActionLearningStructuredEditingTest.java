@@ -6,6 +6,7 @@ package edu.tufts.hrilab.action.learning;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
+import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -267,5 +268,32 @@ public class ActionLearningStructuredEditingTest {
     }
 
     assertEquals(before, commandSequence(name));
+  }
+
+  @Test
+  public void modifyActionPersistenceFailureRollsBackToOriginalAction() {
+    String name = "structuredModifyRollback_" + System.nanoTime();
+    ActionDBEntry seeded = seedConditionalAction(name);
+    assertNotNull(seeded);
+    ExecutionManager manager = new ExecutionManager();
+    manager.setLearnedActionsFile("build");
+    ActionLearning learning = new ActionLearning(manager, false);
+    Predicate signature = seeded.getSignature(true);
+    List<String> before = commandSequence(name);
+
+    try {
+      learning.modifyAction(
+          signature,
+          Factory.createPredicate("replaceAt",
+              Factory.createSymbol("3"),
+              step("replacementStep")),
+          Factory.createPredicate("none"));
+      fail("Expected publication to fail when learned actions path is not writable as a file.");
+    } catch (IllegalStateException expected) {
+      assertTrue(expected.getMessage().contains("Failed to publish modified action candidate"));
+    }
+
+    assertEquals("Original action must remain available after failed replacement publication.",
+        before, commandSequence(name));
   }
 }
