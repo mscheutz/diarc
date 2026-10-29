@@ -148,6 +148,12 @@ public class TryContext extends ArgumentBasedContext {
 
     switch (tryState) {
       case NORMAL:
+        if (currParserStep == null || currParserStep.isEmpty()) {
+          // Normal branch exhausted; proceed to finally handling.
+          tryState = TryContextState.SHOULD_EXECUTE_FINALLY;
+          setupStepForState();
+          break;
+        }
         // if next step is not CATCH or FINALLY add it as the next step to execute
         ControlFactory.Control controlType = ControlFactory.Control.fromString(currParserStep.getCommand());
         if (controlType != ControlFactory.Control.CATCH && controlType != ControlFactory.Control.FINALLY) {

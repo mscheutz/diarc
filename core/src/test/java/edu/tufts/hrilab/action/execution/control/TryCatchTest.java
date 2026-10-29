@@ -112,6 +112,27 @@ public class TryCatchTest {
     exitc.doStep();
   }
 
+  @Test
+  public void testFinallyRunsAfterSuccessfulTryBody() {
+    EventSpec spec1 = new EventSpec(EventSpec.EventType.CONTROL, "try");
+    EventSpec spec2 = new EventSpec(EventSpec.EventType.CONTROL, "true");
+    EventSpec spec3 = new EventSpec(EventSpec.EventType.CONTROL, "finally");
+    EventSpec spec4 = new EventSpec(EventSpec.EventType.OPERATOR, "log(\"info\", \"finally\")");
+    EventSpec spec5 = new EventSpec(EventSpec.EventType.CONTROL, "endtry");
+    List<EventSpec> specs = Arrays.asList(spec1, spec2, spec3, spec4, spec5);
+    ScriptParser parser = new ScriptParser(specs);
+
+    Context tryc = root.setupNextStep(parser);
+    Context truec = doStepAndGetNext(tryc);
+    assertNotNull(truec);
+    truec.doStep();
+
+    Context finallyc = tryc.getNextStep();
+    assertNotNull("Finally context should execute after successful try body.", finallyc);
+    finallyc.doStep();
+    assertNull("Try context should finish after finally executes.", tryc.getNextStep());
+  }
+
   /**
    * Helper method to stand in for StepExecution.
    * @param context

@@ -399,6 +399,48 @@ public class ActionASLTest {
     }
 
     @Test
+    public void testNestedTryAsyncNoInterruptControlFlowRoundTrip() {
+        assertRoundTrip("""
+                () = nestedTryAsyncNoInterrupt() {
+                    java.lang.Integer !count = 0;
+                    java.util.List !items = op:newObject("java.util.ArrayList");
+                    op:invokeMethod(!items, "add", "first");
+                    op:invokeMethod(!items, "add", "second");
+                    for (!i=0; !i lt 2; !i++) {
+                        try {
+                            foreach (!item : !items) {
+                                noInterrupt {
+                                    if (true) {
+                                        !count = !count + 1;
+                                    } elseif (tsc:available()) {
+                                        exit(FAIL);
+                                    } else {
+                                        !count = !count + 100;
+                                    }
+                                }
+                            }
+                            if (!i == 1) {
+                                exit(FAIL);
+                            }
+                        } catch() {
+                            !count = !count + 2;
+                        } finally {
+                            while (!count lt 6) {
+                                !count = !count + 1;
+                            }
+                        }
+                    }
+                    edu.tufts.hrilab.action.execution.AslTask !task;
+                    edu.tufts.hrilab.action.ActionStatus !status;
+                    long !result = 0;
+                    !task = async(!result) { !result = 42; }
+                    (!status, !result) = join(!task);
+                    if (!count == 10 && !result == 42) { } else { exit(FAIL); }
+                }
+                """);
+    }
+
+    @Test
     public void testForWithoutInitializerRequiresVisibleIntegerCounter() {
         ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
         try {

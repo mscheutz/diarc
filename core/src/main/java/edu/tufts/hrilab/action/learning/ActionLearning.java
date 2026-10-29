@@ -7,11 +7,12 @@ package edu.tufts.hrilab.action.learning;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.action.util.Utilities;
@@ -26,13 +27,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Top level class in charge of maintaining action learning, including the current learning state
@@ -101,6 +107,17 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedIf(?actor,?action,?guard)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedElseIf(?actor,?action,?guard)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedElse(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endLearnedIf(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedWhile(?actor,?action,?guard)"));
+    ignoreActionSet.add(Factory.createPredicate("endLearnedWhile(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedForeach(?actor,?action,?iterator,?collection)"));
+    ignoreActionSet.add(Factory.createPredicate("endLearnedForeach(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("beginLearnedFor(?actor,?action,?loopVar,?initialValue,?comparisonOperator,?comparisonValue,?update)"));
+    ignoreActionSet.add(Factory.createPredicate("endLearnedFor(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("declareLearnedLocal(?actor,?action,?variableName,?javaType,?semanticType,?initializer)"));
     ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor)"));
@@ -281,25 +298,50 @@ public class ActionLearning {
     return true;
   }
 
+  private boolean awaitQueueDrained(long timeoutMillis) {
+    long deadline = System.currentTimeMillis() + timeoutMillis;
+    goalQueueEmptyLock.lock();
+    try {
+      while ((!goalQueue.isEmpty() || consumerBusy.get()) && System.currentTimeMillis() < deadline) {
+        long remaining = Math.max(1, deadline - System.currentTimeMillis());
+        try {
+          learningStateUpdateCondition.await(Math.min(remaining, 200), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ignored) {
+        }
+      }
+      return goalQueue.isEmpty() && !consumerBusy.get();
+    } finally {
+      goalQueueEmptyLock.unlock();
+    }
+  }
+
+  private LearningState resolveLearningState(Predicate action) {
+    if (action == null) {
+      return null;
+    }
+    if (currentLearningState != null && action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      return currentLearningState;
+    }
+    return pausedLearningStates.get(action.getName());
+  }
+
+  private LearningState requireActiveLearningState(Predicate action) {
+    LearningState learningState = resolveLearningState(action);
+    if (learningState == null) {
+      throw new IllegalStateException("No learning state for action " + action);
+    }
+    if (currentLearningState == null || !Objects.equals(currentLearningState.getName(), learningState.getName())) {
+      throw new IllegalStateException("Learning state is not currently active for action " + action);
+    }
+    return learningState;
+  }
+
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
     log.debug("[endActionLearning] " + newAction);
-
-    // Wait for the consumer thread to drain any pending goals and finish event-spec'ing
-    // the one currently in flight before we touch currentLearningState.
-    goalQueueEmptyLock.lock();
-    try {
-      long deadline = System.currentTimeMillis() + 30000;
-      while ((!goalQueue.isEmpty() || consumerBusy.get()) && System.currentTimeMillis() < deadline) {
-        try {
-          learningStateUpdateCondition.await(200, java.util.concurrent.TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ignored) {}
-      }
-      if (!goalQueue.isEmpty() || consumerBusy.get()) {
-        log.warn("[endActionLearning] timed out waiting for learning goal queue to drain");
-      }
-    } finally {
-      goalQueueEmptyLock.unlock();
+    if (!awaitQueueDrained(30000)) {
+      log.error("[endActionLearning] timed out waiting for learning goal queue to drain, preserving draft");
+      return false;
     }
 
     boolean currentState;
@@ -318,10 +360,37 @@ public class ActionLearning {
     }
 
     log.debug("Generating new ActionDBEntry");
-    ActionDBEntry dbEntry  = learningState.generateActionDBEntry();
-    if (executionManager.getLearnedActionsFile() != null) {
+    if (learningState.hasOpenBlocks()) {
+      log.error("[endActionLearning] cannot publish action with unclosed control blocks: {}", newAction);
+      return false;
+    }
+    ActionDBEntry dbEntry;
+    String serialized;
+    try {
+      dbEntry = learningState.generateActionDBEntry(false);
       ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
-      writer.writeToFile(dbEntry, executionManager.getLearnedActionsFile(), true);
+      serialized = writer.writeAction(dbEntry);
+      ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+      List<ActionDBEntry> parsedRoundTrip = parser.parseStrict("<learned:" + dbEntry.getName() + ">", List.of(), serialized);
+      if (parsedRoundTrip == null || parsedRoundTrip.size() != 1) {
+        log.error("[endActionLearning] round-trip parse validation failed for learned action {}", dbEntry.getName());
+        return false;
+      }
+    } catch (Exception e) {
+      log.error("[endActionLearning] failed to validate learned action {}", newAction, e);
+      return false;
+    }
+    Database.getInstance().addActionDBEntry(dbEntry);
+    if (executionManager.getLearnedActionsFile() != null) {
+      try {
+        Path out = Path.of(executionManager.getLearnedActionsFile());
+        String suffix = serialized.endsWith(System.lineSeparator()) ? serialized : serialized + System.lineSeparator();
+        Files.writeString(out, suffix, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      } catch (Exception e) {
+        Database.getInstance().removeActionDBEntry(dbEntry);
+        log.error("[endActionLearning] failed to persist learned action to file; publication rolled back", e);
+        return false;
+      }
     }
     LearningState previousLearningState = learningState.getPreviousLearningState();
     if (previousLearningState != null) {
@@ -445,6 +514,173 @@ public class ActionLearning {
     return true;
   }
 
+  public boolean beginLearnedIf(Predicate action, Predicate guard) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedIf] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedIf(guard);
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedIf] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean beginLearnedElseIf(Predicate action, Predicate guard) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedElseIf] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedElseIf(guard);
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedElseIf] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean beginLearnedElse(Predicate action) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedElse] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedElse();
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedElse] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean endLearnedIf(Predicate action) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[endLearnedIf] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.endLearnedIf();
+      return true;
+    } catch (Exception e) {
+      log.error("[endLearnedIf] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean beginLearnedWhile(Predicate action, Predicate guard) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedWhile] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedWhile(guard);
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedWhile] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean endLearnedWhile(Predicate action) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[endLearnedWhile] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.endLearnedWhile();
+      return true;
+    } catch (Exception e) {
+      log.error("[endLearnedWhile] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean beginLearnedForeach(Predicate action, String iteratorVariable, String collectionVariable) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedForeach] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedForeach(iteratorVariable, collectionVariable);
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedForeach] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean endLearnedForeach(Predicate action) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[endLearnedForeach] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.endLearnedForeach();
+      return true;
+    } catch (Exception e) {
+      log.error("[endLearnedForeach] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean beginLearnedFor(Predicate action, String loopVariable, String initialValue,
+                                 String comparisonOperator, String comparisonValue, String update) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[beginLearnedFor] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.beginLearnedFor(loopVariable, initialValue, comparisonOperator, comparisonValue, update);
+      return true;
+    } catch (Exception e) {
+      log.error("[beginLearnedFor] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean endLearnedFor(Predicate action) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[endLearnedFor] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.endLearnedFor();
+      return true;
+    } catch (Exception e) {
+      log.error("[endLearnedFor] failed for {}", action, e);
+      return false;
+    }
+  }
+
+  public boolean declareLearnedLocal(Predicate action, String variableName, String javaType,
+                                     String semanticType, String initializer) {
+    try {
+      LearningState learningState = requireActiveLearningState(action);
+      if (!awaitQueueDrained(30000)) {
+        log.error("[declareLearnedLocal] timed out waiting for pending taught goals");
+        return false;
+      }
+      learningState.declareLearnedLocal(variableName, javaType, semanticType, initializer);
+      return true;
+    } catch (Exception e) {
+      log.error("[declareLearnedLocal] failed for {}", action, e);
+      return false;
+    }
+  }
+
   public boolean waitForLearningStateUpdate(Predicate action) {
     boolean updated = false;
     learningStateUpdateListenerInterrupted.put(action,false);
@@ -556,6 +792,18 @@ public class ActionLearning {
    : condition()
    : effect()
    : argument()
+
+   Structured edit operation forms (must use location predicate 'none'):
+   : insertInBlock(blockStartIndex, actionPredicate)
+   : insertInBranch(ifBlockStartIndex, branchIndex, actionPredicate)
+   : removeBlock(blockStartIndex)
+   : replaceBlock(blockStartIndex, actionPredicate)
+   : addBlockLocal(insertIndex, variableName, javaType, semanticType [, initializer])
+     Legacy compatibility: addBlockLocal(insertIndex, variableName, javaType, semanticType, none, initializer)
+   : renameBlockLocal(declarationIndex, newName)
+   : removeAt(index)
+   : replaceAt(index, actionPredicate)
+   Structured edits are transactional; rejected edits do not mutate the action.
    */
 
   public void modifyAction(Predicate action, Predicate modification, Predicate location) {
@@ -585,6 +833,9 @@ public class ActionLearning {
     if (knownEntry == null) {
       // this is the case when modifying an action while learning the action
       learningState = this.currentLearningState;
+      if (learningState == null) {
+        throw new IllegalArgumentException("No active learning state or matching known action for: " + action);
+      }
     } else {
       // modifying an action that already exists
       learningState = new LearningState(knownEntry, action);
@@ -595,12 +846,64 @@ public class ActionLearning {
     if (existingEntry != null) {
       Database.getActionDB().removeAction(existingEntry);
     }
-    learningState.generateActionDBEntry();
+    learningState.generateActionDBEntry(true);
     //TODO: write new version of action to file?? Only for modified taught actions?
   }
 
   private void modifyAction(Predicate modification, Predicate location, LearningState ls) {
     String operation = modification.getName();
+    StructuredEditOperation structured = StructuredEditOperation.fromOperationName(operation);
+
+    if (structured != null) {
+      if (!"none".equalsIgnoreCase(location.getName())) {
+        throw new IllegalArgumentException("Structured operation " + operation + " requires location predicate 'none'.");
+      }
+      structured.validateArity(modification);
+      switch (structured) {
+        case INSERT_IN_BLOCK -> {
+        ls.appendActionToBlockBody(parseIntArg(modification.get(0), "blockStartIndex"), (Predicate) modification.get(1));
+        return;
+        }
+        case INSERT_IN_BRANCH -> {
+        ls.appendActionToBranch(
+            parseIntArg(modification.get(0), "ifBlockStartIndex"),
+            parseIntArg(modification.get(1), "branchIndex"),
+            (Predicate) modification.get(2));
+        return;
+        }
+        case REMOVE_BLOCK -> {
+        ls.removeCompleteBlock(parseIntArg(modification.get(0), "blockStartIndex"));
+        return;
+        }
+        case REPLACE_BLOCK -> {
+        ls.replaceCompleteBlockWithAction(parseIntArg(modification.get(0), "blockStartIndex"), (Predicate) modification.get(1));
+        return;
+        }
+        case ADD_BLOCK_LOCAL -> {
+        String semanticType = nullableArg(modification.get(3));
+        String initializer = parseBlockLocalInitializer(modification);
+        ls.addBlockLocalDeclaration(
+            parseIntArg(modification.get(0), "insertIndex"),
+            modification.get(1).toString(),
+            modification.get(2).toString(),
+            semanticType,
+            initializer);
+        return;
+        }
+        case RENAME_BLOCK_LOCAL -> {
+        ls.renameBlockLocalDeclaration(parseIntArg(modification.get(0), "declarationIndex"), modification.get(1).toString());
+        return;
+        }
+        case REMOVE_AT -> {
+        ls.removeActionAt(parseIntArg(modification.get(0), "index"));
+        return;
+        }
+        case REPLACE_AT -> {
+        ls.replaceActionAt(parseIntArg(modification.get(0), "index"), (Predicate) modification.get(1));
+        return;
+        }
+      }
+    }
 
     switch (location.getName()) {
       case "condition": {
@@ -694,12 +997,45 @@ public class ActionLearning {
     }
   }
 
-  private ActionDBEntry getDBEntry(Predicate task) {
-    List<ActionDBEntry> possibleEntries = Database.getActionDB().getActionsBySignature(task);
-    if (possibleEntries.isEmpty()) {
+  private static int parseIntArg(Symbol symbol, String label) {
+    try {
+      return Integer.parseInt(symbol.toString());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Expected integer " + label + " but got: " + symbol, e);
+    }
+  }
+
+  private static String parseBlockLocalInitializer(Predicate modification) {
+    int argCount = modification.getArgs().size();
+    if (argCount <= 4) {
       return null;
     }
-    return possibleEntries.get(0);
+    if (argCount == 5) {
+      return nullableArg(modification.get(4));
+    }
+
+    String legacySlot = nullableArg(modification.get(4));
+    if (legacySlot != null) {
+      throw new IllegalArgumentException("addBlockLocal legacy placeholder must be null/none when six arguments are used.");
+    }
+    return nullableArg(modification.get(5));
+  }
+
+  private static String nullableArg(Symbol symbol) {
+    String value = symbol.toString();
+    if (value.equalsIgnoreCase("null") || value.equalsIgnoreCase("none") || value.isEmpty()) {
+      return null;
+    }
+    return value;
+  }
+
+  private ActionDBEntry getDBEntry(Predicate task) {
+    List<ActionDBEntry> possibleEntries = Database.getActionDB().getActionsBySignature(task);
+    if (!possibleEntries.isEmpty()) {
+      return possibleEntries.get(0);
+    }
+
+    return Database.getActionDB().getAction(task.getName());
   }
 
   enum ModType {
@@ -722,6 +1058,44 @@ public class ActionLearning {
       }
       log.error("Unknown modification type: " + typeStr);
       return null;
+    }
+  }
+
+  private enum StructuredEditOperation {
+    INSERT_IN_BLOCK("insertInBlock", 2, 2),
+    INSERT_IN_BRANCH("insertInBranch", 3, 3),
+    REMOVE_BLOCK("removeBlock", 1, 1),
+    REPLACE_BLOCK("replaceBlock", 2, 2),
+    ADD_BLOCK_LOCAL("addBlockLocal", 4, 6),
+    RENAME_BLOCK_LOCAL("renameBlockLocal", 2, 2),
+    REMOVE_AT("removeAt", 1, 1),
+    REPLACE_AT("replaceAt", 2, 2);
+
+    private final String operationName;
+    private final int minArgs;
+    private final int maxArgs;
+
+    StructuredEditOperation(String operationName, int minArgs, int maxArgs) {
+      this.operationName = operationName;
+      this.minArgs = minArgs;
+      this.maxArgs = maxArgs;
+    }
+
+    private static StructuredEditOperation fromOperationName(String name) {
+      for (StructuredEditOperation op : values()) {
+        if (op.operationName.equals(name)) {
+          return op;
+        }
+      }
+      return null;
+    }
+
+    private void validateArity(Predicate modification) {
+      int actual = modification.getArgs().size();
+      if (actual < minArgs || actual > maxArgs) {
+        throw new IllegalArgumentException("Operation " + operationName + " requires " + minArgs
+            + ".." + maxArgs + " argument(s), but got " + actual + ": " + modification);
+      }
     }
   }
 

@@ -289,6 +289,35 @@ use the `--debug-jvm` argument.
 
 `./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerComponent --args="-editor" --debug-jvm`
 
+## Structured ASL Action Learning APIs
+
+`GoalManagerComponent` exposes TRADE services for structured teaching/editing of learned actions while preserving
+EventSpec-list ASL semantics.
+
+**Structured teaching services** (actor-scoped):
+- `beginLearnedIf`, `beginLearnedElseIf`, `beginLearnedElse`, `endLearnedIf`
+- `beginLearnedWhile`, `endLearnedWhile`
+- `beginLearnedFor`, `endLearnedFor`
+- `beginLearnedForeach`, `endLearnedForeach`
+- `declareLearnedLocal`
+
+**Structured `modifyAction` operations** (use `location=none`):
+- `insertInBlock(blockStartIndex, actionPredicate)`
+- `insertInBranch(ifBlockStartIndex, branchIndex, actionPredicate)`
+- `removeBlock(blockStartIndex)`
+- `replaceBlock(blockStartIndex, actionPredicate)`
+- `addBlockLocal(insertIndex, variableName, javaType, semanticType [, initializer])`
+  - legacy-compatible form: `addBlockLocal(insertIndex, variableName, javaType, semanticType, none, initializer)`
+- `renameBlockLocal(declarationIndex, newName)`
+- `removeAt(index)`
+- `replaceAt(index, actionPredicate)`
+
+**Lifecycle and failure semantics**
+- Structured teaching/editing requires an **active (not paused)** learning session for the action.
+- Structural transitions wait for queued taught steps to drain before mutating the draft.
+- Structured edits are **transactional**: rejected edits (invalid indices/branches/scope/arity/location) do not mutate the source action.
+- `endActionLearning` rejects publication when control blocks are unclosed and validates writer→parser round-trip before publish/persist.
+
 ## Running a DIARC Configuration 
 
 To run a DiarcConfiguration (a collection of DIARC components) which is located in the

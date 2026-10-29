@@ -182,6 +182,52 @@ public class AgentTeam {
         return actionLearning.cancelActionLearning(newAction);
     }
 
+    protected boolean beginLearnedIf(Predicate action, Predicate guard) {
+        return actionLearning.beginLearnedIf(action, guard);
+    }
+
+    protected boolean beginLearnedElseIf(Predicate action, Predicate guard) {
+        return actionLearning.beginLearnedElseIf(action, guard);
+    }
+
+    protected boolean beginLearnedElse(Predicate action) {
+        return actionLearning.beginLearnedElse(action);
+    }
+
+    protected boolean endLearnedIf(Predicate action) {
+        return actionLearning.endLearnedIf(action);
+    }
+
+    protected boolean beginLearnedWhile(Predicate action, Predicate guard) {
+        return actionLearning.beginLearnedWhile(action, guard);
+    }
+
+    protected boolean endLearnedWhile(Predicate action) {
+        return actionLearning.endLearnedWhile(action);
+    }
+
+    protected boolean beginLearnedForeach(Predicate action, String iteratorVariable, String collectionVariable) {
+        return actionLearning.beginLearnedForeach(action, iteratorVariable, collectionVariable);
+    }
+
+    protected boolean endLearnedForeach(Predicate action) {
+        return actionLearning.endLearnedForeach(action);
+    }
+
+    protected boolean beginLearnedFor(Predicate action, String loopVariable, String initialValue,
+                                      String comparisonOperator, String comparisonValue, String update) {
+        return actionLearning.beginLearnedFor(action, loopVariable, initialValue, comparisonOperator, comparisonValue, update);
+    }
+
+    protected boolean endLearnedFor(Predicate action) {
+        return actionLearning.endLearnedFor(action);
+    }
+
+    protected boolean declareLearnedLocal(Predicate action, String variableName, String javaType,
+                                          String semanticType, String initializer) {
+        return actionLearning.declareLearnedLocal(action, variableName, javaType, semanticType, initializer);
+    }
+
     protected ActionLearningStatus getLearningStatus() {
         return actionLearning.getLearningStatus();
     }

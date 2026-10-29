@@ -2479,6 +2479,133 @@ public class ExecutionManager implements GoalListener {
 
   @Action
   @TRADEService
+  /**
+   * Start a learned IF block for the active learning draft of {@code action}.
+   * The learning session must be active (not paused) and pending taught steps are drained before mutation.
+   */
+  public boolean beginLearnedIf(Symbol actor, Predicate action, Predicate guard) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedIf] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedIf(action, guard);
+  }
+
+  @Action
+  @TRADEService
+  public boolean beginLearnedElseIf(Symbol actor, Predicate action, Predicate guard) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedElseIf] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedElseIf(action, guard);
+  }
+
+  @Action
+  @TRADEService
+  public boolean beginLearnedElse(Symbol actor, Predicate action) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedElse] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedElse(action);
+  }
+
+  @Action
+  @TRADEService
+  public boolean endLearnedIf(Symbol actor, Predicate action) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[endLearnedIf] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.endLearnedIf(action);
+  }
+
+  @Action
+  @TRADEService
+  public boolean beginLearnedWhile(Symbol actor, Predicate action, Predicate guard) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedWhile] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedWhile(action, guard);
+  }
+
+  @Action
+  @TRADEService
+  public boolean endLearnedWhile(Symbol actor, Predicate action) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[endLearnedWhile] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.endLearnedWhile(action);
+  }
+
+  @Action
+  @TRADEService
+  public boolean beginLearnedForeach(Symbol actor, Predicate action, String iteratorVariable, String collectionVariable) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedForeach] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedForeach(action, iteratorVariable, collectionVariable);
+  }
+
+  @Action
+  @TRADEService
+  public boolean endLearnedForeach(Symbol actor, Predicate action) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[endLearnedForeach] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.endLearnedForeach(action);
+  }
+
+  @Action
+  @TRADEService
+  public boolean beginLearnedFor(Symbol actor, Predicate action, String loopVariable, String initialValue,
+                                 String comparisonOperator, String comparisonValue, String update) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[beginLearnedFor] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.beginLearnedFor(action, loopVariable, initialValue, comparisonOperator, comparisonValue, update);
+  }
+
+  @Action
+  @TRADEService
+  public boolean endLearnedFor(Symbol actor, Predicate action) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[endLearnedFor] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.endLearnedFor(action);
+  }
+
+  @Action
+  @TRADEService
+  public boolean declareLearnedLocal(Symbol actor, Predicate action, String variableName, String javaType,
+                                     String semanticType, String initializer) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[declareLearnedLocal] unknown actor supplied {}", actor);
+      return false;
+    }
+    return agentTeam.declareLearnedLocal(action, variableName, javaType, semanticType, initializer);
+  }
+
+  @Action
+  @TRADEService
   public boolean resumeActionLearning(Symbol actor) {
     log.debug("[resumeActionLearning] {}", actor);
     AgentTeam agentTeam = getAgentTeam(actor);
@@ -2575,6 +2702,22 @@ public class ExecutionManager implements GoalListener {
 
   @Action
   @TRADEService
+  /**
+   * Apply an action edit to either an existing action or the current learning draft.
+   *
+   * <p>Structured operation contract (all require {@code location=none}):
+   * <ul>
+   *   <li>{@code insertInBlock(blockStartIndex, actionPredicate)}</li>
+   *   <li>{@code insertInBranch(ifBlockStartIndex, branchIndex, actionPredicate)}</li>
+   *   <li>{@code removeBlock(blockStartIndex)}</li>
+   *   <li>{@code replaceBlock(blockStartIndex, actionPredicate)}</li>
+   *   <li>{@code addBlockLocal(insertIndex, variableName, javaType, semanticType [, initializer] [, legacyPlaceholder, initializer])}</li>
+   *   <li>{@code renameBlockLocal(declarationIndex, newName)}</li>
+   *   <li>{@code removeAt(index)}</li>
+   *   <li>{@code replaceAt(index, actionPredicate)}</li>
+   * </ul>
+   * Structured edits are transactional: rejected edits do not mutate the source action.
+   */
   public void modifyAction(Symbol actor, Predicate action, Predicate modification, Predicate location) {
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {

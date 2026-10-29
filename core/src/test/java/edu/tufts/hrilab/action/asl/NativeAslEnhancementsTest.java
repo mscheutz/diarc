@@ -160,6 +160,70 @@ public class NativeAslEnhancementsTest {
         GoalStatus.SUCCEEDED, manager.joinOnGoal(restoredGoal, 5000));
   }
 
+  @Test(timeout = 20000)
+  public void nestedAsyncNoInterruptLoopSerializeAndExecuteWithEquivalentOutcome() {
+    String originalName = "aslNestedAsyncLoop" + names.incrementAndGet();
+    String restoredName = originalName + "Reloaded";
+    String source = """
+        () = ROOT() {
+          int !count = 0;
+          java.util.List !items = op:newObject("java.util.ArrayList");
+          op:invokeMethod(!items, "add", "first");
+          op:invokeMethod(!items, "add", "second");
+          for (!i=0; !i lt 2; !i++) {
+            foreach (!item : !items) {
+              noInterrupt {
+                if (true) {
+                  !count = !count + 1;
+                } else {
+                  !count = !count + 100;
+                }
+              }
+            }
+            while (!count lt 4) { !count = !count + 1; }
+          }
+          AslTask !task;
+          ActionStatus !status;
+          long !result = 0;
+          !task = async(!result) { !result = 42; }
+          (!status, !result) = join(!task);
+          if (!result == 42) { } else { exit(FAIL); }
+        }
+        """.replace("ROOT", originalName);
+    ActionDBEntry original = new ActionScriptLanguageParser()
+        .parseStrict("nested-try-async-runtime.asl", null, IMPORTS + source).get(0);
+    String written = new ActionScriptLanguageWriter().writeAction(original);
+    ActionDBEntry restored = new ActionScriptLanguageParser()
+        .parseStrict("nested-try-async-runtime.asl", null, written.replace(originalName, restoredName)).get(0);
+
+    long originalGoal = run(original);
+    long restoredGoal = run(restored);
+    GoalStatus originalStatus = manager.joinOnGoal(originalGoal, 5000);
+    GoalStatus restoredStatus = manager.joinOnGoal(restoredGoal, 5000);
+    assertEquals(originalStatus, restoredStatus);
+    assertEquals(manager.getGoalExecutionDiagnostic(originalGoal).reason(),
+        manager.getGoalExecutionDiagnostic(restoredGoal).reason());
+  }
+
+  @Test(timeout = 15000)
+  public void tryFinallyExecutesAfterSuccessfulBodyWithNestedControl() {
+    succeeds("""
+        () = ROOT() {
+          int !value = 0;
+          java.util.List !items = op:newObject("java.util.ArrayList");
+          op:invokeMethod(!items, "add", "once");
+          try {
+            foreach (!item : !items) {
+              noInterrupt { !value = !value + 1; }
+            }
+          } finally {
+            !value = !value + 10;
+          }
+          if (!value == 11) { } else { exit(FAIL); }
+        }
+        """);
+  }
+
   @Test(timeout = 15000)
   public void taskResultsArePrivateUntilExplicitJoinAndIncludeDirectActionReturns() {
     succeeds("""
