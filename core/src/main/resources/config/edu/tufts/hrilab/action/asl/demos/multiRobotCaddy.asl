@@ -463,7 +463,7 @@ import java.util.List;
     act:getTokenIds(?refID);
 }
 
-() = executeGraspFailurePolicy(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = executeGraspFailurePolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?goal) {
 
   recovery: {
     failureReasons: {grasping(X,Y,Z)}
@@ -472,9 +472,9 @@ import java.util.List;
 
   op:log("info", "executing recovery policy. FailedAction: ?failedActionPredicate. FailureReasons: ?failureReasons. FailedGoal: ?goal");
 
-  // get the failed action's actor
-  Symbol !otherActor;
-  !otherActor = op:invokeMethod(?failedActionPredicate, "get", 0);
+  // get the first failed action's actor
+  Predicate !firstFailedActionPredicate = op:invokeMethod(?failedActionPredicates, "get", 0);
+  Symbol !otherActor = op:invokeMethod(?failedActionPredicate, "get", 0);
   op:log("info", "got actor from  failed action. Actor: !otherActor");
 
   // TODO: EAK: change how the AI builds out children contexts during execution.

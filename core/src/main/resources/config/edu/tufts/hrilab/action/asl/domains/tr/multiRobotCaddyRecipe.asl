@@ -7,6 +7,7 @@ import java.lang.Integer;
 import java.lang.String;
 import java.util.List;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.justification.Justification;
 
 /**
  * recipe format:
@@ -354,27 +355,15 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       actionStatuses: {FAIL_POSTCONDITIONS}
     }
 
-    Predicate !plannedActionFull;
-    Predicate !goalPred;
-    edu.tufts.hrilab.action.goal.Goal !goal;
-    Long !gid;
-    GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.ActionStatus !actionStatus;
-    Predicate !bradAsHumanActor;
-    Symbol !planningActor;
-
     // use self:agent as planning actor so all diarc agents can be used in planning -- is this necessary?
-    !planningActor = op:createSymbol("self", "agent");
+    Symbol !planningActor = op:createSymbol("self", "agent");
 
-    !bradAsHumanActor = op:createPredicate("object(brad, human)");
-    !plannedActionFull = op:createPredicate("planned", !planningActor);
+    Predicate !bradAsHumanActor = op:createPredicate("object(brad, human)");
+    Predicate !plannedActionFull = op:createPredicate("planned", !planningActor);
     op:log("info", ">>>> 1 plannedActionFull: !plannedActionFull");
 
-    Predicate !goalState;
-    !goalState = op:createPredicate("and", ?failureReasons);
-    !goalPred = op:createPredicate("goal", !planningActor, !goalState);
-
-    Predicate !actionDescription;
+    Predicate !goalState = op:createPredicate("and", ?failureReasons);
+    Predicate !goalPred = op:createPredicate("goal", !planningActor, !goalState);
 
     //for talking about performance assessment;
     Variable !x = "X";
@@ -428,7 +417,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         act:generateResponseFromString("I have found a plan to recover");
 
 //        //describe the plan
-//        !actionDescription = act:getActDesc(!plannedActionFull);
+//        Predicate !actionDescription = act:getActDesc(!plannedActionFull);
 //        //op:log(info, "description: !actionDescription");
 //        act:generateResponse(!actionDescription);
 
@@ -454,12 +443,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
             op:log("info", ">>>> 5 plannedActionFull: !plannedActionFull");
             !priority = act:getPriorityForGoal(!plannedActionFull);
             op:log("info", ">>>> 6 plannedActionFull: !plannedActionFull");
-            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
-            !goalStatus = act:joinOnGoal(!gid);
+            Long !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
+            GoalStatus !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
-              !failureConditions= act:getGoalFailConditions(!gid);
-              !actionStatus= act:getActionStatus(!gid);
+              Justification !failureConditions= act:getGoalFailConditions(!gid);
+              edu.tufts.hrilab.action.ActionStatus !actionStatus= act:getActionStatus(!gid);
               op:log("debug", "action status: !actionStatus");
               exit(!actionStatus, !failureConditions);
             }
@@ -494,12 +483,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
             //finally, execute the planned action
             !priorityTier = act:getPriorityTierForGoal(!plannedActionFull);
             !priority = act:getPriorityForGoal(!plannedActionFull);
-            !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
-            !goalStatus = act:joinOnGoal(!gid);
+            Long !gid = act:submitGoal(!plannedActionFull, !execType, !priorityTier, !priority, !submitter);
+            GoalStatus !goalStatus = act:joinOnGoal(!gid);
             if (op:invokeMethod(!goalStatus, "isFailure")) {
               op:log("debug", "Action failed, goal: !gid");
-              !failureConditions= act:getGoalFailConditions(!gid);
-              !actionStatus= act:getActionStatus(!gid);
+              Justification !failureConditions= act:getGoalFailConditions(!gid);
+              edu.tufts.hrilab.action.ActionStatus !actionStatus= act:getActionStatus(!gid);
               op:log("debug", "action status: !actionStatus");
               exit(!actionStatus, !failureConditions);
             }

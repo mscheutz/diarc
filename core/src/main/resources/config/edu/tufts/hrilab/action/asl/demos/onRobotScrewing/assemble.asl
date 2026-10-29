@@ -1,9 +1,12 @@
-() = assemble["assembles model for ?modelID from belief"](edu.tufts.hrilab.fol.Symbol ?modelID){
-    edu.tufts.hrilab.fol.Predicate !goalState;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Predicate;
+
+() = assemble["assembles model for ?modelID from belief"](Symbol ?modelID){
+    Predicate !goalState;
     //edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = SKIPPENDING;
     //edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
 
-    edu.tufts.hrilab.fol.Symbol !descriptor;
+    Symbol !descriptor;
 
     op:log(debug,"[assemble] model ID: ?modelID");
 
@@ -18,17 +21,17 @@
     //act:submitGoal(!goalState, !execType, !priorityTier);
 }
 
-() = startLearningAssembleScript["assembles model for ?modelID from belief"](edu.tufts.hrilab.fol.Symbol ?modelName){
+() = startLearningAssembleScript["assembles model for ?modelID from belief"](Symbol ?modelName){
 
     effects:{
         success: object(?modelName,cognexobj);
     }
 
     //assemble(modelA) -> assembleModelA
-    edu.tufts.hrilab.fol.Predicate !scriptID;
-    edu.tufts.hrilab.fol.Symbol !startSymbol ="start";
-    edu.tufts.hrilab.fol.Predicate !objectPred;
-    edu.tufts.hrilab.fol.Symbol !descriptor;
+    Predicate !scriptID;
+    Symbol !startSymbol ="start";
+    Predicate !objectPred;
+    Symbol !descriptor;
 
     (!descriptor) = tsc:getDescriptorForID(?modelName);
 
@@ -46,13 +49,13 @@
     act:waitForActionLearningStart(!scriptID);
 }
 
-() = endLearningAssembleScript["ends learning of assemble?modelName()"](edu.tufts.hrilab.fol.Symbol ?modelName){
-    edu.tufts.hrilab.fol.Predicate !scriptID;
-    edu.tufts.hrilab.fol.Symbol !endSymbol= "end";
-    edu.tufts.hrilab.fol.Predicate !modPred;
-    edu.tufts.hrilab.fol.Predicate !modLocation;
+() = endLearningAssembleScript["ends learning of assemble?modelName()"](Symbol ?modelName){
+    Predicate !scriptID;
+    Symbol !endSymbol= "end";
+    Predicate !modPred;
+    Predicate !modLocation;
 
-    edu.tufts.hrilab.fol.Symbol !descriptor;
+    Symbol !descriptor;
 
     (!descriptor) = tsc:getDescriptorForID(?modelName);
     op:log(debug, "[endLearningAssembleScript] descriptor: !descriptor");
@@ -63,8 +66,8 @@
     act:endActionLearning(!scriptID);
 }
 
-() = getOn["gets ?object on to the surface beneath ?destination"](edu.tufts.hrilab.fol.Symbol ?object, edu.tufts.hrilab.fol.Symbol ?destination) {
-   edu.tufts.hrilab.fol.Predicate !goalPred;
+() = getOn["gets ?object on to the surface beneath ?destination"](Symbol ?object, Symbol ?destination) {
+   Predicate !goalPred;
 
    (!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?destination)");
    goal:!goalPred;
@@ -72,30 +75,30 @@
 
 //TODO: move get a version of this working in mainline DIARC
 //interactive version where it asks questions about the differences
-() = modifyAssemble["creates a new assembly script based on an existing one"](edu.tufts.hrilab.fol.Predicate ?newScriptID, edu.tufts.hrilab.fol.Predicate ?oldScriptID){
+() = modifyAssemble["creates a new assembly script based on an existing one"](Predicate ?newScriptID, Predicate ?oldScriptID){
 
   java.util.List !predArgs;
-  edu.tufts.hrilab.fol.Symbol !newModelID;
-  edu.tufts.hrilab.fol.Symbol !oldModelID;
-  edu.tufts.hrilab.fol.Predicate !newScriptGoal;
-  edu.tufts.hrilab.fol.Predicate !oldScriptGoal;
-  edu.tufts.hrilab.fol.Predicate !likeGoal;
-  edu.tufts.hrilab.fol.Predicate !uniqueEffect;
-  edu.tufts.hrilab.fol.Predicate !modLocation;
-  edu.tufts.hrilab.fol.Predicate !objectPred;
+  Symbol !newModelID;
+  Symbol !oldModelID;
+  Predicate !newScriptGoal;
+  Predicate !oldScriptGoal;
+  Predicate !likeGoal;
+  Predicate !uniqueEffect;
+  Predicate !modLocation;
+  Predicate !objectPred;
 
   java.util.Map !bindings;
   java.util.List !bindingArgs;
   edu.tufts.hrilab.fol.Variable !x = "X";
   edu.tufts.hrilab.fol.Variable !y = "Y";
 
-  edu.tufts.hrilab.fol.Predicate !modification;
+  Predicate !modification;
   java.lang.String !modName;
-  edu.tufts.hrilab.fol.Predicate !location;
+  Predicate !location;
 
-  edu.tufts.hrilab.fol.Symbol !speaker;
+  Symbol !speaker;
 
-  edu.tufts.hrilab.fol.Symbol !descriptor;
+  Symbol !descriptor;
 
   !speaker = op:newObject("edu.tufts.hrilab.fol.Symbol",?actor);
 
@@ -146,23 +149,23 @@
 //TODO:brad: refactor "assemble?modelID(?modelID)" predicate creation?
 
 //copy case, here an new action is generated based on an existing action and a given modification
-() = modifyAssemble["creates a new assembly script based on an existing one"](edu.tufts.hrilab.fol.Predicate ?newScriptID, edu.tufts.hrilab.fol.Predicate ?oldScriptID, edu.tufts.hrilab.fol.Predicate ?modification, edu.tufts.hrilab.fol.Predicate ?location){
+() = modifyAssemble["creates a new assembly script based on an existing one"](Predicate ?newScriptID, Predicate ?oldScriptID, Predicate ?modification, Predicate ?location){
 
 //  effects:{
 //   success: object(!newModelID,cognexobj);
 //  }
 
   java.util.List !predArgs;
-  edu.tufts.hrilab.fol.Symbol !newModelID;
-  edu.tufts.hrilab.fol.Symbol !oldModelID;
-  edu.tufts.hrilab.fol.Predicate !newScriptGoal;
-  edu.tufts.hrilab.fol.Predicate !oldScriptGoal;
-  edu.tufts.hrilab.fol.Predicate !likeGoal;
-  edu.tufts.hrilab.fol.Predicate !uniqueEffect;
-  edu.tufts.hrilab.fol.Predicate !modLocation;
-  edu.tufts.hrilab.fol.Predicate !objectPred;
+  Symbol !newModelID;
+  Symbol !oldModelID;
+  Predicate !newScriptGoal;
+  Predicate !oldScriptGoal;
+  Predicate !likeGoal;
+  Predicate !uniqueEffect;
+  Predicate !modLocation;
+  Predicate !objectPred;
 
-  edu.tufts.hrilab.fol.Symbol !descriptor;
+  Symbol !descriptor;
 
  (!predArgs) = op:invokeMethod(?newScriptID, getArgs);
  (!newModelID) = op:get(!predArgs, 1);
@@ -193,11 +196,11 @@
 }
 
 //within action case, here the action is modified in place, given a modification
-() = modifyAssemble["creates a new assembly script based on an existing one"](edu.tufts.hrilab.fol.Predicate ?scriptID,  edu.tufts.hrilab.fol.Predicate ?modification, edu.tufts.hrilab.fol.Predicate ?location){
+() = modifyAssemble["creates a new assembly script based on an existing one"](Predicate ?scriptID,  Predicate ?modification, Predicate ?location){
 
   java.util.List !predArgs;
-  edu.tufts.hrilab.fol.Symbol !modelID;
-  edu.tufts.hrilab.fol.Predicate !scriptGoal;
+  Symbol !modelID;
+  Predicate !scriptGoal;
 
 
  (!predArgs) = op:invokeMethod(?scriptID, getArgs);
@@ -205,7 +208,7 @@
 
   //get action based on model id
   op:log(debug, "in modify assemble in place");
-  (!descriptor) = tsc:getDescriptorForID(!modelID);
+  Symbol !descriptor = tsc:getDescriptorForID(!modelID);
   (!scriptGoal) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "assemble!descriptor(?actor,!modelID)");
   op:log(debug, "nsg !scriptGoal");
 
@@ -216,15 +219,15 @@
 //TODO:brad update this to new assemble goal submission format?
 () = assembleVision["classifies model in front of itself and calls relevant assemble script"](){
 
-     edu.tufts.hrilab.fol.Symbol !modelType;
-     edu.tufts.hrilab.fol.Predicate !scriptID;
-     edu.tufts.hrilab.fol.Symbol !unk;
+     Symbol !modelType;
+     Predicate !scriptID;
+     Symbol !unk;
      (!unk) =op:newObject(edu.tufts.hrilab.fol.Symbol,"unknown");
-     edu.tufts.hrilab.fol.Symbol !fail;
+     Symbol !fail;
      (!fail) =op:newObject(edu.tufts.hrilab.fol.Symbol,"failure");
-     edu.tufts.hrilab.fol.Predicate !failCond;
+     Predicate !failCond;
 
-    edu.tufts.hrilab.fol.Symbol !descriptor;
+    Symbol !descriptor;
 
      //TODO:brad: move this out?
      act:goToCameraPose("conveyor");

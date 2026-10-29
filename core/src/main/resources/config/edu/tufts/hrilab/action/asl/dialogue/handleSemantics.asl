@@ -20,6 +20,7 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
     Predicate !state;
     java.util.Map !matchingQuestions;
     Question !matchingQuestion;
+    edu.tufts.hrilab.action.justification.Justification !failureConditions;
 
     op:log("debug", "[handleSemantics] entering action script for actor: ?actor");
 
@@ -110,7 +111,7 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
 }
 
 () = handleWantBel["reply to wantBel semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?fact, Symbol  ?semanticType, Boolean ?validated) {
-    Predicate !state;
+    edu.tufts.hrilab.action.justification.Justification !failureConditions;
 
     effects : {
       success infer : handled(?actor,?addressee,wantBel(?speaker,?addressee,?fact),?semanticType,?validated);
@@ -121,9 +122,9 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
       act:believeFact(?speaker, ?actor, ?fact, indirect);
     } catch(!failureConditions) {
       if (op:equals(?addressee, ?actor)) {
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel(?actor,?fact)");
-        !becausePredicate = act:createBecausePredicate(!state, ?speaker, !failureConditions);
-        !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(bel(?actor,?fact),!becausePredicate)");
+        Predicate !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel(?actor,?fact)");
+        Predicate !becausePredicate = act:createBecausePredicate(!state, ?speaker, !failureConditions);
+        Predicate !failureEffects = op:createPredicate("cannot(bel(?actor,?fact),!becausePredicate)");
         act:generateResponse(?speaker, !failureEffects, direct);
       }
     }
@@ -253,6 +254,7 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
     Predicate !failureReasonPredicate;
     java.lang.String !stateName;
     java.util.Set !keepHeadPreds;
+    edu.tufts.hrilab.action.justification.Justification !failureConditions;
 
     if (op:equals(?addressee, ?actor)) {
       try {
@@ -301,6 +303,7 @@ import edu.tufts.hrilab.action.goal.GoalFilter;
     Predicate !becausePredicate;
     Predicate !failureReasonPredicate;
     Predicate !recoveryPred;
+    edu.tufts.hrilab.action.justification.Justification !failureConditions;
 
     effects : {
       success infer : handled(?actor,recover(want(?speaker,?state),?recovery),?semanticType,?validated);
