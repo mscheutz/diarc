@@ -314,6 +314,10 @@ EventSpec-list ASL semantics.
 
 **Lifecycle and failure semantics**
 - Structured teaching/editing requires an **active (not paused)** learning session for the action.
+- **Instruction ordering:** acceptance is linearized at enqueue time into a specific learning session; queued commands retain that immutable session ownership through processing.
+- **Session transitions:** begin/pause/resume/nested begin/nested end/cancel/end first move session phase under queue lock, then drain affected accepted work before switching active state.
+- **Finalization:** `endActionLearning` marks the session `CLOSING` atomically with acceptance checks, drains accepted session work, and only then validates/publishes; post-boundary instructions are rejected for that session.
+- **Worker lifecycle:** a single queue consumer is started with synchronized `STOPPED→STARTING→RUNNING` transitions, woken on shutdown/cancel/finalization transitions, and restarted cleanly for later sessions.
 - Learning uses a single queue consumer; structural commands and taught steps are serialized by accepted-command order.
 - Structural transitions wait for queued taught steps to drain before mutating the draft.
 - `resumeActionLearning` fails when no paused session exists; `endActionLearning` fails when no active/paused draft exists.
@@ -321,6 +325,7 @@ EventSpec-list ASL semantics.
 - Block-local declarations remain lexical (from `declare`/`assign` EventSpecs) and are not promoted into action-wide roles.
 - Explicit script-variable arguments are preserved only when lexically visible; undefined/out-of-scope references are rejected.
 - Publication/replacement is transactional across DB registration and persistence rollback.
+- **Semantic validation:** round-trip equivalence compares signature, EventSpecs, role metadata (name/type/semantic type/local/return/vararg/default-presence/default-value), pre/overall conditions (including predicate+observable entries), and effects.
 - `endActionLearning` rejects publication when control blocks are unclosed and validates structural+scope integrity plus semantic writer→parser equivalence before publish/persist.
 
 ## Running a DIARC Configuration 
