@@ -1,0 +1,127 @@
+{
+  "testName" : "actionLearningTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello ravenna", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "nod(shafer)", "ACT", "NORMAL", "1", "ravenna", "332" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "332", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not nod because I do not know how to nod", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not learn how to nod because learning how to nod is admin Goal", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "learnAction(dempster,nod(dempster))", "ACT", "NORMAL", "1", "evan", "337" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "changeLearningExecution(dempster,execute)", "ACT", "SKIPPENDING", "1", "evan", "340" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "340", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1", "evan", "343" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "343", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "look(dempster,down)", "ACT", "NORMAL", "1", "evan", "346" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "346", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1", "evan", "349" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "349", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "look(dempster,down)", "ACT", "NORMAL", "1", "evan", "352" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "352", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "endActionLearning(dempster,nod(dempster))", "ACT", "SKIPPENDING", "1", "evan", "355" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "355", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "337", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "nod(shafer)", "ACT", "NORMAL", "1", "ravenna", "358" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "358", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "nod(dempster)", "ACT", "NORMAL", "1", "ravenna", "361" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "361", "SUCCEEDED" ]
+    } ]
+  } ]
+}

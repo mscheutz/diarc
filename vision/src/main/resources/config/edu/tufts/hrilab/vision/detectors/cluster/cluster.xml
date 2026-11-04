@@ -1,0 +1,37 @@
+<!--
+Set runtime configuration for a VisionProcessor.
+
+Fields (required unless noted otherwise):
+
+  processor tag:
+
+  	type        : type using an "isA" heirarchy (e.g., color, shape)
+
+	arity       : number of arguments (including variables, descriptors, etc.)
+
+  predicate tag(s):
+	
+	name        : leading atom's name (e.g., red) and
+
+	data        : (Optional) whatever data is needed for run-time processing
+
+
+-->
+
+<processor type="object" arity="1">
+  <config>
+    <object_cluster_tolerance>0.06</object_cluster_tolerance>
+    <object_cluster_min_size>50</object_cluster_min_size>
+  </config>
+
+  <predicate name="object"/>
+  <predicate name="screw"/>
+  <predicate name="largegear"/>
+  <predicate name="smallgear"/>
+  <predicate name="gearboxtop"/>
+  <predicate name="gearboxbottom"/>
+  <predicate name="painkiller"/>
+  <predicate name="bandagebox"/>
+  <predicate name="antiseptic"/>
+  <predicate name="medicalcaddy"/>
+</processor>

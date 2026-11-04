@@ -1,0 +1,8 @@
+and(at(tray:container,sharedloc:place), in(tray:container,antiseptic1:antiseptic), in(tray:container,bandage1:bandage), in(tray:container,painkillers1:painkillers))
+and(at(medkit2,alpha) ,in(medkit2,bandage))
+did(deliver(armone:agent, standardMedkit, sharedloc))
+-Automate-
+did(createRecipeGoal(self:agent,test))
+and(fluent_equals(amount, tray_area:place, pillBottle:counter, 2),fluent_equals(amount, tray_area:place, screwBox:counter, 1))
+fluent_equals(amount, tray_area:place, antiseptic:counter, 1)
+fluent_equals(amount, shared_area:place, antiseptic:counter, 1)

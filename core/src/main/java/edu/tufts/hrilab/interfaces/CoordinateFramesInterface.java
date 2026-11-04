@@ -1,0 +1,47 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+package edu.tufts.hrilab.interfaces;
+
+import ai.thinkingrobots.trade.TRADEService;
+
+import javax.vecmath.Matrix4d;
+import java.util.List;
+
+/**
+ * Core interface for robot coordinate frames and their transformations.
+ */
+public interface CoordinateFramesInterface {
+
+  /**
+   * Get the current transform to convert from one local coordinate frame to a
+   * different one.
+   *
+   * @param srcFrame source frame
+   * @param dstFrame destination frame
+   * @return
+   *
+   */
+  @TRADEService
+  Matrix4d getTransform(String srcFrame, String dstFrame);
+
+  /**
+   * Get a list of all coordinate frames currently in the system.
+   *
+   * @return
+   *
+   */
+  @TRADEService
+  List<String> getCoordinateFrames();
+
+  /**
+   * Add a static transform to the TF tree. This only adds the transform
+   * to the local TF instance, and does not add it to the ROS TF tree.
+   *
+   * @param parent
+   * @param child
+   * @param transform
+   */
+  @TRADEService
+  void addLocalStaticTransform(String parent, String child, Matrix4d transform);
+}

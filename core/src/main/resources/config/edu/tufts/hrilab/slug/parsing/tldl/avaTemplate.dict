@@ -1,0 +1,596 @@
+START-TEMPLATES
+
+%THING: {RN: ?PH : VAR}, {DN: ?PH}
+%ADJ: {RN/RN: #x.?PH($x): MOD}, {DN/DN: #x.?PH($x)}, {PROP: ?PH}
+THING;{RN; ?PH ; VAR}, {DN; ?PH}
+
+LOC; {LN; ?PH; VAR}, {DN; ?PH}
+SAVELOCATION; {C/LIT* ; #x.saveLocation(?ADDRESSEE, $x)}
+%PROPLOC; {LREF; ?PH; DEFINITE}
+
+%intransitive
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+%transitive verb with direction argument
+%VERBTDDEG; {((C/DEG)/DIR)\AGENT ; #x#y#z.?PH($y,$z)}, {(C/DEG)/DIR ; #x#y.?PH($x,$y)}
+
+%transitive verb with direction argument
+%also supports a distance in the given direction
+%%TODO:brad: It's not great that this case has AGENT on the outside, unlike pretty much everything else. I think ultimately this is the form we want, but with the greedy rule combination parsing algorithm I don't think we can.
+VERBTD; {((C\AGENT)/VAL)/DIR; #x#y#a.?PH($a,$x,$y)}, {(C/VAL)/DIR ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {(C\AGENT)/DIR ; #y#a.?PH($a,$y)}, {C/DIR ; #x.?PH(?ADDRESSEE,$x)}
+
+
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+%AGENT; {NP; ?PH}
+
+%EFFECTTEMPLATE; {(EFFECT/REF)\AGENT; #x#y.?PH($x,$y)}, {EFFECT/REF; #x.?PH($x)}, {EFFECT; ?PH}
+CONDTEMPLATE; {COND/RN; #x.?PH($x)}, {COND; ?PH}
+END-TEMPLATES
+
+%%%%%%%%%%%  A  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+a; REF/RN ; #x.$x ; INDEFINITE
+a; LREF/LN ; #x.$x ;INDEFINITE
+a; DESC/DN ; #x.$x
+
+%TODO;brad; what was this for
+%above; TDIR; above
+above; ABOVE ;above
+
+actor; AGENT ; ?ADDRESSEE
+
+after; PP/C; #x.after($x)
+
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+
+ahead; Adj; ahead
+
+an; REF/RN ; #x.$x ; INDEFINITE
+an; LREF/LN ; #x.$x ; INDEFINITE
+an; DESC/DN ; #x.$x
+
+
+and; (C/C)\C ; #x#y.and($x,$y)
+
+andy; ADDRESSABLE ; andy
+
+another; REF/RN ; #x.$x ; UNFAMILIAR
+another; LREF/LN ; #x.$x ; UNFAMILIAR
+another; DESC/DN ; #x.$x
+
+
+%you are holding the object
+%are; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r,arm)
+are; EFFECT/V ; #a.$a
+were; EFFECT/V ; #x.state($x)
+were; ((EFFECT/REF)\AGENT)/((V/REF)\AGENT) ; #x.state($x)
+
+as ; AS ; as
+
+arm; RN ; arm
+arm; N ; arm
+arms; N ; arms
+
+%%%%%%%%%%%  B  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+backward; DIR; back
+backwards; DIR; back
+%bathroom; LOC; bathroom
+
+%the area behind you, the cup behind the ball
+%behind; (REF / AGENT) \ REF, (REF / REF) \ REF,; #x#y.behind($x,$y); MOD
+behind; (REF / AGENT) \ REF, (REF / REF) \ REF,; #x#y.behind($x,$y)
+behind; Prep/AGENT ; #a.behind($a)
+
+%before; (C\C)/C; #x#y.before($y,$x)
+before; PP/C; #x.before($x)
+
+blue; RN/RN; #x.blue($x) ; MOD
+
+bottle; THING
+
+box; THING
+
+brad; ADDRESSABLE ; brad
+
+but; ADV\ADV; #x.$x
+
+button; RN\TYPE ; #x.$xbutton ; VAR
+
+bye; G, G[good] ; bye
+
+%%%%%%%%%%%  C  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+can; MODAL / C ; #x.$x
+can; (MODAL\AGENT) / (C\AGENT) ; #x.$x
+can; ((MODAL/REF)\AGENT) / ((C/REF)\AGENT) ; #x.$x
+can; (((MODAL/REF)/REF)\AGENT) / (((C/REF)/REF)\AGENT) ; #x.$x
+can; Q / C ; #x.can($x)
+
+catch; (C\AGENT)/AGENT ; #x#a.catch($a,$x)
+%%TODO:brad: to we care about the imperative "Depmster catch Shafer"
+catch; C/AGENT ; #x.catch(?ADDRESSEE,$x)
+
+chris; ADDRESSABLE ; chris
+
+could; MODAL / C ; #x.$x
+could; (MODAL\AGENT) / (C\AGENT) ; #x.$x
+could; ((MODAL/REF)\AGENT) / ((C/REF)\AGENT) ; #x.$x
+could; (((MODAL/REF)/REF)\AGENT) / (((C/REF)/REF)\AGENT) ; #x.$x
+could; Q/C ; #x.can($x)
+
+commX; AGENT ; commX
+
+condition ; CONDITIONTYPE\CONDITIONTYPEPREFIX ; #x.condition($x)
+
+cuttingboard; THING; cuttingBoard
+
+%%%%%%%%%%%  D  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+did not ; C/C ; #x.modify(delete($x))
+did not ; (C\AGENT)/(C\AGENT) ; #x.modify(delete($x))
+did ; C/C ; #x.$x
+do not ; C/C ; #x.modify(delete($x))
+do not ;(((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT) ; #x.modify(delete($x))
+%"do you trust me"
+%do; Q/ C; #x.$x
+%do; (Q \ WHO)/(Q \ WHO); #x.$x
+%do; (Q/WHO)/(C / AGENT) ; #x.$x
+
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,remove($x),$y)
+
+% " does dempster trust me"
+does; Q/C ; #x.$x
+%TODO:brad; we can't have these 2 rules, or rather the second would  never get used?
+%does; Q/C ; #x.$x
+
+down; DIR; down
+down; DOWN ;Down
+down; TYPE; down
+
+degrees; VAL\NUM ; #x.$x
+
+dempster; ADDRESSABLE ; dempster
+
+%%%%%%%%%%%  E  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+effect ; EFFECTTYPE\EFFECTTYPEPREFIX ; #x.effect($x)
+
+eighth; NUM; eighth
+
+evening; G[good] ; evening
+
+evan; ADDRESSABLE ; evan
+
+ava; ADDRESSABLE; ava
+
+exit ; LOC; exit
+
+%%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+failure; EFFECTTYPEPREFIX; failure
+
+fifth; NUM; fifth
+
+first; C/C ; #x. $x
+first; NUM; first
+
+floor; TYPE\NUM; #x.$xfloor
+
+%for; FOR/AGENT; #x. $x
+for; FOR; For
+
+forward; DIR; forward
+
+fourth; NUM; fourth
+
+fridge ; THING
+
+%from ; PPadv/C ; #x.from($x)
+%from; LOC/LOC; #x.$x
+from; REF/REF; #x.$x
+from; RN/RN; #x.$x
+
+%%%%%%%%%%%  G  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+goal; QUERYABLE; goal
+
+good; G / G[good]; # x. good_$x
+
+gray; Adj; gray
+
+green; RN/RN; #x.green($x) ; MOD
+
+%%%%%%%%%%%  H  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+hand; N ; hand
+hands; N ; hands
+
+hi; G ; hi
+hi there; G ; hi_there
+
+hello; G ; hello
+%hello; G / N, G \ N ; # x. directAddress($x,hello)
+
+holding; (V/REF)\AGENT; #a#r.holding($a,$r,arm)
+%how; HOW; how
+%
+%how would; (Q/C)/AGENT ; #a#c.how($a,$c)
+%how do; (Q/C)/AGENT ; #a#c.how($a,$c)
+how would; (C/C)/AGENT ; #a#c.describeActionSteps(?ADDRESSEE,$c)
+how do; (C/C)/AGENT ; #a#c.describeActionSteps(?ADDRESSEE,$c)
+
+%%%%%%%%%%%  I  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+is; (S/DESC)\REF; #x#y.instanceOf($x,$y)
+%is; (S / DESC) \ REF; # x #y. definitionOf($x,$y)
+
+is; (((S / NP)  / OF) / COMPOSED)\ REF; #x#c#o#y.composed$o($x,$y)
+is; (S / PROP) \ REF; # x #z. propertyOf($x,$z)
+would have been; (S/PROP)\REF; #x #z. past(propertyOf($x,$z))
+is; (S /DESC)\REF[ACT]  ; #x #y.instanceOf($x,$y)
+%%%%%%%%%%% not changing not(is()) stuff to prop
+is; (S / DESC[not]) \ REF ; # x #y. notDefinitionOf($x,$y)
+is; (S / PROP[not]) \ REF; # x #z. notPropertyOf($x,$z)
+is; (S/VP[how])\N ; #x#y.is($x,$y)
+is; IS; is
+
+is like; (ADV/C)\C ; #x#y.like($x,$y)
+
+i; AGENT ; ?INTERACTOR
+
+in; PPadv/C; #x.$x
+
+in front of; Prep/AGENT; #a.inFrontOf($a)
+
+is; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
+
+is there open space; Q/Prep; #p.openspace($p)
+
+is trusted; S\AGENT ; #a.trusted($a)
+is a novice; S\AGENT; #a.novice($a)
+%is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
+
+it; REF ; it ; INFOCUS
+
+%%%%%%%%%%%  J  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+jar; THING; jar
+
+%%%%%%%%%%%  K  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%kitchen; LOC ; kitchen
+
+kokomo; PROPLOC; kokomo
+
+knife; THING; knife
+
+%know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know how; (C/INF)\AGENT ; #a#i.reportIfCanPerform(?ADDRESSEE,$i)
+know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
+
+%%%%%%%%%%%  L  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+lowerlevelbutton; thing ; LL
+
+left; DIR; left
+%left ninety degrees; DEG; left,ninety
+ninety degrees; DEG; ninety
+left; N/N ; #x.left$x
+
+look; VERBTD ; look
+
+lower; C / NP[your]; # x. lower(?ADDRESSEE,$x)
+lower; (C\AGENT)/ NP[your]; #x#y. lower($y,$x)
+
+%%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+magnet; THING
+
+%makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
+
+matt; ADDRESSABLE ; matt
+marlow; ADDRESSABLE; marlow
+
+me; AGENT ; ?INTERACTOR
+
+medkit; THING
+
+morning; G[good] ; morning
+
+mug; THING
+
+%%%%%%%%%%%  N  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+near; PP/REF; #x.near($x)
+
+need; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+need; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+needs; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+
+night; G[good] ; night
+
+no; VAL; val(no)
+
+%% TODO: remove "nod" once TLDL learning is fixed
+nod; VERBI ; nod
+
+not; PROP[not] / Adj; # x. $x
+
+now; C/C, C\C, Q\Q, Q/Q ; #x. $x
+
+%%%%%%%%%%%  O  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+object; THING
+carrot; THING; carrot
+
+%obstacle; THING
+the obstacle; REF ; obstacle
+an obstacle; REF ; obstacle
+
+of ; (REF/REF)\REF ; #x#y.of($x,$y) ; MOD
+
+ok; ACK ; okay
+
+okay ; ACK ; okay
+
+ok; C/C, S/S ; # x. $x
+
+okay; C/C, S/S ; # x. $x
+
+orange; RN/RN; #x.orange($x) ; MOD
+
+orange; Adj; orange
+
+overall; CONDITIONTYPEPREFIX; overall
+
+%%%%%%%%%%%  P  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%part; THING
+
+plate; THING
+
+please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
+
+post; CONDITIONTYPEPREFIX; post
+
+pre; CONDITIONTYPEPREFIX; pre
+
+put; (C/REF)/REF; #x#y.put(?ADDRESSEE,$x,$y)
+
+%pr2; AGENT ; pr2
+%%%%%%%%%%%  Q  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%orange; THING/THING; #x.orange($x) ; MOD
+
+%%%%%%%%%%%  R  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+raise; C / NP[your]; #x. raise(?ADDRESSEE,$x)
+raise; (C\AGENT)/ NP[your]; #x#y. raise(?ADDRESSEE,$x)
+raised; POSE; raised
+
+ravenna; ADDRESSABLE ; ravenna
+
+red; RN/RN; #x.red($x) ; MOD
+
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE$w,remove($x),$l)
+
+
+
+replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
+
+resume; VERBI ; resume
+
+right; DIR; right
+%right ninety degrees; DEG; right,ninety
+right; N/N ; #x.right$x
+
+robot; ADDRESSABLE; self
+
+room one; PLACE; roomOne
+
+%%%%%%%%%%%  S  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+safe; PROP; safe
+
+second; NUM; second
+
+% "does dempster see an obstacle"
+%see; VERBT; see
+see; (C/REF)\AGENT ; #x#y.see($x,$y)
+
+sepi; ADDRESSABLE ; Sepi
+
+seventh; NUM; seventh
+
+shafer; ADDRESSABLE ; shafer
+Shafer; ADDRESSABLE ; shafer
+schafer; ADDRESSABLE ; shafer
+Schafer; ADDRESSABLE ; shafer
+schaefer; ADDRESSABLE ; shafer
+Schaefer; ADDRESSABLE ; shafer
+shaffer; ADDRESSABLE ; shafer
+Shaffer; ADDRESSABLE ; shafer
+dumpster; ADDRESSABLE ; dempster
+
+%shake your head
+shake your; C/N; #x.shakeyour$x()
+shake your; (C\AGENT)/N; #y#z.shakeyour$y()
+%shake; C / NP[your]; #x. shake($x)
+%shake; (C\AGENT)/ NP[your]; #x#y. shake($x)
+
+sit; VERBI ; sit
+
+sixth; NUM; sixth
+
+solid; Adj; solid
+
+spot; ADDRESSABLE ; spot
+
+stand; VERBI ; stand
+stand up; VERBI ; stand
+
+%TODO;brad; something about the parenthesis makes it so this can be a VERBI
+%start over; C ; goToStartPose(false)
+%start over; C\AGENT ; #x.goToStartPose(false)
+start over; VERBI ; startOver
+%start over; C\AGENT ; #x.startOver()
+
+
+straight; DIR ; straight
+
+stop; VERBI ; stop
+
+% do you see support
+support; REF ; support
+
+sure; SURE; sure
+
+success; EFFECTTYPEPREFIX; success
+
+successfully; EFFECTTYPE; effect(success)
+
+%%%%%%%%%%%  T  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% what is the previous/current/next step of <goal> (for actor)
+%% TODO: can these be broken into smaller rules?
+the current step of ; QUERYABLE/C ; #x.describe(stepOf(current,$x))
+the previous step of ; QUERYABLE/C ; #x.describe(stepOf(previous,$x))
+the next step of ; QUERYABLE/C ; #x.describe(stepOf(next,$x))
+the current step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(current,$x,$z))
+the previous step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(previous,$x,$z))
+the next step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(next,$x,$z))
+
+% I will teach you how to pass me the knife
+teach;(((S\AGENT)/INF)/HOW)/AGENT; #l#h#a#t.teach($t,$l,$a)
+
+%tell; ((C/INF)/AGENT)\AGENT ; #x#y#z.directAddress($x,tell($y,$z))
+%tell; C/C; #x.tell(?ADDRESSEE,$x)
+%tell; (C\AGENT)/C; #x#a.tell($a,$x)
+
+thank you; G ; thank_you
+thanks ; G ; thank_you
+
+that; C ; that ; ACTIVATED
+that; REF ; ACTIVATED
+that; REF/RN ; #x.$x ; FAMILIAR
+that; LREF/LN ; x.$x ; FAMILIAR
+%that is how you
+that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
+
+the; REF/RN ; #x.$x ; DEFINITE
+the; LREF/LN ; #x.$x ; DEFINITE
+
+then; C/C; #x. $x
+
+there; LREF ; ACTIVATED
+here; LREF ; ACTIVATED
+
+this location is the; SAVELOCATION
+this location is; SAVELOCATION
+this is location; SAVELOCATION
+
+save this location as the; SAVELOCATION
+save this location as; SAVELOCATION
+save this as location; SAVELOCATION
+
+save locations to file; C ; saveLocationsToFile(?ADDRESSEE)
+
+there is admin goal ; S ; isAdminGoal(D,Y)
+
+thirdfloorbutton; THING ; thirdfloorbutton
+
+this; REF/RN ; #x.$x ; REFACTIVATED
+this; LREF/LN ; #x.$x ; REFACTIVATED
+%this; REF ; ACTIVATED
+
+%TODO;brad; what is the to for, do we need it?
+%to; PPadv/C; #x.$x
+%to; PP/AGENT ; #x.$x
+%to; INF/C; #x.to($x)
+to; REF/REF; #x.$x
+to; RN/RN; #x.$x
+%to; PP/LREF; #x.$x
+
+
+
+%to; (C\AGENT)/(C\AGENT); #x.to($x)
+
+tomato; THING
+
+toward; TDIR; toward
+
+%%tust me
+trust; (C/AGENT)\AGENT ; #x#y.trust($x,$y)
+trust; C/AGENT ; #x.trust($x)}
+trust; (Q \ WHO)\AGENT; #x#y.trust($x,$y)
+
+tyler; ADDRESSABLE ; tyler
+Tyler; ADDRESSABLE ; tyler
+
+%%%%%%%%%%%  U  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+up; DIR; up
+up; TYPE; up
+
+used; (PROP/AFFORDANCE)/FOR ; #x #y.usedFor($y)
+
+%%%%%%%%%%%  V  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  W  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+walk; VERBTD ; move
+
+%want; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+%want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+
+%what are your goals, what are shafer's goals
+what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)
+
+what do you see ; Q ; see(?ADDRESSEE,WHAT)
+
+what time is it; Q; timeIs(WHAT)
+what time it is; KNOWABLE; currentTime
+
+%when cutting a tomato ...
+when; ADV/C ; #x.$x
+
+where do; Q/C; #x.where($x)
+where would; Q/C; #x.where($x)
+
+foresee; (C/N)\AGENT ; #a#x.foresee($a,$x)
+issues; N; issues
+
+where is; Q/AGENT; #x.isLocated($x,WHERE,?ADDRESSEE)
+
+who do; WHO; WHO
+
+will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT),((S/REF)\AGENT)/((C/REF)\AGENT) ; #x.will($x)
+
+%with; PP/C; #x.with($x)
+with; (WITH/C)\C; #x#y.with($y,$x)
+
+without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+
+would have been; (S / PROP) \ REF; # x #z. past(propertyOf($x,$z))
+
+%%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+yes; VAL; val(yes)
+
+you; AGENT; ?ADDRESSEE
+
+you are not permitted to ; S/C ; #x.notPermitted($x)
+
+your; AGENT; ?ADDRESSEE
+your; NP[your] / N ; # x. $x
+
+%%%%%%%%%%%  Z  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

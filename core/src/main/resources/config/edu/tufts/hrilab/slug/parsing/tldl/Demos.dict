@@ -1,0 +1,420 @@
+%%%%%%%%% Greetings
+
+hi: G : hi
+hi: G / THERE: # x. hi$x
+there: THERE: there
+hello: G : hello
+hello: G / N, G \ N : # x. directAddress($x,hello)
+%thank you
+you: G[you] : you
+thank : G / G[you] : # x. thank_$x
+thanks : G : thank_you
+good: G / G[good]: # x. good_$x
+bye: G, G[good] : bye
+evening: N, G[good] : evening
+morning: N, G[good] : morning
+night: N, G[good] : night
+
+%%%%%%%%% Nouns
+
+shafer: N : shafer
+%for use before and after complete sentences fo direct address
+shafer: G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q: #x.directAddress(shafer,$x)
+dempster: N : dempster
+dempster: G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q: #x.directAddress(dempster,$x)
+you: Pron, N: ?ACTOR
+
+your: NP / N : # x. $x
+your: NP[your] / N : # x. $x
+
+I: Pron, N : ?INTERACTOR
+me: N : ?INTERACTOR
+obstacle: N: obstacle
+area: N: area
+
+arm: N : arm
+arms: N : arms
+%arms: N : and(arm(left),arm(right)):
+hand: N : hand
+hands: N : hands
+%hands: N : and(hand(left),hand(right)):
+
+squat: N : squat
+
+that: N: that
+that: VP[that]/S: #x.$x
+
+support: N: support
+
+object: N, OBJECT : object
+
+knife: N: knife
+blade: N: blade
+
+%temporarry until Tom's stuff is integrated
+it: N: lastobject
+
+%for testing without oov
+blade: N: blade
+handle: N: handle
+
+%%%%%%%%% Modifiers
+
+please: C / C, C \ C, Can[you]/Can[you], Can[you]\Can[you], Pron \ Pron, Adj \ Adj, S \ S : # x. $x
+now: C/C, C\C, Pron\Pron, Adj\Adj, S\S, S/S, Q\Q, Q/Q : # x. $x
+
+not: Adj[not] / Adj: # x. $x
+not: NP[not] / NP: # x. $x
+
+behind: (NP / Pron) \ NP, (NP / N) \ NP, (NP / NP) \ NP: # x #y. $x(behind($y))
+
+ok: C/C, S/S : # x. $x
+
+%how: VP[how]/VP[to],VP[how]/VP: #x.how($x)
+
+%%%%%%%%% Articles/ quantifiers
+the: NP/N, NP[object]/OBJECT : #x.$x 
+%the: NP / NP : # x. the(e,x) @ e
+%the: NP / N : # x. the(e,x(e))
+a: NP/N, NP[object]/OBJECT : #x.$x
+%a: NP / NP : # X. exists(e,X) @ e
+%a: NP / N : # X. exists(e,X(e))
+an: NP / N, NP[object]/OBJECT : #x.$x
+%an: NP / NP : # X. exists(e,X) @ e
+%an: NP / N : # X. exists(e,X(e))
+
+%%%%%%%%% Question Verbs
+
+who: Pron : WHO
+trust: (Q\VP[who])\N : #x #y. trust($x,$y)
+do: VP[who]\Pron : #x. $x
+
+%can: (C / C) / NP : #x #y.capableOf($x,$y)
+can: Q / Can[you] : # x. capableOf(?ACTOR,$x)
+%could: (C / C) / NP : #x #y.capableOf($x,$y)
+could: Q / Can[you] : # x. capableOf(?ACTOR,$x)
+
+do: Q / Do[you] : # x. $x
+does: Q / VP, Q / Do[you], Q / Does: #x.$x
+%The Do[you] here is lazy
+%does: (Q / VP) \ N, (Q / Does) \ N: #x#y.directAddress(x,y)
+
+%%%%%%%%% Command Verbs
+% Verbs should have 3 forms, infinitive (INFX), inferred subject (C), given subject(C\N)
+% and take however many args are needed
+
+%%standing related
+stand: C : stand(?ACTOR)
+stand: INF0 : stand
+stand: Can[you] \ Pron : #x. stand($x)
+%standUp for action learning
+stand: C /UP: # x. stand$x(?ACTOR)
+up: UP: Up
+get: C / UP : # x. get$x(?ACTOR)
+
+%%sitting
+%sit: C : sit(?ACTOR)
+%sit: C / Adj, S / Adv: # x. sit(?ACTOR,$x)
+%sit: Can[you] \ Pron : #x. sit($x)
+%sit: (Can[you] / NP) \ Pron, (Can[you] / Adj) \ Pron: # x #y. sit($x,$y)
+sit: INF0: sit
+
+%%walking related verbs
+%walk: C : walk(?ACTOR,forward)
+walk: C / Adj: # x. walk(?ACTOR,$x)
+walk: (C/ Adj) \ Pron, (C/ Adj) \ N, (C/ Adj) \ NP : # x #y. walk($x,$y)
+walk: (Can[you] / Adj) \ Pron : # x #y. walk($x,$y)
+%walk: Can[you] \ Pron : #x. walk($x,forward)
+walk: INF1: walk
+
+% move: C : move(?ACTOR,forward)
+move: C / Adj : # x. move(?ACTOR,$x)
+move: (C/ Adj) \ Pron, (C/ Adj) \ N, (C/ Adj) \ NP : # x #y. move($x,$y)
+move: (Can[you] / Adj) \ Pron: # x #y. move($x,$y)
+%move: Can[you] \ Pron : #x. move($x,forward)
+move: INF1 : move
+
+go: C : move(?ACTOR,forward)
+go: C / Adj : # x. move(?ACTOR,$x)
+go: (C/ Adj) \ Pron, (C/ Adj) \ N, (C/ Adj) \ NP : # x #y. move($x,$y)
+go: (Can[you] / Adj) \ Pron : # x #y. move($x,$y)
+%go: Can[you] \ Pron : #x. move($x,forward)
+go: INF1 : move
+
+%%stop
+stop: C : stop(?ACTOR)
+stop: C \ Pron, C \ N, C \ NP : #x. stop($x)
+stop: C[you] \ Pron : #x. stop($x)
+stop: INF0: stop
+
+do: C / Pron[Action] : # x. do(?ACTOR,$x)
+%doAsquat
+do: (C/N)/A, (VP/N)/A, (VP/NP)/A : #x#y.do$x$y(?ACTOR)
+%doAsquat
+do: INF2 : do
+do: ((VP/N)/A)\N, ((VP/NP)/A)\N : #x#y#z.do$y$z($x)
+do: ((Can[you]/N)/A)\Pron : #x#y#z.do$y$z($x)
+%%for creating doAx functor names
+a:A:a
+
+%%pickAndPlace
+pick: ((C/NP)/PLACE)/AND, ((VP/NP)/PLACE)/AND : #x #y #z.pick$x$y(?ACTOR,$z)
+pick: (((C\Pron)/NP)/PLACE)/AND, (((VP\Pron)/NP)/PLACE)/AND : #x #y #z #w.pick$x$y($w,$z)
+pick: INF3 : pick
+and: AND : And
+place: PLACE: Place
+
+%pick up
+pick: (C/NP)/UP : #x#y.pick$x(?ACTOR,$y)
+up: UP : Up
+%pick up the knife by the blade
+pick: (((C/NP)/PARTOF)/NP)/UP : #x#y#z#w. pick$x(?ACTOR,$z($w,$y))
+by: PARTOF: partOf
+
+%point to
+point: (C/NP)/TO : #x#y.point$x(?ACTOR,$y)
+to: TO : To
+
+%%lookForObject
+look: (C/NP[object])/FOR : #x #y. look$x(?ACTOR,$y)
+for: FOR: For
+
+%%findObject
+find: C/NP[object]: #x.findObject(?ACTOR,$x)
+
+%%graspObject
+grasp: C/NP[object]: #x.graspObject(?ACTOR,$x)
+
+%%releaseObject
+release: C/NP[object]: #x.releaseObject(?ACTOR,x)
+
+%%moveObject
+move: (C/Adj)/NP[object]: #x#y.moveObject(?ACTOR,$x,$y)
+
+
+%%turn
+turn: C / NP[to], C / NP,  C / Adj, C / Adv: # x. move(?ACTOR,$x)
+turn: INF1: move
+
+%%catch
+catch: ((S / Pron) \ Pron)\WILL,  ((S / N) \ Pron)\WILL, :  #w # x # y. catch($x,$y)
+
+%%trust
+trust: C / NP, C/ N, C / Pron: # x #y. trust(?ACTOR,$y)
+trust: (Do[you] / NP) \ Pron, (Do[you] / N) \ Pron,  (Do[you] / Pron) \ Pron: # x #y. trust($x,$y)
+trust: (Does / NP) \ N, (Does / N) \ N, (Does / Pron) \ N: #x#y. trust($x,$y)
+
+%%see
+see: (Do[you] / NP) \ Pron, (Do[you] / N) \ Pron, (VP / N)\N, (VP / NP)\N, : # x #y. see($x,$y)
+
+%% relax
+relax: C: rest(?ACTOR)
+
+%%tell
+tell: (C/INF)\N : #x#y.directAddress($x,tell($x,$y))
+%tell: C/INF : #x.tell(?ACTOR,$x)
+
+%% raise
+raise: C / NP, C / N: # x. raise(?ACTOR,$x)
+raise: (Can[you] / NP) \ Pron, (Can[you] / N) \ Pron: # x #y. raise($x,$y)
+lower: C / NP: # x. lower(?ACTOR,$x)
+lower: (Can[you] / NP) \ Pron, (Can[you] / N) \ Pron: # x #y. lower($x,$y)
+
+%% crouching
+crouch: C : crouch(?ACTOR)
+crouch: INF0: crouch
+%crouchDown doesn't move arms
+crouch: C/DOWN : #x.crouch$x(?ACTOR)
+down: DOWN :Down
+
+%%forget
+%forget: (C/VP[how])\N : #x#y.directAddress(x,forgetHow($x,$y))
+%forget: (C/VP[that])\N : #x#y.directAddress(x,forgetThat($x,$y))
+forget: C/VP[how]: #x.forgetHow(?ACTOR,$x)
+forget: C/VP[that]: #x.forgetThat(?ACTOR,$x)
+
+start: C/OVER :#x.start$x(?ACTOR)
+over: OVER: Over
+
+raise: C / NP[your], C / NP, C / N: # x. raise(?ACTOR,$x)
+
+lower: C / NP[your], C / NP, C / N: # x. lower(?ACTOR,$x)
+
+wave: C / NP[your], C / N: # x. wave(?ACTOR,$x)
+wave: C : wave(?ACTOR,arm(right))
+
+hand: (C/NP[to])/N: #x#y.handOver(?ACTOR,$y,$x)
+
+%%%%%%%%% infinitive stuff
+to: (INF\N)/INF0: #x #y. $y,$x($y)
+to: ((INF\N)/Adj)/INF1: #x #y #z . $z,$x($z,$y)
+to: (((INF\N)/N)/A)/INF2: #x #y #z #w . $w,$x$y$z($w)
+%to: ((((INF\N)/NP)/PLACE)/AND)/INF3: #x #y #z #w #u . $w,$x$y$z($w,$u)
+to: NP/N, NP/NP, VP[to]/VP: #x.$x
+
+to: NP[to] / NP, NP[to] / N, NP[to] / Pron: # x. $x
+
+%%%%%%%%% Statement Verbs
+%teach: ((S/VP[how])/Pron)\Pron: #w#x#y.teach($w,$x,$y)
+
+is: (S / NP) \ NP: # x #y. definitionOf($x,$y)
+is: (S / Adj) \ NP: # x #z. propertyOf($x,$z)
+%% not changing not(is()) stuff to prop
+is: (S / NP[not]) \ NP: #x #y. notDefinitionOf($x,$y)
+is: (S / Adj[not]) \ NP: #x #z. not(propertyOf($x,$z))
+
+is: (S /NP)\NP[this] : #x #y.instanceOf($x,$y)
+
+%is: Q / NP[there], Q / NP: #x. check(?ACTOR,$x)
+%is: (Q / NP) \ NP: #x #y. check(?ACTOR,is($x,$y))
+
+is: (S/VP[how])\N : #x#y.is($x,$y)
+
+need: (S/ INF)\ Pron, (S\ N) / INF : # x #y. want($x,$y)
+want: (S/ INF)\ Pron, (S\ N) / INF : # x #y. want($x,$y)
+wants: (S/ INF)\ N, (S\ N) / N : # x #y. want($x,$y)
+needs: (S/ INF)\ N, (S\ N) / N : # x #y. want($x,$y)
+
+%%%%%%%%% Adj
+forward: Adj : straight
+straight: Adj : straight
+backward: Adj : back
+back: Adj : back
+right: Adj: right
+left: Adj: left
+gray: Adj: gray
+orange: Adj: orange
+%not really adjectives, but oh well
+up: Adj: up
+down: Adj: down
+
+ahead: Adj: ahead
+
+
+
+solid: Adj: solid
+safe: Adj: safe
+
+%%%%%%%%% hacky stuff
+%will: Pron \ Pron : # x. $x
+would: Pron \ Pron : # x. $x
+of: PP/NP, PP/Pron: #x.$x
+part: (NP/PP)\Adj: #x#y.partOf($x,$y)
+
+this: NP[this]/N : #x.$x
+
+hold: G/ON: #x.hold_$x
+on: ON: on
+gone: Adj: gone
+
+%%%%%%%%%%% testing stuff
+%%passMeX: C: passObject(?ACTOR,Object,?INTERACTOR)
+%%pickUpX: C: pickUpObject(?ACTOR,Object)
+%%placeX: C: placeObject(?ACTOR,Object)
+
+%%%%%%%%%% hierarchical stuff
+%%
+%%walk: C : move(?ACTOR,forward)
+%%walk: C / Adj: # x. move(?ACTOR,$x)
+%%walk: (C/ Adj) \ Pron, (C/ Adj) \ N, (C/ Adj) \ NP : # x #y. move($x,$y)
+%%walk: (Can[you] / Adj) \ Pron : # x #y. move($x,$y)
+%%%walk: Can[you] \ Pron : #x. move($x,forward)
+%%walk: INF1: move
+%%
+%%% move: C : move(?ACTOR,forward)
+%%move: C / Adj : # x. move(?ACTOR,$x)
+%%move: (C/ Adj) \ Pron, (C/ Adj) \ N, (C/ Adj) \ NP : # x #y. move($x,$y)
+%%move: (Can[you] / Adj) \ Pron: # x #y. move($x,$y)
+
+%%%%%% action learning and type stuff
+%%teach:(((ALS/HOWTO)/OBJ)\SUB )\WILL: #a#b#c#d.ALS($b,$c)
+%%show:(((ALS/HOWTO)/OBJ)\SUB)\WILL : #a#b#c#d.ALS($b,$c)
+%%I: SUB: ?INTERACTOR
+%%will: WILL:will
+%%you: OBJ: ?ACTOR
+%%how: HOWTO/TO: howto
+%%to:TO: to
+%%an: OBJ/OBJ: #x.$x
+%%a: OBJ/OBJ: #x.$x
+%%object: OBJ: object
+
+%%%%%% action learning and type stuff
+%%teach:(((actionlearningstart/HOWTO)/OBJ)\SUB )\WILL: #w#x#y#z.actionlearningstart($x,$y)
+%%show:(((actionlearningstart/HOWTO)/OBJ)\SUB)\WILL : #w#x#y#z.actionlearningstart($x,$y)
+%%I: SUB: ?INTERACTOR
+%%will: WILL:will
+%%you: OBJ, SUB: ?ACTOR
+%%how: HOWTO/TO: #x.howto
+%%how: HOW: how
+%%to:TO: to
+%%an: OBJ/OBJ: #x.$x
+%%a: OBJ/OBJ: #x.$x
+%%object: OBJ: object
+%%
+%%%that is how you
+%%
+%%that: ((actionlearningend/SUB)/HOW)/IS : #x#y#z.actionlearningend($z)
+%%is: IS: is
+%%
+%%the: OBJ/OBJ, SUB/SUB: #x.$x
+%%
+%%find: C/OBJ: #x.find(?ACTOR,$x)
+%%grasp: C/OBJ: #x.grasp(?ACTOR,$x)
+%%release: C/OBJ: #x.release(?ACTOR,$x)
+%%
+%%up: DIR: up
+%%down: DIR: down
+%%left: DIR: left
+%%right: DIR: right
+%%
+%%move: (C/DIR)/OBJ: #x#y.move($x,$y)
+%%
+%%%%supertype transformations
+%%%how this actually work is super weird
+%%*:actionlearningstart: actionlearningstart($x,$y) > *: S/C : #v.actionlearningstart($x,$y,$v)
+%%*:actionlearningstart: actionlearningstart($x,$y) > *: S/(C/OBJ) : #v.actionlearningstart($x,$y,$v)
+%%*:actionlearningend: actionlearningend($z) > *: S/C: #v.actionlearningend($z,$v)
+%%*:actionlearningend: actionlearningend($z) > *: S/(C/OBJ) : #v.actionlearningend($z,$v)
+
+
+
+%%%% action learning and type stuff
+teach:(((actionlearningstart/HOWTO)/N)\N)\WILL: #w#x#y#z.actionlearningstart($x,$y)
+%show:(((actionlearningstart/HOWTO)/NP)\N)\WILL : #w#x#y#z.actionlearningstart($x,$y)
+will: WILL:will
+how: HOWTO/TO: #x.howto
+how: HOW: how
+to:TO: to
+
+%that is how you
+that: ((actionlearningend/N)/HOW)/IS : #x#y#z.actionlearningend($z)
+is: IS: is
+
+up: DIR: up
+down: DIR: down
+left: DIR: left
+right: DIR: right
+forward: DIR: forward
+backward: DIR: backward
+
+move: (C/DIR)/NP: #x#y.moveObject(?ACTOR,$x,$y)
+
+%%%supertype transformations
+%%how this actually work is super weird
+%*:actionlearningstart: actionlearningstart($x,$y) > *: S/C : #v.actionlearningstart($x,$y,$v)
+%*:actionlearningend: actionlearningend($z) > *: S/C: #v.actionlearningend($z,$v)
+
+%%%%%% teaching moral norms
+is: (((S/S)/IF)/CONDITION)\IT : #it#c#if#s.hornClause($c,$s)
+is: (S/PP)\THERE, (S/NP)\THERE : #t#n.$n
+to: (CONDITION/C)\Adj : #a#c.$a($c)
+
+in: ((PP\N)/PP)/FRONT, ((PP\NP)/PP)/FRONT : #front#x#y.inFront($y,$x)
+
+it: IT : it
+if: IF : if
+
+when: (CONDITION/S)\CONDITION: #c#s.and($c,#s)
+unsafe: Adj : unsafe
+
+front: FRONT: front

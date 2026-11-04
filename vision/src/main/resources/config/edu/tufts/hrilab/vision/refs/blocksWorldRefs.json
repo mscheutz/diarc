@@ -1,0 +1,33 @@
+{
+    "visionReferences": [
+      {
+        "refId": "physobj_0:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "red(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_1:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "blue(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_2:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "purple(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_3:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "yellow(VAR0:physobj)"
+        ]
+      }
+    ]
+  }
+  

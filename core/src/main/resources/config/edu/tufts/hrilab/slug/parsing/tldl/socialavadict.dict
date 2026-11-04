@@ -1,0 +1,127 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TEMPLATES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+START-TEMPLATES
+
+% delivering specific ditransitive verb
+VERBDELT; {((C/PP)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}, {(C/PP)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}
+
+%transitive verb
+VERBT; {(C/REF)\AGENT; #a#y.?PH($a,$y)}, {(C/PP)\AGENT; #a#y.?PH($a,$y)}, {C/REF ; #x.?PH(?ADDRESSEE,$x)}, {C/PP ; #x.?PH(?ADDRESSEE,$x)}
+
+%ditransitive verb
+% Simplified template of this syntax worked: ((C/(REF | LREF | PP | NP | VP})/{AGENT})[\AGENT]
+VERBDT; {((C/REF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/LREF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/LREF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/PP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/PP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/VP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/VP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/NP)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/NP)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}
+%VERBDTCOMPLEX; {((C/REF)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/LREF)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/LREF)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/PP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/PP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/VP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/VP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/NP)/NP)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/NP)/NP ; #x#y.?PH(?ADDRESSEE,$x,$y)}
+
+%VERBDTCOMPLEX;
+% Simplified template of this syntax worked: (((C/(LREF | PP | NP | VP})/PP)/AGENT})[\AGENT]
+VERBDTCOMPLEX; {(((C/PP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/PP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/LREF)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/LREF)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/NP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/NP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)}, {(((C/VP)/PP)/AGENT)\AGENT; #a#x#y#z.?PH($a,$x,$y,$z)}, {((C/VP)/PP)/AGENT; #x#y#z.?PH(?ADDRESSEE,$x,$y,$z)},
+
+END-TEMPLATES
+
+go home; C; goHome(?ADDRESSEE)
+dock; VERBT; dock
+
+drive; VERBT; goToLocation
+get; VERBT; goToLocation
+go; VERBT; goToLocation
+move; VERBT; goToLocation
+
+follow; C; follow(?ADDRESSEE)
+follow me; C; follow(?ADDRESSEE)
+stop following; C; stopFollowing(?ADDRESSEE)
+
+to; REF/REF; #x.$x
+to; RN/RN; #x.$x
+
+escort * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+escort * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+take * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
+take * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
+
+bring; VERBDELT; deliver
+carry; VERBDELT; deliver
+deliver; VERBDELT; deliver
+get; VERBDELT; deliver
+move; VERBDELT; deliver
+take; VERBDELT; deliver
+transport; VERBDELT; deliver
+
+are you able to; C/C; #x.$x
+would you mind; C/C; #x.$x
+could you go and; C/C; #x.$x
+could you; C/C; #x.$x
+can you; C/C; #x.$x
+is it possible to; C/C; #x.$x
+id like you to; C/C; #x.$x
+
+sit; C; sit(?ADDRESSEE)
+stand; C; stand(?ADDRESSEE)
+
+i want to discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+discuss robot performance; C; discussRobotPerformance(?ADDRESSEE)
+
+stop; C; cancelCurrentTask(?ADDRESSEE)
+pause; C; suspendCurrentTask(?ADDRESSEE)
+resume; C; resumeSystemGoals(?ADDRESSEE)
+nevermind; VAL; abort(question)
+
+%say; C/LIT*; #x.say(?ADDRESSEE, $x)
+
+option; VAL/NUM; #x.option($x)
+
+cancel pending goals; VERBI; cancelAllQueuedTasks
+cancel all pending goals; VERBI; cancelAllQueuedTasks
+cancel all active goals; VERBI; cancelAllCurrentAndQueuedTasks
+cancel all goals; VERBI; cancelAllCurrentAndQueuedTasks
+cancel all scheduled goals; VERBI; cancelAllScheduledGoals
+cancel all scheduled tasks; VERBI; cancelAllScheduledGoals
+remove the task from the queue at position; C/LIT* ; #x.cancelSingleTaskInQueue(?ADDRESSEE,$x)
+
+now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
+
+yes; VAL; val(yes)
+no; VAL; val(no)
+
+% the dashboard quick actions send these exact strings
+lower media volume; C; lowerVideoVolume(?ADDRESSEE)
+raise media volume; C; raiseVideoVolume(?ADDRESSEE)
+switch display to tracs; C; switchDisplayToTRACS(?ADDRESSEE)
+switch display to telepresence; C; switchDisplayToTelepresence(?ADDRESSEE)
+
+set output volume to; C/LIT*; #x.setVoiceVolume(?ADDRESSEE,$x)
+set output volume; C/LIT*; #x.setVoiceVolume(?ADDRESSEE,$x)
+lower output volume; C; lowerVoiceVolume(?ADDRESSEE)
+raise output volume; C; raiseVoiceVolume(?ADDRESSEE)
+
+% VERBI is not a template in this dict, so the VERBI lines above never parse; these are the live forms
+cancel pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
+cancel all pending goals; C; cancelAllQueuedTasks(?ADDRESSEE)
+cancel all active goals; C; cancelAllCurrentAndQueuedTasks(?ADDRESSEE)
+cancel all goals; C; cancelAllCurrentAndQueuedTasks(?ADDRESSEE)
+cancel all scheduled goals; C; cancelAllScheduledGoals(?ADDRESSEE)
+cancel all scheduled tasks; C; cancelAllScheduledGoals(?ADDRESSEE)
+
+ready; VAL; val(yes)
+i am ready; VAL; val(yes)
+im ready; VAL; val(yes)
+
+%TODO: what of these (and of what has been deleted) are necessary for the website?
+
+%ww; VERBI; triggerWW
+%ready; VERBI; interruptWaitForReadyAck
+
+%enable admin mode; VERBI; enableAdminMode
+%disable admin mode; VERBI; disableAdminMode
+
+%disable_ww_listen; VERBI; interruptListenForWWandASR
+%enable_ww_listen; VERBI; listenForWWandASR
+%start idle image cycle; VERBI; startIdleImageCycle
+%stop idle image cycle; VERBI; stopIdleImageCycle
+
+%play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)
+primary dock; C; setAtPrimaryDock(?ADDRESSEE)
+secondary dock; C; setAtSecondaryDock(?ADDRESSEE)

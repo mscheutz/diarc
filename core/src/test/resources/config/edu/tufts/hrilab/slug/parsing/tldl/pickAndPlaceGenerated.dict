@@ -1,0 +1,35 @@
+location one; REF; location one:pose; DEFINITE
+location one; RN; location one:pose; VAR
+location one; PROPERTY; location one:pose
+
+location two; REF; location two:pose; DEFINITE
+location two; RN; location two:pose; VAR
+location two; PROPERTY; location two:pose
+
+location three; REF; location three:pose; DEFINITE
+location three; RN; location three:pose; VAR
+location three; PROPERTY; location three:pose
+
+location four; REF; location four:pose; DEFINITE
+location four; RN; location four:pose; VAR
+location four; PROPERTY; location four:pose
+
+red block; REF; red block:physobj ; DEFINITE
+red block; RN; red block:physobj ; VAR
+red block; PROPERTY; red block:property
+
+green block; REF; green block:physobj ; DEFINITE
+green block; RN; green block:physobj ; VAR
+green block; PROPERTY; green block:property
+
+blue block; REF; blue block:physobj ; DEFINITE
+blue block; RN; blue block:physobj ; VAR
+blue block; PROPERTY; blue block:property
+
+yellow block; REF; yellow block:physobj ; DEFINITE
+yellow block; RN; yellow block:physobj ; VAR
+yellow block; PROPERTY; yellow block:property
+
+orange block; REF; orange block:physobj ; DEFINITE
+orange block; RN; orange block:physobj ; VAR
+orange block; PROPERTY; orange block:property

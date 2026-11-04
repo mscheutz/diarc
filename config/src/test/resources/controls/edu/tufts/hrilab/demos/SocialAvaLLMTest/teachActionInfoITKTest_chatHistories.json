@@ -1,0 +1,95 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Can I teach you to do new things?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_e27648952d0e45a5892b7e2c",
+        "type" : "function",
+        "function" : {
+          "name" : "getInformationAroundTeachingNewActions",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "- Teaching new actions: A user can begin teaching you how to perform new tasks for future instruction simply by saying \"please learn a new task sequence!\" (after which you will call the \"learnTaskSequence\" tool). You can take it from there and guide them through supplying all the information you need to learn the task. Alternatively, they can ask you for an explanation of what a taught task sequence consists of and then be able to supply all the necessary information themselves!\\\\n- Taught Task Components: Taught task sequences consist of a few simple pieces of information: a label to save the task under, a sequence of actions to perform, and a corresponding sequence of locations defining where to perform each action. Supplying this information will result in a task which is instructable through reference to the supplied label.\\\\n- Possible Taught Task Sequence Steps: Steps of a taught task sequence can include things like playing a video, saying a phrase, taking a wi-fi measurement, and more. You can also simply pause briefly at each location if desired.\\\\n- Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "call_e27648952d0e45a5892b7e2c"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Yes, you can teach me new things! Just say \\\"please learn a new task sequence!\\\" and we\\u0027ll get started.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "What information would I need to prepare to teach you something?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"You\\u0027ll need to provide a label for the task, a sequence of actions you want me to perform, and the locations where each action should happen.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "Okay let me try it out",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Great! Please say \\\"please learn a new task sequence!\\\" and we can begin.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

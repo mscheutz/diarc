@@ -1,0 +1,82 @@
+{
+    "visionReferences": [
+      {
+        "refId": "physobj_0:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_ll(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_1:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_1(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_2:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_2(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_3:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_3(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_4:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_4(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_5:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button5(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_6:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_6(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_7:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_up(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_8:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "button_down(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_9:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "elevator_closed(VAR0:physobj)"
+        ]
+      },
+      {
+        "refId": "physobj_10:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "elevator_open(VAR0:physobj)"
+        ]
+      }
+    ]
+  }
+  

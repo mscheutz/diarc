@@ -1,0 +1,104 @@
+{
+  "default": {
+    "priority": 1,
+    "priorityTier": "NORMAL"
+  },
+
+  "updateSettings": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+
+  "handled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listen": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endFreeze": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "freeze": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
+  },
+  "cancelPendingGoalByIndex": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendSystemGoalsBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeCurrentTask": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "changeLearningExecution": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "pauseActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describePendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllActiveGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllPendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  }
+}

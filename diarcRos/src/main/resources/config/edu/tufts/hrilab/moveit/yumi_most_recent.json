@@ -1,0 +1,85 @@
+{
+  "configName": "yumi",
+  "baseLinkString": "yumi_base_link",
+  "opticalFrame": "camera_link",
+  "visionComponent": "edu.tufts.hrilab.vision.VisionComponent",
+  "maxMovetoAttempts": 2,
+  "maxNodeCheckCount": 3,
+  "graspApproachOffset": 0.03,
+  "graspContactOffset": 0.0,
+  "positionTolerance": 0.05,
+  "speedFactor" : 1.0,
+  "armReach": 0.90,
+  "allowDisableCollisionAvoidance": false,
+  "eeTransform" : {
+    "position_x": 0,
+    "position_y": 0,
+    "position_z": 0.12,
+    "quaternion_x": 0.0,
+    "quaternion_y": 0.0,
+    "quaternion_z": 0.0,
+    "quaternion_w": 1.0
+  },
+  "localStaticTransforms": [
+    {
+      "parent": "yumi_base_link",
+      "child": "camera_link",
+      "x": 0.70,
+      "y": 0.47,
+      "z": 0.74,
+      "roll": 2.615,
+      "pitch": 0.0,
+      "yaw": 3.1415
+    }
+  ],
+  "defaultGroupName": "right_arm",
+  "groups": [
+    {
+      "groupName": "left_arm",
+      "jointNames": [
+        "yumi_joint_1_l",
+        "yumi_joint_2_l",
+        "yumi_joint_3_l",
+        "yumi_joint_4_l",
+        "yumi_joint_5_l",
+        "yumi_joint_6_l",
+        "yumi_joint_7_l"
+      ],
+      "effectorLinkName": "yumi_link_7_l"
+    },
+    {
+      "groupName": "right_arm",
+      "jointNames": [
+        "yumi_joint_1_r",
+        "yumi_joint_2_r",
+        "yumi_joint_3_r",
+        "yumi_joint_4_r",
+        "yumi_joint_5_r",
+        "yumi_joint_6_r",
+        "yumi_joint_7_r"
+      ],
+      "effectorLinkName": "yumi_link_7_r",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.yumi.YumiRightGripper"
+    },
+    {
+      "groupName": "both_arms",
+      "jointNames": [
+        "yumi_joint_1_l",
+        "yumi_joint_2_l",
+        "yumi_joint_7_l",
+        "yumi_joint_3_l",
+        "yumi_joint_4_l",
+        "yumi_joint_5_l",
+        "yumi_joint_6_l",
+        "yumi_joint_1_r",
+        "yumi_joint_2_r",
+        "yumi_joint_7_r",
+        "yumi_joint_3_r",
+        "yumi_joint_4_r",
+        "yumi_joint_5_r",
+        "yumi_joint_6_r"
+      ],
+      "effectorLinkName": "yumi_link_7_r"
+    }
+  ]
+}

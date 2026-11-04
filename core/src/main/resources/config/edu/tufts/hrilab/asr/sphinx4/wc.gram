@@ -1,0 +1,18 @@
+#JSGF V1.0;
+grammar jsgf.wc;
+
+public <main> = <stop> | <act_cmd>;
+
+<stop> = stop;
+
+<act_cmd> = <go_cmd> <go_dir> | <turn_cmd> <turn_dir> | <preset>;
+
+<go_dir> = forward | straight | left | right;
+
+<turn_dir> = left | right;
+
+<go_cmd> = go | move;
+
+<turn_cmd> = turn;
+
+<preset> = i need my coffee;

@@ -1,0 +1,15 @@
+#JSGF V1.0;
+
+/**
+ * JSGF WSJ Grammar for ManyEars WSJ example
+ */
+
+grammar wsj;
+
+public <words> = (<digit> | <teen> | <rockpaperscissor>);
+
+<rockpaperscissor> = rock | paper | scissor;
+
+<digit> = one | two | three | four | five | six | seven | eight | nine;
+
+<teen> = ten | eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen | eighteen | nineteen;

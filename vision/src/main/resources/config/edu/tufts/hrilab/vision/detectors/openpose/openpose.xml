@@ -1,0 +1,151 @@
+<!--
+Set runtime configuration for a VisionProcessor.
+
+Fields (required unless noted otherwise):
+
+  processor tag:
+
+  	type        : type using an "isA" heirarchy (e.g., color, shape)
+
+	arity       : number of arguments (including variables, descriptors, etc.)
+
+  predicate tag(s):
+	
+	name        : leading atom's name (e.g., red) and
+
+	data        : (Optional) whatever data is needed for run-time processing
+
+Example: 
+              <processor type="color" arity="1">
+                <predicate name="red">
+                  <r>250</r>
+                  <g>0</g>
+                  <b>0</b>
+                </predicate>
+                <predicate name="blue">
+                  <r>0</r>
+                  <g>0</g>
+                  <b>250</b>
+                </predicate>
+              </processor>
+
+-->
+
+<processor type="object" arity="1">
+  <config configOpenpose="configOpenpose.xml"/>
+
+  <predicate name="bill">
+    <!--<joint index="0" name="nose"/>-->
+    <!--<joint index="1" name="neck"/>-->
+    <!--<joint index="2" name="rightShoulder"/>-->
+    <!--<joint index="3" name="rightElbow"/>-->
+    <joint index="4" name="rightWrist"/>
+    <!--<joint index="5" name="leftShoulder"/>-->
+    <!--<joint index="6" name="leftElbow"/>-->
+    <joint index="7" name="leftWrist"/>
+    <!--<joint index="8" name="rightHip"/>-->
+    <!--<joint index="9" name="rightKnee"/>-->
+    <!--<joint index="10" name="rightAnkle"/>-->
+    <!--<joint index="11" name="leftHip"/>-->
+    <!--<joint index="12" name="leftKnee"/>-->
+    <!--<joint index="13" name="leftAnkle"/>-->
+    <!--<joint index="14" name="rightEye"/>-->
+    <!--<joint index="15" name="leftEye"/>-->
+    <!--<joint index="16" name="rightEar"/>-->
+    <!--<joint index="17" name="leftEar"/>-->
+  </predicate>
+
+  <predicate name="brad">
+    <joint index="0" name="nose"/>
+    <!--<joint index="1" name="neck"/>-->
+    <!--<joint index="2" name="rightShoulder"/>-->
+    <!--<joint index="3" name="rightElbow"/>-->
+    <!--<joint index="4" name="rightWrist"/>-->
+    <!--<joint index="5" name="leftShoulder"/>-->
+    <!--<joint index="6" name="leftElbow"/>-->
+    <!--<joint index="7" name="leftWrist"/>-->
+    <!--<joint index="8" name="rightHip"/>-->
+    <!--<joint index="9" name="rightKnee"/>-->
+    <!--<joint index="10" name="rightAnkle"/>-->
+    <!--<joint index="11" name="leftHip"/>-->
+    <!--<joint index="12" name="leftKnee"/>-->
+    <!--<joint index="13" name="leftAnkle"/>-->
+    <!--<joint index="14" name="rightEye"/>-->
+    <!--<joint index="15" name="leftEye"/>-->
+    <!--<joint index="16" name="rightEar"/>-->
+    <!--<joint index="17" name="leftEar"/>-->
+  </predicate>
+
+  <predicate name="tyler">
+    <!--<joint index="0" name="nose"/>-->
+    <!--<joint index="1" name="neck"/>-->
+    <!--<joint index="2" name="rightShoulder"/>-->
+    <!--<joint index="3" name="rightElbow"/>-->
+    <joint index="4" name="rightWrist"/>
+    <!--<joint index="5" name="leftShoulder"/>-->
+    <!--<joint index="6" name="leftElbow"/>-->
+    <joint index="7" name="leftWrist"/>
+    <!--<joint index="8" name="rightHip"/>-->
+    <!--<joint index="9" name="rightKnee"/>-->
+    <!--<joint index="10" name="rightAnkle"/>-->
+    <!--<joint index="11" name="leftHip"/>-->
+    <!--<joint index="12" name="leftKnee"/>-->
+    <!--<joint index="13" name="leftAnkle"/>-->
+    <!--<joint index="14" name="rightEye"/>-->
+    <!--<joint index="15" name="leftEye"/>-->
+    <!--<joint index="16" name="rightEar"/>-->
+    <!--<joint index="17" name="leftEar"/>-->
+  </predicate>
+
+  <predicate name="person">
+    <joint index="0" name="nose"/>
+    <joint index="1" name="neck"/>
+    <joint index="2" name="rightShoulder"/>
+    <joint index="3" name="rightElbow"/>
+    <joint index="4" name="rightWrist"/>
+    <joint index="5" name="leftShoulder"/>
+    <joint index="6" name="leftElbow"/>
+    <joint index="7" name="leftWrist"/>
+    <joint index="8" name="rightHip"/>
+    <joint index="9" name="rightKnee"/>
+    <joint index="10" name="rightAnkle"/>
+    <joint index="11" name="leftHip"/>
+    <joint index="12" name="leftKnee"/>
+    <joint index="13" name="leftAnkle"/>
+    <joint index="14" name="rightEye"/>
+    <joint index="15" name="leftEye"/>
+    <joint index="16" name="rightEar"/>
+    <joint index="17" name="leftEar"/>
+  </predicate>
+  <predicate name="hand">
+    <joint index="4" name="rightHand"/>
+  </predicate>
+  <predicate name="hand">
+    <joint index="7" name="leftHand"/>
+  </predicate>
+  <predicate name="rightHand">
+    <joint index="4" name="rightHand"/>
+  </predicate>
+  <predicate name="leftHand">
+    <joint index="7" name="leftHand"/>
+  </predicate>
+  <predicate name="foot">
+    <joint index="10" name="rightAnkle"/>
+  </predicate>
+  <predicate name="foot">
+    <joint index="13" name="leftAnkle"/>
+  </predicate>
+  <predicate name="rightFoot">
+    <joint index="10" name="rightFoot"/>
+  </predicate>
+  <predicate name="leftFoot">
+    <joint index="13" name="leftFoot"/>
+  </predicate>
+  <predicate name="head">
+    <joint index="0" name="nose"/>
+    <joint index="14" name="rightEye"/>
+    <joint index="15" name="leftEye"/>
+    <joint index="16" name="rightEar"/>
+    <joint index="17" name="leftEar"/>
+  </predicate>
+</processor>

@@ -1,0 +1,42 @@
+#JSGF V1.0;
+grammar compliantarm.gram;
+
+public <s> = [<directaddress>] <question> [<directaddress>] | [<directaddress>] [<startcommand>] <command> [<endcommand>] [<directaddress>] | [<directaddress>] <greeting> [<directaddress>];
+
+<directaddress> = chris;
+
+<startcommand> = can you please | please | can you | could you | i (want|need) you to | <directaddress> (wants|needs) you to | great | now | ok |  <startcommand> <startcommand> | first| now| then;
+
+<endcommand> = please | now | <endcommand> <endcommand>;
+
+<command> = <acincommand> | <teach> | go to pose <pose> | save this pose as <pose> | <stop> | start over | [now|okay|first|then] <acincommand> | execute while learning | <modify>;
+
+<question> = how would you <command>| describe how to <command> | do you know how to <command> | what is the (current|previous|next) step of <command> [for <directaddress>] | what are you doing | what is the probability that (you|<directaddress>) can <command>;
+
+<modify>= when you <command> (make sure you | don't| replace <command> with) <command> [<actionLocation>] | (add|remove) ((success|failure) effect | (pre|overall) condition) (to|from|in) <command> | <command> is like <command> but (add| remove| replace <command> with) <command> [<actionLocation>] ;
+
+<actionLocation> = (before|after) you <command>;
+
+<stop>= stop | pause | resume | start;
+
+<greeting> = hello | thanks | thank you | good bye | good morning;
+
+<pose> = (left | right | middle | start | hand over) [position|pose];
+
+<part> = part | (red | blue | green | yellow | orange | black | white | work) (part|piece) | assembly | object;
+
+<teach> = (i will teach you how to | that is how you) <acincommand>;
+
+<acincommand> = <compliance> | <stiffness> | <retrieve> | <proceed> | <assemble> | <insert>;
+
+<compliance> = be (free | stiff | loose ) (along the path | across the path) | allow me to adjust the arm | adjust;
+
+<stiffness> = (reset | increase | decrease) the (stiffness|compliance) [at the end of the path];
+
+<retrieve> = (retrieve | save this (piece|part) as | release) [the] <part>;
+
+<proceed> = proceed | continue | start | stop | pause | halt;
+
+<assemble> = (insert | assemble) [the] <part>;
+
+<insert> = insert [the] <part> [in the] <pose>;

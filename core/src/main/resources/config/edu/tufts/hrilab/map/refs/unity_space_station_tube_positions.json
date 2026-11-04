@@ -1,0 +1,1408 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_71:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftTwo(VAR0:location)"
+      ],
+      "position": [
+        -27.67300033569336,
+        2.7790000438690186,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_51:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightEight(VAR0:location)"
+      ],
+      "position": [
+        -36.44900131225586,
+        5.4710001945495605,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightSeven(VAR0:location)"
+      ],
+      "position": [
+        -34.95600128173828,
+        5.322000026702881,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_35:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightSix(VAR0:location)"
+      ],
+      "position": [
+        -33.4640007019043,
+        5.173999786376953,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_23:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightTwelve(VAR0:location)"
+      ],
+      "position": [
+        10.376999855041504,
+        -34.35599899291992,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_67:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightTen(VAR0:location)"
+      ],
+      "position": [
+        9.142999649047852,
+        -31.621999740600586,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_15:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftEight(VAR0:location)"
+      ],
+      "position": [
+        9.52299976348877,
+        -28.159000396728516,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_59:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "beta(VAR0:location)"
+      ],
+      "position": [
+        6.684000015258789,
+        16.69300079345703,
+        -0.02500000037252903
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.4279144342874888,
+        0.9038192501426481
+      ]
+    },
+    {
+      "refId": "location_47:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftEleven(VAR0:location)"
+      ],
+      "position": [
+        16.257999420166016,
+        31.302000045776367,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightSix(VAR0:location)"
+      ],
+      "position": [
+        13.348999977111816,
+        24.156999588012695,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_31:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightTwelve(VAR0:location)"
+      ],
+      "position": [
+        18.60099983215332,
+        31.46500015258789,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_63:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftEight(VAR0:location)"
+      ],
+      "position": [
+        -36.62799835205078,
+        3.6730000972747803,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_11:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightSix(VAR0:location)"
+      ],
+      "position": [
+        6.673999786376953,
+        -26.15399932861328,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_55:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alpha(VAR0:location)"
+      ],
+      "position": [
+        3.4140000343322754,
+        -16.41200065612793,
+        -0.02500000037252903
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.5318848618627297,
+        -0.8468166824769484
+      ]
+    },
+    {
+      "refId": "location_43:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightThree(VAR0:location)"
+      ],
+      "position": [
+        10.722999572753906,
+        20.50200080871582,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightFour(VAR0:location)"
+      ],
+      "position": [
+        5.439000129699707,
+        -23.41900062561035,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_39:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightEleven(VAR0:location)"
+      ],
+      "position": [
+        9.760000228881836,
+        -32.98899841308594,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_27:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftSix(VAR0:location)"
+      ],
+      "position": [
+        11.880999565124512,
+        25.211000442504883,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_19:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightNine(VAR0:location)"
+      ],
+      "position": [
+        8.524999618530273,
+        -30.2549991607666,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_60:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftFour(VAR0:location)"
+      ],
+      "position": [
+        7.053999900817871,
+        -22.690000534057617,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_40:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightNine(VAR0:location)"
+      ],
+      "position": [
+        15.975000381469727,
+        27.81100082397461,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightOne(VAR0:location)"
+      ],
+      "position": [
+        3.5869998931884766,
+        -19.31800079345703,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_72:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftFive(VAR0:location)"
+      ],
+      "position": [
+        7.671000003814697,
+        -24.058000564575195,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_24:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightNine(VAR0:location)"
+      ],
+      "position": [
+        -37.941001892089844,
+        5.619999885559082,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_68:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftNine(VAR0:location)"
+      ],
+      "position": [
+        10.140000343322754,
+        -29.525999069213867,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_12:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftSix(VAR0:location)"
+      ],
+      "position": [
+        8.288000106811523,
+        -25.424999237060547,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_56:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftOne(VAR0:location)"
+      ],
+      "position": [
+        -26.18000030517578,
+        2.630000114440918,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_48:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftFour(VAR0:location)"
+      ],
+      "position": [
+        -30.658000946044922,
+        3.0769999027252197,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightEight(VAR0:location)"
+      ],
+      "position": [
+        15.098999977111816,
+        26.593000411987305,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_36:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftTwelve(VAR0:location)"
+      ],
+      "position": [
+        17.132999420166016,
+        32.52000045776367,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_20:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftThree(VAR0:location)"
+      ],
+      "position": [
+        9.255000114440918,
+        21.55699920654297,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_64:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftFour(VAR0:location)"
+      ],
+      "position": [
+        10.246999740600586,
+        22.937999725341797,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_52:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftTwo(VAR0:location)"
+      ],
+      "position": [
+        8.380000114440918,
+        20.339000701904297,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_44:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightSeven(VAR0:location)"
+      ],
+      "position": [
+        14.223999977111816,
+        25.375,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightSeven(VAR0:location)"
+      ],
+      "position": [
+        7.290999889373779,
+        -27.520999908447266,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_32:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftOne(VAR0:location)"
+      ],
+      "position": [
+        5.202000141143799,
+        -18.589000701904297,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_28:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftOne(VAR0:location)"
+      ],
+      "position": [
+        7.504000186920166,
+        19.121000289916992,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_16:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftTwo(VAR0:location)"
+      ],
+      "position": [
+        5.818999767303467,
+        -19.95599937438965,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_73:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gamma(VAR0:location)"
+      ],
+      "position": [
+        -22.361000061035156,
+        2.739000082015991,
+        0.04899999871850014
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9998555312971348,
+        -0.016997544955789815
+      ]
+    },
+    {
+      "refId": "location_61:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftTen(VAR0:location)"
+      ],
+      "position": [
+        15.381999969482422,
+        30.083999633789062,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_13:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftSeven(VAR0:location)"
+      ],
+      "position": [
+        -35.13600158691406,
+        3.5239999294281006,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_57:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftFive(VAR0:location)"
+      ],
+      "position": [
+        11.005999565124512,
+        23.993000030517578,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_45:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightFour(VAR0:location)"
+      ],
+      "position": [
+        11.597999572753906,
+        21.719999313354492,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightTwelve(VAR0:location)"
+      ],
+      "position": [
+        -42.41899871826172,
+        6.066999912261963,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_37:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftTwelve(VAR0:location)"
+      ],
+      "position": [
+        11.991999626159668,
+        -33.62699890136719,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_25:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightEleven(VAR0:location)"
+      ],
+      "position": [
+        17.725000381469727,
+        30.246999740600586,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_69:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftFive(VAR0:location)"
+      ],
+      "position": [
+        -32.1510009765625,
+        3.2260000705718994,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_53:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftSix(VAR0:location)"
+      ],
+      "position": [
+        -33.643001556396484,
+        3.375,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_41:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightTen(VAR0:location)"
+      ],
+      "position": [
+        16.850000381469727,
+        29.02899932861328,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightThree(VAR0:location)"
+      ],
+      "position": [
+        -28.986000061035156,
+        4.7270002365112305,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_33:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftEleven(VAR0:location)"
+      ],
+      "position": [
+        11.375,
+        -32.2599983215332,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_21:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightTwo(VAR0:location)"
+      ],
+      "position": [
+        4.204999923706055,
+        -20.684999465942383,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_65:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftThree(VAR0:location)"
+      ],
+      "position": [
+        6.435999870300293,
+        -21.322999954223633,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_17:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightFive(VAR0:location)"
+      ],
+      "position": [
+        6.056000232696533,
+        -24.78700065612793,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_49:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftSeven(VAR0:location)"
+      ],
+      "position": [
+        8.906000137329102,
+        -26.79199981689453,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_29:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftThree(VAR0:location)"
+      ],
+      "position": [
+        -29.165000915527344,
+        2.927999973297119,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_70:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftSeven(VAR0:location)"
+      ],
+      "position": [
+        12.755999565124512,
+        26.429000854492188,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_62:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightFour(VAR0:location)"
+      ],
+      "position": [
+        -30.479000091552734,
+        4.875999927520752,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_50:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightEight(VAR0:location)"
+      ],
+      "position": [
+        7.9079999923706055,
+        -28.88800048828125,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_46:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaLeftTen(VAR0:location)"
+      ],
+      "position": [
+        10.756999969482422,
+        -30.89299964904785,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.17994099114116863,
+        -0.983677406321368
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightTwo(VAR0:location)"
+      ],
+      "position": [
+        -27.493000030517578,
+        4.578000068664551,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_34:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "alphaRightThree(VAR0:location)"
+      ],
+      "position": [
+        4.822000026702881,
+        -22.052000045776367,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.983677406321368,
+        -0.17994099114116863
+      ]
+    },
+    {
+      "refId": "location_26:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightOne(VAR0:location)"
+      ],
+      "position": [
+        -26.000999450683594,
+        4.428999900817871,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_14:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightTwo(VAR0:location)"
+      ],
+      "position": [
+        9.847999572753906,
+        19.284000396728516,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_58:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftNine(VAR0:location)"
+      ],
+      "position": [
+        14.506999969482422,
+        28.865999221801758,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_42:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightFive(VAR0:location)"
+      ],
+      "position": [
+        12.472999572753906,
+        22.937999725341797,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaRightOne(VAR0:location)"
+      ],
+      "position": [
+        8.972000122070312,
+        18.06599998474121,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.29485835094116253,
+        0.955540973941075
+      ]
+    },
+    {
+      "refId": "location_30:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftEleven(VAR0:location)"
+      ],
+      "position": [
+        -41.10599899291992,
+        4.119999885559082,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_74:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftNine(VAR0:location)"
+      ],
+      "position": [
+        -38.12099838256836,
+        3.822000026702881,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_22:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightEleven(VAR0:location)"
+      ],
+      "position": [
+        -40.926998138427734,
+        5.918000221252441,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_66:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightTen(VAR0:location)"
+      ],
+      "position": [
+        -39.433998107910156,
+        5.769000053405762,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftTen(VAR0:location)"
+      ],
+      "position": [
+        -39.61399841308594,
+        3.9709999561309814,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_54:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaLeftTwelve(VAR0:location)"
+      ],
+      "position": [
+        -42.5989990234375,
+        4.269000053405762,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7331139954820038,
+        -0.6801057782642436
+      ]
+    },
+    {
+      "refId": "location_38:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "betaLeftEight(VAR0:location)"
+      ],
+      "position": [
+        13.631999969482422,
+        27.648000717163086,
+        -0.026000000536441803
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.955540973941075,
+        0.29485835094116253
+      ]
+    },
+    {
+      "refId": "location_18:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gammaRightFive(VAR0:location)"
+      ],
+      "position": [
+        -31.97100067138672,
+        5.025000095367432,
+        0.04800000041723251
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6801057782642436,
+        0.7331139954820038
+      ]
+    },
+    {
+      "refId": "location_75:location",
+      "variable": "VAR0:location",
+      "properties" : [
+        "alpha(VAR0:location)"
+      ],
+      "position" : [
+        3.414,
+        -16.412,
+        0.04800000041723251
+      ],
+      "orientation" : [
+        0.0,
+        0.0,
+        0.532,
+        -0.847
+      ]
+    },
+    {
+      "refId": "location_76:location",
+      "variable": "VAR0:location",
+      "properties" : [
+        "beta(VAR0:location)"
+      ],
+      "position" : [
+        6.684,
+        16.693,
+        0.04800000041723251
+      ],
+      "orientation" : [
+        0.0,
+        0.0,
+        0.428,
+        0.904
+      ]
+    },
+    {
+      "refId": "location_77:location",
+      "variable": "VAR0:location",
+      "properties" : [
+        "gamma(VAR0:location)"
+      ],
+      "position" : [
+        -22.361,
+        2.739,
+        0.04800000041723251
+      ],
+      "orientation" : [
+        0.0,
+        0.0,
+        1.0,
+        -0.017
+      ]
+    }
+  ]
+}

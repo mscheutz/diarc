@@ -1,0 +1,32 @@
+#JSGF V1.0;
+grammar actionLearning.gram;
+
+public <s>= <command> | <command_interact> |<description> | <question>| <teach> | <startover> | <look> | <grabit>;
+
+<question>= do you see (an|the) <object>;
+
+<description>= the <object> is (a|an) <object> | the <part> is the <color> part <mod> <object> |the <color> part <mod> <object> is the <part> ;
+
+<command> = [now|okay|first|then] (pickup |find|grab|release) (it | (the) <object> [<mod> <part>]) | [now|okay|first|then] move (it | the <object>) <direction> [me];
+
+<command_interact> = [now|okay|first|then] pass me the <object> [<mod> <part>];
+
+<learnable> = pass |pickup;
+
+<direction> = up|down|forward|back|toward;
+
+<teach>= [okay] i will teach you how to <learnable> [me] (the|an) <object> | that is how you <learnable> [me] [the] <object>;
+
+<object> =  object |plate |knife |it;
+
+<mod> = by the |of the;
+
+<part> = blade |handle;
+
+<color> = gray | orange;
+
+<startover>= start over;
+
+<look> = look <direction>;
+
+<grabit> = i will grab it;

@@ -1,0 +1,3049 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,start:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        7.671,
+        -24.058,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        3.587,
+        -19.318,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        11.881,
+        25.211,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        12.756,
+        26.429,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        13.632,
+        27.648,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        10.247,
+        22.938,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        9.255,
+        21.557,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        14.507,
+        28.866,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        15.382,
+        30.084,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        16.258,
+        31.302,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_11:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        17.133,
+        32.52,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_12:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        17.725,
+        30.247,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_13:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        16.85,
+        29.029,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_14:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        15.975,
+        27.811,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_15:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        14.224,
+        25.375,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_16:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        11.598,
+        21.72,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_17:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        10.723,
+        20.502,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_18:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        9.848,
+        19.284,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_19:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        11.006,
+        23.993,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_20:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        18.601,
+        31.465,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_21:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        8.972,
+        18.066,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_22:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        7.504,
+        19.121,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_23:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        8.38,
+        20.339,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.956,
+        0.295
+      ]
+    },
+    {
+      "refId": "location_24:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        8.288,
+        -25.425,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_25:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        8.906,
+        -26.792,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_26:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        9.523,
+        -28.159,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_27:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        7.054,
+        -22.69,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_28:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        10.14,
+        -29.526,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_29:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        10.757,
+        -30.893,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_30:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        11.375,
+        -32.26,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_31:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        11.992,
+        -33.627,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_32:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        9.76,
+        -32.989,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_33:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        9.143,
+        -31.622,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_34:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        8.525,
+        -30.255,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_35:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        7.291,
+        -27.521,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_36:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        5.439,
+        -23.419,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_37:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        4.822,
+        -22.052,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_38:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        4.205,
+        -20.685,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_39:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        7.908,
+        -28.888,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_40:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        10.377,
+        -34.356,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_41:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        5.202,
+        -18.589,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_42:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        5.819,
+        -19.956,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_43:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        -33.643,
+        3.375,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_44:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        -35.136,
+        3.524,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_45:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        -36.628,
+        3.673,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_46:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        -30.658,
+        3.077,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_47:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        -29.165,
+        2.928,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_48:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        -38.121,
+        3.822,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_49:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        -39.614,
+        3.971,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_50:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        -41.106,
+        4.12,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_51:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        -42.599,
+        4.269,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_52:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        -40.927,
+        5.918,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_53:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        -39.434,
+        5.769,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_54:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        -37.941,
+        5.62,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_55:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        -34.956,
+        5.322,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_56:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        -30.479,
+        4.876,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_57:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        -28.986,
+        4.727,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_58:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        -27.493,
+        4.578,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_59:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        -36.449,
+        5.471,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_60:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        -32.151,
+        3.226,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_61:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        -42.419,
+        6.067,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_62:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        -26.001,
+        4.429,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_63:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        -26.18,
+        2.63,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_64:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        -27.673,
+        2.779,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.733,
+        -0.68
+      ]
+    },
+    {
+      "refId": "location_65:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        6.056,
+        -24.787,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_66:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        -33.464,
+        5.174,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_67:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        12.473,
+        22.938,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_68:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        13.349,
+        24.157,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_69:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        15.099,
+        26.593,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.295,
+        0.956
+      ]
+    },
+    {
+      "refId": "location_70:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        6.436,
+        -21.323,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.18,
+        -0.984
+      ]
+    },
+    {
+      "refId": "location_71:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        6.674,
+        -26.154,
+        -0.026
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.984,
+        -0.18
+      ]
+    },
+    {
+      "refId": "location_72:location",
+      "variable": "X:location",
+      "properties": [
+        "experimentStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        -31.971,
+        5.025,
+        0.048
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.68,
+        0.733
+      ]
+    },
+    {
+      "refId": "location_73:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_74:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_75:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_76:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_77:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_78:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_79:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_80:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_81:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_82:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_83:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_84:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_85:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_86:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_87:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_88:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_89:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_90:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_91:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_92:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_93:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_94:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_95:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_96:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_97:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_98:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_99:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_100:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_101:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_102:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_103:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_104:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_105:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_106:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_107:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_108:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_109:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_110:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_111:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_112:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_113:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_114:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_115:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_116:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_117:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_118:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_119:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_120:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_121:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_122:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_123:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eight:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_124:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_125:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_126:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_127:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_128:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,four:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_129:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,seven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_130:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_131:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,two:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_132:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_133:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,five:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_134:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_135:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_136:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_137:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,nine:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_138:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_139:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,one:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_140:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,eleven:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_141:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,beta:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,three:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_142:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,gamma:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,six:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_143:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,left:direction)",
+        "wingid(X:location,twelve:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_144:location",
+      "variable": "X:location",
+      "properties": [
+        "prepStation(X:location)",
+        "in(X:location,alpha:area)",
+        "side(X:location,right:direction)",
+        "wingid(X:location,ten:id)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_5:location",
+      "variable": "X",
+      "properties": [
+        "corner(X)"
+      ],
+      "position": [
+        10.6569410609048,
+        2.809707053364581,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.09467256447504682,
+        0.995508465828251
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X",
+      "properties": [
+        "booth right(X)"
+      ],
+      "position": [
+        -0.2559321935459936,
+        0.8524766792580308,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.014459433911911446,
+        0.999895456920846
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "booth left(X)"
+      ],
+      "position": [
+        1.234301143175667,
+        0.8584493965693598,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9127355753677368,
+        0.4085508162494925
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "booth front(X)"
+      ],
+      "position": [
+        0.3318662774297172,
+        1.874431359106025,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.6758087602237123,
+        0.7370770106338204
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "trash cans(X)"
+      ],
+      "position": [
+        -10.47250160211764,
+        2.706624780175863,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.8653036301526944,
+        0.5012480699659292
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        0.001117428567727046,
+        0.7474430930195788,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.6899048849684242,
+        0.7239000274186383
+      ]
+    }
+  ]
+}

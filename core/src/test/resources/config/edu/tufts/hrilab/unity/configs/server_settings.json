@@ -1,0 +1,34 @@
+{
+    "tubeOnDecayRate" : 1.0,
+    "tubeOffDecayRate" : 0.5,
+    "tubeRepairRate" : 5.0,
+    "trials" : [
+        {
+            "seconds" : 3000,
+            "robots" : 1,
+            "survey" : true,
+            "tubes" : [
+                {
+                    "time" : 0,
+                    "tube" : "Alpha:L:5"
+                },
+                {
+                    "time" : 70,
+                    "tube" : "Beta:R:1"
+                }
+            ],
+            "rovers" : [
+                {
+                    "time": 20,
+                    "specificity": 0,
+                    "position": "radiation:A:1"
+                },
+                {
+                    "time": 40,
+                    "specificity": 0,
+                    "position": "radiation:B:2"
+                }
+            ]
+        }
+    ]
+}

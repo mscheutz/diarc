@@ -1,0 +1,11 @@
+to; PP/LREF; #x.$x
+from; PP/LREF; #x.$x
+bring; VERBDT; escortToLocation
+show; VERBDT; escortToLocation
+bring; VERBDTCOMPLEX; escortToLocation
+arena; LOC; arena
+back elevator; LOC; back elevator
+kitchen; LOC; 430 kitchenette
+hri lab; LOC; 481b hri lab; DEFINITE
+bathroom; LOC; bathroom
+restroom; LOC; bathroom

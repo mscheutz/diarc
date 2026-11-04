@@ -1,0 +1,183 @@
+%save this pose as; C/LIT*; #x.recordCameraPoseAsk(?ADDRESSEE,$x)
+save this post as; C/LIT*; #x.recordCameraPoseAsk(?ADDRESSEE,$x)
+save this cuz as; C/LIT*; #x.recordCameraPoseAsk(?ADDRESSEE,$x)
+
+%go to pose; C/REF; #x.gotoCamerapose(?ADDRESSEE,$x)
+go to post; C/REF; #x.gotoCameraPose(?ADDRESSEE,$x)
+go to toast; C/REF; #x.gotoCameraPose(?ADDRESSEE,$x)
+go to coast; C/REF; #x.gotoCameraPose(?ADDRESSEE,$x)
+
+%save location at relative coordinates; (((C/LOC)/AS)/NUM)/NUM ; #x#y#a#l.saveLocation(?ADDRESSEE,$l,$x,$y)
+safe location at relative coordinates; (((C/LOC)/AS)/NUM)/NUM ; #x#y#a#l.saveLocation(?ADDRESSEE,$l,$x,$y)
+
+%with arm two; ARM ; two
+with arm to; ARM ; two
+
+%mm; VAL\NUM ; #x.val($x,mm)
+millimeter; VAL\NUM ; #x.val($x,mm)
+millimeters; VAL\NUM ; #x.val($x,mm)
+%millinewton meter; VAL\NUM ; #x.val($x,mNm)
+millinewton meters; VAL\NUM ; #x.val($x,mNm)
+meters; VAL\NUM ; #x.val($x,mNm)
+ml meters; VAL\NUM ; #x.val($x,mNm)
+m; VAL\NUM ; #x.val($x,mNm)
+mm meters; VAL\NUM ; #x.val($x,mNm)
+ml; VAL\NUM ; #x.val($x,mNm)
+millie newton meters; VAL\NUM ; #x.val($x,mNm)
+millie newton meter; VAL\NUM ; #x.val($x,mNm)
+
+%fill; ((C/REF)/FROM)/REF; #x#from#y.fill($x,$y)
+filled; ((C/REF)/FROM)/REF; #x#from#y.fill($x,$y)
+feel; ((C/REF)/FROM)/REF; #x#from#y.fill($x,$y)
+build; ((C/REF)/FROM)/REF; #x#from#y.fill($x,$y)
+
+%advance the conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+then advance the conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+reverse the conveyor belt; C ; moveConveyorBackward(?ADDRESSEE)
+advanced the conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+then advanced the conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+advanced conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+reversed the conveyor belt; C ; moveConveyorBackward(?ADDRESSEE)
+%advance the conveyor; C ; conveyorForward()
+%reverse the conveyor; C ; conveyorReverse()
+
+%lunch box number one; RECIPE ; lunchbox_one
+lunchbox number one; RECIPE ; lunchbox_one
+lunch box number 1; RECIPE ; lunchbox_one
+lunchbox number 1; RECIPE ; lunchbox_one
+
+%lunch box number two; RECIPE ; lunchbox_two
+lunchbox number two; RECIPE ; lunchbox_two
+lunch box number 2; RECIPE ; lunchbox_two
+lunchbox number 2; RECIPE ; lunchbox_two
+
+%standard medkit; RECIPE; standardMedkit
+standard method; RECIPE; standardMedkit
+standard med kit; RECIPE; standardMedkit
+
+%compartment 1; COMPARTMENT; compartmentOne
+compartment one; COMPARTMENT; compartmentOne
+%compartment 2; COMPARTMENT; compartmentTwo
+compartment two; COMPARTMENT; compartmentTwo
+compartment to; COMPARTMENT; compartmentTwo
+compartment too; COMPARTMENT; compartmentTwo
+%compartment 3; COMPARTMENT; compartmentThree
+compartment three; COMPARTMENT; compartmentThree
+%compartment 4; COMPARTMENT; compartmentFour
+compartment four; COMPARTMENT; compartmentFour
+%compartment 5; COMPARTMENT; compartmentFive
+compartment five; COMPARTMENT; compartmentFive
+
+%pose; VAL/RN; #p.pose($p); DEFINITE
+post; VAL/RN; #p.pose($p); DEFINITE
+pause; VAL/RN; #p.pose($p); DEFINITE
+pairs; VAL/RN; #p.pose($p); DEFINITE
+pearse; VAL/RN; #p.pose($p); DEFINITE
+
+%hole; JOB; holeDet
+hold; JOB; holeDet
+whole debt; JOB; holeDet
+hole det; JOB; holeDet
+hole debt; JOB; holeDet
+holds; JOB; holeDet
+hold at; JOB; holeDet
+holds at; JOB; holeDet
+%cbDet; JOB; cbDet
+c b det; JOB; cbDet
+c b debt; JOB; cbDet
+cb debt; JOB; cbDet
+cb de; JOB; cbDet
+cb; JOB; cbDet
+
+%align with; C/REF; #s.alignWith(?ADDRESSEE,$s)
+a line with; C/REF; #s.alignWith(?ADDRESSEE,$s)
+
+%m3 screw; SCREWTYPE; m3
+and three screw; SCREWTYPE; m3
+and three; SCREWTYPE; m3
+
+%m3 hole; RN; m3; VAR
+and three holes; REF; m3Hole; DEFINITE
+and three holes; DESC; m3Hole
+%deep m3 hole; DESC; deepM3
+
+%deep m3; SCREWTYPE; deepM3
+deepm3; SCREWTYPE; deepM3
+
+
+nf32 sv; RN; nf32sv; VAR
+nf32-sv; RN; nf32sv; VAR
+nf 32sv; RN; nf32sv; VAR
+nf 32 sv; RN; nf32sv; VAR
+nf-32 sv; RN; nf32sv; VAR
+f-32 sv; RN; nf32sv; VAR
+n of 32 sv; RN; nf32sv; VAR
+
+nf32 sv; DESC; nf32sv
+nf32-sv; DESC; nf32sv
+nf 32sv; DESC; nf32sv
+nf 32 sv; DESC; nf32sv
+nf-32 sv; DESC; nf32sv
+f-32 sv; DESC; nf32sv
+n of 32 sv; DESC; nf32sv
+
+nv30 fau; RN; nv30fau; VAR
+nv-30fau; RN; nv30fau; VAR
+nv 30fau; RN; nv30fau; VAR
+nv 30 fau; RN; nv30fau; VAR
+nv-30 fau; RN; nv30fau; VAR
+v-30 fau; RN; nv30fau; VAR
+n of 30 fau; RN; nv30fau; VAR
+
+nv30 fau; DESC; nv30fau
+nv-30fau; DESC; nv30fau
+nv 30fau; DESC; nv30fau
+nv 30 fau; DESC; nv30fau
+nv-30 fau; DESC; nv30fau
+v-30 fau; DESC; nv30fau
+envy 30 fau; DESC; nv30fau
+n of 30 fau; DESC; nv30fau
+
+
+%nf-32sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf32sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf32 sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf32-sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf 32sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf 32 sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf-32 sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%f-32 sv circuit breaker; RN; nf32-sv circuit breaker; VAR
+%nf-32sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf32sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf32 sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf32-sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf 32sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf 32 sv circuit breaker; DESC; nf32-sv circuit breaker
+%nf-32 sv circuit breaker; DESC; nf32-sv circuit breaker
+%f-32 sv circuit breaker; DESC; nf32-sv circuit breaker
+
+
+%% Homophones added through the GUI %%
+%there are
+the air; (((VAL/AREA)/AT)/DN)/NUM; #n#d#t#a.val(observableAt($n,$d,$a))
+%pose
+pause; VAL/RN; #p.pose($p)
+
+%setup poses; C; init(?ADDRESSEE)
+set up poses; C; init(?ADDRESSEE)
+
+%n v face; JOB; nvDet
+nv face; JOB; nvDet
+envy face; JOB; nvDet
+
+%robot two; ADDRESSABLE; robottwo:agent
+robot 2; ADDRESSABLE; robottwo:agent
+robot2; ADDRESSABLE; robottwo:agent
+
+%mounting hole; DESC; deepM3Hole
+%mounting holes; DESC; deepM3Hole
+mountain holes; DESC; deepM3Hole
+mountain hole; DESC; deepM3Hole
+
+%advance the conveyor belt; C ; moveConveyorForward(?ADDRESSEE)
+advance the conveyor bel; C ; moveConveyorForward(?ADDRESSEE)

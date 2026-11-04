@@ -1,0 +1,75 @@
+#JSGF V1.0;
+grammar jsgf.vision_command;
+
+public <main> = [rudy] <wit> | [rudy] <tia> | [rudy] <dys> | [rudy] <wdys> | [rudy] <look> | [rudy] <hmo> | [rudy] <hmo2> | [rudy] <wno> | [rudy] <doare> | [rudy] <rel> | [rudy] <rel2> | [rudy] <relrudy1> | [rudy] <relrudy2> | [rudy] <wi> | [rudy] <wi2> | [rudy] <wof> | [rudy] <send> | [rudy] <reading> | [rudy] <stop> | [rudy] <act_cmd> | [rudy] <gtp> ;
+
+<wof> = watch out for <art> <obstacle>;
+
+<obstacle> = box;
+
+<send> = transmit [data] | send [data];
+
+<reading> = take a reading | get a reading;
+
+<stop> = stop | halt;
+
+<act_cmd> = <start_cmd> <dir>;
+
+<dir> = forward | straight | left | right | back | backward | backwards | up | down;
+
+<start_cmd> = go | move | head | turn | walk | veer | rotate | travel;
+
+<gtp> = <start_cmd> to point <digit> ;
+
+<wit> = what is this;
+
+<tia> = this is <art> <object>;
+
+<dys> = do you see [any] <objects>;
+
+<wdys> = what do you see;
+
+<look> = look <direction> [<degree_degrees>];
+<degree_degrees> = <degree> degrees;
+
+<hmo> = how many <objects> have you seen;
+
+<hmo2> = how many <objects> <doare>;
+
+<wno> = what number of <objects> <doare>;
+
+<doare> = do you see | are there;
+
+<rel> = [<frompersp>] is <art> <object> <reldir> <object>;
+
+<rel2> = is <art> <object> <reldir> <art> <object> [<frompersp>];
+
+<relrudy1> = [<frompersp>] is <art> <object> <reldirnoof>;
+
+<relrudy2> = is <art> <object> <reldirnoof> [<frompersp>];
+
+<wi> = [<frompersp>] where is <art> <object>;
+
+<wi2> = where is <art> <object> [<frompersp>];
+
+<reldir> = to the left of | to the right of | in front of | behind | above | below;
+
+<reldirnoof> = to the left | to the right | in front | behind | above | below;
+
+<frompersp> = from the perspective of <art> <object>;
+
+<art> = a | an | the;
+
+<direction> = left | right | forward | back | up | down;
+
+<object> = folder | wireless | program;
+
+<objects> = folders | wireless | programs;
+
+<digit> = one | two | three | four | five | six | seven | eight | nine;
+
+<teens> = ten | eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen | eighteen | nineteen;
+
+<tens> = twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety;
+
+<degree> = <digit> | <teens> | <tens> [<digit>] | <digit> hundred [and] [<tens> | <tens> <digit> | <digit>];

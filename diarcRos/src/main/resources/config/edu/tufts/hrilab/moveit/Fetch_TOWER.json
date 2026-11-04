@@ -1,0 +1,136 @@
+{
+  "configName": "Fetch TOWER",
+  "baseLinkString": "base_link",
+  "pointingFrame": "pointing_link",
+  "maxMoveToAttempts": 10,
+  "maxNodeCheckCount": 10,
+  "positionTolerance": 0.005,
+  "graspApproachOffset": 0.26,
+  "graspContactOffset": 0.1787,
+  "maxPlanningTime": 20.0,
+  "armReach": 0.85,
+  "maxGripperPosition": 0.1,
+  "allowDisableCollisionAvoidance": true,
+  "speedFactor": 0.3,
+  "defaultGroupName": "arm",
+  "groups": [
+    {
+      "groupName": "arm",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.fetch.FetchGripper"
+    },
+    {
+      "groupName": "arm_with_torso",
+      "jointNames": [
+        "torso_lift_joint",
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.fetch.FetchGripper"
+    },
+    {
+      "groupName": "presser",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "presser_link"
+    },
+    {
+      "groupName": "presser_with_torso",
+      "jointNames": [
+        "torso_lift_joint",
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "presser_link"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "tuck",
+      "poseGroup": "arm",
+      "jointStates": [
+        1.32,
+        1.4,
+        -0.2,
+        1.72,
+        0.0,
+        1.5,
+        -1.57079632679
+      ]
+    },
+    {
+      "poseName": "raised",
+      "poseGroup": "arm",
+      "jointStates": [
+          1.5633691132843017,
+          -0.173418873314209,
+          -2.18021378616333,
+          1.7557802787194825,
+          1.332968086216736,
+          2.151925930529785,
+          -0.31718018972625733
+      ]
+    },
+    {
+      "poseName": "start",
+      "poseGroup": "arm",
+      "jointStates": [
+      1.5665373720947267, -0.84563327622406, 2.959672290463257, -0.6501153989245605, 0.09303266534805298, -1.7758210324157715, -0.46606128257217405
+      ]
+    },
+    {
+      "poseName": "prepare",
+      "poseGroup": "arm",
+      "jointStates": [
+        1.603,
+        0.065,
+        -0.020,
+        -1.762,
+        0.159,
+        -0.361,
+        -0.099
+      ]
+    }
+  ],
+  "localStaticTransforms": [
+    {
+      "parent": "torso_lift_link",
+      "child": "pointing_link",
+      "x": 0.0,
+      "y": 0.5,
+      "z": 1,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 0
+    }
+  ],
+  "collisions": [
+  ]
+}

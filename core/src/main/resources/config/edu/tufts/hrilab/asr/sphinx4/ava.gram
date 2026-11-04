@@ -1,0 +1,82 @@
+#JSGF V1.0;
+grammar ava.gram;
+
+public <s> = [ava] <VALID> | <VALID> | <NONVALID>;
+
+
+<VALID> = [MODAL] [MODAL] <COMMAND> | <HARD_CODED_COMMANDS> | <STATEMENT> | <REPLY>;
+<COMMAND> =  <ESCORT_COMMAND> | <MOVE> <PREP> <LREF> | <DELVER> <REF> <PREP> <LREF>;
+<HARD_CODED_COMMANDS> = go home | hey ava | find person | battery level | look at moving | long demo | please stop;
+<REPLY> = yes | no;
+<STATEMENT> = <AGENT> is <AT_PREP> <LREF>;
+
+<MOVE> = drive | go | get | move;
+<ESCORT_COMMAND> = <ESCORT> (<HUMAN> [<AT_PREP> <LREF>] | <SPEAKER>) <PREP> <LREF> | show (<HUMAN> [<AT_PREP> <LREF>] | <SPEAKER>) [<VP> | <NP>] <LREF>;
+<ESCORT> = bring | drive | escort | guide | get | lead | take | transport;
+<DELVER> = bring | carry | deliver | get | move | take | transport;
+
+<MODAL> = are you able to | would you mind | could you go and | could you | can you | is it possible to |
+          id like you to | please;
+
+
+<NOUN> = <LREF> | <REF> | <AGENT>;
+
+<REF> = the <RN>; // an <RN> | a <RN> |
+<RN> = <THING>;
+<THING> = box | package;
+
+<VP> = how to get <PREP> | how to reach | how to access;
+<NP> = (directions | the directions | the way | the path | the route) <PREP> | the location of;
+
+<AGENT> = <SPEAKER> | <HUMAN>;
+<SPEAKER> = me;
+<HUMAN> = matt | chris | evan;
+
+<PREP> = to;
+<AT_PREP> = in | around | near | by | at | inside | besides | adjacent | from | in front of;
+
+<LREF> = the <LN> | <JCC_LREF> | <ROOM>; // <LREF> | <LAB_LREF>
+<LN> = <LOC>;
+<LOC> = <JCC_LOC>; // | <LAB_LOC>;
+
+// <LAB_LOC> = arena | back door | bullpen | coffee maker | exit | test | elevator | dock;
+// <LAB_LREF> = cramer;
+
+<JCC_LOC> = <JCC_LAB> | <JCC_OFFICE> | <JCC_ROOMS> | <JCC_OFFICE_HOURS> | /* dock  | */ [<ADJ>] elevator [<PP>] | [<ADJ>] stairs [<PP>] |
+            kitchenette | (kitchen | sink) [area] | construction [zone | site | area] | utility corridor | storage |
+            bathroom | restroom;
+<JCC_LREF> = stairs (a | b) | <PROF> office |<JCC_OFFICE_HOURS> | <PROF_WITH_LAB> lab | room <ROOM_NUMBER>;
+
+<JCC_LAB> = (h r i | nat | mu lip | able | robotics) lab | lab space;
+<JCC_OFFICE> = ([c s] admin) office;
+<JCC_ROOMS> = (conference | meeting | huddle | [levy [family]] seminar) room;
+<JCC_OFFICE_HOURS> = [c s | comp] <CLASS_NUMBER> office hours;
+
+<CLASS_NUMBER> = <THREE_DIGIT_NUMBER> | <TWO_DIGIT_NUMBER>;
+<ROOM_NUMBER> = <LETTERED_ROOM_NUMBER> | <THREE_DIGIT_NUMBER>;
+
+<ZERO_TO_NINE> = zero | oh | one | two | three | four | five | six | seven | nine;
+<TEN_TO_NINETEEN> = ten | eleven | twelve | thirteen | fourteen |fifteen | sixteen | seventeen | eighteen | nineteen;
+<TENS> = twenty | thirty | forty | fifty | sixty  | seventy | eighty | ninety;
+<TWO_DIGIT_NUMBER> = <ZERO_TO_NINE> <ZERO_TO_NINE> | <TEN_TO_NINETEEN> | <TENS> [<ZERO_TO_NINE>];
+//<THREE_DIGIT_NUMBER> = <ZERO_TO_NINE> <TWO_DIGIT_NUMBER> | <ZERO_TO_NINE> hundred <TWO_DIGIT_NUMBER>;
+<THREE_DIGIT_NUMBER> = (four | one) [hundred] <TWO_DIGIT_NUMBER>;
+<LETTERED_ROOM_NUMBER> = ((four four (zero | oh)) | four hundred forty | four forty) <LETTER>;
+<LETTER> = a | b | c | d | e | f | g | h | i | j | k | l;
+
+<PROF_WITH_LAB> = matthias | /*fahads | jivkos |*/elaine's | professor (/*scheutzs | dogars | sinapovs |*/ shorts);
+<PROF> = matthias | /*milod's | jivko's | saeed's | vladimir's |*/ marty's | norman's | karen's | /* raja's |*/
+         elaine's | /* fahad's |*/ megan's | diane's | noah's | marks | davids | richards | professor (/*scheutz's |
+         kazerounian's | sinapov's | mehraban's | podolskii's |*/ allens | ramseys | edwards | /*sambasivan's |*/
+         shorts | /*dogar's | monaghan's | souvaine's | mendelsohn's |*/ monroe's | /*sheldon's | lillethun's |*/
+         townsend's);
+<ADJ> = back | rear | front;
+<PP> = in the <ADJ>;
+
+<FIRST_NAME> = evans;
+
+<ROOM> = <FIRST_NAME> office;
+
+<NONVALID> = <disfluencies>;
+
+<disfluencies> = um | uh | ah;

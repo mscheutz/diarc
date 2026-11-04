@@ -1,0 +1,23 @@
+#JSGF V1.0;
+grammar actionLearning.gram;
+
+public <s>= <command> |<description> | <question>| <teach>| <startover> | <fragment> ;
+
+<question>= do you see (a|an|the) [<object>];
+
+<description>= this <object> is (a) | [the] is the <color> part <mod> <object> |the <color> part <mod> <object> is [the] ;
+
+<command> = [now|okay|first|then] (find|grab|release) the| [now|okay|first|then] move the [<direction>];
+
+<direction> = up|down|forward|back;
+
+<teach>= i will teach you how to [the] | that is how you [the];
+
+<object> =  object |<unknown> ;
+<mod> = by [the] | of [the] ;
+
+<color> = gray | orange;
+
+<startover>= start over;
+
+<fragment>=  the [now |by the];

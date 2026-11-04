@@ -1,0 +1,30 @@
+init
+-
+when is the last time you ran experiment 5
+was it successful
+has power been restored to experiment station alpha right four
+had the power outage not occurred would yesterday's run of experiment 5 succeeded?
+-
+how many experiments are currently scheduled
+how long would it take to execute experiment 3 right now
+yes
+-
+go to experiment station gamma right four
+describe how to run experiment 8
+-
+run experiment 9 is like run experiment 4
+replace go to experiment station beta left four with go to experiment station gamma right five
+replace check that tube temperature is 27 degrees with check that tube pressure is 23 psi
+that is all
+robot one run experiment 9
+-
+add new notification broken
+every time an experiment bay breaks
+the number of scheduled experiments
+the duration of all currently running experiments
+that is all
+-
+what are you doing now
+how long will they take to complete
+how many experiments are in the queue
+add repair experiment station alpha left three to the top of the schedule

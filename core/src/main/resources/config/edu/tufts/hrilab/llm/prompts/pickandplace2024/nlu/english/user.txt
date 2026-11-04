@@ -1,0 +1,192 @@
+Please respond with three pieces of information corresponding to the user input that I will provide after fully giving instructions. First, I would like to know the equivalent semantic form understandable by the system. Second, I would like to know the type of input as categorized by the system. Lastly, I would like a confidence value ranging between 0-100 for how confident you are that your output is a correct representation of the user's input. As an example, given the semantics exampleSemantics(exampleArguments), input type VAL, and confidence value 80, I would like the results in the following format:
+
+{"Semantics":"exampleSemantics(exampleArguments)","Input Type":"VAL","Confidence":"80"}
+
+A confidence value below 50 will indicate to the user that you do not believe there is a matching valid parse of the user's input, or that the input is ambiguous enough that it could possibly mean multiple different things. A value increasing above 50 shows that you are confident in your result and don't believe there is any ambiguity.
+
+Examples of this task being performed correctly, potentially along with additional notes you should not produce, are as follows:
+###
+
+Example 1:
+Input: Can you please navigate to location one
+Output: {"Semantics":"goToPose(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Example 1 Notes: The user is asking you to navigate to the location one. This matches the description of the known goToPose(?actor,?pose:pose) action signature and location one is a known pose to the system. There are no similar actions known to the system so there is no ambiguity. The above format template can be populated with the corresponding signature details and parameterization with a high confidence.
+
+Example 2:
+Input: get me the block at location one
+Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"20"}
+Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the object which is currently at location one, or to make it so the object you are holding gets to location one. Picking up the object at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
+
+Example 3:
+Input: pick up a ball
+Output: {"Semantics":"pickUp(robotone,ball:physobj)","Input Type":"INSTRUCT","Confidence":"0",}
+Example 3 Notes: Confidence is low for example 3 because, while it is fairly clear what the user is asking, "ball" is not listed as a known physobj. The ?object:physobj argument therefore cannot be populated with "ball" and the action signature is left incomplete. This logical result is therefore invalid and should be associated with a low confidence.
+
+Example 4:
+Input: let me know what is at location one
+Output: {"Semantics":"describeObjectsAt(robtone:agent,location one:pose)","Input Type":"QUESTION","Confidence":"80"}
+
+Example 5:
+Input: I took the red block and moved it to location two
+Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+
+Example 6:
+Input: the red one
+Output: {"Semantics":"objectType(red block:physobj)","Input Type":"REPLY","Confidence": 90"}
+
+Example 7:
+Input: pick up the block
+Output: {"Semantics":"pickUp(robotone)","Input Type":"INSTRUCT","Confidence":"70"}
+Example 7 Notes: The user is asking you to pick up a block. An argument is specified to be picked up, block, but it is not specified which exact block the user wants you to pick up. Since "block" is not a valid physobj, you cannot use the pickUp(?actor,?object:physobj) semantics. Normally, this would mean there is no valid parse. But, given the context of the robots task and the fact that an action exists which generally looks for and picks up an object, the chosen semantics ignore "the block" and use the action which matches the intent of the command: pickUp(?actor).
+
+Example 8:
+Input: open gripper
+Output: {"Semantics":"openGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 9:
+Input: close gripper
+Output: {"Semantics":"closeGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 10:
+Input: detect the red block
+Output: {"Semantics":"detectObject(robotone, red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 11:
+Input: pick up the block
+Output: {"Semantics":"pickUp(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 12:
+Input: pick up the green block
+Output: {"Semantics":"pickUp(robotone,green block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 13:
+Input: put down the block
+Output: {"Semantics":"putDown(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 14:
+Input: put down the red block
+Output: {"Semantics":"putDown(robotone,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 15:
+Input: move the yellow block from location one to location two
+Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,location one:pose,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 16:
+Input: place the orange block at location three
+Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,location three:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 17:
+Input: place the block down at location one
+Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 18:
+Input: get the red block to location two
+Output: {"Semantics":"getObjectTo(robotone,red block:physobj,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 19:
+Input: suspend current task
+Output: {"Semantics":"suspendSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 20:
+Input: resume current task
+Output: {"Semantics":"resumeSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 21:
+Input: cancel current task
+Output: {"Semantics":"cancelSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 22:
+Input: cancel all tasks
+Output: {"Semantics":"cancelAllCurrentGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 23:
+Input: the green block is not at location two
+Output: {"Semantics":"not(at(green block:physobj,location two:pose))","Input Type":"STATEMENT","Confidence":"100"}
+
+Example 24:
+Input: eric is trusted
+Output: {"Semantics":"trusted(eric)","Input Type":"STATEMENT","Confidence":"100"}
+
+Example 25:
+Input: eric is a supervisor
+Output: {"Semantics":"supervisor(eric)","Input Type":"STATEMENT","Confidence":"100"}
+
+Example 26:
+Input: pete is not an admin
+Output: {"Semantics":"not(admin(pete))","Input Type":"STATEMENT","Confidence":"100"}
+
+Example 27:
+Input: where is the red block
+Output: {"Semantics":"describeObjectPose(robotone,red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 28:
+Input: what are the locations of all the blocks
+Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 29:
+Input: how many objects are at location two
+Output: {"Semantics":"describeNumberOfObjectsAt(robotone,location two:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 30:
+Input: are any objects at location three
+Output: {"Semantics":"objectsAt(location three:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 31:
+Input: is yellow block at location four
+Output: {"Semantics":"at(yellow block:physobj,location four:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 33:
+Input: do you see the red block
+Output: {"Semantics":"see(red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 34:
+Input: do you know how to put down the red block
+Output: {"Semantics":"knowHow(robotone,to(putDown(robotone,red block:physobj)))","Input Type":"QUESTION","Confidence":"100"}
+
+Example 35:
+Input: what is your current task
+Output: {"Semantics":"describeCurrentGoal(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 36:
+Input: what are your pending tasks
+Output: {"Semantics":"describePendingGoals(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 37:
+Input: nevermind
+Output: {"Semantics":"abort(question)","Input Type":"REPLY","Confidence":"100"}
+
+Example 38:
+Input: no object
+Output: {"Semantics":"objectType(none)","Input Type":"REPLY","Confidence":"100"}
+
+Example 39:
+Input: nowhere
+Output: {"Semantics":"pose(none)","Input Type":"REPLY","Confidence":"100"}
+
+Example 40:
+Input: yes
+Output: {"Semantics":"val(yes)","Input Type":"REPLY","Confidence":"100"}
+
+Example 41:
+Input: no
+Output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
+
+Example 42:
+Input: swap the red block and the yellow block
+Output: {"Semantics":"swapObjects(robotone,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 43:
+Input: where are you now
+Output: {"Semantics":"describeCurrentPose(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Example 44:
+Input: is eric a supervisor
+Output: {"Semantics":"know(robotone,supervisor(eric))","Input Type":"QUESTION","Confidence":"100"}
+
+Example 44:
+Input: is eric an admin
+Output: {"Semantics":"know(robotone,admin(eric))","Input Type":"QUESTION","Confidence":"100"}
+###
+
+Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with the Output json as shown in the examples. The new input you are tasked with translating is:
+Input: "%input"

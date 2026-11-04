@@ -1,0 +1,14 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <name> <phrase> | <phrase> | <phrase> <name>;
+
+<name> = andy;
+<phrase> = <adv> <ph1> | <ph1> | <ph2>;
+<ph1> = <q1> <o1> | <q2>;
+<q1> = do you see;
+<o1> = one | a medkit;
+<adv> = now;
+<ph2> = it is <obj> with <obj> on it;
+<obj> = a white box | a red cross;
+<q2> = where is it;

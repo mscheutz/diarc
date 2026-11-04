@@ -1,0 +1,14 @@
+#JSGF V1.0;
+grammar jsgf.julydemo;
+
+public <utterance> = <s>;
+
+<prp> = you | i | me | it;
+<meas> = meter;
+
+<inp> = of <prp>;
+<cdp> = one <meas>;
+<rbp> = within <cdp> <inp>;
+
+<vp> = follow <prp> | stay <rbp> | should <vp> | to <vp> | turn <vp> ;
+<s> = <prp> (want | means that| means) <prp> <vp>;

@@ -1,0 +1,22 @@
+#JSGF V1.0;
+grammar jsgf.junedemo;
+
+public <utterance> = [ok] <s> | <np>;
+
+<in> = for | in | to;
+
+<prp> = you;
+
+<dt> = a | an | all;
+<jj> = new | suspicious;
+<nn> = order | camera | nav point four | objects;
+
+<vb> = I have | go to | inspect | come | I'll get;
+
+<dir> = back;
+
+<np> = [<dt>] [<jj>] <nn>;
+<pp> = <in> (<prp> | <np>);
+
+<cc> = and;
+<s> = <vb> <dir> | <vb> <np> [<pp>] | <vb> <prp> <np> | <s> <cc> <s>;

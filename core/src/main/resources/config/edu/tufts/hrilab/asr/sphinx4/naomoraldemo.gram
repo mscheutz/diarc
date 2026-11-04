@@ -1,0 +1,46 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <startcommand> <question> | <startcommand> <question> <endcommand> | <question> | <question> <endcommand> |  <startcommand> <command> | <command> <endcommand> | <command> | <startcommand> <command> <endcommand>| <greeting> | <startcommand> <greeting>| good | great | ok| <schafer> | <greeting> <schafer>;
+
+<startcommand> = can you please | please | can you | could you | are you going to | i need you to | i want you to | great | good | now | just | ok | schafer | <startcommand> <startcommand>;
+
+<endcommand> = please | now | schafer | <endcommand> <endcommand>;
+
+<command> = <turn> <orient> | <walk> <direction> | <sitdown> | <getup> | <stop> | <armact> <your> <orient> <appendage> | <armact> <your> <appendage> | <armact> <your> <arms> | <walk> | wave;
+
+<question>= <see> | <doyouhaveaname> | <trust> | <safe>;
+
+<turn> = turn ;
+
+<orient> = left | right;
+
+<sitdown> = crouch;
+
+<getup> = stand up | get up;
+
+<walk> = walk | move | go;
+
+<direction> = forward | backward | straight | back;
+
+<armact> = raise | lower | wave;
+
+<appendage> = arm | hand;
+
+<stop>= stop;
+
+<your>= your;
+
+<arms>= arms | hands;
+
+<doyouhaveaname> = do you have a name | what is your name | whats your name;
+
+<safe> = the obstacle is not solid | the area behind you is safe | i will catch you;
+
+<see> = can you see a face | do you see a face | do you see an obstacle | do you see support ahead;
+
+<greeting> = hello | hi | hi there | thanks | thank you | bye | good bye| good evening;
+
+<trust> = do you trust me;
+
+<schafer> = schafer;

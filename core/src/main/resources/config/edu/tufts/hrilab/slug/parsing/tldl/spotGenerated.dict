@@ -1,0 +1,24 @@
+bottle;REF; bottle:physobj;DEFINITE
+bottle;RN; bottle:physobj;VAR
+bottle;DESC; bottle:property
+bottle;DN; bottle:property
+
+apple;REF; apple:physobj;DEFINITE
+apple;RN; apple:physobj;VAR
+apple;DESC; apple:property
+apple;DN; apple:property
+
+dock;REF; dock:location;DEFINITE
+dock;RN; dock:location;VAR
+dock;DESC; dock:property
+dock;DN; dock:property
+
+table;REF; table:location;DEFINITE
+table;RN; table:location;VAR
+table;DESC; table:property
+table;DN; table:property
+
+me;REF; me:location;DEFINITE
+me;RN; me:location;VAR
+me;DESC; me:property
+me;DN; me:property

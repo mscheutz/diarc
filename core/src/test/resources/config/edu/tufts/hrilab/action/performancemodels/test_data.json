@@ -1,0 +1,220 @@
+{
+    "goToLocation(?actor:agent,?location)": {
+        "effects": {
+            "dependent": [
+                {
+                    "effects": [
+                        "at(?actor,?location)"
+                    ],
+                    "group": "fj"
+                }
+            ],
+            "independent": []
+        },
+        "measures": {
+            "andy": {
+                "screw": {
+                    "performanceMeasures": {
+                        "effectMeasures": {
+                            "dependentMeasures": [
+                                {
+                                    "group": "fj",
+                                    "jointDistribution": [
+                                        6,
+                                        14
+                                    ]
+                                }
+                            ],
+                            "marginalMeasures": [
+                                {
+                                    "holds": 14,
+                                    "name": "at(?actor,?location)"
+                                }
+                            ]
+                        },
+                        "experience": 20,
+                        "failureSumSqDiff": 7.0,
+                        "failureTimeMean": 5.0,
+                        "failureTimeVar": 2.0,
+                        "success": 14,
+                        "successSumSqDiff": 69.0,
+                        "successTimeMean": 7.0,
+                        "successTimeVar": 3.0
+                    }
+                }
+            }
+        }
+    },
+    "look(?actor:agent,?direction)": {
+        "effects": {
+            "dependent": [
+                {
+                    "effects": [],
+                    "group": "fj"
+                }
+            ],
+            "independent": []
+        },
+        "measures": {
+            "andy": {
+                "up": {
+                    "performanceMeasures": {
+                        "effectMeasures": {
+                            "dependentMeasures": [],
+                            "marginalMeasures": []
+                        },
+                        "experience": 150,
+                        "failureSumSqDiff": 0.0,
+                        "failureTimeMean": 0.0,
+                        "failureTimeVar": 0.0,
+                        "success": 100,
+                        "successSumSqDiff": 36.0,
+                        "successTimeMean": 1.5,
+                        "successTimeVar": 0.2
+                    }
+                }
+            }
+        }
+    },
+    "openGripper(?actor:agent,?groupName)": {
+        "effects": {
+            "dependent": [
+                {
+                    "effects": [],
+                    "group": "fj"
+                }
+            ],
+            "independent": []
+        },
+        "measures": {
+            "andy": {
+                "arm": {
+                    "performanceMeasures": {
+                        "effectMeasures": {
+                            "dependentMeasures": [],
+                            "marginalMeasures": []
+                        },
+                        "experience": 100,
+                        "failureSumSqDiff": 0.01,
+                        "failureTimeMean": 0.5,
+                        "failureTimeVar": 0.025,
+                        "success": 93,
+                        "successSumSqDiff": 0.1,
+                        "successTimeMean": 0.8,
+                        "successTimeVar": 0.01
+                    }
+                }
+            }
+        }
+    },
+    "pickup(?actor:agent,?object,?arm)": {
+        "effects": {
+            "dependent": [
+                {
+                    "effects": [
+                        "grasping(?actor,?object,?arm)",
+                        "touching(?actor,?object,?arm)"
+                    ],
+                    "group": "fj"
+                }
+            ],
+            "independent": []
+        },
+        "measures": {
+            "andy": {
+                "rock": {
+                    "arm": {
+                        "performanceMeasures": {
+                            "effectMeasures": {
+                                "dependentMeasures": [
+                                    {
+                                        "group": "fj",
+                                        "jointDistribution": [
+                                            2,
+                                            0,
+                                            2,
+                                            16
+                                        ]
+                                    }
+                                ],
+                                "marginalMeasures": [
+                                    {
+                                        "holds": 18,
+                                        "name": "touching(?actor,?object,?arm)"
+                                    },
+                                    {
+                                        "holds": 16,
+                                        "name": "grasping(?actor,?object,?arm)"
+                                    }
+                                ]
+                            },
+                            "experience": 20,
+                            "failureSumSqDiff": 0.1,
+                            "failureTimeMean": 20.0,
+                            "failureTimeVar": 0.01,
+                            "success": 16,
+                            "successSumSqDiff": 57.0,
+                            "successTimeMean": 26.0,
+                            "successTimeVar": 3.0
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "place(?actor:agent,?object,?arm)": {
+        "effects": {
+            "dependent": [
+                {
+                    "effects": [
+                        "not(grasping(?actor,?object,?arm))",
+                        "not(touching(?actor,?object,?arm))"
+                    ],
+                    "group": "fj"
+                }
+            ],
+            "independent": []
+        },
+        "measures": {
+            "andy": {
+                "rock": {
+                    "arm": {
+                        "performanceMeasures": {
+                            "effectMeasures": {
+                                "dependentMeasures": [
+                                    {
+                                        "group": "fj",
+                                        "jointDistribution": [
+                                            2,
+                                            0,
+                                            2,
+                                            16
+                                        ]
+                                    }
+                                ],
+                                "marginalMeasures": [
+                                    {
+                                        "holds": 18,
+                                        "name": "not(touching(?actor,?object,?arm))"
+                                    },
+                                    {
+                                        "holds": 16,
+                                        "name": "not(grasping(?actor,?object,?arm))"
+                                    }
+                                ]
+                            },
+                            "experience": 20,
+                            "failureSumSqDiff": 0.1,
+                            "failureTimeMean": 20.0,
+                            "failureTimeVar": 0.01,
+                            "success": 16,
+                            "successSumSqDiff": 57.0,
+                            "successTimeMean": 26.0,
+                            "successTimeVar": 3.0
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

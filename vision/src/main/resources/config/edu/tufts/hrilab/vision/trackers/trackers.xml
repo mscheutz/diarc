@@ -1,0 +1,28 @@
+<!--
+Set the Trackers available to the vision system.
+
+Required:
+	type : TrackerType - must match one of 
+		the Tracker enums (case insensitive).
+
+Optional:
+	depends:
+	config : Configuration file. Relative path.
+	required : if this detector type requires a particular
+	    runtime configuration to be available.
+	    this must match one of the enums defined in the Java
+	    edu.tufts.hrilab.vision.visionproc.Requirement enum (case insensitive)
+
+example:
+	<tracker type="opentld" config="open_tld/default.txt"/>
+
+All detectors must be enclosed within the <trackers> tag.
+-->
+<trackers>
+	<tracker type="tld" required="opencv_tracking"/>
+	<tracker type="kcf" required="opencv_tracking"/>
+	<tracker type="generic"/>
+	<tracker type="cmt"/>
+	<tracker type="relation" required="depth"/>
+	<tracker type="v4r" config="../detectors/v4r/v4r.xml" required="v4r"/>
+</trackers>

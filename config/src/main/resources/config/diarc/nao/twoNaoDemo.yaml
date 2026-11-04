@@ -1,0 +1,61 @@
+component: edu.tufts.hrilab.slug.listen.ListenerComponent
+---
+component: edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent
+args:
+  dict: [templatedict.dict, templatedictLearned.dict]
+---
+component: edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent
+args:
+  pragrules: demos.prag
+---
+component: edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent
+---
+component: edu.tufts.hrilab.slug.dialogue.DialogueComponent
+---
+component: edu.tufts.hrilab.slug.nlg.SimpleNLGComponent
+---
+component: edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent
+args:
+  config: demodialogues/heteroAgentsDemo_trusted.simspeech
+  speaker: evan
+  addressee: dempster
+---
+component: edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent
+args:
+  config: demodialogues/heteroAgentsDemo_untrusted.simspeech
+  speaker: ravenna
+  addressee: dempster
+---
+component: edu.tufts.hrilab.nao.NaoComponent
+args:
+  groups: agent:dempster
+  url: 192.168.1.7
+  voice: low
+  flags: [ unsafe, doNotWakeUp]
+disableWhen: [mock]
+---
+component: edu.tufts.hrilab.nao.NaoComponent
+args:
+  groups: agent:shafer
+  url: 192.168.1.15
+  voice: high
+  flags: [ unsafe, doNotWakeUp]
+disableWhen: [mock]
+---
+component: edu.tufts.hrilab.nao.MockNaoComponent
+args:
+  groups: agent:dempster
+  obstacle: true
+enableWhen: [mock]
+---
+component: edu.tufts.hrilab.nao.MockNaoComponent
+args:
+  groups: agent:shafer
+  obstacle: true
+enableWhen: [mock]
+---
+component: edu.tufts.hrilab.action.GoalManagerComponent
+args:
+  beliefinitfile: [ demos.pl, agents/twonaoagents.pl ]
+  asl: [ core.asl, vision.asl, nao/naodemo.asl, dialogue/nlg.asl, dialogue/handleSemantics.asl, dialogue/nlu.asl ]
+  goal: listen(self)

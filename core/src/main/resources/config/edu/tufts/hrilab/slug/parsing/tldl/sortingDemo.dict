@@ -1,0 +1,60 @@
+pill bottle; RN; pillBottle:physobj ; VAR
+pill bottle; PROPERTY; pillBottle:property
+%TODO:brad: do we want this to have a semantic type?
+a; PROPERTY/PROPERTY; #x.$x
+%TODO:brad: rectify this usage of PROPERTY with DESC
+
+part; RN; part:physobj ; VAR
+part; PROPERTY; part:property
+
+
+sort; C ; sort(?ADDRESSEE)
+%sorting; C ; sort(?ADDRESSEE)
+sortieren; C ; sort(?ADDRESSEE)
+
+if;(S/THEN)/CONDITION; #c#t.if($c,$t)
+%homophone?
+%is;(C/THEN)/CONDITION; #c#t.if($c,$t)
+
+then; THEN/C; #x.then($x)
+
+the scale reads over; CONDITION/VAL; #n.itemWeightGreaterThan(?ADDRESSEE,$n)
+a scale reads over; CONDITION/VAL; #n.itemWeightGreaterThan(?ADDRESSEE,$n)
+die wage zeigt ueber ; CONDITION/VAL; #n.itemWeightGreaterThan(?ADDRESSEE,$n)
+g; VAL\NUM ; #x.$x
+grams; VAL\NUM ; #x.$x
+gramm; VAL\NUM ; #x.$x
+
+the part is longer than; CONDITION/VAL; #n.partLengthGreaterThan(?ADDRESSEE,$n)
+mm; VAL\NUM ; #x.$x
+
+otherwise; S/C; #x.else($x)
+
+run; (C/PERSISTENT)/C; #g#p.persistent(?ADDRESSEE,$g)
+as a persistent goal; PERSISTENT; persistent
+
+%start; C/C; #g.persistent(?ADDRESSEE,$g)
+
+start sorting; C; controlLoop(?ADDRESSEE)
+
+modify action; C/C; #a.modifyInteractive(?ADDRESSEE,$a)
+aendere handlung; C/C; #a.modifyInteractiveGerman(?ADDRESSEE,$a)
+
+das ist alles; VAL; mod(none)
+
+replace; (VAL/WITH)/CONDITION; #x#y.mod(replace($y,$x),none);
+ersetze; (VAL/WITH)/CONDITION; #x#y.mod(replace($y,$x),none);
+
+with; WITH/CONDITION; #x.$x
+durch; WITH/CONDITION; #x.$x
+
+%modifyinteractivetmpinput; C; modifyInteractive(?ADDRESSEE,sort(?ADDRESSEE))
+%replacementtmpinput; C; replace(itemWeightGreaterThan(100),itemWeightGreaterThan(150))
+replacementtmpinput; C; modifyAction(?ADDRESSEE,sort(?ADDRESSEE),replace(itemWeightGreaterThan(?ADDRESSEE,150),itemWeightGreaterThan(?ADDRESSEE,100)),none())
+box be; REF; box b:pose; DEFINITE
+
+%%for foodOrdering dev
+go to pose; C/REF; #x.gotopose(?ADDRESSEE,$x);
+senseandgotodetectedobject; C; senseAndGoToDetectedObject(?ADDRESSEE)
+pickup; C; pickUp(?ADDRESSEE);
+putdown; C; putDown(?ADDRESSEE)

@@ -1,0 +1,63 @@
+get the red block to location two
+location one
+----
+the yellow block is at location one
+go to location one
+pick up the yellow block
+go to location two
+put down the yellow block
+----
+pick up the block
+nevermind
+----
+the green block is at location one
+what objects do you know the locations of
+move the green block from location one to location two
+yes
+red block
+----
+place the red block down at location one
+what objects are at location two
+----
+the red block is no longer at location one
+I will teach you a new task
+task a
+get the green block to location one
+get the yellow block to location one
+pick up the green block
+put down the green block
+i am done teaching
+perform task a
+----
+----
+----
+赤いブロックを場所2にしてください
+場所1
+----
+黄色いブロックは場所1にあります
+場所1番にしてください
+黄色いブロックを拾ってください
+場所2番にしてください
+黄色いブロックを置いてください
+----
+物体を拾ってください
+何でもないです
+----
+緑色のブロックは場所1にあります
+位置を把握している物体をすべて教えてください
+緑色のブロックを場所1から場所2に移動してください
+はい
+赤いブロック
+----
+赤いブロックを場所1に置いてください
+場所2にどの物体がありますか
+---
+赤いブロックはもう場所1にありません
+課題を教えます
+課題Aと呼びます
+緑色のブロックを場所1にしてください
+黄色いブロックを場所1にしてください
+緑色のブロックを拾ってください
+緑色のブロックを置いてください
+課題の手段は以上です
+課題Aを実行する

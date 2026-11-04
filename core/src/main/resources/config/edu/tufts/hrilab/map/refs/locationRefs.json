@@ -1,0 +1,130 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+          "caddyLocation(VAR0:location)"
+      ],
+      "position": [
+        -0.277,
+        0.777,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.429,
+        0.903
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+          "screwlocation(VAR0:location)"
+      ],
+      "position": [
+        -0.999,
+        0.779,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.941,
+        0.340
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+          "smallgearlocation(VAR0:location)"
+      ],
+      "position": [
+        -0.020,
+        0.444,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.211,
+        0.977
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "largegearlocation(VAR0:location)"
+      ],
+      "position": [
+        -0.3968126159303389,
+        0.02088422456395067,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.31507301496683154,
+        0.9490674345059527
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gearboxtoplocation(VAR0:location)"
+      ],
+      "position": [
+        -0.663,
+        -0.288,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.860,
+        0.511
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "gearboxbottomlocation(VAR0:location)"
+      ],
+      "position": [
+        -0.990,
+        0.067,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.890,
+        0.455
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "dropofflocation(VAR0:location)"
+      ],
+      "position": [
+        -1.380,
+        0.264,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.887,
+        0.463
+      ]
+    }
+  ]
+}

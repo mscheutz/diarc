@@ -1,0 +1,20 @@
+setup demo
+------
+define new kit medkit
+it uses a medical caddy
+there is 1 medical caddy at table a
+it contains 2 painkillers
+there are 2 painkillers at table b
+it contains one antiseptic
+there is 1 antiseptic at table c
+it contains one bandage box
+there is 1 bandage box at table e
+that is all
+------
+assemble a medkit
+------
+deliver a medkit to alpha
+------
+------
+------
+makebandageboxobservableattablefour

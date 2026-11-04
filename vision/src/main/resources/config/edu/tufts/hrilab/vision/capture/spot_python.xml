@@ -1,0 +1,30 @@
+<!--
+Set the runtime camera capture configuration for the vision system.
+
+Required:
+	camMode: camera mode - see options below
+	imageWidth: image width in pixels
+	imageHeight: image height in pixels
+	hasStereo: is capture mode stereo
+	hasDepth: does capture mode produce depth info
+
+Optional:
+	any additional fields the particular camera mode might need
+
+NOTE: use this config:
+    1) see the README in <DIARC_HOME>vision/src/main/python/diarc/spot/
+    2) set the hostname, username, and password below
+-->
+
+<capture>
+    <camMode>BOSDYN_PYTHON</camMode>
+    <imageWidth>320</imageWidth>
+    <imageHeight>240</imageHeight>
+    <hasStereo>false</hasStereo>
+    <hasDepth>true</hasDepth>
+    <convertToRGB>true</convertToRGB>
+    <hostname>192.168.80.3</hostname>
+    <username>hrilab</username>
+<!--    <password>hrilabrulesspotphi</password>-->
+    <password>hrilabrulesspotpsi</password>
+</capture>

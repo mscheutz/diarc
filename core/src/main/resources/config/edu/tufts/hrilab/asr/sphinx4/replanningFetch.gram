@@ -1,0 +1,13 @@
+#JSGF V1.0;
+grammar replanningFetch.gram;
+
+public <s>= <teach> | <command> | <greet>;
+
+<teach>= i will teach you how to <command>  | that is how you <command>;
+<command>= [first] approach <loc> | retrieve <obj> from <loc> | [then] grab <obj> | go to <loc> | actually use <obj> | actually use <loc> | actually go to <loc>;
+<greet>= hello | goodbye;
+
+<obj>= the block;
+<loc>= the <desc> desk | pose <pose> | the start position;
+<pose>= start | raised;
+<desc>= left | right | white | brown | alpha | beta;

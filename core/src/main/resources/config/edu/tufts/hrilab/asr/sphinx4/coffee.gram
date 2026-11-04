@@ -1,0 +1,12 @@
+#JSGF V1.0;
+grammar jsgf.coffee;
+
+public <s> = <person> need <np> | could <person> get <person> <np> | there is <np> <pploc> | <location> is called <location;
+
+<location> = the hall | the breakroom | the end <pppart> | the room | <location> <pploc>;
+
+<pploc> = at <location> | in <location> | to the right;
+<pppart> = of <location>;
+
+<np> = [a] coffee;
+<person> = i | you | me;

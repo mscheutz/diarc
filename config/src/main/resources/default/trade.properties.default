@@ -1,0 +1,28 @@
+#
+# DO NOT MODIFY!!
+# DO NOT MODIFY!!
+# DO NOT MODIFY!!
+#
+# If you need different trade properties, please create a new trade.properties file somewhere on you local machine
+# and set the 'diarc.tradePeropertiesFile' gradle property (in your personal gradle.properties) to point to your
+# custom trade.properties file.
+#
+
+CONTAINERNAME=
+BROADCASTPORT=33333
+BROADCASTINTERVAL=3000
+STARTBROADCAST=false
+MCAST_ADDR=230.1.1.1
+DISCOVERYTIMEOUT=3000
+STARTDISCOVERY=false
+CALLCONTAINERDISCOVERYTIMEOUT=3000
+STARTACCEPTINGCONNECTIONS=false
+SERVERIPS=
+SCANFORSERVER=true
+TIMEOUT_CLIENT_SOCKET=3000
+CALLCHECKTIME=5000
+USEENCRYPTION=false
+CREDENTIALS=diarcUser
+TRADESYSID=diarc
+CONNECTCONTAINERS=
+COPYDATAFORLOCALINVOKES=false

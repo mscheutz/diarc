@@ -1,0 +1,16 @@
+init
+shut down
+----
+look for available parts
+----
+stow arm
+unstow arm
+carry mode
+detection mode
+open gripper
+close gripper
+stand
+sit
+dock
+undock
+

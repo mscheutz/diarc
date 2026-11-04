@@ -1,0 +1,148 @@
+{
+  "poseReferences": [
+    {
+      "refId": "movebaselocation_0:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+          "tableALocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        1.09310734272,
+        -4.451836586,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.122123012564,
+        0.99251497208
+      ]
+    },
+    {
+      "refId": "movebaselocation_1:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+          "tableBLocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        0.892194926739,
+        -3.92136025429,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.607832038884,
+        0.794065622292
+      ]
+    },
+    {
+      "refId": "movebaselocation_2:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+          "tableCLocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        0.820450425148,
+        -4.85441398621,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.787892164385,
+        0.615813232483
+      ]
+    },
+    {
+      "refId": "movebaselocation_3:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+        "largegearlocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        -0.3968126159303389,
+        0.02088422456395067,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.31507301496683154,
+        0.9490674345059527
+      ]
+    },
+    {
+      "refId": "movebaselocation_4:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+        "tableELocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        0.0866497755051,
+        -4.71780014038,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.99255694451,
+        0.12178141034
+      ]
+    },
+    {
+      "refId": "movebaselocation_5:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+        "gearboxbottomlocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        -0.990,
+        0.067,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.890,
+        0.455
+      ]
+    },
+    {
+      "refId": "movebaselocation_6:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+        "tableGLocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        0.0866497755051,
+        -4.71780014038,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.99255694451,
+        0.12178141034
+      ]
+    },
+    {
+      "refId": "movebaselocation_7:movebaselocation",
+      "variable": "VAR0:movebaselocation",
+      "properties": [
+        "handoverlocation(VAR0:movebaselocation)"
+      ],
+      "position": [
+        0.346065998077,
+        -3.48123717308,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.698373765809,
+        0.715733248655
+      ]
+    }
+  ]
+}

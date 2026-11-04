@@ -1,0 +1,968 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
+/**
+ * MaryTTSComponent implementation class for the TTS server.
+ *
+ * @author: Cody Canning; cody.canning@tufts.edu
+ */
+package edu.tufts.hrilab.tts;
+
+import java.io.*;
+
+import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
+import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
+import edu.tufts.hrilab.interfaces.VoiceProsodyInterface;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.util.resource.Resources;
+import marytts.util.MaryUtils;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.io.IOUtils;
+
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.sound.sampled.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import marytts.datatypes.MaryDataType;
+import marytts.modules.synthesis.Voice;
+import marytts.server.Mary;
+import marytts.server.Request;
+import marytts.util.data.audio.AudioPlayer;
+import org.apache.log4j.Level;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+public class MaryTTSComponent extends DiarcComponent implements SpeechProductionInterface, VoiceProsodyInterface {
+
+  private MaryDataType inputType;//.TEXT or .RAWMARYXML
+  private MaryDataType outputType;
+  private Voice voice;
+  private String defaultEffects;
+  private String defaultStyle;
+  private Locale locale;
+  private int id;
+  private AudioFileFormat audioFileFormat;
+  private AudioInputStream ais;
+  private AudioPlayer ap;
+  private Request request;
+  private BufferedReader br;
+
+  private boolean useGui = false;
+  private MaryTTSComponentVis gui;
+  private float volume = 1.0f;
+
+  /**
+   * The configuration file from which to load canned-phrases.
+   */
+  private String config;
+  private String defaultConfigPath = "config/edu/tufts/hrilab/tts";
+  private Document doc;
+  private DocumentBuilder db;
+  private Transformer tr;
+  private String voiceStr;    // default to female voice
+  private boolean enabled;
+
+
+  private enum Emotion {
+    STRESS, CONFUSION, ANGER, CUSTOM1, NONE
+  }
+
+  private Emotion e;
+
+  // mixer vars set by flags
+  private int mixerID = -1;
+  private boolean muteMics;
+
+  // Termux on Android has no javax.sound.sampled provider. Detect and route
+  // playback through paplay (pulseaudio CLI) instead.
+  private static final boolean IS_TERMUX =
+          System.getenv("PREFIX") != null
+          && System.getenv("PREFIX").startsWith("/data/data/com.termux");
+
+  // boolean markers set by args flags
+  private boolean saveToWav;
+  private String markup;
+
+  // if saving to a .wav file, save at this location
+  private String wavFilename;
+  private String xmlFilename;
+  private boolean speaking;
+
+  // Hold playback clips to potentially interrupt
+  private List<Clip> currentPlaybackClips;
+  private Lock clipLock;
+
+  /**
+   * Map from unknown token (i.e., newly learned word) to wave file of the word.
+   */
+  private Map<String, byte[]> newWordMap;
+  /**
+   * Executor that executes sayText and playWavFile jobs.
+   */
+  private ExecutorService executor;
+
+
+  //Brad: this is an awful hack to get around MaryTTS not using logging appropriately
+  public class MyProperties extends Properties {
+
+    public MyProperties(Properties properties) {
+      super(properties);
+    }
+
+    @Override
+    public Object setProperty(String key, String value) {
+      //catch the overried call in the Mary TTS jar and while we're in the right scope turn off all of their logging
+      if ("log4j.defaultInitOverride".equals(key)) {
+        MaryUtils.getLogger("main").getParent().setLevel(Level.FATAL);
+        return null;
+      } else {
+        return super.setProperty(key, value);
+      }
+    }
+  }
+
+
+  /**
+   * MaryTTSComponent constructor. Initializes TTS component.
+   */
+  public MaryTTSComponent() throws IOException, UnsupportedAudioFileException, InterruptedException {
+    super();
+
+    File tempWavFile = File.createTempFile("diarc-utterance-", ".wav");
+    File tempXmlFile = File.createTempFile("diarc-utterance-", ".xml");
+
+    outputType = MaryDataType.AUDIO;
+    locale = new Locale("en-US");
+    defaultEffects = null;
+    defaultStyle = null;
+    id = 0;
+
+    audioFileFormat = new AudioFileFormat(AudioFileFormat.Type.WAVE, Voice.AF16000, AudioSystem.NOT_SPECIFIED);
+    //audioFileFormat = new AudioFileFormat(AudioFileFormat.Type.WAVE, Voice.AF22050, AudioSystem.NOT_SPECIFIED);
+
+    // initialize components necessary for building and transforming XML doc later
+    try {
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      db = dbf.newDocumentBuilder();
+      TransformerFactory transformerFactory = TransformerFactory.newInstance();
+      this.tr = transformerFactory.newTransformer();
+    } catch (Exception ex) {
+      log.error("exception initializing MaryTTS", ex);
+    }
+
+    e = Emotion.NONE;
+    config = "default.tts";
+    saveToWav = false;
+    markup = "SSML";
+    wavFilename = tempWavFile.getPath();
+    xmlFilename = tempXmlFile.getPath();
+    speaking = false;
+    currentPlaybackClips = new ArrayList<>();
+    clipLock = new ReentrantLock();
+
+    // default to male voice
+    //voiceStr = "cmu-rms=hsmm"
+    voiceStr = "cmu-slt-hsmm";
+
+    newWordMap = new HashMap<>();
+//    newWordMap.put("unk0", null);
+//    newWordMap.put("unk1", null);
+
+    executor = Executors.newSingleThreadExecutor();
+  }
+
+  @Override
+  protected void init() {
+    try {
+      if (Mary.currentState() == Mary.STATE_OFF) {
+        MyProperties newProps = new MyProperties(System.getProperties());
+        System.setProperties(newProps);
+        Mary.startup();
+        System.setProperty("log4j.defaultInitOverride", "true");
+      }
+    } catch (Exception ex) {
+      log.error("error stating Marytts", ex);
+    }
+
+    setVoice(voiceStr);
+
+    if (useGui) {
+      gui = new MaryTTSComponentVis(this);
+    }
+  }
+
+  /**
+   * Checks if speech is being produced.
+   *
+   * @return {@code true} if speech is being produced, {@code false} otherwise
+   */
+  @Override
+  public boolean isSpeaking() {
+    return speaking;
+  }
+
+  /**
+   * Stops an ongoing utterance.
+   *
+   * @return {@code true} if speech is interrupted, {@code false} otherwise.
+   */
+  @Override
+  public boolean stopUtterance() {
+    clipLock.lock();
+    for (Clip clip : currentPlaybackClips) {
+      clip.stop();
+    }
+    clipLock.unlock();
+    return true;
+    //Doesn't seem to work?
+    //ap.interrupt();
+    //return ap.isInterrupted();
+  }
+
+  /**
+   * sets prosody to STRESS ANGER or CONFUSION
+   *
+   * @param newEmo the new prosody to be used
+   */
+  @Override
+  public void setEmotion(String newEmo) {
+    for (Emotion emo : Emotion.values()) {
+      if (emo.toString().equalsIgnoreCase(newEmo)) {
+        this.e = emo;
+      }
+    }
+    log.debug("Applying " + this.e.toString());
+
+  }
+
+  /**
+   * returns the current vocal emotion
+   */
+  @Override
+  public String getEmotion() {
+    return this.e.toString();
+  }
+
+  /**
+   * @return the current voice used for TTS
+   */
+  @Override
+  public String getVoice() {
+    return this.voice.toString();
+  }
+
+  /**
+   * @param v name of the voice or male or female
+   */
+  @Override
+  public void setVoice(String v) {
+    String vc = v;
+
+    if (v.equalsIgnoreCase("male")) {
+      vc = "cmu-rms-hsmm";
+    } else if (v.equalsIgnoreCase("female")) {
+      vc = "cmu-slt-hsmm";
+    }
+
+    voice = Voice.getVoice(vc);
+  }
+
+  @TRADEService
+  @Action
+  public void toggleVoiceOn() {
+    this.enabled = true;
+  }
+
+  @TRADEService
+  @Action
+  public void toggleVoiceOff() {
+    this.enabled = false;
+  }
+
+  @Override
+  public boolean sayText(String text) {
+//    if (this.enabled) {
+    sayText(text, true);
+//    }
+      return true;
+  }
+
+  /**
+   * Speaks appropriate text
+   *
+   * @param text the text to be spoken
+   * @param wait whether or not to block until speaking call returns
+   * @return true if the text was generated as speech, false otherwise
+   */
+  @Override
+  public boolean sayText(String text, boolean wait) {
+    final String finalText = text;
+
+    if (text.isEmpty()) {
+      log.debug("[sayText] Given empty string ''. This will cause MaryTTS to loop indefinitely. Returning false instead.");
+      return false;
+    }
+
+    // Turn off the microphone
+    if (muteMics) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone").onLocalhost());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayText] Exception disabling microphone", e);
+      }
+    }
+
+    Future<Boolean> future = executor.submit(() -> {
+
+      // split on new words
+      List<String> splitText = splitOnNewWords(finalText);
+      log.info("sayText(" + String.join(", ", splitText) + ")");
+
+      boolean result = true;
+      for (String t : splitText) {
+        if (newWordMap.containsKey(t)) {
+          result &= playWavFile(newWordMap.get(t));
+        } else {
+          result &= textToSpeech(t, true);
+        }
+      }
+      return result;
+    });
+
+    Boolean future_result = true;
+    if (wait) {
+      try {
+        log.debug("Waiting for future to finish.");
+        future_result = future.get();
+        log.debug("Future finished.");
+//      } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("Error waiting on sayText '{}' to finish.", text, e);
+      }
+    }
+
+    // Turn on the microphone
+    if (muteMics) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone").onLocalhost());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayText] Exception disabling microphone", e);
+      }
+    }
+
+    return future_result;
+  }
+
+  private boolean textToSpeech(String text, boolean wait) {
+    long tRequest = System.nanoTime();
+    log.debug("[lat] tts_request_send kind=mary text_len={}", text != null ? text.length() : 0);
+    speaking = true;
+    doc = db.newDocument();
+    AtomicBoolean isDone = new AtomicBoolean(false);
+
+    // GB: add punctuation if none-exists, default to '.'
+    if (!(text.endsWith(".") || text.endsWith(",") || text.endsWith("?") || text.endsWith("!"))) {
+      text += ".";
+    }
+
+    try {
+      // search for words in ALLCAPS and wrap them with emphasis tags
+      String emphUtt = addEmphasis(text);
+      // apply appropriate emotion (including NONE)
+      applyEmotion(emphUtt);
+
+      request = new Request(inputType,
+              outputType,
+              locale,
+              voice,
+              defaultEffects,
+              defaultStyle,
+              id,
+              audioFileFormat);
+
+      request.readInputData(br);
+      long tSynthStart = System.nanoTime();
+      request.process();
+      long tSynthDone = System.nanoTime();
+      log.debug("[lat] tts_synth_done kind=mary synth_ms={}", (tSynthDone - tSynthStart) / 1_000_000);
+      ais = request.getOutputData().getAudio();
+
+      // either save the audio to .wav or output it as audio
+      if (saveToWav) {
+        File f = new File(wavFilename);
+        AudioSystem.write(ais, audioFileFormat.getType(), f);
+      } else if (IS_TERMUX) {
+        playViaShell(ais, audioFileFormat.getType(), wait);
+      } else {
+        Clip playbackClip = null;
+
+        try {
+          if (mixerID == -1) {
+            playbackClip = AudioSystem.getClip();
+          } else {
+            playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+          }
+          playbackClip.open(ais);
+
+          // LineListener to close the clip when done
+          Clip finalPlaybackClip = playbackClip;
+          playbackClip.addLineListener(event -> {
+            if (event.getType() == LineEvent.Type.STOP) {
+              finalPlaybackClip.close();
+              isDone.set(true);
+            }
+          });
+          clipLock.lock();
+          currentPlaybackClips.add(playbackClip);
+          clipLock.unlock();
+        } catch (LineUnavailableException ex) {
+          log.error("line unavailable", ex);
+          speaking = false;
+          return false;
+        } catch (IOException ex) {
+          log.error("io exception reading file", ex);
+          speaking = false;
+          return false;
+        }
+
+        if (volume < 1.0f) {
+          FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+          gainControl.setValue(20f * (float) Math.log10(volume));
+        }
+
+        playbackClip.loop(0);
+        playbackClip.start();
+        long tFirstAudio = System.nanoTime();
+        log.debug("[lat] tts_first_audio kind=mary ttfa={}ms", (tFirstAudio - tRequest) / 1_000_000);
+
+        while (wait && !isDone.get()) {
+          Util.Sleep(100);
+        }
+        long tDrainDone = System.nanoTime();
+        log.debug("[lat] tts_done kind=mary total={}ms", (tDrainDone - tRequest) / 1_000_000);
+        clipLock.lock();
+        currentPlaybackClips.remove(playbackClip);
+        clipLock.unlock();
+      }
+      log.debug("Exiting textToSpeech");
+      speaking = false;
+      return true;
+
+    } catch (Exception ex) {
+      log.error("exception in textToSpeech", ex);
+      speaking = false;
+      return false;
+    }
+  }
+
+  // paplay volume: 0..65536 = 0..100%. Mirrors Clip MASTER_GAIN behavior at init.
+  private int paplayVolume() {
+    return (int) Math.round(65536 * Math.max(0f, Math.min(1f, volume)));
+  }
+
+  /**
+   * Write an AudioInputStream to a temp WAV, play it via paplay, optionally wait.
+   * Used on Termux where javax.sound.sampled has no output provider.
+   */
+  private boolean playViaShell(AudioInputStream src, AudioFileFormat.Type type, boolean wait) {
+    File tmp = null;
+    try {
+      tmp = File.createTempFile("diarc-tts-", ".wav");
+      AudioSystem.write(src, type, tmp);
+      ProcessBuilder pb = new ProcessBuilder("paplay", "--volume=" + paplayVolume(), tmp.getAbsolutePath());
+      pb.redirectErrorStream(true);
+      Process p = pb.start();
+      if (wait) {
+        p.waitFor();
+      }
+      return true;
+    } catch (Exception e) {
+      log.error("paplay shell playback failed", e);
+      return false;
+    } finally {
+      if (tmp != null && wait) {
+        tmp.delete();
+      }
+    }
+  }
+
+  @TRADEService
+  public void playAudioClip(String path) {
+    speaking = true;
+    AtomicBoolean isDone = new AtomicBoolean(false);
+
+    try {
+      log.info("[playAudioClip] playing audio clip at path: " + path);
+      File audioFile = new File(path);
+      ais = AudioSystem.getAudioInputStream(audioFile);
+
+      if (IS_TERMUX) {
+        playViaShell(ais, AudioFileFormat.Type.WAVE, true);
+        speaking = false;
+        return;
+      }
+
+      Clip playbackClip = null;
+
+      try {
+        if (mixerID == -1) {
+          playbackClip = AudioSystem.getClip();
+        } else {
+          playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        playbackClip.open(ais);
+
+        // LineListener to close the clip when done
+        Clip finalPlaybackClip = playbackClip;
+        playbackClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        clipLock.lock();
+        currentPlaybackClips.add(playbackClip);
+        clipLock.unlock();
+      } catch (LineUnavailableException ex) {
+        log.error("line unavailable", ex);
+        speaking = false;
+        return;
+      } catch (IOException ex) {
+        log.error("io exception reading file", ex);
+        speaking = false;
+        return;
+      }
+
+      if (volume < 1.0f) {
+        FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(10f * (float) Math.log10(volume * 0.1));
+      }
+
+      playbackClip.loop(0);
+      playbackClip.start();
+
+      while (!isDone.get()) {
+        Util.Sleep(100);
+      }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
+      log.debug("Exiting textToSpeech");
+      speaking = false;
+    } catch (Exception ex) {
+      log.error("exception in textToSpeech", ex);
+      speaking = false;
+    }
+  }
+
+  @TRADEService
+  @Action
+  public void setMaryTTSVolume(String volumeStr) {
+    try {
+      if (volumeStr.startsWith("\"") && volumeStr.endsWith("\"")) {
+        volumeStr = volumeStr.substring(1,volumeStr.length()-1);
+      }
+      volume = Float.parseFloat(volumeStr);
+      if (volume < 0.0f) {
+        volume = 0.0f;
+        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
+      } else if (volume > 1.0f) {
+        volume = 1.0f;
+        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
+      }
+      log.debug("setting volume " + volume);
+    } catch (NumberFormatException e) {
+      log.error("[setMaryTTSVolume] cannot parse volume string {}", volumeStr, e);
+    }
+  }
+
+  @TRADEService
+  public String getConfigFile() {
+    return Resources.createFilepath(defaultConfigPath, config);
+  }
+
+  @TRADEService
+  public void addNewWord(String word, byte[] pcmData) {
+    log.debug("adding new word: " + word);
+    newWordMap.put(word, pcmData);
+  }
+
+  /**
+   * Split on new words in the newWordsMap.
+   *
+   * @return
+   */
+  private List<String> splitOnNewWords(String text) {
+    List<String> splitText = new LinkedList<>();
+    splitText.add(text.trim());
+    for (String newWord : newWordMap.keySet()) {
+      for (int i = 0; i < splitText.size(); ++i) {
+        String t = splitText.get(i);
+        List<String> tempSplit = splitOnNewWordsHelper(t, newWord);
+        splitText.remove(i);
+        splitText.addAll(i, tempSplit);
+        i += tempSplit.size();
+      }
+    }
+    return splitText;
+  }
+
+  /**
+   * Helper method to split text on newWordMap.
+   *
+   * @param text
+   * @param splitter
+   * @return
+   */
+  private List<String> splitOnNewWordsHelper(String text, String splitter) {
+    List<String> splitText = new ArrayList<>();
+
+    if (text.equals(splitter)) {
+      // special case
+      splitText.add(splitter);
+    } else {
+      for (String s : text.split(splitter)) {
+        if (!s.trim().isEmpty()) {
+          splitText.add(s.trim());
+        }
+        splitText.add(splitter.trim());
+      }
+      if (splitText.size() > 1 && !text.endsWith(splitter)) {
+        splitText.remove(splitText.size() - 1);
+      }
+    }
+    return splitText;
+  }
+
+  /**
+   * TODO: write this method
+   *
+   * @param data
+   * @return
+   */
+  private boolean playWavFile(byte[] data) {
+    if (data == null) {
+      return false;
+    }
+
+    AudioFormat audioFormat = new AudioFormat(16000, 16, 1, true, true);
+
+    AtomicBoolean isDone = new AtomicBoolean(false);
+    Clip playbackClip;
+    try {
+      if (mixerID == -1) {
+        playbackClip = AudioSystem.getClip();
+      } else {
+        playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+      }
+
+      Clip finalPlaybackClip = playbackClip;
+      // LineListener to close the clip when done
+      playbackClip.addLineListener(event -> {
+        if (event.getType() == LineEvent.Type.STOP) {
+          finalPlaybackClip.close();
+          isDone.set(true);
+        }
+      });
+      clipLock.lock();
+      currentPlaybackClips.add(playbackClip);
+      clipLock.unlock();
+      if (volume < 1.0f) {
+        FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(20f * (float) Math.log10(volume));
+      }
+      playbackClip.open(audioFormat, data, 0, data.length);
+      playbackClip.start();
+      while (!isDone.get()) {
+        Util.Sleep(1);
+      }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
+    } catch (LineUnavailableException e1) {
+      throw new RuntimeException("[playWavFile] LineUnavailableException", e1);
+    }
+    return true;
+  }
+
+  /**
+   * kind of a hack... When adding emphasis tags to utterance they aren't
+   * escaped by the XML transformer. this function fixes the opening and closing
+   * XML brackets.
+   *
+   * @param fname file name to fix XML tags of
+   * @throws IOException
+   */
+  private void fixXML(String fname) throws IOException {
+    FileInputStream fis = new FileInputStream(fname);
+    String content = IOUtils.toString(fis);
+    content = content.replace("&lt;", "<");
+    content = content.replace("&gt;", ">");
+    fis.close();
+    FileOutputStream fos = new FileOutputStream(fname);
+    IOUtils.write(content, fos);
+    fos.close();
+  }
+
+  /**
+   * generate utterance with RAWMARYXML markup. populates doc with MARYXML
+   * header and paragraph tag
+   *
+   * @return the child element
+   * @throws ParserConfigurationException
+   */
+  private Element createRAWMARYXMLDoc() throws ParserConfigurationException {
+    inputType = MaryDataType.RAWMARYXML;
+
+    // create elements
+    Element maryEl = doc.createElement("maryxml");
+    maryEl.setAttribute("version", "0.4");
+    maryEl.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    maryEl.setAttribute("xmlns", "http://mary.dfki.de/2002/MaryXML");
+    maryEl.setAttribute("xml:lang", "en-US");
+    doc.appendChild(maryEl);
+    Element pEl = doc.createElement("p");
+    maryEl.appendChild(pEl);
+    return pEl;
+  }
+
+  /**
+   * generate utterance with SSML markup. populates doc with SSML header and
+   * paragraph tag
+   *
+   * @return the child element
+   * @throws ParserConfigurationException
+   */
+  private Element createSSMLDoc() throws ParserConfigurationException {
+    inputType = MaryDataType.SSML;
+
+    // create elements
+    Element maryEl = doc.createElement("speak");
+    maryEl.setAttribute("version", "1.0");
+    maryEl.setAttribute("xmlns", "http://www.w3.org/2001/10/synthesis");
+    maryEl.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    maryEl.setAttribute("xsi:schemaLocation", "http://www.w3.org/2001/10/synthesis "
+            + "http://www.w3.org/TR/speech-synthesis/synthesis.xsd");
+    maryEl.setAttribute("xml:lang", "en-US");
+    doc.appendChild(maryEl);
+    Element pEl = doc.createElement("p");
+    maryEl.appendChild(pEl);
+    return pEl;
+  }
+
+  /**
+   * applies Emotion e to input s by wrapping the utterance in Mary XML
+   *
+   * @param s the string we're applying emotion to
+   */
+  private void applyEmotion(String s) {
+    try {
+      Element prosodyEl = doc.createElement("prosody");
+
+      // generate emotive markup
+      switch (this.e) {
+        case STRESS: // nervous, stressed, fearful
+          prosodyEl.setAttribute("contour", "(0%,+3st)(10%,+3st)(20%,+3st)(30%,+10st)(40%,+4st)(50%,+4st)(60%,+4st)(70%,+9st)(80%,+7st)(90%,+10st)(100%,+11st)");
+          prosodyEl.setAttribute("rate", "1.15");
+          break;
+        case ANGER: // angry, frustrated
+          prosodyEl.setAttribute("contour", "(0%,-2st)(10%,-2st)(20%,-2st)(30%,-2st)(40%,-2st)(50%,-2st)(60%,-3st)(70%,-3st)(80%,-3st)(90%,-4st)(100%,-4st)");
+          prosodyEl.setAttribute("rate", "0.82");
+          break;
+        case CONFUSION: // confused, puzzled
+          prosodyEl.setAttribute("contour", "(0%,-1st)(10%,-1st)(20%,-1st)(30%,-1st)(40%,-1st)(50%,-1st)(60%,-2st)(70%,+3st)(80%,+3st)(90%,+10st)(100%,+6st)");
+          prosodyEl.setAttribute("rate", "0.85");
+          prosodyEl.setAttribute("volume", "0.0");
+          break;
+        case CUSTOM1:
+          break;
+        default:
+          break;
+      }
+
+      // append the utterance with prosody markup to doc.
+      Node utt = doc.createTextNode(s);
+
+      log.debug("Utterance", utt);
+
+      prosodyEl.appendChild(utt);
+      if (this.markup.equalsIgnoreCase("SSML")) {
+        createSSMLDoc().appendChild(prosodyEl);
+      } else {
+        createRAWMARYXMLDoc().appendChild(prosodyEl);
+      }
+
+      // transform the document to XML
+      DOMSource source = new DOMSource(doc);
+      File tempFile = new File(xmlFilename);
+      StreamResult result = new StreamResult(tempFile);
+      this.tr.transform(source, result);
+
+      fixXML(tempFile.getPath());
+
+      // delegate datastream
+      FileInputStream fstream = new FileInputStream(xmlFilename);
+      DataInputStream in = new DataInputStream(fstream);
+      this.br = new BufferedReader(new InputStreamReader(in));
+
+    } catch (Exception ex) {
+      log.error("exception in applyEmotion", ex);
+    }
+  }
+
+  /**
+   * adds emphasis to uppercase words in String s
+   *
+   * @param utterance the utterance text we are searching for ALLCAPS words and
+   *                  emphasizing
+   * @return the updated String including emphasis
+   */
+  private String addEmphasis(String utterance) {
+    String[] words = utterance.split("\\s+");
+    String newUtterance = "";
+    for (int i = 0; i < words.length; i++) {
+      if (isAllUppercase(words[i])) {
+        words[i] = "<emphasis level=\"strong\">" + words[i] + "</emphasis>";
+      }
+      newUtterance = newUtterance + " " + words[i];
+    }
+    return newUtterance;
+  }
+
+  /**
+   * *
+   * Returns true if string s is all uppercase, false otherwise
+   *
+   * @param s the string to check
+   * @return true or false
+   */
+  private boolean isAllUppercase(String s) {
+    if (s.length() <= 1) {
+      return false;
+    }
+    boolean allUpper = true;
+    for (int i = 0; i < s.length(); i++) {
+      if (Character.isLowerCase(s.charAt(i))) {
+        allUpper = false;
+        break;
+      }
+    }
+    return allUpper;
+  }
+
+  public String getGuiHelp() {
+    return "sayText: enter any string you want to say\n"
+            + "sayText (with boolean): enter any string you want to say, with blocking true/false\n"
+            + "isSpeaking: is component currently speaking\n"
+            + "stopUtterance: cancel utterance from being said\n"
+            + "setEmotion: set either \"stress\", \"anger\", or \"confusion\""
+            + " (without quotes).\n"
+            + "getEmotion: get currently set emotion\n"
+            + "setVoice: specify voice to use by name. Or by gender (\"female\" or \"male\").\n"
+            + "getVoice: get the current voice being used";
+  }
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("wav").desc("save to wav play instead of sending directly to audioout").build());
+    options.add(Option.builder("stress").desc("apply stressed prosody to an utterance").build());
+    options.add(Option.builder("anger").desc("apply angry, frustrated prosody to an utterance").build());
+    options.add(Option.builder("confusion").desc("apply confused, perplexed prosody to an utterance").build());
+    options.add(Option.builder("male").desc("use male voice").build());
+    options.add(Option.builder("female").desc("use female voice").build());
+    options.add(Option.builder("config").hasArg().argName("file").desc("set configuration file").build());
+    options.add(Option.builder("gui").desc("create gui").build());
+    options.add(Option.builder("volume").hasArg().desc("set volume of output").build());
+    options.add(Option.builder("showMixers").argName("boolean").desc("Show all mixers").build());
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
+    options.add(Option.builder("mixer").hasArg().argName("id").desc("ID of mixer to select for speaker").build());
+    options.add(Option.builder("muteMics").argName("boolean").desc("Mute mics when speaking").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    String volumeStr;
+    if (cmdLine.hasOption("wav")) {
+      log.debug("found WAV, saving to file");
+      saveToWav = true;
+    }
+    if (cmdLine.hasOption("stress")) {
+      log.debug("setting STRESS");
+      this.e = Emotion.STRESS;
+    }
+    if (cmdLine.hasOption("anger")) {
+      log.debug("setting ANGER");
+      this.e = Emotion.ANGER;
+    }
+    if (cmdLine.hasOption("confusion")) {
+      log.debug("setting CONFUSION");
+      this.e = Emotion.CONFUSION;
+    }
+    if (cmdLine.hasOption("male")) {
+      log.debug("setting MALE");
+      voiceStr = "male";
+    }
+    if (cmdLine.hasOption("female")) {
+      log.debug("setting FEMALE");
+      voiceStr = "female";
+    }
+    if (cmdLine.hasOption("config")) {
+      config = cmdLine.getOptionValue("config");
+    }
+    if (cmdLine.hasOption("gui")) {
+      useGui = true;
+    }
+    if (cmdLine.hasOption("volume")) {
+      volumeStr = cmdLine.getOptionValue("volume");
+      setMaryTTSVolume(volumeStr);
+    }
+    if (cmdLine.hasOption("showMixers")) {
+      ConfigurableMicrophone.showMixers();
+    }
+    if (cmdLine.hasOption("muteMics")) {
+      muteMics = true;
+    }
+    if (cmdLine.hasOption("mixer") || cmdLine.hasOption("matchMixer")) {
+      if (cmdLine.hasOption("mixer")) {
+        mixerID = Integer.parseInt(cmdLine.getOptionValue("mixer"));
+      } else if (cmdLine.hasOption("matchMixer")) {
+        String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+        mixerID = ConfigurableMicrophone.matchMixer(matchString);
+        log.debug("Matching mixer string \"" + matchString + "\"");
+      }
+      log.debug("Using mixer " + mixerID);
+    } else {
+      log.debug("Using default mixer");
+    }
+
+  }
+
+}

@@ -1,0 +1,766 @@
+{
+  "testName" : "multiRobotCaddyDemoTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[setup, demo],\"setup demo\",{})", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "setupscene(self:agent)", "ACT", "NORMAL", "1", "evan", "3" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableA:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableA:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableA:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableA:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableB:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableB:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableB:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableB:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableC:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableC:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableC:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableC:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableD:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableD:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableD:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableD:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableE:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableE:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableE:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableE:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableF:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableF:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableF:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableF:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableG:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableG:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableG:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(tableG:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(physobj_0Area:area,medicalcaddy:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(physobj_0Area:area,bandagebox:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(physobj_0Area:area,antiseptic:property),0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "fluent_equals(amount(physobj_0Area:area,painkiller:property),0)", "null" ]
+    }, {
+      "serviceName" : "initLocation",
+      "serviceArgs" : [ "spotlocation_0:spotlocation", "justification(true)" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[define, new, kit, medkit],\"define new kit medkit\",{})", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineRecipe(self:agent,medkit)", "ACT", "NORMAL", "1", "evan", "12" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "What container does it use?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, uses, a, medical, caddy],\"it uses a medical caddy\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "What container does it use?", "[val(X)]", "self:agent", "evan", "-1", "{X=medicalcaddy:physobj}" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "where is there a medicalcaddy", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, medical, caddy, at, table, a],\"there is 1 medical caddy at table a\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "where is there a medicalcaddy", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,medicalcaddy:physobj,tableA:area)}" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "observableAt(medicalcaddy,tableA:area)", "null" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_0:physobj}", "1.0", "[medicalcaddy(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "isContainer(physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "object(physobj_0Area,area)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "areaBoundToContainer(physobj_0Area:area,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "containerArea(physobj_0Area:area)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay. What does a medkit contain?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, 2, painkillers],\"it contains 2 painkillers\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "Okay. What does a medkit contain?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(2,painkiller:property)}" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "where are there painkillers", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, are, 2, painkillers, at, table, b],\"there are 2 painkillers at table b\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "where are there painkillers", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(2,painkiller:property,tableB:area)}" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "observableAt(painkiller,tableB:area)", "null" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_1:physobj}", "1.0", "[painkiller(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_2:physobj}", "1.0", "[painkiller(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, antiseptic],\"it contains one antiseptic\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,antiseptic:physobj)}" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "where is there an antiseptic", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, antiseptic, at, table, c],\"there is 1 antiseptic at table c\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "where is there an antiseptic", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,antiseptic:physobj,tableC:area)}" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "observableAt(antiseptic,tableC:area)", "null" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_3:physobj}", "1.0", "[antiseptic(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, bandage, box],\"it contains one bandage box\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=contains(1,bandagebox:physobj)}" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "where is there a bandagebox", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, bandage, box, at, table, e],\"there is 1 bandage box at table e\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "where is there a bandagebox", "[val(X)]", "self:agent", "evan", "-1", "{X=observableAt(1,bandagebox:physobj,tableE:area)}" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "observableAt(bandagebox,tableE:area)", "null" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_4:physobj}", "1.0", "[bandagebox(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "does it contain anything else?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[that, is, all],\"that is all\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "evan", "-1", "{X=none}" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "recipe(medkit,container(medicalcaddy:physobj),contents(contains(2,painkiller:property),contains(1,antiseptic:physobj),contains(1,bandagebox:physobj)))", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[deliver, a, medkit, to, alpha],\"deliver a medkit to alpha\",{})", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "deliver(self:agent,medkit,temilocation_0:temilocation)", "ACT", "NORMAL", "1", "evan", "33" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_3:physobj", "0" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_3:physobj", "[1]" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_1:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_1:physobj", "1" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_1:physobj", "[2]" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_2:physobj", "1" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_2:physobj", "[2]" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_4:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_4:physobj", "2" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_4:physobj", "[]" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "observableAt(bandagebox:property,tableE:area)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I failed execution because the bandagebox objects not At table E", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I have found a plan to recover", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "it will take about 28 seconds", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Do you want me to execute it?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[describe, your, plan],\"describe your plan\",{})", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "describeYourPlan(self:agent)", "ACT", "NORMAL", "1", "evan", "212" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "knows(self:agent,actionDescription(planned(self:agent),Y))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "actionDescription(planned(self:agent),X)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "actionDescription(planned(self:agent),steps(gotospot(spot:spot,spotlocation_0:spotlocation,spotlocation_5:spotlocation,room1:room,room3:room),receiveitem(spot:spot,physobj_4:physobj,bandagebox:property,pharmacy:area,spotlocation_5:spotlocation),gotospot(spot:spot,spotlocation_5:spotlocation,spotlocation_1:spotlocation,room3:room,room1:room),putdownspot(spot:spot,physobj_4:physobj,bandagebox:property,tableG:area,spotlocation_1:spotlocation),gotomovebase(fetch:fetch,movebaselocation_4:movebaselocation,movebaselocation_6:movebaselocation,room1:room,room1:room),pickupitem(fetch:fetch,physobj_4:physobj,bandagebox:property,tableG:area,movebaselocation_6:movebaselocation),gotomovebase(fetch:fetch,movebaselocation_6:movebaselocation,movebaselocation_4:movebaselocation,room1:room,room1:room),putdown(fetch:fetch,physobj_4:physobj,bandagebox:property,tableE:area,movebaselocation_4:movebaselocation)))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "probabilityOf(planned(self:agent),X)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "to execute The Plan spot goes To the betaLocation, then spot receives the bandagebox at pharmacy, then spot goes To the tableGLocation, then spot puts Down the bandagebox on table G, then fetch goes To the tableGLocation, then fetch picks Up the bandagebox from table G, then fetch goes To the tableELocation and then fetch putdowns", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[yes],\"yes\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "Do you want me to execute it?", "[val(X)]", "self:agent", "evan", "-1", "{X=yes}" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "planned(self:agent)", "ACT", "SKIPPENDING", "1", "evan", "216" ]
+    }, {
+      "serviceName" : "goToLocation",
+      "serviceArgs" : [ "spotlocation_5:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Can I please have physobj_4:physobj", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "reportRecognizedSpeech",
+      "serviceArgs" : [ "UNKNOWN(evan,self:agent,[ready],\"ready\",{})", "null" ]
+    }, {
+      "serviceName" : "waitForResponse",
+      "serviceArgs" : [ "Can I please have physobj_4:physobj", "[val(X)]", "self:agent", "evan", "-1", "{X=ready}" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLocation",
+      "serviceArgs" : [ "spotlocation_1:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overTable", "justification(true)" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "overBody", "justification(true)" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLocation",
+      "serviceArgs" : [ "spotlocation_7:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "stow", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_6:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_4:physobj", "2" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_4:physobj", "[4]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_4:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_4:physobj", "2" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_4:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "dropOff", "justification(true)" ]
+    }, {
+      "serviceName" : "moveObjectFetchItPrimitive",
+      "serviceArgs" : [ "physobj_4:physobj", "arm", "down", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Recovery completed resuming original goal", "true" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_4:physobj", "2" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_4:physobj", "[4]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_4:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_4:physobj", "2" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_0:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "moveObjectAbove",
+      "serviceArgs" : [ "physobj_4:physobj", "physobj_0:physobj", "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_4:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_1:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_2:physobj", "1" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_2:physobj", "[6]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_2:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_2:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_2:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_2:physobj", "1" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_0:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "moveObjectAbove",
+      "serviceArgs" : [ "physobj_2:physobj", "physobj_0:physobj", "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_2:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_3:physobj", "0" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_3:physobj", "[5]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_3:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_3:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_3:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_3:physobj", "0" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_0:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "moveObjectAbove",
+      "serviceArgs" : [ "physobj_3:physobj", "physobj_0:physobj", "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_3:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_1:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_1:physobj", "1" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_1:physobj", "[6]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_1:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_1:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_1:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_1:physobj", "1" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_0:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "moveObjectAbove",
+      "serviceArgs" : [ "physobj_1:physobj", "physobj_0:physobj", "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_1:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLocation",
+      "serviceArgs" : [ "spotlocation_2:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_0:physobj", "[3]" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "see(fetch:fetch,physobj_0:physobj)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveTo",
+      "serviceArgs" : [ "arm", "physobj_0:physobj", "justification(true)" ]
+    }, {
+      "serviceName" : "graspObject",
+      "serviceArgs" : [ "arm", "physobj_0:physobj", "0.0", "justification(true)" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_0:physobj", "3" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "approachLocation",
+      "serviceArgs" : [ "movebaselocation_7:movebaselocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLoc",
+      "serviceArgs" : [ "temilocation_2:temilocation", "false", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:spotphysobj=spotphysobj_0:spotphysobj}", "1.0", "[door(X:spotphysobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:spotphysobj=spotphysobj_1:spotphysobj}", "1.0", "[handle(X:spotphysobj)]", "true" ]
+    }, {
+      "serviceName" : "openDoor",
+      "serviceArgs" : [ "spotphysobj_0:spotphysobj", "spotphysobj_1:spotphysobj", "justification(true)" ]
+    }, {
+      "serviceName" : "initLocation",
+      "serviceArgs" : [ "spotlocation_6:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLocation",
+      "serviceArgs" : [ "spotlocation_3:spotlocation", "justification(true)" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_5:physobj}", "1.0", "[temi(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "getTypeId",
+      "serviceArgs" : [ "physobj_5:physobj", "4" ]
+    }, {
+      "serviceName" : "getTokenIds",
+      "serviceArgs" : [ "physobj_5:physobj", "[]" ]
+    }, {
+      "serviceName" : "moveObjectAbove",
+      "serviceArgs" : [ "physobj_0:physobj", "physobj_5:physobj", "arm", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, -0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "releaseObject",
+      "serviceArgs" : [ "arm", "physobj_0:physobj", "0.1", "justification(true)" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justification(true)" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "carry", "justification(true)" ]
+    }, {
+      "serviceName" : "goToLoc",
+      "serviceArgs" : [ "temilocation_0:temilocation", "false", "true" ]
+    } ]
+  } ]
+}

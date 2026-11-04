@@ -1,0 +1,23 @@
+{
+  "processor": {
+    "type": "object",
+    "arity": 1
+  },
+  "predicates": [
+    {
+      "name": "door"
+    },
+    {
+      "name": "doorhandle"
+    },
+    {
+      "name": "handle"
+    },
+    {
+      "name": "block"
+    },
+    {
+      "name": "doorknob"
+    }
+  ]
+}

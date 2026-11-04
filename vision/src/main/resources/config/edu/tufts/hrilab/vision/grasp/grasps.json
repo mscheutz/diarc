@@ -1,0 +1,18 @@
+{
+  "grasps": [
+    {
+      "name": "agile",
+      "priority": 1,
+      "config": "agile/agilegrasp.xml"
+    },
+    {
+      "name": "gpd",
+      "priority": 0,
+      "config": "gpd/gpd.cfg"
+    },
+    {
+      "name": "small_object",
+      "priority": 2
+    }
+  ]
+}

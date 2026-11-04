@@ -1,0 +1,231 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "do you know the wifi signal strength at reception?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_17f4fc9b415c45d4b8ec49f1",
+        "type" : "function",
+        "function" : {
+          "name" : "getPreviouslyMeasuredWifiStrengthsAtLocationsString",
+          "arguments" : "{\"locations\":[\"reception:location\"]}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "I have not measured wifi at reception.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I do not have information about the wifi signal strength at reception.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "could you go figure that out for me?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_7eb3e6636cd04e478ffff99c",
+        "type" : "function",
+        "function" : {
+          "name" : "measureWifiAtLocations",
+          "arguments" : "{\"locations\":[\"reception:location\"]}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should measure the wifi signal strength at reception?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "What is the wifi signal strength at reception?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_c606ed91df924fbaa28181af",
+        "type" : "function",
+        "function" : {
+          "name" : "getPreviouslyMeasuredWifiStrengthsAtLocationsString",
+          "arguments" : "{\"locations\":[\"reception:location\"]}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "The wifi signal strength at reception is -55, which is strong..",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "call_c606ed91df924fbaa28181af"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"The wifi signal strength at reception is strong.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "What is the wifi signal strength where you are right now?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_289b8931aee14052a741d001",
+        "type" : "function",
+        "function" : {
+          "name" : "getPreviouslyMeasuredWifiStrengthAtCurrentLocationString",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "The wifi signal strength where I am right now is weak.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "call_289b8931aee14052a741d001"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"The wifi signal strength where I am right now is weak.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "get and tell me the temperature of where you are",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_40a2e895b7d74a418d773054",
+        "type" : "function",
+        "function" : {
+          "name" : "getPreviouslyMeasuredTemperatureAtCurrentLocationString",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "temperature at current location was 70 degrees",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "call_40a2e895b7d74a418d773054"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"The temperature where I am right now is 70 degrees.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

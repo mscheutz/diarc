@@ -1,0 +1,3 @@
+- Follow instructions from IHMC to install Nadia simulator.
+- Be sure to setup ROS2 IHMC messages. See instructions inside <NADIA_HOME>/repository-group/nadia/nadia-user-interface/ros2ws
+- Follow instructions to setup PyTRADE (https://github.com/mscheutz/diarc/wiki/PyTRADE).

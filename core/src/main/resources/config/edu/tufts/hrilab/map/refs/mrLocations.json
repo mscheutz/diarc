@@ -1,0 +1,346 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        -0.1149142213035182,
+        -3.068575304334459,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.09090020891707212,
+        0.9958600062352302
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "X",
+      "properties": [
+        "table 1(X)"
+      ],
+      "position": [
+        3.462883458744388,
+        -4.622569999175426,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.039024484483603496,
+        0.9992382546774264
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "X",
+      "properties": [
+        "table 2(X)"
+      ],
+      "position": [
+        9.664635595764071,
+        -4.904128046636639,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.8586713336895161,
+        0.5125266243814732
+      ]
+    },
+    {
+      "refId": "location_12:location",
+      "variable": "X",
+      "properties": [
+        "table 8(X)"
+      ],
+      "position": [
+        5.973818651993622,
+        -11.48693632321823,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.73969534282361,
+        0.6729418992788768
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "X",
+      "properties": [
+        "table 3(X)"
+      ],
+      "position": [
+        8.605913305246839,
+        -6.451384278671135,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9553608741511306,
+        0.29544136497990203
+      ]
+    },
+    {
+      "refId": "location_15:location",
+      "variable": "X",
+      "properties": [
+        "thinking robots office(X)"
+      ],
+      "position": [
+        2.366778086844239,
+        7.323318690798899,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9995728823165362,
+        0.029224184118845108
+      ]
+    },
+    {
+      "refId": "location_14:location",
+      "variable": "X",
+      "properties": [
+        "front door(X)"
+      ],
+      "position": [
+        1.770436113763814,
+        -10.22424919546312,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.05368214793101535,
+        0.9985580739213483
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "X",
+      "properties": [
+        "table 4(X)"
+      ],
+      "position": [
+        9.065169234817631,
+        -8.407378487160246,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.2809260645127113,
+        0.9597294130521373
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X",
+      "properties": [
+        "conference corner(X)"
+      ],
+      "position": [
+        10.30426018756836,
+        -3.828008993649313,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9165077597198331,
+        0.4000169076093317
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "conference center(X)"
+      ],
+      "position": [
+        8.141010811382948,
+        -10.22278764637902,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9479636733008179,
+        0.3183785076006554
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "front tv(X)"
+      ],
+      "position": [
+        -2.861024835704096,
+        -6.204086306279153,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.46027363843662145,
+        0.8877770991416225
+      ]
+    },
+    {
+      "refId": "location_11:location",
+      "variable": "X",
+      "properties": [
+        "table 7(X)"
+      ],
+      "position": [
+        8.384984041847256,
+        -11.31164370693672,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.997573860708432,
+        0.06961603573368548
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "next to wine(X)"
+      ],
+      "position": [
+        3.205232611744078,
+        -3.656460069145142,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.8897935664771959,
+        0.45636324244596205
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "X",
+      "properties": [
+        "table 6(X)"
+      ],
+      "position": [
+        8.990465513279277,
+        -10.77819818598392,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.4505309871880845,
+        0.8927607907963533
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "X",
+      "properties": [
+        "table 5(X)"
+      ],
+      "position": [
+        6.775031797597168,
+        -9.189065221530939,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.42497275835814036,
+        0.9052061393149483
+      ]
+    },
+    {
+      "refId": "location_17:location",
+      "variable": "X",
+      "properties": [
+        "couch two(X)"
+      ],
+      "position": [
+        5.461370465860791,
+        19.86506967666058,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7958339014111061,
+        0.6055149885550133
+      ]
+    },
+    {
+      "refId": "location_16:location",
+      "variable": "X",
+      "properties": [
+        "couch one(X)"
+      ],
+      "position": [
+        6.148073404914632,
+        17.4350531935856,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.009624653906293539,
+        0.9999536819459109
+      ]
+    },
+    {
+      "refId": "location_19:location",
+      "variable": "X",
+      "properties": [
+        "couch four(X)"
+      ],
+      "position": [
+        8.60679777418907,
+        16.56606084975213,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9999971086250183,
+        0.0024047331667310682
+      ]
+    },
+    {
+      "refId": "location_18:location",
+      "variable": "X",
+      "properties": [
+        "couch three(X)"
+      ],
+      "position": [
+        8.619111976714587,
+        20.2822210657413,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.999998007166501,
+        0.001996412539188055
+      ]
+    }
+  ]
+}

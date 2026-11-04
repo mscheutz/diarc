@@ -1,0 +1,73 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "what locations do you know about?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_0638cc3902474376bbbae208",
+        "type" : "function",
+        "function" : {
+          "name" : "getAllKnownLocations",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "I know the following locations: atrium three elevators, bieward elevators, biewend lab, cardiology checkin, dock, elevator, emergency, floating elevators, garage stairs, infectious disease, mother and infant unit, pavilion, pharmacy, piano, proger elevators, reception, rheumatology checkin, tv, visitors center. Please list no more than 5 locations at a time in any response, unless explicitly asked for all/more/different locations. You may still provide the total number of locations you have saved and list 5 in your initial response though.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : "call_0638cc3902474376bbbae208"
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I know about 20 locations. Here are five: atrium three elevators, bieward elevators, biewend lab, cardiology checkin, and dock.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "list them all out",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I know about 20 locations. Here are all of them: atrium three elevators, bieward elevators, biewend lab, cardiology checkin, dock, elevator, emergency, floating elevators, garage stairs, infectious disease, mother and infant unit, pavilion, pharmacy, piano, proger elevators, reception, rheumatology checkin, tv, visitors center.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

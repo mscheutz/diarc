@@ -1,0 +1,34 @@
+<!--
+Set the runtime camera capture configuration for the vision system.
+
+Required:
+	camMode: camera mode - see options below
+	imageWidth: image width in pixels
+	imageHeight: image height in pixels
+	hasStereo: is capture mode stereo
+	hasDepth: does capture mode produce depth info
+	publishCloudToRos: should captured point cloud be published to ROS (only possible if
+						VisionComponent is compiled with ROS support and hasDepth is true)
+
+NOTE: info about the kinova kortex vision sensor can be found here:
+https://github.com/Kinovarobotics/ros_kortex_vision
+
+Run this ROS command:
+roslaunch kinova_vision kinova_vision_rgbd.launch 
+-->
+
+<capture>
+    <camMode>ROS</camMode>
+    <imageWidth>320</imageWidth>
+    <imageHeight>240</imageHeight>
+    <hasStereo>false</hasStereo>
+    <hasDepth>true</hasDepth>
+    <imageTopic>/camera/color/image_raw</imageTopic>
+    <depthTopic>/camera/depth/image</depthTopic>
+    <cameraInfoTopic>/camera/color/camera_info</cameraInfoTopic>
+    <depthInfoTopic>/camera/depth/camera_info</depthInfoTopic>
+    <convertToRGB>true</convertToRGB>
+    <depthRegistration>true</depthRegistration>
+    <publishCloudToRos>false</publishCloudToRos>
+    <depthToColorT>-0.0195 -0.005 0.0</depthToColorT>
+</capture>

@@ -1,0 +1,6 @@
+{
+  "testName" : "invalidArgumentTest",
+  "testlets" : [ {
+    "serviceCalls" : [ ]
+  } ]
+}

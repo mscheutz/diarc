@@ -1,0 +1,67 @@
+%%%%%%%%%%%%%%% Start multirobotcaddy %%%%%%%%%%%%%%%
+set up demo; C; setupscene(?ADDRESSEE)
+
+medical catty; THING; medicalcaddy:physobj
+
+met kit; KITTYPE; medkit
+med kit; KITTYPE; medkit
+
+there's; (((VAL/AREA)/AT)/DN)/NUM; #n#d#t#a.val(observableAt($n,$d,$a))
+
+air; (((VAL/AREA)/AT)/DN)/NUM; #n#d#t#a.val(observableAt($n,$d,$a))
+
+tablec; AREA; tableC:area
+tablecy; AREA; tableC:area
+table sea; AREA; tableC:area
+
+pain killers; DN; painkiller:property
+
+intercepted; THING; antiseptic:physobj
+
+deliver and; (C/LOC)/KITTYPE; #x#y.deliver(?ADDRESSEE,$x,$y)
+%%%%%%%%%%%%%%% End multirobotcaddy %%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%% Start fetch (untested) %%%%%%%%%%%%%%%
+%
+%%search (a small gear) -> fetch
+%search; ((C/REF)/REF)\AGENT; #a#x#y.fetch($a,$x,$y)
+%search; (C/REF)/REF; #x#y.fetch(?ADDRESSEE,$x,$y)
+%%" -homophone fetch such"
+%such; ((C/REF)/REF)\AGENT; #a#x#y.fetch($a,$x,$y)
+%such; (C/REF)/REF; #x#y.fetch(?ADDRESSEE,$x,$y)
+%%" -homophone fetch dutch"
+%dutch; ((C/REF)/REF)\AGENT; #a#x#y.fetch($a,$x,$y)
+%dutch; (C/REF)/REF; #x#y.fetch(?ADDRESSEE,$x,$y)
+%%" -homophone caddy location catty location"
+%catty location; THING; caddylocation
+%tool catty; THING; toolcaddy:physobj
+%catty; THING; caddy
+%
+%%(reset) alarm -> arm
+%alarm; RN ; arm
+%alarm; N ; arm
+%
+%%(assemble a) academy -> a caddy
+%%a; REF/RN ; #x.$x ; INDEFINITE
+%%a; LREF/LN ; #x.$x ;INDEFINITE
+%%a; DESC/DN ; #x.$x
+%%caddy; THING; caddy
+%academy ; REF; caddy
+%
+%
+%%TODO
+%%pick up -> pickup
+%pick up; VERBT; pickup
+%pick up; C/NP; #y.pickUp(?ACTOR,$y)
+%%pickUpX: C: pickUpObject(?ACTOR,Object)
+%
+%%%%%%%%%%%%%%%% End fetch %%%%%%%%%%%%%%%
+
+%% Due to canceling ASR preemptively
+%" -homophone caddy cad"
+%" -homophone caddy location cad location"
+
+%TODO
+%" -homophone pose post"
+%you asssemble a caddy -> describe how you assemble a caddy

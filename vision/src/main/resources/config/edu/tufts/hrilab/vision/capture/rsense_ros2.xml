@@ -1,0 +1,34 @@
+<!--
+Set the runtime camera capture configuration for the vision system.
+
+Required:
+	camMode: camera mode - see options below
+	imageWidth: image width in pixels
+	imageHeight: image height in pixels
+	hasStereo: is capture mode stereo
+	hasDepth: does capture mode produce depth info
+	publishCloudToRos: should captured point cloud be published to ROS (only possible if
+						VisionComponent is compiled with ROS support and hasDepth is true)
+
+Optional:
+	any additional fields the particular camera mode might need
+
+NOTE: use this config with:
+
+	 ros2 launch realsense2_camera rs_align_depth_launch.py"
+-->
+
+<capture>
+    <camMode>ROS2</camMode>
+    <imageWidth>320</imageWidth>
+    <imageHeight>240</imageHeight>
+    <hasStereo>false</hasStereo>
+    <hasDepth>true</hasDepth>
+    <imageTopic>/camera/camera/color/image_raw</imageTopic>
+    <depthTopic>/camera/camera/aligned_depth_to_color/image_raw</depthTopic>
+    <cameraInfoTopic>/camera/camera/color/camera_info</cameraInfoTopic>
+    <depthInfoTopic>/camera/camera/aligned_depth_to_color/camera_info</depthInfoTopic>
+    <convertToRGB>true</convertToRGB>
+    <convertToMeters>false</convertToMeters>
+    <publishCloudToRos>false</publishCloudToRos>
+</capture>

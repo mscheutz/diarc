@@ -1,0 +1,30 @@
+%TODO:brad: update THING template to use appropriate semantic types
+box; THING; box
+bowl; THING; bowl
+caddy; THING; caddy
+painkiller; THING; painkiller
+antiseptic; THING; antiseptic
+bandage box; THING; bandagebox
+gearboxtop; THING; gearboxtop
+gearboxbottom; THING; gearboxbottom
+medicalcaddy; THING; medicalcaddy
+apple; THING; apple
+baseball; THING; baseball
+glassbottle; THING; glassbottle
+bowl; THING; bowl
+carrot; THING; carrot
+donut; THING; donut
+flowerpot; THING; flowerpot
+flower; THING; flowerpot
+plant; THING; flowerpot
+block; THING; block
+plant; THING; flowerpot
+computermouse; THING; computermouse
+car; THING; car
+bottle; THING; sportsbottle
+teddybear; THING; teddybear
+tennis ball; THING; tennisball
+tennisball; THING; tennisball
+waterbottle; THING; waterbottle
+box; THING; box
+block; THING; block

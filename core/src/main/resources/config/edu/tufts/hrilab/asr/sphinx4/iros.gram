@@ -1,0 +1,12 @@
+#JSGF V1.0;
+grammar jsgf.iros;
+
+public <s> = <sbj> <vp> | <cc> <s> | <s> <s>;
+
+<vp> = <md> be <pp> | are <pp> | push <np> <dist> | to go <pp>;
+<md> = will;
+<sbj> = you;
+<pp> = at <np> | in <np> | into <np>;
+<dist> = one meter;
+<np> = the room | a room | a closed door | it;
+<cc> = if | when | and | then;

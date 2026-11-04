@@ -1,0 +1,91 @@
+{
+  "configName": "ur5_real",
+  "pointingFrame": "camera_frame",
+  "baseLinkString": "base_link",
+  "maxMovetoAttempts": 5,
+  "maxNodeCheckCount": 10,
+  "graspApproachOffset": 0.265,
+  "graspContactOffset": 0.130,
+  "speedFactor" : 0.2,
+  "allowDisableCollisionAvoidance": true,
+  "localStaticTransforms": [
+    {
+      "parent": "world",
+      "child": "base_link",
+      "x": 0,
+      "y": 0,
+      "z": 0.025,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 0
+    },
+    {
+      "parent": "base_link",
+      "child": "static_camera_frame",
+      "x": 0.53,
+      "y": 0.41,
+      "z": 0.73,
+      "roll": -2.740,
+      "pitch": 0,
+      "yaw": 1.658
+    }
+  ],
+  "defaultGroupName": "manipulator",
+  "groups": [
+    {
+      "groupName": "manipulator",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "elbow_joint",
+        "wrist_1_joint",
+        "wrist_2_joint",
+        "wrist_3_joint"
+      ],
+      "effectorLinkName": "ee_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.robotiq._2f85"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "start",
+      "poseGroup": "manipulator",
+      "jointStates": [
+        1.570,
+        -1.570,
+        2.356,
+        -0.785,
+        1.570,
+        0.00
+      ]
+    }
+  ],
+  "collisions": [
+    {
+      "parent": "world",
+      "name": "table",
+      "x": "0",
+      "y": "0",
+      "z": "-0.4825",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0.915",
+      "depth": "0.915",
+      "height": "0.915"
+    },
+    {
+      "parent": "ee_link",
+      "name": "gripper_collision",
+      "x": 0.07,
+      "y": 0.0,
+      "z": 0.0,
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0.14",
+      "depth": "0.145",
+      "height": "0.04"
+    }
+  ]
+}

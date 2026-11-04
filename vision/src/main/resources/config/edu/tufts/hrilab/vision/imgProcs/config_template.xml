@@ -1,0 +1,22 @@
+<!--
+Set runtime configuration for an ImageProcessor.
+	
+	name : advertised description of ImageProcessor capability.
+
+All elements must be enclosed within the <predicates> tag.
+All advertised descriptions must be in a <preicate> tag with
+	a name attribute.
+-->
+
+<predicates>
+	<predicate name="name1">
+		<!--
+		Insert any addtional elements/data/values here.
+		-->
+	</predicate>
+	<predicate name="name2">
+		<!--
+		Insert any addtional elements/data/values here.
+		-->
+	</predicate>
+</predicates>

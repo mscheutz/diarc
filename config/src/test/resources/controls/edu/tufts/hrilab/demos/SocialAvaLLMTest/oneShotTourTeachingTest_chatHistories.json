@@ -1,0 +1,228 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Learn a new task called measurement patrol made up of four steps. Step 1 is to start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure both the wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_f7f732c8088647559f63e3ea",
+        "type" : "function",
+        "function" : {
+          "name" : "learnTaskSequence",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "The previous conversation history leading up to this point is as follows:\n{\n  \"role\": \"user\",\n  \"content\": \"Learn a new task called measurement patrol made up of four steps. Step 1 is to start at the dock and say starting the measurement patrol. Steps 2 and 3 should be to measure both the wifi signal and temperature at reception and at the pavilion. Step 4 is to say “done measuring” back at dock\"\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"call_f7f732c8088647559f63e3ea\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"learnTaskSequence\",\n        \"arguments\": \"{}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"assistant\",\n  \"content\": \"\",\n  \"tool_calls\": [\n    {\n      \"id\": \"\",\n      \"type\": \"function\",\n      \"function\": {\n        \"name\": \"validatingToolSubmission\",\n        \"arguments\": \"{\\\"response\\\":\\\"Confirming I should learn a new task sequence?\\\"}\"\n      },\n      \"index\": 0\n    }\n  ]\n}\n{\n  \"role\": \"user\",\n  \"content\": \"yes\"\n}\nLook for any relevant information from this conversation history to inform your initial response.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_b7ece49e6a524139b878ea0c",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I understand you want to teach me a task called measurement patrol. Let me confirm the details: start at dock, say \\\"starting the measurement patrol\\\", then measure wifi and temperature at reception and pavilion, and finally return to dock saying \\\"done measuring\\\". Is that correct?\",\"currentTaskSequenceDefinition\":{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"starting the measurement patrol\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"done measuring\"}}}]}}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Your most recent tool call with id call_b7ece49e6a524139b878ea0c was rejected by the system. Please address the following reasons why and make an updated tool call. Solve these issues on your own where possible. If you must ask the user for missing or clarifying information, let them know why:\n- It looks like your current definition of the target to be submitted is fully filled out. If this seems to be the case, try submitting the target submission tool call directly insteadof responding to the user.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_5060523a08254551952199f8",
+        "type" : "function",
+        "function" : {
+          "name" : "submitTaskSequenceDefinition",
+          "arguments" : "{\"taskName\":\"measurement patrol\",\"locationActionPairs\":[{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"starting the measurement patrol\"}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"reception:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureWifiAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"pavilion:location\",\"action\":{\"name\":\"measureTemperatureAtCurrentLocation\",\"arguments\":{}}},{\"location\":\"dock:location\",\"action\":{\"name\":\"sayLocally\",\"arguments\":{\"words\":\"done measuring\"}}}]}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Got it.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should learn a new task sequence under the name measurement patrol, starting at the dock to say \\u0027starting the measurement patrol\\u0027, then measuring wifi and temperature at reception, followed by measuring wifi and temperature at the pavilion, and finally returning to the dock to say \\u0027done measuring\\u0027.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "I have told you all the information you need, please save it",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "What are the steps of the measurement patrol I taught you?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_1f2676691f184050b86e28d0",
+        "type" : "function",
+        "function" : {
+          "name" : "getActionSteps",
+          "arguments" : "{\"action\":\"measurement_patrol\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "The steps for the measurement patrol are: go to the dock, say 'starting the measurement patrol', go to reception, measure WiFi and temperature there, go to the pavilion, measure WiFi and temperature there, return to the dock, and say 'done measuring'. Summarize this description if relaying to the user.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"The steps for the measurement patrol are to go to the dock, say starting the measurement patrol, go to reception and measure WiFi and temperature there, then go to the pavilion and measure WiFi and temperature there, return to the dock, and say done measuring.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "forget how to perform the measurement patrol",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_75e4637662414e898b6e1a94",
+        "type" : "function",
+        "function" : {
+          "name" : "forgetTaughtAction",
+          "arguments" : "{\"actionPredicate\":\"{\\\"name\\\": \\\"measurement_patrol\\\", \\\"arguments\\\": {}}\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Confirming I should forget how to perform the measurement patrol?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "yes",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  } ]
+}

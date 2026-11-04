@@ -1,0 +1,371 @@
+{
+  "utterances" : [ {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Can I teach you how to go to the front door?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_2e29902b9d4c4e8f9763d2d5",
+        "type" : "function",
+        "function" : {
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Fact List:\\\\n- The set of saved locations available to you are presented in the location list.\\\\n- You only know how to navigate between saved locations. You cannot travel to any other position in the environment without explicitly saving it first.\\\\n- The only way to save a new location is if the user instructs you to save your current position as a new location (where you will subsequently call the \"saveLocation\" tool).\\\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new.\\\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so and/or your active task is follow.\\\\n- The only way you will stop following a user is if they instruct you to stop following (where you will subsequently call the \"stopFollowing\" tool)\\\\n#\\\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I can only navigate to saved locations, and the front door isn\\u0027t one of them. Would you like me to follow you there so I can save it?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "okay, come with me then",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_f3b2d481cb3e41e9ab7024f9",
+        "type" : "function",
+        "function" : {
+          "name" : "follow",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Should I follow you?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "nevermind",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Can I show you where my office is?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_5b00ca79d48f4196aa95aee3",
+        "type" : "function",
+        "function" : {
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Fact List:\\\\n- The set of saved locations available to you are presented in the location list.\\\\n- You only know how to navigate between saved locations. You cannot travel to any other position in the environment without explicitly saving it first.\\\\n- The only way to save a new location is if the user instructs you to save your current position as a new location (where you will subsequently call the \"saveLocation\" tool).\\\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new.\\\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so and/or your active task is follow.\\\\n- The only way you will stop following a user is if they instruct you to stop following (where you will subsequently call the \"stopFollowing\" tool)\\\\n#\\\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I can\\u0027t see your office, but if you tell me where it is, I\\u0027ll try to find it.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "okay, come with me then",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_fc1c28347e354eda95cd25e9",
+        "type" : "function",
+        "function" : {
+          "name" : "follow",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Did I hear correctly that you want me to follow you?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "nevermind",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "How do I teach you a new location?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_90c1e89ffc9b46049594d0dd",
+        "type" : "function",
+        "function" : {
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Fact List:\\\\n- The set of saved locations available to you are presented in the location list.\\\\n- You only know how to navigate between saved locations. You cannot travel to any other position in the environment without explicitly saving it first.\\\\n- The only way to save a new location is if the user instructs you to save your current position as a new location (where you will subsequently call the \"saveLocation\" tool).\\\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new.\\\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so and/or your active task is follow.\\\\n- The only way you will stop following a user is if they instruct you to stop following (where you will subsequently call the \"stopFollowing\" tool)\\\\n#\\\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"To teach me a new location, please follow me to the place you want me to remember and then instruct me to save it.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "okay, come with me then, I'll show you to the back room",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_e18b35b36bbe4fe498cf89be",
+        "type" : "function",
+        "function" : {
+          "name" : "follow",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "validatingToolSubmission",
+          "arguments" : "{\"response\":\"Did I hear correctly that you want me to follow you?\\\\\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "nevermind",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    } ]
+  }, {
+    "utteranceText" : null,
+    "systemPrompt" : null,
+    "chatHistory" : [ {
+      "role" : "user",
+      "content" : "Can you go to the basement?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "call_b7f6f71e5f66447eb653e62d",
+        "type" : "function",
+        "function" : {
+          "name" : "getAssistanceOnUsingSaveLocationAndGoToLocationProperly",
+          "arguments" : "{}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "tool",
+      "content" : "Fact List:\\\\n- The set of saved locations available to you are presented in the location list.\\\\n- You only know how to navigate between saved locations. You cannot travel to any other position in the environment without explicitly saving it first.\\\\n- The only way to save a new location is if the user instructs you to save your current position as a new location (where you will subsequently call the \"saveLocation\" tool).\\\\n- The only way you can get to a new position in order to save a new location is by following the user to somewhere new.\\\\n- The only way to follow the user is if they instruct you to (where you will subsequently call the \"follow\" tool). Do not tell the user you are following them unless you have done so and/or your active task is follow.\\\\n- The only way you will stop following a user is if they instruct you to stop following (where you will subsequently call the \"stopFollowing\" tool)\\\\n#\\\\nResponse target: Please use the supplied information to 1. answer the user's questions to the best of your ability and/or 2. Inform what tool calls to make to fulfill their requests. If none of this information is relevant, you may ignore it.",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"I cannot navigate to the basement as it is not a saved location. Would you like me to follow you there?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "Can I show you how to get there?",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"Yes, I would be happy to learn how to navigate to the basement. Please guide me there.\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    }, {
+      "role" : "user",
+      "content" : "nevermind",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : null,
+      "tool_call_id" : null
+    }, {
+      "role" : "assistant",
+      "content" : "",
+      "function_call" : null,
+      "reasoning" : null,
+      "tool_calls" : [ {
+        "id" : "",
+        "type" : "function",
+        "function" : {
+          "name" : "respondToUserWithoutPerformingAnAction",
+          "arguments" : "{\"response\":\"No problem. Is there anything else you would like me to help with?\"}"
+        },
+        "index" : 0
+      } ],
+      "tool_call_id" : null
+    } ]
+  } ]
+}

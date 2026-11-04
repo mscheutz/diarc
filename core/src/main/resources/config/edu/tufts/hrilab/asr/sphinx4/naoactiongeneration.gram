@@ -1,0 +1,4 @@
+#JSGF V1.0;
+grammar affordanceDemo.gram;
+
+public <s> = i will teach you how to do a squat | raise your hands | crouch | stand up | lower your hands | that is how you do a squat | do a squat;

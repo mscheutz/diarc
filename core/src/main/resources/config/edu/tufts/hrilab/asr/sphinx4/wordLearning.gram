@@ -1,0 +1,12 @@
+#JSGF V1.0;
+grammar wordLearning.jsgf;
+
+public <s> = [<agent>] <command> | [<agent>] <statement>;
+
+<agent>= robot | brad | evan | sepi;
+
+<object>= plate | box | bottle | mug| knife;
+
+<command>= point to the <object>;
+
+<statement>= i will take the <object> | i put the <object> near the <object> | the object is (a|an) <object>;

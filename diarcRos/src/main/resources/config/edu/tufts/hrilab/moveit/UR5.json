@@ -1,0 +1,161 @@
+{
+  "configName": "UR5",
+  "baseLinkString": "base_link",
+  "pointingFrame": "camera_frame",
+  "maxMoveToAttempts": 5,
+  "maxNodeCheckCount": 10,
+  "graspApproachOffset": 0.265,
+  "graspContactOffset": 0.165,
+  "speedFactor" : 0.2,
+  "allowDisableCollisionAvoidance": false,
+  "endEffectorTransform" : {
+    "x" : 0,
+    "y" : 0,
+    "z" : 0,
+    "roll" : -1.5707,
+    "pitch" : -1.5707,
+    "yaw" : 0
+  },
+  "localStaticTransforms": [
+    {
+      "parent": "world",
+      "child": "base_link",
+      "x": 0,
+      "y": 0.038,
+      "z": 0.0891,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": -1.5707
+    },
+    {
+      "parent": "wrist_3_link",
+      "child": "camera_frame",
+      "x": -0.0325,
+      "y": 0.1268,
+      "z": 0.06,
+      "roll": -1.5707,
+      "pitch": 0,
+      "yaw": 0
+    },
+    {
+      "parent": "wrist_3_link",
+      "child": "ee_link",
+      "x": 0,
+      "y": 0.0823,
+      "z": 0,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 1.5707
+    }
+  ],
+  "defaultGroupName": "manipulator",
+  "groups": [
+    {
+      "groupName": "manipulator",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "elbow_joint",
+        "wrist_1_joint",
+        "wrist_2_joint",
+        "wrist_3_joint"
+      ],
+      "effectorLinkName": "ee_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.robotiq._2f85"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "start",
+      "poseGroup": "manipulator",
+      "jointStates": [
+        -1.570,
+        -1.221,
+        -2.094,
+        -0.872,
+        1.5708,
+        0.0
+      ]
+    }
+  ],
+  "collisions": [
+    {
+      "parent": "base_link",
+      "name": "table",
+      "x": "0",
+      "y": "0",
+      "z": "0",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "2",
+      "depth": ".37",
+      "height": "0"
+    },
+    {
+      "parent": "base_link",
+      "name": "table2",
+      "x": "0",
+      "y": "0",
+      "z": "-.17",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "2",
+      "depth": "2",
+      "height": "0"
+    },
+    {
+      "parent": "base_link",
+      "name": "lwall",
+      "x": "-.7",
+      "y": "0",
+      "z": "0",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0",
+      "depth": "2",
+      "height": "2"
+    },
+    {
+      "parent": "base_link",
+      "name": "rwall",
+      "x": ".7",
+      "y": "0",
+      "z": "0",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0",
+      "depth": "2",
+      "height": "2"
+    },
+    {
+      "parent": "base_link",
+      "name": "bwall",
+      "x": "0",
+      "y": "-.3",
+      "z": "0",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "2",
+      "depth": "0",
+      "height": "2"
+    },
+    {
+      "parent": "ee_link",
+      "name": "camera",
+      "x": "0",
+      "y": "0",
+      "z": "0.07",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0.05",
+      "depth": "0.18",
+      "height": ".05"
+    }
+  ]
+}

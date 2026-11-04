@@ -1,0 +1,156 @@
+{
+    "processor": {
+      "type": "category",
+      "arity": 1
+    },
+    "config": {
+      "model": "bestOCRnew.onnx",
+      "backend": "CPU"
+    },
+    "predicates": [
+      {
+        "name": "zero",
+        "classID": 0
+      },
+      {
+        "name": "one",
+        "classID": 1
+      },
+      {
+        "name": "two",
+        "classID": 2
+      },
+      {
+        "name": "three",
+        "classID": 3
+      },
+      {
+        "name": "four",
+        "classID": 4
+      },
+      {
+        "name": "five",
+        "classID": 5
+      },
+      {
+        "name": "six",
+        "classID": 6
+      },
+      {
+        "name": "seven",
+        "classID": 7
+      },
+      {
+        "name": "eight",
+        "classID": 8
+      },
+      {
+        "name": "nine",
+        "classID": 9
+      },
+      {
+        "name": "a",
+        "classID": 10
+      },
+      {
+        "name": "b",
+        "classID": 11
+      },
+      {
+        "name": "c",
+        "classID": 12
+      },
+      {
+        "name": "d",
+        "classID": 13
+      },
+      {
+        "name": "e",
+        "classID": 14
+      },
+      {
+        "name": "f",
+        "classID": 15
+      },
+      {
+        "name": "g",
+        "classID": 16
+      },
+      {
+        "name": "h",
+        "classID": 17
+      },
+      {
+        "name": "i",
+        "classID": 18
+      },
+      {
+        "name": "j",
+        "classID": 19
+      },
+      {
+        "name": "k",
+        "classID": 20
+      },
+      {
+        "name": "l",
+        "classID": 21
+      },
+      {
+        "name": "m",
+        "classID": 22
+      },
+      {
+        "name": "n",
+        "classID": 23
+      },
+      {
+        "name": "o",
+        "classID": 24
+      },
+      {
+        "name": "p",
+        "classID": 25
+      },
+      {
+        "name": "q",
+        "classID": 26
+      },
+      {
+        "name": "r",
+        "classID": 27
+      },
+      {
+        "name": "s",
+        "classID": 28
+      },
+      {
+        "name": "t",
+        "classID": 29
+      },
+      {
+        "name": "u",
+        "classID": 30
+      },
+      {
+        "name": "v",
+        "classID": 31
+      },
+      {
+        "name": "w",
+        "classID": 32
+      },
+      {
+        "name": "x",
+        "classID": 33
+      },
+      {
+        "name": "y",
+        "classID": 34
+      },
+      {
+        "name": "z",
+        "classID": 35
+      }
+    ]
+  }

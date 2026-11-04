@@ -1,0 +1,68 @@
+setup poses
+-
+raise up
+-
+init
+-
+Save this pose as conveyor
+40 mm
+Save this pose as work area
+5 mm
+Save this pose as screw feeder
+75 mm
+-
+Define new screw type M3
+job m3 hole
+150 millinewton meters
+300 millinewton meters
+6500 degrees
+pose screw feeder
+-
+I will teach you how to screw a screw into a hole
+first mount the screw
+then align with the hole
+Then run the screwdriver job of the screw
+That is how you screw an M3 screw into a hole
+-
+search for M3 holes
+screw an M3 screw into an M3 hole
+-
+Update M3 screw target torque to 150 millinewton meters
+Update M3 screw max torque to 200 millinewton meters
+-
+search for M3 holes
+screw an M3 screw into an M3 hole
+-
+define new item NF32-SV
+job circuit breaker face
+-
+I will teach you how to assemble a NF32-SV
+first go to pose conveyor
+then verify that you can see the NF32-SV
+Then get the NF32-SV on the work area
+then search for 2 m3 holes
+screw a M3 screw into the left M3 hole
+screw a M3 screw into the right M3 hole
+then get the NF32-SV on the conveyor
+then advance the conveyor belt
+that is how you assemble a NF32-SV
+-
+assemble a NF32-SV
+-
+generate offline representation for your last goal
+-
+M3 ネジの目標トルクを 170 ミリニュートンメーターに変更します
+M3 ネジの最大トルクを 300 ミリニュートンメーターに変更します
+M3 のネジ穴を探してください
+M3 のネジでネジ締めしてください
+-
+generate robot code for assemble a NF32-SV
+-
+define new item NV30-FAU
+job n v det
+-
+assemble an NV30-FAU is like assemble an NF32-SV
+replace screw an M3 screw into the left M3 hole with screw an M3 screw into the bottom M3 hole
+replace screw an M3 screw into the right M3 hole with screw an M3 screw into the top M3 hole
+-
+assemble an NV30-FAU

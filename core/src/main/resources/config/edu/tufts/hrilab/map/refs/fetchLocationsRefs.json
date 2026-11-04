@@ -1,0 +1,184 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "bathroom(VAR0:location)"
+      ],
+      "position": [
+        0.1,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "lockers(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        0.1,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "staircase(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.1
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "frontDesk(VAR0:location)"
+      ],
+      "position": [
+        0.1,
+        0.1,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "officeHours(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        0.1,
+        0.1
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "humanRobotInteractionLab(VAR0:location)"
+      ],
+      "position": [
+        0.1,
+        0.0,
+        0.1
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "couchArea(VAR0:location)"
+      ],
+      "position": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_7:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "huddleRoom(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "waterFountain(VAR0:location)"
+      ],
+      "position": [
+        0.2,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "elevators(VAR0:location)"
+      ],
+      "position": [
+        10.0,
+        0.2,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}

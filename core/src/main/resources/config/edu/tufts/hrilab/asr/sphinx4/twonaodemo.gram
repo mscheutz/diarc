@@ -1,0 +1,49 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = [<directaddress>] <question> [<directaddress>] | [<directaddress>] [<startcommand>] <command> [<endcommand>] [<directaddress>] | [<directaddress>] <greeting> [<directaddress>] | [<directaddress>] <statement> [<directaddress>];
+
+<directaddress> = shafer | dempster;
+
+<startcommand> = can you please | please | can you | could you | i (want|need) you to | <directaddress> (wants|needs) you to | great | now | ok |  <startcommand> <startcommand>;
+
+<endcommand> = please | now | <endcommand> <endcommand>;
+
+<command> = <turn> <orient> | <walk> <direction> | <sitdown> | <getup> | <stop> | <armact> your <orient> <appendage> | <armact> your <appendage> | <armact> your <arms> | <walk> | wave | [ok] relax | tell <directaddress> to <command>| <learnable>;
+
+<question>= <see> | <doyouhaveaname> | <trust> | <safe>;
+
+<turn> = turn ;
+
+<orient> = left | right;
+
+<sitdown> = crouch | crouch down;
+
+<getup> = stand up | get up | stand;
+
+<walk> = walk | move;
+
+<direction> = forward | backward | straight | back;
+
+<armact> = raise | lower | wave;
+
+<appendage> = arm | hand;
+
+<arms>= arms | hands;
+
+<learnable> = do a squat;
+
+<stop>= stop;
+
+<doyouhaveaname> = do you have a name | what is your name | whats your name;
+
+<safe> = the obstacle is not solid | the area behind (you| <directaddress>) is safe | i will catch (you| <directaddress>);
+
+<see> =  (do you| does <directaddress>) see an obstacle [now] | (do you |does <directaddress>) see support [now];
+
+<greeting> = hello | thanks | thank you | good bye| good morning;
+
+<trust> = (do you| does <directaddress> )trust me;
+
+<statement> = i will teach you how to <learnable> | <learnable> | that is how you <learnable>| the obstacle is gone | hold on ;
+

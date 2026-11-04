@@ -1,0 +1,112 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
+package edu.tufts.hrilab.abb;
+
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
+import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.Effect;
+import edu.tufts.hrilab.action.annotations.Observes;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
+
+import java.util.List;
+import java.util.Map;
+
+public interface RWSRobotComponentInterface {
+
+  @TRADEService
+  @Action
+  Symbol addCameraPose(String propertyName, String poseString);
+
+  @TRADEService
+  @Action
+  void addDropoffPose(String propertyName, String cameraPoseName, String poseString);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  void goToCameraPose(Symbol locationRef);
+
+  @TRADEService
+  @Action
+  void calibrateGripper();
+
+  @TRADEService
+  @Action
+  void openGripperRapid();
+
+  @TRADEService
+  @Action
+  void closeGripperRapid();
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  void pourSauce();
+
+  @TRADEService
+  @Action
+  void setGraspPoint(Symbol itemType, String targetString);
+
+  @TRADEService
+  @Action
+  boolean defineGraspPointForDescriptor(Symbol refId, Symbol itemType);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  boolean perceiveEntityFromSymbol(Symbol refId);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  void pickupItem(Symbol refId);
+
+  @TRADEService
+  @Action
+  Justification cookItem(Symbol refId, Term time);
+
+  @TRADEService
+  @Action
+  Justification sauteItem(Symbol refId, Term time);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  boolean goToPoseName(String poseName);
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "cancelCurrentRapidAction()")
+  @Effect(effect = {"noRapidError()"}, type = EffectType.SUCCESS, observable = {"noRapidError()"})
+  void putDownItem(Symbol refId, Symbol pose);
+
+  void moveToObject(Symbol refId);
+
+  void setCognexConsultant(CognexConsultant cognexConsultant);
+
+  @TRADEService
+  @Action
+  boolean cancelCurrentRapidAction();
+
+  @TRADEService
+  @Observes({"noRapidError()"})
+  List<Map<Variable, Symbol>> checkError(Term t);
+
+  @TRADEService
+  @Action
+  CognexResult getMatchingResult(Symbol refId, List<CognexResult> results);
+}

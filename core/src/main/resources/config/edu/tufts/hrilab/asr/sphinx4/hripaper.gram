@@ -1,0 +1,33 @@
+#JSGF V1.0;
+grammar jsgf.hripaper;
+
+public <utterance> = [<frame>] <s> | <frame> <vp>;
+
+<s> = [<dp>] <np> [<dp>] <vp> | <aux> <s> | <np> [<dp>] <s>;
+
+<vp> = <verb> [<vc>] | <copula> <np> <np> | <vp> and <vp> | <copula> <vp> | <verb> <vp>;
+
+<np> = [ [<pdt>] <det>] [<adj>] <noun> | there | <np> <pp> | how <det> <noun> | <prp>;
+
+<pp> = <prep> <np>;
+
+<pdt> = all;
+<det> = the | that | a | any | those | many;
+<adj> = first | yellow | green | blue;
+<noun> = room | hallway | doorway | block | box | blocks | boxes | left | ba;
+<prp> = you | we | it;
+
+<vc> = <adverb> | <np> | <pp> | <vc> <vc>;
+
+<dp> = <lfp> | <nlfp> | <dp> <dp>;
+<lfp> = good | okay | now;
+<nlfp> = um | er | uh;
+
+<aux> = do;
+<copula> = is;
+<verb> = go | walk | get | located | see | have | be | walking;
+<adverb> = right;
+
+<prep> = into | down | through | from | next to | on;
+
+<frame> = you have to | looks like you'll | looks like you will;

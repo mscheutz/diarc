@@ -1,0 +1,7 @@
+this is location a
+this is location b
+go to location a
+go to location b
+when location a is blocked go to location b
+when a location is blocked go to a free location
+stop

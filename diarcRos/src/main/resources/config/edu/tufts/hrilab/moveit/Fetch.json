@@ -1,0 +1,176 @@
+{
+  "configName": "Fetch",
+  "baseLinkString": "base_link",
+  "pointingFrame": "pointing_link",
+  "maxMoveToAttempts": 10,
+  "maxNodeCheckCount": 10,
+  "positionTolerance": 0.005,
+  "graspApproachOffset": 0.26,
+  "graspContactOffset": 0.1787,
+  "maxPlanningTime": 20.0,
+  "armReach": 0.85,
+  "maxGripperPosition": 0.1,
+  "allowDisableCollisionAvoidance": true,
+  "speedFactor": 0.15,
+  "defaultGroupName": "arm",
+  "groups": [
+    {
+      "groupName": "arm",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.fetch.FetchGripper"
+    },
+    {
+      "groupName": "arm_with_torso",
+      "jointNames": [
+        "torso_lift_joint",
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "upperarm_roll_joint",
+        "elbow_flex_joint",
+        "forearm_roll_joint",
+        "wrist_flex_joint",
+        "wrist_roll_joint"
+      ],
+      "effectorLinkName": "wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.fetch.FetchGripper"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "tuck",
+      "poseGroup": "arm",
+      "jointStates": [
+        1.32,
+        1.4,
+        -0.2,
+        1.72,
+        0.0,
+        1.66,
+        0.0
+      ]
+    },
+    {
+      "poseName": "raised",
+      "poseGroup": "arm",
+      "jointStates": [
+          1.5633691132843017,
+          -0.173418873314209,
+          -2.18021378616333,
+          1.7557802787194825,
+          1.332968086216736,
+          2.151925930529785,
+          -0.31718018972625733
+      ]
+    },
+    {
+      "poseName": "start",
+      "poseGroup": "arm",
+      "jointStates": [
+      1.5665373720947267, -0.84563327622406, 2.959672290463257, -0.6501153989245605, 0.09303266534805298, -1.7758210324157715, -0.46606128257217405
+      ]
+    },
+    {
+      "poseName": "prepare",
+      "poseGroup": "arm",
+      "jointStates": [
+        1.603,
+        0.065,
+        -0.020,
+        -1.762,
+        0.159,
+        -0.361,
+        -0.099
+      ]
+    },
+    {
+      "poseName": "screwPlace",
+      "poseGroup": "arm",
+      "jointStates": [
+        0.8788380414417514,
+        -0.5939054681585576,
+        1.3411264079056417,
+        -1.0151309732607317,
+        0.3256491812883926,
+        -1.6532593025773634,
+        1.1137077665818644
+      ]
+    },
+    {
+      "poseName": "carry2",
+      "poseGroup": "arm",
+      "jointStates": [
+        1.52,
+        -0.400,
+        0.97,
+        -1.44,
+        1.169,
+        -2.09,
+        0.25
+      ]
+    },
+    {
+      "poseName": "carry3",
+      "poseGroup": "arm",
+      "jointStates": [
+      1.5527315058532716, -0.22475446057312012, 1.0560019794891358, -1.6310962720324707, 1.2619260622024535, -2.057689967047119, 0.29479322988090517
+      ]
+    },
+    {
+      "poseName": "carry",
+      "poseGroup": "arm",
+      "jointStates": [
+      1.5665373720947267, -0.84563327622406, 2.959672290463257, -0.6501153989245605, 0.09303266534805298, -1.7758210324157715, -0.46606128257217405
+      ]
+    },
+    {
+      "poseName": "dropOff",
+      "poseGroup": "arm",
+      "jointStates": [
+       0.3397362150970459, -0.810735233545227, 2.514817792553711, -0.997178940336914, 0.39676085839271547, -1.5207965992797852, -0.19224569540920258
+      ]
+    },
+    {
+      "poseName": "release",
+      "poseGroup": "arm",
+      "jointStates": [
+        0.08701275966796874, -0.3724001724719238, 1.7796574417541504, -0.48252811865112305, 1.217057116127014, -1.8015151642669678, -0.48945446651878355
+      ]
+    },
+    {
+      "poseName": "gearboxPlace",
+      "poseGroup": "arm",
+      "jointStates": [
+        -0.5540422039986019,
+        -0.9994290043828622,
+        1.6398280379756782,
+        1.1219849427941053,
+        -0.6281608550297957,
+        1.9663975842007808,
+        -2.3269177043577907
+      ]
+    }
+  ],
+  "localStaticTransforms": [
+    {
+      "parent": "torso_lift_link",
+      "child": "pointing_link",
+      "x": 0.0,
+      "y": 0.5,
+      "z": 1,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 0
+    }
+  ],
+  "collisions": [
+  ]
+}

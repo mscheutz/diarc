@@ -1,0 +1,26 @@
+setup poses
+-
+i will teach you how to sort
+first advance the conveyor belt
+then go to pose conveyor
+then verify that you can see a part
+If the part is longer than 75 mm then get the part on table a
+otherwise put the part on table b
+that is how you sort
+-
+start sorting
+-
+modify action sort
+replace the part is longer than 75 mm with the part is longer than 100 mm
+that is all
+-
+aendere handlung sortieren
+Ersetze die Wage zeigt ueber 100 Gramm durch die Wage zeigt ueber 150 Gramm
+Das ist alles
+-
+sort
+-
+run sort as a persistent goal
+-
+reverse the conveyor belt
+-
